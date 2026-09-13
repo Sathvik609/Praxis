@@ -38,7 +38,8 @@ class PegboardFSM:
         spec: BoardSpec = BOARD,
         debounce_frames: int = 2,
         clear_frames: int = 3,
-        drop_frames: int = 3,
+        drop_after_s: float = 1.5,
+        drop_after_hand_s: float = 0.3,
         near_mm: float = 10.0,
         transit_mm: float = 20.0,
         clear_mm: float = 25.0,
@@ -49,7 +50,8 @@ class PegboardFSM:
         self.targets = list(targets) if targets is not None else None
         self.debounce_frames = max(1, debounce_frames)
         self.clear_frames = max(1, clear_frames)
-        self.drop_frames = max(1, drop_frames)
+        self.drop_after_s = drop_after_s
+        self.drop_after_hand_s = drop_after_hand_s
         self.near_mm = near_mm
         self.transit_mm = transit_mm
         self.clear_mm = clear_mm
@@ -69,7 +71,7 @@ class PegboardFSM:
         self._t_seated = 0.0
         self._seated_hole: int | None = None
         self._clear_streak = 0
-        self._still_streak = 0
+        self._still_since: float | None = None
         self._still_pos: tuple[float, float] | None = None
         self._wrong: set[int] = set()
 
@@ -148,27 +150,27 @@ class PegboardFSM:
         return self.target if self.target in newly_occupied else None
 
     def _check_drop(self, obs: Observation) -> bool:
-        """A free peg that sits still away from the hand for drop_frames while a peg is 'in hand'."""
+        """A free peg that sits still (away from the hand, if the hand is known) for long enough
+        while a peg is 'in hand'. Time-based, so frame rate does not change the behaviour."""
         extra = len(obs.free_pegs_mm) > self._baseline_free
         if not extra:
-            self._still_streak, self._still_pos = 0, None
+            self._still_since, self._still_pos = None, None
             return False
         # Track the free peg farthest from the source (the one we are carrying / dropped).
         src = self._source_pos or (0.0, 0.0)
         peg = max(obs.free_pegs_mm, key=lambda p: _dist(p, src))
         if obs.hand_mm is not None and _dist(obs.hand_mm, peg) <= self.clear_mm:
-            self._still_streak, self._still_pos = 0, None
+            self._still_since, self._still_pos = None, None
             return False
-        if self._still_pos is not None and _dist(peg, self._still_pos) <= self.stationary_mm:
-            self._still_streak += 1
-        else:
-            self._still_streak = 1
+        if self._still_pos is None or _dist(peg, self._still_pos) > self.stationary_mm:
+            self._still_since = obs.t
         self._still_pos = peg
-        return self._still_streak >= self.drop_frames
+        limit = self.drop_after_hand_s if obs.hand_mm is not None else self.drop_after_s
+        return self._still_since is not None and (obs.t - self._still_since) >= limit
 
     def _reset_carry(self, obs: Observation) -> None:
         self._baseline_free = len(obs.free_pegs_mm)
-        self._still_streak, self._still_pos = 0, None
+        self._still_since, self._still_pos = None, None
         self._clear_streak = 0
 
     # ---- state handlers ------------------------------------------------------------------
@@ -180,7 +182,7 @@ class PegboardFSM:
             self._source_pos = gone[0] if gone else self._last_free[0]
             self._baseline_free = len(obs.free_pegs_mm)
             self._t_grasp = obs.t
-            self._still_streak, self._still_pos = 0, None
+            self._still_since, self._still_pos = None, None
             ev.append(self._go("grasped", obs.t))
         return ev
 

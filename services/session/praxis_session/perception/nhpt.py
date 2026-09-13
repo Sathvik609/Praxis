@@ -47,7 +47,8 @@ class NHPT:
 
     def step(self, obs: Observation) -> list[Event]:
         if self.completed:
-            return []
+            # Timer is frozen, but the FSM still runs so the final rep_complete / hand_clear fire.
+            return self.fsm.step(obs)
         out: list[Event] = []
         for ev in self.fsm.step(obs):
             out.append(ev)

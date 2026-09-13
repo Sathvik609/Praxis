@@ -146,18 +146,45 @@ def test_wrong_hole_emits_event_and_waits_for_correction() -> None:
 
 def test_drop_emits_event_and_returns_to_at_source() -> None:
     fsm = make()
-    ev = run(fsm, [
+    obs = [
         Observation(0.0, occ(), [SRC]),
         Observation(0.1, occ(), []),                 # grasped
         Observation(0.2, occ(), [(120.0, 148.5)]),   # in transit
-        Observation(0.3, occ(), [(118.0, 150.0)]),   # stationary on the table...
-        Observation(0.4, occ(), [(118.0, 150.0)]),
-        Observation(0.5, occ(), [(118.0, 150.0)]),
-        Observation(0.6, occ(), [(118.0, 150.0)]),
-    ])
+    ]
+    # Stationary on the table for 1.6 s (default drop_after_s = 1.5 without hand data).
+    obs += [Observation(0.3 + i * 0.1, occ(), [(118.0, 150.0)]) for i in range(17)]
+    ev = run(fsm, obs)
     assert "drop" in types(ev)
+    drop = next(e for e in ev if e.type == "drop")
+    assert 1.8 <= drop.t <= 1.9
     assert fsm.state == "at_source"
     assert fsm.reps == 0
+
+
+def test_brief_pause_in_transit_is_not_a_drop() -> None:
+    fsm = make()
+    obs = [
+        Observation(0.0, occ(), [SRC]),
+        Observation(0.1, occ(), []),
+        Observation(0.2, occ(), [(120.0, 148.5)]),
+    ]
+    obs += [Observation(0.3 + i * 0.1, occ(), [(120.0, 148.5)]) for i in range(8)]  # 0.8 s hold
+    ev = run(fsm, obs)
+    assert "drop" not in types(ev)
+    assert fsm.state == "in_transit"
+
+
+def test_drop_is_fast_when_hand_is_visibly_away() -> None:
+    fsm = make()
+    obs = [
+        Observation(0.0, occ(), [SRC], hand_mm=SRC),
+        Observation(0.1, occ(), [], hand_mm=SRC),
+        Observation(0.2, occ(), [(120.0, 148.5)], hand_mm=(122.0, 148.5)),
+    ]
+    obs += [Observation(0.3 + i * 0.1, occ(), [(118.0, 150.0)], hand_mm=(170.0, 100.0)) for i in range(5)]
+    ev = run(fsm, obs)
+    assert "drop" in types(ev)
+    assert next(e for e in ev if e.type == "drop").t <= 0.7
 
 
 def test_occupancy_debounce_ignores_single_frame_flicker() -> None:

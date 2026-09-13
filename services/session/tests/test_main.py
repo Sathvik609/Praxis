@@ -38,3 +38,42 @@ def test_session_websocket_rejects_undecodable_frame() -> None:
         msg = json.loads(ws.receive_text())
     assert msg["type"] == "error"
     assert msg["code"] == "bad_frame"
+
+
+def _jpeg(frame) -> bytes:
+    import cv2 as _cv2
+    ok, buf = _cv2.imencode(".jpg", frame, [_cv2.IMWRITE_JPEG_QUALITY, 90])
+    assert ok
+    return buf.tobytes()
+
+
+def test_session_websocket_pegboard_mode_streams_pipeline_events() -> None:
+    from tests.synth import perspective_from_mm, render_frame
+
+    H = perspective_from_mm()
+    client = TestClient(app)
+    with client.websocket_connect("/session?mode=pegboard&targets=4&debounce=1&clear=1") as ws:
+        ws.send_bytes(_jpeg(render_frame(H, pegs_mm=[(160.0, 148.5)])))
+        msgs = [json.loads(ws.receive_text()) for _ in range(2)]
+    types = [m["type"] for m in msgs]
+    assert types == ["calibration", "frame"]
+    assert msgs[0]["calibrated"] is True
+    assert msgs[1]["fsm"]["state"] == "at_source"
+    assert msgs[1]["overlay"]["target"] == 4
+    assert msgs[1]["frame_index"] == 0
+
+
+def test_session_websocket_rejects_unknown_mode() -> None:
+    client = TestClient(app)
+    with client.websocket_connect("/session?mode=bogus") as ws:
+        msg = json.loads(ws.receive_text())
+    assert msg["type"] == "error" and msg["code"] == "bad_mode"
+
+
+def test_events_endpoint_returns_ring_tail() -> None:
+    client = TestClient(app)
+    r = client.get("/events?n=5")
+    assert r.status_code == 200
+    body = r.json()
+    assert "events" in body and isinstance(body["events"], list)
+    assert body["count"] >= len(body["events"])
