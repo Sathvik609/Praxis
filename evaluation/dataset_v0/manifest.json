@@ -1,0 +1,45 @@
+{
+ "version": "v0",
+ "entries": [
+  {
+   "id": "synthetic_nhpt_01",
+   "mode": "nhpt",
+   "video": "synthetic_nhpt_01.mp4",
+   "labels": "synthetic_nhpt_01.labels.json",
+   "synthetic": true,
+   "participant": "render",
+   "notes": "OpenCV-rendered board, scrambled hole order, mp4v"
+  },
+  {
+   "id": "synthetic_pegboard_01",
+   "mode": "pegboard",
+   "video": "synthetic_pegboard_01.mp4",
+   "labels": "synthetic_pegboard_01.labels.json",
+   "synthetic": true,
+   "participant": "render",
+   "targets": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    1
+   ],
+   "notes": "20 reps, holes 0-8 twice + 2, board cleared between rounds"
+  }
+ ]
+}
