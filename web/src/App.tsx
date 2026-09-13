@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Nav } from './components/Nav'
 import { Home } from './routes/Home'
+import { Session } from './routes/Session'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/session" element={<Session />} />
             <Route path="/exercises" element={<Placeholder title="Exercises" />} />
             <Route path="/progress" element={<Placeholder title="Progress" />} />
             <Route path="/reports" element={<Placeholder title="Reports" />} />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CamOnIndicator } from '../components/CamOnIndicator'
 import { useWebcamStream } from '../hooks/useWebcamStream'
 import { SESSION_API_URL, SESSION_WS_URL } from '../lib/config'
@@ -62,6 +63,14 @@ export function Home() {
           Start camera test
         </button>
       )}
+      <div className="grid gap-3 md:grid-cols-2">
+        <Link to="/session?mode=nhpt" className="flex min-h-14 items-center justify-center rounded-2xl border-2 border-blue-700 text-xl font-semibold text-blue-800">
+          Start Nine-Hole Peg Test
+        </Link>
+        <Link to="/session?mode=pegboard" className="flex min-h-14 items-center justify-center rounded-2xl border-2 border-blue-700 text-xl font-semibold text-blue-800">
+          Start pegboard transfer
+        </Link>
+      </div>
       <p className="text-base text-slate-500">
         Video is processed in memory and never stored. Only events leave your device.
       </p>

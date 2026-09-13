@@ -1,13 +1,5 @@
 import { NavLink } from 'react-router-dom'
-
-export const NAV_ITEMS = [
-  { to: '/', label: 'Home' },
-  { to: '/exercises', label: 'Exercises' },
-  { to: '/progress', label: 'Progress' },
-  { to: '/reports', label: 'Reports' },
-  { to: '/coach', label: 'Coach' },
-  { to: '/settings', label: 'Settings' },
-] as const
+import { NAV_ITEMS } from '../lib/nav'
 
 /** Persistent navigation. Every link is a 56px tap target (min-h-14 = 3.5rem = 56px). */
 export function Nav() {
