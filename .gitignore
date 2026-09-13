@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+web/dist/
+infra/cdk.out/
+infra/*.js
+infra/*.d.ts
+!infra/jest.config.js
+.pnpm-store/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Large media: raw video never committed except consented dataset clips (see docs/LICENSES.md)
+*.mp4
+*.mov
+*.avi
+!evaluation/dataset_v0/**/*.mp4
+
+# Generated
+services/session/models/*.onnx
+traces/*.jsonl
+!traces/.gitkeep
