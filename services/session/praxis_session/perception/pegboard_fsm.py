@@ -42,6 +42,7 @@ class PegboardFSM:
         near_mm: float = 10.0,
         transit_mm: float = 20.0,
         clear_mm: float = 25.0,
+        peg_clear_mm: float = 15.0,
         stationary_mm: float = 2.0,
     ) -> None:
         self.spec = spec
@@ -52,6 +53,7 @@ class PegboardFSM:
         self.near_mm = near_mm
         self.transit_mm = transit_mm
         self.clear_mm = clear_mm
+        self.peg_clear_mm = peg_clear_mm
         self.stationary_mm = stationary_mm
 
         self.state = "at_source"
@@ -241,7 +243,7 @@ class PegboardFSM:
             clear = _dist(obs.hand_mm, c) > self.clear_mm
             self._clear_streak = self.clear_frames if clear else 0
         else:
-            near_peg = any(_dist(p, c) <= self.clear_mm for p in obs.free_pegs_mm)
+            near_peg = any(_dist(p, c) <= self.peg_clear_mm for p in obs.free_pegs_mm)
             self._clear_streak = 0 if near_peg else self._clear_streak + 1
         if self._clear_streak >= self.clear_frames:
             ev.append(self._go("hand_clear", obs.t))
