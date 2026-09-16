@@ -77,7 +77,6 @@ class HandTracker:
         self.last_ms = 0.0
         palm, hand = self.models_dir / PALM_MODEL, self.models_dir / HAND_MODEL
         if palm.exists() and hand.exists():
-            import cv2
 
             from praxis_session.perception.zoo.mp_handpose import MPHandPose
             from praxis_session.perception.zoo.mp_palmdet import MPPalmDet
@@ -87,12 +86,6 @@ class HandTracker:
             with _quiet_cv_logs():
                 self._palm = MPPalmDet(str(palm), nmsThreshold=0.3, scoreThreshold=0.6, topK=100)
                 self._hand = MPHandPose(str(hand), confThreshold=conf_threshold)
-            self.available = True
-            return
-        if False:  # pragma: no cover - keeps the original branch shape for diffing
-
-            self._palm = MPPalmDet(str(palm), nmsThreshold=0.3, scoreThreshold=0.6, topK=100)
-            self._hand = MPHandPose(str(hand), confThreshold=conf_threshold)
             self.available = True
 
     def detect(self, frame_bgr: np.ndarray) -> HandResult | None:

@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–3 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **Phase 0–4 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
@@ -27,7 +27,8 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Web screen 07 Live NHPT (overlay, board view, elapsed, dots, captions, controls, trace) + assessment result | built, tested |
 | Evaluation dataset_v0 (synthetic) + scorer (rep F1, NHPT MAE) | built; **no real recordings yet** |
 | Hand model (OpenCV Zoo palm + landmark ONNX via `cv2.dnn`), pinch / SPARC / tremor metrics, hand proximity into the peg FSM, overlay | built; unit-tested on synthetic signals and a blank frame; **live webcam check done on 16 Sep (model loads, ~6 ms/stage)** |
-| Cup; pose; avatar; exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 4–8) |
+| Waiter – cup: cup base segmentation on the target sheet, reach FSM with verified/unverified reaches, arcs and explicit phase switch, pipeline `cup` mode, WS commands, screen 07b + report, synthetic clip + reach metrics | built, tested on synthetic frames (reach F1 1.0, reach MAE 0 ms — pipeline validation only) |
+| Pose; avatar; exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 5–8) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
 ## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
@@ -54,7 +55,8 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 `pipeline.py` mode `nhpt` emits one `frame` event per frame (calibrated flag, NHPT snapshot, occupancy, hole/marker geometry in frame pixels, suggested next hole) plus every FSM/NHPT event; the FSM is not stepped while uncalibrated, and the Phase 1 perception-lost/regained logic applies. `replay.py` drives the identical pipeline from a video with timestamps from the file fps, so results are deterministic.
 ### 3.5 Hand (ONNX via `cv2.dnn`)
 `perception/hand.py` runs the OpenCV Zoo MediaPipe pair (Apache-2.0, recorded in `docs/LICENSES.md` before download; SHA256 pinned in `tools/fetch_models.py`): palm detection at 192×192 then hand landmarks at 224×224, both through `cv2.dnn.readNet` / `forward` (≈ 3–6 ms per stage on an Apple-silicon laptop CPU). The Zoo pre/post-processing is vendored verbatim under `perception/zoo/`. The best-scoring palm yields 21 landmarks in frame pixels; through the ArUco homography they become sheet millimetres, from which we compute pinch aperture (thumb tip ↔ index tip), index-tip path speed, spectral arc length of the speed profile (SPARC), and tremor as the dominant 3–12 Hz component of the detrended fingertip trace over a 3 s window. The thumb/index midpoint feeds `Observation.hand_mm`, which the peg FSM uses for in-transit, over-target, hand-clear and the faster (0.3 s) drop rule. When the models are absent the tracker reports `available: false`, `/health` says so, and NHPT runs on occupancy alone. Handedness from the model is mirrored by the webcam and is not used clinically.
-### 3.6 Waiter – cup — Phase 4 (not started)
+### 3.6 Waiter – cup (target sheet, cup base, reach FSM)
+`perception/cup.py`. The frame is warped through the calibration homography to a 2 px/mm canonical view of the whole A4 target sheet; the cup's **blue base band** (assumption: a saturated blue sticker or tape ring on the cup base, HSV hue 95–130) is segmented with `cv2.inRange` + morphological open, the largest `cv2.findContours` blob gives the centroid and equivalent diameter in mm. `CupFSM` runs `at_dot → lifted → in_transit → over_dot → placed → hand_clear`: lifted when the base disappears or moves > 20 mm from its dot; over a dot within 25 mm; placed after `clear_frames` stationary frames; hand-clear when the hand (Phase 3 landmarks) is > 60 mm away or, without hand data, after `clear_frames` more frames. A placement that was only inferred from the hand while the base was hidden is reported **unverified (cup_occluded)**; a reach during which any marker was lost is **unverified (marker_lost)**. Reaches follow the arc 1→2→3→4→5→4→3→2→1; a wrong dot emits `wrong_dot` and re-anchors the sequence. Two slow arcs are followed by two fast arcs only after the patient answers the progression prompt (WebSocket command `set_phase`), never automatically; the prescription clamp lands with the coach in Phase 7. Events: `reach_complete` (from/to dot, reach ms, verified, reason, arc, phase), `arc_complete` (mean verified reach, unverified count), `cup_complete`.
 ### 3.7 Pose and Arm to the front — Phase 5 (not started)
 ### 3.8 Exertion context — Phase 7 (not started)
 
@@ -68,7 +70,7 @@ Deferred to W6. `PRAXIS_CLOUD_ENABLED` (default 0) gates every cloud call.
 Metrics: rep F1, NHPT MAE, reach-time MAE, angle error vs goniometer app, compensation detection rate, event-to-cue latency p50/p95, scripted coach scenarios, SUS.
 
 ### 6.1 dataset_v0 (16 Sep 2026) — synthetic only
-`evaluation/results/dataset_v0.md`, regenerated by `evaluation/scripts/eval.py`. One OpenCV-rendered NHPT clip (perspective tilt/yaw, Gaussian noise, mp4v, scrambled hole order). Rep F1 = 1.0 (9/9), NHPT absolute error = 0.0 s. **These numbers validate the replay pipeline, not real-world accuracy**: no real lighting, hands, shadows or pegs are involved. Real recordings (first NHPT run on the printed sheet, then 300+ reps / ≥ 5 participants) are Phase 2's open item and Phase 9's work.
+`evaluation/results/dataset_v0.md`, regenerated by `evaluation/scripts/eval.py`. One OpenCV-rendered NHPT clip (perspective tilt/yaw, Gaussian noise, mp4v, scrambled hole order). Rep F1 = 1.0 (9/9), NHPT absolute error = 0.0 s; on the synthetic cup clip (32 reaches, 2 slow + 2 fast arcs) reach F1 = 1.0 and reach-time MAE = 0 ms. **These numbers validate the replay pipeline, not real-world accuracy**: no real lighting, hands, shadows or pegs are involved. Real recordings (first NHPT run on the printed sheet, then 300+ reps / ≥ 5 participants) are Phase 2's open item and Phase 9's work.
 
 ## 7. COOL benchmark
 W6.
