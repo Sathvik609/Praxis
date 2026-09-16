@@ -43,7 +43,9 @@
         "resume",
         "rest",
         "therapist_flag",
-        "exertion"
+        "exertion",
+        "replay_start",
+        "replay_end"
       ]
     },
     "t": {
@@ -350,6 +352,15 @@
         "string",
         "null"
       ]
+    },
+    "clip": {
+      "type": "string"
+    },
+    "fps": {
+      "type": "number"
+    },
+    "frames": {
+      "type": "integer"
     }
   }
 }

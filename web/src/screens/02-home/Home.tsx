@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
 import { Chip, type ChipTone } from '../../design/Chip'
+import { api, useApi } from '../../lib/api'
 import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK } from '../../lib/seed'
 
 const tone: Record<string, ChipTone> = { focus: 'focus', watch: 'amber', stable: 'mint' }
@@ -16,6 +17,9 @@ export function Home() {
   const [view, setView] = useState<'front' | 'side' | 'both'>('side')
   const [focus, setFocus] = useState<string>('lWrist')
   const region = REGIONS[focus]
+  const { data: me } = useApi(() => api.me())
+  const goal = me?.goal ?? PATIENT.goal
+  const attempts = me?.goal_attempts ?? PATIENT.goalAttempts
 
   return (
     <div className="grid grid-cols-[1fr_2fr_1fr] gap-6 p-6">
@@ -44,10 +48,10 @@ export function Home() {
         </div>
         <div className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="text-2xl">Your everyday goal</h2>
-          <p className="text-lg">{PATIENT.goal}</p>
-          <p className="text-muted">{PATIENT.goalAttempts} attempts logged this week</p>
+          <p className="text-lg">{goal}</p>
+          <p className="text-muted">{attempts} attempts logged this week</p>
           <div className="mt-3 flex gap-3">
-            <Button variant="secondary" className="min-h-12 text-base">Log an attempt</Button>
+            <Button variant="secondary" className="min-h-12 text-base" onClick={() => api.logGoal('attempt')}>Log an attempt</Button>
             <Button variant="secondary" className="min-h-12 text-base">Edit goal</Button>
           </div>
         </div>
@@ -101,7 +105,8 @@ export function Home() {
           <div className="flex items-start justify-between"><div><h2 className="text-xl">Assigned program</h2><p className="text-muted">{PROGRAM.short}</p></div><Chip tone="neutral">Read-only</Chip></div>
           <div className="mt-3 border-t border-line pt-3"><div className="font-bold">Next visit</div><div className="text-muted">{PROGRAM.nextVisit}</div></div>
         </div>
-        <p className="text-sm text-muted">Illustrative data until the local store lands (Phase 8).</p>
+        <button type="button" className="min-h-12 text-left text-teal underline" onClick={() => nav('/settings')}>Replay a recorded session (no webcam)</button>
+        <p className="text-sm text-muted">Body-map markers and week are illustrative seed data; goal, sessions and reports come from the local store.</p>
       </div>
     </div>
   )

@@ -31,11 +31,13 @@ function caption(f: FrameEvent | null, lost: boolean): string {
 export function LiveNhpt() {
   const [sp] = useSearchParams()
   const hand = sp.get('hand') ?? 'left'
+  const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
+    replay,
   })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
@@ -83,7 +85,7 @@ export function LiveNhpt() {
         <span className="text-xl font-bold">Nine-Hole Peg Test · {hand} hand</span>
         <span className="text-muted">Assessment · attempt 1 of 1</span>
         <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} />
+          <LiveIndicator active={camActive} replay={!!replay} />
           <Chip tone={lost ? 'amber' : 'mint'}>{lost ? 'Tracking lost' : 'Tracking ready'}</Chip>
         </span>
       </header>
@@ -91,10 +93,10 @@ export function LiveNhpt() {
       <div className="grid flex-1 grid-cols-[5fr_3fr_3fr] gap-6 p-6">
         <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 text-white/80">
-            <span className="mr-2 inline-block h-3 w-3 rounded-full bg-red" />
+            <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
             <b>You</b> · {hand} hand · board tracking
           </div>
-          <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
+          {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
           <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
           <div className="absolute bottom-3 left-4 text-white/80">
             cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}

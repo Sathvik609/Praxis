@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseEvent, type PraxisEvent } from '../lib/events'
 
-type Opts = { wsUrl: string; mode: string; fps?: number; params?: Record<string, string> }
+type Opts = { wsUrl: string; mode: string; fps?: number; params?: Record<string, string>; replay?: string | null }
 
 /** Streams 640x480 JPEG frames to the session service and collects the JSON events it returns.
  *  Frames are built on a canvas from the <video>; nothing is recorded. */
-export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
+export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = null }: Opts) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -33,6 +33,24 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
   const start = useCallback(async () => {
     setError(null)
     const gen = ++genRef.current
+    if (replay) {
+      // Replay mode: no camera; the service streams the recorded clip through the same pipeline.
+      const q = new URLSearchParams({ mode, ...params, replay }).toString()
+      const ws = new WebSocket(`${wsUrl}?${q}`)
+      wsRef.current = ws
+      ws.onopen = () => setConnected(true)
+      ws.onclose = () => setConnected(false)
+      ws.onerror = () => setError('session service unreachable')
+      ws.onmessage = (m) => {
+        const e = parseEvent(String(m.data))
+        if (e) {
+          setLastEvent(e)
+          setEvents((xs) => [...xs.slice(-199), e])
+        }
+      }
+      setCamActive(true)
+      return
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
@@ -88,7 +106,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
       setError(e instanceof Error ? e.message : 'camera unavailable')
       stop()
     }
-  }, [wsUrl, mode, fps, params, stop])
+  }, [wsUrl, mode, fps, params, replay, stop])
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const ws = wsRef.current

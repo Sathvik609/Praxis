@@ -1,0 +1,5 @@
+{"mode": "nhpt", "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1789598073.1988358, "session": "c319e78e6401", "kind": "session"}
+{"type": "state_change", "id": 42, "t": 0.5, "seq": 2, "ts": 1789598073.798025, "session": "c319e78e6401", "kind": "event"}
+{"type": "nhpt_start", "id": 43, "t": 0.5, "seq": 3, "ts": 1789598073.798382, "session": "c319e78e6401", "kind": "event"}
+{"action": "instruct", "cue_id": "nhpt_start", "reason": "first peg lifted", "evidence": [43], "label": "Rule-based coach \u00b7 LLM agent pending", "seq": 4, "ts": 1789598073.798505, "session": "c319e78e6401", "kind": "decide"}
+{"kind": "action", "text": "Nice and steady. Timer is running \u2014 no need to rush.", "ui": {"avatar_clip": "nhpt"}, "seq": 5, "ts": 1789598073.798613, "session": "c319e78e6401"}

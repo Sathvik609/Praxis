@@ -184,3 +184,18 @@ def test_ws_feedback_persists_session(client):
         assert ack["ok"] is True and ack["summary"]["session_id"] == sid
     one = client.get(f"/api/sessions/{sid}").json()
     assert one["feedback"]["effort"] == 4 and one["mode"] == "cup"
+
+
+def test_ws_replay_streams_a_recorded_clip_without_client_frames(client):
+    with client.websocket_connect("/session?mode=nhpt&sheet=nhpt_board&replay=synthetic_nhpt_01&clear=1") as ws:
+        first = ws.receive_json()
+        assert first["type"] == "replay_start" and first["clip"] == "synthetic_nhpt_01" and first["frames"] > 0
+        types = []
+        for _ in range(6):
+            types.append(ws.receive_json()["type"])
+    assert "frame" in types
+
+
+def test_ws_replay_unknown_clip_errors(client):
+    with client.websocket_connect("/session?mode=nhpt&replay=nope") as ws:
+        assert ws.receive_json()["code"] == "bad_replay"

@@ -7,6 +7,7 @@ leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default of
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import time
@@ -158,6 +159,7 @@ async def session_ws(
     hold: float = 3.0,
     sets: int = 2,
     reps: int = 8,
+    replay: str | None = None,
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
@@ -194,6 +196,9 @@ async def session_ws(
         sessions[coach.session_id] = coach
         if len(sessions) > 50:
             sessions.pop(next(iter(sessions)))
+    if replay and pipeline is not None and coach is not None:
+        await _replay_loop(ws, replay, pipeline, coach)
+        return
     frame_index = 0
     try:
         while True:
@@ -269,3 +274,73 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=summary)]
     result = pipeline.command(cmd)
     return [make_event("command", cmd=name, session_id=coach.session_id, **result)]
+
+
+def _find_clip(clip_id: str) -> Path | None:
+    manifest = EVAL_DIR / "manifest.json"
+    if not manifest.exists():
+        return None
+    for e in json.loads(manifest.read_text()).get("entries", []):
+        if e.get("id") == clip_id and e.get("video"):
+            p = EVAL_DIR / e["video"]
+            return p if p.exists() else None
+    return None
+
+
+async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, coach: CoachSession) -> None:
+    """Judge fallback: the service streams a recorded clip through the identical pipeline at the
+    file's fps while still accepting text commands from the client. Raw frames never leave."""
+    path = _find_clip(clip_id)
+    if path is None:
+        await ws.send_text(make_event("error", code="bad_replay", clip=clip_id).to_json())
+        await ws.close()
+        return
+    cap = cv2.VideoCapture(str(path))
+    fps = float(cap.get(cv2.CAP_PROP_FPS)) or 10.0
+    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    await ws.send_text(make_event("replay_start", clip=clip_id, fps=fps, frames=n, session_id=coach.session_id).to_json())
+    i = 0
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok or frame is None:
+                await ws.send_text(make_event("replay_end", clip=clip_id, frames=i).to_json())
+                break
+            t = i / fps
+            evs = pipeline.process(frame, t, i)
+            for e in evs:
+                await ws.send_text(e.to_json())
+            for e in coach.on_events(evs, pipeline.snapshot(t), t):
+                ring.append(e)
+                await ws.send_text(e.to_json())
+            i += 1
+            try:
+                msg = await asyncio.wait_for(ws.receive(), timeout=max(0.005, 1.0 / fps))
+                if msg.get("type") == "websocket.disconnect":
+                    return
+                if msg.get("text") is not None:
+                    try:
+                        cmd = json.loads(msg["text"])
+                    except json.JSONDecodeError:
+                        cmd = {}
+                    for e in _handle_command(cmd, pipeline, coach):
+                        ring.append(e)
+                        await ws.send_text(e.to_json())
+            except asyncio.TimeoutError:
+                pass
+        while True:  # keep the socket open for feedback after the clip ends
+            msg = await ws.receive()
+            if msg.get("type") == "websocket.disconnect":
+                return
+            if msg.get("text") is not None:
+                try:
+                    cmd = json.loads(msg["text"])
+                except json.JSONDecodeError:
+                    cmd = {}
+                for e in _handle_command(cmd, pipeline, coach):
+                    ring.append(e)
+                    await ws.send_text(e.to_json())
+    except WebSocketDisconnect:
+        return
+    finally:
+        cap.release()

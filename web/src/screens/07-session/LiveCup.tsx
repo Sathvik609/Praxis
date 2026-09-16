@@ -36,6 +36,7 @@ function caption(f: FrameEvent | null, lost: boolean): string {
 export function LiveCup() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
+  const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params })
   const [traceOpen, setTraceOpen] = useState(false)
@@ -83,7 +84,7 @@ export function LiveCup() {
         <span className="text-xl font-bold">Waiter – cup · {side} side</span>
         <span className="text-muted">Coordination · {arcLabel}</span>
         <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} />
+          <LiveIndicator active={camActive} replay={!!replay} />
           <Chip tone={lost ? 'amber' : 'mint'}>{lost ? 'Tracking lost' : 'Tracking ready'}</Chip>
         </span>
       </header>
@@ -92,10 +93,10 @@ export function LiveCup() {
         <div className="flex flex-col gap-4">
           <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
             <div className="absolute left-4 top-3 z-10 text-white/80">
-              <span className="mr-2 inline-block h-3 w-3 rounded-full bg-red" />
+              <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
               <b>You</b> · {frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · {frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}
             </div>
-            <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
+            {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
             <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
             <div className="absolute bottom-3 left-4 text-white/80">
               {cup?.dot != null ? `cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : 'place the cup on dot 1'}

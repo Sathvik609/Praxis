@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–7 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **Phase 0–8 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
@@ -33,7 +33,9 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Prescription clamps, behavioural exertion index, hard-coded stop rules (pain, symptoms, lean, failed reps, exertion, perception loss) with therapist flags | built, tested |
 | Rule-based coach behind the Coach interface (six actions, evidence ids, tool names), JSON decision trace, `/api/trace`, session summary | built, tested; labeled "Rule-based coach · LLM agent pending" |
 | Web: captioned + spoken cues, progression prompt from coach events, paused/stopped/rest overlays, pain check, exertion chip, decision trace panel | built, tested |
-| Store; sign-in; check-in; choose exercise; feedback; full report; progress; therapist; settings; replay UI | not started (Phase 8) |
+| SQLite store (patients, prescriptions vN, sessions, events, flags, goal log) seeded with the wireframe's illustrative history; sessions persisted on feedback; REST for patient, sessions, flags, progress, therapist, replay list | built, tested |
+| Screens 01 sign-in/first-run, 03 check-in (voice + tap), 04 choose exercise + instructions-only sheet, 08 feedback, 09 full report, 10 progress, 11 therapist (read-only), settings, coach drawer, set check-in; replay entry with Replay badge; server-side replay over the WebSocket | built, tested |
+| Real recordings, dataset v1, latency numbers, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
 ## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
@@ -79,6 +81,9 @@ Two implementations share `coach/base.py`: the deterministic `RuleCoach` (shippe
 **Trace** (`trace.py`): JSON lines per session under `traces/<id>.jsonl` with kinds `session, checkin, event, stop_rule, flag, decide, tool, action, answer, pain, rpe, pause, resume, feedback`; `/api/trace?session=` returns the tail and the live-session "Show trace" panel renders decide → tool → action lines under each perception event. Speech is a `speak` event captioned on screen (≥ 24 px) and voiced by the browser's SpeechSynthesis until Polly (W6).
 
 **Exertion** (`exertion.py`) is a behavioural index only (rep-time slope, falling peak angles, tremor share, last RPE), labeled `method: behavioural` everywhere it appears.
+
+### 3.10 Local store and replay
+`store.py` is a SQLite database (`services/session/praxis.db`, git-ignored) with the tables DynamoDB will mirror: `patients`, `prescriptions` (versioned JSON), `sessions` (summary, check-in and feedback JSON, status, tracking = usable | limited when more than 30 % of reps were unverified), `events` (non-frame events only), `flags` (therapist flags with reviewed state), `goal_log`, `nhpt_trend`. It is seeded once with the wireframe's illustrative history (Alex M., Dr. Rao, program v3, six NHPT assessments 68 → 41.2 s, four sessions, two flags); every seeded number is labeled illustrative in the UI. A live session is persisted when the browser sends `feedback` after the post-session overlay; the report is then served by id. **Replay** is the judge fallback: `WS /session?mode=…&replay=<clip id>` makes the service read the recorded clip with `cv2.VideoCapture` and push it through the identical pipeline and coach at the file's frame rate while still accepting commands; the browser shows a Replay badge instead of "Live · not recording" and no frames travel to it. Clips come from `evaluation/dataset_v0/manifest.json`.
 
 ## 5. AWS deployment
 Deferred to W6. `PRAXIS_CLOUD_ENABLED` (default 0) gates every cloud call.

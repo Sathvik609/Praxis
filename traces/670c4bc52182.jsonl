@@ -1,0 +1,5 @@
+{"mode": "cup", "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1789598073.0629928, "session": "670c4bc52182", "kind": "session"}
+{"pain_before": 2, "energy": "comfortable", "minutes": 14, "new_symptoms": false, "seq": 2, "ts": 1789598073.063328, "session": "670c4bc52182", "kind": "checkin"}
+{"pain": 6, "seq": 3, "ts": 1789598073.0635352, "session": "670c4bc52182", "kind": "pain"}
+{"action": "stop", "rule": "pain", "text": "Pain 6/10 is at your stop level. Session ended and saved; your therapist is flagged.", "seq": 4, "ts": 1789598073.063574, "session": "670c4bc52182", "kind": "stop_rule"}
+{"rule": "pain", "detail": "pain 6/10 reported (stop level 5)", "seq": 5, "ts": 1789598073.063603, "session": "670c4bc52182", "kind": "flag"}

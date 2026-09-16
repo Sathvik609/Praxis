@@ -1,0 +1,3 @@
+{"mode": "cup", "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1789597759.9634838, "session": "293d1ece8c2d", "kind": "session"}
+{"pain_before": 2, "energy": "comfortable", "minutes": 14, "new_symptoms": false, "seq": 2, "ts": 1789597759.9638379, "session": "293d1ece8c2d", "kind": "checkin"}
+{"pain_after": 2, "effort": 4, "compared": "same", "seq": 3, "ts": 1789597759.964075, "session": "293d1ece8c2d", "kind": "feedback"}

@@ -13,6 +13,7 @@ import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
+import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
 
 type ArmComplete = PraxisEvent & { sets: number; reps: number }
@@ -35,6 +36,7 @@ function caption(f: FrameEvent | null, lost: boolean, lean: boolean): string {
 export function LiveArm() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
+  const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'none', side }), [side])
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params })
   const [traceOpen, setTraceOpen] = useState(false)
@@ -56,6 +58,9 @@ export function LiveArm() {
   const lastLean = [...events].reverse().find((e) => e.type === 'compensation_lean')
   const leanRecent = !!lastLean && (frame ? frame.t - lastLean.t < 4 : true)
   const complete = events.find((e) => e.type === 'arm_complete') as ArmComplete | undefined
+  const [askedSets, setAskedSets] = useState<number[]>([])
+  const setDone = [...events].reverse().find((e) => e.type === 'set_complete' && !askedSets.includes(Number(e.set))) as (PraxisEvent & { set: number }) | undefined
+  const setCheckOpen = !!setDone && !complete
   const reps = events.filter((e) => e.type === 'rep_complete') as RepComplete[]
 
   const finish = (endedEarly: boolean) => {
@@ -79,7 +84,7 @@ export function LiveArm() {
         <span className="text-xl font-bold">Arm to the front · {side} side</span>
         <span className="text-muted">Arm strengthening · set {a?.set ?? 1} of {a?.sets ?? 2}</span>
         <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} />
+          <LiveIndicator active={camActive} replay={!!replay} />
           <Chip tone={lost ? 'amber' : 'mint'}>{lost ? 'Tracking lost' : 'Tracking ready'}</Chip>
         </span>
       </header>
@@ -87,10 +92,10 @@ export function LiveArm() {
       <div className="grid flex-1 grid-cols-[5fr_2fr_2fr] gap-6 p-6">
         <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 text-white/80">
-            <span className="mr-2 inline-block h-3 w-3 rounded-full bg-red" />
+            <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
             <b>You</b> · ghost arm shows target{frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}
           </div>
-          <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
+          {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
           <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
           <div className="absolute bottom-10 left-4 text-2xl font-bold text-amber">
             Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {a?.target_deg ?? 90}° · ceiling {a?.ceiling_deg ?? 90}°
@@ -138,6 +143,7 @@ export function LiveArm() {
         </div>
       </div>
 
+      <SetCheckIn open={setCheckOpen} setNumber={setDone?.set ?? 1} onSubmit={(r) => { if (r !== null) send({ cmd: 'rpe', rpe: r }); setAskedSets((s) => [...s, setDone?.set ?? 0]) }} />
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
