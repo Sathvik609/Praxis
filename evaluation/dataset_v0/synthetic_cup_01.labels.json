@@ -1,0 +1,332 @@
+{
+ "fps": 10.0,
+ "frames": 517,
+ "reaches": [
+  {
+   "rep": 1,
+   "from_dot": 0,
+   "to_dot": 1,
+   "t_lift": 1.0,
+   "t_placed": 2.0,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 2,
+   "from_dot": 1,
+   "to_dot": 2,
+   "t_lift": 3.2,
+   "t_placed": 4.2,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 3,
+   "from_dot": 2,
+   "to_dot": 3,
+   "t_lift": 5.4,
+   "t_placed": 6.4,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 4,
+   "from_dot": 3,
+   "to_dot": 4,
+   "t_lift": 7.6,
+   "t_placed": 8.6,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 5,
+   "from_dot": 4,
+   "to_dot": 3,
+   "t_lift": 9.8,
+   "t_placed": 10.8,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 6,
+   "from_dot": 3,
+   "to_dot": 2,
+   "t_lift": 12.0,
+   "t_placed": 13.0,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 7,
+   "from_dot": 2,
+   "to_dot": 1,
+   "t_lift": 14.2,
+   "t_placed": 15.2,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 8,
+   "from_dot": 1,
+   "to_dot": 0,
+   "t_lift": 16.4,
+   "t_placed": 17.4,
+   "reach_ms": 1000.0,
+   "arc": 1,
+   "phase": "slow"
+  },
+  {
+   "rep": 9,
+   "from_dot": 0,
+   "to_dot": 1,
+   "t_lift": 18.6,
+   "t_placed": 19.6,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 10,
+   "from_dot": 1,
+   "to_dot": 2,
+   "t_lift": 20.8,
+   "t_placed": 21.8,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 11,
+   "from_dot": 2,
+   "to_dot": 3,
+   "t_lift": 23.0,
+   "t_placed": 24.0,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 12,
+   "from_dot": 3,
+   "to_dot": 4,
+   "t_lift": 25.2,
+   "t_placed": 26.2,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 13,
+   "from_dot": 4,
+   "to_dot": 3,
+   "t_lift": 27.4,
+   "t_placed": 28.4,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 14,
+   "from_dot": 3,
+   "to_dot": 2,
+   "t_lift": 29.6,
+   "t_placed": 30.6,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 15,
+   "from_dot": 2,
+   "to_dot": 1,
+   "t_lift": 31.8,
+   "t_placed": 32.8,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 16,
+   "from_dot": 1,
+   "to_dot": 0,
+   "t_lift": 34.0,
+   "t_placed": 35.0,
+   "reach_ms": 1000.0,
+   "arc": 2,
+   "phase": "slow"
+  },
+  {
+   "rep": 17,
+   "from_dot": 0,
+   "to_dot": 1,
+   "t_lift": 35.9,
+   "t_placed": 36.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 18,
+   "from_dot": 1,
+   "to_dot": 2,
+   "t_lift": 36.9,
+   "t_placed": 37.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 19,
+   "from_dot": 2,
+   "to_dot": 3,
+   "t_lift": 37.9,
+   "t_placed": 38.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 20,
+   "from_dot": 3,
+   "to_dot": 4,
+   "t_lift": 38.9,
+   "t_placed": 39.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 21,
+   "from_dot": 4,
+   "to_dot": 3,
+   "t_lift": 39.9,
+   "t_placed": 40.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 22,
+   "from_dot": 3,
+   "to_dot": 2,
+   "t_lift": 40.9,
+   "t_placed": 41.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 23,
+   "from_dot": 2,
+   "to_dot": 1,
+   "t_lift": 41.9,
+   "t_placed": 42.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 24,
+   "from_dot": 1,
+   "to_dot": 0,
+   "t_lift": 42.9,
+   "t_placed": 43.3,
+   "reach_ms": 400.0,
+   "arc": 3,
+   "phase": "fast"
+  },
+  {
+   "rep": 25,
+   "from_dot": 0,
+   "to_dot": 1,
+   "t_lift": 43.9,
+   "t_placed": 44.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 26,
+   "from_dot": 1,
+   "to_dot": 2,
+   "t_lift": 44.9,
+   "t_placed": 45.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 27,
+   "from_dot": 2,
+   "to_dot": 3,
+   "t_lift": 45.9,
+   "t_placed": 46.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 28,
+   "from_dot": 3,
+   "to_dot": 4,
+   "t_lift": 46.9,
+   "t_placed": 47.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 29,
+   "from_dot": 4,
+   "to_dot": 3,
+   "t_lift": 47.9,
+   "t_placed": 48.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 30,
+   "from_dot": 3,
+   "to_dot": 2,
+   "t_lift": 48.9,
+   "t_placed": 49.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 31,
+   "from_dot": 2,
+   "to_dot": 1,
+   "t_lift": 49.9,
+   "t_placed": 50.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  },
+  {
+   "rep": 32,
+   "from_dot": 1,
+   "to_dot": 0,
+   "t_lift": 50.9,
+   "t_placed": 51.3,
+   "reach_ms": 400.0,
+   "arc": 4,
+   "phase": "fast"
+  }
+ ],
+ "phases": [
+  "slow",
+  "slow",
+  "fast",
+  "fast"
+ ]
+}

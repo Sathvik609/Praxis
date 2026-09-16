@@ -6,6 +6,7 @@ leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default of
 """
 from __future__ import annotations
 
+import json
 import os
 import time
 
@@ -87,7 +88,20 @@ async def session_ws(
     frame_index = 0
     try:
         while True:
-            data = await ws.receive_bytes()
+            msg = await ws.receive()
+            if msg.get("type") == "websocket.disconnect":
+                return
+            if msg.get("text") is not None:
+                try:
+                    cmd = json.loads(msg["text"])
+                except json.JSONDecodeError:
+                    cmd = {}
+                result = pipeline.command(cmd) if pipeline is not None else {"ok": False}
+                e = make_event("command", cmd=cmd.get("cmd"), **result)
+                ring.append(e)
+                await ws.send_text(e.to_json())
+                continue
+            data = msg.get("bytes") or b""
             frame = decode_jpeg(data)
             if frame is None:
                 await ws.send_text(make_event("error", code="bad_frame").to_json())

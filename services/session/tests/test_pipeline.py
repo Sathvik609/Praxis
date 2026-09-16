@@ -122,3 +122,38 @@ def test_nhpt_frame_with_hand_tracker_on_synthetic_board():
     assert d["models"]["hand"] is True
     assert d["hand"]["present"] is False  # no real hand in a synthetic render
     assert d["proc_ms"] > 0.0
+
+
+def _cup_frames(dst_seq):
+    """Frames: cup resting at dot 0, then for each dst: hidden (lifted), resting at dst."""
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+
+    seq = [C.targets_mm[0]] * 3
+    for k in dst_seq:
+        seq += [None] * 3 + [C.targets_mm[k]] * 5
+    return [camera_frame(C, cup_mm=p)[0] for p in seq]
+
+
+def test_cup_mode_emits_reach_events_and_frame_block():
+    from praxis_session.schema import validate_event
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", clear_frames=2, use_hand=False)
+    evs = []
+    for i, f in enumerate(_cup_frames([1, 2])):
+        evs += p.process(f, t=i * 0.1, frame_index=i)
+    for e in evs:
+        validate_event(e.to_dict())
+    d = evs[0].to_dict()
+    assert d["type"] == "frame" and d["cup"]["mode"] == "cup" and len(d["overlay"]["dots_px"]) == 5
+    assert d["overlay"]["cup_px"] is not None
+    reaches = [e for e in evs if e.type == "reach_complete"]
+    assert [r.payload["to_dot"] for r in reaches] == [1, 2]
+    assert all(r.payload["verified"] for r in reaches)
+    assert p.snapshot()["cup"]["reaches_total"] == 2
+
+
+def test_cup_command_switches_phase():
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    assert p.command({"cmd": "set_phase", "phase": "fast"}) == {"ok": True, "phase": "fast"}
+    assert p.snapshot()["cup"]["phase"] == "fast"
+    assert p.command({"cmd": "nope"})["ok"] is False

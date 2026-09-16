@@ -24,7 +24,12 @@
         "drop",
         "nhpt_start",
         "nhpt_split",
-        "nhpt_complete"
+        "nhpt_complete",
+        "reach_complete",
+        "wrong_dot",
+        "arc_complete",
+        "cup_complete",
+        "command"
       ]
     },
     "t": {
@@ -169,6 +174,66 @@
     },
     "proc_ms": {
       "type": "number"
+    },
+    "cup": {
+      "type": "object"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "phase": {
+      "type": "string"
+    },
+    "from_dot": {
+      "type": "integer"
+    },
+    "to_dot": {
+      "type": "integer"
+    },
+    "reach_ms": {
+      "type": "number"
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "arc": {
+      "type": "integer"
+    },
+    "dot": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "expected": {
+      "type": "integer"
+    },
+    "arcs": {
+      "type": "integer"
+    },
+    "reaches": {
+      "type": "array"
+    },
+    "mean_reach_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "unverified": {
+      "type": "integer"
+    },
+    "awaiting_phase": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": "string"
     }
   }
 }

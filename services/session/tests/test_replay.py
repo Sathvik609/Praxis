@@ -40,3 +40,14 @@ def test_missing_file_raises(tmp_path: Path):
         run_replay(tmp_path / "nope.mp4")
     write_events_jsonl([], tmp_path / "x" / "e.jsonl")
     assert (tmp_path / "x" / "e.jsonl").exists()
+
+
+def test_cup_clip_replays_four_arcs(tmp_path: Path):
+    from praxis_session.perception.synth import write_cup_clip
+
+    lab = write_cup_clip(tmp_path / "cup.mp4", fps=10, hold=2, seed=3)
+    assert len(lab["reaches"]) == 32 and lab["phases"] == ["slow", "slow", "fast", "fast"]
+    res = run_replay(tmp_path / "cup.mp4", mode="cup", sheet="cup_targets", clear_frames=1)
+    counts = res.summary()["event_counts"]
+    assert counts["reach_complete"] == 32 and counts["arc_complete"] == 4
+    assert res.snapshot["cup"]["finished"]

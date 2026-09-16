@@ -145,3 +145,60 @@ def write_nhpt_clip(
             "total_s": round(reps[-1]["t_seated"] - reps[0]["t_lift"], 3),
         },
     }
+
+
+def write_cup_clip(
+    path: Path | str,
+    fps: float = 10.0,
+    hold: int = 4,
+    seed: int = 3,
+    noise_sigma: float = 4.0,
+    size: tuple[int, int] = (640, 480),
+    phases: tuple[str, ...] = ("slow", "slow", "fast", "fast"),
+) -> dict:
+    """Render a scripted Waiter - cup run (arcs 1..5..1) and return ground-truth labels.
+
+    Per reach (each `hold` frames): resting at the source dot -> base hidden (lifted) ->
+    seen mid-way -> resting at the destination (hold + 2 frames). Fast arcs use hold // 2.
+    Labels: reaches[{rep, from_dot, to_dot, t_lift, t_placed, reach_ms, arc, phase}], phases.
+    """
+    from praxis_session.perception.board_spec import CUP_TARGETS
+    from praxis_session.perception.cup import ARC
+
+    spec = CUP_TARGETS
+    dots = spec.targets_mm
+    rng = np.random.default_rng(seed)
+    tilt, yaw = 15.0 + rng.uniform(-4, 4), 5.0 + rng.uniform(-4, 4)
+    w = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
+    assert w.isOpened(), path
+    i = 0
+    reaches = []
+
+    def emit(cup, n: int) -> None:
+        nonlocal i
+        for _ in range(n):
+            frame, _ = camera_frame(
+                spec, size=size, tilt_deg=tilt, yaw_deg=yaw, noise_sigma=noise_sigma,
+                seed=int(rng.integers(0, 2**31)), cup_mm=cup,
+            )
+            w.write(frame)
+            i += 1
+
+    emit(dots[0], hold)
+    for arc_i, phase in enumerate(phases, start=1):
+        h = max(1, hold // 2) if phase == "fast" else hold
+        for a, b in zip(ARC[:-1], ARC[1:], strict=True):
+            emit(dots[a], h)
+            t_lift = i / fps
+            emit(None, h)
+            mid = ((dots[a][0] + dots[b][0]) / 2, (dots[a][1] + dots[b][1]) / 2)
+            emit(mid, h)
+            t_placed = i / fps
+            emit(dots[b], h + 2)
+            reaches.append({
+                "rep": len(reaches) + 1, "from_dot": a, "to_dot": b, "t_lift": t_lift,
+                "t_placed": t_placed, "reach_ms": round((t_placed - t_lift) * 1000.0, 1),
+                "arc": arc_i, "phase": phase,
+            })
+    w.release()
+    return {"fps": fps, "frames": i, "reaches": reaches, "phases": list(phases)}

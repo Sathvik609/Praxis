@@ -83,3 +83,18 @@ def test_health_reports_models_block(client):
     body = client.get("/health").json()
     assert set(body["models"]) == {"hand", "pose"}
     assert all(isinstance(v, bool) for v in body["models"].values())
+
+
+def test_ws_cup_text_command_switches_phase(client):
+    from praxis_session.perception.board_spec import CUP_TARGETS
+    from praxis_session.perception.synth import camera_frame
+
+    frame, _ = camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[0])
+    _, buf = cv2.imencode(".jpg", frame)
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets") as ws:
+        ws.send_text('{"cmd":"set_phase","phase":"fast"}')
+        ack = ws.receive_json()
+        assert ack["type"] == "command" and ack["ok"] is True
+        ws.send_bytes(buf.tobytes())
+        msg = ws.receive_json()
+    assert msg["type"] == "frame" and msg["cup"]["phase"] == "fast"

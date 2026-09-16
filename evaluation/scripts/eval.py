@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE.parents[2] / "services" / "session"))
 from praxis_session.replay import run_replay  # noqa: E402
 
 
-def match_reps(pred: list[dict], labeled: list[dict], tol: float):
+def match_reps(pred: list[dict], labeled: list[dict], tol: float, key: str = "hole", t_key: str = "t_seated"):
     """Greedy one-to-one matching in time order. Returns tp, fp, fn, misses."""
     used: set[int] = set()
     tp = 0
@@ -26,9 +26,9 @@ def match_reps(pred: list[dict], labeled: list[dict], tol: float):
     for p in pred:
         best = None
         for j, lab in enumerate(labeled):
-            if j in used or lab["hole"] != p["hole"]:
+            if j in used or lab[key] != p[key]:
                 continue
-            dt = p["t"] - lab["t_seated"]
+            dt = p["t"] - lab[t_key]
             if -tol <= dt <= tol + 1.0 and (best is None or abs(dt) < abs(best[1])):
                 best = (j, dt)
         if best is None:
@@ -36,6 +36,7 @@ def match_reps(pred: list[dict], labeled: list[dict], tol: float):
         else:
             used.add(best[0])
             tp += 1
+            p["matched"] = best[0]
     fn = [lab for j, lab in enumerate(labeled) if j not in used]
     misses += [{"kind": "false_negative", "label": lab} for lab in fn]
     return tp, len(pred) - tp, len(fn), misses
@@ -53,7 +54,9 @@ def main(argv=None) -> int:
 
     rows = []
     tp = fp = fn = 0
+    rtp = rfp = rfn = 0
     nhpt_err = []
+    reach_err_ms = []
     n_labeled = 0
     for e in manifest["entries"]:
         labels = json.loads((ds / e["labels"]).read_text())
@@ -61,6 +64,23 @@ def main(argv=None) -> int:
             ds / e["video"], mode=e["mode"], sheet=e.get("sheet", "nhpt_board"),
             debounce_frames=1, clear_frames=1,
         )
+        if e["mode"] == "cup":
+            pred = [
+                {"t": ev.payload["t_placed"], "to_dot": ev.payload["to_dot"], "reach_ms": ev.payload["reach_ms"]}
+                for ev in res.events if ev.type == "reach_complete"
+            ]
+            a, b, c, misses = match_reps(pred, labels["reaches"], args.tol, key="to_dot", t_key="t_placed")
+            rtp, rfp, rfn = rtp + a, rfp + b, rfn + c
+            for p in pred:
+                if "matched" in p:
+                    reach_err_ms.append(abs(p["reach_ms"] - labels["reaches"][p["matched"]]["reach_ms"]))
+            row = {
+                "id": e["id"], "mode": e["mode"], "synthetic": e.get("synthetic", False),
+                "frames": res.frames, "labeled_reps": len(labels["reaches"]), "pred_reps": len(pred),
+                "tp": a, "fp": b, "fn": c, "misses": misses,
+            }
+            rows.append(row)
+            continue
         pred = [
             {"t": ev.t, "hole": ev.payload["hole"]} for ev in res.events if ev.type == "rep_complete"
         ]
@@ -84,7 +104,12 @@ def main(argv=None) -> int:
     prec = tp / (tp + fp) if tp + fp else 0.0
     rec = tp / (tp + fn) if tp + fn else 0.0
     f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
+    rprec = rtp / (rtp + rfp) if rtp + rfp else 0.0
+    rrec = rtp / (rtp + rfn) if rtp + rfn else 0.0
+    rf1 = 2 * rprec * rrec / (rprec + rrec) if rprec + rrec else 0.0
     results = {
+        "reach_f1": round(rf1, 4), "reach_tp": rtp, "reach_fp": rfp, "reach_fn": rfn,
+        "reach_mae_ms": round(sum(reach_err_ms) / len(reach_err_ms), 1) if reach_err_ms else None,
         "dataset": manifest.get("version", "v0"), "tol_s": args.tol, "n_entries": len(rows),
         "n_labeled_reps": n_labeled, "tp": tp, "fp": fp, "fn": fn,
         "rep_precision": round(prec, 4), "rep_recall": round(rec, 4), "rep_f1": round(f1, 4),
@@ -112,8 +137,9 @@ def main(argv=None) -> int:
         )
     md += [
         "",
-        f"**Rep F1: {results['rep_f1']}** (P {results['rep_precision']}, R {results['rep_recall']}) · "
-        f"**NHPT MAE: {results['nhpt_mae_s']} s**",
+        f"**Rep F1 (NHPT): {results['rep_f1']}** (P {results['rep_precision']}, R {results['rep_recall']}) · "
+        f"**NHPT MAE: {results['nhpt_mae_s']} s** · "
+        f"**Reach F1 (cup): {results['reach_f1']}** · **Reach-time MAE: {results['reach_mae_ms']} ms**",
         "",
     ]
     (out / "dataset_v0.md").write_text("\n".join(md))

@@ -10,6 +10,16 @@
    "synthetic": true,
    "participant": "render",
    "notes": "OpenCV-rendered NHPT sheet, scrambled hole order, perspective + noise, mp4v"
+  },
+  {
+   "id": "synthetic_cup_01",
+   "mode": "cup",
+   "sheet": "cup_targets",
+   "video": "synthetic_cup_01.mp4",
+   "labels": "synthetic_cup_01.labels.json",
+   "synthetic": true,
+   "participant": "render",
+   "notes": "OpenCV-rendered cup target sheet, blue cup base, 2 slow + 2 fast arcs, mp4v"
   }
  ]
 }

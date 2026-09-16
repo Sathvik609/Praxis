@@ -15,6 +15,7 @@ from praxis_session.events import Event, EventRing, make_event
 from praxis_session.perception.board import BoardState
 from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
+from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
 from praxis_session.perception.hand import HandMetrics, HandTracker
 from praxis_session.perception.nhpt import NHPT
 from praxis_session.perception.peg_fsm import Observation
@@ -26,8 +27,8 @@ from praxis_session.perception.quality import (
     task_area_in_view,
 )
 
-Mode = Literal["calibrate", "nhpt"]
-MODES: tuple[str, ...] = ("calibrate", "nhpt")
+Mode = Literal["calibrate", "nhpt", "cup"]
+MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup")
 LOSS_FRAMES = 5
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
 
@@ -60,17 +61,35 @@ class SessionPipeline:
         if use_hand and mode != "calibrate":
             tracker = HandTracker()
             self._hand = tracker if tracker.available else None
+        self._cup_sheet: CupSheetState | None = None
+        self._cup: CupFSM | None = None
         if mode == "nhpt":
             self._board = BoardState(self.spec)
             self._nhpt = NHPT(
                 spec=self.spec, debounce_frames=debounce_frames, clear_frames=clear_frames
             )
+        elif mode == "cup":
+            self._cup_sheet = CupSheetState(self.spec)
+            self._cup = CupFSM(spec=self.spec, clear_frames=clear_frames)
 
     # ---- public -------------------------------------------------------------------------
     def process(self, frame_bgr: np.ndarray, t: float, frame_index: int) -> list[Event]:
         if self.mode == "calibrate":
             return self._process_calibrate(frame_bgr, t, frame_index)
+        if self.mode == "cup":
+            return self._process_cup(frame_bgr, t, frame_index)
         return self._process_nhpt(frame_bgr, t, frame_index)
+
+    def command(self, cmd: dict[str, Any]) -> dict[str, Any]:
+        """Text commands from the client (progression prompt answers etc.)."""
+        name = cmd.get("cmd")
+        if name == "set_phase" and self._cup is not None:
+            try:
+                self._cup.set_phase(str(cmd.get("phase")))
+            except ValueError as e:
+                return {"ok": False, "error": str(e)}
+            return {"ok": True, "phase": self._cup.phase}
+        return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
 
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
         nhpt = None
@@ -78,7 +97,10 @@ class SessionPipeline:
         if self._nhpt is not None:
             nhpt = self._nhpt.snapshot(t if t is not None else self._last_t)
             reps = self._nhpt.fsm.reps
-        return {"mode": self.mode, "reps": reps, "nhpt": nhpt}
+        cup = self._cup.snapshot() if self._cup is not None else None
+        if cup is not None:
+            reps = cup["reaches_total"]
+        return {"mode": self.mode, "reps": reps, "nhpt": nhpt, "cup": cup}
 
     # ---- internals ----------------------------------------------------------------------
     _last_t: float = 0.0
@@ -208,5 +230,57 @@ class SessionPipeline:
             )
             for e in self._nhpt.step(obs):
                 self._emit(out, e)
+        self._track_loss(out, cal, t, i)
+        return out
+
+    def _process_cup(self, frame_bgr: np.ndarray, t: float, i: int) -> list[Event]:
+        assert self._cup_sheet is not None and self._cup is not None
+        out: list[Event] = []
+        self._last_t = t
+        t0 = time.perf_counter()
+        cal = self._cal.run(frame_bgr)
+        cup_mm = None
+        dots_px: list[list[float]] = []
+        cup_px = None
+        if cal.calibrated:
+            canon = self._cup_sheet.warp(frame_bgr, cal)
+            cup_mm = self._cup_sheet.cup_mm(canon)
+            dots_px = self._cup_sheet.dots_frame_px(cal)
+            if cup_mm is not None:
+                cup_px = np.round(cal.to_px(np.array([cup_mm[:2]], np.float32))[0], 1).tolist()
+        hand_block, hand_mm = self._hand_block(frame_bgr, t, cal)
+        snap = self._cup.snapshot()
+        self._emit(
+            out,
+            make_event(
+                "frame",
+                t=t,
+                frame_index=i,
+                calibrated=cal.calibrated,
+                missing=cal.missing,
+                cup=snap
+                | {
+                    "cup_mm": None if cup_mm is None else [round(v, 1) for v in cup_mm],
+                    "hand_clear": hand_mm is None
+                    or self._cup.dot is None
+                    or float(np.hypot(*(np.array(hand_mm) - np.array(self._cup.dots[self._cup.dot]))))
+                    > self._cup.hand_clear_mm,
+                },
+                overlay={
+                    "dots_px": dots_px,
+                    "cup_px": cup_px,
+                    "expected_next": snap["expected_next"],
+                    "markers_px": {
+                        str(k): np.round(v, 1).tolist() for k, v in cal.marker_corners_px.items()
+                    },
+                },
+                hand=hand_block,
+                models={"hand": self._hand is not None},
+                proc_ms=round((time.perf_counter() - t0) * 1000.0, 1),
+            ),
+        )
+        obs = CupObservation(t=t, cup_mm=cup_mm, hand_mm=hand_mm, calibrated=cal.calibrated)
+        for e in self._cup.step(obs):
+            self._emit(out, e)
         self._track_loss(out, cal, t, i)
         return out

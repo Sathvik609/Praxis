@@ -33,22 +33,45 @@ def obs(t, cup=None, hand=None, calibrated=True):
     return CupObservation(t=t, cup_mm=cup, hand_mm=hand, calibrated=calibrated)
 
 
-def move(fsm: CupFSM, t0: float, src: int, dst: int, hold: int = 3, dt: float = 0.1, calibrated=True, occlude=False):
+def move(
+    fsm: CupFSM,
+    t0: float,
+    src: int,
+    dst: int,
+    hold: int = 3,
+    dt: float = 0.1,
+    calibrated=True,
+    occlude=False,
+):
     """Scripted reach from dot src to dot dst. Returns (events, t_end)."""
     evs = []
     t = t0
     for _ in range(hold):  # resting at src
-        evs += fsm.step(obs(t, cup=D[src], calibrated=calibrated)); t += dt
+        evs += fsm.step(obs(t, cup=D[src], calibrated=calibrated))
+        t += dt
     for _ in range(hold):  # lifted: base hidden
-        evs += fsm.step(obs(t, cup=None, calibrated=calibrated)); t += dt
+        evs += fsm.step(obs(t, cup=None, calibrated=calibrated))
+        t += dt
     mid = ((D[src][0] + D[dst][0]) / 2, (D[src][1] + D[dst][1]) / 2)
     for _ in range(hold):  # in transit (base glimpsed mid-way)
-        evs += fsm.step(obs(t, cup=None if occlude else mid, calibrated=calibrated)); t += dt
+        evs += fsm.step(obs(t, cup=None if occlude else mid, calibrated=calibrated))
+        t += dt
     for _ in range(hold + 2):  # placed on dst
-        evs += fsm.step(obs(t, cup=None if occlude else D[dst], hand=D[dst] if occlude else None, calibrated=calibrated)); t += dt
+        evs += fsm.step(
+            obs(
+                t,
+                cup=None if occlude else D[dst],
+                hand=D[dst] if occlude else None,
+                calibrated=calibrated,
+            )
+        )
+        t += dt
     if occlude:
         for _ in range(hold + 2):  # hand leaves, cup still hidden
-            evs += fsm.step(obs(t, cup=None, hand=(D[dst][0] + 80, D[dst][1] + 80), calibrated=calibrated)); t += dt
+            evs += fsm.step(
+                obs(t, cup=None, hand=(D[dst][0] + 80, D[dst][1] + 80), calibrated=calibrated)
+            )
+            t += dt
     return evs, t
 
 
@@ -94,7 +117,11 @@ def test_occluded_placement_inferred_from_hand_is_unverified():
         fsm.step(obs(0.0, cup=D[0]))
     evs, _ = move(fsm, 0.3, 0, 1, occlude=True)
     r = [e for e in evs if e.type == "reach_complete"]
-    assert len(r) == 1 and r[0].payload["verified"] is False and r[0].payload["reason"] == "cup_occluded"
+    assert (
+        len(r) == 1
+        and r[0].payload["verified"] is False
+        and r[0].payload["reason"] == "cup_occluded"
+    )
 
 
 def test_wrong_dot_emits_event_and_reanchors():

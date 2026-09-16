@@ -11,7 +11,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve()
 sys.path.insert(0, str(HERE.parents[2] / "services" / "session"))
-from praxis_session.perception.synth import write_nhpt_clip  # noqa: E402
+from praxis_session.perception.synth import write_cup_clip, write_nhpt_clip  # noqa: E402
 
 NHPT_ORDER = [4, 0, 8, 2, 6, 1, 7, 3, 5]
 
@@ -39,6 +39,20 @@ def main(argv=None) -> int:
             "notes": "OpenCV-rendered NHPT sheet, scrambled hole order, perspective + noise, mp4v",
         }
     ]
+    cup = write_cup_clip(out / "synthetic_cup_01.mp4", args.fps, args.hold, seed=3)
+    (out / "synthetic_cup_01.labels.json").write_text(json.dumps(cup, indent=1))
+    entries.append(
+        {
+            "id": "synthetic_cup_01",
+            "mode": "cup",
+            "sheet": "cup_targets",
+            "video": "synthetic_cup_01.mp4",
+            "labels": "synthetic_cup_01.labels.json",
+            "synthetic": True,
+            "participant": "render",
+            "notes": "OpenCV-rendered cup target sheet, blue cup base, 2 slow + 2 fast arcs, mp4v",
+        }
+    )
     manifest_path = out / "manifest.json"
     manifest = {"version": "v0", "entries": entries}
     if manifest_path.exists():  # keep hand-added real entries
