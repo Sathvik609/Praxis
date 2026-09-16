@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
@@ -116,10 +117,8 @@ export function LiveCup() {
             <span className="text-muted">Reference</span>
             <span className="ml-auto rounded-full bg-teal px-4 py-2 font-bold text-white">Avatar</span>
           </div>
-          <div className="flex aspect-[3/4] items-center justify-center rounded-2xl bg-[var(--stage-a)] p-6 text-center text-white/70">
-            Avatar reference arrives in Phase 6. Ideal path dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}.
-          </div>
-          <p className="text-center text-muted">Reference only. Your reps are verified from the camera, not from matching the figure.</p>
+          <AvatarPanel clip="cup" compact />
+          <p className="text-center text-muted">ideal path · dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}</p>
         </div>
 
         <div className="flex flex-col gap-4">

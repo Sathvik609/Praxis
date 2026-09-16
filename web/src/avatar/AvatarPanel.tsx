@@ -36,10 +36,12 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, markers =
   if (clipKey !== clipName) {
     // clip changed: reset during render (React's recommended pattern instead of an effect)
     setClipKey(clipName)
-    timeRef.current = 0
     setCaption(sample(clip, 0).caption)
     setStep(1)
   }
+  useEffect(() => {
+    timeRef.current = 0
+  }, [clipName])
 
   useEffect(() => {
     if (!playing) return

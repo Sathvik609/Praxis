@@ -20,6 +20,7 @@ cd services/session && uv sync && uv run python tools/fetch_models.py && uv run 
 
 # 2. Web app (pnpm)
 cd web && pnpm install && pnpm dev
+#    → http://localhost:5173/  Home (body map) → Start session → check-in (Phase 8) · /demo?exercise=cup&side=left shows the demonstration
 #    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
 #    Click Allow on the camera prompt, hold the printed NHPT sheet in view:
 #    the checklist turns Pass and "Continue to demonstration" unlocks.
@@ -37,11 +38,11 @@ uv run python ../../evaluation/scripts/make_dataset_v0.py && uv run python ../..
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
-## Status (Phase 0–5, 16 Sep 2026)
+## Status (Phase 0–6, 16 Sep 2026)
 
-Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks, perception-loss events, wireframe screen 05 (Camera setup), **and the full Nine-Hole Peg Test**: canonical board warp → cached Hough holes → HSV/contour peg occupancy → six-state peg FSM → timer from first lift to ninth seat with per-peg splits, streamed as `frame` + FSM events, drawn on screen 07 (live NHPT with board view, controls, trace) and summarised on the assessment result. Replay mode plays a recorded clip through the identical pipeline. **Hand landmarks** come from the OpenCV Zoo palm + hand ONNX models through `cv2.dnn` (run `uv run python tools/fetch_models.py` once), giving pinch aperture, smoothness (SPARC) and tremor in millimetres and gating the peg FSM. **Waiter – cup** tracks a cup with a blue base band across the printed 5-dot sheet: reach time per dot, verified vs unverified reaches, two slow arcs then two fast arcs after the patient accepts the progression prompt (screen 07b). **Arm to the front** uses the OpenCV Zoo pose model: shoulder angle vs a 90° ceiling, 3 s holds, trunk-lean and shoulder-hike flags (screen 07c). `evaluation/` regenerates rep F1 and NHPT MAE (1.0 and 0.0 s on the synthetic clip — pipeline validation only). **Nothing has been verified on a real recording yet.** See `docs/TECHNICAL_REPORT.md` §2.1, `docs/RISKS.md`, `docs/PLAN.md`.
+Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks, perception-loss events, wireframe screen 05 (Camera setup), **and the full Nine-Hole Peg Test**: canonical board warp → cached Hough holes → HSV/contour peg occupancy → six-state peg FSM → timer from first lift to ninth seat with per-peg splits, streamed as `frame` + FSM events, drawn on screen 07 (live NHPT with board view, controls, trace) and summarised on the assessment result. Replay mode plays a recorded clip through the identical pipeline. **Hand landmarks** come from the OpenCV Zoo palm + hand ONNX models through `cv2.dnn` (run `uv run python tools/fetch_models.py` once), giving pinch aperture, smoothness (SPARC) and tremor in millimetres and gating the peg FSM. **Waiter – cup** tracks a cup with a blue base band across the printed 5-dot sheet: reach time per dot, verified vs unverified reaches, two slow arcs then two fast arcs after the patient accepts the progression prompt (screen 07b). **Arm to the front** uses the OpenCV Zoo pose model: shoulder angle vs a 90° ceiling, 3 s holds, trunk-lean and shoulder-hike flags (screen 07c). The **avatar** is a procedural Three.js mannequin with keyframed clips: Home body map, Demonstration (screen 06) and the live reference panels; it never scores anyone. `evaluation/` regenerates rep F1 and NHPT MAE (1.0 and 0.0 s on the synthetic clip — pipeline validation only). **Nothing has been verified on a real recording yet.** See `docs/TECHNICAL_REPORT.md` §2.1, `docs/RISKS.md`, `docs/PLAN.md`.
 
-Not started: avatar (6), exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), real dataset (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
+Not started: exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), real dataset (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout
 ```

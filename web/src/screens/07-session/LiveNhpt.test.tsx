@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
+
 import * as hook from '../../session/useWebcamStream'
 import { LiveNhpt } from './LiveNhpt'
 

@@ -1,5 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
+import { Home } from '../screens/02-home/Home'
 import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
+import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
 import { Pending } from '../screens/placeholders'
@@ -11,16 +13,17 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Shell />,
     children: [
-      { index: true, element: <Pending n="02" title="Home" /> },
+      { index: true, element: <Home /> },
       { path: 'exercises', element: <Pending n="04" title="Choose exercise" /> },
       { path: 'progress', element: <Pending n="10" title="Progress and history" /> },
       { path: 'settings', element: <Pending n="—" title="Settings" /> },
       { path: 'checkin', element: <Pending n="03" title="Pre-session check-in" /> },
       { path: 'choose', element: <Pending n="04" title="Choose exercise" /> },
       { path: 'setup', element: <CameraSetup /> },
-      { path: 'demo', element: <Pending n="06" title="Demonstration" /> },
+      { path: 'demo', element: <Demonstration /> },
       { path: 'report', element: <AssessmentResult /> },
       { path: 'therapist', element: <Pending n="11" title="Therapist dashboard" /> },
+      { path: 'coach', element: <Pending n="04c" title="Coach drawer (Phase 8)" /> },
     ],
   },
 ])

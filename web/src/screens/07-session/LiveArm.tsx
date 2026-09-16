@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
@@ -102,9 +103,8 @@ export function LiveArm() {
             <span className="text-muted">Reference · {holding ? 'at target' : 'lift'}</span>
             <span className="ml-auto rounded-full bg-teal px-4 py-2 font-bold text-white">Avatar</span>
           </div>
-          <div className="flex aspect-[3/4] items-center justify-center rounded-2xl bg-[var(--stage-a)] p-6 text-center text-white/70">
-            Side-view avatar arrives in Phase 6. Shoulder {now != null ? Math.round(now) : '—'}° of {a?.target_deg ?? 90}°.
-          </div>
+          <AvatarPanel clip="armFront" camera="side" compact />
+          <p className="text-center text-muted">side view · shoulder {now != null ? Math.round(now) : '—'}° of {a?.target_deg ?? 90}°</p>
           <div className="flex justify-between text-muted"><span>Lift for 3</span><span>Lower for 3</span></div>
           <div className="h-3 overflow-hidden rounded-full bg-line">
             <div className="h-full bg-teal transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />

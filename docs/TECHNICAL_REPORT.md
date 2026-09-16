@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–5 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **Phase 0–6 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
@@ -29,7 +29,8 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Hand model (OpenCV Zoo palm + landmark ONNX via `cv2.dnn`), pinch / SPARC / tremor metrics, hand proximity into the peg FSM, overlay | built; unit-tested on synthetic signals and a blank frame; **live webcam check done on 16 Sep (model loads, ~6 ms/stage)** |
 | Waiter – cup: cup base segmentation on the target sheet, reach FSM with verified/unverified reaches, arcs and explicit phase switch, pipeline `cup` mode, WS commands, screen 07b + report, synthetic clip + reach metrics | built, tested on synthetic frames (reach F1 1.0, reach MAE 0 ms — pipeline validation only) |
 | Arm to the front: OpenCV Zoo person + BlazePose via `cv2.dnn`, One-Euro-smoothed shoulder angle, trunk lean, shoulder hike, arm FSM with hold timing and ceiling clamp, pipeline `arm` mode, screen 07c + report, landmark replay + evaluation | built; FSM/angles tested on synthetic landmark streams (rep F1 1.0, peak MAE < 1°); live model check pending a person in front of the webcam |
-| Avatar; exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 6–8) |
+| Avatar: procedural Three.js mannequin, keyframed clips (idle, NHPT, cup, arm front), cue layer, markers; Home body map (02), Demonstration (06), reference panels in 07/07b/07c | built; rig/sampler unit-tested, scene checked in Chrome |
+| Exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 7–8) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
 ## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
@@ -63,6 +64,9 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 
 `perception/arm_fsm.py`: `start_pose → moving → target_reached → hold → return`; target clamped to the 90° ceiling in code (`clamped` reported); a rep is verified when it reached target − 10° and held ≥ 3 s; `target_missed` and `hold_too_short` reps are counted but unverified; `compensation_lean` fires once per rep when |lean| > 12° (flagged after three), `shoulder_hiking` when hike exceeds 0.08 torso lengths above baseline. Pipeline mode `arm` needs no sheet; pose absence for 15 frames pauses with `perception_lost`. Because the DNN cannot detect a drawn figure, the evaluation feeds a synthetic 33-point landmark stream through the same FSM (`replay.run_landmark_replay`), which validates the state machine and angle code, not the detector.
 ### 3.8 Exertion context — Phase 7 (not started)
+
+## 3.9 Avatar (reference, never a scorer)
+`web/src/avatar/`: a ten-joint rig with a rest pose and forward kinematics (`rig.ts`), keyframed clips per exercise with step captions (`clips.ts`: idle loop, NHPT pinch-carry-seat loop, Waiter – cup five steps, Arm to the front lift-hold-lower, front or side camera), and a sampler with smooth interpolation (`sampler.ts`), all pure TypeScript and unit-tested. `AvatarScene.tsx` renders the rig with Three.js primitives (capsules, spheres, stage disc, three-point light, aqua material) and a cue layer: a mint tube along the exercise's ideal path, an amber ring on the current target joint, coloured joint dots with HTML text labels for Focus / Watch / Stable markers. `AvatarPanel` adds Play / Replay / Slower / Close-up / Captions and the fixed label "Reference only. Your reps are verified from the camera." The same figure appears on Home (body map with markers from the prescription and camera metrics, illustrative seed data until Phase 8), Demonstration, and the live reference panels. There is no live pose mirroring and the avatar plays no part in verification.
 
 ## 4. Coach
 Phase 7: rule-based coach labeled "Rule-based coach · LLM agent pending"; W6: Strands agent on Bedrock behind the same interface. Actions `instruct | correct | progress | regress | rest | stop`; guardrails in code; every decision logged event → decision → tool → action.

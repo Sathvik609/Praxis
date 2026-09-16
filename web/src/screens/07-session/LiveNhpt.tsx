@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
@@ -118,9 +119,7 @@ export function LiveNhpt() {
             </div>
           </div>
           {reference === 'avatar' ? (
-            <div className="flex aspect-square items-center justify-center rounded-2xl bg-[var(--stage-a)] p-6 text-center text-white/70">
-              Avatar reference arrives in Phase 6. It never scores you; reps are verified from the camera.
-            </div>
+            <AvatarPanel clip="nhpt" compact />
           ) : (
             <BoardView occupancy={frame?.board?.occupancy ?? {}} nextHole={nextHole} />
           )}
