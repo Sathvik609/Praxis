@@ -46,3 +46,17 @@ test('drawOverlay with null only clears', () => {
   drawOverlay(fakeCtx(calls), null)
   expect(calls).toEqual(['clearRect'])
 })
+
+test('drawFrameOverlay fills occupied holes and rings the next one', async () => {
+  const { drawFrameOverlay } = await import('./OverlayCanvas')
+  const calls: string[] = []
+  drawFrameOverlay(fakeCtx(calls), {
+    type: 'frame', t: 0, id: 1, calibrated: true, missing: [],
+    nhpt: { mode: 'nhpt', state: 'at_source', target: null, reps: 0, finished: false, started: false, completed: false, pegs_done: 1, elapsed_s: 0, total_s: null },
+    board: { occupancy: { hole_0: 'occupied', hole_1: 'empty' } },
+    overlay: { holes_px: [[1, 1], [2, 2]], target: null, next_hole: 1, markers_px: {} },
+  })
+  expect(calls.filter((c) => c === 'arc').length).toBe(2)
+  expect(calls.filter((c) => c === 'fill').length).toBe(1)
+  expect(calls.filter((c) => c === 'stroke').length).toBe(2)
+})

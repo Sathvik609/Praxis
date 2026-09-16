@@ -1,9 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
+import { LiveNhpt } from '../screens/07-session/LiveNhpt'
+import { AssessmentResult } from '../screens/09-report/AssessmentResult'
 import { Pending } from '../screens/placeholders'
 import { Shell } from './Shell'
 
 export const router = createBrowserRouter([
+  { path: '/session', element: <LiveNhpt /> },
   {
     path: '/',
     element: <Shell />,
@@ -16,8 +19,7 @@ export const router = createBrowserRouter([
       { path: 'choose', element: <Pending n="04" title="Choose exercise" /> },
       { path: 'setup', element: <CameraSetup /> },
       { path: 'demo', element: <Pending n="06" title="Demonstration" /> },
-      { path: 'session', element: <Pending n="07" title="Live session" /> },
-      { path: 'report', element: <Pending n="09" title="Session report" /> },
+      { path: 'report', element: <AssessmentResult /> },
       { path: 'therapist', element: <Pending n="11" title="Therapist dashboard" /> },
     ],
   },

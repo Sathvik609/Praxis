@@ -1,0 +1,32 @@
+{
+ "dataset": "v0",
+ "tol_s": 1.0,
+ "n_entries": 1,
+ "n_labeled_reps": 9,
+ "tp": 9,
+ "fp": 0,
+ "fn": 0,
+ "rep_precision": 1.0,
+ "rep_recall": 1.0,
+ "rep_f1": 1.0,
+ "nhpt_mae_s": 0.0,
+ "n_synthetic": 1,
+ "n_real": 0,
+ "entries": [
+  {
+   "id": "synthetic_nhpt_01",
+   "mode": "nhpt",
+   "synthetic": true,
+   "frames": 185,
+   "labeled_reps": 9,
+   "pred_reps": 9,
+   "tp": 9,
+   "fp": 0,
+   "fn": 0,
+   "misses": [],
+   "nhpt_labeled_s": 17.0,
+   "nhpt_pred_s": 17.0,
+   "nhpt_abs_err_s": 0.0
+  }
+ ]
+}
