@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react'
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'inverse'
   full?: boolean
 }
 
@@ -10,6 +10,7 @@ const styles = {
   secondary: 'border-2 border-teal bg-surface text-teal',
   danger: 'bg-red text-white',
   ghost: 'border-2 border-red bg-surface text-red',
+  inverse: 'bg-white text-teal',
 }
 
 export function Button({ variant = 'primary', full, className = '', ...rest }: Props) {

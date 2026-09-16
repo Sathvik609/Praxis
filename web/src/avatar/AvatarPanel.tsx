@@ -103,7 +103,7 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, markers =
             {caption || `Step ${step} of ${clip.steps}`}
           </div>
         )}
-        <div className="absolute left-3 top-2 text-xs text-white/60">{clip.camera === 'side' ? 'side view' : 'front view'} · {speed}× · same figure as Home</div>
+        <div className="absolute left-3 top-2 text-xs text-white/60">{(camera ?? clip.camera) === 'side' ? 'side view' : 'front view'} · {speed}× · same figure as Home</div>
       </div>
       {!compact && (
         <div className="flex flex-wrap gap-2">

@@ -24,8 +24,8 @@ export function Home() {
           <div className="text-white/80">Next practice · today</div>
           <h1 className="text-3xl text-white">Waiter – cup, then Arm to the front</h1>
           <p className="mt-1 text-white/80">About 14 min · cup + target sheet · wrist weight</p>
-          <Button full className="mt-5 bg-white text-teal" onClick={() => nav('/checkin')}>Start session</Button>
-          <Button full variant="secondary" className="mt-3 border-white/60 bg-transparent text-white" onClick={() => nav('/coach')}>Ask the coach</Button>
+          <Button full variant="inverse" className="mt-5" onClick={() => nav('/checkin')}>Start session</Button>
+          <button type="button" className="mt-3 min-h-14 w-full rounded-2xl border-2 border-white/60 text-xl font-bold text-white" onClick={() => nav('/coach')}>Ask the coach</button>
         </div>
         <div className="rounded-2xl border border-line bg-surface p-5">
           <div className="flex items-baseline justify-between"><h2 className="text-2xl">This week</h2><span className="text-muted">{WEEK.sessions} days · {WEEK.minutes} min</span></div>
