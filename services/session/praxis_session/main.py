@@ -4,6 +4,7 @@ Edge/privacy mode: 640x480 JPEG frames arrive over WebSocket, are decoded in mem
 OpenCV 5 (cv2.__version__ == 5.0.0 at authoring), processed, and discarded. Only JSON events
 leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default off).
 """
+
 from __future__ import annotations
 
 import json
@@ -60,6 +61,11 @@ async def session_ws(
     sheet: str = "nhpt_board",
     debounce: int = 2,
     clear: int = 3,
+    side: str = "left",
+    target: float = 90.0,
+    hold: float = 3.0,
+    sets: int = 2,
+    reps: int = 8,
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
@@ -80,6 +86,11 @@ async def session_ws(
                 ring=ring,
                 debounce_frames=debounce,
                 clear_frames=clear,
+                side=side,
+                target_deg=target,
+                hold_s=hold,
+                sets=sets,
+                reps=reps,
             )
         except ValueError:
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())

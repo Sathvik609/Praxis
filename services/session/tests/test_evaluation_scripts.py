@@ -26,7 +26,7 @@ def test_make_and_eval_dataset_v0_on_synthetic_clip(tmp_path: Path):
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
     assert res["rep_f1"] == 1.0 and res["nhpt_mae_s"] < 0.5
-    assert res["n_synthetic"] == 2 and res["n_real"] == 0
+    assert res["n_synthetic"] == 3 and res["n_real"] == 0
     md = (out / "dataset_v0.md").read_text()
     assert "synthetic" in md.lower() and "Rep F1" in md
 
@@ -45,9 +45,22 @@ def test_dataset_v0_includes_cup_and_reach_metrics(tmp_path: Path):
     ds = tmp_path / "ds"
     assert make.main(["--out", str(ds), "--hold", "2"]) == 0
     manifest = json.loads((ds / "manifest.json").read_text())
-    assert {e["mode"] for e in manifest["entries"]} == {"nhpt", "cup"}
+    assert {"nhpt", "cup"} <= {e["mode"] for e in manifest["entries"]}
     out = tmp_path / "res"
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
     assert res["rep_f1"] == 1.0 and res["reach_f1"] == 1.0
     assert res["reach_mae_ms"] is not None and res["reach_mae_ms"] < 150
+
+
+def test_dataset_v0_includes_arm_landmark_entry(tmp_path: Path):
+    make = _load("make_dataset_v0")
+    ev = _load("eval")
+    ds = tmp_path / "ds"
+    assert make.main(["--out", str(ds), "--hold", "2"]) == 0
+    manifest = json.loads((ds / "manifest.json").read_text())
+    assert any(e["mode"] == "arm" for e in manifest["entries"])
+    out = tmp_path / "res"
+    assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
+    res = json.loads((out / "dataset_v0.json").read_text())
+    assert res["arm_rep_f1"] == 1.0 and res["arm_peak_mae_deg"] < 3.0

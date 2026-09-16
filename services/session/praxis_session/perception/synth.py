@@ -2,6 +2,7 @@
 
 OpenCV cv2.__version__ == 5.0.0 (cv2.warpPerspective).
 """
+
 from __future__ import annotations
 
 import math
@@ -115,8 +116,13 @@ def write_nhpt_clip(
         nonlocal i
         for _ in range(n):
             frame, _ = camera_frame(
-                spec, size=size, tilt_deg=tilt, yaw_deg=yaw, noise_sigma=noise_sigma,
-                seed=int(rng.integers(0, 2**31)), pegs_mm=pegs,
+                spec,
+                size=size,
+                tilt_deg=tilt,
+                yaw_deg=yaw,
+                noise_sigma=noise_sigma,
+                seed=int(rng.integers(0, 2**31)),
+                pegs_mm=pegs,
             )
             w.write(frame)
             i += 1
@@ -133,7 +139,9 @@ def write_nhpt_clip(
         seated.append(k)
         emit(pegs_of(), hold)
         emit(pegs_of((src,)), hold)
-        reps.append({"rep": r + 1, "hole": k, "t_lift": t_lift, "t_seated": t_seat, "t_clear": i / fps})
+        reps.append(
+            {"rep": r + 1, "hole": k, "t_lift": t_lift, "t_seated": t_seat, "t_clear": i / fps}
+        )
     w.release()
     return {
         "fps": fps,
@@ -178,8 +186,13 @@ def write_cup_clip(
         nonlocal i
         for _ in range(n):
             frame, _ = camera_frame(
-                spec, size=size, tilt_deg=tilt, yaw_deg=yaw, noise_sigma=noise_sigma,
-                seed=int(rng.integers(0, 2**31)), cup_mm=cup,
+                spec,
+                size=size,
+                tilt_deg=tilt,
+                yaw_deg=yaw,
+                noise_sigma=noise_sigma,
+                seed=int(rng.integers(0, 2**31)),
+                cup_mm=cup,
             )
             w.write(frame)
             i += 1
@@ -195,10 +208,78 @@ def write_cup_clip(
             emit(mid, h)
             t_placed = i / fps
             emit(dots[b], h + 2)
-            reaches.append({
-                "rep": len(reaches) + 1, "from_dot": a, "to_dot": b, "t_lift": t_lift,
-                "t_placed": t_placed, "reach_ms": round((t_placed - t_lift) * 1000.0, 1),
-                "arc": arc_i, "phase": phase,
-            })
+            reaches.append(
+                {
+                    "rep": len(reaches) + 1,
+                    "from_dot": a,
+                    "to_dot": b,
+                    "t_lift": t_lift,
+                    "t_placed": t_placed,
+                    "reach_ms": round((t_placed - t_lift) * 1000.0, 1),
+                    "arc": arc_i,
+                    "phase": phase,
+                }
+            )
     w.release()
     return {"fps": fps, "frames": i, "reaches": reaches, "phases": list(phases)}
+
+
+def write_arm_landmarks(
+    path: Path | str,
+    sets: int = 2,
+    reps: int = 8,
+    hold_s: float = 3.2,
+    fps: float = 15.0,
+    seed: int = 1,
+    peak_deg: float = 90.0,
+    side: str = "left",
+) -> dict:
+    """Write a JSONL stream of synthetic 33-point landmarks (px) for Arm-to-the-front lifts.
+
+    The pose DNN cannot detect a drawn figure, so arm evaluation feeds landmarks through the
+    same ArmFSM the live pipeline uses. Labels: reps[{set, rep, t_start, t_peak, peak_deg, t_end}].
+    """
+    import json
+
+    from tests.test_pose import figure  # synthetic side-view figure (tests helper)
+
+    rng = np.random.default_rng(seed)
+    lines: list[str] = []
+    labels: list[dict] = []
+    t = 0.0
+    dt = 1.0 / fps
+
+    def emit(angle: float) -> None:
+        nonlocal t
+        lm = figure(angle, side=side) + rng.normal(0, 0.8, (33, 2)).astype(np.float32)
+        lines.append(json.dumps({"t": round(t, 4), "landmarks_px": np.round(lm, 2).tolist()}))
+        t += dt
+
+    for _ in range(int(fps * 0.7)):
+        emit(5.0)
+    for s_i in range(1, sets + 1):
+        for r_i in range(1, reps + 1):
+            pk = peak_deg + rng.uniform(-1.5, 1.5)
+            t_start = t
+            n_up = int(fps)
+            for k in range(n_up + 1):
+                emit(5 + (pk - 5) * k / n_up)
+            t_peak = t
+            for _ in range(int(hold_s * fps)):
+                emit(pk)
+            for k in range(n_up, -1, -1):
+                emit(5 + (pk - 5) * k / n_up)
+            for _ in range(int(fps * 0.5)):
+                emit(5.0)
+            labels.append(
+                {
+                    "set": s_i,
+                    "rep": r_i,
+                    "t_start": round(t_start, 4),
+                    "t_peak": round(t_peak, 4),
+                    "peak_deg": round(pk, 1),
+                    "t_end": round(t, 4),
+                }
+            )
+    Path(path).write_text("\n".join(lines) + "\n")
+    return {"fps": fps, "frames": len(lines), "side": side, "reps": labels, "hold_s": hold_s}

@@ -6,6 +6,7 @@ optional hand position in mm (from the hand model, Phase 3). Transitions are gat
 occupancy deltas and free-peg / hand proximity. Emits Events: state_change, rep_complete,
 wrong_hole, drop. No frames are touched here; cv2.__version__ == 5.0.0 upstream (board.py).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -87,7 +88,12 @@ class PegFSM:
         return self.targets is None
 
     def snapshot(self) -> dict:
-        return {"state": self.state, "target": self.target, "reps": self.reps, "finished": self.finished}
+        return {
+            "state": self.state,
+            "target": self.target,
+            "reps": self.reps,
+            "finished": self.finished,
+        }
 
     def step(self, obs: Observation) -> list[Event]:
         events: list[Event] = []
@@ -128,7 +134,9 @@ class PegFSM:
                 self._stable[k] = raw
 
     def _go(self, to: str, t: float) -> Event:
-        ev = make_event("state_change", t=t, **{"from": self.state, "to": to, "target": self.target})
+        ev = make_event(
+            "state_change", t=t, **{"from": self.state, "to": to, "target": self.target}
+        )
         self.state = to
         return ev
 
@@ -138,7 +146,9 @@ class PegFSM:
     def _near_target(self, obs: Observation) -> bool:
         pts = list(obs.free_pegs_mm) + ([obs.hand_mm] if obs.hand_mm else [])
         if self.any_hole_mode:
-            centers = [c for k, c in enumerate(self.spec.targets_mm) if not self._stable.get(k, False)]
+            centers = [
+                c for k, c in enumerate(self.spec.targets_mm) if not self._stable.get(k, False)
+            ]
         else:
             c = self._target_center()
             centers = [c] if c else []
@@ -258,9 +268,15 @@ class PegFSM:
         self.reps += 1
         ev = [
             make_event(
-                "rep_complete", t=obs.t, rep=self.reps, hole=hole, target=self.target,
+                "rep_complete",
+                t=obs.t,
+                rep=self.reps,
+                hole=hole,
+                target=self.target,
                 duration_s=round(self._t_seated - self._t_grasp, 4),
-                t_grasp=self._t_grasp, t_seated=self._t_seated, t_clear=obs.t,
+                t_grasp=self._t_grasp,
+                t_seated=self._t_seated,
+                t_clear=obs.t,
             )
         ]
         if self.targets is not None:

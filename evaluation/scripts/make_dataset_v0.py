@@ -11,7 +11,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve()
 sys.path.insert(0, str(HERE.parents[2] / "services" / "session"))
-from praxis_session.perception.synth import write_cup_clip, write_nhpt_clip  # noqa: E402
+from praxis_session.perception.synth import (  # noqa: E402
+    write_arm_landmarks,
+    write_cup_clip,
+    write_nhpt_clip,
+)
 
 NHPT_ORDER = [4, 0, 8, 2, 6, 1, 7, 3, 5]
 
@@ -51,6 +55,20 @@ def main(argv=None) -> int:
             "synthetic": True,
             "participant": "render",
             "notes": "OpenCV-rendered cup target sheet, blue cup base, 2 slow + 2 fast arcs, mp4v",
+        }
+    )
+    arm = write_arm_landmarks(out / "synthetic_arm_01.jsonl", sets=2, reps=8, hold_s=3.2, fps=15, seed=1)
+    (out / "synthetic_arm_01.labels.json").write_text(json.dumps(arm, indent=1))
+    entries.append(
+        {
+            "id": "synthetic_arm_01",
+            "mode": "arm",
+            "landmarks": "synthetic_arm_01.jsonl",
+            "labels": "synthetic_arm_01.labels.json",
+            "synthetic": True,
+            "participant": "render",
+            "side": "left",
+            "notes": "Synthetic 33-point landmark stream (the pose DNN cannot see a drawn figure); exercises ArmFSM only",
         }
     )
     manifest_path = out / "manifest.json"

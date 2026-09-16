@@ -3,6 +3,7 @@
 Presence is a frame-difference fallback until the pose model lands (Phase 5); every presence
 result carries method="frame_difference" so the UI and trace can label it.
 """
+
 from __future__ import annotations
 
 from collections import deque
@@ -25,7 +26,12 @@ def lighting(frame_bgr: np.ndarray) -> dict:
         hint = "Too bright. Move the lamp or close the blind."
     elif sharp < 40:
         hint = "Image is blurry. Clean the lens or hold the camera still."
-    return {"mean_luma": round(luma, 1), "sharpness": round(sharp, 1), "ok": hint is None, "hint": hint}
+    return {
+        "mean_luma": round(luma, 1),
+        "sharpness": round(sharp, 1),
+        "ok": hint is None,
+        "hint": hint,
+    }
 
 
 class MarkerSteadiness:
@@ -61,7 +67,10 @@ def task_area_in_view(
             & (px[:, 1] <= h - margin_px)
         )
     )
-    return {"ok": inside, "hint": None if inside else "Move the camera back so the whole sheet is in view."}
+    return {
+        "ok": inside,
+        "hint": None if inside else "Move the camera back so the whole sheet is in view.",
+    }
 
 
 class Presence:
@@ -109,8 +118,15 @@ def build_checks(
     )
     return [
         row("camera", "Camera permission", camera_ok, "Allow the camera in your browser."),
-        row("person", "One person in view", present, "Sit so your upper body and the table are in view."),
+        row(
+            "person",
+            "One person in view",
+            present,
+            "Sit so your upper body and the table are in view.",
+        ),
         row("task_area", "Hand and task area in view", area_d["ok"], area_d.get("hint")),
-        row("markers", "Sheet found · all four corner markers visible", cal.calibrated, markers_hint),
+        row(
+            "markers", "Sheet found · all four corner markers visible", cal.calibrated, markers_hint
+        ),
         row("lighting", "Lighting and steady tracking", light_ok, light_hint),
     ]

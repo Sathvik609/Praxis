@@ -27,9 +27,7 @@ def test_marker_corners_are_tl_tr_br_bl():
     c = NHPT_BOARD.marker_corners_mm(0)
     cx, cy = NHPT_BOARD.marker_centres_mm[0]
     s = NHPT_BOARD.marker_size_mm / 2
-    assert np.allclose(
-        c, [[cx - s, cy - s], [cx + s, cy - s], [cx + s, cy + s], [cx - s, cy + s]]
-    )
+    assert np.allclose(c, [[cx - s, cy - s], [cx + s, cy - s], [cx + s, cy + s], [cx - s, cy + s]])
 
 
 def test_markers_do_not_overlap_targets():

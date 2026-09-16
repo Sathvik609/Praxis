@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from praxis_session.perception.board_spec import NHPT_BOARD
@@ -157,3 +158,72 @@ def test_cup_command_switches_phase():
     assert p.command({"cmd": "set_phase", "phase": "fast"}) == {"ok": True, "phase": "fast"}
     assert p.snapshot()["cup"]["phase"] == "fast"
     assert p.command({"cmd": "nope"})["ok"] is False
+
+
+def test_arm_mode_frame_block_without_models():
+    from praxis_session.schema import validate_event
+
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, side="left")
+    frame = np.zeros((480, 640, 3), np.uint8)
+    evs = p.process(frame, 0.0, 0)
+    d = evs[0].to_dict()
+    validate_event(d)
+    assert d["type"] == "frame" and d["arm"]["mode"] == "arm" and d["pose"] == {"present": False}
+    assert d["models"] == {"hand": False, "pose": False}
+    assert d["overlay"]["skeleton_px"] == []
+    assert p.snapshot()["arm"]["target_deg"] == 90
+
+
+def test_arm_mode_from_landmarks_runs_fsm():
+    from praxis_session.perception.pose import PoseResult
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm",
+        sheet="none",
+        use_hand=False,
+        use_pose=False,
+        side="left",
+        hold_s=1.0,
+        sets=1,
+        reps=1,
+    )
+    evs = []
+    profile = (
+        [5 + 85 * i / 15 for i in range(16)]
+        + [90] * 20
+        + [90 - 85 * i / 15 for i in range(16)]
+        + [5] * 8
+    )
+    for i, ang in enumerate(profile):
+        res = PoseResult(
+            landmarks_px=figure(ang),
+            visibility=np.ones(33, np.float32),
+            world=np.zeros((33, 3), np.float32),
+            conf=0.9,
+        )
+        evs += p.process_pose(res, t=i / 15.0, frame_index=i)
+    types = [e.type for e in evs]
+    assert types.count("rep_complete") == 1 and "arm_complete" in types
+    fr = [e for e in evs if e.type == "frame"][20].to_dict()
+    assert len(fr["overlay"]["skeleton_px"]) == 8 and fr["overlay"]["ghost_target_px"] is not None
+    assert fr["pose"]["present"] and abs(fr["arm"]["angle_now"] - 90) < 3
+
+
+def test_arm_pose_loss_after_15_frames():
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, side="left")
+    from praxis_session.perception.pose import PoseResult
+    from tests.test_pose import figure
+
+    res = PoseResult(
+        landmarks_px=figure(5),
+        visibility=np.ones(33, np.float32),
+        world=np.zeros((33, 3), np.float32),
+        conf=0.9,
+    )
+    p.process_pose(res, 0.0, 0)
+    seen = []
+    for i in range(1, 20):
+        seen += [e.type for e in p.process_pose(None, i * 0.1, i)]
+    assert seen.count("perception_lost") == 1
+    assert "perception_regained" in [e.type for e in p.process_pose(res, 3.0, 30)]

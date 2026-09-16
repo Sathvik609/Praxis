@@ -4,6 +4,7 @@ Modes: "calibrate" (Phase 1: calibration + setup checks) and "nhpt" (Phase 2: bo
 peg FSM -> NHPT timer). Later phases add "cup" and "arm". One pipeline per WebSocket
 connection or replay; frames are processed and dropped, events go to the ring and the socket.
 """
+
 from __future__ import annotations
 
 import time
@@ -16,7 +17,9 @@ from praxis_session.perception.board import BoardState
 from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
 from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
+from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation
 from praxis_session.perception.hand import HandMetrics, HandTracker
+from praxis_session.perception.pose import SKELETON, OneEuro, PoseResult, PoseTracker, arm_angles
 from praxis_session.perception.nhpt import NHPT
 from praxis_session.perception.peg_fsm import Observation
 from praxis_session.perception.quality import (
@@ -27,8 +30,9 @@ from praxis_session.perception.quality import (
     task_area_in_view,
 )
 
-Mode = Literal["calibrate", "nhpt", "cup"]
-MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup")
+Mode = Literal["calibrate", "nhpt", "cup", "arm"]
+MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
+POSE_LOSS_FRAMES = 15
 LOSS_FRAMES = 5
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
 
@@ -42,12 +46,21 @@ class SessionPipeline:
         debounce_frames: int = 2,
         clear_frames: int = 3,
         use_hand: bool = True,
+        use_pose: bool = True,
+        side: str = "left",
+        target_deg: float = 90.0,
+        hold_s: float = 3.0,
+        sets: int = 2,
+        reps: int = 8,
     ) -> None:
         if mode not in MODES:
             raise ValueError(f"bad mode {mode}")
+        if mode == "arm":
+            sheet = "nhpt_board" if sheet in ("none", "") else sheet  # no sheet is used in arm mode
         if sheet not in SHEETS:
             raise ValueError(f"bad sheet {sheet}")
         self.mode, self.spec, self.ring = mode, SHEETS[sheet], ring
+        self.side = side
         self._cal = Calibrator(self.spec)
         self._steady = MarkerSteadiness()
         self._presence = Presence()
@@ -63,6 +76,17 @@ class SessionPipeline:
             self._hand = tracker if tracker.available else None
         self._cup_sheet: CupSheetState | None = None
         self._cup: CupFSM | None = None
+        self._arm: ArmFSM | None = None
+        self._pose: PoseTracker | None = None
+        self._angle_filter = OneEuro(min_cutoff=1.5, beta=0.05)
+        self._pose_miss = 0
+        self._pose_lost = False
+        self._pose_seen = False
+        if mode == "arm":
+            self._arm = ArmFSM(target_deg=target_deg, hold_s=hold_s, sets=sets, reps_per_set=reps)
+            if use_pose:
+                tracker = PoseTracker()
+                self._pose = tracker if tracker.available else None
         if mode == "nhpt":
             self._board = BoardState(self.spec)
             self._nhpt = NHPT(
@@ -78,6 +102,9 @@ class SessionPipeline:
             return self._process_calibrate(frame_bgr, t, frame_index)
         if self.mode == "cup":
             return self._process_cup(frame_bgr, t, frame_index)
+        if self.mode == "arm":
+            res = self._pose.detect(frame_bgr) if self._pose is not None else None
+            return self.process_pose(res, t, frame_index)
         return self._process_nhpt(frame_bgr, t, frame_index)
 
     def command(self, cmd: dict[str, Any]) -> dict[str, Any]:
@@ -100,7 +127,10 @@ class SessionPipeline:
         cup = self._cup.snapshot() if self._cup is not None else None
         if cup is not None:
             reps = cup["reaches_total"]
-        return {"mode": self.mode, "reps": reps, "nhpt": nhpt, "cup": cup}
+        arm = self._arm.snapshot() if self._arm is not None else None
+        if arm is not None:
+            reps = arm["reps_total"]
+        return {"mode": self.mode, "reps": reps, "nhpt": nhpt, "cup": cup, "arm": arm}
 
     # ---- internals ----------------------------------------------------------------------
     _last_t: float = 0.0
@@ -155,7 +185,9 @@ class SessionPipeline:
         self._track_loss(out, cal, t, i)
         return out
 
-    def _hand_block(self, frame_bgr: np.ndarray, t: float, cal: CalibrationResult) -> tuple[dict, tuple[float, float] | None]:
+    def _hand_block(
+        self, frame_bgr: np.ndarray, t: float, cal: CalibrationResult
+    ) -> tuple[dict, tuple[float, float] | None]:
         """Run the hand tracker (if available) and return (event block, hand position in mm)."""
         if self._hand is None:
             return {"present": False}, None
@@ -263,7 +295,9 @@ class SessionPipeline:
                     "cup_mm": None if cup_mm is None else [round(v, 1) for v in cup_mm],
                     "hand_clear": hand_mm is None
                     or self._cup.dot is None
-                    or float(np.hypot(*(np.array(hand_mm) - np.array(self._cup.dots[self._cup.dot]))))
+                    or float(
+                        np.hypot(*(np.array(hand_mm) - np.array(self._cup.dots[self._cup.dot])))
+                    )
                     > self._cup.hand_clear_mm,
                 },
                 overlay={
@@ -283,4 +317,87 @@ class SessionPipeline:
         for e in self._cup.step(obs):
             self._emit(out, e)
         self._track_loss(out, cal, t, i)
+        return out
+
+    def process_pose(self, res: PoseResult | None, t: float, frame_index: int) -> list[Event]:
+        """Arm mode from a pose result (the model output, or injected landmarks in tests/replay)."""
+        assert self._arm is not None
+        out: list[Event] = []
+        self._last_t = t
+        t0 = time.perf_counter()
+        angles: dict[str, Any] | None = None
+        skeleton: list[list[list[float]]] = []
+        ghost: list[float] | None = None
+        shoulder_px: list[float] | None = None
+        if res is not None:
+            angles = arm_angles(res, self.side)
+            angles["shoulder_deg"] = round(self._angle_filter.filter(t, angles["shoulder_deg"]), 1)
+            lm = res.landmarks_px
+            skeleton = [
+                [np.round(lm[a], 1).tolist(), np.round(lm[b], 1).tolist()] for a, b in SKELETON
+            ]
+            si = 11 if self.side == "left" else 12
+            ei, hi = si + 2, si + 12
+            sh, el, hp = lm[si], lm[ei], lm[hi]
+            shoulder_px = np.round(sh, 1).tolist()
+            trunk = hp - sh
+            if np.linalg.norm(trunk) > 1e-6:
+                d = trunk / np.linalg.norm(trunk)
+                arm_len = float(np.linalg.norm(el - sh))
+                a = np.radians(self._arm.target_deg)
+                cands = []
+                for sgn in (1, -1):
+                    rot = np.array(
+                        [[np.cos(sgn * a), -np.sin(sgn * a)], [np.sin(sgn * a), np.cos(sgn * a)]]
+                    )
+                    cands.append(sh + arm_len * (rot @ d))
+                cur = el - sh
+                best = min(cands, key=lambda c: -float(np.dot(c - sh, cur)))
+                ghost = np.round(best, 1).tolist()
+        else:
+            self._angle_filter.reset()
+        snap_before = self._arm.snapshot()
+        self._emit(
+            out,
+            make_event(
+                "frame",
+                t=t,
+                frame_index=frame_index,
+                calibrated=res is not None,
+                missing=[],
+                arm=snap_before | ({} if angles is None else {"angles": angles}),
+                pose=(
+                    {"present": False}
+                    if res is None
+                    else res.to_dict() | {"ms": round(self._pose.last_ms, 1) if self._pose else 0.0}
+                ),
+                overlay={
+                    "skeleton_px": skeleton,
+                    "shoulder_px": shoulder_px,
+                    "ghost_target_px": ghost,
+                },
+                models={"hand": self._hand is not None, "pose": self._pose is not None},
+                proc_ms=round((time.perf_counter() - t0) * 1000.0, 1),
+            ),
+        )
+        obs = ArmObservation(
+            t=t,
+            shoulder_deg=None if angles is None else angles["shoulder_deg"],
+            trunk_lean_deg=0.0 if angles is None else angles["trunk_lean_deg"],
+            shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
+            view_ok=bool(angles and angles["view_ok"]),
+        )
+        for e in self._arm.step(obs):
+            self._emit(out, e)
+        # pose loss bookkeeping (mirrors marker loss)
+        if res is not None:
+            self._pose_seen, self._pose_miss = True, 0
+            if self._pose_lost:
+                self._pose_lost = False
+                self._emit(out, make_event("perception_regained", t=t, frame_index=frame_index))
+        elif self._pose_seen:
+            self._pose_miss += 1
+            if self._pose_miss >= POSE_LOSS_FRAMES and not self._pose_lost:
+                self._pose_lost = True
+                self._emit(out, make_event("perception_lost", t=t, frame_index=frame_index, missing=["pose"]))
         return out

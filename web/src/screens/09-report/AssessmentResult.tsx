@@ -13,7 +13,46 @@ type NhptResult = {
 }
 type Reach = { rep: number; from_dot: number; to_dot: number; reach_ms: number; verified: boolean; reason: string | null; arc: number; phase: string }
 type CupResult = { kind: 'cup'; side: string; arcs: number; reaches: Reach[]; ended_early: boolean }
-type Result = NhptResult | CupResult
+type ArmRep = { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
+type ArmResult = { kind: 'arm'; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; ceiling_deg: number }
+type Result = NhptResult | CupResult | ArmResult
+
+function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
+  const verified = r.reps.filter((x) => x.verified).length
+  const unverified = r.reps.length - verified
+  const best = r.reps.filter((x) => x.verified).reduce((m, x) => Math.max(m, x.peak_deg), 0)
+  return (
+    <div className="mx-auto max-w-4xl p-8">
+      <div className="flex items-center gap-4">
+        <h1 className="text-4xl">Arm to the front · {r.side} side</h1>
+        <Chip tone={r.ended_early ? 'amber' : 'mint'}>{r.ended_early ? 'Ended early' : 'Complete'}</Chip>
+      </div>
+      <p className="mt-2 text-muted">Camera-relative angles, not goniometry. Ceiling {r.ceiling_deg}° enforced in code.</p>
+      <div className="mt-6 grid grid-cols-4 gap-4">
+        {[[`${r.sets}`, 'sets'], [`${verified} verified`, 'lifts'], [`${unverified} unverified`, 'missed target or short hold'], [`${r.lean_count} lean events`, `${r.hike_count} shoulder-hike events`]].map(([v, l]) => (
+          <div key={l} className="rounded-2xl border border-line bg-surface p-5">
+            <div className="text-2xl font-bold">{v}</div>
+            <div className="text-muted">{l}</div>
+          </div>
+        ))}
+      </div>
+      {r.reps.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-line bg-surface p-8">
+          <h2 className="mb-3 text-2xl">Peak angle per rep · ceiling {r.ceiling_deg}° · best {Math.round(best)}° · amber = unverified</h2>
+          <div className="flex h-40 items-end gap-1">
+            {r.reps.map((x, i) => (
+              <div key={i} data-testid="arm-rep" title={`set ${x.set} rep ${x.rep}: ${x.peak_deg}° hold ${x.hold_s}s${x.reason ? ` · ${x.reason}` : ''}`}
+                className={`flex-1 rounded-t ${x.verified ? 'bg-teal' : 'bg-amber'}`} style={{ height: `${Math.min(100, (x.peak_deg / r.ceiling_deg) * 100)}%` }} />
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="mt-8 flex justify-end">
+        <Button onClick={onDone}>Done — back to Home</Button>
+      </div>
+    </div>
+  )
+}
 
 function CupReport({ r, onDone }: { r: CupResult; onDone: () => void }) {
   const verified = r.reaches.filter((x) => x.verified).length
@@ -62,6 +101,7 @@ export function AssessmentResult() {
   const { state } = useLocation() as { state: Result | null }
   const nav = useNavigate()
   if (state?.kind === 'cup') return <CupReport r={state} onDone={() => nav('/')} />
+  if (state?.kind === 'arm') return <ArmReport r={state} onDone={() => nav('/')} />
   if (!state || state.kind !== 'nhpt') {
     return (
       <div className="mx-auto max-w-4xl p-8">

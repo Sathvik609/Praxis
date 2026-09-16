@@ -15,7 +15,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve()
 sys.path.insert(0, str(HERE.parents[2] / "services" / "session"))
-from praxis_session.replay import run_replay  # noqa: E402
+from praxis_session.replay import run_landmark_replay, run_replay  # noqa: E402
 
 
 def match_reps(pred: list[dict], labeled: list[dict], tol: float, key: str = "hole", t_key: str = "t_seated"):
@@ -55,11 +55,31 @@ def main(argv=None) -> int:
     rows = []
     tp = fp = fn = 0
     rtp = rfp = rfn = 0
+    atp = afp = afn = 0
     nhpt_err = []
     reach_err_ms = []
+    peak_err_deg = []
     n_labeled = 0
     for e in manifest["entries"]:
         labels = json.loads((ds / e["labels"]).read_text())
+        if e["mode"] == "arm":
+            res = run_landmark_replay(ds / e["landmarks"], side=e.get("side", "left"), hold_s=labels.get("hold_s", 3.0) - 0.2)
+            pred = [
+                {"t": ev.payload["t_end"], "rep_key": 1, "peak_deg": ev.payload["peak_deg"]}
+                for ev in res.events if ev.type == "rep_complete"
+            ]
+            lab = [{"t_end": r["t_end"], "rep_key": 1, "peak_deg": r["peak_deg"]} for r in labels["reps"]]
+            a, b, c, misses = match_reps(pred, lab, args.tol, key="rep_key", t_key="t_end")
+            atp, afp, afn = atp + a, afp + b, afn + c
+            for p in pred:
+                if "matched" in p:
+                    peak_err_deg.append(abs(p["peak_deg"] - lab[p["matched"]]["peak_deg"]))
+            rows.append({
+                "id": e["id"], "mode": e["mode"], "synthetic": e.get("synthetic", False),
+                "frames": res.frames, "labeled_reps": len(lab), "pred_reps": len(pred),
+                "tp": a, "fp": b, "fn": c, "misses": misses,
+            })
+            continue
         res = run_replay(
             ds / e["video"], mode=e["mode"], sheet=e.get("sheet", "nhpt_board"),
             debounce_frames=1, clear_frames=1,
@@ -107,7 +127,12 @@ def main(argv=None) -> int:
     rprec = rtp / (rtp + rfp) if rtp + rfp else 0.0
     rrec = rtp / (rtp + rfn) if rtp + rfn else 0.0
     rf1 = 2 * rprec * rrec / (rprec + rrec) if rprec + rrec else 0.0
+    aprec = atp / (atp + afp) if atp + afp else 0.0
+    arec = atp / (atp + afn) if atp + afn else 0.0
+    af1 = 2 * aprec * arec / (aprec + arec) if aprec + arec else 0.0
     results = {
+        "arm_rep_f1": round(af1, 4), "arm_tp": atp, "arm_fp": afp, "arm_fn": afn,
+        "arm_peak_mae_deg": round(sum(peak_err_deg) / len(peak_err_deg), 2) if peak_err_deg else None,
         "reach_f1": round(rf1, 4), "reach_tp": rtp, "reach_fp": rfp, "reach_fn": rfn,
         "reach_mae_ms": round(sum(reach_err_ms) / len(reach_err_ms), 1) if reach_err_ms else None,
         "dataset": manifest.get("version", "v0"), "tol_s": args.tol, "n_entries": len(rows),
@@ -139,7 +164,8 @@ def main(argv=None) -> int:
         "",
         f"**Rep F1 (NHPT): {results['rep_f1']}** (P {results['rep_precision']}, R {results['rep_recall']}) · "
         f"**NHPT MAE: {results['nhpt_mae_s']} s** · "
-        f"**Reach F1 (cup): {results['reach_f1']}** · **Reach-time MAE: {results['reach_mae_ms']} ms**",
+        f"**Reach F1 (cup): {results['reach_f1']}** · **Reach-time MAE: {results['reach_mae_ms']} ms** · "
+        f"**Arm rep F1: {results['arm_rep_f1']}** · **Peak-angle MAE: {results['arm_peak_mae_deg']}°** (landmark stream, synthetic)",
         "",
     ]
     (out / "dataset_v0.md").write_text("\n".join(md))

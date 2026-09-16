@@ -3,6 +3,7 @@
 Refuses to calibrate until all four markers (ids 0-3) are visible.
 OpenCV cv2.__version__ == 5.0.0 (cv2.aruco.ArucoDetector, cv2.findHomography).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -39,7 +40,9 @@ class CalibrationResult:
             "calibrated": self.calibrated,
             "missing": self.missing,
             "rms_mm": None if self.rms_mm is None else round(float(self.rms_mm), 3),
-            "markers_px": {str(k): np.round(v, 1).tolist() for k, v in self.marker_corners_px.items()},
+            "markers_px": {
+                str(k): np.round(v, 1).tolist() for k, v in self.marker_corners_px.items()
+            },
         }
 
 

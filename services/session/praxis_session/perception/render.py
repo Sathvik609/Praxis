@@ -2,6 +2,7 @@
 
 OpenCV cv2.__version__ == 5.0.0 (cv2.aruco.generateImageMarker, cv2.circle).
 """
+
 from __future__ import annotations
 
 import cv2

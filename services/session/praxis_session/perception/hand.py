@@ -6,6 +6,7 @@ sheet millimetres through the ArUco calibration: pinch aperture (thumb tip 4 <->
 path speed, spectral arc length (SPARC, Balasubramanian et al. 2015) of the index-tip speed,
 and tremor as the dominant 3-12 Hz component of the detrended index-tip trace.
 """
+
 from __future__ import annotations
 
 import math
@@ -23,11 +24,27 @@ PALM_MODEL = "palm_detection_mediapipe_2023feb.onnx"
 HAND_MODEL = "handpose_estimation_mediapipe_2023feb.onnx"
 THUMB_TIP, INDEX_TIP = 4, 8
 CONNECTIONS = [
-    (0, 1), (1, 2), (2, 3), (3, 4),
-    (0, 5), (5, 6), (6, 7), (7, 8),
-    (5, 9), (9, 10), (10, 11), (11, 12),
-    (9, 13), (13, 14), (14, 15), (15, 16),
-    (13, 17), (17, 18), (18, 19), (19, 20), (0, 17),
+    (0, 1),
+    (1, 2),
+    (2, 3),
+    (3, 4),
+    (0, 5),
+    (5, 6),
+    (6, 7),
+    (7, 8),
+    (5, 9),
+    (9, 10),
+    (10, 11),
+    (11, 12),
+    (9, 13),
+    (13, 14),
+    (14, 15),
+    (15, 16),
+    (13, 17),
+    (17, 18),
+    (18, 19),
+    (19, 20),
+    (0, 17),
 ]
 
 
@@ -77,7 +94,6 @@ class HandTracker:
         self.last_ms = 0.0
         palm, hand = self.models_dir / PALM_MODEL, self.models_dir / HAND_MODEL
         if palm.exists() and hand.exists():
-
             from praxis_session.perception.zoo.mp_handpose import MPHandPose
             from praxis_session.perception.zoo.mp_palmdet import MPPalmDet
 
@@ -113,7 +129,9 @@ class HandTracker:
 
 
 # ---- metrics ------------------------------------------------------------------------------
-def sparc(velocity: np.ndarray, fs: float, padlevel: int = 4, fc: float = 10.0, amp_th: float = 0.05) -> float:
+def sparc(
+    velocity: np.ndarray, fs: float, padlevel: int = 4, fc: float = 10.0, amp_th: float = 0.05
+) -> float:
     """Spectral arc length of a speed profile (more negative = less smooth)."""
     v = np.asarray(velocity, np.float64)
     if v.size < 4 or not np.any(v):
@@ -128,10 +146,14 @@ def sparc(velocity: np.ndarray, fs: float, padlevel: int = 4, fc: float = 10.0, 
     if inx.size < 2:
         return 0.0
     f_sel, mf_sel = f_sel[inx[0] : inx[-1] + 1], mf_sel[inx[0] : inx[-1] + 1]
-    return float(-np.sum(np.sqrt((np.diff(f_sel) / (f_sel[-1] - f_sel[0])) ** 2 + np.diff(mf_sel) ** 2)))
+    return float(
+        -np.sum(np.sqrt((np.diff(f_sel) / (f_sel[-1] - f_sel[0])) ** 2 + np.diff(mf_sel) ** 2))
+    )
 
 
-def tremor(trace_xy: np.ndarray, fs: float, band: tuple[float, float] = (3.0, 12.0)) -> tuple[float | None, float]:
+def tremor(
+    trace_xy: np.ndarray, fs: float, band: tuple[float, float] = (3.0, 12.0)
+) -> tuple[float | None, float]:
     """Dominant frequency in `band` of the detrended 2-D trace and the band's share of power."""
     x = np.asarray(trace_xy, np.float64)
     if x.ndim != 2 or x.shape[0] < int(fs):  # need >= 1 s
@@ -174,8 +196,13 @@ class HandMetrics:
 
     def update(self, t: float, res: HandResult | None, cal: CalibrationResult) -> dict:
         out: dict = {
-            "present": res is not None, "pinch_mm": None, "index_tip_mm": None,
-            "path_mm_s": None, "sparc": None, "tremor_hz": None, "tremor_ratio": 0.0,
+            "present": res is not None,
+            "pinch_mm": None,
+            "index_tip_mm": None,
+            "path_mm_s": None,
+            "sparc": None,
+            "tremor_hz": None,
+            "tremor_ratio": 0.0,
         }
         if res is None or not cal.calibrated:
             if res is None:
@@ -198,5 +225,8 @@ class HandMetrics:
                 speed = step / np.maximum(np.diff(ts), 1e-6)
                 out["sparc"] = round(sparc(speed, fs), 3)
                 hz, ratio = tremor(xy, fs)
-                out["tremor_hz"], out["tremor_ratio"] = (None if hz is None else round(hz, 1)), ratio
+                out["tremor_hz"], out["tremor_ratio"] = (
+                    (None if hz is None else round(hz, 1)),
+                    ratio,
+                )
         return out

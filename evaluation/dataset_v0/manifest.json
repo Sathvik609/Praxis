@@ -20,6 +20,16 @@
    "synthetic": true,
    "participant": "render",
    "notes": "OpenCV-rendered cup target sheet, blue cup base, 2 slow + 2 fast arcs, mp4v"
+  },
+  {
+   "id": "synthetic_arm_01",
+   "mode": "arm",
+   "landmarks": "synthetic_arm_01.jsonl",
+   "labels": "synthetic_arm_01.labels.json",
+   "synthetic": true,
+   "participant": "render",
+   "side": "left",
+   "notes": "Synthetic 33-point landmark stream (the pose DNN cannot see a drawn figure); exercises ArmFSM only"
   }
  ]
 }

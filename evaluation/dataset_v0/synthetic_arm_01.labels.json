@@ -1,0 +1,136 @@
+{
+ "fps": 15,
+ "frames": 1402,
+ "side": "left",
+ "reps": [
+  {
+   "set": 1,
+   "rep": 1,
+   "t_start": 0.6667,
+   "t_peak": 1.7333,
+   "peak_deg": 89.4,
+   "t_end": 6.4667
+  },
+  {
+   "set": 1,
+   "rep": 2,
+   "t_start": 6.4667,
+   "t_peak": 7.5333,
+   "peak_deg": 88.8,
+   "t_end": 12.2667
+  },
+  {
+   "set": 1,
+   "rep": 3,
+   "t_start": 12.2667,
+   "t_peak": 13.3333,
+   "peak_deg": 88.7,
+   "t_end": 18.0667
+  },
+  {
+   "set": 1,
+   "rep": 4,
+   "t_start": 18.0667,
+   "t_peak": 19.1333,
+   "peak_deg": 90.3,
+   "t_end": 23.8667
+  },
+  {
+   "set": 1,
+   "rep": 5,
+   "t_start": 23.8667,
+   "t_peak": 24.9333,
+   "peak_deg": 90.8,
+   "t_end": 29.6667
+  },
+  {
+   "set": 1,
+   "rep": 6,
+   "t_start": 29.6667,
+   "t_peak": 30.7333,
+   "peak_deg": 89.9,
+   "t_end": 35.4667
+  },
+  {
+   "set": 1,
+   "rep": 7,
+   "t_start": 35.4667,
+   "t_peak": 36.5333,
+   "peak_deg": 89.9,
+   "t_end": 41.2667
+  },
+  {
+   "set": 1,
+   "rep": 8,
+   "t_start": 41.2667,
+   "t_peak": 42.3333,
+   "peak_deg": 89.2,
+   "t_end": 47.0667
+  },
+  {
+   "set": 2,
+   "rep": 1,
+   "t_start": 47.0667,
+   "t_peak": 48.1333,
+   "peak_deg": 89.5,
+   "t_end": 52.8667
+  },
+  {
+   "set": 2,
+   "rep": 2,
+   "t_start": 52.8667,
+   "t_peak": 53.9333,
+   "peak_deg": 90.5,
+   "t_end": 58.6667
+  },
+  {
+   "set": 2,
+   "rep": 3,
+   "t_start": 58.6667,
+   "t_peak": 59.7333,
+   "peak_deg": 90.9,
+   "t_end": 64.4667
+  },
+  {
+   "set": 2,
+   "rep": 4,
+   "t_start": 64.4667,
+   "t_peak": 65.5333,
+   "peak_deg": 89.1,
+   "t_end": 70.2667
+  },
+  {
+   "set": 2,
+   "rep": 5,
+   "t_start": 70.2667,
+   "t_peak": 71.3333,
+   "peak_deg": 89.4,
+   "t_end": 76.0667
+  },
+  {
+   "set": 2,
+   "rep": 6,
+   "t_start": 76.0667,
+   "t_peak": 77.1333,
+   "peak_deg": 88.7,
+   "t_end": 81.8667
+  },
+  {
+   "set": 2,
+   "rep": 7,
+   "t_start": 81.8667,
+   "t_peak": 82.9333,
+   "peak_deg": 91.3,
+   "t_end": 87.6667
+  },
+  {
+   "set": 2,
+   "rep": 8,
+   "t_start": 87.6667,
+   "t_peak": 88.7333,
+   "peak_deg": 91.2,
+   "t_end": 93.4667
+  }
+ ],
+ "hold_s": 3.2
+}

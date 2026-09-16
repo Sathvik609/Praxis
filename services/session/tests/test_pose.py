@@ -29,18 +29,18 @@ def figure(
     lean = np.radians(lean_deg)
     sh_mid = hip_mid + 200.0 * np.array([-np.sin(lean), -np.cos(lean)])
     sep = 160.0 if frontal else 20.0  # frontal: shoulders ~0.8 torso lengths apart
-    l, r = (0, 1) if side == "left" else (1, 0)
-    lm[SHOULDER[l]] = sh_mid + [0, -hike * 200.0]
-    lm[SHOULDER[r]] = sh_mid + [sep, 0]
-    lm[HIP[l]] = hip_mid
-    lm[HIP[r]] = hip_mid + [sep, 0]
+    li, ri = (0, 1) if side == "left" else (1, 0)
+    lm[SHOULDER[li]] = sh_mid + [0, -hike * 200.0]
+    lm[SHOULDER[ri]] = sh_mid + [sep, 0]
+    lm[HIP[li]] = hip_mid
+    lm[HIP[ri]] = hip_mid + [sep, 0]
     a = np.radians(arm_deg)
     # upper arm direction rotated from "down" (0,1) toward "forward" (+x)
-    up = lm[SHOULDER[l]] + 120.0 * np.array([np.sin(a), np.cos(a)])
-    lm[ELBOW[l]] = up
-    lm[WRIST[l]] = up + 100.0 * np.array([np.sin(a), np.cos(a)])
-    lm[ELBOW[r]] = lm[SHOULDER[r]] + [0, 120]
-    lm[WRIST[r]] = lm[ELBOW[r]] + [0, 100]
+    up = lm[SHOULDER[li]] + 120.0 * np.array([np.sin(a), np.cos(a)])
+    lm[ELBOW[li]] = up
+    lm[WRIST[li]] = up + 100.0 * np.array([np.sin(a), np.cos(a)])
+    lm[ELBOW[ri]] = lm[SHOULDER[ri]] + [0, 120]
+    lm[WRIST[ri]] = lm[ELBOW[ri]] + [0, 100]
     return lm
 
 

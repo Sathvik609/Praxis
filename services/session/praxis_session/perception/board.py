@@ -1,15 +1,16 @@
 """Board state from a calibrated frame (OpenCV cv2.__version__ == 5.0.0).
 
-  1. warp()          cv2.warpPerspective with the calibration homography -> canonical top-down
-                     view of the board region at a fixed px/mm.
-  2. detect_holes()  cv2.HoughCircles on the canonical view, run ONCE and cached; each circle is
-                     snapped to the nearest expected hole from the SheetSpec. Holes Hough misses
-                     fall back to spec positions; hole_source reports "hough" | "mixed" | "spec".
-  3. occupancy()     HSV segmentation of saturated peg colour + cv2.findContours for peg blobs,
-                     per-hole masked colour fraction and a masked cv2.matchTemplate score against
-                     an empty-hole template -> hole_k: "empty" | "occupied".
-  4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit).
+1. warp()          cv2.warpPerspective with the calibration homography -> canonical top-down
+                   view of the board region at a fixed px/mm.
+2. detect_holes()  cv2.HoughCircles on the canonical view, run ONCE and cached; each circle is
+                   snapped to the nearest expected hole from the SheetSpec. Holes Hough misses
+                   fall back to spec positions; hole_source reports "hough" | "mixed" | "spec".
+3. occupancy()     HSV segmentation of saturated peg colour + cv2.findContours for peg blobs,
+                   per-hole masked colour fraction and a masked cv2.matchTemplate score against
+                   an empty-hole template -> hole_k: "empty" | "occupied".
+4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -224,6 +225,8 @@ class BoardState:
             "scores": scores,
             "hole_source": self.hole_source,
             "holes_canonical_px": [[round(h.x, 1), round(h.y, 1), round(h.r, 1)] for h in holes],
-            "free_pegs_mm": [[round(x, 2), round(y, 2)] for x, y in self.free_pegs_mm(canonical_bgr)],
+            "free_pegs_mm": [
+                [round(x, 2), round(y, 2)] for x, y in self.free_pegs_mm(canonical_bgr)
+            ],
             "px_per_mm": self.px_per_mm,
         }

@@ -3,6 +3,7 @@
 Coordinates are millimetres, origin at the sheet's top-left, x right, y down.
 Detection with cv2.__version__ == 5.0.0 (cv2.aruco DICT_4X4_50, ids 0-3).
 """
+
 from __future__ import annotations
 
 import math

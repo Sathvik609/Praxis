@@ -36,3 +36,16 @@ test('cup variant shows verified and unverified counts', () => {
   expect(screen.getByText(/1 unverified/)).toBeInTheDocument()
   expect(screen.getAllByTestId('reach')).toHaveLength(2)
 })
+
+test('arm variant shows sets, verified reps and lean events', () => {
+  renderWith({
+    kind: 'arm', side: 'left', sets: 2, ended_early: false, lean_count: 2, hike_count: 0, ceiling_deg: 90,
+    reps: [
+      { set: 1, rep: 1, peak_deg: 91, hold_s: 3.1, verified: true, reason: null, lean: false, hike: false },
+      { set: 1, rep: 2, peak_deg: 70, hold_s: 0.5, verified: false, reason: 'target_missed', lean: true, hike: false },
+    ],
+  })
+  expect(screen.getByText(/1 verified/)).toBeInTheDocument()
+  expect(screen.getByText(/2 lean events/)).toBeInTheDocument()
+  expect(screen.getAllByTestId('arm-rep')).toHaveLength(2)
+})

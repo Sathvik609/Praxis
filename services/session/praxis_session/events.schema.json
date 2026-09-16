@@ -29,7 +29,13 @@
         "wrong_dot",
         "arc_complete",
         "cup_complete",
-        "command"
+        "command",
+        "target_missed",
+        "hold_too_short",
+        "compensation_lean",
+        "shoulder_hiking",
+        "set_complete",
+        "arm_complete"
       ]
     },
     "t": {
@@ -59,10 +65,7 @@
       "type": "boolean"
     },
     "missing": {
-      "type": "array",
-      "items": {
-        "type": "integer"
-      }
+      "type": "array"
     },
     "rms_mm": {
       "type": [
@@ -234,6 +237,54 @@
     },
     "error": {
       "type": "string"
+    },
+    "arm": {
+      "type": "object"
+    },
+    "pose": {
+      "type": "object"
+    },
+    "set": {
+      "type": "integer"
+    },
+    "peak_deg": {
+      "type": "number"
+    },
+    "hold_s": {
+      "type": "number"
+    },
+    "held_s": {
+      "type": "number"
+    },
+    "target_deg": {
+      "type": "number"
+    },
+    "lean_deg": {
+      "type": "number"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "flagged": {
+      "type": "boolean"
+    },
+    "hike": {
+      "type": [
+        "number",
+        "boolean"
+      ]
+    },
+    "sets": {
+      "type": "integer"
+    },
+    "lean": {
+      "type": "boolean"
+    },
+    "t_start": {
+      "type": "number"
+    },
+    "t_end": {
+      "type": "number"
     }
   }
 }

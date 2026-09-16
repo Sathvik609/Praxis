@@ -1,4 +1,5 @@
 """Contract every emitted event must satisfy; the web client's types are derived from it."""
+
 from __future__ import annotations
 
 import json
@@ -15,9 +16,7 @@ def _validator() -> Draft202012Validator:
     return Draft202012Validator(json.loads(_PATH.read_text()))
 
 
-EVENT_TYPES: frozenset[str] = frozenset(
-    json.loads(_PATH.read_text())["properties"]["type"]["enum"]
-)
+EVENT_TYPES: frozenset[str] = frozenset(json.loads(_PATH.read_text())["properties"]["type"]["enum"])
 
 
 def validate_event(d: dict) -> None:

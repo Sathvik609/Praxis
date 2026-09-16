@@ -1,4 +1,5 @@
 """Timestamped JSON events: the only thing that leaves the perception process."""
+
 from __future__ import annotations
 
 import itertools

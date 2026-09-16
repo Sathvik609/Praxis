@@ -51,3 +51,14 @@ def test_cup_clip_replays_four_arcs(tmp_path: Path):
     counts = res.summary()["event_counts"]
     assert counts["reach_complete"] == 32 and counts["arc_complete"] == 4
     assert res.snapshot["cup"]["finished"]
+
+
+def test_arm_landmark_replay(tmp_path: Path):
+    from praxis_session.perception.synth import write_arm_landmarks
+    from praxis_session.replay import run_landmark_replay
+
+    lab = write_arm_landmarks(tmp_path / "arm.jsonl", sets=1, reps=3, hold_s=1.2, fps=15, seed=1)
+    assert len(lab["reps"]) == 3
+    res = run_landmark_replay(tmp_path / "arm.jsonl", side="left", hold_s=1.0, sets=1, reps=3)
+    counts = res.summary()["event_counts"]
+    assert counts["rep_complete"] == 3 and res.snapshot["arm"]["finished"]

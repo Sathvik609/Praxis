@@ -78,7 +78,9 @@ def test_build_checks_has_five_rows_in_wireframe_order():
 
 def test_build_checks_marks_missing_markers_with_hint():
     cal = Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8))
-    rows = build_checks(cal, {"ok": True, "hint": None}, {"ok": True}, {"ok": False, "hint": "x"}, {"present": None})
+    rows = build_checks(
+        cal, {"ok": True, "hint": None}, {"ok": True}, {"ok": False, "hint": "x"}, {"present": None}
+    )
     by_id = {r["id"]: r for r in rows}
     assert by_id["markers"]["status"] == "check" and "0, 1, 2, 3" in by_id["markers"]["hint"]
     assert by_id["person"]["status"] == "pending"

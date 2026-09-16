@@ -25,6 +25,28 @@ export type CupSnapshot = {
   finished: boolean
 }
 
+export type ArmSnapshot = {
+  mode: 'arm'
+  state: string
+  set: number
+  rep: number
+  sets: number
+  reps_per_set: number
+  target_deg: number
+  ceiling_deg: number
+  clamped: boolean
+  hold_s: number
+  hold_progress: number
+  angle_now: number | null
+  peak_this_rep: number
+  best_this_set: number
+  trunk_lean_deg: number
+  reps_total: number
+  unverified_total: number
+  flags: { lean: boolean; lean_count: number; hike_count: number }
+  finished: boolean
+}
+
 export type FrameEvent = PraxisEvent & {
   calibrated: boolean
   missing: number[]
@@ -48,8 +70,13 @@ export type FrameEvent = PraxisEvent & {
     dots_px?: number[][]
     cup_px?: number[] | null
     expected_next?: number | null
+    skeleton_px?: number[][][]
+    shoulder_px?: number[] | null
+    ghost_target_px?: number[] | null
     markers_px: Record<string, number[][]>
   }
+  arm?: ArmSnapshot & { angles?: { shoulder_deg: number; elbow_deg: number; trunk_lean_deg: number; shoulder_hike_norm: number; view_ok: boolean; visibility: number } }
+  pose?: { present: boolean; landmarks_px?: number[][]; visibility?: number[]; conf?: number; ms?: number }
   cup?: CupSnapshot & { cup_mm?: number[] | null; hand_clear?: boolean }
   hand?: { present: boolean; landmarks_px?: number[][]; pinch_mm?: number | null; tremor_hz?: number | null; sparc?: number | null; ms?: number }
   models?: { hand: boolean }
@@ -124,6 +151,28 @@ export function drawFrameOverlay(ctx: CanvasRenderingContext2D, f: FrameEvent | 
     ctx.strokeStyle = '#FFFFFF'
     ctx.beginPath()
     ctx.arc(f.overlay.cup_px[0], f.overlay.cup_px[1], 18, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+  for (const [p, q] of f.overlay.skeleton_px ?? []) {
+    ctx.strokeStyle = MINT
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    ctx.moveTo(p[0], p[1])
+    ctx.lineTo(q[0], q[1])
+    ctx.stroke()
+  }
+  if (f.overlay.shoulder_px && f.overlay.ghost_target_px) {
+    const [sx, sy] = f.overlay.shoulder_px
+    const [gx, gy] = f.overlay.ghost_target_px
+    ctx.strokeStyle = AMBER
+    ctx.setLineDash([8, 6])
+    ctx.beginPath()
+    ctx.moveTo(sx, sy)
+    ctx.lineTo(gx, gy)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.beginPath()
+    ctx.arc(gx, gy, 10, 0, Math.PI * 2)
     ctx.stroke()
   }
   if (f.hand?.present && f.hand.landmarks_px) drawHand(ctx, f.hand.landmarks_px)

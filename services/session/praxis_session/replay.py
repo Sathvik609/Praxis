@@ -5,6 +5,7 @@ index, so results are deterministic. Uses cv2.VideoCapture (cv2.__version__ == 5
 
     uv run python -m praxis_session.replay clip.mp4 --mode nhpt [--events-out ev.jsonl] [--quiet]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -90,6 +91,62 @@ def run_replay(
     )
 
 
+def run_landmark_replay(
+    path: str | Path,
+    side: str = "left",
+    ring: EventRing | None = None,
+    on_event: Any = None,
+    **fsm_kwargs: Any,
+) -> ReplayResult:
+    """Arm mode from a JSONL landmark stream ({t, landmarks_px[33][2]} per line)."""
+    import json
+
+    import numpy as np
+
+    from praxis_session.perception.pose import PoseResult
+
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(p)
+    pipeline = SessionPipeline(
+        mode="arm", sheet="none", ring=ring, use_hand=False, use_pose=False, side=side, **fsm_kwargs
+    )
+    events: list[Event] = []
+    i = 0
+    t = 0.0
+    for line in p.read_text().splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        t = float(row["t"])
+        lm = row.get("landmarks_px")
+        res = None
+        if lm is not None:
+            res = PoseResult(
+                landmarks_px=np.asarray(lm, np.float32),
+                visibility=np.ones(33, np.float32),
+                world=np.zeros((33, 3), np.float32),
+                conf=1.0,
+            )
+        evs = pipeline.process_pose(res, t, i)
+        events += evs
+        if on_event:
+            for e in evs:
+                on_event(e)
+        i += 1
+    snap = pipeline.snapshot(t)
+    return ReplayResult(
+        path=str(p),
+        mode="arm",
+        fps=0.0,
+        frames=i,
+        reps=snap["reps"],
+        nhpt_total_s=None,
+        events=events,
+        snapshot=snap,
+    )
+
+
 def write_events_jsonl(events: list[Event], out: str | Path) -> None:
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as f:
@@ -108,12 +165,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--events-out", default=None, help="write events JSONL here")
     ap.add_argument("--debounce", type=int, default=2)
     ap.add_argument("--clear", type=int, default=3)
+    ap.add_argument("--side", default="left")
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args(argv)
-    res = run_replay(
-        args.video, mode=args.mode, sheet=args.sheet, fps_override=args.fps,
-        debounce_frames=args.debounce, clear_frames=args.clear,
-    )
+    if args.mode == "arm" or str(args.video).endswith(".jsonl"):
+        res = run_landmark_replay(args.video, side=args.side)
+    else:
+        res = run_replay(
+            args.video,
+            mode=args.mode,
+            sheet=args.sheet,
+            fps_override=args.fps,
+            debounce_frames=args.debounce,
+            clear_frames=args.clear,
+        )
     if args.events_out:
         write_events_jsonl(res.events, args.events_out)
     if not args.quiet:

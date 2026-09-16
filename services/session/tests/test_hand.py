@@ -28,7 +28,11 @@ def _min_jerk_velocity(n=200, fs=100.0):
 def test_sparc_is_higher_for_smoother_movement():
     v, fs = _min_jerk_velocity()
     rng = np.random.default_rng(0)
-    jerky = v + 0.3 * np.sin(2 * np.pi * 10 * np.linspace(0, 1, v.size)) + 0.05 * rng.normal(size=v.size)
+    jerky = (
+        v
+        + 0.3 * np.sin(2 * np.pi * 10 * np.linspace(0, 1, v.size))
+        + 0.05 * rng.normal(size=v.size)
+    )
     assert sparc(v, fs) > sparc(jerky, fs)
     assert -4 < sparc(v, fs) < 0
 
@@ -47,7 +51,13 @@ def _fake_hand(x: float, y: float, pinch_px: float = 30.0) -> HandResult:
     lm = np.zeros((21, 2), np.float32) + [x, y]
     lm[4] = [x, y]  # thumb tip
     lm[8] = [x + pinch_px, y]  # index tip
-    return HandResult(landmarks_px=lm, z=np.zeros(21, np.float32), conf=0.95, handedness=0.1, bbox=np.array([x - 20, y - 20, x + 40, y + 20], np.float32))
+    return HandResult(
+        landmarks_px=lm,
+        z=np.zeros(21, np.float32),
+        conf=0.95,
+        handedness=0.1,
+        bbox=np.array([x - 20, y - 20, x + 40, y + 20], np.float32),
+    )
 
 
 def test_pinch_and_metrics_in_mm_with_calibration():

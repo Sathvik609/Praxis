@@ -4,6 +4,7 @@ Any-hole targets, timer from the first peg lift (first at_source -> grasped) to 
 seated, per-peg splits (seated-to-seated). Emits nhpt_start, nhpt_split, nhpt_complete on top
 of the FSM's own events. This is a timing aid, not a clinical instrument (CLAUDE.md §1).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -32,7 +33,11 @@ class NHPT:
 
     @property
     def total_s(self) -> float | None:
-        return None if self.t_end is None or self.t_start is None else round(self.t_end - self.t_start, 4)
+        return (
+            None
+            if self.t_end is None or self.t_start is None
+            else round(self.t_end - self.t_start, 4)
+        )
 
     @property
     def state(self) -> str:
@@ -56,22 +61,39 @@ class NHPT:
                 self.t_start = ev.t
                 self._last_seat_t = ev.t
                 out.append(make_event("nhpt_start", t=ev.t))
-            elif ev.type == "state_change" and ev.payload["to"] == "seated" and self.t_start is not None:
+            elif (
+                ev.type == "state_change"
+                and ev.payload["to"] == "seated"
+                and self.t_start is not None
+            ):
                 hole = self.fsm._seated_hole
                 assert self._last_seat_t is not None
                 split = round(ev.t - self._last_seat_t, 4)
                 self._last_seat_t = ev.t
-                self.pegs.append({"peg": len(self.pegs) + 1, "hole": hole, "t": ev.t, "split_s": split})
-                out.append(make_event(
-                    "nhpt_split", t=ev.t, peg=len(self.pegs), hole=hole, split_s=split,
-                    elapsed_s=round(ev.t - self.t_start, 4),
-                ))
+                self.pegs.append(
+                    {"peg": len(self.pegs) + 1, "hole": hole, "t": ev.t, "split_s": split}
+                )
+                out.append(
+                    make_event(
+                        "nhpt_split",
+                        t=ev.t,
+                        peg=len(self.pegs),
+                        hole=hole,
+                        split_s=split,
+                        elapsed_s=round(ev.t - self.t_start, 4),
+                    )
+                )
                 if len(self.pegs) >= self.n_pegs:
                     self.t_end = ev.t
-                    out.append(make_event(
-                        "nhpt_complete", t=ev.t, total_s=self.total_s,
-                        splits_s=[p["split_s"] for p in self.pegs], pegs=list(self.pegs),
-                    ))
+                    out.append(
+                        make_event(
+                            "nhpt_complete",
+                            t=ev.t,
+                            total_s=self.total_s,
+                            splits_s=[p["split_s"] for p in self.pegs],
+                            pegs=list(self.pegs),
+                        )
+                    )
                     break
         return out
 

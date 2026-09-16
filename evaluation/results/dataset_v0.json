@@ -1,4 +1,9 @@
 {
+ "arm_rep_f1": 1.0,
+ "arm_tp": 16,
+ "arm_fp": 0,
+ "arm_fn": 0,
+ "arm_peak_mae_deg": 0.77,
  "reach_f1": 1.0,
  "reach_tp": 32,
  "reach_fp": 0,
@@ -6,7 +11,7 @@
  "reach_mae_ms": 0.0,
  "dataset": "v0",
  "tol_s": 1.0,
- "n_entries": 2,
+ "n_entries": 3,
  "n_labeled_reps": 9,
  "tp": 9,
  "fp": 0,
@@ -15,7 +20,7 @@
  "rep_recall": 1.0,
  "rep_f1": 1.0,
  "nhpt_mae_s": 0.0,
- "n_synthetic": 2,
+ "n_synthetic": 3,
  "n_real": 0,
  "entries": [
   {
@@ -41,6 +46,18 @@
    "labeled_reps": 32,
    "pred_reps": 32,
    "tp": 32,
+   "fp": 0,
+   "fn": 0,
+   "misses": []
+  },
+  {
+   "id": "synthetic_arm_01",
+   "mode": "arm",
+   "synthetic": true,
+   "frames": 1402,
+   "labeled_reps": 16,
+   "pred_reps": 16,
+   "tp": 16,
    "fp": 0,
    "fn": 0,
    "misses": []
