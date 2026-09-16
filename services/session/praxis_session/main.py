@@ -14,7 +14,10 @@ import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from praxis_session.events import EventRing, make_event
+from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
+
+POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
 
 CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
 MODES = {"heartbeat", *PIPELINE_MODES}
@@ -30,6 +33,10 @@ def health() -> dict[str, object]:
         "service": "praxis-session",
         "opencv_version": cv2.__version__,
         "mode": "cloud" if CLOUD_ENABLED else "edge",
+        "models": {
+            "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
+            "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
+        },
     }
 
 

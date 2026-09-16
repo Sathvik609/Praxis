@@ -77,3 +77,9 @@ def test_ws_nhpt_returns_frame_event_first(client):
         ws.send_bytes(buf.tobytes())
         msg = ws.receive_json()
     assert msg["type"] == "frame" and msg["calibrated"] and msg["nhpt"]["mode"] == "nhpt"
+
+
+def test_health_reports_models_block(client):
+    body = client.get("/health").json()
+    assert set(body["models"]) == {"hand", "pose"}
+    assert all(isinstance(v, bool) for v in body["models"].values())

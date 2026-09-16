@@ -94,6 +94,8 @@ export function LiveNhpt() {
           <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
           <div className="absolute bottom-3 left-4 text-white/80">
             cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}
+            {frame?.models?.hand ? ` · dnn hand${frame.hand?.present ? ' ✓' : ''}` : ' · hand model off'}
+            {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
           </div>
           {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
         </div>

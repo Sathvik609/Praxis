@@ -98,3 +98,27 @@ def test_nhpt_mode_freezes_fsm_when_uncalibrated():
     d = evs[0].to_dict()
     assert d["type"] == "frame" and d["calibrated"] is False and d["nhpt"]["state"] == "at_source"
     assert d["overlay"]["holes_px"] == []
+
+
+def test_nhpt_frame_carries_hand_block_and_proc_ms_without_models():
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=False)
+    frame, _ = camera_frame(NHPT_BOARD)
+    d = p.process(frame, 0.0, 0)[0].to_dict()
+    assert d["hand"] == {"present": False}
+    assert d["proc_ms"] >= 0.0
+    assert d["models"] == {"hand": False}
+
+
+def test_nhpt_frame_with_hand_tracker_on_synthetic_board():
+    import pytest
+
+    from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR
+
+    if not (MODELS_DIR / HAND_MODEL).exists():
+        pytest.skip("models not downloaded")
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=True)
+    frame, _ = camera_frame(NHPT_BOARD)
+    d = p.process(frame, 0.0, 0)[0].to_dict()
+    assert d["models"]["hand"] is True
+    assert d["hand"]["present"] is False  # no real hand in a synthetic render
+    assert d["proc_ms"] > 0.0

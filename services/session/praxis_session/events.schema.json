@@ -160,6 +160,15 @@
     },
     "free_pegs_mm": {
       "type": "array"
+    },
+    "hand": {
+      "type": "object"
+    },
+    "models": {
+      "type": "object"
+    },
+    "proc_ms": {
+      "type": "number"
     }
   }
 }

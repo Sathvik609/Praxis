@@ -26,6 +26,38 @@ export type FrameEvent = PraxisEvent & {
   }
   board: { occupancy?: Record<string, 'empty' | 'occupied'>; hole_source?: string; free_pegs_mm?: number[][] }
   overlay: { holes_px: number[][]; target: number | null; next_hole: number | null; markers_px: Record<string, number[][]> }
+  hand?: { present: boolean; landmarks_px?: number[][]; pinch_mm?: number | null; tremor_hz?: number | null; sparc?: number | null; ms?: number }
+  models?: { hand: boolean }
+  proc_ms?: number
+}
+
+/** 21-point MediaPipe hand topology. */
+export const HAND_CONNECTIONS: [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [5, 9], [9, 10], [10, 11], [11, 12],
+  [9, 13], [13, 14], [14, 15], [15, 16],
+  [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
+]
+
+export function drawHand(ctx: CanvasRenderingContext2D, landmarks: number[][]) {
+  ctx.lineWidth = 2
+  ctx.strokeStyle = '#7FE0C4'
+  for (const [a, b] of HAND_CONNECTIONS) {
+    const p = landmarks[a]
+    const q = landmarks[b]
+    if (!p || !q) continue
+    ctx.beginPath()
+    ctx.moveTo(p[0], p[1])
+    ctx.lineTo(q[0], q[1])
+    ctx.stroke()
+  }
+  ctx.fillStyle = '#FFFFFF'
+  for (const [x, y] of landmarks) {
+    ctx.beginPath()
+    ctx.arc(x, y, 3, 0, Math.PI * 2)
+    ctx.fill()
+  }
 }
 
 const MINT = '#2FA985'
@@ -53,6 +85,7 @@ export function drawFrameOverlay(ctx: CanvasRenderingContext2D, f: FrameEvent | 
     if (occupied) ctx.fill()
     ctx.stroke()
   })
+  if (f.hand?.present && f.hand.landmarks_px) drawHand(ctx, f.hand.landmarks_px)
 }
 
 /** Pure drawing routine (testable without WebGL/canvas): marker quads in mint, sheet

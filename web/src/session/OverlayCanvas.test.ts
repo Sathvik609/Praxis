@@ -60,3 +60,12 @@ test('drawFrameOverlay fills occupied holes and rings the next one', async () =>
   expect(calls.filter((c) => c === 'fill').length).toBe(1)
   expect(calls.filter((c) => c === 'stroke').length).toBe(2)
 })
+
+test('drawHand draws 20 connections and 21 points', async () => {
+  const { drawHand } = await import('./OverlayCanvas')
+  const calls: string[] = []
+  drawHand(fakeCtx(calls), Array.from({ length: 21 }, (_, i) => [i, i]))
+  expect(calls.filter((c) => c === 'stroke').length).toBe(21)
+  expect(calls.filter((c) => c === 'arc').length).toBe(21)
+  expect(calls.filter((c) => c === 'fill').length).toBe(21)
+})

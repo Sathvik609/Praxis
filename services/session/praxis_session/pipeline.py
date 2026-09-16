@@ -6,6 +6,7 @@ connection or replay; frames are processed and dropped, events go to the ring an
 """
 from __future__ import annotations
 
+import time
 from typing import Any, Literal
 
 import numpy as np
@@ -14,6 +15,7 @@ from praxis_session.events import Event, EventRing, make_event
 from praxis_session.perception.board import BoardState
 from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
+from praxis_session.perception.hand import HandMetrics, HandTracker
 from praxis_session.perception.nhpt import NHPT
 from praxis_session.perception.peg_fsm import Observation
 from praxis_session.perception.quality import (
@@ -38,6 +40,7 @@ class SessionPipeline:
         ring: EventRing | None = None,
         debounce_frames: int = 2,
         clear_frames: int = 3,
+        use_hand: bool = True,
     ) -> None:
         if mode not in MODES:
             raise ValueError(f"bad mode {mode}")
@@ -52,6 +55,11 @@ class SessionPipeline:
         self._lost = False
         self._board: BoardState | None = None
         self._nhpt: NHPT | None = None
+        self._hand: HandTracker | None = None
+        self._hand_metrics = HandMetrics()
+        if use_hand and mode != "calibrate":
+            tracker = HandTracker()
+            self._hand = tracker if tracker.available else None
         if mode == "nhpt":
             self._board = BoardState(self.spec)
             self._nhpt = NHPT(
@@ -125,10 +133,28 @@ class SessionPipeline:
         self._track_loss(out, cal, t, i)
         return out
 
+    def _hand_block(self, frame_bgr: np.ndarray, t: float, cal: CalibrationResult) -> tuple[dict, tuple[float, float] | None]:
+        """Run the hand tracker (if available) and return (event block, hand position in mm)."""
+        if self._hand is None:
+            return {"present": False}, None
+        res = self._hand.detect(frame_bgr)
+        metrics = self._hand_metrics.update(t, res, cal)
+        if res is None:
+            return {"present": False}, None
+        block = res.to_dict() | {k: v for k, v in metrics.items() if k != "present"}
+        block["ms"] = round(self._hand.last_ms, 1)
+        hand_mm = None
+        if cal.calibrated:
+            tips = cal.to_mm(res.landmarks_px[[4, 8]])
+            mid = tips.mean(axis=0)
+            hand_mm = (float(mid[0]), float(mid[1]))
+        return block, hand_mm
+
     def _process_nhpt(self, frame_bgr: np.ndarray, t: float, i: int) -> list[Event]:
         assert self._board is not None and self._nhpt is not None
         out: list[Event] = []
         self._last_t = t
+        t0 = time.perf_counter()
         cal = self._cal.run(frame_bgr)
         board_d: dict[str, Any] | None = None
         holes_px: list[list[float]] = []
@@ -136,6 +162,7 @@ class SessionPipeline:
             canon = self._board.warp(frame_bgr, cal)
             board_d = self._board.to_event_payload(canon)
             holes_px = self._board.holes_frame_px(cal)
+        hand_block, hand_mm = self._hand_block(frame_bgr, t, cal)
         occ = board_d["occupancy"] if board_d else {}
         next_hole = next(
             (k for k in range(len(self.spec.targets_mm)) if occ.get(f"hole_{k}") == "empty"), None
@@ -167,6 +194,9 @@ class SessionPipeline:
                         str(k): np.round(v, 1).tolist() for k, v in cal.marker_corners_px.items()
                     },
                 },
+                hand=hand_block,
+                models={"hand": self._hand is not None},
+                proc_ms=round((time.perf_counter() - t0) * 1000.0, 1),
             ),
         )
         if board_d is not None:
@@ -174,6 +204,7 @@ class SessionPipeline:
                 t=t,
                 occupancy=board_d["occupancy"],
                 free_pegs_mm=[(float(x), float(y)) for x, y in board_d["free_pegs_mm"]],
+                hand_mm=hand_mm,
             )
             for e in self._nhpt.step(obs):
                 self._emit(out, e)
