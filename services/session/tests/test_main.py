@@ -98,3 +98,59 @@ def test_ws_cup_text_command_switches_phase(client):
         ws.send_bytes(buf.tobytes())
         msg = ws.receive_json()
     assert msg["type"] == "frame" and msg["cup"]["phase"] == "fast"
+
+
+def _cup_frame_bytes(dot=0):
+    from praxis_session.perception.board_spec import CUP_TARGETS
+    from praxis_session.perception.synth import camera_frame
+
+    frame, _ = camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[dot])
+    _, buf = cv2.imencode(".jpg", frame)
+    return buf.tobytes()
+
+
+def test_ws_checkin_pain_stop_rule_and_trace(client):
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets") as ws:
+        ws.send_text('{"cmd":"checkin","pain":2,"energy":"comfortable","minutes":14,"new_symptoms":false}')
+        ack = ws.receive_json()
+        assert ack["type"] == "command" and ack["ok"] is True and ack["session_id"]
+        sid = ack["session_id"]
+        ws.send_text('{"cmd":"pain","pain":6}')
+        msgs = [ws.receive_json() for _ in range(3)]
+        types = [m["type"] for m in msgs]
+        assert "stop" in types and "therapist_flag" in types
+    r = client.get(f"/api/trace?session={sid}&n=20")
+    kinds = [row["kind"] for row in r.json()["rows"]]
+    assert "checkin" in kinds and "stop_rule" in kinds and "flag" in kinds
+    s = client.get(f"/api/session/{sid}/summary").json()
+    assert s["stopped"] is True and s["flags"][0]["rule"] == "pain"
+
+
+def test_ws_coach_event_follows_perception_events(client):
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets&clear=1") as ws:
+        seen = []
+        for dot in [0, 0, 0, None, None, None, 1, 1, 1, 1]:
+            ws.send_bytes(_cup_frame_bytes(dot) if dot is not None else _blank_bytes())
+            # drain everything that arrived for this frame
+            msg = ws.receive_json()
+            seen.append(msg["type"])
+            while msg["type"] != "frame" or _pending(ws):
+                try:
+                    msg = ws.receive_json()
+                    seen.append(msg["type"])
+                except Exception:
+                    break
+    assert "reach_complete" in seen and "coach" in seen
+
+
+def _blank_bytes():
+    from praxis_session.perception.board_spec import CUP_TARGETS
+    from praxis_session.perception.synth import camera_frame
+
+    frame, _ = camera_frame(CUP_TARGETS)  # sheet visible, no cup (lifted)
+    _, buf = cv2.imencode(".jpg", frame)
+    return buf.tobytes()
+
+
+def _pending(ws) -> bool:
+    return False

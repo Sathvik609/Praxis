@@ -35,7 +35,15 @@
         "compensation_lean",
         "shoulder_hiking",
         "set_complete",
-        "arm_complete"
+        "arm_complete",
+        "coach",
+        "speak",
+        "stop",
+        "pause",
+        "resume",
+        "rest",
+        "therapist_flag",
+        "exertion"
       ]
     },
     "t": {
@@ -285,6 +293,63 @@
     },
     "t_end": {
       "type": "number"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "rule": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "cue_id": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array"
+    },
+    "ui": {
+      "type": "object"
+    },
+    "label": {
+      "type": "string"
+    },
+    "tool_calls": {
+      "type": "array"
+    },
+    "speak_id": {
+      "type": "integer"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "level": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "reasons": {
+      "type": "array"
+    },
+    "method": {
+      "type": "string"
+    },
+    "pain": {
+      "type": "integer"
+    },
+    "summary": {
+      "type": "object"
+    },
+    "cmd": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

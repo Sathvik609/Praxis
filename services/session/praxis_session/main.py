@@ -18,6 +18,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from praxis_session.events import EventRing, make_event
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
+from praxis_session.prescription import SEED_PRESCRIPTION
+from praxis_session.session import CoachSession
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
 
@@ -26,6 +28,7 @@ MODES = {"heartbeat", *PIPELINE_MODES}
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
 ring = EventRing()
+sessions: dict[str, CoachSession] = {}
 
 
 @app.get("/health")
@@ -45,6 +48,28 @@ def health() -> dict[str, object]:
 @app.get("/events")
 def events(n: int = 50) -> dict[str, object]:
     return {"count": len(ring), "events": [e.to_dict() for e in ring.latest(n)]}
+
+
+@app.get("/api/trace")
+def api_trace(session: str | None = None, n: int = 100) -> dict[str, object]:
+    """Decision trace rows (event -> stop rule -> decide -> tool -> action) for a session."""
+    s = sessions.get(session) if session else (list(sessions.values())[-1] if sessions else None)
+    if s is None:
+        return {"session": None, "rows": []}
+    return {"session": s.session_id, "rows": s.trace.tail(n)}
+
+
+@app.get("/api/session/{session_id}/summary")
+def api_summary(session_id: str) -> dict[str, object]:
+    s = sessions.get(session_id)
+    if s is None:
+        return {"error": "unknown session"}
+    return s.summary()
+
+
+@app.get("/api/prescription")
+def api_prescription() -> dict[str, object]:
+    return SEED_PRESCRIPTION.model_dump()
 
 
 def decode_jpeg(data: bytes) -> np.ndarray | None:
@@ -96,6 +121,12 @@ async def session_ws(
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())
             await ws.close()
             return
+    coach: CoachSession | None = None
+    if pipeline is not None:
+        coach = CoachSession(mode=mode, prescription=SEED_PRESCRIPTION)
+        sessions[coach.session_id] = coach
+        if len(sessions) > 50:
+            sessions.pop(next(iter(sessions)))
     frame_index = 0
     try:
         while True:
@@ -107,10 +138,9 @@ async def session_ws(
                     cmd = json.loads(msg["text"])
                 except json.JSONDecodeError:
                     cmd = {}
-                result = pipeline.command(cmd) if pipeline is not None else {"ok": False}
-                e = make_event("command", cmd=cmd.get("cmd"), **result)
-                ring.append(e)
-                await ws.send_text(e.to_json())
+                for e in _handle_command(cmd, pipeline, coach):
+                    ring.append(e)
+                    await ws.send_text(e.to_json())
                 continue
             data = msg.get("bytes") or b""
             frame = decode_jpeg(data)
@@ -127,9 +157,46 @@ async def session_ws(
                 ring.append(e)
                 await ws.send_text(e.to_json())
             else:
-                for e in pipeline.process(frame, time.time(), frame_index):
+                now = time.time()
+                evs = pipeline.process(frame, now, frame_index)
+                for e in evs:
                     await ws.send_text(e.to_json())
+                if coach is not None:
+                    for e in coach.on_events(evs, pipeline.snapshot(now), now):
+                        ring.append(e)
+                        await ws.send_text(e.to_json())
             frame_index += 1
             del frame
     except WebSocketDisconnect:
         return
+
+
+def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None) -> list:
+    """Text commands from the browser: pipeline commands and coach-session inputs."""
+    name = cmd.get("cmd")
+    now = time.time()
+    out: list = []
+    if pipeline is None or coach is None:
+        return [make_event("command", cmd=name, ok=False, error="no pipeline")]
+    if name == "checkin":
+        out += coach.on_checkin(int(cmd.get("pain", 0)), str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"))
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *out]
+    if name == "pain":
+        out += coach.on_pain(int(cmd.get("pain", 0)), now)
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *out]
+    if name == "rpe":
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.on_rpe(int(cmd.get("rpe", 0)), now)]
+    if name == "pause":
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.pause(now)]
+    if name == "resume":
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.resume(now)]
+    if name == "answer":
+        pcmd, evs = coach.on_answer(str(cmd.get("prompt", "")), str(cmd.get("choice", "")), now)
+        result = pipeline.command(pcmd) if pcmd else {"ok": True}
+        return [make_event("command", cmd=name, session_id=coach.session_id, **result), *evs]
+    if name == "feedback":
+        coach.feedback = {k: v for k, v in cmd.items() if k != "cmd"}
+        coach.trace.log("feedback", **coach.feedback)
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=coach.summary(now))]
+    result = pipeline.command(cmd)
+    return [make_event("command", cmd=name, session_id=coach.session_id, **result)]
