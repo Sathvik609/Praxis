@@ -1,0 +1,23 @@
+:root {
+  --teal: #1f5f5b;
+  --mint: #2fa985;
+  --amber: #c97f14;
+  --red: #b9382b;
+  --bg: #eef2f0;
+  --surface: #ffffff;
+  --text: #14201e;
+  --muted: #5c6b68;
+  --line: #d5dedb;
+  --focus: #2e7cf6;
+  --stage-a: #050e10;
+  --stage-b: #0f262b;
+  --font-heading: 'Lora', Georgia, serif;
+  --font-body: 'Carlito', 'Calibri', system-ui, sans-serif;
+}
+:root[data-theme='dark'] {
+  --bg: #0f1a19;
+  --surface: #162321;
+  --text: #e9f1ee;
+  --muted: #9db0ac;
+  --line: #27403c;
+}

@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+@import '@fontsource/lora/600.css';
+@import '@fontsource/carlito/400.css';
+@import '@fontsource/carlito/700.css';
+@import './design/tokens.css';
+
+@theme {
+  --color-teal: var(--teal);
+  --color-mint: var(--mint);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-focus: var(--focus);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: 18px;
+  background: var(--bg);
+  color: var(--text);
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
