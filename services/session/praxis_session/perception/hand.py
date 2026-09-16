@@ -49,6 +49,25 @@ class HandResult:
         }
 
 
+class _quiet_cv_logs:
+    def __enter__(self):
+        import cv2
+
+        try:
+            self._prev = cv2.utils.logging.getLogLevel()
+            cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+        except AttributeError:  # pragma: no cover
+            self._prev = None
+        return self
+
+    def __exit__(self, *exc):
+        import cv2
+
+        if self._prev is not None:
+            cv2.utils.logging.setLogLevel(self._prev)
+        return False
+
+
 class HandTracker:
     """Palm detector + hand landmarker through cv2.dnn. `available` is False without models."""
 
@@ -58,8 +77,19 @@ class HandTracker:
         self.last_ms = 0.0
         palm, hand = self.models_dir / PALM_MODEL, self.models_dir / HAND_MODEL
         if palm.exists() and hand.exists():
+            import cv2
+
             from praxis_session.perception.zoo.mp_handpose import MPHandPose
             from praxis_session.perception.zoo.mp_palmdet import MPPalmDet
+
+            # The vendored wrappers call setPreferableTarget, which OpenCV 5's graph engine
+            # ignores with a WARN log on every construction; silence that one line.
+            with _quiet_cv_logs():
+                self._palm = MPPalmDet(str(palm), nmsThreshold=0.3, scoreThreshold=0.6, topK=100)
+                self._hand = MPHandPose(str(hand), confThreshold=conf_threshold)
+            self.available = True
+            return
+        if False:  # pragma: no cover - keeps the original branch shape for diffing
 
             self._palm = MPPalmDet(str(palm), nmsThreshold=0.3, scoreThreshold=0.6, topK=100)
             self._hand = MPHandPose(str(hand), confThreshold=conf_threshold)

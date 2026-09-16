@@ -23,6 +23,7 @@ function mockStream(events: Record<string, unknown>[]) {
     error: null,
     start: vi.fn(async () => {}),
     stop: vi.fn(),
+    send: vi.fn(),
     videoRef: { current: null },
   })
 }

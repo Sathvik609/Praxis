@@ -90,6 +90,11 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
     }
   }, [wsUrl, mode, fps, params, stop])
 
+  const send = useCallback((obj: Record<string, unknown>) => {
+    const ws = wsRef.current
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj))
+  }, [])
+
   useEffect(() => stop, [stop])
-  return { camActive, connected, lastEvent, events, error, start, stop, videoRef }
+  return { camActive, connected, lastEvent, events, error, start, stop, send, videoRef }
 }

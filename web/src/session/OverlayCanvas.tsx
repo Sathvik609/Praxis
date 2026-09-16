@@ -9,10 +9,26 @@ export type CalibrationEvent = PraxisEvent & {
   targets_px?: number[][]
 }
 
+export type CupSnapshot = {
+  mode: 'cup'
+  state: string
+  dot: number | null
+  phase: 'slow' | 'fast'
+  arcs_done: number
+  arc_index: number
+  arcs_planned: { slow: number; fast: number }
+  expected_next: number | null
+  dots_in_arc: number[]
+  reaches_total: number
+  unverified_total: number
+  awaiting_phase: boolean
+  finished: boolean
+}
+
 export type FrameEvent = PraxisEvent & {
   calibrated: boolean
   missing: number[]
-  nhpt: {
+  nhpt?: {
     mode: string
     state: string
     target: number | null
@@ -25,7 +41,16 @@ export type FrameEvent = PraxisEvent & {
     total_s: number | null
   }
   board: { occupancy?: Record<string, 'empty' | 'occupied'>; hole_source?: string; free_pegs_mm?: number[][] }
-  overlay: { holes_px: number[][]; target: number | null; next_hole: number | null; markers_px: Record<string, number[][]> }
+  overlay: {
+    holes_px?: number[][]
+    target?: number | null
+    next_hole?: number | null
+    dots_px?: number[][]
+    cup_px?: number[] | null
+    expected_next?: number | null
+    markers_px: Record<string, number[][]>
+  }
+  cup?: CupSnapshot & { cup_mm?: number[] | null; hand_clear?: boolean }
   hand?: { present: boolean; landmarks_px?: number[][]; pinch_mm?: number | null; tremor_hz?: number | null; sparc?: number | null; ms?: number }
   models?: { hand: boolean }
   proc_ms?: number
@@ -76,7 +101,7 @@ export function drawFrameOverlay(ctx: CanvasRenderingContext2D, f: FrameEvent | 
     ctx.closePath()
     ctx.stroke()
   }
-  f.overlay.holes_px.forEach(([x, y], k) => {
+  ;(f.overlay.holes_px ?? []).forEach(([x, y], k) => {
     const occupied = f.board?.occupancy?.[`hole_${k}`] === 'occupied'
     ctx.strokeStyle = k === f.overlay.next_hole ? AMBER : MINT
     ctx.fillStyle = MINT
@@ -85,6 +110,22 @@ export function drawFrameOverlay(ctx: CanvasRenderingContext2D, f: FrameEvent | 
     if (occupied) ctx.fill()
     ctx.stroke()
   })
+  ;(f.overlay.dots_px ?? []).forEach(([x, y], k) => {
+    const visited = f.cup?.dots_in_arc?.includes(k)
+    ctx.strokeStyle = k === f.overlay.expected_next ? AMBER : MINT
+    ctx.fillStyle = MINT
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x, y, 12, 0, Math.PI * 2)
+    if (visited) ctx.fill()
+    ctx.stroke()
+  })
+  if (f.overlay.cup_px) {
+    ctx.strokeStyle = '#FFFFFF'
+    ctx.beginPath()
+    ctx.arc(f.overlay.cup_px[0], f.overlay.cup_px[1], 18, 0, Math.PI * 2)
+    ctx.stroke()
+  }
   if (f.hand?.present && f.hand.landmarks_px) drawHand(ctx, f.hand.landmarks_px)
 }
 

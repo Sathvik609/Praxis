@@ -16,8 +16,8 @@ type NhptComplete = PraxisEvent & { total_s: number; splits_s: number[]; pegs: u
 function caption(f: FrameEvent | null, lost: boolean): string {
   if (lost) return 'I lost the board. Keep all four corner markers in view.'
   if (!f) return 'Getting the camera ready.'
-  if (!f.nhpt.started) return 'Pick up the first peg when you are ready. The timer starts on your first lift.'
-  if (f.nhpt.completed) return 'All nine seated. Nicely done.'
+  if (!f.nhpt?.started) return 'Pick up the first peg when you are ready. The timer starts on your first lift.'
+  if (f.nhpt?.completed) return 'All nine seated. Nicely done.'
   return 'Nice and steady. Timer is running — no need to rush.'
 }
 
@@ -54,10 +54,10 @@ export function LiveNhpt() {
       state: {
         kind: 'nhpt',
         hand,
-        total_s: complete?.total_s ?? frame?.nhpt.total_s ?? null,
+        total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,
         splits_s: complete?.splits_s ?? [],
         pegs: complete?.pegs ?? [],
-        pegs_done: frame?.nhpt.pegs_done ?? 0,
+        pegs_done: frame?.nhpt?.pegs_done ?? 0,
         ended_early: endedEarly,
       },
     })
@@ -68,9 +68,9 @@ export function LiveNhpt() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete?.id])
 
-  const pegsDone = frame?.nhpt.pegs_done ?? 0
+  const pegsDone = frame?.nhpt?.pegs_done ?? 0
   const nextHole = frame?.overlay.next_hole ?? null
-  const elapsed = frame?.nhpt.elapsed_s ?? 0
+  const elapsed = frame?.nhpt?.elapsed_s ?? 0
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
@@ -134,7 +134,7 @@ export function LiveNhpt() {
               <span>{elapsed.toFixed(1)}</span>
               <span className="text-2xl"> s</span>
             </div>
-            <div className="text-muted">{frame?.nhpt.started ? 'started at first peg lift' : 'waiting for first peg lift'}</div>
+            <div className="text-muted">{frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'}</div>
           </div>
           <div className="rounded-2xl border border-line bg-surface p-6">
             <div className="mb-3 flex justify-between">

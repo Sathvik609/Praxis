@@ -1,12 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
-import { LiveNhpt } from '../screens/07-session/LiveNhpt'
+import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
 import { Pending } from '../screens/placeholders'
 import { Shell } from './Shell'
 
 export const router = createBrowserRouter([
-  { path: '/session', element: <LiveNhpt /> },
+  { path: '/session', element: <SessionRouter /> },
   {
     path: '/',
     element: <Shell />,

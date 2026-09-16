@@ -23,3 +23,16 @@ test('empty state without a result', () => {
   renderWith(null)
   expect(screen.getByText(/No result/)).toBeInTheDocument()
 })
+
+test('cup variant shows verified and unverified counts', () => {
+  renderWith({
+    kind: 'cup', side: 'left', arcs: 4, ended_early: false,
+    reaches: [
+      { rep: 1, from_dot: 0, to_dot: 1, reach_ms: 1200, verified: true, reason: null, arc: 1, phase: 'slow' },
+      { rep: 2, from_dot: 1, to_dot: 2, reach_ms: 900, verified: false, reason: 'cup_occluded', arc: 1, phase: 'slow' },
+    ],
+  })
+  expect(screen.getByText(/1 verified/)).toBeInTheDocument()
+  expect(screen.getByText(/1 unverified/)).toBeInTheDocument()
+  expect(screen.getAllByTestId('reach')).toHaveLength(2)
+})

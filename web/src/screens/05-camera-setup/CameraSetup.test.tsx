@@ -12,6 +12,7 @@ function mockStream(lastEvent: Record<string, unknown> | null, camActive = true)
     error: null,
     start: vi.fn(async () => {}),
     stop: vi.fn(),
+    send: vi.fn(),
     videoRef: { current: null },
   })
 }
