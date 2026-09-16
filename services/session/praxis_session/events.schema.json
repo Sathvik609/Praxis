@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Praxis event",
+  "type": "object",
+  "required": ["type", "t", "id"],
+  "properties": {
+    "type": {
+      "enum": [
+        "heartbeat",
+        "error",
+        "calibration",
+        "quality",
+        "setup_checks",
+        "perception_lost",
+        "perception_regained"
+      ]
+    },
+    "t": {"type": "number"},
+    "id": {"type": "integer"},
+    "frame_index": {"type": "integer"},
+    "frame": {"type": "object", "required": ["width", "height", "bytes"]},
+    "code": {"type": "string"},
+    "sheet": {"type": "string"},
+    "calibrated": {"type": "boolean"},
+    "missing": {"type": "array", "items": {"type": "integer"}},
+    "rms_mm": {"type": ["number", "null"]},
+    "markers_px": {"type": "object"},
+    "targets_px": {"type": "array"},
+    "lighting": {"type": "object"},
+    "steadiness": {"type": "object"},
+    "presence": {"type": "object"},
+    "all_required_pass": {"type": "boolean"},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "label"],
+        "properties": {"status": {"enum": ["pass", "check", "fail", "pending"]}}
+      }
+    }
+  }
+}
