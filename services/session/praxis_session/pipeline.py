@@ -103,7 +103,9 @@ class SessionPipeline:
         if self.mode == "cup":
             return self._process_cup(frame_bgr, t, frame_index)
         if self.mode == "arm":
+            t0 = time.perf_counter()
             res = self._pose.detect(frame_bgr) if self._pose is not None else None
+            self._detect_ms = (time.perf_counter() - t0) * 1000.0
             return self.process_pose(res, t, frame_index)
         return self._process_nhpt(frame_bgr, t, frame_index)
 
@@ -134,6 +136,7 @@ class SessionPipeline:
 
     # ---- internals ----------------------------------------------------------------------
     _last_t: float = 0.0
+    _detect_ms: float = 0.0
 
     def _emit(self, out: list[Event], e: Event) -> None:
         if self.ring is not None:
@@ -377,9 +380,10 @@ class SessionPipeline:
                     "ghost_target_px": ghost,
                 },
                 models={"hand": self._hand is not None, "pose": self._pose is not None},
-                proc_ms=round((time.perf_counter() - t0) * 1000.0, 1),
+                proc_ms=round((time.perf_counter() - t0) * 1000.0 + self._detect_ms, 1),
             ),
         )
+        self._detect_ms = 0.0
         obs = ArmObservation(
             t=t,
             shoulder_deg=None if angles is None else angles["shoulder_deg"],
