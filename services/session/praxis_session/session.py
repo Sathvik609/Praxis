@@ -33,7 +33,8 @@ class CoachSession:
         self.feedback: dict[str, Any] = {}
         self.decisions: list[dict[str, Any]] = []
         self.pending_prompt: dict[str, Any] | None = None
-        self.counts = {"reps_total": 0, "verified": 0, "unverified": 0, "corrections": 0}
+        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "corrections": 0, "posture_cues": 0}
+        self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
         self._last_level = "low"
         self.t_start: float | None = None
@@ -97,6 +98,17 @@ class CoachSession:
             if e.type in ("rep_complete", "reach_complete"):
                 self.counts["reps_total"] += 1
                 self.counts["verified" if e.payload.get("verified") else "unverified"] += 1
+            if e.type == "reach_complete":
+                self.measures.setdefault("reach_ms", []).append(e.payload.get("reach_ms"))
+                self.measures.setdefault("reach_verified", []).append(bool(e.payload.get("verified")))
+            elif e.type == "rep_complete" and "peak_deg" in e.payload:
+                self.measures.setdefault("peak_deg", []).append(e.payload.get("peak_deg"))
+                self.measures.setdefault("peak_verified", []).append(bool(e.payload.get("verified")))
+            elif e.type == "nhpt_complete":
+                self.measures["nhpt_total_s"] = e.payload.get("total_s")
+                self.measures["splits_s"] = list(e.payload.get("splits_s") or [])
+            elif e.type in ("compensation_lean", "shoulder_hiking"):
+                self.counts["posture_cues"] += 1
             if e.type != "frame":
                 self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep")})
         out: list[Event] = []
@@ -152,7 +164,12 @@ class CoachSession:
             "mode": self.mode,
             "t_start": self.t_start,
             "t_end": t if t is not None else self.t_end,
-            "camera": dict(self.counts),
+            "camera": {
+                **self.counts,
+                **self.measures,
+                "coverage_pct": round(100 * self.counts["verified"] / self.counts["reps_total"]) if self.counts["reps_total"] else None,
+                "active_s": round((self.t_end or 0) - (self.t_start or 0), 1) if self.t_start is not None else 0,
+            },
             "told_us": {**self.checkin, **self.feedback},
             "exertion": self.exertion.state,
             "coach": {"label": LABEL, "notes": notes, "decisions": len(self.decisions)},

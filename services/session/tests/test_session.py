@@ -63,3 +63,21 @@ def test_pause_resume_and_summary(tmp_path):
     assert any(n["confidence"] in ("high", "medium") for n in summ["coach"]["notes"])
     assert summ["flags"] and summ["flags"][0]["rule"] == "lean"
     assert summ["exertion"]["method"] == "behavioural"
+
+
+def test_summary_carries_task_measurements(tmp_path):
+    s = make(mode="nhpt", tmp_path=tmp_path)
+    s.on_events([make_event("nhpt_start", t=1.0)], snapshot={}, t=1.0)
+    s.on_events([make_event("nhpt_complete", t=42.0, total_s=41.2, splits_s=[4.0, 5.0], pegs=[])], snapshot={}, t=42.0)
+    cam = s.summary(t=43.0)["camera"]
+    assert cam["nhpt_total_s"] == 41.2 and cam["splits_s"] == [4.0, 5.0] and cam["active_s"] == 42.0
+    c = make(mode="cup", tmp_path=tmp_path)
+    c.on_events([make_event("reach_complete", t=5.0, to_dot=1, from_dot=0, verified=True, reason=None, reach_ms=1200, arc=1, phase="slow"),
+                 make_event("reach_complete", t=8.0, to_dot=2, from_dot=1, verified=False, reason="cup_occluded", reach_ms=900, arc=1, phase="slow")], snapshot={}, t=8.0)
+    cam = c.summary(t=9.0)["camera"]
+    assert cam["reach_ms"] == [1200, 900] and cam["reach_verified"] == [True, False] and cam["coverage_pct"] == 50
+    a = make(mode="arm", tmp_path=tmp_path)
+    a.on_events([make_event("rep_complete", t=5.0, set=1, rep=1, peak_deg=88.0, hold_s=3.1, verified=True, reason=None, lean=False, hike=False),
+                 make_event("compensation_lean", t=6.0, lean_deg=14, count=1, flagged=False)], snapshot={}, t=6.0)
+    cam = a.summary(t=7.0)["camera"]
+    assert cam["peak_deg"] == [88.0] and cam["peak_verified"] == [True] and cam["posture_cues"] == 1
