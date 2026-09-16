@@ -23,15 +23,23 @@ cd web && pnpm install && pnpm dev
 #    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
 #    Click Allow on the camera prompt, hold the printed NHPT sheet in view:
 #    the checklist turns Pass and "Continue to demonstration" unlocks.
+#    → http://localhost:5173/session?hand=left  runs the Nine-Hole Peg Test live.
+
+# 3. Replay mode (no webcam) — the judge fallback, identical pipeline
+cd services/session
+uv run python -m praxis_session.replay ../../evaluation/dataset_v0/synthetic_nhpt_01.mp4 --mode nhpt --quiet
+
+# 4. Regenerate every evaluation number
+uv run python ../../evaluation/scripts/make_dataset_v0.py && uv run python ../../evaluation/scripts/eval.py
 ```
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
-## Status (Phase 0–1, 16 Sep 2026)
+## Status (Phase 0–2, 16 Sep 2026)
 
-Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks (lighting, steadiness, task area, motion-based presence fallback), perception-loss events, and wireframe screen 05 (Camera setup) with the gated checklist. Nothing has been verified on a real recording yet. See `docs/TECHNICAL_REPORT.md` §2.1 for what is real, `docs/RISKS.md`, and `docs/PLAN.md` for the phase checklist.
+Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks, perception-loss events, wireframe screen 05 (Camera setup), **and the full Nine-Hole Peg Test**: canonical board warp → cached Hough holes → HSV/contour peg occupancy → six-state peg FSM → timer from first lift to ninth seat with per-peg splits, streamed as `frame` + FSM events, drawn on screen 07 (live NHPT with board view, controls, trace) and summarised on the assessment result. Replay mode plays a recorded clip through the identical pipeline. `evaluation/` regenerates rep F1 and NHPT MAE (1.0 and 0.0 s on the synthetic clip — pipeline validation only). **Nothing has been verified on a real recording yet.** See `docs/TECHNICAL_REPORT.md` §2.1, `docs/RISKS.md`, `docs/PLAN.md`.
 
-Not started: NHPT board state and timing (Phase 2), hand and pose models (3, 5), Waiter – cup (4), avatar (6), exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), evaluation (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
+Not started: hand model (Phase 3), Waiter – cup (4), pose + Arm to the front (5), avatar (6), exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), real dataset (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout
 ```

@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–1 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **Phase 0–2 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
@@ -20,7 +20,13 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Pipeline `calibrate` mode, perception-lost/regained events | built, tested |
 | Web: shell, tokens (light/dark), primitives, webcam → WS hook, Live indicator | built, tested |
 | Web screen 05 Camera setup with gated checklist and overlay | built, tested; manual browser check done without camera permission |
-| NHPT board state, peg FSM, timer; hand; cup; pose; avatar; exertion; stop rules; coach; trace; store; other screens | not started (Phases 2–8) |
+| Board state (warp, cached Hough holes, HSV/contour occupancy, masked template score, free pegs) | built, tested on synthetic frames |
+| Peg FSM (six states, debounce, wrong hole, drop) and NHPT timer with splits | built, tested on scripted observations |
+| Pipeline `nhpt` mode: `frame` events with overlay geometry + FSM/NHPT events; FSM frozen on perception loss | built, tested |
+| Replay mode (`python -m praxis_session.replay`) | built, tested on the synthetic clip |
+| Web screen 07 Live NHPT (overlay, board view, elapsed, dots, captions, controls, trace) + assessment result | built, tested |
+| Evaluation dataset_v0 (synthetic) + scorer (rep F1, NHPT MAE) | built; **no real recordings yet** |
+| Hand; cup; pose; avatar; exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 3–8) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
 ## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
@@ -36,7 +42,15 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 ### 3.3 Pipeline and events
 `pipeline.py` composes calibration and quality per frame into `calibration`, `quality`, `setup_checks` events (validated against `events.schema.json`). Five consecutive uncalibrated frames after a calibrated one emit `perception_lost` (with missing ids); recovery emits `perception_regained`. One pipeline per WebSocket connection; frames are dropped after processing.
 
-### 3.4 Board state, peg FSM, NHPT timing — Phase 2 (not started)
+### 3.4 Board state (warp, Hough holes, HSV pegs, masked template)
+`perception/board.py`. `cv2.warpPerspective` maps the frame through the calibration homography to a canonical 3 px/mm top-down view of a 140 mm square around the hole grid. Holes are found once with `cv2.HoughCircles` and cached; each circle is snapped to the nearest expected hole (≤ 4 mm) and any hole Hough misses falls back to the spec position (`hole_source` = hough | mixed | spec is reported in every event). Pegs are segmented in HSV (`cv2.inRange`, S ≥ 90, V ≥ 60, morphological open) and blobbed with `cv2.findContours`; occupancy per hole is the fraction of peg mask inside the hole disc (≥ 0.35 → occupied), and a masked `cv2.matchTemplate` (TM_CCORR_NORMED) score against a synthetic empty-hole template is logged alongside. Free pegs (blobs not in any hole) are reported in mm. **Limitation:** the HSV range assumes saturated pegs on a white sheet and printed holes are flat rings; both must be re-tuned on the physical board (Phase 2 real recording, still pending).
+
+### 3.4.1 Peg FSM and NHPT timing
+`perception/peg_fsm.py`: `at_source → grasped → in_transit → over_target → seated → hand_clear`. Occupancy is debounced (N consecutive frames). Grasp = a free peg disappears; in-transit = a free peg or the hand is > 20 mm from where it was picked up; over-target = a free peg or hand within 10 mm of an empty hole; seated = a hole becomes occupied; hand-clear = hand > 25 mm from the hole (or, without hand landmarks, no free peg within 15 mm for `clear_frames`). Events: `state_change`, `rep_complete` (with grasp/seat/clear timestamps), `wrong_hole`, `drop` (a free peg stationary for 1.5 s without hand data, 0.3 s when the hand is visibly away). Hand landmarks are optional inputs today (Phase 3).
+`perception/nhpt.py` runs the FSM in any-hole mode: the timer starts at the first `grasped` transition and stops at the ninth `seated`; per-peg splits are seated-to-seated. The FSM keeps running after completion so the final `rep_complete` still fires.
+
+### 3.4.2 Pipeline, events, replay
+`pipeline.py` mode `nhpt` emits one `frame` event per frame (calibrated flag, NHPT snapshot, occupancy, hole/marker geometry in frame pixels, suggested next hole) plus every FSM/NHPT event; the FSM is not stepped while uncalibrated, and the Phase 1 perception-lost/regained logic applies. `replay.py` drives the identical pipeline from a video with timestamps from the file fps, so results are deterministic.
 ### 3.5 Hand (ONNX via `cv2.dnn`) — Phase 3 (not started; license recorded before download)
 ### 3.6 Waiter – cup — Phase 4 (not started)
 ### 3.7 Pose and Arm to the front — Phase 5 (not started)
@@ -49,7 +63,10 @@ Phase 7: rule-based coach labeled "Rule-based coach · LLM agent pending"; W6: S
 Deferred to W6. `PRAXIS_CLOUD_ENABLED` (default 0) gates every cloud call.
 
 ## 6. Evaluation
-Phase 9. Metrics: rep F1, NHPT MAE, reach-time MAE, angle error vs goniometer app, compensation detection rate, event-to-cue latency p50/p95, scripted coach scenarios, SUS. No numbers yet.
+Metrics: rep F1, NHPT MAE, reach-time MAE, angle error vs goniometer app, compensation detection rate, event-to-cue latency p50/p95, scripted coach scenarios, SUS.
+
+### 6.1 dataset_v0 (16 Sep 2026) — synthetic only
+`evaluation/results/dataset_v0.md`, regenerated by `evaluation/scripts/eval.py`. One OpenCV-rendered NHPT clip (perspective tilt/yaw, Gaussian noise, mp4v, scrambled hole order). Rep F1 = 1.0 (9/9), NHPT absolute error = 0.0 s. **These numbers validate the replay pipeline, not real-world accuracy**: no real lighting, hands, shadows or pegs are involved. Real recordings (first NHPT run on the printed sheet, then 300+ reps / ≥ 5 participants) are Phase 2's open item and Phase 9's work.
 
 ## 7. COOL benchmark
 W6.
@@ -58,7 +75,7 @@ W6.
 Video processed in memory only; never stored by default. Only events, metrics, logs leave the device. Clips only with explicit consent, 30-day deletion. Feeling is self-reported, never read from the face; face analysis limited to presence.
 
 ## 9. Limitations and honest scope
-Exercise ceiling: NHPT, Waiter – cup, Arm to the front. Angles are camera-relative progress, not goniometry. Everything so far is validated on synthetic renders only.
+Exercise ceiling: NHPT, Waiter – cup, Arm to the front. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
 
 ## 10. Reproducibility
 Every number in §6–7 will be regenerated by scripts in `evaluation/` and `benchmark/`.
