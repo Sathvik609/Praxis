@@ -97,7 +97,8 @@ class CoachSession:
         for e in events:
             if e.type in ("rep_complete", "reach_complete"):
                 self.counts["reps_total"] += 1
-                self.counts["verified" if e.payload.get("verified") else "unverified"] += 1
+                # NHPT rep_complete carries no `verified` flag: occupancy is the verification.
+                self.counts["verified" if e.payload.get("verified", True) else "unverified"] += 1
             if e.type == "reach_complete":
                 self.measures.setdefault("reach_ms", []).append(e.payload.get("reach_ms"))
                 self.measures.setdefault("reach_verified", []).append(bool(e.payload.get("verified")))

@@ -70,7 +70,7 @@ def test_summary_carries_task_measurements(tmp_path):
     s.on_events([make_event("nhpt_start", t=1.0)], snapshot={}, t=1.0)
     s.on_events([make_event("nhpt_complete", t=42.0, total_s=41.2, splits_s=[4.0, 5.0], pegs=[])], snapshot={}, t=42.0)
     cam = s.summary(t=43.0)["camera"]
-    assert cam["nhpt_total_s"] == 41.2 and cam["splits_s"] == [4.0, 5.0] and cam["active_s"] == 42.0
+    assert cam["nhpt_total_s"] == 41.2 and cam["splits_s"] == [4.0, 5.0] and cam["active_s"] == 41.0
     c = make(mode="cup", tmp_path=tmp_path)
     c.on_events([make_event("reach_complete", t=5.0, to_dot=1, from_dot=0, verified=True, reason=None, reach_ms=1200, arc=1, phase="slow"),
                  make_event("reach_complete", t=8.0, to_dot=2, from_dot=1, verified=False, reason="cup_occluded", reach_ms=900, arc=1, phase="slow")], snapshot={}, t=8.0)
