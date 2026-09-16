@@ -139,7 +139,7 @@ export function LiveNhpt() {
               <span>
                 <b>{pegsDone} of 9</b> seated
               </span>
-              <span className="text-muted">{nextHole != null ? `next: hole ${nextHole + 1}` : 'board full'}</span>
+              <span className="text-muted">{nextHole != null ? `next: hole ${nextHole + 1}` : frame ? 'board full' : 'waiting for the board'}</span>
             </div>
             <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
           </div>
