@@ -34,3 +34,6 @@ services/session/data/
 # local store (edge mode)
 services/session/praxis.db
 services/session/*.db
+
+# per-session decision traces (kept locally; sample traces are added deliberately)
+traces/*.jsonl
