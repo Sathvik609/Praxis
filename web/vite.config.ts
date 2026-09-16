@@ -8,7 +8,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/ws': { target: 'ws://127.0.0.1:8000', ws: true, rewrite: (p) => p.replace(/^\/ws/, '') },
-      '/api': { target: 'http://127.0.0.1:8000', rewrite: (p) => p.replace(/^\/api/, '') },
+      '/api': { target: 'http://127.0.0.1:8000' },
+      '/health': { target: 'http://127.0.0.1:8000' },
+      '/events': { target: 'http://127.0.0.1:8000' },
     },
   },
   test: {
