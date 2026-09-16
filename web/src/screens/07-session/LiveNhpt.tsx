@@ -9,6 +9,8 @@ import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { BoardView } from './BoardView'
+import { browserSpeak, useCoach } from '../../session/useCoach'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
 
@@ -29,12 +31,14 @@ export function LiveNhpt() {
   const nav = useNavigate()
   const hand = sp.get('hand') ?? 'left'
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, events, error, start, stop, videoRef } = useWebcamStream({
+  const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
   })
   const [traceOpen, setTraceOpen] = useState(false)
+  const [painOpen, setPainOpen] = useState(false)
+  const coach = useCoach(events, { speak: browserSpeak })
   const [reference, setReference] = useState<'avatar' | 'board'>('board')
 
   useEffect(() => {
@@ -146,16 +150,19 @@ export function LiveNhpt() {
           </div>
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
-            <p className="text-2xl">{caption(frame, lost)}</p>
-            <div className="mt-2 text-sm text-muted">Rule-based captions · coach pending (Phase 7)</div>
+            <p className="text-2xl">{coach.caption?.text ?? caption(frame, lost)}</p>
+            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
+          <ExertionChip exertion={coach.exertion} />
         </div>
       </div>
 
+      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
-        onPause={() => stop()}
-        onRest={() => stop()}
-        onPain={() => finish(true)}
+        onPause={() => send({ cmd: 'pause' })}
+        onRest={() => send({ cmd: 'pause' })}
+        onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}
         onToggleTrace={() => setTraceOpen((v) => !v)}

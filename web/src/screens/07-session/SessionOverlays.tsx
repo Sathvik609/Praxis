@@ -1,0 +1,65 @@
+import { useState } from 'react'
+import { Button } from '../../design/Button'
+import { Chip } from '../../design/Chip'
+import { NumberScale } from '../../design/NumberScale'
+import { Overlay } from '../../design/Overlay'
+import type { ExertionState, Overlay as OverlayState } from '../../session/useCoach'
+
+const RULE_TITLE: Record<string, string> = {
+  perception: 'Tracking lost',
+  lean: 'Paused · posture',
+  failed_reps: 'Paused · let’s check the setup',
+  patient: 'Paused',
+  pain: 'Session ended · pain at stop level',
+  symptoms: 'Session ended · new symptoms',
+  exertion: 'Rest break',
+}
+
+/** In-session states from wireframe 08b: frozen session behind a high-contrast panel. */
+export function SessionOverlay({ overlay, onResume, onEnd }: { overlay: OverlayState | null; onResume: () => void; onEnd: () => void }) {
+  if (!overlay) return null
+  const title = RULE_TITLE[overlay.rule] ?? (overlay.kind === 'stopped' ? 'Session ended' : 'Paused')
+  return (
+    <Overlay open title={title}>
+      <p className="mt-3 text-2xl">{overlay.text}</p>
+      {overlay.kind === 'stopped' ? (
+        <>
+          <p className="mt-2 text-muted">Your progress so far is saved. Your therapist is flagged and will see this session.</p>
+          <div className="mt-6 flex justify-end"><Button onClick={onEnd}>Save and continue</Button></div>
+        </>
+      ) : (
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onEnd}>End session</Button>
+          <Button onClick={onResume}>{overlay.kind === 'rest' ? 'Rested — continue' : 'Resume'}</Button>
+        </div>
+      )}
+    </Overlay>
+  )
+}
+
+/** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. */
+export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmit: (pain: number) => void; onCancel: () => void }) {
+  const [pain, setPain] = useState<number | null>(null)
+  if (!open) return null
+  return (
+    <Overlay open title="How is the pain right now?">
+      <p className="mt-2 text-muted">Pain at or above 5 ends the session and flags your therapist. Take your time.</p>
+      <div className="mt-5"><NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" /></div>
+      <div className="mt-6 flex justify-end gap-3">
+        <Button variant="secondary" onClick={onCancel}>Back to session</Button>
+        <Button disabled={pain === null} onClick={() => pain !== null && onSubmit(pain)}>Send to coach</Button>
+      </div>
+    </Overlay>
+  )
+}
+
+export function ExertionChip({ exertion }: { exertion: ExertionState | null }) {
+  const level = exertion?.level ?? 'low'
+  const tone = level === 'high' ? 'red' : level === 'moderate' ? 'amber' : 'mint'
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3">
+      <Chip tone={tone}>Exertion: {level}</Chip>
+      <span className="text-sm text-muted">behavioural index{exertion?.reasons.length ? ` · ${exertion.reasons.join(' · ')}` : ' · no signs yet'}</span>
+    </div>
+  )
+}

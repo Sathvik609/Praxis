@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–6 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **Phase 0–7 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
@@ -30,7 +30,10 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Waiter – cup: cup base segmentation on the target sheet, reach FSM with verified/unverified reaches, arcs and explicit phase switch, pipeline `cup` mode, WS commands, screen 07b + report, synthetic clip + reach metrics | built, tested on synthetic frames (reach F1 1.0, reach MAE 0 ms — pipeline validation only) |
 | Arm to the front: OpenCV Zoo person + BlazePose via `cv2.dnn`, One-Euro-smoothed shoulder angle, trunk lean, shoulder hike, arm FSM with hold timing and ceiling clamp, pipeline `arm` mode, screen 07c + report, landmark replay + evaluation | built; FSM/angles tested on synthetic landmark streams (rep F1 1.0, peak MAE < 1°); live model check pending a person in front of the webcam |
 | Avatar: procedural Three.js mannequin, keyframed clips (idle, NHPT, cup, arm front), cue layer, markers; Home body map (02), Demonstration (06), reference panels in 07/07b/07c | built; rig/sampler unit-tested, scene checked in Chrome |
-| Exertion; stop rules; coach; trace decisions; store; other screens | not started (Phases 7–8) |
+| Prescription clamps, behavioural exertion index, hard-coded stop rules (pain, symptoms, lean, failed reps, exertion, perception loss) with therapist flags | built, tested |
+| Rule-based coach behind the Coach interface (six actions, evidence ids, tool names), JSON decision trace, `/api/trace`, session summary | built, tested; labeled "Rule-based coach · LLM agent pending" |
+| Web: captioned + spoken cues, progression prompt from coach events, paused/stopped/rest overlays, pain check, exertion chip, decision trace panel | built, tested |
+| Store; sign-in; check-in; choose exercise; feedback; full report; progress; therapist; settings; replay UI | not started (Phase 8) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
 ## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
@@ -69,7 +72,13 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 `web/src/avatar/`: a ten-joint rig with a rest pose and forward kinematics (`rig.ts`), keyframed clips per exercise with step captions (`clips.ts`: idle loop, NHPT pinch-carry-seat loop, Waiter – cup five steps, Arm to the front lift-hold-lower, front or side camera), and a sampler with smooth interpolation (`sampler.ts`), all pure TypeScript and unit-tested. `AvatarScene.tsx` renders the rig with Three.js primitives (capsules, spheres, stage disc, three-point light, aqua material) and a cue layer: a mint tube along the exercise's ideal path, an amber ring on the current target joint, coloured joint dots with HTML text labels for Focus / Watch / Stable markers. `AvatarPanel` adds Play / Replay / Slower / Close-up / Captions and the fixed label "Reference only. Your reps are verified from the camera." The same figure appears on Home (body map with markers from the prescription and camera metrics, illustrative seed data until Phase 8), Demonstration, and the live reference panels. There is no live pose mirroring and the avatar plays no part in verification.
 
 ## 4. Coach
-Phase 7: rule-based coach labeled "Rule-based coach · LLM agent pending"; W6: Strands agent on Bedrock behind the same interface. Actions `instruct | correct | progress | regress | rest | stop`; guardrails in code; every decision logged event → decision → tool → action.
+Two implementations share `coach/base.py`: the deterministic `RuleCoach` (shipped, labeled "Rule-based coach · LLM agent pending" in every decision and on screen) and, in W6, a Strands agent on Bedrock. Actions are restricted to `instruct | correct | progress | regress | rest | stop`; a `Decision` must cite the perception event ids it was made from, and the tool functions carry the names the agent will bind (`get_events`, `get_exertion_state`, `get_prescription`, `read_patient_model`, `write_session_summary`, `speak`).
+
+**Order of operations per frame** (`session.py`): perception events → behavioural exertion update → **stop rules** (`stop_rules.py`: pain ≥ 5, new/worse symptoms at check-in, trunk lean flagged three times, three consecutive unverified reps, exertion high for 60 s, perception loss) → coach (silent while stopped or paused) → trace. Every stop/pause/rest that a clinician should see also writes a `therapist_flag`. The rule coach's progression proposal (fast arcs) is only made when the prescription's `allowed_adaptations.cup.fast_arcs` is true and the last arc had at most one unverified reach; it is a prompt the patient answers, and the phase changes only on "Yes". Its regression (hold 3 s → 2 s after three lean events) is clamped by `prescription.clamp`. Instructions are rate-limited to one per 2.5 s; corrections always pass.
+
+**Trace** (`trace.py`): JSON lines per session under `traces/<id>.jsonl` with kinds `session, checkin, event, stop_rule, flag, decide, tool, action, answer, pain, rpe, pause, resume, feedback`; `/api/trace?session=` returns the tail and the live-session "Show trace" panel renders decide → tool → action lines under each perception event. Speech is a `speak` event captioned on screen (≥ 24 px) and voiced by the browser's SpeechSynthesis until Polly (W6).
+
+**Exertion** (`exertion.py`) is a behavioural index only (rep-time slope, falling peak angles, tremor share, last RPE), labeled `method: behavioural` everywhere it appears.
 
 ## 5. AWS deployment
 Deferred to W6. `PRAXIS_CLOUD_ENABLED` (default 0) gates every cloud call.

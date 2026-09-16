@@ -118,6 +118,8 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
 
     let raf = 0
     let lastProject = 0
+    let frames = 0
+    const dbg = (window as unknown as { __avatarDebug?: Record<string, unknown> })
     const tmp = new THREE.Vector3()
     const up = new THREE.Vector3(0, 1, 0)
     const render = () => {
@@ -161,9 +163,12 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
       const focus = p.closeUp && p.clip.targetJoint ? v(pos[p.clip.targetJoint]) : new THREE.Vector3(0, 1.28, 0)
       const dist = p.closeUp ? 1.5 : 2.7
       const target = p.camera === 'side' ? new THREE.Vector3(dist, focus.y + 0.05, 0.15) : new THREE.Vector3(0.1, focus.y + 0.08, dist)
-      cam.position.lerp(target, 0.12)
+      if (frames === 0) cam.position.copy(target)
+      else cam.position.lerp(target, 0.12)
       cam.lookAt(focus)
       renderer.render(scene, cam)
+      frames += 1
+      dbg.__avatarDebug = { frames, cam: cam.position.toArray(), target: target.toArray(), size: [el.clientWidth, el.clientHeight], aspect: cam.aspect }
       const now = performance.now()
       if (p.onProject && now - lastProject > 100) {
         lastProject = now

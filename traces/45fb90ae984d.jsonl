@@ -1,0 +1,9 @@
+{"mode": "cup", "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1789597378.991034, "session": "45fb90ae984d", "kind": "session"}
+{"type": "state_change", "id": 19, "t": 1789597379.0164511, "seq": 2, "ts": 1789597379.022656, "session": "45fb90ae984d", "kind": "event"}
+{"type": "state_change", "id": 23, "t": 1789597379.0382552, "to_dot": 1, "seq": 3, "ts": 1789597379.043882, "session": "45fb90ae984d", "kind": "event"}
+{"type": "state_change", "id": 24, "t": 1789597379.0382552, "to_dot": 1, "seq": 4, "ts": 1789597379.044037, "session": "45fb90ae984d", "kind": "event"}
+{"type": "state_change", "id": 26, "t": 1789597379.0452108, "seq": 5, "ts": 1789597379.051583, "session": "45fb90ae984d", "kind": "event"}
+{"type": "reach_complete", "id": 27, "t": 1789597379.0452108, "rep": 1, "to_dot": 1, "verified": true, "reason": null, "arc": 1, "seq": 6, "ts": 1789597379.051692, "session": "45fb90ae984d", "kind": "event"}
+{"type": "state_change", "id": 28, "t": 1789597379.0452108, "seq": 7, "ts": 1789597379.051734, "session": "45fb90ae984d", "kind": "event"}
+{"action": "instruct", "cue_id": "cup_onto_dot", "reason": "verified reach", "evidence": [27], "label": "Rule-based coach \u00b7 LLM agent pending", "seq": 8, "ts": 1789597379.051778, "session": "45fb90ae984d", "kind": "decide"}
+{"kind": "action", "text": "Onto dot 2 \u2014 good. Let your hand come back to your lap before the next reach.", "ui": {"avatar_clip": "cup"}, "seq": 9, "ts": 1789597379.051808, "session": "45fb90ae984d"}

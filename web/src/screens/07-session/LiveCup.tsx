@@ -9,6 +9,8 @@ import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { ProgressionPrompt } from './ProgressionPrompt'
+import { browserSpeak, useCoach } from '../../session/useCoach'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
 
@@ -36,6 +38,8 @@ export function LiveCup() {
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
   const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params })
   const [traceOpen, setTraceOpen] = useState(false)
+  const [painOpen, setPainOpen] = useState(false)
+  const coach = useCoach(events, { speak: browserSpeak })
   const [whyOpen, setWhyOpen] = useState(false)
   const [declined, setDeclined] = useState(false)
 
@@ -52,7 +56,7 @@ export function LiveCup() {
   })()
   const lastArc = [...events].reverse().find((e) => e.type === 'arc_complete') as ArcComplete | undefined
   const complete = events.find((e) => e.type === 'cup_complete') as CupComplete | undefined
-  const showPrompt = !!cup?.awaiting_phase && cup.phase === 'slow' && !declined
+  const showPrompt = (!!coach.prompt || (!!cup?.awaiting_phase && cup.phase === 'slow')) && !declined
 
   const finish = (endedEarly: boolean) => {
     stop()
@@ -107,9 +111,10 @@ export function LiveCup() {
           </div>
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
-            <p className="text-2xl">{caption(frame, lost)}</p>
-            <div className="mt-2 text-sm text-muted">Rule-based captions · coach pending (Phase 7)</div>
+            <p className="text-2xl">{coach.caption?.text ?? caption(frame, lost)}</p>
+            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
+          <ExertionChip exertion={coach.exertion} />
         </div>
 
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
@@ -125,8 +130,8 @@ export function LiveCup() {
           {showPrompt && (
             <ProgressionPrompt
               reason={`Two clean slow arcs${lastArc?.mean_reach_ms ? `, mean reach ${(lastArc.mean_reach_ms / 1000).toFixed(1)} s` : ''}${lastArc?.unverified ? `, ${lastArc.unverified} unverified` : ', no unverified reaches'}.`}
-              onAccept={() => send({ cmd: 'set_phase', phase: 'fast' })}
-              onDecline={() => setDeclined(true)}
+              onAccept={() => { send(coach.prompt ? { cmd: 'answer', prompt: coach.prompt.id, choice: 'Yes, go faster' } : { cmd: 'set_phase', phase: 'fast' }); coach.dismissPrompt() }}
+              onDecline={() => { if (coach.prompt) send({ cmd: 'answer', prompt: coach.prompt.id, choice: 'Keep pace' }); coach.dismissPrompt(); setDeclined(true) }}
               onWhy={() => setWhyOpen((v) => !v)}
               whyOpen={whyOpen}
             />
@@ -143,10 +148,12 @@ export function LiveCup() {
         </div>
       </div>
 
+      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
-        onPause={() => stop()}
-        onRest={() => stop()}
-        onPain={() => finish(true)}
+        onPause={() => send({ cmd: 'pause' })}
+        onRest={() => send({ cmd: 'pause' })}
+        onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}
         onToggleTrace={() => setTraceOpen((v) => !v)}

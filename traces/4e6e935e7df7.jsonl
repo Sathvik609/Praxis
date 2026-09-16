@@ -1,0 +1,4 @@
+{"mode": "calibrate", "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1789597410.160095, "session": "4e6e935e7df7", "kind": "session"}
+{"type": "calibration", "id": 6978, "t": 1789597410.160751, "seq": 2, "ts": 1789597410.162504, "session": "4e6e935e7df7", "kind": "event"}
+{"type": "quality", "id": 6979, "t": 1789597410.160751, "seq": 3, "ts": 1789597410.1625779, "session": "4e6e935e7df7", "kind": "event"}
+{"type": "setup_checks", "id": 6980, "t": 1789597410.160751, "seq": 4, "ts": 1789597410.162614, "session": "4e6e935e7df7", "kind": "event"}

@@ -8,6 +8,8 @@ import type { PraxisEvent } from '../../lib/events'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
+import { browserSpeak, useCoach } from '../../session/useCoach'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
 
@@ -33,8 +35,10 @@ export function LiveArm() {
   const nav = useNavigate()
   const side = sp.get('side') ?? 'left'
   const params = useMemo(() => ({ sheet: 'none', side }), [side])
-  const { camActive, events, error, start, stop, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params })
+  const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params })
   const [traceOpen, setTraceOpen] = useState(false)
+  const [painOpen, setPainOpen] = useState(false)
+  const coach = useCoach(events, { speak: browserSpeak })
 
   useEffect(() => {
     void start()
@@ -128,16 +132,19 @@ export function LiveArm() {
           </div>
           <div className={`rounded-2xl border-l-8 p-6 ${leanRecent ? 'border-amber bg-amber/10' : 'border-teal bg-mint/10'}`}>
             <div className="text-muted">Coach{leanRecent ? ' · posture' : ''}</div>
-            <p className="text-2xl">{caption(frame, lost, leanRecent)}</p>
-            <div className="mt-2 text-sm text-muted">Rule-based captions · coach pending (Phase 7)</div>
+            <p className="text-2xl">{coach.caption?.text ?? caption(frame, lost, leanRecent)}</p>
+            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
+          <ExertionChip exertion={coach.exertion} />
         </div>
       </div>
 
+      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
-        onPause={() => stop()}
-        onRest={() => stop()}
-        onPain={() => finish(true)}
+        onPause={() => send({ cmd: 'pause' })}
+        onRest={() => send({ cmd: 'pause' })}
+        onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}
         onToggleTrace={() => setTraceOpen((v) => !v)}
