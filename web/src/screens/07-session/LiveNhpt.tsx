@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
@@ -10,6 +10,8 @@ import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { BoardView } from './BoardView'
 import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useSessionFlow } from '../../session/useSessionFlow'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -28,10 +30,9 @@ function caption(f: FrameEvent | null, lost: boolean): string {
  *  peg lift and stops at the ninth seated peg; reps are verified from OpenCV events only. */
 export function LiveNhpt() {
   const [sp] = useSearchParams()
-  const nav = useNavigate()
   const hand = sp.get('hand') ?? 'left'
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({
+  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
@@ -39,6 +40,7 @@ export function LiveNhpt() {
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
+  const flow = useSessionFlow(events, send, stop, connected)
   const [reference, setReference] = useState<'avatar' | 'board'>('board')
 
   useEffect(() => {
@@ -54,9 +56,7 @@ export function LiveNhpt() {
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
 
   const finish = (endedEarly: boolean) => {
-    stop()
-    nav('/report', {
-      state: {
+    flow.finish({
         kind: 'nhpt',
         hand,
         total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,
@@ -64,8 +64,7 @@ export function LiveNhpt() {
         pegs: complete?.pegs ?? [],
         pegs_done: frame?.nhpt?.pegs_done ?? 0,
         ended_early: endedEarly,
-      },
-    })
+      })
   }
 
   useEffect(() => {
@@ -157,6 +156,7 @@ export function LiveNhpt() {
         </div>
       </div>
 
+      <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls

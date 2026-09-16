@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
@@ -9,6 +9,8 @@ import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useSessionFlow } from '../../session/useSessionFlow'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -32,13 +34,13 @@ function caption(f: FrameEvent | null, lost: boolean, lean: boolean): string {
  *  measures the shoulder angle and watches for leaning. Angles are relative progress. */
 export function LiveArm() {
   const [sp] = useSearchParams()
-  const nav = useNavigate()
   const side = sp.get('side') ?? 'left'
   const params = useMemo(() => ({ sheet: 'none', side }), [side])
-  const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params })
+  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
+  const flow = useSessionFlow(events, send, stop, connected)
 
   useEffect(() => {
     void start()
@@ -57,13 +59,10 @@ export function LiveArm() {
   const reps = events.filter((e) => e.type === 'rep_complete') as RepComplete[]
 
   const finish = (endedEarly: boolean) => {
-    stop()
-    nav('/report', {
-      state: {
+    flow.finish({
         kind: 'arm', side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
         lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
-      },
-    })
+      })
   }
   useEffect(() => {
     if (complete) finish(false)
@@ -139,6 +138,7 @@ export function LiveArm() {
         </div>
       </div>
 
+      <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls

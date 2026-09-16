@@ -49,8 +49,8 @@ test('progression prompt appears when awaiting phase and sends the command', () 
   expect(send).toHaveBeenCalledWith({ cmd: 'set_phase', phase: 'fast' })
 })
 
-test('completion navigates to the report', () => {
+test('completion opens the feedback overlay', () => {
   mockStream([frame, { type: 'cup_complete', t: 12, id: 3, arcs: 4, reaches: [] }])
   renderAt('/session?exercise=cup&side=left')
-  expect(screen.getByText('REPORT PAGE')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })

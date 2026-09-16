@@ -61,5 +61,18 @@ test('tracking lost badge after perception_lost', () => {
 test('navigates to the report when the test completes', () => {
   mockStream([frame, { type: 'nhpt_complete', t: 12, id: 3, total_s: 41.2, splits_s: [4, 5], pegs: [] }])
   renderAt('/session?hand=left')
-  expect(screen.getByText('REPORT PAGE')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
+})
+
+test('feedback acknowledgement navigates to the persisted report', () => {
+  mockStream([frame, { type: 'command', t: 13, id: 4, cmd: 'feedback', ok: true, summary: { session_id: 'sid42' } }])
+  render(
+    <MemoryRouter initialEntries={['/session?hand=left']}>
+      <Routes>
+        <Route path="/session" element={<LiveNhpt />} />
+        <Route path="/report/:id" element={<div>REPORT sid42</div>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  expect(screen.getByText('REPORT sid42')).toBeInTheDocument()
 })

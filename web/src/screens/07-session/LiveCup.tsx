@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
@@ -10,6 +10,8 @@ import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { ProgressionPrompt } from './ProgressionPrompt'
 import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useSessionFlow } from '../../session/useSessionFlow'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -33,13 +35,13 @@ function caption(f: FrameEvent | null, lost: boolean): string {
  *  camera; the avatar (Phase 6) is a pacing reference only. */
 export function LiveCup() {
   const [sp] = useSearchParams()
-  const nav = useNavigate()
   const side = sp.get('side') ?? 'left'
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params })
+  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
+  const flow = useSessionFlow(events, send, stop, connected)
   const [whyOpen, setWhyOpen] = useState(false)
   const [declined, setDeclined] = useState(false)
 
@@ -59,13 +61,10 @@ export function LiveCup() {
   const showPrompt = (!!coach.prompt || (!!cup?.awaiting_phase && cup.phase === 'slow')) && !declined
 
   const finish = (endedEarly: boolean) => {
-    stop()
-    nav('/report', {
-      state: {
+    flow.finish({
         kind: 'cup', side, arcs: complete?.arcs ?? cup?.arcs_done ?? 0,
         reaches: complete?.reaches ?? [], ended_early: endedEarly,
-      },
-    })
+      })
   }
   useEffect(() => {
     if (complete) finish(false)
@@ -148,6 +147,7 @@ export function LiveCup() {
         </div>
       </div>
 
+      <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls

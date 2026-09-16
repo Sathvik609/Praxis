@@ -47,8 +47,8 @@ test('posture cue appears after a compensation_lean event', () => {
   expect(screen.getByText(/Sit tall/)).toBeInTheDocument()
 })
 
-test('completion navigates to the report', () => {
+test('completion opens the feedback overlay', () => {
   mockStream([frame, { type: 'arm_complete', t: 12, id: 3, sets: 2, reps: 16 }])
   renderAt('/session?exercise=arm&side=left')
-  expect(screen.getByText('REPORT PAGE')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })
