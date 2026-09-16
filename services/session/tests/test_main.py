@@ -48,3 +48,20 @@ def test_events_tail_lists_recent(client):
     r = client.get("/events?n=5")
     assert r.json()["count"] >= 1
     assert r.json()["events"][-1]["type"] == "heartbeat"
+
+
+def test_ws_calibrate_returns_setup_checks(client):
+    from praxis_session.perception.board_spec import NHPT_BOARD
+    from praxis_session.perception.synth import camera_frame
+
+    frame, _ = camera_frame(NHPT_BOARD)
+    _, buf = cv2.imencode(".jpg", frame)
+    with client.websocket_connect("/session?mode=calibrate&sheet=nhpt_board") as ws:
+        ws.send_bytes(buf.tobytes())
+        types = [ws.receive_json()["type"] for _ in range(3)]
+    assert types == ["calibration", "quality", "setup_checks"]
+
+
+def test_ws_bad_sheet(client):
+    with client.websocket_connect("/session?mode=calibrate&sheet=zzz") as ws:
+        assert ws.receive_json()["code"] == "bad_sheet"

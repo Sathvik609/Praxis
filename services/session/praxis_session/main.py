@@ -7,15 +7,17 @@ leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default of
 from __future__ import annotations
 
 import os
+import time
 
 import cv2
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from praxis_session.events import EventRing, make_event
+from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 
 CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
-MODES = {"heartbeat"}
+MODES = {"heartbeat", *PIPELINE_MODES}
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
 ring = EventRing()
@@ -44,12 +46,25 @@ def decode_jpeg(data: bytes) -> np.ndarray | None:
 
 
 @app.websocket("/session")
-async def session_ws(ws: WebSocket, mode: str = "heartbeat") -> None:
+async def session_ws(ws: WebSocket, mode: str = "heartbeat", sheet: str = "nhpt_board") -> None:
+    """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
+
+    One pipeline per connection; every event goes to the shared ring and back over the socket
+    as one JSON text message per event. Frames are decoded in memory and dropped.
+    """
     await ws.accept()
     if mode not in MODES:
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
         return
+    pipeline: SessionPipeline | None = None
+    if mode != "heartbeat":
+        try:
+            pipeline = SessionPipeline(mode=mode, sheet=sheet, ring=ring)  # type: ignore[arg-type]
+        except ValueError:
+            await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())
+            await ws.close()
+            return
     frame_index = 0
     try:
         while True:
@@ -58,14 +73,18 @@ async def session_ws(ws: WebSocket, mode: str = "heartbeat") -> None:
             if frame is None:
                 await ws.send_text(make_event("error", code="bad_frame").to_json())
                 continue
-            h, w = frame.shape[:2]
-            e = make_event(
-                "heartbeat",
-                frame_index=frame_index,
-                frame={"width": w, "height": h, "bytes": len(data)},
-            )
-            ring.append(e)
-            await ws.send_text(e.to_json())
+            if pipeline is None:
+                h, w = frame.shape[:2]
+                e = make_event(
+                    "heartbeat",
+                    frame_index=frame_index,
+                    frame={"width": w, "height": h, "bytes": len(data)},
+                )
+                ring.append(e)
+                await ws.send_text(e.to_json())
+            else:
+                for e in pipeline.process(frame, time.time(), frame_index):
+                    await ws.send_text(e.to_json())
             frame_index += 1
             del frame
     except WebSocketDisconnect:
