@@ -52,8 +52,11 @@ def camera_frame(
     pegs_mm: list[tuple[float, float]] | None = None,
     peg_bgr: tuple[int, int, int] = (40, 40, 220),
     peg_diameter_mm: float = 8.0,
+    cup_mm: tuple[float, float] | None = None,
+    cup_bgr: tuple[int, int, int] = (200, 90, 30),
+    cup_diameter_mm: float = 60.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return (BGR frame, H_true mm->px). Optional coloured peg discs at mm positions."""
+    """Return (BGR frame, H_true mm->px). Optional coloured peg discs and a blue cup base disc."""
     canon = sheet_canonical(spec, CANON_PX_PER_MM)
     if hide_marker is not None:
         cx, cy = spec.marker_centres_mm[hide_marker]
@@ -66,6 +69,10 @@ def camera_frame(
         for x, y in pegs_mm:
             c = (int(round(x * CANON_PX_PER_MM)), int(round(y * CANON_PX_PER_MM)))
             cv2.circle(canon_bgr, c, r, peg_bgr, -1, cv2.LINE_AA)
+    if cup_mm is not None:
+        r = int(round(cup_diameter_mm / 2 * CANON_PX_PER_MM))
+        c = (int(round(cup_mm[0] * CANON_PX_PER_MM)), int(round(cup_mm[1] * CANON_PX_PER_MM)))
+        cv2.circle(canon_bgr, c, r, cup_bgr, -1, cv2.LINE_AA)
     H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale)
     S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
     frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=(90, 90, 90))
