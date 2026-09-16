@@ -5,6 +5,7 @@ OpenCV cv2.__version__ == 5.0.0 (cv2.warpPerspective).
 from __future__ import annotations
 
 import math
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -73,3 +74,67 @@ def camera_frame(
         noise = rng.normal(0, noise_sigma, frame.shape)
         frame = np.clip(frame.astype(np.float32) + noise, 0, 255).astype(np.uint8)
     return frame, H_mm_px
+
+
+def write_nhpt_clip(
+    path: Path | str,
+    order: list[int],
+    fps: float = 10.0,
+    hold: int = 5,
+    seed: int = 1,
+    noise_sigma: float = 4.0,
+    size: tuple[int, int] = (640, 480),
+) -> dict:
+    """Render a scripted NHPT run with cv2.VideoWriter and return ground-truth labels.
+
+    Phases per transfer (each `hold` frames): source peg visible -> lifted -> over hole ->
+    seated -> next peg at source. Labels: reps[{rep, hole, t_lift, t_seated, t_clear}],
+    nhpt{t_start, t_end, total_s}. Synthetic: exercises the pipeline, not real accuracy.
+    """
+    from praxis_session.perception.board_spec import NHPT_BOARD
+
+    spec = NHPT_BOARD
+    src = (160.0, 148.5)
+    holes = spec.targets_mm
+    rng = np.random.default_rng(seed)
+    tilt, yaw = 15.0 + rng.uniform(-4, 4), 5.0 + rng.uniform(-4, 4)
+    w = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
+    assert w.isOpened(), path
+    i = 0
+    seated: list[int] = []
+    reps = []
+
+    def emit(pegs: list[tuple[float, float]], n: int) -> None:
+        nonlocal i
+        for _ in range(n):
+            frame, _ = camera_frame(
+                spec, size=size, tilt_deg=tilt, yaw_deg=yaw, noise_sigma=noise_sigma,
+                seed=int(rng.integers(0, 2**31)), pegs_mm=pegs,
+            )
+            w.write(frame)
+            i += 1
+
+    def pegs_of(extra: tuple[tuple[float, float], ...] = ()) -> list[tuple[float, float]]:
+        return [holes[k] for k in seated] + list(extra)
+
+    emit(pegs_of((src,)), hold)
+    for r, k in enumerate(order):
+        t_lift = i / fps
+        emit(pegs_of(), hold)
+        emit(pegs_of(((holes[k][0] + 5.0, holes[k][1]),)), hold)
+        t_seat = i / fps
+        seated.append(k)
+        emit(pegs_of(), hold)
+        emit(pegs_of((src,)), hold)
+        reps.append({"rep": r + 1, "hole": k, "t_lift": t_lift, "t_seated": t_seat, "t_clear": i / fps})
+    w.release()
+    return {
+        "fps": fps,
+        "frames": i,
+        "reps": reps,
+        "nhpt": {
+            "t_start": reps[0]["t_lift"],
+            "t_end": reps[-1]["t_seated"],
+            "total_s": round(reps[-1]["t_seated"] - reps[0]["t_lift"], 3),
+        },
+    }

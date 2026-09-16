@@ -46,7 +46,13 @@ def decode_jpeg(data: bytes) -> np.ndarray | None:
 
 
 @app.websocket("/session")
-async def session_ws(ws: WebSocket, mode: str = "heartbeat", sheet: str = "nhpt_board") -> None:
+async def session_ws(
+    ws: WebSocket,
+    mode: str = "heartbeat",
+    sheet: str = "nhpt_board",
+    debounce: int = 2,
+    clear: int = 3,
+) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
     One pipeline per connection; every event goes to the shared ring and back over the socket
@@ -60,7 +66,13 @@ async def session_ws(ws: WebSocket, mode: str = "heartbeat", sheet: str = "nhpt_
     pipeline: SessionPipeline | None = None
     if mode != "heartbeat":
         try:
-            pipeline = SessionPipeline(mode=mode, sheet=sheet, ring=ring)  # type: ignore[arg-type]
+            pipeline = SessionPipeline(
+                mode=mode,  # type: ignore[arg-type]
+                sheet=sheet,
+                ring=ring,
+                debounce_frames=debounce,
+                clear_frames=clear,
+            )
         except ValueError:
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())
             await ws.close()

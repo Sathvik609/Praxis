@@ -50,3 +50,51 @@ def test_bad_sheet_and_mode_raise():
         SessionPipeline(mode="calibrate", sheet="nope")
     with pytest.raises(ValueError):
         SessionPipeline(mode="nope", sheet="nhpt_board")  # type: ignore[arg-type]
+
+
+def _nhpt_frames():
+    """Synthetic frames for one full NHPT run: peg at source, lifted, seated per hole."""
+    from praxis_session.perception.board_spec import NHPT_BOARD as B
+
+    src = (160.0, 148.5)
+    holes = B.targets_mm
+    order = [4, 0, 8, 2, 6, 1, 7, 3, 5]
+    seated: list[int] = []
+    seq = []
+    seq.append([holes[k] for k in seated] + [src])
+    for k in order:
+        seq.append([holes[j] for j in seated])  # lifted
+        seq.append([holes[j] for j in seated] + [(holes[k][0] + 5, holes[k][1])])  # over hole
+        seated.append(k)
+        seq.append([holes[j] for j in seated])  # seated
+        seq.append([holes[j] for j in seated] + [src])  # next peg at source
+    return [camera_frame(NHPT_BOARD, pegs_mm=p)[0] for p in seq]
+
+
+def test_nhpt_mode_runs_a_full_test_from_synthetic_frames():
+    from praxis_session.schema import validate_event
+
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", debounce_frames=1, clear_frames=1)
+    evs = []
+    for i, f in enumerate(_nhpt_frames()):
+        evs += p.process(f, t=i * 0.5, frame_index=i)
+    for e in evs:
+        validate_event(e.to_dict())
+    types = _types(evs)
+    assert types[0] == "frame"
+    assert types.count("nhpt_complete") == 1 and types.count("rep_complete") == 9
+    fr = evs[0].to_dict()
+    assert fr["calibrated"] and len(fr["overlay"]["holes_px"]) == 9
+    assert fr["board"]["occupancy"]["hole_4"] == "empty"
+    snap = p.snapshot()
+    assert snap["mode"] == "nhpt" and snap["reps"] == 9 and snap["nhpt"]["completed"]
+    assert snap["nhpt"]["total_s"] > 0
+
+
+def test_nhpt_mode_freezes_fsm_when_uncalibrated():
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", debounce_frames=1, clear_frames=1)
+    bad, _ = camera_frame(NHPT_BOARD, hide_marker=0)
+    evs = p.process(bad, 0.0, 0)
+    d = evs[0].to_dict()
+    assert d["type"] == "frame" and d["calibrated"] is False and d["nhpt"]["state"] == "at_source"
+    assert d["overlay"]["holes_px"] == []

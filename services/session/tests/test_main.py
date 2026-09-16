@@ -65,3 +65,15 @@ def test_ws_calibrate_returns_setup_checks(client):
 def test_ws_bad_sheet(client):
     with client.websocket_connect("/session?mode=calibrate&sheet=zzz") as ws:
         assert ws.receive_json()["code"] == "bad_sheet"
+
+
+def test_ws_nhpt_returns_frame_event_first(client):
+    from praxis_session.perception.board_spec import NHPT_BOARD
+    from praxis_session.perception.synth import camera_frame
+
+    frame, _ = camera_frame(NHPT_BOARD, pegs_mm=[(160.0, 148.5)])
+    _, buf = cv2.imencode(".jpg", frame)
+    with client.websocket_connect("/session?mode=nhpt&sheet=nhpt_board") as ws:
+        ws.send_bytes(buf.tobytes())
+        msg = ws.receive_json()
+    assert msg["type"] == "frame" and msg["calibrated"] and msg["nhpt"]["mode"] == "nhpt"

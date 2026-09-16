@@ -2,7 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Praxis event",
   "type": "object",
-  "required": ["type", "t", "id"],
+  "required": [
+    "type",
+    "t",
+    "id"
+  ],
   "properties": {
     "type": {
       "enum": [
@@ -12,31 +16,150 @@
         "quality",
         "setup_checks",
         "perception_lost",
-        "perception_regained"
+        "perception_regained",
+        "frame",
+        "state_change",
+        "rep_complete",
+        "wrong_hole",
+        "drop",
+        "nhpt_start",
+        "nhpt_split",
+        "nhpt_complete"
       ]
     },
-    "t": {"type": "number"},
-    "id": {"type": "integer"},
-    "frame_index": {"type": "integer"},
-    "frame": {"type": "object", "required": ["width", "height", "bytes"]},
-    "code": {"type": "string"},
-    "sheet": {"type": "string"},
-    "calibrated": {"type": "boolean"},
-    "missing": {"type": "array", "items": {"type": "integer"}},
-    "rms_mm": {"type": ["number", "null"]},
-    "markers_px": {"type": "object"},
-    "targets_px": {"type": "array"},
-    "lighting": {"type": "object"},
-    "steadiness": {"type": "object"},
-    "presence": {"type": "object"},
-    "all_required_pass": {"type": "boolean"},
+    "t": {
+      "type": "number"
+    },
+    "id": {
+      "type": "integer"
+    },
+    "frame_index": {
+      "type": "integer"
+    },
+    "frame": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "bytes"
+      ]
+    },
+    "code": {
+      "type": "string"
+    },
+    "sheet": {
+      "type": "string"
+    },
+    "calibrated": {
+      "type": "boolean"
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "rms_mm": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "markers_px": {
+      "type": "object"
+    },
+    "targets_px": {
+      "type": "array"
+    },
+    "lighting": {
+      "type": "object"
+    },
+    "steadiness": {
+      "type": "object"
+    },
+    "presence": {
+      "type": "object"
+    },
+    "all_required_pass": {
+      "type": "boolean"
+    },
     "checks": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "status", "label"],
-        "properties": {"status": {"enum": ["pass", "check", "fail", "pending"]}}
+        "required": [
+          "id",
+          "status",
+          "label"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "pass",
+              "check",
+              "fail",
+              "pending"
+            ]
+          }
+        }
       }
+    },
+    "nhpt": {
+      "type": "object"
+    },
+    "board": {
+      "type": "object"
+    },
+    "overlay": {
+      "type": "object"
+    },
+    "from": {
+      "type": "string"
+    },
+    "to": {
+      "type": "string"
+    },
+    "rep": {
+      "type": "integer"
+    },
+    "hole": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "target": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "duration_s": {
+      "type": "number"
+    },
+    "peg": {
+      "type": "integer"
+    },
+    "split_s": {
+      "type": "number"
+    },
+    "elapsed_s": {
+      "type": "number"
+    },
+    "total_s": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "splits_s": {
+      "type": "array"
+    },
+    "pegs": {
+      "type": "array"
+    },
+    "free_pegs_mm": {
+      "type": "array"
     }
   }
 }
