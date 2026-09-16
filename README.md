@@ -14,8 +14,8 @@ Three camera-coached tasks ship: **Nine-Hole Peg Test** (assessment), **Waiter �
 # 0. Print the sheets at 100 % (A4). Check a marker measures 40 mm with a ruler.
 #    docs/sheets/nhpt_board.pdf · docs/sheets/cup_targets.pdf
 
-# 1. Session service (Python 3.12 + uv)
-cd services/session && uv sync && uv run uvicorn praxis_session.main:app --port 8000
+# 1. Session service (Python 3.12 + uv). fetch_models downloads the Apache-2.0 OpenCV Zoo ONNX files (25 MB).
+cd services/session && uv sync && uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000
 #    → http://127.0.0.1:8000/health  {"status":"ok","opencv_version":"5.0.0","mode":"edge"}
 
 # 2. Web app (pnpm)
@@ -35,11 +35,11 @@ uv run python ../../evaluation/scripts/make_dataset_v0.py && uv run python ../..
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
-## Status (Phase 0–2, 16 Sep 2026)
+## Status (Phase 0–3, 16 Sep 2026)
 
-Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks, perception-loss events, wireframe screen 05 (Camera setup), **and the full Nine-Hole Peg Test**: canonical board warp → cached Hough holes → HSV/contour peg occupancy → six-state peg FSM → timer from first lift to ninth seat with per-peg splits, streamed as `frame` + FSM events, drawn on screen 07 (live NHPT with board view, controls, trace) and summarised on the assessment result. Replay mode plays a recorded clip through the identical pipeline. `evaluation/` regenerates rep F1 and NHPT MAE (1.0 and 0.0 s on the synthetic clip — pipeline validation only). **Nothing has been verified on a real recording yet.** See `docs/TECHNICAL_REPORT.md` §2.1, `docs/RISKS.md`, `docs/PLAN.md`.
+Built and tested on synthetic renders: session service (`/health`, `/events`, WebSocket frame ingest), event JSON schema, sheet geometry + printable PDFs, ArUco → homography calibration that refuses until all four markers are visible, setup quality checks, perception-loss events, wireframe screen 05 (Camera setup), **and the full Nine-Hole Peg Test**: canonical board warp → cached Hough holes → HSV/contour peg occupancy → six-state peg FSM → timer from first lift to ninth seat with per-peg splits, streamed as `frame` + FSM events, drawn on screen 07 (live NHPT with board view, controls, trace) and summarised on the assessment result. Replay mode plays a recorded clip through the identical pipeline. **Hand landmarks** come from the OpenCV Zoo palm + hand ONNX models through `cv2.dnn` (run `uv run python tools/fetch_models.py` once), giving pinch aperture, smoothness (SPARC) and tremor in millimetres and gating the peg FSM. `evaluation/` regenerates rep F1 and NHPT MAE (1.0 and 0.0 s on the synthetic clip — pipeline validation only). **Nothing has been verified on a real recording yet.** See `docs/TECHNICAL_REPORT.md` §2.1, `docs/RISKS.md`, `docs/PLAN.md`.
 
-Not started: hand model (Phase 3), Waiter – cup (4), pose + Arm to the front (5), avatar (6), exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), real dataset (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
+Not started: Waiter – cup (4), pose + Arm to the front (5), avatar (6), exertion / stop rules / rule coach / trace (7), remaining screens and local store (8), real dataset (9). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout
 ```
