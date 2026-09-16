@@ -48,18 +48,26 @@ def camera_frame(
     noise_sigma: float = 0.0,
     hide_marker: int | None = None,
     seed: int = 0,
+    pegs_mm: list[tuple[float, float]] | None = None,
+    peg_bgr: tuple[int, int, int] = (40, 40, 220),
+    peg_diameter_mm: float = 8.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return (BGR frame, H_true mm->px)."""
+    """Return (BGR frame, H_true mm->px). Optional coloured peg discs at mm positions."""
     canon = sheet_canonical(spec, CANON_PX_PER_MM)
     if hide_marker is not None:
         cx, cy = spec.marker_centres_mm[hide_marker]
         s = int(spec.marker_size_mm * CANON_PX_PER_MM / 2) + 2
         c = (int(cx * CANON_PX_PER_MM), int(cy * CANON_PX_PER_MM))
         cv2.rectangle(canon, (c[0] - s, c[1] - s), (c[0] + s, c[1] + s), 255, -1)
+    canon_bgr = cv2.cvtColor(canon, cv2.COLOR_GRAY2BGR)
+    if pegs_mm:
+        r = int(round(peg_diameter_mm / 2 * CANON_PX_PER_MM))
+        for x, y in pegs_mm:
+            c = (int(round(x * CANON_PX_PER_MM)), int(round(y * CANON_PX_PER_MM)))
+            cv2.circle(canon_bgr, c, r, peg_bgr, -1, cv2.LINE_AA)
     H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale)
     S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
-    frame = cv2.warpPerspective(canon, H_mm_px @ S, size, borderValue=90)
-    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=(90, 90, 90))
     if noise_sigma > 0:
         rng = np.random.default_rng(seed)
         noise = rng.normal(0, noise_sigma, frame.shape)
