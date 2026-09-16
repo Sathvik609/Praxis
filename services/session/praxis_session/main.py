@@ -10,6 +10,9 @@ from __future__ import annotations
 import json
 import os
 import time
+from pathlib import Path
+
+from pydantic import BaseModel
 
 import cv2
 import numpy as np
@@ -20,6 +23,7 @@ from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
+from praxis_session.store import DEFAULT_PATH, Store
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
 
@@ -29,6 +33,9 @@ MODES = {"heartbeat", *PIPELINE_MODES}
 app = FastAPI(title="Praxis session service", version="0.2.0")
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
+store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
+store.seed_if_empty()
+EVAL_DIR = Path(__file__).resolve().parents[3] / "evaluation" / "dataset_v0"
 
 
 @app.get("/health")
@@ -69,7 +76,67 @@ def api_summary(session_id: str) -> dict[str, object]:
 
 @app.get("/api/prescription")
 def api_prescription() -> dict[str, object]:
-    return SEED_PRESCRIPTION.model_dump()
+    return store.prescription()
+
+
+@app.get("/api/patients/me")
+def api_me() -> dict[str, object]:
+    return store.patient()
+
+
+@app.get("/api/sessions")
+def api_sessions(limit: int = 50) -> dict[str, object]:
+    return {"sessions": store.sessions(limit)}
+
+
+@app.get("/api/sessions/{session_id}")
+def api_session(session_id: str) -> dict[str, object]:
+    s = store.session(session_id)
+    if s is None:
+        live = sessions.get(session_id)
+        return {"error": "unknown session"} if live is None else {"id": session_id, "live": True, "summary": live.summary()}
+    return s
+
+
+@app.get("/api/flags")
+def api_flags() -> dict[str, object]:
+    return {"flags": store.flags()}
+
+
+@app.post("/api/flags/{flag_id}/reviewed")
+def api_flag_reviewed(flag_id: int) -> dict[str, object]:
+    store.mark_reviewed(flag_id)
+    return {"ok": True}
+
+
+class GoalNote(BaseModel):
+    note: str = ""
+
+
+@app.post("/api/goal-log")
+def api_goal_log(body: GoalNote) -> dict[str, object]:
+    return {"ok": True, "goal_attempts": store.log_goal(body.note)}
+
+
+@app.get("/api/progress")
+def api_progress() -> dict[str, object]:
+    return store.progress()
+
+
+@app.get("/api/therapist/patients")
+def api_therapist_patients() -> dict[str, object]:
+    return {"patients": store.therapist_patients()}
+
+
+@app.get("/api/replay/list")
+def api_replay_list() -> dict[str, object]:
+    clips = []
+    manifest = EVAL_DIR / "manifest.json"
+    if manifest.exists():
+        for e in json.loads(manifest.read_text()).get("entries", []):
+            if e.get("video"):
+                clips.append({"id": e["id"], "mode": e["mode"], "sheet": e.get("sheet", "nhpt_board"), "path": e["video"], "synthetic": e.get("synthetic", False)})
+    return {"clips": clips}
 
 
 def decode_jpeg(data: bytes) -> np.ndarray | None:
@@ -197,6 +264,8 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
     if name == "feedback":
         coach.feedback = {k: v for k, v in cmd.items() if k != "cmd"}
         coach.trace.log("feedback", **coach.feedback)
-        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=coach.summary(now))]
+        summary = coach.summary(now)
+        store.save_session(summary, coach.checkin, coach.feedback, [r for r in coach.trace.tail(2000) if r.get("kind") == "event"])
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=summary)]
     result = pipeline.command(cmd)
     return [make_event("command", cmd=name, session_id=coach.session_id, **result)]

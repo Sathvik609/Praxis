@@ -154,3 +154,33 @@ def _blank_bytes():
 
 def _pending(ws) -> bool:
     return False
+
+
+def test_rest_store_endpoints(client):
+    me = client.get("/api/patients/me").json()
+    assert me["name"] == "Alex M."
+    sessions = client.get("/api/sessions").json()["sessions"]
+    assert len(sessions) >= 4
+    one = client.get(f"/api/sessions/{sessions[0]['id']}").json()
+    assert one["id"] == sessions[0]["id"] and "summary" in one
+    flags = client.get("/api/flags").json()["flags"]
+    assert flags and "rule" in flags[0]
+    r = client.post(f"/api/flags/{flags[0]['id']}/reviewed").json()
+    assert r["ok"] is True
+    g = client.post("/api/goal-log", json={"note": "cup at lunch"}).json()
+    assert g["ok"] is True and g["goal_attempts"] >= 1
+    th = client.get("/api/therapist/patients").json()["patients"]
+    assert th[0]["name"] == "Alex M." and "open_flags" in th[0]
+    rp = client.get("/api/replay/list").json()["clips"]
+    assert any(c["id"] == "synthetic_nhpt_01" for c in rp)
+
+
+def test_ws_feedback_persists_session(client):
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets") as ws:
+        ws.send_text('{"cmd":"checkin","pain":2,"energy":"comfortable","minutes":14,"new_symptoms":false}')
+        sid = ws.receive_json()["session_id"]
+        ws.send_text('{"cmd":"feedback","pain_after":2,"effort":4,"compared":"same"}')
+        ack = ws.receive_json()
+        assert ack["ok"] is True and ack["summary"]["session_id"] == sid
+    one = client.get(f"/api/sessions/{sid}").json()
+    assert one["feedback"]["effort"] == 4 and one["mode"] == "cup"

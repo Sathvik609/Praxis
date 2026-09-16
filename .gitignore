@@ -30,3 +30,7 @@ services/session/data/
 .idea/
 .vscode/
 *.log
+
+# local store (edge mode)
+services/session/praxis.db
+services/session/*.db
