@@ -1,6 +1,0 @@
-{
-  "app": "npx tsx bin/praxis.ts",
-  "context": {
-    "@aws-cdk/core:newStyleStackSynthesis": true
-  }
-}

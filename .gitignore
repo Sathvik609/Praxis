@@ -5,35 +5,28 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
-dist/
-build/
 
 # Node
 node_modules/
-web/dist/
-infra/cdk.out/
-infra/*.js
-infra/*.d.ts
-!infra/jest.config.js
-.pnpm-store/
+dist/
+.vite/
+coverage/
 
-# Env / secrets
-.env
-.env.*
-!.env.example
+# CDK
+cdk.out/
 
-# OS / editor
-.DS_Store
-.vscode/
-.idea/
-
-# Large media: raw video never committed except consented dataset clips (see docs/LICENSES.md)
-*.mp4
-*.mov
-*.avi
-!evaluation/dataset_v0/**/*.mp4
-
-# Generated
+# Models (downloaded by script, never committed)
 services/session/models/*.onnx
-traces/*.jsonl
-!traces/.gitkeep
+
+# Recordings and local data (consented clips never committed)
+evaluation/dataset_v*/**/*.mp4
+evaluation/dataset_v*/**/*.mov
+!evaluation/dataset_v*/**/synthetic_*.mp4
+services/session/praxis.db
+services/session/data/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
