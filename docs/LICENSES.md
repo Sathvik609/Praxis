@@ -14,5 +14,7 @@ Rule (CLAUDE.md §1): every model license is recorded here **before** it is inte
 | Lora (via `@fontsource/lora` 5.3.0) | Cyreal | SIL OFL 1.1 | Headings | 2026-09-16 |
 | Carlito (via `@fontsource/carlito` 5.3.0) | Google / tyPoland Lukasz Dziedzic | SIL OFL 1.1 | Body text | 2026-09-16 |
 | Radix UI, Tailwind CSS, React, Vite | respective projects | MIT | Web app | 2026-09-16 |
-| Hand landmark + palm detection ONNX | **TBD — OpenCV Zoo (Apache-2.0) planned; record exact model, commit and SHA256 before download (Phase 3)** | | | |
-| Pose + person detection ONNX | **TBD — OpenCV Zoo (Apache-2.0) planned; record before download (Phase 5)** | | | |
+| Palm detection ONNX `palm_detection_mediapipe_2023feb.onnx` | OpenCV Zoo `models/palm_detection_mediapipe` (MediaPipe palm detector converted by OpenCV), https://github.com/opencv/opencv_zoo | Apache-2.0 (LICENSE in the model folder) | Hand localisation stage 1 via `cv2.dnn`; pre/post-processing ported from `mp_palmdet.py` (Apache-2.0) | 2026-09-16, before download; SHA256 pinned in `services/session/tools/fetch_models.py` |
+| Hand landmark ONNX `handpose_estimation_mediapipe_2023feb.onnx` | OpenCV Zoo `models/handpose_estimation_mediapipe` (MediaPipe hand landmarker converted by OpenCV) | Apache-2.0 | 21 hand landmarks via `cv2.dnn`; pre/post-processing ported from `mp_handpose.py` (Apache-2.0) | 2026-09-16, before download; SHA256 pinned |
+| Person detection ONNX `person_detection_mediapipe_2023mar.onnx` | OpenCV Zoo `models/person_detection_mediapipe` | Apache-2.0 | Pose stage 1 via `cv2.dnn`; ported from `mp_persondet.py` | 2026-09-16, before download; SHA256 pinned |
+| Pose landmark ONNX `pose_estimation_mediapipe_2023mar.onnx` | OpenCV Zoo `models/pose_estimation_mediapipe` (MediaPipe BlazePose converted by OpenCV) | Apache-2.0 | 33 body landmarks via `cv2.dnn` for Arm to the front; ported from `mp_pose.py` | 2026-09-16, before download; SHA256 pinned |
