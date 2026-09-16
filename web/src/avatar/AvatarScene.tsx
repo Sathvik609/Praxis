@@ -45,6 +45,7 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
       return
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.domElement.style.display = 'block'
     el.appendChild(renderer.domElement)
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x071518)
@@ -107,7 +108,7 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
     const resize = () => {
       const w = el.clientWidth || 300
       const h = el.clientHeight || 300
-      renderer.setSize(w, h, false)
+      renderer.setSize(w, h, true)
       cam.aspect = w / h
       cam.updateProjectionMatrix()
     }
