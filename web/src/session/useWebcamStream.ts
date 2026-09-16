@@ -10,6 +10,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
   const wsRef = useRef<WebSocket | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
+  const genRef = useRef(0) // bumps on every start/stop so a stale getUserMedia result is discarded
   const [camActive, setCamActive] = useState(false)
   const [connected, setConnected] = useState(false)
   const [lastEvent, setLastEvent] = useState<PraxisEvent | null>(null)
@@ -17,6 +18,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
   const [error, setError] = useState<string | null>(null)
 
   const stop = useCallback(() => {
+    genRef.current += 1
     if (timerRef.current) window.clearInterval(timerRef.current)
     timerRef.current = null
     wsRef.current?.close()
@@ -30,15 +32,26 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
 
   const start = useCallback(async () => {
     setError(null)
+    const gen = ++genRef.current
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
         audio: false,
       })
+      if (gen !== genRef.current) {
+        // A stop() or a newer start() happened while the prompt was open (React StrictMode
+        // double-mount does this): release this stream and let the newer call own the camera.
+        stream.getTracks().forEach((t) => t.stop())
+        return
+      }
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
+        try {
+          await videoRef.current.play()
+        } catch (e) {
+          if (!(e instanceof DOMException && e.name === 'AbortError')) throw e
+        }
       }
       setCamActive(true)
       const q = new URLSearchParams({ mode, ...params }).toString()
@@ -71,6 +84,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {} }: Opts) {
         )
       }, Math.round(1000 / fps))
     } catch (e) {
+      if (gen !== genRef.current) return
       setError(e instanceof Error ? e.message : 'camera unavailable')
       stop()
     }
