@@ -35,6 +35,7 @@ from praxis_session.auth import issue_token, record_failure, revoke, too_many_fa
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
+from praxis_session.plan import today as plan_today
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
@@ -177,6 +178,16 @@ def api_profile_save(body: ProfileBody, authorization: str | None = Header(defau
     except ProfileError as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
     return JSONResponse({"ok": True, "profile": prof})
+
+
+@app.get("/api/plan/today")
+def api_plan_today(pain: int | None = None, authorization: str | None = Header(default=None)) -> dict[str, object]:
+    """Today's exercises for the signed-in user. `pain` is the daily check's answer and
+    overrides the profile's last one; the tier rule lives in `plan.py`, in code."""
+    user = user_for_token(_bearer(authorization))
+    username = user["username"] if user else ""
+    profile = store.profile(username) if username else None
+    return plan_today(profile, pain, store.sessions_today(username) if username else [])
 
 
 @app.get("/api/prescription")

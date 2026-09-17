@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from praxis_session.perception.exercises import EXERCISES
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 
@@ -20,7 +21,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS patients(id TEXT PRIMARY KEY, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS prescriptions(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, version INTEGER, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, patient_id TEXT, mode TEXT, started_at TEXT, ended_at TEXT,
-  status TEXT, tracking TEXT, title TEXT, summary_json TEXT, feedback_json TEXT, checkin_json TEXT);
+  status TEXT, tracking TEXT, title TEXT, summary_json TEXT, feedback_json TEXT, checkin_json TEXT,
+  exercise TEXT, username TEXT);
 CREATE TABLE IF NOT EXISTS events(session_id TEXT, seq INTEGER, json TEXT, PRIMARY KEY(session_id, seq));
 CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, rule TEXT, detail TEXT, t REAL, date TEXT, reviewed INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
@@ -54,6 +56,16 @@ class Store:
         self._db = sqlite3.connect(str(self.path), check_same_thread=False)
         self._db.row_factory = sqlite3.Row
         self._db.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Columns added after a database was first written (Sprint E: which exercise a session
+        was, and whose it is). SQLite has no IF NOT EXISTS for ADD COLUMN."""
+        have = {r["name"] for r in self._db.execute("PRAGMA table_info(sessions)")}
+        for col in ("exercise", "username"):
+            if col not in have:
+                self._db.execute(f"ALTER TABLE sessions ADD COLUMN {col} TEXT")
+        self._db.commit()
 
     # ---- seed --------------------------------------------------------------------------
     def seed_if_empty(self) -> None:
@@ -64,13 +76,13 @@ class Store:
         for d, s in NHPT_TREND:
             self._db.execute("INSERT INTO nhpt_trend(patient_id, date, total_s) VALUES(?, ?, ?)", (PATIENT["id"], d, s))
         for s in SESSIONS:
-            self._insert_session(s["id"], s["mode"], s["started_at"], s["ended_at"], s["status"], s["tracking"], s["title"], s["summary"], s["feedback"], s["checkin"], s["events"], s["started_at"][:10])
+            self._insert_session(s["id"], s["mode"], s["started_at"], s["ended_at"], s["status"], s["tracking"], s["title"], s["summary"], s["feedback"], s["checkin"], s["events"], s["started_at"][:10], s.get("exercise"), s.get("username"))
         self._db.commit()
 
-    def _insert_session(self, sid, mode, started_at, ended_at, status, tracking, title, summary, feedback, checkin, events, date) -> None:
+    def _insert_session(self, sid, mode, started_at, ended_at, status, tracking, title, summary, feedback, checkin, events, date, exercise=None, username=None) -> None:
         self._db.execute(
-            "INSERT OR REPLACE INTO sessions(id, patient_id, mode, started_at, ended_at, status, tracking, title, summary_json, feedback_json, checkin_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-            (sid, PATIENT["id"], mode, started_at, ended_at, status, tracking, title, json.dumps(summary), json.dumps(feedback or {}), json.dumps(checkin or {})),
+            "INSERT OR REPLACE INTO sessions(id, patient_id, mode, started_at, ended_at, status, tracking, title, summary_json, feedback_json, checkin_json, exercise, username) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (sid, PATIENT["id"], mode, started_at, ended_at, status, tracking, title, json.dumps(summary), json.dumps(feedback or {}), json.dumps(checkin or {}), exercise, username),
         )
         self._db.execute("DELETE FROM events WHERE session_id=?", (sid,))
         for i, e in enumerate(events):
@@ -131,7 +143,8 @@ class Store:
 
     def _row(self, r: sqlite3.Row, with_events: bool = False) -> dict[str, Any]:
         d = {
-            "id": r["id"], "mode": r["mode"], "started_at": r["started_at"], "ended_at": r["ended_at"], "status": r["status"],
+            "id": r["id"], "mode": r["mode"], "exercise": r["exercise"], "username": r["username"],
+            "started_at": r["started_at"], "ended_at": r["ended_at"], "status": r["status"],
             "tracking": r["tracking"], "title": r["title"], "date": (r["started_at"] or "")[:10],
             "summary": json.loads(r["summary_json"] or "{}"), "feedback": json.loads(r["feedback_json"] or "{}"), "checkin": json.loads(r["checkin_json"] or "{}"),
         }
@@ -142,8 +155,20 @@ class Store:
             d["events"] = [json.loads(e["json"]) for e in self._db.execute("SELECT json FROM events WHERE session_id=? ORDER BY seq", (r["id"],))]
         return d
 
-    def sessions(self, limit: int = 50) -> list[dict[str, Any]]:
-        rows = self._db.execute("SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
+    def sessions(self, limit: int = 50, username: str | None = None) -> list[dict[str, Any]]:
+        if username is None:
+            rows = self._db.execute("SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
+        else:
+            rows = self._db.execute("SELECT * FROM sessions WHERE username=? ORDER BY started_at DESC LIMIT ?", (username.lower(), limit)).fetchall()
+        return [self._row(r) for r in rows]
+
+    def sessions_today(self, username: str, date: str | None = None) -> list[dict[str, Any]]:
+        """This user's sessions dated today — what `plan.today` turns into `done_today`."""
+        day = date or datetime.now().date().isoformat()
+        rows = self._db.execute(
+            "SELECT * FROM sessions WHERE username=? AND started_at LIKE ? ORDER BY started_at DESC",
+            (username.lower(), f"{day}%"),
+        ).fetchall()
         return [self._row(r) for r in rows]
 
     def session(self, sid: str) -> dict[str, Any] | None:
@@ -207,10 +232,14 @@ class Store:
         if summary.get("mode") == "nhpt" and (summary.get("tracking_lost_events") or cam.get("tracking_lost_events")):
             tracking = "limited"  # pegs seated while tracking was lost cannot be verified
         names = {"nhpt": "Nine-Hole Peg Test", "cup": "Waiter – cup", "arm": "Arm to the front"}
+        exercise = summary.get("exercise")
+        username = (summary.get("username") or "").lower() or None
         title = names.get(summary.get("mode"), summary.get("mode", "session"))
+        if summary.get("mode") == "arm" and exercise in EXERCISES:
+            title = EXERCISES[exercise].name
         if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s"):
             title += f" · {cam['nhpt_total_s']:.1f} s"
-        self._insert_session(sid, summary.get("mode", ""), started, ended, status, tracking, title, summary, feedback, checkin, events, started[:10])
+        self._insert_session(sid, summary.get("mode", ""), started, ended, status, tracking, title, summary, feedback, checkin, events, started[:10], exercise, username)
         if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s"):
             self._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES(?,?,?)", (PATIENT["id"], started[:10], float(cam["nhpt_total_s"])))
         self._db.commit()
