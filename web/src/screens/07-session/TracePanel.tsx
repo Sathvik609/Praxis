@@ -26,7 +26,7 @@ function Kind({ k, children }: { k: keyof typeof INK; children: string }) {
 }
 
 function Time({ t }: { t: number }) {
-  return <span className={`inline-block w-[4rem] shrink-0 tabular-nums ${INK.time}`}>{t.toFixed(1)} s</span>
+  return <span className={`inline-block min-w-[4rem] shrink-0 whitespace-nowrap tabular-nums ${INK.time}`}>{t.toFixed(1)} s</span>
 }
 
 /** Judge / developer trace (CLAUDE.md §1 "Show trace"): OpenCV output → decision → tool call

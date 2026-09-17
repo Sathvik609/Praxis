@@ -131,7 +131,7 @@ export function LiveNhpt() {
           ) : (
             <BoardView occupancy={frame?.board?.occupancy ?? {}} nextHole={nextHole} />
           )}
-          <div className="mt-auto">
+          <div>
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <span className="text-xl">
                 <b>{pegsDone} of 9</b> seated

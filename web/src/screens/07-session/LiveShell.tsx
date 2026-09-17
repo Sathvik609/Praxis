@@ -75,12 +75,6 @@ export function LiveFeed({
         </>
       }
       topRight={tracking ? <span className="rounded-lg bg-black/55 px-3 py-1 text-lg">{tracking}</span> : undefined}
-      bottomLeft={
-        <div className="flex flex-col items-start gap-2">
-          {band && <div className="rounded-lg bg-black/65 px-3 py-1.5 text-xl font-bold tabular-nums text-white">{band}</div>}
-          <div className="text-base text-white/80">{cvLine}</div>
-        </div>
-      }
     >
       {replay ? (
         <div aria-hidden className="aspect-4/3 w-full bg-[linear-gradient(180deg,var(--stage-a),var(--stage-b))]" />
@@ -88,12 +82,20 @@ export function LiveFeed({
         <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
       )}
       <OverlayCanvas width={640} height={480} calibration={null} frame={frame} mirrored={!replay} />
-      {replay && (
-        <div className="absolute bottom-3 right-4 z-10 inline-flex items-center gap-2 rounded-lg border border-[#E9A23B]/70 bg-black/65 px-3 py-1.5 text-lg font-bold text-[#E9A23B]">
-          <Play aria-hidden className="h-4 w-4" />
-          Replay · processed on the service
+      {/* Bottom bar: measurement band + OpenCV line on the left, replay badge on the right; a
+          flex row so the badge never overlaps a long OpenCV line. */}
+      <div className="pointer-events-none absolute inset-x-4 bottom-3 z-10 flex items-end justify-between gap-4">
+        <div className="flex min-w-0 flex-col items-start gap-2">
+          {band && <div className="rounded-lg bg-black/65 px-3 py-1.5 text-xl font-bold tabular-nums text-white">{band}</div>}
+          <div className="text-base text-white/80">{cvLine}</div>
         </div>
-      )}
+        {replay && (
+          <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[#E9A23B]/70 bg-black/65 px-3 py-1.5 text-lg font-bold text-[#E9A23B]">
+            <Play aria-hidden className="h-4 w-4" />
+            Replay · processed on the service
+          </div>
+        )}
+      </div>
       {(status === 'camera_blocked' || status === 'service_unreachable') && (
         <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={onRetry} /></div>
       )}
