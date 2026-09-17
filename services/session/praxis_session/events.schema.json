@@ -77,6 +77,23 @@
     "missing": {
       "type": "array"
     },
+    "source": {
+      "enum": [
+        "fresh",
+        "held",
+        "partial",
+        null
+      ]
+    },
+    "age_s": {
+      "type": "number"
+    },
+    "tilt_deg": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
     "rms_mm": {
       "type": [
         "number",
@@ -96,6 +113,9 @@
       "type": "object"
     },
     "presence": {
+      "type": "object"
+    },
+    "angle": {
       "type": "object"
     },
     "all_required_pass": {

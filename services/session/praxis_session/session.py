@@ -68,10 +68,13 @@ class CoachSession:
         self.trace.log("pause", rule=rule)
         return [make_event("pause", t=t, rule=rule, text="Paused. Take your time.")]
 
-    def resume(self, t: float) -> list[Event]:
+    def resume(self, t: float, rule: str | None = None, text: str | None = None) -> list[Event]:
+        """Clear a pause. `rule` names the rule that cleared itself (perception auto-resume);
+        the patient's own tap carries no rule."""
         self.paused, self.pause_rule = False, None
-        self.trace.log("resume")
-        return [make_event("resume", t=t)]
+        self.trace.log("resume", rule=rule)
+        extra = {k: v for k, v in (("rule", rule), ("text", text)) if v is not None}
+        return [make_event("resume", t=t, **extra)]
 
     def on_answer(self, prompt_id: str, choice: str, t: float) -> tuple[dict[str, Any] | None, list[Event]]:
         self.trace.log("answer", prompt=prompt_id, choice=choice)
@@ -120,6 +123,10 @@ class CoachSession:
             out.append(make_event("exertion", t=t, **state))
         out += self._log_stop(self.stop_rules.on_events(events))
         out += self._log_stop(self.stop_rules.on_exertion(state, self.exertion.high_for_s(t), t))
+        # A perception pause clears itself when tracking returns (D-CAL-2); pauses the patient
+        # or another rule asked for still need a tap.
+        if self.paused and self.pause_rule == "perception" and any(e.type == "perception_regained" for e in events):
+            out += self.resume(t, rule="perception", text="Tracking is back. Carry on.")
         if self.stopped or self.paused:
             return out
         ctx = CoachContext(mode=self.mode, events=[e for e in events if e.type != "frame"], snapshot=snapshot, exertion=state, prescription=self.prescription, t=t, last_speak_t=self._last_speak_t, last_cue_t=self._last_cue_t)
