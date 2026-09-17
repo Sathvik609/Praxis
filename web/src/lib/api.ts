@@ -12,7 +12,9 @@ export type TherapistPatient = { id: string; name: string; program: string; open
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`)
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
-  return r.json() as Promise<T>
+  const body = (await r.json()) as T & { error?: string }
+  if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
+  return body
 }
 async function post<T>(path: string, body?: unknown): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })

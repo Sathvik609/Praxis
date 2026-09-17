@@ -17,3 +17,10 @@ test('line chart labels every point and states the trend in words', () => {
   expect(screen.getByText('41.2')).toBeInTheDocument()
   expect(screen.getByText(/6.9 s better/)).toBeInTheDocument()
 })
+
+test('bars axis reaches the tallest value even when it is not a multiple of the tick step', () => {
+  render(<Bars title="Peak angle" unit="°" values={[91, 88]} target={90} />)
+  const texts = [...document.querySelectorAll('text')].map((t) => t.textContent)
+  expect(texts).toContain('100') // top tick above 91
+  expect(texts).toContain('91')
+})

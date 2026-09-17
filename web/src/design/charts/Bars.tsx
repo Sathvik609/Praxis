@@ -12,9 +12,10 @@ type Props = {
 
 function ticks(max: number): number[] {
   if (max <= 0) return [0]
-  const step = [1, 2, 5, 10, 20, 50, 100].find((s) => max / s <= 4) ?? 100
+  const step = [0.5, 1, 2, 5, 10, 20, 50, 100].find((s) => max / s <= 4) ?? 100
+  const top = Math.ceil(max / step - 1e-9) * step // axis always reaches the tallest bar / target
   const out: number[] = []
-  for (let v = 0; v <= max + 1e-9; v += step) out.push(v)
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 100) / 100)
   return out
 }
 
