@@ -1,96 +1,136 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../design/Button'
+import { Card } from '../../design/Card'
+import { Checkbox } from '../../design/Checkbox'
 import { Chip } from '../../design/Chip'
+import { Pill } from '../../design/Pill'
+import { Stat } from '../../design/Stat'
+import { Bars } from '../../design/charts/Bars'
+import { Line } from '../../design/charts/Line'
 import { api, useApi } from '../../lib/api'
 
-function Line({ points, label, lowerIsBetter }: { points: { date: string; total_s: number }[]; label: string; lowerIsBetter?: boolean }) {
-  if (!points.length) return <p className="text-muted">No assessments yet.</p>
-  const xs = points.map((_, i) => (i / Math.max(1, points.length - 1)) * 300 + 10)
-  const max = Math.max(...points.map((p) => p.total_s))
-  const min = Math.min(...points.map((p) => p.total_s))
-  const ys = points.map((p) => 90 - ((p.total_s - min) / Math.max(1e-6, max - min)) * 70)
-  return (
-    <div>
-      <svg viewBox="0 0 320 110" className="h-32 w-full" role="img" aria-label={label}>
-        <polyline fill="none" stroke="#1F5F5B" strokeWidth="3" points={xs.map((x, i) => `${x},${ys[i]}`).join(' ')} />
-        {xs.map((x, i) => <circle key={i} cx={x} cy={ys[i]} r="5" fill="#1F5F5B" />)}
-        <text x={xs[0]} y="105" fontSize="10" fill="#5C6B68">{points[0].date.slice(5)}</text>
-        <text x={xs[xs.length - 1] - 30} y="105" fontSize="10" fill="#5C6B68">{points[points.length - 1].date.slice(5)}</text>
-      </svg>
-      <div className="text-muted">{points.length} assessments · same board and camera setup{lowerIsBetter ? ' · lower is better' : ''}</div>
-    </div>
-  )
+type Range = '4w' | '12w' | 'all'
+type Task = 'cup' | 'arm'
+const TASK_NAME: Record<Task, string> = { cup: 'Waiter – cup', arm: 'Arm to the front' }
+const WEEKS: Record<Range, number | null> = { '4w': 4, '12w': 12, all: null }
+
+/** Dates on or after `weeks` before the newest date in the data (not today, so a replayed or
+ *  older store still shows something). */
+function since(dates: string[], weeks: number | null): string | null {
+  if (weeks == null || dates.length === 0) return null
+  const newest = dates.reduce((a, b) => (a > b ? a : b))
+  const d = new Date(newest)
+  d.setDate(d.getDate() - weeks * 7)
+  return d.toISOString().slice(0, 10)
 }
 
-/** Screen 10 · Progress and history. Limited-tracking sessions are greyed and excluded from
- *  comparison. Pain and effort are patient-reported. No recovery score. */
+/** Screen 10 · Progress and history. Limited-tracking sessions are hatched and labeled
+ *  unverified; "Compare same setup only" drops them. Pain and effort are patient-reported.
+ *  No recovery score; tasks are never combined. */
 export function Progress() {
   const nav = useNavigate()
-  const { data: p } = useApi(() => api.progress())
-  const { data: sessions } = useApi(() => api.sessions())
-  const [range] = useState('Last 4 weeks')
-  const last = p?.nhpt_trend.at(-1)
-  const comparable = p?.verified_per_session.filter((v) => !v.limited) ?? []
+  const { data: p, error: pError, reload } = useApi(() => api.progress())
+  const { data: sessions, error: sError } = useApi(() => api.sessions())
+  const [range, setRange] = useState<Range>('4w')
+  const [task, setTask] = useState<Task>('cup')
+  const [sameSetup, setSameSetup] = useState(false)
+  const [logNote, setLogNote] = useState<string | null>(null)
+
+  if (!p && !pError) return <p className="p-8 text-xl text-muted" role="status">Loading your progress…</p>
+  if (!p) return <p className="p-8 text-xl text-red-ink" role="alert">Could not load progress: {pError}. Is the session service running?</p>
+
+  const allDates = [...p.verified_per_session.map((v) => v.date), ...(sessions ?? []).map((s) => s.date), ...p.nhpt_trend.map((t) => t.date)]
+  const from = since(allDates, WEEKS[range])
+  const inRange = (date: string) => !from || date >= from
+  const perSession = p.verified_per_session.filter((v) => v.mode === task && inRange(v.date) && (!sameSetup || !v.limited))
+  const comparable = perSession.filter((v) => !v.limited)
+  const list = (sessions ?? []).filter((s) => s.mode === task && inRange(s.date))
+  const trend = p.nhpt_trend // the weekly assessment history is always shown whole
+  const last = p.nhpt_trend.at(-1)
+
+  const logAttempt = () =>
+    api
+      .logGoal('cup')
+      .then(() => {
+        setLogNote('Logged.')
+        reload()
+      })
+      .catch(() => setLogNote('Could not log — the session service is not reachable.'))
+
   return (
     <div className="p-8">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <h1 className="text-4xl">Progress and history</h1>
-        <div className="ml-auto flex gap-2">
-          {[range, 'Waiter – cup', 'Left', 'Compare same setup'].map((f, i) => <span key={f} className={`rounded-full border-2 px-4 py-2 font-bold ${i === 0 ? 'border-teal bg-teal text-white' : 'border-line'}`}>{f}</span>)}
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: '12w', label: 'Last 12 weeks' }, { value: 'all', label: 'All time' }]} />
+          <Pill ariaLabel="Task" size="sm" value={task} onChange={setTask} options={[{ value: 'cup', label: 'Waiter – cup' }, { value: 'arm', label: 'Arm to the front' }]} />
+          <Checkbox label="Compare same setup only" checked={sameSetup} onChange={setSameSetup} />
         </div>
       </div>
-      <div className="mt-6 grid grid-cols-[1fr_1fr_1fr] gap-6">
-        <section className="rounded-2xl border border-line bg-surface p-6">
-          <div className="flex items-baseline justify-between"><h2 className="text-2xl">Nine-Hole Peg Test</h2><span className="text-muted">left · lower is better</span></div>
-          {last && <div className="mt-2 text-3xl font-bold">{last.total_s.toFixed(1)} s</div>}
-          <Line points={p?.nhpt_trend ?? []} label="NHPT trend" lowerIsBetter />
-          <p className="mt-1 text-muted">Run separately from practice.</p>
-        </section>
-        <section className="rounded-2xl border border-line bg-surface p-6">
-          <div className="flex items-baseline justify-between"><h2 className="text-2xl">Waiter – cup</h2><span className="text-muted">verified reaches per session</span></div>
-          <div className="mt-4 flex h-32 items-end gap-2">
-            {(p?.verified_per_session ?? []).map((v, i) => (
-              <div key={i} data-testid="verified-bar" title={`${v.date}: ${v.verified} verified${v.limited ? ' · limited tracking' : ''}`} className={`flex-1 rounded-t ${v.limited ? 'bg-line' : 'bg-teal'}`} style={{ height: `${Math.min(100, (v.verified / Math.max(1, ...(p?.verified_per_session.map((x) => x.verified) ?? [1]))) * 100)}%` }} />
-            ))}
-          </div>
-          <p className="mt-2 text-muted">{p?.verified_per_session.length ?? 0} sessions · grey = limited tracking, not comparable</p>
-          {comparable.length >= 2 && <p className="text-lg">{comparable[0].verified} → {comparable[comparable.length - 1].verified} verified · same task, side and setup</p>}
-        </section>
+      <div className="mt-6 grid grid-cols-3 gap-6">
+        <Card title="Nine-Hole Peg Test" action={<Chip tone="neutral">lower is better</Chip>}>
+          {last ? <Stat value={last.total_s.toFixed(1)} unit="s" label={`latest · ${last.date.slice(5)}`} /> : <p className="text-muted">No assessments yet.</p>}
+          {trend.length > 0 && (
+            <div className="mt-3">
+              <Line title="Nine-Hole Peg Test" unit="s" points={trend.map((t) => ({ x: t.date.slice(5), y: t.total_s }))} />
+            </div>
+          )}
+          <p className="mt-2 text-base text-muted">{trend.length} assessment{trend.length === 1 ? '' : 's'} · same board and camera setup · run separately from practice.</p>
+        </Card>
+        <Card title={TASK_NAME[task]} action={<Chip tone="neutral">verified per session</Chip>}>
+          {perSession.length === 0 ? (
+            <p className="text-muted">No {TASK_NAME[task]} sessions in this range.</p>
+          ) : (
+            <Bars title={TASK_NAME[task]} unit="reaches" values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
+          )}
+          <p className="mt-2 text-base text-muted">{perSession.length} session{perSession.length === 1 ? '' : 's'} · limited tracking counts as unverified and is never compared.</p>
+          {comparable.length >= 2 && <p className="mt-1 text-lg">{comparable[0].verified} → {comparable[comparable.length - 1].verified} verified · same task, side and setup</p>}
+        </Card>
         <div className="space-y-6">
-          <section className="rounded-2xl border border-line bg-surface p-6">
-            <h2 className="text-2xl">Practice</h2>
-            <div className="mt-2 flex gap-8"><div><div className="text-3xl font-bold">{p?.practice.done ?? '—'}/{p?.practice.planned ?? '—'}</div><div className="text-muted">planned sessions done</div></div><div><div className="text-3xl font-bold">{p?.practice.hours ?? '—'} h</div><div className="text-muted">active time, 4 weeks</div></div></div>
-          </section>
-          <section className="rounded-2xl border border-line bg-surface p-6">
-            <h2 className="text-2xl">Pain and effort</h2>
-            <p className="text-muted">What you reported, per session</p>
-            <ul className="mt-2 text-lg">{(p?.pain_effort ?? []).slice(-6).map((x, i) => <li key={i} className={x.ended_early ? 'text-red' : ''}>{x.date.slice(5)} · pain after {x.pain_after ?? 'not recorded'} · effort {x.effort ?? 'not recorded'}{x.ended_early ? ' · session ended' : ''}</li>)}</ul>
-          </section>
+          <Card title="Practice">
+            <div className="flex flex-wrap gap-8">
+              <Stat value={`${p.practice.done}/${p.practice.planned}`} label="planned sessions done" />
+              <Stat value={p.practice.hours} unit="h" label="active time, 4 weeks" />
+            </div>
+          </Card>
+          <Card title="Pain and effort">
+            <p className="-mt-3 text-muted">What you reported, per session</p>
+            <ul className="mt-2 text-lg">
+              {p.pain_effort.slice(-6).map((x, i) => (
+                <li key={i} className={x.ended_early ? 'font-bold text-red-ink' : ''}>
+                  {x.date.slice(5)} · pain after {x.pain_after ?? 'not recorded'} · effort {x.effort ?? 'not recorded'}
+                  {x.ended_early ? ' · session ended early' : ''}
+                </li>
+              ))}
+              {p.pain_effort.length === 0 && <li className="text-muted">Nothing reported yet.</li>}
+            </ul>
+          </Card>
         </div>
       </div>
       <div className="mt-6 grid grid-cols-[2fr_1fr] gap-6">
-        <section className="rounded-2xl border border-line bg-surface p-6">
-          <h2 className="text-2xl">Session list</h2>
-          <ul className="mt-2 divide-y divide-line">
-            {(sessions ?? []).map((s) => (
-              <li key={s.id} className="flex items-center gap-4 py-3">
-                <span className="w-24 text-muted">{s.date.slice(5)}</span>
-                <span className="flex-1 text-lg">{s.title}</span>
+        <Card title="Session list" action={<Chip tone="neutral">{TASK_NAME[task]}</Chip>}>
+          {sError && <p className="text-red-ink">Could not load sessions: {sError}</p>}
+          {sessions && list.length === 0 && <p className="text-muted">No sessions yet for {TASK_NAME[task]} in this range.</p>}
+          <ul className="divide-y divide-line">
+            {list.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center gap-3 py-3">
+                <span className="w-16 text-muted">{s.date.slice(5)}</span>
+                <span className="min-w-0 flex-1 text-lg">{s.title}</span>
                 <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.status === 'ended_early' ? `Ended early · pain ${String(s.feedback?.pain_after ?? '')}` : s.mode === 'nhpt' ? 'Assessment' : 'Complete'}</Chip>
                 <Chip tone={s.tracking === 'usable' ? 'mint' : 'amber'}>{s.tracking === 'usable' ? 'Usable tracking' : 'Limited tracking'}</Chip>
-                <Button variant="secondary" className="min-h-11 px-4 text-base" onClick={() => nav(`/report/${s.id}`)}>Open</Button>
+                <Button variant="secondary" aria-label={`Open ${s.title} · ${s.date}`} onClick={() => nav(`/report/${s.id}`)}>Open</Button>
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
         <div className="space-y-6">
-          <section className="rounded-2xl border border-line bg-surface p-6">
-            <h2 className="text-2xl">Everyday goal log</h2>
-            <p className="text-lg">Used a cup with my left hand — {p?.goal_log_count ?? 0} times this month</p>
-            <Button variant="secondary" className="mt-3" onClick={() => api.logGoal('cup').then(() => window.location.reload())}>Log an attempt</Button>
-          </section>
-          <p className="rounded-2xl border border-line bg-surface p-5 text-muted">No recovery score is calculated. Different tasks are never combined.</p>
+          <Card title="Everyday goal log">
+            <p className="text-lg">Used a cup with my left hand — {p.goal_log_count} times this month</p>
+            {logNote && <p className="text-base text-muted" role="status">{logNote}</p>}
+            <Button variant="secondary" className="mt-3" onClick={logAttempt}>Log an attempt</Button>
+          </Card>
+          <Card padding="sm"><p className="text-muted">No recovery score is calculated. Different tasks are never combined.</p></Card>
         </div>
       </div>
     </div>
