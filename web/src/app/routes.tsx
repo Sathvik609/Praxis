@@ -12,6 +12,7 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
+import { Welcome } from '../screens/guided/Welcome'
 import { RequireAuth } from './RequireAuth'
 import { Shell } from './Shell'
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
   { path: '/signin', element: <SignIn /> },
   { path: '/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
   { path: '/details/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
+  { path: '/welcome', element: <RequireAuth><Welcome /></RequireAuth> },
   { path: '/', element: <Navigate to="/details" replace /> },
   {
     element: <RequireAuth><Shell /></RequireAuth>,

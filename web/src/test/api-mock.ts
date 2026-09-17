@@ -1,6 +1,7 @@
-/** Minimal fetch mock keyed by URL prefix for screen tests. */
+/** Minimal fetch mock keyed by URL prefix for screen tests. `init` is kept in the call record
+ *  so a test can assert what was posted. */
 export function mockApi(routes: Record<string, unknown>) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input)
     const key = Object.keys(routes).find((k) => url.includes(k))
     const body = key ? routes[key] : { error: `unmocked ${url}` }
