@@ -137,7 +137,7 @@ function NhptReport({ r, onDone }: { r: NhptResult; onDone: () => void }) {
 export function AssessmentResult() {
   const { state } = useLocation() as { state: Result | null }
   const nav = useNavigate()
-  const done = () => nav('/')
+  const done = () => nav('/details')
   if (state?.kind === 'cup') return <CupReport r={state} onDone={done} />
   if (state?.kind === 'arm') return <ArmReport r={state} onDone={done} />
   if (state?.kind === 'nhpt') return <NhptReport r={state} onDone={done} />
@@ -146,7 +146,7 @@ export function AssessmentResult() {
       <h1 className="text-4xl">Assessment result</h1>
       <Card className="mt-5">
         <p className="text-lg">No result to show yet. The peg test takes about a minute with the printed sheet and a pegboard.</p>
-        <Button full className="mt-5" onClick={() => nav('/checkin')}>Run the peg test</Button>
+        <Button full className="mt-5" onClick={() => nav('/details/checkin')}>Run the peg test</Button>
         <Button variant="link" className="mt-2" onClick={done}>Back to Home</Button>
       </Card>
     </div>

@@ -7,7 +7,7 @@ function renderChoose() {
     <MemoryRouter initialEntries={['/choose']}>
       <Routes>
         <Route path="/choose" element={<ChooseExercise />} />
-        <Route path="/setup" element={<div>SETUP</div>} />
+        <Route path="/details/setup" element={<div>SETUP</div>} />
       </Routes>
     </MemoryRouter>,
   )

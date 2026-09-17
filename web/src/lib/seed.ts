@@ -66,11 +66,11 @@ export const REGIONS: Record<string, { title: string; status: Marker['status']; 
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
     metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2', unit: 'of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
     program: [{ name: 'Arm to the front', tag: 'camera' }],
-    primary: { label: 'Practise Arm to the front', to: '/demo?exercise=arm&side=left' } },
+    primary: { label: 'Practise Arm to the front', to: '/details/demo?exercise=arm&side=left' } },
   lElbow: { title: 'Left elbow', status: 'stable', setBy: 'No exercise assigned here',
     metrics: [{ value: '170°', label: 'elbow extension during lifts' }],
     program: [],
-    primary: { label: 'Ask the coach', to: '/' } },
+    primary: { label: 'Ask the coach', to: '/details/coach' } },
 }
 
 export const HOME_MARKERS: Marker[] = [

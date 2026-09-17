@@ -91,7 +91,7 @@ export function Demonstration() {
         label="Demonstration"
         left={
           <>
-            <Button variant="secondary" onClick={() => nav('/coach')}>Ask a question</Button>
+            <Button variant="secondary" onClick={() => nav('/details/coach')}>Ask a question</Button>
             <Button variant="secondary" onClick={() => nav(`${sessionUrl}&rehearse=1`)}>Rehearse without scoring</Button>
           </>
         }

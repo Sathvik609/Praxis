@@ -8,7 +8,7 @@ function renderReport() {
     <MemoryRouter initialEntries={['/report/abc']}>
       <Routes>
         <Route path="/report/:id" element={<SessionReport />} />
-        <Route path="/" element={<div>HOME</div>} />
+        <Route path="/details" element={<div>HOME</div>} />
       </Routes>
     </MemoryRouter>,
   )

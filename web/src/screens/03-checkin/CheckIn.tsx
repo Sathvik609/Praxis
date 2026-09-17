@@ -74,7 +74,7 @@ export function CheckIn() {
     } catch {
       /* private mode */
     }
-    nav('/choose')
+    nav('/details/choose')
   }
   const rules = rx?.stop_rules
   const clinician = rx?.clinician?.split(',')[0] ?? 'your therapist'
@@ -125,7 +125,7 @@ export function CheckIn() {
       <FlowBar
         step={0}
         label="Check-in"
-        left={<Button variant="secondary" onClick={() => nav('/')}>Back to Home</Button>}
+        left={<Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>}
         right={
           <div className="flex flex-col items-end">
             <Button disabled={pain === null} aria-describedby={pain === null ? hintId : undefined} onClick={go}>

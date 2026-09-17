@@ -11,9 +11,9 @@ function renderHome() {
     <MemoryRouter initialEntries={['/']}>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/checkin" element={<div>CHECKIN</div>} />
+        <Route path="/details/checkin" element={<div>CHECKIN</div>} />
         <Route path="/session" element={<div>SESSION</div>} />
-        <Route path="/progress" element={<div>PROGRESS</div>} />
+        <Route path="/details/progress" element={<div>PROGRESS</div>} />
         <Route path="/report/:id" element={<div>REPORT</div>} />
       </Routes>
     </MemoryRouter>,

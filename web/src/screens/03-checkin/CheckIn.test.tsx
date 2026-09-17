@@ -9,7 +9,7 @@ test('check-in collects pain, location, energy, time and symptoms, shows stop ru
     <MemoryRouter initialEntries={['/checkin']}>
       <Routes>
         <Route path="/checkin" element={<CheckIn />} />
-        <Route path="/choose" element={<div>CHOOSE</div>} />
+        <Route path="/details/choose" element={<div>CHOOSE</div>} />
       </Routes>
     </MemoryRouter>,
   )

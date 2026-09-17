@@ -23,7 +23,7 @@ export function CameraBlocked({ reason, onRetry }: { reason: 'camera_blocked' | 
         <p className="mt-2 text-lg text-muted">{text}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           <Button icon={<RotateCcw />} onClick={onRetry}>Try again</Button>
-          <Button variant="secondary" icon={<Play />} onClick={() => nav('/settings')}>Use a recorded session</Button>
+          <Button variant="secondary" icon={<Play />} onClick={() => nav('/details/settings')}>Use a recorded session</Button>
         </div>
       </Card>
     </div>
