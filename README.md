@@ -18,7 +18,7 @@ Three camera-coached tasks ship: **Nine-Hole Peg Test** (assessment), **Waiter �
 cd services/session && uv sync && uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000
 #    → http://127.0.0.1:8000/health  {"status":"ok","opencv_version":"5.0.0","mode":"edge"}
 
-# 2. Web app (pnpm)
+# 2. Web app (pnpm). Every screen is behind sign-in: accounts Rinky, Shruthi, Sathvik (team-managed, no self sign-up yet).
 cd web && pnpm install && pnpm dev
 #    → http://localhost:5173/  Home (body map) → Start session → check-in (Phase 8) · /demo?exercise=cup&side=left shows the demonstration
 #    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)

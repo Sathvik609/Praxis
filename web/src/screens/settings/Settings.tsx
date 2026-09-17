@@ -8,6 +8,7 @@ import { Chip } from '../../design/Chip'
 import { Play } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
+import { getSession, logout } from '../../lib/auth'
 
 const MODE_NAME: Record<string, string> = { nhpt: 'Nine-Hole Peg Test', cup: 'Waiter – cup', arm: 'Arm to the front' }
 const GUIDANCE_KEY = 'praxis.guidance'
@@ -87,6 +88,10 @@ export function Settings() {
             {error && <p className="text-red-ink" role="alert">Could not list recordings — the session service is not reachable.</p>}
             {clips && clips.length === 0 && <p className="text-muted">No recordings available yet.</p>}
           </div>
+        </Card>
+        <Card title="Account">
+          <p className="text-lg">Signed in as <b>{getSession()?.user.name ?? 'you'}</b>. Accounts are managed by the Praxis team for now.</p>
+          <Button variant="secondary" className="mt-3" onClick={() => { void logout().then(() => nav('/signin', { replace: true })) }}>Sign out</Button>
         </Card>
         <Card title="Cloud">
           <p className="-mt-2 text-muted">Cloud mode is off in this build. Everything runs on this device.</p>

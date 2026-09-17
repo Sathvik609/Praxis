@@ -12,17 +12,18 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
+import { RequireAuth } from './RequireAuth'
 import { Shell } from './Shell'
 
-/** Sign-in (own minimal header), the live session and the clinician dashboard (own clinician
- *  header) render outside the patient Shell; every other screen sits under the hub nav. */
+/** Every screen except sign-in sits behind RequireAuth. Sign-in (own minimal header), the live
+ *  session and the clinician dashboard (own clinician header) render outside the patient Shell. */
 export const router = createBrowserRouter([
-  { path: '/session', element: <SessionRouter /> },
+  { path: '/session', element: <RequireAuth><SessionRouter /></RequireAuth> },
   { path: '/signin', element: <SignIn /> },
-  { path: '/therapist', element: <Therapist /> },
+  { path: '/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
   {
     path: '/',
-    element: <Shell />,
+    element: <RequireAuth><Shell /></RequireAuth>,
     children: [
       { index: true, element: <Home /> },
       { path: 'exercises', element: <ChooseExercise /> },

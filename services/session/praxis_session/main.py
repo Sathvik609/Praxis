@@ -17,8 +17,10 @@ from pydantic import BaseModel
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Header, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 
+from praxis_session.auth import issue_token, revoke, user_for_token, verify
 from praxis_session.events import EventRing, make_event
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
@@ -55,6 +57,40 @@ def health() -> dict[str, object]:
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
         },
     }
+
+
+class LoginBody(BaseModel):
+    username: str = ""
+    password: str = ""
+
+
+def _bearer(authorization: str | None) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    return None
+
+
+@app.post("/api/auth/login")
+def api_login(body: LoginBody) -> JSONResponse:
+    """Local accounts (praxis_session/auth.py). 401 with a plain message on a bad pair."""
+    user = verify(body.username, body.password)
+    if user is None:
+        return JSONResponse({"ok": False, "error": "Wrong username or password."}, status_code=401)
+    return JSONResponse({"ok": True, "user": user, "token": issue_token(user["username"])})
+
+
+@app.get("/api/auth/me")
+def api_auth_me(authorization: str | None = Header(default=None)) -> JSONResponse:
+    user = user_for_token(_bearer(authorization))
+    if user is None:
+        return JSONResponse({"ok": False, "error": "Not signed in."}, status_code=401)
+    return JSONResponse({"ok": True, "user": user})
+
+
+@app.post("/api/auth/logout")
+def api_logout(authorization: str | None = Header(default=None)) -> dict[str, object]:
+    revoke(_bearer(authorization))
+    return {"ok": True}
 
 
 @app.get("/events")

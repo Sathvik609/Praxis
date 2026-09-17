@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SignIn } from './SignIn'
 
@@ -13,41 +13,49 @@ function renderSignIn() {
   )
 }
 
-beforeEach(() => sessionStorage.clear())
-
-test('sign-in and first-run profile lead to Home', () => {
-  renderSignIn()
-  expect(screen.getByText(/Your practice, supported/)).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'First-time setup' })).toBeInTheDocument()
-  expect(screen.getByText(/Camera, microphone and any cloud processing are asked for later/)).toBeInTheDocument()
-  expect(screen.queryByText(/Cognito/)).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', { name: 'Right' }))
-  fireEvent.click(screen.getByRole('button', { name: /Save and open Home/ }))
-  expect(screen.getByText('HOME')).toBeInTheDocument()
-  expect(sessionStorage.getItem('praxis.profile')).toContain('"side":"right"')
+beforeEach(() => {
+  sessionStorage.clear()
+  vi.unstubAllGlobals()
 })
 
-test('sign in saves the profile and opens Home; the password is empty and can be shown', () => {
+function mockLogin(ok: boolean) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok, status: ok ? 200 : 401, json: async () => (ok ? { ok: true, user: { username: 'rinky', name: 'Rinky', initial: 'R' }, token: 'tok' } : { ok: false, error: 'Wrong username or password.' }) })),
+  )
+}
+
+test('asks for username and password only; no account creation', () => {
+  renderSignIn()
+  expect(screen.getByText(/Your practice, supported/)).toBeInTheDocument()
+  expect(screen.getByLabelText('Username')).toBeInTheDocument()
+  expect(screen.getByLabelText('Password')).toBeInTheDocument()
+  expect(screen.queryByText(/Create account/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Cognito/)).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled()
+})
+
+test('a wrong password shows an error and stays on the page', async () => {
+  mockLogin(false)
+  renderSignIn()
+  fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Rinky' } })
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'nope' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent(/Wrong username or password/)
+  expect(screen.queryByText('HOME')).not.toBeInTheDocument()
+  expect(sessionStorage.getItem('praxis.auth')).toBeNull()
+})
+
+test('a right password stores the session and opens Home; the password can be shown', async () => {
+  mockLogin(true)
   renderSignIn()
   const pw = screen.getByLabelText('Password') as HTMLInputElement
-  expect(pw.value).toBe('')
   expect(pw.type).toBe('password')
   fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
   expect(pw.type).toBe('text')
-  fireEvent.click(screen.getByRole('button', { name: 'Hide password' }))
-  expect(pw.type).toBe('password')
+  fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Rinky' } })
+  fireEvent.change(pw, { target: { value: 'example-password' } })
   fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
-  expect(screen.getByText('HOME')).toBeInTheDocument()
-  const profile = JSON.parse(sessionStorage.getItem('praxis.profile') ?? '{}')
-  expect(profile.side).toBe('left')
-  expect(profile.guidance.spoken).toBe(true)
-})
-
-test('the mode toggle switches between sign in and create account', () => {
-  renderSignIn()
-  fireEvent.click(screen.getByRole('radio', { name: 'Create account' }))
-  expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument()
-  expect(screen.getByLabelText('Your name')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText('HOME')).toBeInTheDocument())
+  expect(JSON.parse(sessionStorage.getItem('praxis.auth') ?? '{}').user.name).toBe('Rinky')
 })

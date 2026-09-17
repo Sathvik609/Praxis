@@ -38,6 +38,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Single-origin container image (multi-stage Dockerfile: web build → FastAPI serves `web_dist`, `/ws/session` alias, `PORT`/`PRAXIS_*` env, SHA256-pinned model fetch at build), `railway.json`; hosted on Railway for team review | built, tested (`tests/test_web_static.py`), image smoke-tested locally |
 | Sprint A (17 Sep): replay for cup/arm + clip-time commands, arm setup without a sheet (`for=arm`), coach cadence (per-cue cooldowns, phrase pools, arc summaries with numbers), speech queue, `liveStatus` enum, caption expiry, 1280 × 800 height budget with pinned controls, camera-blocked card, Home replay entry | built, tested (pytest 147, vitest 86), checked in Chrome at 1280 × 800 |
 | Sprint C (17 Sep): design system (ink/fill/tint tokens, dark theme AA-measured by `design/contrast.test.ts`, primitives with states, lucide icons, Bars/Line charts with text summaries), all 15 screens migrated, designed live overlay, clinician header, sign-in outside the shell, keyboard roving on number scales | built, tested (vitest 200), checked in Chrome at 1280 × 800 light and dark |
+| Sign-in gate (17 Sep): `POST /api/auth/login` against three team accounts (SHA-256 hashes in `auth.py`, in-memory bearer tokens), `RequireAuth` on every route, sign-out in Settings | built, tested (pytest 149, vitest 202), checked in Chrome |
 | Real recordings, dataset v1, latency numbers, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 

@@ -1,44 +1,39 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { Checkbox } from '../../design/Checkbox'
 import { Field } from '../../design/Field'
-import { Pill } from '../../design/Pill'
-import { PROGRAM } from '../../lib/seed'
+import { login } from '../../lib/auth'
 
-type Side = 'left' | 'right' | 'both'
-type Mode = 'signin' | 'create'
-const GUIDANCE = [
-  ['spoken', 'Spoken instructions'],
-  ['captions', 'Captions'],
-  ['larger', 'Larger text'],
-  ['helper', 'Helper for setup'],
-] as const
-
-/** Screen 01 · Sign in and first-run profile. Rendered outside the patient Shell with its own
- *  minimal header. Local accounts for the edge build: signing in stores the profile for this
- *  browser session (`praxis.profile`) and opens Home. Camera, microphone and cloud consent are
- *  asked at the point of use, never here. */
+/** Screen 01 · Sign in. Username and password only; the service holds the accounts (three
+ *  named users for now, a database later). Rendered outside the patient Shell. Camera,
+ *  microphone and cloud consent are asked at the point of use, never here. */
 export function SignIn() {
   const nav = useNavigate()
-  const [mode, setMode] = useState<Mode>('signin')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const loc = useLocation()
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
-  const [side, setSide] = useState<Side>('left')
-  const [code, setCode] = useState('GR-4471-L2')
-  const [goal, setGoal] = useState('Use a cup on my own')
-  const [g, setG] = useState({ spoken: true, captions: true, larger: false, helper: false })
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const from = (loc.state as { from?: string } | null)?.from ?? '/'
 
-  const save = () => {
-    try {
-      sessionStorage.setItem('praxis.profile', JSON.stringify({ side, code, goal, guidance: g, name: name || undefined, email: email || undefined }))
-    } catch {
-      /* private mode: the profile lives for this page only */
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    const r = await login(username, password)
+    setBusy(false)
+    if (!r.ok) {
+      setError(r.error)
+      return
     }
-    nav('/')
+    try {
+      sessionStorage.setItem('praxis.profile', JSON.stringify({ side: 'left', name: r.user.name }))
+    } catch {
+      /* private mode */
+    }
+    nav(from, { replace: true })
   }
 
   return (
@@ -47,40 +42,21 @@ export function SignIn() {
         <span className="font-heading text-2xl font-semibold text-teal-ink">Praxis</span>
         <span className="text-muted">· Your practice, supported</span>
       </header>
-      <div className="mx-auto grid w-full max-w-[1200px] flex-1 grid-cols-[minmax(340px,2fr)_3fr] gap-8 p-8">
-        <div>
-          <h1 className="text-4xl">{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h1>
-          <p className="mt-2 text-muted">{mode === 'signin' ? 'Sign in to reach the practice your therapist assigned.' : 'Your therapist gives you a program code; everything else stays on this device.'}</p>
-          <Card className="mt-6">
-            <Pill ariaLabel="Sign in or create account" value={mode} onChange={setMode} className="mb-5" options={[{ value: 'signin', label: 'Sign in' }, { value: 'create', label: 'Create account' }]} />
-            {mode === 'create' && <Field label="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className="mb-4" />}
-            <Field label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <div className="mx-auto flex w-full max-w-[520px] flex-1 flex-col justify-center p-8">
+        <h1 className="text-4xl">Welcome back</h1>
+        <p className="mt-2 text-muted">Sign in to reach the practice your therapist assigned.</p>
+        <Card className="mt-6">
+          <form onSubmit={submit} noValidate>
+            <Field label="Username" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
             <div className="mt-4 flex items-end gap-2">
-              <Field label="Password" type={showPw ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} className="flex-1" />
+              <Field label="Password" type={showPw ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="flex-1" />
               <Button type="button" variant="link" className="min-h-14 shrink-0" aria-label={showPw ? 'Hide password' : 'Show password'} aria-pressed={showPw} onClick={() => setShowPw((s) => !s)}>{showPw ? 'Hide' : 'Show'}</Button>
             </div>
-            <Button full className="mt-5" onClick={save}>{mode === 'signin' ? 'Sign in' : 'Create account'}</Button>
-            <p className="mt-3 text-base text-muted">Forgot password · Privacy · Terms</p>
-          </Card>
-        </div>
-        <Card>
-          <h2 className="text-4xl">First-time setup</h2>
-          <p className="text-muted">Shown once after sign in. Clinical limits come from your program and are read-only.</p>
-          <div className="mt-5 font-bold">Practising side</div>
-          <Pill ariaLabel="Practising side" value={side} onChange={setSide} className="mt-2" options={[{ value: 'left', label: 'Left' }, { value: 'right', label: 'Right' }, { value: 'both', label: 'Both' }]} />
-          <Field label="Program code from your therapist" value={code} onChange={(e) => setCode(e.target.value)} className="mt-5" hint={`Connected: ${PROGRAM.label} · ${PROGRAM.clinician} · 3 exercises + 1 assessment assigned`} />
-          <Field label="Everyday goal" value={goal} onChange={(e) => setGoal(e.target.value)} className="mt-5" />
-          <div className="mt-5 font-bold">Guidance</div>
-          <div className="mt-1 grid grid-cols-2 gap-x-6">
-            {GUIDANCE.map(([k, label]) => (
-              <Checkbox key={k} label={label} checked={g[k]} onChange={(v) => setG({ ...g, [k]: v })} />
-            ))}
-          </div>
-          <div className="mt-8 flex items-center justify-between gap-6">
-            <p className="text-muted">Camera, microphone and any cloud processing are asked for later, when needed.</p>
-            <Button variant="secondary" className="shrink-0" onClick={save}>Save and open Home</Button>
-          </div>
+            {error && <p role="alert" className="mt-4 rounded-[var(--r-control)] bg-tint-red px-4 py-3 text-red-ink">{error}</p>}
+            <Button type="submit" full className="mt-6" disabled={busy || !username || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+          </form>
         </Card>
+        <p className="mt-4 text-base text-muted">Accounts are set up by the Praxis team for now. Camera, microphone and any cloud processing are asked for later, when needed.</p>
       </div>
     </div>
   )
