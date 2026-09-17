@@ -152,12 +152,12 @@ export function CameraSetup() {
         step={2}
         label="Camera setup"
         left={
-          <Button variant="secondary" onClick={() => nav('/choose')}>
+          <Button variant="secondary" onClick={() => nav('/details/choose')}>
             Change exercise
           </Button>
         }
         right={
-          <Button disabled={!ready} onClick={() => nav(`/demo?exercise=${exercise}`)}>
+          <Button disabled={!ready} onClick={() => nav(`/details/demo?exercise=${exercise}`)}>
             Continue to demonstration
           </Button>
         }

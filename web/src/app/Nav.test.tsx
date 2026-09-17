@@ -19,11 +19,11 @@ test('nav shows the four hubs and the program label', () => {
 })
 
 test('the active hub is marked for assistive tech and the account circle links to settings', () => {
-  renderNav('/progress')
+  renderNav('/details/progress')
   expect(screen.getByRole('link', { name: 'Progress' })).toHaveAttribute('aria-current', 'page')
   expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
   const account = screen.getByRole('link', { name: /Account and settings/ })
-  expect(account).toHaveAttribute('href', '/settings')
+  expect(account).toHaveAttribute('href', '/details/settings')
   expect(account).toHaveTextContent('A')
 })
 

@@ -79,7 +79,7 @@ export function Home() {
         setGoalNote('Logged.')
       })
       .catch(() => setGoalNote('Could not log — the session service is not reachable.'))
-  const openReport = () => nav(sessions?.[0] ? `/report/${sessions[0].id}` : '/progress')
+  const openReport = () => nav(sessions?.[0] ? `/report/${sessions[0].id}` : '/details/progress')
 
   return (
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.1fr)] gap-5 p-5">
@@ -88,8 +88,8 @@ export function Home() {
           <div className="text-white/80">Next practice · today</div>
           <h1 className="text-3xl text-white">Waiter – cup, then Arm to the front</h1>
           <p className="mt-1 text-white/80">About 14 min · cup + target sheet · wrist weight</p>
-          <Button full variant="inverse" className="mt-5" onClick={() => nav('/checkin')}>Start session</Button>
-          <Button full variant="secondary" className="mt-3 whitespace-normal! border-white/70! bg-transparent! text-white! hover:bg-white/10!" onClick={() => nav('/settings')}>Replay a recorded session · no webcam</Button>
+          <Button full variant="inverse" className="mt-5" onClick={() => nav('/details/checkin')}>Start session</Button>
+          <Button full variant="secondary" className="mt-3 whitespace-normal! border-white/70! bg-transparent! text-white! hover:bg-white/10!" onClick={() => nav('/details/settings')}>Replay a recorded session · no webcam</Button>
           <Button full variant="link" className="mt-2 text-white/90! hover:bg-white/10!" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
         </Card>
 

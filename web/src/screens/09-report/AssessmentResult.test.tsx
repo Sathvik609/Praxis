@@ -7,7 +7,7 @@ function renderWith(state: unknown) {
     <MemoryRouter initialEntries={[{ pathname: '/report', state }]}>
       <Routes>
         <Route path="/report" element={<AssessmentResult />} />
-        <Route path="/checkin" element={<div>CHECKIN</div>} />
+        <Route path="/details/checkin" element={<div>CHECKIN</div>} />
       </Routes>
     </MemoryRouter>,
   )

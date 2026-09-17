@@ -100,7 +100,7 @@ export function ChooseExercise() {
       /* private mode */
     }
   }
-  const begin = () => nav(`/setup?exercise=${current.id}&side=${side}`)
+  const begin = () => nav(`/details/setup?exercise=${current.id}&side=${side}`)
   const advice = suggest(time, pain, kit)
   const usePick = () => {
     if (!advice.pick) return
@@ -181,7 +181,7 @@ export function ChooseExercise() {
         left={
           <>
             <span className="hidden self-center text-muted lg:inline">Level changes need your clinician.</span>
-            <Button variant="secondary" onClick={() => nav('/checkin')}>Back</Button>
+            <Button variant="secondary" onClick={() => nav('/details/checkin')}>Back</Button>
           </>
         }
         right={

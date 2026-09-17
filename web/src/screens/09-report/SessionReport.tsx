@@ -65,7 +65,7 @@ export function SessionReport() {
         <Card tone="watch" title="Could not load this report">
           <p className="text-lg">The report could not be fetched ({problem}). Reports stay on this device until they are delivered.</p>
           <div className="mt-4">
-            <Button variant="secondary" onClick={() => nav('/')}>Back to Home</Button>
+            <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
           </div>
         </Card>
       </div>
@@ -116,7 +116,7 @@ export function SessionReport() {
         <div className="ml-auto flex flex-wrap gap-3">
           <Button variant="secondary" icon={<Download />} onClick={dl}>Download JSON</Button>
           <Button variant="secondary" icon={<Share2 />} onClick={() => setSharing(true)}>Sharing</Button>
-          <Button onClick={() => nav('/')}>Done — back to Home</Button>
+          <Button onClick={() => nav('/details')}>Done — back to Home</Button>
         </div>
       </div>
 

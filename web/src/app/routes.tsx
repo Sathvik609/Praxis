@@ -12,30 +12,51 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
+import { Done } from '../screens/guided/Done'
+import { Go } from '../screens/guided/Go'
+import { Ready } from '../screens/guided/Ready'
+import { Today } from '../screens/guided/Today'
+import { Welcome } from '../screens/guided/Welcome'
 import { RequireAuth } from './RequireAuth'
+import { RequireProfile } from './RequireProfile'
 import { Shell } from './Shell'
 
-/** Every screen except sign-in sits behind RequireAuth. Sign-in (own minimal header), the live
- *  session and the clinician dashboard (own clinician header) render outside the patient Shell. */
+/** Two paths through the app (Sprint E).
+ *
+ *  The **guided path** is the front door: `/` Today, `/welcome` onboarding, `/ready` get ready,
+ *  `/go` session, `/done/:id` finish. It has no nav bar — one screen, one primary action.
+ *
+ *  The **details hub** is everything built to wireframes v1.1, still reachable under
+ *  `/details/*` for the therapist story and for judges. `/session` and `/report/:id` keep their
+ *  old paths so replay links and report links from either path resolve.
+ *
+ *  Sign-in, the live session and the clinician dashboard render outside the patient Shell. */
 export const router = createBrowserRouter([
   { path: '/session', element: <RequireAuth><SessionRouter /></RequireAuth> },
   { path: '/signin', element: <SignIn /> },
   { path: '/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
+  { path: '/details/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
+  { path: '/welcome', element: <RequireAuth><Welcome /></RequireAuth> },
+  { path: '/ready', element: <RequireAuth><RequireProfile><Ready /></RequireProfile></RequireAuth> },
+  { path: '/go', element: <RequireAuth><RequireProfile><Go /></RequireProfile></RequireAuth> },
+  { path: '/done/:id', element: <RequireAuth><Done /></RequireAuth> },
+  { path: '/', element: <RequireAuth><RequireProfile><Today /></RequireProfile></RequireAuth> },
   {
-    path: '/',
     element: <RequireAuth><Shell /></RequireAuth>,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'exercises', element: <ChooseExercise /> },
-      { path: 'progress', element: <Progress /> },
-      { path: 'settings', element: <Settings /> },
-      { path: 'checkin', element: <CheckIn /> },
-      { path: 'choose', element: <ChooseExercise /> },
-      { path: 'setup', element: <CameraSetup /> },
-      { path: 'demo', element: <Demonstration /> },
       { path: 'report', element: <AssessmentResult /> },
       { path: 'report/:id', element: <SessionReport /> },
-      { path: 'coach', element: <CoachDrawer /> },
+      { path: 'details', element: <Home /> },
+      { path: 'details/exercises', element: <ChooseExercise /> },
+      { path: 'details/progress', element: <Progress /> },
+      { path: 'details/settings', element: <Settings /> },
+      { path: 'details/checkin', element: <CheckIn /> },
+      { path: 'details/choose', element: <ChooseExercise /> },
+      { path: 'details/setup', element: <CameraSetup /> },
+      { path: 'details/demo', element: <Demonstration /> },
+      { path: 'details/report', element: <AssessmentResult /> },
+      { path: 'details/report/:id', element: <SessionReport /> },
+      { path: 'details/coach', element: <CoachDrawer /> },
     ],
   },
 ])
