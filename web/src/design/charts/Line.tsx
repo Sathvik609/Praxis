@@ -34,7 +34,7 @@ export function Line({ points, unit, title, target, height = 160, lowerIsBetter 
             <text x={x(i)} y={height - 6} textAnchor="middle" fontSize="11" fill="var(--muted)">{p.x}</text>
           </g>
         ))}
-        <text x={4} y={12} fontSize="10" fill="var(--muted)">{unit}</text>
+        <text x={padL - 6} y={height - 2} textAnchor="end" fontSize="10" fill="var(--muted)">{unit}</text>
       </svg>
       <figcaption className="mt-1 text-base text-muted">
         {points.length >= 2 ? `${Math.abs(trend).toFixed(1)} ${unit} ${(lowerIsBetter ? trend < 0 : trend > 0) ? 'better' : 'worse'} than the first point` : 'one measurement so far'}

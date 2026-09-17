@@ -1,9 +1,7 @@
 import type { ComponentType, SVGProps } from 'react'
 // Hub icons. `Activity` is in design/Icon; the other three are not in the shared set yet and
-// come straight from lucide-react 1.47.0 (same licence, recorded in docs/LICENSES.md).
-import { Home as HomeIcon, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-import { Activity } from '../design/Icon'
+import { Activity, Home as HomeIcon, Settings as SettingsIcon, TrendingUp } from '../design/Icon'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 const hubs: { label: string; to: string; icon: Icon }[] = [

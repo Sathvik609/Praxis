@@ -65,7 +65,7 @@ export function Bars({ values, unit, labels, verified, height = 160, title, targ
             </g>
           )
         })}
-        <text x={4} y={12} fontSize="10" fill="var(--muted)">{unit}</text>
+        <text x={padL - 6} y={height - 2} textAnchor="end" fontSize="10" fill="var(--muted)">{unit}</text>
       </svg>
       <figcaption className="mt-1 flex flex-wrap gap-4 text-base text-muted">
         <span className="inline-flex items-center gap-1"><span aria-hidden className="inline-block h-3 w-3 rounded-sm bg-teal" /> verified</span>
