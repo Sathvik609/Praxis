@@ -14,15 +14,18 @@ import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
 import { Shell } from './Shell'
 
+/** Sign-in (own minimal header), the live session and the clinician dashboard (own clinician
+ *  header) render outside the patient Shell; every other screen sits under the hub nav. */
 export const router = createBrowserRouter([
   { path: '/session', element: <SessionRouter /> },
+  { path: '/signin', element: <SignIn /> },
+  { path: '/therapist', element: <Therapist /> },
   {
     path: '/',
     element: <Shell />,
     children: [
       { index: true, element: <Home /> },
       { path: 'exercises', element: <ChooseExercise /> },
-      { path: 'signin', element: <SignIn /> },
       { path: 'progress', element: <Progress /> },
       { path: 'settings', element: <Settings /> },
       { path: 'checkin', element: <CheckIn /> },
@@ -31,7 +34,6 @@ export const router = createBrowserRouter([
       { path: 'demo', element: <Demonstration /> },
       { path: 'report', element: <AssessmentResult /> },
       { path: 'report/:id', element: <SessionReport /> },
-      { path: 'therapist', element: <Therapist /> },
       { path: 'coach', element: <CoachDrawer /> },
     ],
   },
