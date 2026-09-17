@@ -16,3 +16,12 @@ test('raising the left shoulder pitch brings the wrist forward and up', () => {
   expect(p.lWrist[2]).toBeGreaterThan(p.lShoulder[2] + 0.3)
   expect(Math.abs(p.lWrist[1] - p.lShoulder[1])).toBeLessThan(0.05)
 })
+
+test('hand joints hang 9 cm past the wrist along the forearm and follow the wrist rotation', () => {
+  const p = forwardKinematics(restAngles())
+  expect(p.lHand[1]).toBeCloseTo(p.lWrist[1] - 0.09, 6)
+  const a = restAngles()
+  a.lElbow = [-Math.PI / 2, 0, 0]
+  const q = forwardKinematics(a)
+  expect(q.lHand[2]).toBeGreaterThan(q.lWrist[2] + 0.08)
+})
