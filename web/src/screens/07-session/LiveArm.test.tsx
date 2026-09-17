@@ -31,20 +31,34 @@ function renderAt(path: string) {
   )
 }
 
-test('shows set, rep, angle tiles and the ceiling caption', () => {
+test('shows set, rep, angle tiles and the shoulder band in the feed (not over the video)', () => {
   mockStream([frame])
   renderAt('/session?exercise=arm&side=left')
   expect(screen.getByText(/set 1 of 2/)).toBeInTheDocument()
   expect(screen.getByText(/Rep 5 of 8/)).toBeInTheDocument()
   expect(screen.getByText('72°')).toBeInTheDocument()
   expect(screen.getByText('88°')).toBeInTheDocument()
-  expect(screen.getByText(/Shoulder 72° · target 90° · ceiling 90°/)).toBeInTheDocument()
+  const band = screen.getByText(/Shoulder 72° · target 90° · ceiling 90°/)
+  expect(band.className).toMatch(/tabular-nums/)
+  expect(band.className).not.toMatch(/text-amber/)
+  expect(screen.getByText('9°')).toBeInTheDocument()
+  expect(screen.queryByText('(leaning)')).toBeNull()
 })
 
-test('posture cue appears after a compensation_lean event', () => {
+test('trunk lean over 12° is amber and says "(leaning)" so colour is never alone', () => {
+  mockStream([{ ...frame, arm: { ...frame.arm, trunk_lean_deg: -15 } }])
+  renderAt('/session?exercise=arm&side=left')
+  const lean = screen.getByText('15°')
+  expect(lean.className).toMatch(/text-amber-ink/)
+  expect(screen.getByText('(leaning)')).toBeInTheDocument()
+})
+
+test('posture cue appears after a compensation_lean event in the watch tone', () => {
   mockStream([frame, { type: 'compensation_lean', t: 11, id: 2, lean_deg: 15, count: 1, flagged: false }])
   renderAt('/session?exercise=arm&side=left')
   expect(screen.getByText(/Sit tall/)).toBeInTheDocument()
+  expect(screen.getByText('Coach · posture')).toBeInTheDocument()
+  expect(screen.getByText(/Sit tall/).closest('section')?.className).toMatch(/border-l-amber-ink/)
 })
 
 test('completion opens the feedback overlay', () => {
@@ -57,4 +71,5 @@ test('replay query is passed to the stream so no webcam is opened', () => {
   mockStream([])
   renderAt('/session?exercise=arm&side=left&replay=synthetic_arm_01')
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_arm_01' }))
+  expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
 })

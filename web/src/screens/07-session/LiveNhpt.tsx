@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
-import { Chip } from '../../design/Chip'
+import { Card } from '../../design/Card'
+import { Pill } from '../../design/Pill'
 import { ProgressDots } from '../../design/ProgressDots'
+import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
-import { CameraBlocked } from '../../session/CameraBlocked'
-import { LiveIndicator } from '../../session/LiveIndicator'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
-import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
+import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { BoardView } from './BoardView'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -82,88 +83,76 @@ export function LiveNhpt() {
   const pegsDone = frame?.nhpt?.pegs_done ?? 0
   const nextHole = frame?.overlay.next_hole ?? null
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
+  const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
-        <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
-        <span className="text-xl font-bold">Nine-Hole Peg Test · {hand} hand</span>
-        <span className="text-muted">Assessment · attempt 1 of 1</span>
-        <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} replay={!!replay} />
-          <Chip tone={label.tone}>{label.chip}</Chip>
-        </span>
-      </header>
+      <SessionHeader title={`Nine-Hole Peg Test · ${hand} hand`} subtitle="Assessment · attempt 1 of 1" status={status} label={label} />
 
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
-        <div className="relative min-h-0 self-start overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
-          <div className="absolute left-4 top-3 z-10 text-white/80">
-            <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
-            <b>You</b> · {hand} hand · {live ? 'board tracking' : label.feed}
-          </div>
-          {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
-          <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
-          <div className="absolute bottom-3 left-4 text-white/80">
-            cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}
-            {frame?.models?.hand ? ` · dnn hand${frame.hand?.present ? ' ✓' : ''}` : ' · hand model off'}
-            {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
-          </div>
-          {(status === 'camera_blocked' || status === 'service_unreachable') && (
-            <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={() => { stop(); void start() }} /></div>
-          )}
-        </div>
+        <LiveFeed
+          className="min-h-0 self-start"
+          replay={!!replay}
+          camActive={camActive}
+          status={status}
+          videoRef={videoRef}
+          frame={frame}
+          feedLabel={replay ? `recorded session · ${hand} hand` : `${hand} hand · ${label.feed}`}
+          tracking={live ? ['board tracking', handSeen].filter(Boolean).join(' · ') : undefined}
+          cvLine={
+            <>
+              cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}
+              {frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}
+              {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
+            </>
+          }
+          onRetry={() => { stop(); void start() }}
+        />
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-muted">Reference</span>
-            <div className="ml-auto flex gap-1 rounded-full border border-line p-1">
-              {(['avatar', 'board'] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  aria-pressed={reference === r}
-                  onClick={() => setReference(r)}
-                  className={`h-12 rounded-full px-4 font-bold ${reference === r ? 'bg-teal text-white' : 'text-ink'}`}
-                >
-                  {r === 'avatar' ? 'Avatar' : 'Board view'}
-                </button>
-              ))}
-            </div>
-          </div>
+        <Card
+          className="flex min-h-0 flex-col gap-4 overflow-hidden"
+          padding="sm"
+          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
+          action={
+            <Pill
+              size="sm"
+              ariaLabel="Reference view"
+              value={reference}
+              onChange={setReference}
+              options={[
+                { value: 'avatar', label: 'Avatar' },
+                { value: 'board', label: 'Board view' },
+              ]}
+            />
+          }
+        >
           {reference === 'avatar' ? (
             <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="nhpt" compact /></div>
           ) : (
             <BoardView occupancy={frame?.board?.occupancy ?? {}} nextHole={nextHole} />
           )}
-        </div>
-
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-            <div className="text-muted">Elapsed</div>
-            <div className="font-heading text-6xl">
-              <span>{elapsed.toFixed(1)}</span>
-              <span className="text-2xl"> s</span>
-            </div>
-            <div className="text-muted">{frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'}</div>
-          </div>
-          <div className="rounded-2xl border border-line bg-surface p-6">
-            <div className="mb-3 flex justify-between">
-              <span>
+          <div>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <span className="text-xl">
                 <b>{pegsDone} of 9</b> seated
               </span>
-              <span className="text-muted">{nextHole != null ? `next: hole ${nextHole + 1}` : frame?.calibrated ? 'board full' : 'sheet not in view'}</span>
+              <span className="text-lg text-muted">{nextHole != null ? `next: hole ${nextHole + 1}` : frame?.calibrated ? 'board full' : 'sheet not in view'}</span>
             </div>
             <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
           </div>
+        </Card>
+
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
+          <Card>
+            <div className="flex flex-col items-center">
+              <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
+            </div>
+          </Card>
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
+            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
           ) : (
             <>
-              <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-5">
-                <div className="text-muted">Coach</div>
-                <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-              </div>
+              <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
               <ExertionChip exertion={coach.exertion} />
             </>
           )}

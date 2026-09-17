@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
+import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
+import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
-import { CameraBlocked } from '../../session/CameraBlocked'
-import { LiveIndicator } from '../../session/LiveIndicator'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
-import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
+import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { SetCheckIn } from './SetCheckIn'
@@ -20,6 +21,10 @@ import { TracePanel } from './TracePanel'
 
 type ArmComplete = PraxisEvent & { sets: number; reps: number }
 type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
+
+/** Trunk lean above this many degrees is shown as "(leaning)" in amber; the stop rule's own
+ *  threshold lives in the service. */
+export const LEAN_SHOW_DEG = 12
 
 function caption(f: FrameEvent | null, lost: boolean, lean: boolean): string {
   if (lost) return 'I cannot see your shoulder and hip. Turn your practising side to the camera.'
@@ -81,73 +86,67 @@ export function LiveArm() {
 
   const now = a?.angle_now ?? null
   const holding = a?.state === 'hold'
+  const target = a?.target_deg ?? 90
+  const ceiling = a?.ceiling_deg ?? 90
+  const lean = Math.round(Math.abs(a?.trunk_lean_deg ?? 0))
+  const leaning = lean > LEAN_SHOW_DEG
+  const repsPerSet = a?.reps_per_set ?? 8
+  const holdCount = holding ? Math.ceil((a?.hold_s ?? 3) * (a?.hold_progress ?? 0)) : 0
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
-        <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
-        <span className="text-xl font-bold">Arm to the front · {side} side</span>
-        <span className="text-muted">Arm strengthening · set {a?.set ?? 1} of {a?.sets ?? 2}</span>
-        <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} replay={!!replay} />
-          <Chip tone={label.tone}>{label.chip}</Chip>
-        </span>
-      </header>
+      <SessionHeader title={`Arm to the front · ${side} side`} subtitle={`Arm strengthening · set ${a?.set ?? 1} of ${a?.sets ?? 2}`} status={status} label={label} />
 
       <div className="grid min-h-0 grid-cols-[5fr_2fr_2fr] gap-4 p-4">
-        <div className="relative min-h-0 self-start overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
-          <div className="absolute left-4 top-3 z-10 text-white/80">
-            <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
-            <b>You</b> · {live ? `ghost arm shows target${frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}` : label.feed}
-          </div>
-          {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
-          <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
-          <div className="absolute bottom-10 left-4 text-2xl font-bold text-amber">
-            Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {a?.target_deg ?? 90}° · ceiling {a?.ceiling_deg ?? 90}°
-          </div>
-          <div className="absolute bottom-3 left-4 text-white/80">
-            cv2 dnn pose · shoulder–elbow–hip angle · trunk lean <b>{Math.round(Math.abs(a?.trunk_lean_deg ?? 0))}°</b>{frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}
-          </div>
-          {(status === 'camera_blocked' || status === 'service_unreachable') && (
-            <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={() => { stop(); void start() }} /></div>
-          )}
-        </div>
+        <LiveFeed
+          className="min-h-0 self-start"
+          replay={!!replay}
+          camActive={camActive}
+          status={status}
+          videoRef={videoRef}
+          frame={frame}
+          feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
+          tracking={live ? `ghost arm shows target${frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}` : undefined}
+          band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
+          cvLine={`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`}
+          onRetry={() => { stop(); void start() }}
+        />
 
-        <div className="flex min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border border-line bg-surface p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-muted">Reference · {holding ? 'at target' : 'lift'}</span>
-          </div>
+        <Card
+          className="flex min-h-0 flex-col gap-3 overflow-hidden"
+          padding="sm"
+          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
+          action={<Chip tone={holding ? 'mint' : 'neutral'}>{holding ? 'At target' : 'Lift'}</Chip>}
+        >
           <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="armFront" camera="side" compact /></div>
-          <p className="text-center text-muted">side view · shoulder {now != null ? Math.round(now) : '—'}° of {a?.target_deg ?? 90}°</p>
-          <div className="flex justify-between text-muted"><span>Lift for 3</span><span>Lower for 3</span></div>
-          <div className="h-3 overflow-hidden rounded-full bg-line">
-            <div className="h-full bg-teal transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />
+          <p className="text-center text-lg text-muted">side view · shoulder {now != null ? Math.round(now) : '—'}° of {target}°</p>
+          <div className="flex justify-between text-lg text-muted"><span>Lift for 3</span><span>Lower for 3</span></div>
+          <div className="h-3 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="hold progress" aria-valuenow={Math.round((a?.hold_progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-teal-fill transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />
           </div>
-          <p className="text-center text-muted">Figure paces with you. It never scores you.</p>
-        </div>
+          <p className="text-center text-lg text-muted">Figure paces with you. It never scores you.</p>
+        </Card>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="flex justify-between">
-              <span className="text-xl font-bold">Rep {Math.min((a?.rep ?? 0) + 1, a?.reps_per_set ?? 8)} of {a?.reps_per_set ?? 8} · hold {a?.hold_s ?? 3}</span>
-              <span className="text-muted">count: {holding ? Math.ceil((a?.hold_s ?? 3) * (a?.hold_progress ?? 0)) : 0}</span>
+          <Card title={`Rep ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet} · hold ${a?.hold_s ?? 3} s`} action={<span className="whitespace-nowrap text-lg text-muted tabular-nums">count: {holdCount}</span>}>
+            <ProgressDots total={repsPerSet} done={a?.rep ?? 0} current={holding ? a?.rep : undefined} />
+          </Card>
+          <Card>
+            <div className="grid grid-cols-3 gap-3">
+              <Stat value={now != null ? `${Math.round(now)}°` : '—'} label="now" />
+              <Stat value={`${Math.round(a?.best_this_set ?? 0)}°`} label="best this set" />
+              <Stat value={`${lean}°`} label="trunk lean" tone={leaning ? 'amber' : 'default'} extra={leaning ? <span className="font-bold text-amber-ink">(leaning)</span> : undefined} />
             </div>
-            <div className="mt-3"><ProgressDots total={a?.reps_per_set ?? 8} done={a?.rep ?? 0} current={holding ? a?.rep : undefined} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 rounded-2xl border border-line bg-surface p-5">
-            <div><div className="text-3xl font-bold">{now != null ? `${Math.round(now)}°` : '—'}</div><div className="text-muted">now</div></div>
-            <div><div className="text-3xl font-bold">{`${Math.round(a?.best_this_set ?? 0)}°`}</div><div className="text-muted">best this set</div></div>
-            <div><div className={`text-3xl font-bold ${Math.abs(a?.trunk_lean_deg ?? 0) > 12 ? 'text-amber' : ''}`}>{`${Math.round(Math.abs(a?.trunk_lean_deg ?? 0))}°`}</div><div className="text-muted">trunk lean</div></div>
-          </div>
+          </Card>
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
+            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
           ) : (
             <>
-              <div className={`rounded-2xl border-l-8 p-5 ${leanRecent ? 'border-amber bg-amber/10' : 'border-teal bg-mint/10'}`}>
-                <div className="text-muted">Coach{leanRecent ? ' · posture' : ''}</div>
-                <p className="text-2xl">{coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}</p>
-                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-              </div>
+              <CoachCard
+                watch={leanRecent}
+                text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}
+                label={coach.caption?.label ?? COACH_LABEL}
+              />
               <ExertionChip exertion={coach.exertion} />
             </>
           )}
