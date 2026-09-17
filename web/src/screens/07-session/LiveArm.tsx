@@ -82,8 +82,8 @@ export function LiveArm() {
   const holding = a?.state === 'hold'
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
-      <header className="flex h-20 items-center gap-6 border-b border-line bg-surface px-6">
+    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
+      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
         <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
         <span className="text-xl font-bold">Arm to the front · {side} side</span>
         <span className="text-muted">Arm strengthening · set {a?.set ?? 1} of {a?.sets ?? 2}</span>
@@ -93,8 +93,8 @@ export function LiveArm() {
         </span>
       </header>
 
-      <div className="grid flex-1 grid-cols-[5fr_2fr_2fr] gap-6 p-6">
-        <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
+      <div className="grid min-h-0 grid-cols-[5fr_2fr_2fr] gap-4 p-4">
+        <div className="relative min-h-0 self-start overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 text-white/80">
             <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
             <b>You</b> · {live ? `ghost arm shows target${frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}` : label.feed}
@@ -110,22 +110,20 @@ export function LiveArm() {
           {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
         </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border border-line bg-surface p-4">
           <div className="flex items-center gap-2">
             <span className="text-muted">Reference · {holding ? 'at target' : 'lift'}</span>
-            <span className="ml-auto rounded-full bg-teal px-4 py-2 font-bold text-white">Avatar</span>
           </div>
-          <AvatarPanel clip="armFront" camera="side" compact />
+          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="armFront" camera="side" compact /></div>
           <p className="text-center text-muted">side view · shoulder {now != null ? Math.round(now) : '—'}° of {a?.target_deg ?? 90}°</p>
           <div className="flex justify-between text-muted"><span>Lift for 3</span><span>Lower for 3</span></div>
           <div className="h-3 overflow-hidden rounded-full bg-line">
             <div className="h-full bg-teal transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />
           </div>
           <p className="text-center text-muted">Figure paces with you. It never scores you.</p>
-          {traceOpen && <TracePanel events={events} />}
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
           <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="flex justify-between">
               <span className="text-xl font-bold">Rep {Math.min((a?.rep ?? 0) + 1, a?.reps_per_set ?? 8)} of {a?.reps_per_set ?? 8} · hold {a?.hold_s ?? 3}</span>
@@ -138,12 +136,18 @@ export function LiveArm() {
             <div><div className="text-3xl font-bold">{`${Math.round(a?.best_this_set ?? 0)}°`}</div><div className="text-muted">best this set</div></div>
             <div><div className={`text-3xl font-bold ${Math.abs(a?.trunk_lean_deg ?? 0) > 12 ? 'text-amber' : ''}`}>{`${Math.round(Math.abs(a?.trunk_lean_deg ?? 0))}°`}</div><div className="text-muted">trunk lean</div></div>
           </div>
-          <div className={`rounded-2xl border-l-8 p-6 ${leanRecent ? 'border-amber bg-amber/10' : 'border-teal bg-mint/10'}`}>
-            <div className="text-muted">Coach{leanRecent ? ' · posture' : ''}</div>
-            <p className="text-2xl">{coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}</p>
-            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-          </div>
-          <ExertionChip exertion={coach.exertion} />
+          {traceOpen ? (
+            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
+          ) : (
+            <>
+              <div className={`rounded-2xl border-l-8 p-5 ${leanRecent ? 'border-amber bg-amber/10' : 'border-teal bg-mint/10'}`}>
+                <div className="text-muted">Coach{leanRecent ? ' · posture' : ''}</div>
+                <p className="text-2xl">{coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}</p>
+                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+              </div>
+              <ExertionChip exertion={coach.exertion} />
+            </>
+          )}
         </div>
       </div>
 

@@ -21,13 +21,34 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
     genRef.current += 1
     if (timerRef.current) window.clearInterval(timerRef.current)
     timerRef.current = null
-    wsRef.current?.close()
+    const ws = wsRef.current
+    if (ws) {
+      // Detach before closing: a socket closed before it opened (StrictMode double mount)
+      // must not report "service unreachable" for the connection that replaced it.
+      ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null
+      ws.close()
+    }
     wsRef.current = null
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
     if (videoRef.current) videoRef.current.srcObject = null
     setCamActive(false)
     setConnected(false)
+  }, [])
+
+  const attach = useCallback((ws: WebSocket) => {
+    const mine = () => wsRef.current === ws
+    ws.onopen = () => mine() && setConnected(true)
+    ws.onclose = () => mine() && setConnected(false)
+    ws.onerror = () => mine() && setError('session service unreachable')
+    ws.onmessage = (m) => {
+      if (!mine()) return
+      const e = parseEvent(String(m.data))
+      if (e) {
+        setLastEvent(e)
+        setEvents((xs) => [...xs.slice(-199), e])
+      }
+    }
   }, [])
 
   const start = useCallback(async () => {
@@ -38,16 +59,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
       const q = new URLSearchParams({ mode, ...params, replay }).toString()
       const ws = new WebSocket(`${wsUrl}?${q}`)
       wsRef.current = ws
-      ws.onopen = () => setConnected(true)
-      ws.onclose = () => setConnected(false)
-      ws.onerror = () => setError('session service unreachable')
-      ws.onmessage = (m) => {
-        const e = parseEvent(String(m.data))
-        if (e) {
-          setLastEvent(e)
-          setEvents((xs) => [...xs.slice(-199), e])
-        }
-      }
+      attach(ws)
       setCamActive(true)
       return
     }
@@ -76,16 +88,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
       const ws = new WebSocket(`${wsUrl}?${q}`)
       ws.binaryType = 'arraybuffer'
       wsRef.current = ws
-      ws.onopen = () => setConnected(true)
-      ws.onclose = () => setConnected(false)
-      ws.onerror = () => setError('session service unreachable')
-      ws.onmessage = (m) => {
-        const e = parseEvent(String(m.data))
-        if (e) {
-          setLastEvent(e)
-          setEvents((xs) => [...xs.slice(-199), e])
-        }
-      }
+      attach(ws)
       const canvas = document.createElement('canvas')
       canvas.width = 640
       canvas.height = 480
@@ -106,7 +109,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
       setError(e instanceof Error ? e.message : 'camera unavailable')
       stop()
     }
-  }, [wsUrl, mode, fps, params, replay, stop])
+  }, [wsUrl, mode, fps, params, replay, stop, attach])
 
   const send = useCallback((obj: Record<string, unknown>) => {
     const ws = wsRef.current

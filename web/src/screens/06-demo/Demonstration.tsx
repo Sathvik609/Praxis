@@ -19,9 +19,9 @@ export function Demonstration() {
   const sessionUrl = `/session?exercise=${ex.id}&${ex.id === 'nhpt' ? `hand=${side}` : `side=${side}`}`
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-8 p-8">
-        <div>
+    <div className="flex min-h-full flex-col">
+      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
+        <div className="mx-auto w-full max-w-[336px]">
           {ex.clip ? (
             <AvatarPanel clip={ex.clip} onStep={setStep} />
           ) : (

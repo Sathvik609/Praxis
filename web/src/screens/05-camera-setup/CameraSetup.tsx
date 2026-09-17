@@ -47,8 +47,8 @@ export function CameraSetup() {
   const ready = checks?.all_required_pass === true
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-8 p-8">
+    <div className="flex min-h-full flex-col">
+      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 flex items-center gap-2">
             <LiveIndicator active={camActive} />

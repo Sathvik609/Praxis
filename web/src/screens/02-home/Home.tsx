@@ -22,7 +22,7 @@ export function Home() {
   const attempts = me?.goal_attempts ?? PATIENT.goalAttempts
 
   return (
-    <div className="grid grid-cols-[1fr_2fr_1fr] gap-6 p-6">
+    <div className="grid grid-cols-[1.1fr_1.6fr_1.1fr] gap-5 p-5">
       <div className="flex flex-col gap-4">
         <div className="rounded-3xl bg-teal p-6 text-white">
           <div className="text-white/80">Next practice · today</div>
@@ -71,7 +71,7 @@ export function Home() {
             ))}
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mx-auto mt-3 w-full max-w-[352px]">
           <AvatarPanel clip="idle" camera={view === 'front' ? 'front' : 'side'} markers={HOME_MARKERS} onMarkerTap={(m) => setFocus(m.joint)} compact showCues={false} />
         </div>
       </div>

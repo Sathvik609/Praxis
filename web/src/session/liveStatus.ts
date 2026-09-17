@@ -6,6 +6,7 @@ import type { Overlay } from './useCoach'
 export type LiveStatus =
   | 'connecting'
   | 'camera_blocked'
+  | 'service_unreachable'
   | 'waiting_for_frames'
   | 'calibrating'
   | 'tracking'
@@ -26,7 +27,7 @@ export function liveStatus(a: {
 }): LiveStatus {
   if (a.ended || a.overlay?.kind === 'stopped') return 'ended'
   if (a.overlay) return 'paused'
-  if (a.error) return 'camera_blocked'
+  if (a.error) return /unreachable/i.test(a.error) ? 'service_unreachable' : 'camera_blocked'
   if (a.lost) return 'lost'
   if (!a.connected) return 'connecting'
   if (!a.frame) return a.replay ? 'replay' : 'waiting_for_frames'
@@ -43,6 +44,8 @@ export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm'): Status
       return { chip: 'Connecting', tone: 'neutral', feed: 'Connecting to the coach service', coach: 'Connecting to the coach service.' }
     case 'camera_blocked':
       return { chip: 'Camera blocked', tone: 'red', feed: 'Camera blocked', coach: 'Camera blocked. Allow it in the address bar, or use a recorded session.' }
+    case 'service_unreachable':
+      return { chip: 'Coach offline', tone: 'red', feed: 'Coach service unreachable', coach: 'I cannot reach the coach service. Check that it is running, then try again.' }
     case 'waiting_for_frames':
       return { chip: 'Starting camera', tone: 'neutral', feed: 'Starting the camera', coach: 'Getting the camera ready.' }
     case 'calibrating':

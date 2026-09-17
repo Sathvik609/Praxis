@@ -30,21 +30,21 @@ export function ChooseExercise() {
     <button key={v} type="button" aria-pressed={filter === v} onClick={() => setFilter(v)} className={`min-h-14 rounded-full border-2 px-5 text-lg font-bold ${filter === v ? 'border-teal bg-teal text-white' : 'border-line bg-surface'}`}>{label}</button>
   )
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col">
-      <div className="flex-1 p-8">
+    <div className="flex min-h-full flex-col">
+      <div className="flex-1 p-6">
         <div className="flex items-start gap-4">
           <div><h1 className="text-4xl">Choose your exercise</h1><p className="text-muted">Assigned exercises first. Camera coaching is on only where Praxis can verify the task.</p></div>
           <div className="ml-auto flex gap-2">{tab('assigned', 'Assigned')}{tab('all', 'All GRASP L2')}{tab('equipment', 'Equipment I have')}<Button variant="secondary" onClick={() => nav('/coach')}>Help me choose</Button></div>
         </div>
-        <div className="mt-6 grid grid-cols-3 gap-5">
+        <div className="mt-5 grid auto-rows-fr grid-cols-3 gap-4">
           {list.map((e) => (
-            <div key={e.id} className="flex flex-col rounded-2xl border border-line bg-surface p-6">
+            <div key={e.id} className="flex flex-col rounded-2xl border border-line bg-surface p-5">
               <div className="flex items-start justify-between gap-2"><span className="text-muted">{e.category}</span><Chip tone={BADGE[e.kind].tone}>{BADGE[e.kind].text}</Chip></div>
-              <h2 className="mt-2 text-3xl">{e.name}</h2>
+              <h2 className="mt-2 text-2xl">{e.name}</h2>
               <p className="mt-1">{e.equipment}</p>
               <p>{e.dose}</p>
               <p className="mt-1 text-muted">{e.note}</p>
-              <div className="mt-auto pt-5">
+              <div className="mt-auto pt-4">
                 {e.kind === 'instructions' ? (
                   <Button variant="secondary" onClick={() => setSheet(e)}>View instructions</Button>
                 ) : (

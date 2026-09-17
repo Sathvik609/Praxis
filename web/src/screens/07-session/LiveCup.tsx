@@ -82,8 +82,8 @@ export function LiveCup() {
   const unverified = cup?.unverified_total ?? 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
-      <header className="flex h-20 items-center gap-6 border-b border-line bg-surface px-6">
+    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
+      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
         <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
         <span className="text-xl font-bold">Waiter – cup · {side} side</span>
         <span className="text-muted">Coordination · {arcLabel}</span>
@@ -93,8 +93,8 @@ export function LiveCup() {
         </span>
       </header>
 
-      <div className="grid flex-1 grid-cols-[5fr_3fr_3fr] gap-6 p-6">
-        <div className="flex flex-col gap-4">
+      <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
           <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
             <div className="absolute left-4 top-3 z-10 text-white/80">
               <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
@@ -107,30 +107,24 @@ export function LiveCup() {
             </div>
             {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface px-6 py-4">
+          <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface px-5 py-3">
             <ProgressDots total={5} done={dotsDone} current={cup?.expected_next ?? undefined} />
             <span className="ml-auto text-muted">
               {dotsDone} of 5 dots · {unverified} unverified{unverified ? ' (hand covered cup or markers lost)' : ''}
             </span>
           </div>
-          <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
-            <div className="text-muted">Coach</div>
-            <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-          </div>
-          <ExertionChip exertion={coach.exertion} />
         </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4">
           <div className="flex items-center gap-2">
             <span className="text-muted">Reference</span>
-            <span className="ml-auto rounded-full bg-teal px-4 py-2 font-bold text-white">Avatar</span>
+            <span className="ml-auto text-muted">avatar · pacing only</span>
           </div>
-          <AvatarPanel clip="cup" compact />
+          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="cup" compact /></div>
           <p className="text-center text-muted">ideal path · dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}</p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
           {showPrompt && (
             <ProgressionPrompt
               reason={`Two clean slow arcs${lastArc?.mean_reach_ms ? `, mean reach ${(lastArc.mean_reach_ms / 1000).toFixed(1)} s` : ''}${lastArc?.unverified ? `, ${lastArc.unverified} unverified` : ', no unverified reaches'}.`}
@@ -141,13 +135,21 @@ export function LiveCup() {
             />
           )}
           {traceOpen ? (
-            <TracePanel events={events} />
+            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
           ) : (
-            <div className="rounded-2xl border border-line bg-surface p-6">
-              <div className="text-muted">This session</div>
-              <div className="text-3xl font-bold">{cup?.reaches_total ?? 0} reaches</div>
-              <div className="text-muted">{(cup?.reaches_total ?? 0) - unverified} verified · {unverified} unverified · {cup?.arcs_done ?? 0} arcs done</div>
-            </div>
+            <>
+              <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-5">
+                <div className="text-muted">Coach</div>
+                <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
+                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+              </div>
+              <div className="rounded-2xl border border-line bg-surface p-5">
+                <div className="text-muted">This session</div>
+                <div className="text-3xl font-bold">{cup?.reaches_total ?? 0} reaches</div>
+                <div className="text-muted">{(cup?.reaches_total ?? 0) - unverified} verified · {unverified} unverified · {cup?.arcs_done ?? 0} arcs done</div>
+              </div>
+              <ExertionChip exertion={coach.exertion} />
+            </>
           )}
         </div>
       </div>

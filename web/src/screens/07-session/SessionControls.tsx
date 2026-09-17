@@ -12,7 +12,7 @@ type Props = {
 /** Fixed control bar on every in-session screen (CLAUDE.md §1 screens rule). */
 export function SessionControls({ onPause, onRest, onPain, onEnd, traceOpen, onToggleTrace }: Props) {
   return (
-    <footer className="flex h-20 items-center gap-4 border-t border-line bg-surface px-8">
+    <footer className="flex h-20 items-center gap-3 whitespace-nowrap border-t border-line bg-surface px-6">
       <Button variant="secondary" onClick={onPause}>
         Pause
       </Button>
@@ -22,8 +22,7 @@ export function SessionControls({ onPause, onRest, onPain, onEnd, traceOpen, onT
       <Button variant="ghost" onClick={onPain}>
         Pain / feel unwell
       </Button>
-      <span className="text-muted">Talk to coach · Repeat cue · Captions</span>
-      <Button variant="secondary" disabled title="Voice control arrives with the coach (Phase 7)">
+      <Button variant="secondary" disabled title="Voice control arrives with Polly (cloud mode)">
         Push to talk
       </Button>
       <Button variant="secondary" className="ml-auto" onClick={onToggleTrace}>

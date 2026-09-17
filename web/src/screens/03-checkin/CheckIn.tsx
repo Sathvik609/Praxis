@@ -55,7 +55,7 @@ export function CheckIn() {
   const rules = rx?.stop_rules
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col">
+    <div className="flex min-h-full flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-8 p-8">
         <div>
           <h1 className="text-4xl">Before you start</h1>

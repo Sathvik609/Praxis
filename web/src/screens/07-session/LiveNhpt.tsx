@@ -83,8 +83,8 @@ export function LiveNhpt() {
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
-      <header className="flex h-20 items-center gap-6 border-b border-line bg-surface px-6">
+    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
+      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
         <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
         <span className="text-xl font-bold">Nine-Hole Peg Test · {hand} hand</span>
         <span className="text-muted">Assessment · attempt 1 of 1</span>
@@ -94,8 +94,8 @@ export function LiveNhpt() {
         </span>
       </header>
 
-      <div className="grid flex-1 grid-cols-[5fr_3fr_3fr] gap-6 p-6">
-        <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
+      <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
+        <div className="relative min-h-0 self-start overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 text-white/80">
             <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
             <b>You</b> · {hand} hand · {live ? 'board tracking' : label.feed}
@@ -110,7 +110,7 @@ export function LiveNhpt() {
           {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
         </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4">
           <div className="flex items-center gap-2">
             <span className="text-muted">Reference</span>
             <div className="ml-auto flex gap-1 rounded-full border border-line p-1">
@@ -128,15 +128,14 @@ export function LiveNhpt() {
             </div>
           </div>
           {reference === 'avatar' ? (
-            <AvatarPanel clip="nhpt" compact />
+            <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="nhpt" compact /></div>
           ) : (
             <BoardView occupancy={frame?.board?.occupancy ?? {}} nextHole={nextHole} />
           )}
-          {traceOpen && <TracePanel events={events} />}
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-line bg-surface p-6 text-center">
+        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
+          <div className="rounded-2xl border border-line bg-surface p-5 text-center">
             <div className="text-muted">Elapsed</div>
             <div className="font-heading text-6xl">
               <span>{elapsed.toFixed(1)}</span>
@@ -153,12 +152,18 @@ export function LiveNhpt() {
             </div>
             <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
           </div>
-          <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
-            <div className="text-muted">Coach</div>
-            <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-          </div>
-          <ExertionChip exertion={coach.exertion} />
+          {traceOpen ? (
+            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
+          ) : (
+            <>
+              <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-5">
+                <div className="text-muted">Coach</div>
+                <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
+                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+              </div>
+              <ExertionChip exertion={coach.exertion} />
+            </>
+          )}
         </div>
       </div>
 

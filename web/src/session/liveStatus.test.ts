@@ -5,6 +5,7 @@ const base = { connected: true, camActive: true, error: null, replay: false, fra
 test.each([
   [{}, 'tracking'],
   [{ error: 'Permission denied' }, 'camera_blocked'],
+  [{ error: 'session service unreachable', replay: true }, 'service_unreachable'],
   [{ connected: false }, 'connecting'],
   [{ frame: null }, 'waiting_for_frames'],
   [{ frame: null, replay: true }, 'replay'],
