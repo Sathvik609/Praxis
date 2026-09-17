@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AssessmentResult } from './AssessmentResult'
 
@@ -7,24 +7,35 @@ function renderWith(state: unknown) {
     <MemoryRouter initialEntries={[{ pathname: '/report', state }]}>
       <Routes>
         <Route path="/report" element={<AssessmentResult />} />
+        <Route path="/checkin" element={<div>CHECKIN</div>} />
       </Routes>
     </MemoryRouter>,
   )
 }
 
-test('shows total time, splits and the timing-aid label', () => {
+test('shows total time, a splits chart and the timing-aid label', () => {
   renderWith({ kind: 'nhpt', hand: 'left', total_s: 41.23, splits_s: [4.1, 5.2], pegs: [{ peg: 1, hole: 4 }, { peg: 2, hole: 0 }], ended_early: false })
   expect(screen.getByText('41.2')).toBeInTheDocument()
   expect(screen.getByText(/timing aid/)).toBeInTheDocument()
-  expect(screen.getAllByTestId('split')).toHaveLength(2)
+  const chart = screen.getByRole('img', { name: /Per-peg splits/ })
+  expect(chart.getAttribute('aria-label')).toMatch(/Peg 1 4.1 s/)
+  expect(chart.getAttribute('aria-label')).toMatch(/Peg 2 5.2 s/)
 })
 
-test('empty state without a result', () => {
+test('nhpt that stopped early says how many pegs were seated', () => {
+  renderWith({ kind: 'nhpt', hand: 'left', total_s: null, splits_s: [], pegs: [], pegs_done: 4, ended_early: true })
+  expect(screen.getByText(/4 of 9 seated/)).toBeInTheDocument()
+  expect(screen.getByText('Ended early')).toBeInTheDocument()
+})
+
+test('empty state is a card with a primary to run the peg test', () => {
   renderWith(null)
   expect(screen.getByText(/No result/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Run the peg test' }))
+  expect(screen.getByText('CHECKIN')).toBeInTheDocument()
 })
 
-test('cup variant shows verified and unverified counts', () => {
+test('cup variant shows verified and unverified counts and a hatched-unverified chart', () => {
   renderWith({
     kind: 'cup', side: 'left', arcs: 4, ended_early: false,
     reaches: [
@@ -32,12 +43,13 @@ test('cup variant shows verified and unverified counts', () => {
       { rep: 2, from_dot: 1, to_dot: 2, reach_ms: 900, verified: false, reason: 'cup_occluded', arc: 1, phase: 'slow' },
     ],
   })
-  expect(screen.getByText(/1 verified/)).toBeInTheDocument()
-  expect(screen.getByText(/1 unverified/)).toBeInTheDocument()
-  expect(screen.getAllByTestId('reach')).toHaveLength(2)
+  expect(screen.getByText('verified reaches')).toBeInTheDocument()
+  expect(screen.getByText('unverified · hand covered cup or markers lost')).toBeInTheDocument()
+  const chart = screen.getByRole('img', { name: /Reach time/ })
+  expect(chart.getAttribute('aria-label')).toMatch(/2 0.9 s unverified/)
 })
 
-test('arm variant shows sets, verified reps and lean events', () => {
+test('arm variant shows sets, verified reps, lean events and the ceiling as target', () => {
   renderWith({
     kind: 'arm', side: 'left', sets: 2, ended_early: false, lean_count: 2, hike_count: 0, ceiling_deg: 90,
     reps: [
@@ -45,7 +57,10 @@ test('arm variant shows sets, verified reps and lean events', () => {
       { set: 1, rep: 2, peak_deg: 70, hold_s: 0.5, verified: false, reason: 'target_missed', lean: true, hike: false },
     ],
   })
-  expect(screen.getByText(/1 verified/)).toBeInTheDocument()
-  expect(screen.getByText(/2 lean events/)).toBeInTheDocument()
-  expect(screen.getAllByTestId('arm-rep')).toHaveLength(2)
+  expect(screen.getByText('verified lifts')).toBeInTheDocument()
+  expect(screen.getByText('unverified · missed target or short hold')).toBeInTheDocument()
+  expect(screen.getByText(/lean events · 0 shoulder-hike events/)).toBeInTheDocument()
+  const chart = screen.getByRole('img', { name: /Peak angle/ })
+  expect(chart.getAttribute('aria-label')).toMatch(/2 70 ° unverified/)
+  expect(screen.getByText(/target 90 °/)).toBeInTheDocument()
 })

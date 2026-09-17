@@ -1,6 +1,10 @@
+import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../../design/Button'
+import { Card } from '../../design/Card'
+import { Bars } from '../../design/charts/Bars'
 import { Chip } from '../../design/Chip'
+import { Stat } from '../../design/Stat'
 
 type NhptResult = {
   kind: 'nhpt'
@@ -17,40 +21,54 @@ type ArmRep = { set: number; rep: number; peak_deg: number; hold_s: number; veri
 type ArmResult = { kind: 'arm'; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; ceiling_deg: number }
 type Result = NhptResult | CupResult | ArmResult
 
+const tenth = (v: number) => Math.round(v * 10) / 10
+
+/** Shared frame: title with the status chip, a one-line caveat, the body, and the Done primary. */
+function Frame({ title, endedEarly, caveat, children, onDone }: { title: string; endedEarly: boolean; caveat: string; children: ReactNode; onDone: () => void }) {
+  return (
+    <div className="mx-auto w-full max-w-4xl p-6">
+      <div className="flex flex-wrap items-center gap-4">
+        <h1 className="text-4xl">{title}</h1>
+        <Chip tone={endedEarly ? 'amber' : 'mint'}>{endedEarly ? 'Ended early' : 'Complete'}</Chip>
+      </div>
+      <p className="mt-1 text-muted">{caveat}</p>
+      <div className="mt-5 space-y-5">{children}</div>
+      <div className="mt-6 flex justify-end">
+        <Button onClick={onDone}>Done — back to Home</Button>
+      </div>
+    </div>
+  )
+}
+
 function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
   const verified = r.reps.filter((x) => x.verified).length
   const unverified = r.reps.length - verified
   const best = r.reps.filter((x) => x.verified).reduce((m, x) => Math.max(m, x.peak_deg), 0)
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <div className="flex items-center gap-4">
-        <h1 className="text-4xl">Arm to the front · {r.side} side</h1>
-        <Chip tone={r.ended_early ? 'amber' : 'mint'}>{r.ended_early ? 'Ended early' : 'Complete'}</Chip>
-      </div>
-      <p className="mt-2 text-muted">Camera-relative angles, not goniometry. Ceiling {r.ceiling_deg}° enforced in code.</p>
-      <div className="mt-6 grid grid-cols-4 gap-4">
-        {[[`${r.sets}`, 'sets'], [`${verified} verified`, 'lifts'], [`${unverified} unverified`, 'missed target or short hold'], [`${r.lean_count} lean events`, `${r.hike_count} shoulder-hike events`]].map(([v, l]) => (
-          <div key={l} className="rounded-2xl border border-line bg-surface p-5">
-            <div className="text-2xl font-bold">{v}</div>
-            <div className="text-muted">{l}</div>
-          </div>
-        ))}
-      </div>
-      {r.reps.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-line bg-surface p-8">
-          <h2 className="mb-3 text-2xl">Peak angle per rep · ceiling {r.ceiling_deg}° · best {Math.round(best)}° · amber = unverified</h2>
-          <div className="flex h-40 items-end gap-1">
-            {r.reps.map((x, i) => (
-              <div key={i} data-testid="arm-rep" title={`set ${x.set} rep ${x.rep}: ${x.peak_deg}° hold ${x.hold_s}s${x.reason ? ` · ${x.reason}` : ''}`}
-                className={`flex-1 rounded-t ${x.verified ? 'bg-teal' : 'bg-amber'}`} style={{ height: `${Math.min(100, (x.peak_deg / r.ceiling_deg) * 100)}%` }} />
-            ))}
-          </div>
+    <Frame title={`Arm to the front · ${r.side} side`} endedEarly={r.ended_early} caveat={`Camera-relative angles, not goniometry. Ceiling ${r.ceiling_deg}° enforced in code.`} onDone={onDone}>
+      <Card>
+        <div className="grid grid-cols-4 gap-4">
+          <Stat value={r.sets} label="sets" />
+          <Stat value={verified} label="verified lifts" />
+          <Stat value={unverified} label="unverified · missed target or short hold" tone="amber" />
+          <Stat value={r.lean_count} label={`lean events · ${r.hike_count} shoulder-hike events`} tone={r.lean_count > 0 ? 'amber' : 'default'} />
         </div>
+      </Card>
+      {r.reps.length > 0 && (
+        <Card title={`Peak angle per lift · best verified ${Math.round(best)}°`}>
+          <Bars
+            title="Peak angle per lift"
+            unit="°"
+            values={r.reps.map((x) => Math.round(x.peak_deg))}
+            verified={r.reps.map((x) => x.verified)}
+            labels={r.reps.map((x) => `${x.set}.${x.rep}`)}
+            target={r.ceiling_deg}
+            height={180}
+          />
+          <p className="mt-2 text-base text-muted">Labels are set.lift. Unverified lifts missed the target or held too short; they are counted, never scored.</p>
+        </Card>
       )}
-      <div className="mt-8 flex justify-end">
-        <Button onClick={onDone}>Done — back to Home</Button>
-      </div>
-    </div>
+    </Frame>
   )
 }
 
@@ -62,86 +80,75 @@ function CupReport({ r, onDone }: { r: CupResult; onDone: () => void }) {
     return xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length / 1000).toFixed(2) : '—'
   }
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <div className="flex items-center gap-4">
-        <h1 className="text-4xl">Waiter – cup · {r.side} side</h1>
-        <Chip tone={r.ended_early ? 'amber' : 'mint'}>{r.ended_early ? 'Ended early' : 'Complete'}</Chip>
-      </div>
-      <p className="mt-2 text-muted">What the camera measured. Unverified reaches are counted, never scored.</p>
-      <div className="mt-6 grid grid-cols-4 gap-4">
-        {[[`${r.arcs}`, 'arcs'], [`${verified} verified`, 'reaches'], [`${unverified} unverified`, 'hand covered cup or markers lost'], [`${mean('slow')} / ${mean('fast')} s`, 'mean reach slow / fast']].map(([v, l]) => (
-          <div key={l} className="rounded-2xl border border-line bg-surface p-5">
-            <div className="text-2xl font-bold">{v}</div>
-            <div className="text-muted">{l}</div>
-          </div>
-        ))}
-      </div>
-      {r.reaches.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-line bg-surface p-8">
-          <h2 className="mb-3 text-2xl">Reach time per dot · amber = unverified</h2>
-          <ol className="grid grid-cols-4 gap-2">
-            {r.reaches.map((x) => (
-              <li key={x.rep} data-testid="reach" className={`flex justify-between rounded-xl px-4 py-2 ${x.verified ? 'bg-bg' : 'bg-amber/15 text-amber'}`}>
-                <span>{x.phase} · dot {x.from_dot + 1}→{x.to_dot + 1}</span>
-                <b>{(x.reach_ms / 1000).toFixed(1)} s</b>
-              </li>
-            ))}
-          </ol>
+    <Frame title={`Waiter – cup · ${r.side} side`} endedEarly={r.ended_early} caveat="What the camera measured. Unverified reaches are counted, never scored." onDone={onDone}>
+      <Card>
+        <div className="grid grid-cols-4 gap-4">
+          <Stat value={r.arcs} label="arcs" />
+          <Stat value={verified} label="verified reaches" />
+          <Stat value={unverified} label="unverified · hand covered cup or markers lost" tone="amber" />
+          <Stat value={`${mean('slow')} / ${mean('fast')}`} unit="s" label="mean reach · slow / fast" />
         </div>
+      </Card>
+      {r.reaches.length > 0 && (
+        <Card title="Reach time per reach">
+          <Bars
+            title="Reach time"
+            unit="s"
+            values={r.reaches.map((x) => tenth(x.reach_ms / 1000))}
+            verified={r.reaches.map((x) => x.verified)}
+            labels={r.reaches.map((x) => String(x.rep))}
+            height={180}
+          />
+          <p className="mt-2 text-base text-muted">
+            {r.reaches.map((x) => `${x.rep}: ${x.phase} · dot ${x.from_dot + 1}→${x.to_dot + 1}${x.verified ? '' : ' · unverified'}`).join(' · ')}
+          </p>
+        </Card>
       )}
-      <div className="mt-8 flex justify-end">
-        <Button onClick={onDone}>Done — back to Home</Button>
-      </div>
-    </div>
+    </Frame>
   )
 }
 
-/** Screen 09 variant · Assessment result for the Nine-Hole Peg Test. */
+function NhptReport({ r, onDone }: { r: NhptResult; onDone: () => void }) {
+  return (
+    <Frame title={`Nine-Hole Peg Test · ${r.hand} hand`} endedEarly={r.ended_early} caveat="Insertion-only · timing aid, not a clinical instrument." onDone={onDone}>
+      <Card>
+        <Stat size="xl" value={r.total_s != null ? r.total_s.toFixed(1) : '—'} unit="s" label={r.total_s != null ? 'total time · first lift to ninth peg seated' : `Timer did not complete (${r.pegs_done ?? 0} of 9 seated).`} />
+      </Card>
+      {r.splits_s.length > 0 && (
+        <Card title="Per-peg splits">
+          <Bars
+            title="Per-peg splits"
+            unit="s"
+            values={r.splits_s.map(tenth)}
+            labels={r.splits_s.map((_, i) => `Peg ${i + 1}`)}
+            height={180}
+          />
+          {r.pegs.length > 0 && (
+            <p className="mt-2 text-base text-muted">Holes: {r.pegs.map((p, i) => `peg ${i + 1} → hole ${p.hole + 1}`).join(' · ')}</p>
+          )}
+        </Card>
+      )}
+    </Frame>
+  )
+}
+
+/** Screen 09 variant · Assessment result for the Nine-Hole Peg Test, plus the cup and arm
+ *  summaries the live screens hand over in router state. */
 export function AssessmentResult() {
   const { state } = useLocation() as { state: Result | null }
   const nav = useNavigate()
-  if (state?.kind === 'cup') return <CupReport r={state} onDone={() => nav('/')} />
-  if (state?.kind === 'arm') return <ArmReport r={state} onDone={() => nav('/')} />
-  if (!state || state.kind !== 'nhpt') {
-    return (
-      <div className="mx-auto max-w-4xl p-8">
-        <h1 className="text-4xl">Assessment result</h1>
-        <p className="mt-2 text-muted">No result to show. Run the peg test from Home.</p>
-        <Button className="mt-6" onClick={() => nav('/')}>Back to Home</Button>
-      </div>
-    )
-  }
+  const done = () => nav('/')
+  if (state?.kind === 'cup') return <CupReport r={state} onDone={done} />
+  if (state?.kind === 'arm') return <ArmReport r={state} onDone={done} />
+  if (state?.kind === 'nhpt') return <NhptReport r={state} onDone={done} />
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <div className="flex items-center gap-4">
-        <h1 className="text-4xl">Nine-Hole Peg Test · {state.hand} hand</h1>
-        <Chip tone={state.ended_early ? 'amber' : 'mint'}>{state.ended_early ? 'Ended early' : 'Complete'}</Chip>
-      </div>
-      <p className="mt-2 text-muted">insertion-only · timing aid, not a clinical instrument</p>
-      <div className="mt-6 rounded-2xl border border-line bg-surface p-8">
-        <div className="text-muted">Total time</div>
-        <div className="font-heading text-7xl">
-          {state.total_s != null ? <span>{state.total_s.toFixed(1)}</span> : <span>—</span>}
-          <span className="text-2xl"> s</span>
-        </div>
-        {state.total_s == null && <div className="text-muted">Timer did not complete ({state.pegs_done ?? 0} of 9 seated).</div>}
-      </div>
-      {state.splits_s.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-line bg-surface p-8">
-          <h2 className="mb-3 text-2xl">Per-peg splits</h2>
-          <ol className="grid grid-cols-3 gap-2">
-            {state.splits_s.map((s, i) => (
-              <li key={i} data-testid="split" className="flex justify-between rounded-xl bg-bg px-4 py-2">
-                <span>Peg {i + 1}{state.pegs[i] ? ` · hole ${state.pegs[i].hole + 1}` : ''}</span>
-                <b>{s.toFixed(1)} s</b>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-      <div className="mt-8 flex justify-end">
-        <Button onClick={() => nav('/')}>Done — back to Home</Button>
-      </div>
+    <div className="mx-auto w-full max-w-2xl p-6">
+      <h1 className="text-4xl">Assessment result</h1>
+      <Card className="mt-5">
+        <p className="text-lg">No result to show yet. The peg test takes about a minute with the printed sheet and a pegboard.</p>
+        <Button full className="mt-5" onClick={() => nav('/checkin')}>Run the peg test</Button>
+        <Button variant="link" className="mt-2" onClick={done}>Back to Home</Button>
+      </Card>
     </div>
   )
 }
