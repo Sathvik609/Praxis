@@ -2,6 +2,9 @@ import { useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
+import { Card } from '../../design/Card'
+import { RotateCcw } from '../../design/Icon'
+import { Panel } from '../../design/Panel'
 import { SESSION_WS_URL } from '../../lib/config'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
@@ -19,7 +22,8 @@ const TITLE: Record<string, string> = {
 type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 
 /** Screen 05 · Camera setup and calibration. Continue stays disabled until every required
- *  check passes. ArUco markers are required for the two board tasks. */
+ *  check passes. ArUco markers are required for the two board tasks; the arm task needs no
+ *  sheet. The feed is a Panel with the live, mirrored and calibration lines in its corners. */
 export function CameraSetup() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
@@ -45,30 +49,37 @@ export function CameraSetup() {
   const cal = last<CalibrationEvent>('calibration') ?? null
   const checks = last<SetupChecksEvent>('setup_checks')
   const ready = checks?.all_required_pass === true
+  const restart = () => {
+    stop()
+    void start()
+  }
 
   return (
     <div className="flex min-h-full flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
-        <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
-          <div className="absolute left-4 top-3 z-10 flex items-center gap-2">
-            <LiveIndicator active={camActive} />
-            <span className="text-white/70">· mirrored · processed on this device</span>
-          </div>
+        <Panel
+          className="self-start"
+          topLeft={<LiveIndicator active={camActive} />}
+          topRight={<span>mirrored · processed on this device</span>}
+          bottomLeft={
+            <span>
+              {exercise === 'arm' ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration'}{' '}
+              <b>{exercise === 'arm' ? (connected ? 'ready' : 'connecting…') : cal?.calibrated ? 'locked' : 'searching'}</b>
+              {exercise !== 'arm' && cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
+              {exercise !== 'arm' && !connected ? ' · connecting…' : ''}
+            </span>
+          }
+        >
           <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
           <OverlayCanvas width={640} height={480} calibration={cal} />
-          <div className="absolute bottom-3 left-4 text-white/80">
-            OpenCV 5 · ArUco calibration <b>{cal?.calibrated ? 'locked' : 'searching'}</b>
-            {cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
-            {connected ? '' : ' · connecting…'}
-          </div>
           {error && (
             <div className="absolute inset-0 z-20">
-              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} onRetry={() => { stop(); void start() }} />
+              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} onRetry={restart} />
             </div>
           )}
-        </div>
+        </Panel>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           <div>
             <h1 className="text-3xl">Set up camera and equipment</h1>
             <p className="text-muted">
@@ -77,19 +88,13 @@ export function CameraSetup() {
                 : `Continue unlocks when every required check passes. ${TITLE[exercise] ?? exercise}.`}
             </p>
           </div>
-          <div className="rounded-2xl border border-line bg-surface px-6">
+          <Card padding="none" className="px-5">
             <Checklist checks={checks?.checks ?? []} />
-          </div>
-          <p className="text-muted">Processed on this device. Video is not stored; only measurements and events are saved.</p>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                stop()
-                void start()
-              }}
-            >
-              Retry
+          </Card>
+          <p className="text-lg text-muted">Processed on this device. Video is not stored; only measurements and events are saved.</p>
+          <div>
+            <Button variant="secondary" icon={<RotateCcw />} onClick={restart}>
+              Restart camera
             </Button>
           </div>
         </div>
