@@ -10,8 +10,9 @@ import { Panel } from '../../design/Panel'
 import { EXERCISES } from '../../lib/seed'
 
 /** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
- *  dark stage; the numbered step list follows the clip; the patient confirms readiness
- *  before practice starts. Rehearsal runs the live screen with scoring off. */
+ *  dark stage (16:10 AvatarPanel capped at 640 px wide, so ~400 px tall inside the 800 px
+ *  budget); the numbered step list follows the clip; the patient confirms readiness before
+ *  practice starts. Rehearsal runs the live screen with scoring off. */
 export function Demonstration() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
@@ -25,7 +26,7 @@ export function Demonstration() {
   return (
     <div className="flex min-h-full flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
-        <div className="mx-auto w-full max-w-[336px]">
+        <div className="mx-auto w-full max-w-[640px]">
           {ex.clip ? (
             <Panel className="p-3">
               <AvatarPanel clip={ex.clip} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
