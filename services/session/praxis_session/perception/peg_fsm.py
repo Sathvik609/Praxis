@@ -1,10 +1,21 @@
 """Peg finite-state machine (NHPT any-hole mode; ordered targets kept for tests only).
 
 States: at_source -> grasped -> in_transit -> over_target -> seated -> hand_clear (-> at_source).
-Inputs are Observations built from BoardState output (occupancy, free pegs in mm) plus an
-optional hand position in mm (from the hand model, Phase 3). Transitions are gated on debounced
-occupancy deltas and free-peg / hand proximity. Emits Events: state_change, rep_complete,
-wrong_hole, drop. No frames are touched here; cv2.__version__ == 5.0.0 upstream (board.py).
+Inputs are Observations built from BoardState output (occupancy, free pegs in mm) plus the
+hand model's thumb/index midpoint, pinch aperture and a "hand in the source zone" flag.
+Transitions are gated on debounced occupancy deltas and free-peg / hand proximity. Emits
+Events: state_change, rep_complete, wrong_hole, drop. No frames are touched here;
+cv2.__version__ == 5.0.0 upstream (board.py).
+
+Sprint D-SEG-2:
+- grasp fires when the free-peg count drops (pegs on the sheet) OR when the pinch aperture is
+  <= `pinch_grasp_mm` (25 mm, sheet-plane projection) while the hand is in the source zone for
+  two consecutive observations - so pegs lifted from a dish, where no free peg is ever visible,
+  still start the timer (`state_change.grasp` = "count" | "pinch");
+- seating is hand-gated: once hand data has been seen in the session, a hole that fills without
+  the hand having been within `hand_gate_mm` (30 mm) of it in the last `hand_gate_s` (0.5 s) is
+  still counted but its rep_complete carries verified=False, reason="no_hand_near_hole"
+  (unverified is not failed: CLAUDE.md §1). Without any hand data reps stay verified=True.
 """
 
 from __future__ import annotations
@@ -26,6 +37,8 @@ class Observation:
     occupancy: dict[str, str]
     free_pegs_mm: list[tuple[float, float]] = field(default_factory=list)
     hand_mm: tuple[float, float] | None = None
+    pinch_mm: float | None = None  # thumb-index aperture, sheet-plane projection (relative)
+    hand_in_source_zone: bool = False  # hand within 40 mm of the dish zone or of a free peg
 
 
 def _dist(a: Sequence[float], b: Sequence[float]) -> float:
@@ -46,6 +59,10 @@ class PegFSM:
         clear_mm: float = 25.0,
         peg_clear_mm: float = 15.0,
         stationary_mm: float = 2.0,
+        pinch_grasp_mm: float = 25.0,
+        pinch_frames: int = 2,
+        hand_gate_mm: float = 30.0,
+        hand_gate_s: float = 0.5,
     ) -> None:
         self.spec = spec
         self.targets = list(targets) if targets is not None else None
@@ -58,6 +75,15 @@ class PegFSM:
         self.clear_mm = clear_mm
         self.peg_clear_mm = peg_clear_mm
         self.stationary_mm = stationary_mm
+        self.pinch_grasp_mm = pinch_grasp_mm
+        self.pinch_frames = max(1, pinch_frames)
+        self.hand_gate_mm = hand_gate_mm
+        self.hand_gate_s = hand_gate_s
+        self._pinch_streak = 0
+        self._hand_ever = False
+        self._hand_near_t: dict[int, float] = {}  # hole -> last t the hand was within the gate
+        self._seat_verified = True
+        self._seat_reason: str | None = None
 
         self.state = "at_source"
         self.reps = 0
@@ -101,6 +127,7 @@ class PegFSM:
             return events
         prev = dict(self._stable)
         self._update_stable(obs.occupancy)
+        self._track_hand(obs)
         newly_occupied = [k for k, v in self._stable.items() if v and not prev.get(k, False)]
         newly_empty = [k for k, v in self._stable.items() if not v and prev.get(k, False)]
 
@@ -133,9 +160,28 @@ class PegFSM:
             if raw != self._stable[k] and n >= self.debounce_frames:
                 self._stable[k] = raw
 
-    def _go(self, to: str, t: float) -> Event:
+    def _track_hand(self, obs: Observation) -> None:
+        """Remember when the hand was last within the seating gate of each hole, and keep the
+        pinch-in-zone streak for the dish grasp."""
+        if obs.hand_mm is None:
+            self._pinch_streak = 0
+            return
+        self._hand_ever = True
+        for k, c in enumerate(self.spec.targets_mm):
+            if _dist(obs.hand_mm, c) <= self.hand_gate_mm:
+                self._hand_near_t[k] = obs.t
+        pinched = obs.pinch_mm is not None and obs.pinch_mm <= self.pinch_grasp_mm
+        self._pinch_streak = self._pinch_streak + 1 if pinched and obs.hand_in_source_zone else 0
+
+    def _hand_verifies(self, hole: int, t: float) -> bool:
+        if not self._hand_ever:
+            return True  # no hand data in this session: occupancy is the verification
+        last = self._hand_near_t.get(hole)
+        return last is not None and (t - last) <= self.hand_gate_s
+
+    def _go(self, to: str, t: float, **extra: object) -> Event:
         ev = make_event(
-            "state_change", t=t, **{"from": self.state, "to": to, "target": self.target}
+            "state_change", t=t, **{"from": self.state, "to": to, "target": self.target, **extra}
         )
         self.state = to
         return ev
@@ -193,7 +239,16 @@ class PegFSM:
             self._baseline_free = len(obs.free_pegs_mm)
             self._t_grasp = obs.t
             self._still_since, self._still_pos = None, None
-            ev.append(self._go("grasped", obs.t))
+            self._pinch_streak = 0
+            ev.append(self._go("grasped", obs.t, grasp="count"))
+        elif self._pinch_streak >= self.pinch_frames and obs.hand_mm is not None:
+            # Pegs in a dish: no free-peg blob ever disappears, the pinch is the lift.
+            self._source_pos = obs.hand_mm
+            self._baseline_free = len(obs.free_pegs_mm)
+            self._t_grasp = obs.t
+            self._still_since, self._still_pos = None, None
+            self._pinch_streak = 0
+            ev.append(self._go("grasped", obs.t, grasp="pinch"))
         return ev
 
     def _in_grasped(self, obs: Observation, newly_occupied: list[int]) -> list[Event]:
@@ -240,7 +295,9 @@ class PegFSM:
         self._seated_hole = hole
         self._t_seated = obs.t
         self._clear_streak = 0
-        return [self._go("seated", obs.t)]
+        self._seat_verified = self._hand_verifies(hole, obs.t)
+        self._seat_reason = None if self._seat_verified else "no_hand_near_hole"
+        return [self._go("seated", obs.t, verified=self._seat_verified, reason=self._seat_reason)]
 
     def _in_seated(self, obs: Observation, newly_occupied: list[int]) -> list[Event]:
         ev: list[Event] = []
@@ -277,6 +334,8 @@ class PegFSM:
                 t_grasp=self._t_grasp,
                 t_seated=self._t_seated,
                 t_clear=obs.t,
+                verified=self._seat_verified,
+                reason=self._seat_reason,
             )
         ]
         if self.targets is not None:

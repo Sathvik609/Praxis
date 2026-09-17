@@ -314,11 +314,18 @@ class SessionPipeline:
             ),
         )
         if board_d is not None:
+            free = [(float(x), float(y)) for x, y in board_d["free_pegs_mm"]]
+            in_zone = hand_mm is not None and (
+                self._board.in_source_zone(hand_mm)
+                or any(float(np.hypot(hand_mm[0] - x, hand_mm[1] - y)) <= 40.0 for x, y in free)
+            )
             obs = Observation(
                 t=t,
                 occupancy=board_d["occupancy"],
-                free_pegs_mm=[(float(x), float(y)) for x, y in board_d["free_pegs_mm"]],
+                free_pegs_mm=free,
                 hand_mm=hand_mm,
+                pinch_mm=hand_block.get("pinch_rel_mm", hand_block.get("pinch_mm")),
+                hand_in_source_zone=in_zone,
             )
             for e in self._nhpt.step(obs):
                 self._emit(out, e)
