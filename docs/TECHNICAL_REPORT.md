@@ -35,6 +35,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Web: captioned + spoken cues, progression prompt from coach events, paused/stopped/rest overlays, pain check, exertion chip, decision trace panel | built, tested |
 | SQLite store (patients, prescriptions vN, sessions, events, flags, goal log) seeded with the wireframe's illustrative history; sessions persisted on feedback; REST for patient, sessions, flags, progress, therapist, replay list | built, tested |
 | Screens 01 sign-in/first-run, 03 check-in (voice + tap), 04 choose exercise + instructions-only sheet, 08 feedback, 09 full report, 10 progress, 11 therapist (read-only), settings, coach drawer, set check-in; replay entry with Replay badge; server-side replay over the WebSocket | built, tested |
+| Single-origin container image (multi-stage Dockerfile: web build → FastAPI serves `web_dist`, `/ws/session` alias, `PORT`/`PRAXIS_*` env, SHA256-pinned model fetch at build), `railway.json`; hosted on Railway for team review | built, tested (`tests/test_web_static.py`), image smoke-tested locally |
 | Real recordings, dataset v1, latency numbers, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 

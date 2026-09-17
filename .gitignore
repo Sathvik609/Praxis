@@ -37,3 +37,7 @@ services/session/*.db
 
 # per-session decision traces (kept locally; sample traces are added deliberately)
 traces/*.jsonl
+
+# built web app served by the session service (container only)
+services/session/web_dist/
+services/session/data/

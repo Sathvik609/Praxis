@@ -25,6 +25,7 @@ from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
 from praxis_session.store import DEFAULT_PATH, Store
+from praxis_session.web import mount_web
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
 
@@ -36,7 +37,10 @@ ring = EventRing()
 sessions: dict[str, CoachSession] = {}
 store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
 store.seed_if_empty()
-EVAL_DIR = Path(__file__).resolve().parents[3] / "evaluation" / "dataset_v0"
+_HERE = Path(__file__).resolve()
+# Repo layout when run from source; env overrides in the container image (see Dockerfile).
+EVAL_DIR = Path(os.environ["PRAXIS_EVAL_DIR"]) if "PRAXIS_EVAL_DIR" in os.environ else _HERE.parents[3] / "evaluation" / "dataset_v0"
+WEB_DIST = Path(os.environ["PRAXIS_WEB_DIST"]) if "PRAXIS_WEB_DIST" in os.environ else _HERE.parents[1] / "web_dist"
 
 
 @app.get("/health")
@@ -344,3 +348,9 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
         return
     finally:
         cap.release()
+
+
+# Single-origin deploy: same handler at /ws/session (the path the browser uses behind Vite's
+# proxy) and the built web app last, so every /api, /health, /events route above wins.
+app.add_api_websocket_route("/ws/session", session_ws)
+WEB_MOUNTED = mount_web(app, WEB_DIST)

@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from collections import deque
 from pathlib import Path
 from typing import Any
 
-DEFAULT_DIR = Path(__file__).resolve().parents[3] / "traces"
+DEFAULT_DIR = Path(os.environ["PRAXIS_TRACE_DIR"]) if "PRAXIS_TRACE_DIR" in os.environ else Path(__file__).resolve().parents[3] / "traces"
 
 
 class Trace:
