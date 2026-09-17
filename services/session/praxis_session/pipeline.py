@@ -33,7 +33,8 @@ from praxis_session.perception.quality import (
 Mode = Literal["calibrate", "nhpt", "cup", "arm"]
 MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
 POSE_LOSS_FRAMES = 15
-LOSS_FRAMES = 5
+# Uncalibrated frames (after the 1.5 s hold in Calibrator) before `perception_lost` (D-CAL-1).
+LOSS_FRAMES = 20
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
 REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
     "default": REQUIRED_CHECKS,
@@ -167,7 +168,7 @@ class SessionPipeline:
     def _process_calibrate(self, frame_bgr: np.ndarray, t: float, i: int) -> list[Event]:
         out: list[Event] = []
         self._last_t = t
-        cal = self._cal.run(frame_bgr)
+        cal = self._cal.run(frame_bgr, t)
         cal_d = cal.to_dict() | {"frame_index": i}
         if cal.calibrated:
             targets = np.array(self.spec.targets_mm, np.float32)

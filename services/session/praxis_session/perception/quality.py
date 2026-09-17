@@ -111,11 +111,21 @@ def build_checks(
         return {"id": id_, "label": label, "status": status, "hint": None if ok else hint}
 
     present = presence_d.get("present")
-    markers_hint = (
-        None
-        if cal.calibrated
-        else f"Markers missing: {', '.join(map(str, cal.missing))}. Flatten the sheet and keep it in view."
-    )
+    # Setup needs all four markers (CLAUDE.md: refuse to start); a partial or held fix is
+    # enough to keep a running session going but not to unlock Continue.
+    markers_ok = bool(cal.calibrated and not cal.missing)
+    if markers_ok:
+        markers_hint = None
+    elif cal.calibrated:
+        markers_hint = (
+            f"Marker {', '.join(map(str, cal.missing))} is covered. "
+            "Keep all four corners clear to start."
+        )
+    else:
+        markers_hint = (
+            f"Markers missing: {', '.join(map(str, cal.missing))}. "
+            "Flatten the sheet and keep it in view."
+        )
     light_ok = bool(lighting_d["ok"] and steadiness_d["ok"])
     light_hint = lighting_d.get("hint") or (
         None if steadiness_d["ok"] else "Hold the camera still or rest it on the table."
@@ -141,8 +151,6 @@ def build_checks(
             "Sit so your upper body and the table are in view.",
         ),
         row("task_area", "Hand and task area in view", area_d["ok"], area_d.get("hint")),
-        row(
-            "markers", "Sheet found · all four corner markers visible", cal.calibrated, markers_hint
-        ),
+        row("markers", "Sheet found · all four corner markers visible", markers_ok, markers_hint),
         row("lighting", "Lighting and steady tracking", light_ok, light_hint),
     ]

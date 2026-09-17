@@ -26,15 +26,43 @@ def test_calibrate_mode_emits_three_validated_events():
 
 
 def test_perception_lost_and_regained():
+    """Two markers gone: the homography is held 1.5 s, then LOSS_FRAMES (20) uncalibrated
+    frames are needed before `perception_lost` (D-CAL-1). At 0.5 s steps: 15 bad frames
+    (3 held + 12 lost) stay quiet, 25 (3 held + 22 lost) pause."""
+    from tests.test_calibration import hide_markers
+
+    good, H = camera_frame(NHPT_BOARD)
+    bad = hide_markers(good, H, NHPT_BOARD, [1, 2])
     p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
-    good, _ = camera_frame(NHPT_BOARD)
-    bad, _ = camera_frame(NHPT_BOARD, hide_marker=1)
     p.process(good, 0.0, 0)
     seen = []
-    for i in range(1, 8):
-        seen += _types(p.process(bad, i * 0.1, i))
+    for i in range(1, 16):
+        seen += _types(p.process(bad, i * 0.5, i))
+    assert "perception_lost" not in seen
+    for i in range(16, 26):
+        seen += _types(p.process(bad, i * 0.5, i))
     assert seen.count("perception_lost") == 1
-    assert "perception_regained" in _types(p.process(good, 1.0, 8))
+    assert "perception_regained" in _types(p.process(good, 14.0, 26))
+
+
+def test_one_covered_marker_never_loses_tracking_after_a_fresh_calibration():
+    from tests.test_calibration import hide_markers
+
+    good, H = camera_frame(NHPT_BOARD)
+    partial = hide_markers(good, H, NHPT_BOARD, [2])
+    p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
+    p.process(good, 0.0, 0)
+    seen = []
+    for i in range(1, 60):
+        evs = p.process(partial, i * 0.5, i)
+        seen += _types(evs)
+    assert "perception_lost" not in seen
+    cal = evs[0].to_dict()
+    assert cal["calibrated"] and cal["source"] == "partial" and cal["missing"] == [2]
+    # setup still wants all four markers before Continue (CLAUDE.md: refuse to start)
+    checks = evs[2].to_dict()
+    markers = next(c for c in checks["checks"] if c["id"] == "markers")
+    assert markers["status"] == "check" and checks["all_required_pass"] is False
 
 
 def test_no_loss_event_before_first_calibration():
@@ -44,6 +72,7 @@ def test_no_loss_event_before_first_calibration():
     for i in range(10):
         seen += _types(p.process(bad, i * 0.1, i))
     assert "perception_lost" not in seen
+    assert p.process(bad, 2.0, 11)[0].to_dict()["calibrated"] is False
 
 
 def test_bad_sheet_and_mode_raise():
