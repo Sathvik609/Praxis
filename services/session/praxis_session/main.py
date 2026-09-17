@@ -17,10 +17,10 @@ from pydantic import BaseModel
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, Header, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Header, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
-from praxis_session.auth import issue_token, revoke, user_for_token, verify
+from praxis_session.auth import issue_token, record_failure, revoke, too_many_failures, user_for_token, verify
 from praxis_session.events import EventRing, make_event
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
@@ -35,6 +35,19 @@ CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
 MODES = {"heartbeat", *PIPELINE_MODES}
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
+
+PUBLIC_PATHS = {"/health", "/api/auth/login"}
+
+
+@app.middleware("http")
+async def require_token(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """Every /api route (except login) and /events need a signed bearer token. The static app,
+    /health (Railway) and the OpenAPI docs stay public; the WebSocket checks its own token."""
+    path = request.url.path
+    guarded = (path.startswith("/api/") or path == "/events") and path not in PUBLIC_PATHS
+    if guarded and user_for_token(_bearer(request.headers.get("authorization"))) is None:
+        return JSONResponse({"ok": False, "error": "Sign in first."}, status_code=401)
+    return await call_next(request)
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
 store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
@@ -71,10 +84,14 @@ def _bearer(authorization: str | None) -> str | None:
 
 
 @app.post("/api/auth/login")
-def api_login(body: LoginBody) -> JSONResponse:
-    """Local accounts (praxis_session/auth.py). 401 with a plain message on a bad pair."""
+def api_login(body: LoginBody, request: Request) -> JSONResponse:
+    """Local accounts (praxis_session/auth.py): 401 on a bad pair, 429 after repeated failures."""
+    addr = request.headers.get("x-forwarded-for", request.client.host if request.client else "?").split(",")[0].strip()
+    if too_many_failures(addr):
+        return JSONResponse({"ok": False, "error": "Too many attempts. Try again in ten minutes."}, status_code=429)
     user = verify(body.username, body.password)
     if user is None:
+        record_failure(addr)
         return JSONResponse({"ok": False, "error": "Wrong username or password."}, status_code=401)
     return JSONResponse({"ok": True, "user": user, "token": issue_token(user["username"])})
 
@@ -201,12 +218,16 @@ async def session_ws(
     reps: int = 8,
     replay: str | None = None,
     for_mode: str = Query("", alias="for"),
+    token: str | None = None,
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
     One pipeline per connection; every event goes to the shared ring and back over the socket
     as one JSON text message per event. Frames are decoded in memory and dropped.
     """
+    if user_for_token(token or _bearer(ws.headers.get("authorization"))) is None:
+        await ws.close(code=4401)  # handshake refused: sign in first
+        return
     await ws.accept()
     if mode not in MODES:
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())

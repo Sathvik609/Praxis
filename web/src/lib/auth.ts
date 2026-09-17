@@ -14,6 +14,29 @@ export function getSession(): { token: string; user: AuthUser } | null {
   }
 }
 
+/** Bearer header for API calls; empty when signed out. */
+export function authHeaders(): Record<string, string> {
+  const s = getSession()
+  return s ? { authorization: `Bearer ${s.token}` } : {}
+}
+
+/** Token for the WebSocket query (browsers cannot set headers on a socket). */
+export function authToken(): string | null {
+  return getSession()?.token ?? null
+}
+
+/** A 401 from the service means the token expired or was revoked: drop it and go to sign-in. */
+export function onUnauthorized(): void {
+  try {
+    sessionStorage.removeItem(KEY)
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/signin')) {
+    window.location.assign(`/signin`)
+  }
+}
+
 export async function login(username: string, password: string): Promise<{ ok: true; user: AuthUser } | { ok: false; error: string }> {
   let r: Response
   try {

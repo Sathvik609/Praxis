@@ -1,3 +1,4 @@
+import { authHeaders, onUnauthorized } from './auth'
 import { SESSION_API_URL } from './config'
 
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string; level: number; version: number } }
@@ -10,14 +11,16 @@ export type Progress = { nhpt_trend: { date: string; total_s: number }[]; verifi
 export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number; nhpt_last_s: number | null; nhpt_first_s: number | null; illustrative?: boolean }
 
 async function get<T>(path: string): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`)
+  const r = await fetch(`${SESSION_API_URL}${path}`, { headers: authHeaders() })
+  if (r.status === 401) onUnauthorized()
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   const body = (await r.json()) as T & { error?: string }
   if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
   return body
 }
 async function post<T>(path: string, body?: unknown): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+  const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() }, body: body ? JSON.stringify(body) : undefined })
+  if (r.status === 401) onUnauthorized()
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   return r.json() as Promise<T>
 }
