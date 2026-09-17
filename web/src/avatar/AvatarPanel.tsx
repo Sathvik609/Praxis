@@ -29,6 +29,7 @@ const ASPECT: Record<NonNullable<Props['aspect']>, string> = {
 }
 const LABEL_OFFSET = 70
 const LABEL_GAP = 44
+const CAPTION_H = 48 // caption bar height reserved at the bottom of the stage
 
 /** The one avatar: a pacing reference on a dark stage. It never scores the patient. */
 export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'left', markers = [], onMarkerTap, compact = false, showCues = true, onStep, aspect, className = '' }: Props) {
@@ -95,8 +96,13 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
         dy /= len
         if (Math.abs(dx) < 0.35) dx = dx < 0 ? -0.35 : 0.35
         const left = dx < 0
-        const x = Math.min(w - 8, Math.max(8, p.x + dx * LABEL_OFFSET))
-        const y = Math.min(h - 32, Math.max(32, p.y + dy * LABEL_OFFSET))
+        // Keep the whole chip inside the stage (it is anchored at its inner edge) and above
+        // the caption bar, so labels are never cut off at the panel edge.
+        const chipW = labelRefs.current.get(m.joint)?.offsetWidth ?? 120
+        const minX = left ? 8 + chipW : 8
+        const maxX = left ? w - 8 : w - 8 - chipW
+        const x = Math.min(maxX, Math.max(minX, p.x + dx * LABEL_OFFSET))
+        const y = Math.min(h - CAPTION_H - 28, Math.max(32, p.y + dy * LABEL_OFFSET))
         placed.push({ joint: m.joint, x, y, left, px: p.x, py: p.y })
       }
       placed.sort((a, b) => a.y - b.y)
