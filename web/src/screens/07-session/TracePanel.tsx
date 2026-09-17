@@ -50,7 +50,7 @@ export function TracePanel({ events, replay = false }: { events: PraxisEvent[]; 
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[var(--r-card)] bg-[var(--stage-a)] font-mono text-base text-white/85 shadow-[var(--shadow-1)]">
+    <div className="isolate flex h-full flex-col overflow-hidden rounded-[var(--r-card)] bg-[var(--stage-a)] font-mono text-base text-white/85 shadow-[var(--shadow-1)]">
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="sticky top-0 z-10 border-b border-white/10 bg-[var(--stage-a)] px-4 pb-3 pt-3">
           <div className="flex flex-wrap items-center gap-3">

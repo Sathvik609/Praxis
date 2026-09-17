@@ -39,7 +39,8 @@ export function SessionHeader({ title, subtitle, status, label }: { title: strin
 /** The camera stage: Panel with the live indicator + feed label (top-left), the exercise's
  *  tracking words (top-right), an optional dark measurement band and the OpenCV line
  *  (bottom-left), the replay badge (bottom-right) and the camera-blocked card. Frames never
- *  reach the browser in replay; the overlay is drawn from events either way. */
+ *  reach the browser in replay; the overlay is drawn from events either way. `isolate` keeps
+ *  the slots' z-index inside the panel so session dialogs always paint above it. */
 export function LiveFeed({
   replay,
   camActive,
@@ -67,7 +68,7 @@ export function LiveFeed({
 }) {
   return (
     <Panel
-      className={className}
+      className={`isolate ${className}`}
       topLeft={
         <>
           <LiveIndicator active={camActive} replay={replay} />
