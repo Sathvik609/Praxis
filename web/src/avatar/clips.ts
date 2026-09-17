@@ -114,7 +114,7 @@ function cupClip(): Clip {
 function nhptClip(): Clip {
   const holes = nhptHoles('left')
   const dish = nhptDish('left')
-  const atDish = reach(over(dish))
+  const atDish = reach(over(dish, 0.03))
   const keys: Key[] = []
   const PEG = 3.1
   for (let k = 0; k < 3; k++) {
@@ -124,8 +124,8 @@ function nhptClip(): Clip {
     keys.push({ t: T + 0.25, pose: atDish, pinch: 1, hold: true, carry: 'peg' })
     keys.push({ t: T + 0.4, pose: reach(over(dish, 0.1)), target: { kind: 'hole', index: k }, step: 2, caption: 'Step 2 of 3 · carry it over the board, any hole' })
     keys.push({ t: T + 1.2, pose: reach(over(hole, 0.09), 2), step: 3, caption: 'Step 3 of 3 · seat it and let go; the timer stops at the ninth peg' })
-    keys.push({ t: T + 1.5, pose: reach(over(hole, 0.035), 2), ease: 'overshoot', target: { kind: 'hole', index: k }, landed: true })
-    keys.push({ t: T + 1.7, pose: reach(over(hole, 0.035), 2), pinch: 0, hold: true, carry: null, parked: k + 1 })
+    keys.push({ t: T + 1.5, pose: reach(over(hole, 0.03), 2), ease: 'overshoot', target: { kind: 'hole', index: k }, landed: true })
+    keys.push({ t: T + 1.7, pose: reach(over(hole, 0.03), 2), pinch: 0, hold: true, carry: null, parked: k + 1 })
     keys.push({ t: T + 1.9, pose: reach(over(hole, 0.09), 2), target: null })
     keys.push({ t: T + 2.75, pose: atDish, ease: 'overshoot', hold: true })
   }

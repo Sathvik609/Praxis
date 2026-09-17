@@ -25,7 +25,7 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
   const latest = useRef(props)
   useEffect(() => {
     latest.current = props
-    if (stageRef.current) stageRef.current.props = props
+    if (stageRef.current) stageRef.current.input = props
   })
 
   useEffect(() => {
