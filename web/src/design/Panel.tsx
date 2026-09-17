@@ -6,8 +6,8 @@ export function Panel({ children, topLeft, topRight, bottomLeft, className = '' 
   return (
     <div className={`relative overflow-hidden rounded-[var(--r-card)] bg-[var(--stage-a)] text-white shadow-[var(--shadow-1)] ${className}`}>
       {children}
-      {topLeft && <div className="pointer-events-none absolute left-4 top-3 z-10 flex items-center gap-2 text-base text-white/85">{topLeft}</div>}
-      {topRight && <div className="absolute right-4 top-3 z-10 flex items-center gap-2 text-base text-white/85">{topRight}</div>}
+      {topLeft && <div className="pointer-events-none absolute left-4 top-3 z-10 flex max-w-[58%] items-center gap-2 overflow-hidden whitespace-nowrap text-base text-white/85 [&>*]:truncate">{topLeft}</div>}
+      {topRight && <div className="absolute right-4 top-3 z-10 flex max-w-[40%] items-center gap-2 overflow-hidden whitespace-nowrap text-base text-white/85 [&>*]:truncate">{topRight}</div>}
       {bottomLeft && <div className="pointer-events-none absolute bottom-3 left-4 z-10 text-base text-white/80">{bottomLeft}</div>}
     </div>
   )
