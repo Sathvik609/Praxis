@@ -35,10 +35,11 @@ from praxis_session.auth import issue_token, record_failure, revoke, too_many_fa
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
+from praxis_session.plan import today as plan_today
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
-from praxis_session.store import DEFAULT_PATH, Store
+from praxis_session.store import DEFAULT_PATH, ProfileError, Store
 from praxis_session.web import mount_web
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
@@ -155,6 +156,40 @@ def api_summary(session_id: str) -> dict[str, object]:
     return _summary_with_latency(s)
 
 
+class ProfileBody(BaseModel):
+    side: str = ""
+    goal: str = ""
+    pain: int = 0
+
+
+@app.get("/api/profile")
+def api_profile(authorization: str | None = Header(default=None)) -> dict[str, object]:
+    """Guided flow (Sprint E): the signed-in user's profile, or null before onboarding."""
+    user = user_for_token(_bearer(authorization))
+    return {"profile": store.profile(user["username"]) if user else None}
+
+
+@app.post("/api/profile")
+def api_profile_save(body: ProfileBody, authorization: str | None = Header(default=None)) -> JSONResponse:
+    user = user_for_token(_bearer(authorization))
+    assert user is not None  # the middleware refuses unsigned requests before we get here
+    try:
+        prof = store.save_profile(user["username"], body.side, body.goal, body.pain)
+    except ProfileError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+    return JSONResponse({"ok": True, "profile": prof})
+
+
+@app.get("/api/plan/today")
+def api_plan_today(pain: int | None = None, authorization: str | None = Header(default=None)) -> dict[str, object]:
+    """Today's exercises for the signed-in user. `pain` is the daily check's answer and
+    overrides the profile's last one; the tier rule lives in `plan.py`, in code."""
+    user = user_for_token(_bearer(authorization))
+    username = user["username"] if user else ""
+    profile = store.profile(username) if username else None
+    return plan_today(profile, pain, store.sessions_today(username) if username else [])
+
+
 @app.get("/api/prescription")
 def api_prescription() -> dict[str, object]:
     return store.prescription()
@@ -235,10 +270,12 @@ async def session_ws(
     debounce: int = 2,
     clear: int = 3,
     side: str = "left",
-    target: float = 90.0,
-    hold: float = 3.0,
-    sets: int = 2,
-    reps: int = 8,
+    exercise: str | None = None,
+    tier: str = "full",
+    target: float | None = None,
+    hold: float | None = None,
+    sets: int | None = None,
+    reps: int | None = None,
     replay: str | None = None,
     for_mode: str = Query("", alias="for"),
     token: str | None = None,
@@ -247,8 +284,13 @@ async def session_ws(
 
     One pipeline per connection; every event goes to the shared ring and back over the socket
     as one JSON text message per event. Frames are decoded in memory and dropped.
+
+    Sprint E: `mode=arm` takes `exercise` (a `perception/exercises.py` id; default `flexion`,
+    which behaves exactly as Arm to the front always did) and `tier` (`full`/`gentle`, the
+    pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
     """
-    if user_for_token(token or _bearer(ws.headers.get("authorization"))) is None:
+    user = user_for_token(token or _bearer(ws.headers.get("authorization")))
+    if user is None:
         await ws.close(code=4401)  # handshake refused: sign in first
         return
     await ws.accept()
@@ -271,6 +313,8 @@ async def session_ws(
                 sets=sets,
                 reps=reps,
                 for_mode=for_mode or None,
+                exercise=exercise,
+                tier=tier,
             )
         except ValueError:
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())
@@ -279,7 +323,12 @@ async def session_ws(
     coach: CoachSession | None = None
     stats = LatencyStats()
     if pipeline is not None and mode in COACH_MODES:
-        coach = CoachSession(mode=mode, prescription=SEED_PRESCRIPTION)
+        coach = CoachSession(
+            mode=mode,
+            prescription=SEED_PRESCRIPTION,
+            exercise=(exercise or "flexion") if mode == "arm" else None,
+            username=user["username"],
+        )
         sessions[coach.session_id] = coach
         latency_stats[coach.session_id] = stats
         while len(sessions) > 50:

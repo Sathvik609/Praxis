@@ -43,6 +43,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Sign-in gate (17 Sep): `POST /api/auth/login` against three team accounts (salted PBKDF2 in `auth.py`, `PRAXIS_USERS` override), HMAC-signed expiring tokens (`PRAXIS_AUTH_SECRET`), per-address rate limit, HTTP middleware + WebSocket check so every `/api`, `/events` and session socket needs a token, `RequireAuth` on every route, sign-out revokes | built, tested (pytest 153, vitest 202), checked against the deployed URL |
 | Sprint D, D-LAT (17 Sep): capture-time frame prefix, ack-driven sending, off-loop processing with drop-oldest, `latency` on frame/coach events and in the summary, on-screen and report latency lines, no coach session or trace file for setup sockets | built, tested (pytest 165, vitest 214); numbers in §6.2 are in-process on one laptop, not a browser measurement |
 | Sprint E web (17 Sep): guided path `/welcome` → `/` Today → `/ready` → `/go` → `/done/:id` on the profile / today-plan / exercise-registry contracts, old hub moved under `/details/*`, `RequireProfile`, one-hint setup (`readyHint`), phase-driven session wording (`phase.ts`), avatar adapter (`guidedClip.ts`) | built, tested (vitest 264) against mocked endpoints — the service side (E-SVC) is built in parallel and not merged yet; checked in Chrome at 1280 × 800 with a temporary dev mock |
+| Sprint E, E-SVC (17 Sep): per-user profile (`/api/profile`), seven-exercise shoulder registry with per-exercise metrics, generalised arm FSM (registry-driven, front/side gating, pendulum oscillations), pain-tiered `/api/plan/today`, per-exercise coach cues, `exercise`/`username` on the session record | built, tested (pytest 277) on synthetic landmark streams only; front-view rotation metrics and pendulum counting are approximations (§3.7, `docs/RISKS.md`) |
 | Real recordings, dataset v1, browser-measured latency, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
@@ -80,6 +81,51 @@ Occupancy per hole is the fraction of peg mask inside the disc (≥ 0.35 → occ
 `perception/pose.py` runs the OpenCV Zoo MediaPipe person detector (224×224) and BlazePose landmarker (256×256) through `cv2.dnn` (Apache-2.0, recorded before download; vendored wrappers under `perception/zoo/`; OpenCV 5's graph engine returns the person detector's two outputs in swapped order, which `pose.py` re-sorts by width). From the 33 landmarks we compute, in the image plane, shoulder flexion (angle at the shoulder between upper arm and trunk), elbow angle, trunk lean (hip→shoulder midline from vertical, signed), and shoulder hike (practising shoulder height above the other, normalised by torso length and baselined at the start of the set). The shoulder angle is One-Euro filtered. Side view is the assumption; `view_ok` is false when the shoulders are more than 0.6 torso-lengths apart. BlazePose's per-landmark visibility is reported in three groups because they gate three different things: `visibility` (practising-side shoulder, elbow, hip — the angle), `hip_visibility` (both hips — the lean) and `shoulders_visibility` (both shoulders — the hike). **These are camera-relative progress numbers, not goniometry.**
 
 `perception/arm_fsm.py`: `start_pose → moving → target_reached → hold → return`; target clamped to the 90° ceiling in code (`clamped` reported); a rep is verified when it reached target − 10° and held ≥ 3 s; `target_missed` and `hold_too_short` reps are counted but unverified. **Gating (Sprint D):** the FSM freezes — no transitions, no compensation events, the angle still shown — while the patient faces the camera (`view_ok` false → `arm.gate = "turn_side"` on every frame) or the practising-side joint visibility is below 0.5 (`arm.gate = "hips_out_of_view"`), so a frontal lift can never be scored as a rep and a seated patient with hips behind a desk gets no spurious flags. `compensation_lean` fires once per rep only after |lean| > 12° has persisted for 0.5 s with both hips visible (flagged after three); `shoulder_hiking` needs both shoulders visible and hike > 0.08 torso lengths above baseline. Pipeline mode `arm` needs no sheet; pose absence for 15 frames pauses with `perception_lost`. Because the DNN cannot detect a drawn figure, the evaluation feeds a synthetic 33-point landmark stream through the same FSM (`replay.run_landmark_replay`), which validates the state machine and angle code, not the detector.
+**Sprint E — the exercise registry (`perception/exercises.py`).** One frozen `Exercise` per
+shoulder exercise holds its id, name, avatar clip, the camera view it is scored from, the
+metric function, target, in-code ceiling, tolerance, start threshold, hold, sets, reps, the
+gentle-tier overrides and our own paraphrased steps. Seven ship: pendulum, flexion (Arm to the
+front, unchanged defaults), abduction, scaption, extension, external and internal rotation.
+Three metrics run on the same BlazePose landmarks: `shoulder_elevation_deg` (the image-plane
+angle at the shoulder between upper arm and trunk — flexion or extension from the side,
+abduction from the front), `rotation_deg` (front view, elbow tucked and bent: the wrist's
+sideways offset from the elbow divided by the upper-arm length, arcsined; **+ external, −
+internal**) and `pendulum_swing_deg` (the signed angle of shoulder→wrist from vertical while
+the wrist hangs below the shoulder). Targets are overridden by
+`evaluation/results/rehab_reference_ranges.json` when it exists — mean − 1 sd of the correct
+reps — but those are **healthy-adult Kinect peaks** well above the GRASP ceiling, so every
+target is clamped to the exercise's own `ceiling_deg`: a reference can lower a target, never
+raise a ceiling. Without the file the constants in the registry stand.
+
+`ArmFSM(exercise, tier)` is driven entirely by an entry. The view gate generalises: a
+side-view exercise freezes with `gate = "turn_side"` when the shoulders are separated, a
+front-view one with `"turn_front"` when they are stacked (the same 0.6-torso-length
+separation, read both ways). The pendulum uses a second rep shape: the signed swing is
+band-passed with hysteresis at a quarter of the verification amplitude, one rep is a full
+to-and-fro, and the rep is verified when its peak-to-peak amplitude reached 15°; there is no
+hold and no `target_missed`. Every frame's `arm` block now carries `exercise`,
+`view_required`, `phase` (`start | lift | hold | lower`, what the avatar follows) and
+`rep_progress` (0–1), `exercise_start` opens a session with the dose, and `set_complete`
+carries `verified_reps` and `best_deg`.
+
+**Honest scope for Sprint E.** (a) The front view cannot separate scaption from abduction —
+scaption's 30° forward offset projects away — so scaption is measured as abduction with a
+lower target and is described that way in the code and in the UI. (b) The rotation metric
+approximates a forearm that points at the camera by using the upper-arm length as a stand-in
+for the unknown projected forearm length. (c) Pendulum oscillation counting has only ever run
+on synthetic landmark streams. None of these three has been near a real recording; all of them
+are camera-relative progress, **never clinical goniometry**.
+
+### 3.7.1 Pain tier and today's plan (`plan.py`)
+The tier is a rule in code, not a diagnosis and not the coach's call: pain 0–3 gives the full
+registry at full range, 4–6 gives pendulum, flexion, abduction to 60° and external rotation
+with 2 s holds and fewer reps, and 7 or more gives a rest day with no exercises.
+`GET /api/plan/today?pain=` returns the tier, the reason in plain words, the goal line with
+the week number, the items at the tier's dose (each with `done_today`, true when a session for
+that exercise finished today for this user) and the rest advice. High pain is *not* flagged
+here: the existing pain stop rule raises the therapist flag when the same number arrives at
+check-in, so exactly one place does it.
+
 ### 3.8 Exertion context — Phase 7 (not started)
 
 ## 3.9 Avatar (reference, never a scorer)

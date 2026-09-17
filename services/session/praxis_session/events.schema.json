@@ -18,6 +18,7 @@
         "perception_lost",
         "perception_regained",
         "frame",
+        "exercise_start",
         "state_change",
         "rep_complete",
         "wrong_hole",
@@ -438,6 +439,55 @@
         "count",
         "pinch"
       ]
+    },
+    "exercise": {
+      "description": "Exercise id from perception/exercises.py (pendulum, flexion, abduction, scaption, extension, external_rotation, internal_rotation).",
+      "type": "string"
+    },
+    "name": {
+      "description": "Human name of the exercise (exercise_start).",
+      "type": "string"
+    },
+    "view": {
+      "description": "Camera view the exercise is scored from; the FSM freezes in the other one.",
+      "enum": [
+        "side",
+        "front"
+      ]
+    },
+    "kind": {
+      "description": "Rep shape: hold (lift, hold, lower) or oscillation (pendulum swings).",
+      "enum": [
+        "hold",
+        "oscillation"
+      ]
+    },
+    "tier": {
+      "description": "Pain tier applied to the dose: full or gentle.",
+      "enum": [
+        "full",
+        "gentle"
+      ]
+    },
+    "dose": {
+      "description": "Prescribed dose as shown to the patient, e.g. '2 x 8 - hold 3 s'.",
+      "type": "string"
+    },
+    "reps": {
+      "description": "Reps in the set (set_complete) or per set (exercise_start).",
+      "type": "integer"
+    },
+    "swing_deg": {
+      "description": "Pendulum rep: peak-to-peak swing amplitude in camera-relative degrees. Approximation, validated on synthetic landmarks only.",
+      "type": "number"
+    },
+    "verified_reps": {
+      "description": "set_complete: reps in the set the camera verified.",
+      "type": "integer"
+    },
+    "best_deg": {
+      "description": "set_complete: best verified angle in the set, camera-relative degrees.",
+      "type": "number"
     }
   }
 }

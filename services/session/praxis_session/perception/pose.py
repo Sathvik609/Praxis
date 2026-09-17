@@ -137,6 +137,58 @@ def _angle(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.degrees(np.arccos(np.clip(np.dot(a, b) / (na * nb), -1.0, 1.0))))
 
 
+# ---- per-exercise metrics (Sprint E; camera-relative degrees, never goniometry) ---------
+def _sides(side: str) -> tuple[int, int]:
+    i = 0 if side == "left" else 1
+    return i, 1 - i
+
+
+def shoulder_elevation_deg(res: PoseResult, side: str) -> float:
+    """Image-plane angle at the shoulder between the upper arm and the trunk.
+
+    In the **side** view this is shoulder flexion (arm to the front) or extension (arm to the
+    back) — the sign is not recoverable, so both read as a positive elevation. In the **front**
+    view the same number is abduction; scaption (the arm 30° forward of the frontal plane)
+    projects onto the same measurement, so the registry treats scaption as abduction with a
+    lower target and says so. Cross-body motion is indistinguishable from abduction here.
+    """
+    i, _ = _sides(side)
+    lm = res.landmarks_px
+    sh, el, hp = lm[SHOULDER[i]], lm[ELBOW[i]], lm[HIP[i]]
+    return round(_angle(el - sh, hp - sh), 1)
+
+
+def rotation_deg(res: PoseResult, side: str) -> float:
+    """Front-view shoulder rotation with the elbow tucked and bent ~90°: **positive = external**
+    (the wrist swings away from the body), negative = internal (the wrist crosses toward it).
+
+    The forearm points at the camera, so its image length is a projection. We take the wrist's
+    sideways offset from the elbow and divide by the *upper arm* length as a stand-in for the
+    forearm's true length (they are close in these landmarks), then arcsine it. This is an
+    approximation validated on synthetic landmarks only — see docs/RISKS.md.
+    """
+    i, j = _sides(side)
+    lm = res.landmarks_px
+    sh, el, wr, sh_o = lm[SHOULDER[i]], lm[ELBOW[i]], lm[WRIST[i]], lm[SHOULDER[j]]
+    inward = 1.0 if sh_o[0] >= sh[0] else -1.0  # +x points at the other shoulder
+    ref = float(np.linalg.norm(el - sh))
+    if ref < 1e-6:
+        return 0.0
+    lateral = -float(wr[0] - el[0]) * inward  # + = away from the body
+    return round(float(np.degrees(np.arcsin(np.clip(lateral / ref, -1.0, 1.0)))), 1)
+
+
+def pendulum_swing_deg(res: PoseResult, side: str) -> float:
+    """Side-view swing of the hanging arm: the signed angle of shoulder→wrist from vertical
+    (+ forward in +x). 0 when the wrist is not below the shoulder, which is not a pendulum."""
+    i, _ = _sides(side)
+    lm = res.landmarks_px
+    v = lm[WRIST[i]] - lm[SHOULDER[i]]
+    if v[1] <= 0 or float(np.linalg.norm(v)) < 1e-6:
+        return 0.0
+    return round(float(np.degrees(np.arctan2(float(v[0]), float(v[1])))), 1)
+
+
 def arm_angles(res: PoseResult, side: str) -> dict:
     """Shoulder flexion, elbow angle, trunk lean (signed, + = shoulders behind hips toward the
     camera-left), shoulder hike (practising shoulder height above the other one, normalised by
@@ -165,6 +217,10 @@ def arm_angles(res: PoseResult, side: str) -> dict:
         "trunk_lean_deg": round(lean, 1),
         "shoulder_hike_norm": round(hike, 3),
         "view_ok": sep < 0.6,
+        # Sprint E: front-view exercises want the opposite of `view_ok` (shoulders separated,
+        # not stacked); both come from the same shoulder separation.
+        "front_view_ok": sep >= 0.6,
+        "shoulder_sep_norm": round(sep, 3),
         "visibility": round(float(np.min(vis[angle_joints])), 2),
         "hip_visibility": round(float(np.min(vis[[HIP[i], HIP[j]]])), 2),
         "shoulders_visibility": round(float(np.min(vis[[SHOULDER[i], SHOULDER[j]]])), 2),

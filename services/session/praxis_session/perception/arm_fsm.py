@@ -1,16 +1,35 @@
-"""Arm to the front (shoulder flexion) finite-state machine.
+"""Guided shoulder exercise finite-state machine (no OpenCV call here; the landmarks it scores
+come from `perception/pose.py`, which runs `cv2.dnn` on OpenCV cv2.__version__ == 5.0.0).
 
-States: start_pose -> moving -> target_reached -> hold -> return (-> start_pose). One rep per
-return. Target is clamped to the ceiling in code (CLAUDE.md guardrails). Events: state_change,
-rep_complete{verified, reason}, target_missed, hold_too_short, compensation_lean,
-shoulder_hiking, set_complete, arm_complete. Angles arrive from pose.py (camera-relative).
+One FSM for every exercise in `perception/exercises.py`. A registry entry supplies the metric,
+the required camera view, the target, the in-code ceiling, the dose and the tier overrides, so
+adding an exercise never edits this file. `ArmFSM()` with no argument is still "Arm to the
+front" (`flexion`) with exactly the behaviour that shipped in Phase 5.
 
-Gating (Sprint D): the image-plane angle only means something from the side, so the FSM
-freezes (no transitions, no compensation events; the angle is still reported for display)
-while `view_ok` is False (`gate = "turn_side"`) or the practising-side shoulder/elbow/hip
-visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`). `compensation_lean` needs
-the lean to persist for `lean_persist_s` with both hips visible; `shoulder_hiking` needs both
-shoulders visible. A seated patient with the hips behind a desk therefore gets no lean flags.
+Two rep shapes:
+- `kind="hold"` (every lift and rotation): `start_pose -> moving -> target_reached -> hold ->
+  return (-> start_pose)`, one rep per return. A rep is verified when it reached
+  target - tolerance and held for `hold_s`; `target_missed` / `hold_too_short` reps are
+  counted but unverified.
+- `kind="oscillation"` (pendulum): no hold and no target to reach. The signed swing angle is
+  band-passed with hysteresis and one rep is a full to-and-fro; the rep is verified when its
+  peak-to-peak amplitude reached `target_deg - tolerance_deg` (15 deg), otherwise it is
+  counted with reason `swing_too_small`. **Approximation, validated on synthetic landmark
+  streams only** (docs/RISKS.md).
+
+Events: exercise_start, state_change, rep_complete{verified, reason}, target_missed,
+hold_too_short, compensation_lean, shoulder_hiking, set_complete{verified_reps, best_deg},
+arm_complete. Angles are camera-relative progress, never clinical goniometry; the target is
+clamped to the exercise's ceiling in code (CLAUDE.md guardrails).
+
+Gating (Sprint D, generalised in Sprint E): the image-plane metric only means something from
+the view the exercise needs, so the FSM freezes (no transitions, no compensation events; the
+angle is still reported for display) while the view is wrong (`gate = "turn_side"` for
+side-view exercises, `"turn_front"` for front-view ones) or the practising-side
+shoulder/elbow/hip visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`).
+`compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
+`shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
+therefore gets no lean flags.
 """
 
 from __future__ import annotations
@@ -19,30 +38,42 @@ from dataclasses import dataclass
 from typing import Any
 
 from praxis_session.events import Event, make_event
+from praxis_session.perception.exercises import Exercise, resolve
 
 STATES = ("start_pose", "moving", "target_reached", "hold", "return")
 MIN_VISIBILITY = 0.5
-GATES = ("turn_side", "hips_out_of_view")
+GATES = ("turn_side", "turn_front", "hips_out_of_view")
+# FSM state -> the phase the avatar and the big count follow (Sprint E contract).
+PHASES = {
+    "start_pose": "start",
+    "moving": "lift",
+    "target_reached": "hold",
+    "hold": "hold",
+    "return": "lower",
+}
 
 
 @dataclass(frozen=True)
 class ArmObservation:
     t: float
-    shoulder_deg: float | None
+    shoulder_deg: float | None  # the exercise's metric in degrees, camera-relative
     trunk_lean_deg: float
     shoulder_hike_norm: float
-    view_ok: bool
+    view_ok: bool  # True = side view (shoulders stacked); front-view exercises want False
     visibility: float = 1.0  # min over the practising-side shoulder, elbow, hip
     hip_visibility: float = 1.0  # min over both hips (lean)
     shoulders_visibility: float = 1.0  # min over both shoulders (hike)
 
 
-def gate_for(obs: ArmObservation) -> str | None:
+def gate_for(obs: ArmObservation, view: str = "side") -> str | None:
     """Why the FSM is frozen for this observation, or None. No pose at all is not a gate
     (pose loss is reported separately as perception_lost)."""
     if obs.shoulder_deg is None:
         return None
-    if not obs.view_ok:
+    if view == "front":
+        if obs.view_ok:  # shoulders stacked: the patient is side-on to the camera
+            return "turn_front"
+    elif not obs.view_ok:
         return "turn_side"
     if obs.visibility < MIN_VISIBILITY:
         return "hips_out_of_view"
@@ -52,24 +83,33 @@ def gate_for(obs: ArmObservation) -> str | None:
 class ArmFSM:
     def __init__(
         self,
-        target_deg: float = 90.0,
-        ceiling_deg: float = 90.0,
-        hold_s: float = 3.0,
-        sets: int = 2,
-        reps_per_set: int = 8,
-        start_below_deg: float = 25.0,
-        tolerance_deg: float = 10.0,
+        exercise: str | Exercise | None = None,
+        tier: str = "full",
+        target_deg: float | None = None,
+        ceiling_deg: float | None = None,
+        hold_s: float | None = None,
+        sets: int | None = None,
+        reps_per_set: int | None = None,
+        start_below_deg: float | None = None,
+        tolerance_deg: float | None = None,
         lean_limit_deg: float = 12.0,
         lean_events_to_flag: int = 3,
         hike_limit: float = 0.08,
         baseline_frames: int = 10,
         lean_persist_s: float = 0.5,
     ) -> None:
-        self.ceiling_deg = ceiling_deg
-        self.clamped = target_deg > ceiling_deg
-        self.target_deg = min(target_deg, ceiling_deg)
-        self.hold_s, self.sets, self.reps_per_set = hold_s, sets, reps_per_set
-        self.start_below_deg, self.tolerance_deg = start_below_deg, tolerance_deg
+        ex = resolve(exercise, tier)
+        self.exercise, self.tier = ex, tier
+        self.view, self.kind = ex.view, ex.kind
+        self.ceiling_deg = ex.ceiling_deg if ceiling_deg is None else ceiling_deg
+        wanted = ex.target_deg if target_deg is None else target_deg
+        self.clamped = wanted > self.ceiling_deg
+        self.target_deg = min(wanted, self.ceiling_deg)
+        self.hold_s = ex.hold_s if hold_s is None else hold_s
+        self.sets = ex.sets if sets is None else sets
+        self.reps_per_set = ex.reps if reps_per_set is None else reps_per_set
+        self.start_below_deg = ex.start_below_deg if start_below_deg is None else start_below_deg
+        self.tolerance_deg = ex.tolerance_deg if tolerance_deg is None else tolerance_deg
         self.lean_limit_deg, self.lean_events_to_flag = lean_limit_deg, lean_events_to_flag
         self.hike_limit, self.baseline_frames = hike_limit, baseline_frames
         self.lean_persist_s = lean_persist_s
@@ -78,6 +118,7 @@ class ArmFSM:
         self.state = "start_pose"
         self.set, self.rep = 1, 0
         self.finished = False
+        self.started = False
         self.reps: list[dict[str, Any]] = []
         self.lean_count = 0
         self.hike_count = 0
@@ -93,11 +134,55 @@ class ArmFSM:
         self._hike_samples: list[float] = []
         self._hike_baseline = 0.0
         self._best_this_set = 0.0
+        self._verified_this_set = 0
+        # oscillation bookkeeping (pendulum)
+        self._swing_sign = 0
+        self._halves = 0
+        self._swing_lo = 0.0
+        self._swing_hi = 0.0
 
     # ---- public --------------------------------------------------------------------------
+    @property
+    def swing_band_deg(self) -> float:
+        """Hysteresis band for the oscillation counter: a quarter of the peak-to-peak amplitude
+        a swing must reach to be verified, so noise around vertical never counts as a reversal
+        while a small, real swing is still counted (and reported unverified)."""
+        return max(2.0, (self.target_deg - self.tolerance_deg) / 4.0)
+
+    def phase(self) -> str:
+        """The step the avatar follows: start | lift | hold | lower."""
+        if self.kind == "oscillation":
+            if self.state == "start_pose":
+                return "start"
+            return "lift" if self._swing_sign >= 0 else "lower"
+        return PHASES.get(self.state, "start")
+
+    def rep_progress(self) -> float:
+        """0..1 through the current rep, for the avatar and the on-screen count."""
+        if self.kind == "oscillation":
+            return round(min(1.0, self._halves / 2.0), 3)
+        a, lo = self._angle or 0.0, self.start_below_deg
+        span = max(1.0, self.target_deg - lo)
+        if self.state == "moving":
+            return round(0.4 * max(0.0, min(1.0, (a - lo) / span)), 3)
+        if self.state in ("target_reached", "hold"):
+            held = min(1.0, self._held / self.hold_s) if self.hold_s > 0 else 1.0
+            return round(0.4 + 0.4 * held, 3)
+        if self.state == "return":
+            return round(0.8 + 0.2 * (1.0 - max(0.0, min(1.0, (a - lo) / span))), 3)
+        return 0.0
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "mode": "arm",
+            "exercise": self.exercise.id,
+            "exercise_name": self.exercise.name,
+            "tier": self.tier,
+            "kind": self.kind,
+            "dose": self.exercise.dose,
+            "view_required": self.view,
+            "phase": self.phase(),
+            "rep_progress": self.rep_progress(),
             "state": self.state,
             "set": self.set,
             "rep": self.rep,
@@ -108,7 +193,7 @@ class ArmFSM:
             "clamped": self.clamped,
             "hold_s": self.hold_s,
             "hold_progress": round(min(1.0, self._held / self.hold_s), 3)
-            if self.state == "hold"
+            if self.state == "hold" and self.hold_s > 0
             else 0.0,
             "angle_now": self._angle,
             "peak_this_rep": round(self._peak, 1),
@@ -126,7 +211,7 @@ class ArmFSM:
         }
 
     def step(self, obs: ArmObservation) -> list[Event]:
-        self.gate = gate_for(obs)
+        self.gate = gate_for(obs, self.view)
         if self.finished or obs.shoulder_deg is None:
             self._angle = None if obs.shoulder_deg is None else self._angle
             return []
@@ -135,6 +220,27 @@ class ArmFSM:
             self._lean_since = None  # frozen: the angle is shown but nothing is scored
             return []
         evs: list[Event] = []
+        if not self.started:
+            self.started = True
+            evs.append(
+                make_event(
+                    "exercise_start",
+                    t=obs.t,
+                    exercise=self.exercise.id,
+                    name=self.exercise.name,
+                    view=self.view,
+                    kind=self.kind,
+                    tier=self.tier,
+                    dose=self.exercise.dose,
+                    target_deg=self.target_deg,
+                    ceiling_deg=self.ceiling_deg,
+                    hold_s=self.hold_s,
+                    sets=self.sets,
+                    reps=self.reps_per_set,
+                )
+            )
+        if self.kind == "oscillation":
+            return evs + self._swing(obs)
         if self.state in ("moving", "target_reached", "hold"):
             self._peak = max(self._peak, obs.shoulder_deg)
             evs += self._compensation(obs)
@@ -184,7 +290,94 @@ class ArmFSM:
             )
         return evs
 
-    # ---- states --------------------------------------------------------------------------
+    def _complete_rep(self, rep: dict[str, Any], t: float, best: float) -> list[Event]:
+        """Shared tail for both rep shapes: record it, close the set, finish the exercise."""
+        self.reps.append(rep)
+        if rep["verified"]:
+            self._best_this_set = max(self._best_this_set, best)
+            self._verified_this_set += 1
+        evs = [make_event("rep_complete", t=t, **rep)]
+        if self.rep >= self.reps_per_set:
+            evs.append(
+                make_event(
+                    "set_complete",
+                    t=t,
+                    set=self.set,
+                    reps=self.rep,
+                    verified_reps=self._verified_this_set,
+                    best_deg=round(self._best_this_set, 1),
+                )
+            )
+            if self.set >= self.sets:
+                self.finished = True
+                evs.append(make_event("arm_complete", t=t, sets=self.set, reps=len(self.reps)))
+                return evs
+            self.set += 1
+            self.rep = 0
+            self._best_this_set = 0.0
+            self._verified_this_set = 0
+        self._held = 0.0
+        evs.append(self._go("start_pose", t))
+        return evs
+
+    # ---- oscillation (pendulum) ----------------------------------------------------------
+    def _swing(self, obs: ArmObservation) -> list[Event]:
+        a = obs.shoulder_deg or 0.0
+        evs: list[Event] = []
+        if self.state == "start_pose":
+            if len(self._hike_samples) < self.baseline_frames:
+                self._hike_samples.append(obs.shoulder_hike_norm)
+                self._hike_baseline = sum(self._hike_samples) / len(self._hike_samples)
+            if abs(a) < self.swing_band_deg:
+                return evs
+            self._t_move = obs.t
+            self._swing_lo = self._swing_hi = a
+            self._lean_this_rep = self._hike_this_rep = False
+            evs.append(self._go("moving", obs.t))
+        self._swing_lo, self._swing_hi = min(self._swing_lo, a), max(self._swing_hi, a)
+        self._peak = round(self._swing_hi - self._swing_lo, 1)
+        evs += self._compensation(obs)
+        sign = 1 if a > self.swing_band_deg else (-1 if a < -self.swing_band_deg else 0)
+        if sign == 0 or sign == self._swing_sign:
+            return evs
+        if self._swing_sign != 0:
+            self._halves += 1
+        self._swing_sign = sign
+        if self._halves < 2:  # two reversals = one full to-and-fro
+            return evs
+        p2p = round(self._swing_hi - self._swing_lo, 1)
+        verified = p2p >= self.target_deg - self.tolerance_deg
+        self.rep += 1
+        rep = {
+            "set": self.set,
+            "rep": self.rep,
+            "peak_deg": p2p,
+            "swing_deg": p2p,
+            "hold_s": 0.0,
+            "verified": verified,
+            "reason": None if verified else "swing_too_small",
+            "lean": self._lean_this_rep,
+            "hike": self._hike_this_rep,
+            "t_start": self._t_move,
+            "t_end": obs.t,
+        }
+        self._halves = 0
+        self._swing_lo = self._swing_hi = a
+        self._t_move = obs.t
+        self._lean_this_rep = self._hike_this_rep = False
+        out = self._complete_rep(rep, obs.t, p2p)
+        if not self.finished:
+            # `_complete_rep` parks a hold exercise back in start_pose; a swinging arm just
+            # carries on into the next oscillation.
+            self.state = "moving"
+            out = [
+                e
+                for e in out
+                if not (e.type == "state_change" and e.payload["to"] == "start_pose")
+            ]
+        return evs + out
+
+    # ---- states (hold) -------------------------------------------------------------------
     def _in_start_pose(self, obs: ArmObservation) -> list[Event]:
         if len(self._hike_samples) < self.baseline_frames:
             self._hike_samples.append(obs.shoulder_hike_norm)
@@ -251,19 +444,4 @@ class ArmFSM:
             "t_start": self._t_move,
             "t_end": obs.t,
         }
-        self.reps.append(rep)
-        if rep["verified"]:
-            self._best_this_set = max(self._best_this_set, self._peak)
-        evs = [make_event("rep_complete", t=obs.t, **rep)]
-        if self.rep >= self.reps_per_set:
-            evs.append(make_event("set_complete", t=obs.t, set=self.set, reps=self.rep))
-            if self.set >= self.sets:
-                self.finished = True
-                evs.append(make_event("arm_complete", t=obs.t, sets=self.set, reps=len(self.reps)))
-                return evs
-            self.set += 1
-            self.rep = 0
-            self._best_this_set = 0.0
-        self._held = 0.0
-        evs.append(self._go("start_pose", obs.t))
-        return evs
+        return self._complete_rep(rep, obs.t, self._peak)

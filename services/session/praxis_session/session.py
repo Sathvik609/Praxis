@@ -19,8 +19,11 @@ WHY_TEXT = {
 
 
 class CoachSession:
-    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None) -> None:
+    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None) -> None:
         self.mode = mode
+        # Sprint E: which registry exercise this arm session ran, and whose session it is.
+        self.exercise = exercise
+        self.username = (username or "").lower() or None
         self.prescription = prescription
         self.session_id = session_id or uuid.uuid4().hex[:12]
         self.trace = Trace(self.session_id, trace_dir)
@@ -44,7 +47,7 @@ class CoachSession:
         self.paused_s = 0.0
         self._paused_at: float | None = None
         self.tracking_lost_events = 0
-        self.trace.log("session", mode=mode, prescription=f"{prescription.program} L{prescription.level} v{prescription.version}", coach=LABEL)
+        self.trace.log("session", mode=mode, exercise=self.exercise, user=self.username, prescription=f"{prescription.program} L{prescription.level} v{prescription.version}", coach=LABEL)
 
     @property
     def stopped(self) -> bool:
@@ -210,6 +213,8 @@ class CoachSession:
         return {
             "session_id": self.session_id,
             "mode": self.mode,
+            "exercise": self.exercise,
+            "username": self.username,
             "t_start": self.t_start,
             "t_end": t_end,
             # Replay feeds clip time (seconds from 0), live sessions wall-clock epoch seconds.

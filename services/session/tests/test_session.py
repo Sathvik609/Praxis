@@ -166,3 +166,10 @@ def test_summary_reports_which_clock_it_used(tmp_path):
     wall = make(mode="cup", tmp_path=tmp_path)
     wall.on_events([reach(1.7e9)], snapshot={}, t=1.7e9)
     assert wall.summary(t=1.7e9 + 1)["clock"] == "wall"
+
+
+def test_summary_carries_the_exercise_and_the_signed_in_user():
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, exercise="abduction", username="Sathvik")
+    out = s.summary()
+    assert out["exercise"] == "abduction" and out["username"] == "sathvik"
+    assert CoachSession(mode="cup", prescription=SEED_PRESCRIPTION).summary()["exercise"] is None

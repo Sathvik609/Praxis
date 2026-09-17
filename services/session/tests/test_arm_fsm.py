@@ -169,3 +169,104 @@ def test_hike_needs_both_shoulders_visible():
     fsm = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1, hike_limit=0.08)
     evs, _ = run_obs(fsm, rep_profile(90, 1.2, hike=0.3), shoulders_visibility=0.4)
     assert "shoulder_hiking" not in types(evs) and types(evs).count("rep_complete") == 1
+
+
+# ---- Sprint E: the FSM is driven by a registry entry ------------------------------------
+def swing(peak: float, cycles: int = 1, fps: float = FPS):
+    """One-second sine swings about vertical, `peak` degrees each way."""
+    import math
+
+    n = int(fps)
+    out = []
+    for _c in range(cycles):
+        for i in range(n):
+            out.append((peak * math.sin(2 * math.pi * i / n), 0.0, 0.0))
+    return out
+
+
+def test_registry_entry_sets_target_view_and_dose():
+    f = ArmFSM("abduction")
+    assert f.target_deg == 90.0 and f.view == "front" and f.exercise.id == "abduction"
+    s = f.snapshot()
+    assert s["exercise"] == "abduction" and s["view_required"] == "front"
+    assert s["phase"] == "start" and s["rep_progress"] == 0.0 and s["tier"] == "full"
+    assert ArmFSM().exercise.id == "flexion"  # unchanged default
+
+
+def test_gentle_tier_lowers_target_hold_and_reps():
+    f = ArmFSM("abduction", tier="gentle")
+    assert (f.target_deg, f.hold_s, f.reps_per_set) == (60.0, 2.0, 6)
+    assert f.snapshot()["tier"] == "gentle"
+
+
+def test_front_view_exercise_gates_until_the_shoulders_separate():
+    f = ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=1)
+    evs, t = run_obs(f, rep_profile(90, 1.2), view_ok=True)  # side-on: wrong view for abduction
+    assert evs == [] and f.gate == "turn_front"
+    evs, _ = run_obs(f, rep_profile(90, 1.2), t0=t, view_ok=False)
+    assert types(evs).count("rep_complete") == 1 and f.gate is None
+
+
+def test_exercise_start_is_emitted_once_with_the_dose():
+    f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=2)
+    evs, t = run(f, rep_profile(90, 1.2))
+    starts = [e for e in evs if e.type == "exercise_start"]
+    assert len(starts) == 1
+    assert starts[0].payload["exercise"] == "flexion" and starts[0].payload["view"] == "side"
+    assert starts[0].payload["dose"] and starts[0].payload["sets"] == 1
+    evs2, _ = run(f, rep_profile(90, 1.2), t)
+    assert "exercise_start" not in types(evs2)
+
+
+def test_phase_and_rep_progress_follow_the_state():
+    f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=2)
+    seen = {}
+    t = 0.0
+    for angle, lean, hike in rep_profile(90, 1.2):
+        f.step(
+            ArmObservation(
+                t=t, shoulder_deg=angle, trunk_lean_deg=lean, shoulder_hike_norm=hike, view_ok=True
+            )
+        )
+        s = f.snapshot()
+        seen.setdefault(s["phase"], s["rep_progress"])
+        t += 1 / FPS
+    assert set(seen) >= {"start", "lift", "hold", "lower"}
+    assert 0.0 <= seen["lift"] <= seen["hold"] <= seen["lower"] <= 1.0
+
+
+def test_set_complete_carries_verified_count_and_best_angle():
+    f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=2)
+    t = 0.0
+    evs = []
+    for peak in (92.0, 60.0):  # one good rep, one that never reaches the line
+        e, t = run(f, rep_profile(peak, 1.2), t)
+        evs += e
+    done = [e for e in evs if e.type == "set_complete"][0].payload
+    assert done["reps"] == 2 and done["verified_reps"] == 1
+    assert done["best_deg"] >= 90
+
+
+# ---- pendulum: oscillations, no hold ----------------------------------------------------
+def test_pendulum_counts_full_oscillations():
+    f = ArmFSM("pendulum", sets=1, reps_per_set=3)
+    evs, _ = run(f, swing(20.0, cycles=5))
+    reps = [e for e in evs if e.type == "rep_complete"]
+    assert len(reps) == 3 and all(r.payload["verified"] for r in reps)
+    assert reps[0].payload["swing_deg"] >= 15 and reps[0].payload["hold_s"] == 0.0
+    assert "hold_too_short" not in types(evs) and "target_missed" not in types(evs)
+    assert f.finished and "arm_complete" in types(evs)
+
+
+def test_pendulum_small_swings_are_counted_but_unverified():
+    f = ArmFSM("pendulum", sets=1, reps_per_set=2)
+    evs, _ = run(f, swing(5.0, cycles=4))  # 10 deg peak-to-peak, under the 15 deg the plan asks
+    reps = [e for e in evs if e.type == "rep_complete"]
+    assert reps and all(not r.payload["verified"] for r in reps)
+    assert reps[0].payload["reason"] == "swing_too_small"
+
+
+def test_pendulum_at_rest_produces_no_reps():
+    f = ArmFSM("pendulum", sets=1, reps_per_set=2)
+    evs, _ = run(f, [(0.5, 0.0, 0.0)] * 60)
+    assert "rep_complete" not in types(evs) and f.snapshot()["phase"] == "start"

@@ -383,3 +383,57 @@ def test_ws_calibrate_socket_creates_no_coach_session_or_trace_file(client, monk
     assert types == ["calibration", "quality", "setup_checks"]
     assert set(main.sessions) == before
     assert not (tmp_path / "traces").exists()
+
+
+def test_ws_arm_takes_an_exercise_and_tier(client):
+    """E-SVC-3 contract: the frame's `arm` block names the exercise, the view it needs and the
+    avatar's phase."""
+    import cv2 as _cv2
+    import numpy as _np
+
+    from praxis_session.schema import validate_event
+
+    img = _np.zeros((480, 640, 3), _np.uint8)
+    _, buf = _cv2.imencode(".jpg", img)
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=gentle&side=right") as ws:
+        ws.send_bytes(buf.tobytes())
+        msg = ws.receive_json()
+    validate_event(msg)
+    arm = msg["arm"]
+    assert arm["exercise"] == "abduction" and arm["view_required"] == "front"
+    assert arm["tier"] == "gentle" and arm["target_deg"] == 60.0 and arm["hold_s"] == 2.0
+    assert arm["phase"] == "start" and arm["rep_progress"] == 0.0
+    assert arm["reps_per_set"] == 6 and arm["dose"]
+
+
+def test_ws_arm_without_an_exercise_is_still_arm_to_the_front(client):
+    import cv2 as _cv2
+    import numpy as _np
+
+    img = _np.zeros((480, 640, 3), _np.uint8)
+    _, buf = _cv2.imencode(".jpg", img)
+    with client.websocket_connect("/session?mode=arm") as ws:
+        ws.send_bytes(buf.tobytes())
+        arm = ws.receive_json()["arm"]
+    assert arm["exercise"] == "flexion" and arm["view_required"] == "side"
+    assert (arm["target_deg"], arm["hold_s"], arm["sets"], arm["reps_per_set"]) == (90.0, 3.0, 2, 8)
+
+
+def test_ws_arm_session_is_saved_with_its_exercise_and_user(client):
+    import cv2 as _cv2
+    import numpy as _np
+
+    img = _np.zeros((480, 640, 3), _np.uint8)
+    _, buf = _cv2.imencode(".jpg", img)
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=gentle") as ws:
+        ws.send_bytes(buf.tobytes())
+        ws.receive_json()
+        ws.send_text('{"cmd":"feedback","pain_after":2,"effort":3}')
+        m = ws.receive_json()
+        while not (m["type"] == "command" and m.get("cmd") == "feedback"):
+            m = ws.receive_json()
+        sid = m["session_id"]
+        assert m["summary"]["exercise"] == "abduction" and m["summary"]["username"] == "sathvik"
+    row = client.get(f"/api/sessions/{sid}").json()
+    assert row["exercise"] == "abduction" and row["username"] == "sathvik"
+    assert row["title"] == "Arm out to the side"

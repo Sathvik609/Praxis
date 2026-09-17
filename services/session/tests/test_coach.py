@@ -114,3 +114,62 @@ def test_nhpt_milestones():
     assert d[0].action == "instruct" and "Timer" in d[0].text
     d = c.decide(ctx("nhpt", [make_event("nhpt_complete", t=40.0, total_s=39.0, splits_s=[], pegs=[])], 40.0))
     assert "nine" in d[0].text.lower()
+
+
+# ---- Sprint E: one cue table per exercise -------------------------------------------------
+def arm_snap(exercise="flexion", **over):
+    from praxis_session.perception.exercises import EXERCISES
+
+    ex = EXERCISES[exercise]
+    return {"arm": {"exercise": ex.id, "kind": ex.kind, "reps_per_set": ex.reps, "sets": ex.sets} | over}
+
+
+def test_exercise_start_introduces_that_exercise_with_its_clip():
+    c = RuleCoach()
+    e = make_event(
+        "exercise_start", t=0.5, exercise="pendulum", name="Pendulum", view="side",
+        kind="oscillation", tier="full", dose="2 × 10 swings", target_deg=20.0,
+        ceiling_deg=45.0, hold_s=0.0, sets=2, reps=10,
+    )
+    d = c.decide(ctx("arm", [e], 0.5, snapshot=arm_snap("pendulum")))
+    assert len(d) == 1 and d[0].action == "instruct" and d[0].cue_id == "arm_intro"
+    assert d[0].text.startswith("Pendulum:") and d[0].evidence == [e.id]
+    assert d[0].ui["avatar_clip"] == "pendulum"
+    e2 = make_event("exercise_start", t=1.0, exercise="external_rotation", name="Rotate out")
+    d2 = RuleCoach().decide(ctx("arm", [e2], 1.0, snapshot=arm_snap("external_rotation")))
+    assert "elbow" in d2[0].text.lower() and d2[0].ui["avatar_clip"] == "rotationOut"
+
+
+def test_set_summary_cites_verified_count_and_best_angle():
+    c = RuleCoach()
+    e = make_event("set_complete", t=60.0, set=1, reps=8, verified_reps=7, best_deg=88.0)
+    d = c.decide(ctx("arm", [e], 60.0, snapshot=arm_snap("flexion")))
+    assert d[0].cue_id == "arm_set" and "7 of 8" in d[0].text and "88" in d[0].text
+    assert "verified" in d[0].reason
+
+
+def test_pendulum_cues_never_talk_about_lifting_or_holding():
+    c = RuleCoach()
+    evs = [
+        make_event("state_change", t=1.0, **{"from": "start_pose", "to": "moving"}),
+        make_event("rep_complete", t=3.0, set=1, rep=1, peak_deg=21.0, swing_deg=21.0, hold_s=0.0, verified=True, reason=None),
+    ]
+    d = c.decide(ctx("arm", evs, 3.0, snapshot=arm_snap("pendulum")))
+    assert [x.cue_id for x in d] == ["arm_swing", "arm_rep"]
+    assert "lift" not in d[0].text.lower() and "1 of 10" in d[1].text
+
+
+def test_rep_count_follows_the_exercise_dose_not_the_seed_prescription():
+    c = RuleCoach()
+    e = make_event("rep_complete", t=8.0, set=1, rep=1, peak_deg=62.0, hold_s=2.0, verified=True, reason=None)
+    d = c.decide(ctx("arm", [e], 8.0, snapshot=arm_snap("abduction", reps_per_set=6)))
+    assert "1 of 6" in d[0].text
+
+
+def test_arm_done_line_is_per_exercise():
+    c = RuleCoach()
+    e = make_event("arm_complete", t=90.0, sets=2, reps=20)
+    d = c.decide(ctx("arm", [e], 90.0, snapshot=arm_snap("pendulum")))
+    assert d[0].cue_id == "arm_done" and "swing" in d[0].text.lower()
+    d2 = RuleCoach().decide(ctx("arm", [e], 90.0, snapshot=arm_snap("flexion")))
+    assert d2[0].text != d[0].text

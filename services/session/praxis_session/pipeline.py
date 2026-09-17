@@ -19,7 +19,14 @@ from praxis_session.perception.calibration import CalibrationResult, Calibrator
 from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
 from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation, gate_for
 from praxis_session.perception.hand import HandMetrics, HandTracker
-from praxis_session.perception.pose import SKELETON, OneEuro, PoseResult, PoseTracker, arm_angles
+from praxis_session.perception.pose import (
+    SKELETON,
+    OneEuro,
+    PoseResult,
+    PoseTracker,
+    arm_angles,
+    shoulder_elevation_deg,
+)
 from praxis_session.perception.nhpt import NHPT
 from praxis_session.perception.peg_fsm import Observation
 from praxis_session.perception.quality import (
@@ -56,12 +63,17 @@ class SessionPipeline:
         use_hand: bool = True,
         use_pose: bool = True,
         side: str = "left",
-        target_deg: float = 90.0,
-        hold_s: float = 3.0,
-        sets: int = 2,
-        reps: int = 8,
+        target_deg: float | None = None,
+        hold_s: float | None = None,
+        sets: int | None = None,
+        reps: int | None = None,
         for_mode: str | None = None,
+        exercise: str | None = None,
+        tier: str = "full",
     ) -> None:
+        """`exercise` picks the `perception/exercises.py` entry that drives arm mode (default
+        `flexion`, i.e. Arm to the front exactly as before) and `tier` applies its gentle
+        overrides; `target_deg`/`hold_s`/`sets`/`reps` still override both when given."""
         if mode not in MODES:
             raise ValueError(f"bad mode {mode}")
         # In calibrate mode, which exercise the setup is for (arm needs no sheet).
@@ -90,11 +102,19 @@ class SessionPipeline:
         self._arm: ArmFSM | None = None
         self._pose: PoseTracker | None = None
         self._angle_filter = OneEuro(min_cutoff=1.5, beta=0.05)
+        self._metric_filter = OneEuro(min_cutoff=1.5, beta=0.05)  # the exercise's own metric
         self._pose_miss = 0
         self._pose_lost = False
         self._pose_seen = False
         if mode == "arm":
-            self._arm = ArmFSM(target_deg=target_deg, hold_s=hold_s, sets=sets, reps_per_set=reps)
+            self._arm = ArmFSM(
+                exercise,
+                tier,
+                target_deg=target_deg,
+                hold_s=hold_s,
+                sets=sets,
+                reps_per_set=reps,
+            )
             if use_pose:
                 tracker = PoseTracker()
                 self._pose = tracker if tracker.available else None
@@ -398,9 +418,16 @@ class SessionPipeline:
         skeleton: list[list[list[float]]] = []
         ghost: list[float] | None = None
         shoulder_px: list[float] | None = None
+        ex = self._arm.exercise
         if res is not None:
             angles = arm_angles(res, self.side)
             angles["shoulder_deg"] = round(self._angle_filter.filter(t, angles["shoulder_deg"]), 1)
+            # The FSM scores the exercise's own metric (the shoulder angle for the lifts, the
+            # rotation or the pendulum swing otherwise), One-Euro smoothed like the angle.
+            angles["metric"] = ex.id
+            angles["metric_deg"] = round(
+                self._metric_filter.filter(t, float(ex.metric(res, self.side))), 1
+            )
             lm = res.landmarks_px
             skeleton = [
                 [np.round(lm[a], 1).tolist(), np.round(lm[b], 1).tolist()] for a, b in SKELETON
@@ -410,7 +437,9 @@ class SessionPipeline:
             sh, el, hp = lm[si], lm[ei], lm[hi]
             shoulder_px = np.round(sh, 1).tolist()
             trunk = hp - sh
-            if np.linalg.norm(trunk) > 1e-6:
+            # The ghost arm only means anything for the lifts, whose metric is the image-plane
+            # shoulder angle; a rotation or a pendulum swing has no such target pose.
+            if ex.metric is shoulder_elevation_deg and np.linalg.norm(trunk) > 1e-6:
                 d = trunk / np.linalg.norm(trunk)
                 arm_len = float(np.linalg.norm(el - sh))
                 a = np.radians(self._arm.target_deg)
@@ -425,9 +454,10 @@ class SessionPipeline:
                 ghost = np.round(best, 1).tolist()
         else:
             self._angle_filter.reset()
+            self._metric_filter.reset()
         obs = ArmObservation(
             t=t,
-            shoulder_deg=None if angles is None else angles["shoulder_deg"],
+            shoulder_deg=None if angles is None else angles["metric_deg"],
             trunk_lean_deg=0.0 if angles is None else angles["trunk_lean_deg"],
             shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
             view_ok=bool(angles and angles["view_ok"]),
@@ -436,7 +466,7 @@ class SessionPipeline:
             shoulders_visibility=1.0 if angles is None else angles["shoulders_visibility"],
         )
         # The gate for *this* frame goes out with the frame (the snapshot lags one step).
-        snap_before = self._arm.snapshot() | {"gate": gate_for(obs)}
+        snap_before = self._arm.snapshot() | {"gate": gate_for(obs, self._arm.view)}
         self._emit(
             out,
             make_event(
