@@ -12,6 +12,7 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
+import { Done } from '../screens/guided/Done'
 import { Go } from '../screens/guided/Go'
 import { Ready } from '../screens/guided/Ready'
 import { Today } from '../screens/guided/Today'
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
   { path: '/welcome', element: <RequireAuth><Welcome /></RequireAuth> },
   { path: '/ready', element: <RequireAuth><RequireProfile><Ready /></RequireProfile></RequireAuth> },
   { path: '/go', element: <RequireAuth><RequireProfile><Go /></RequireProfile></RequireAuth> },
+  { path: '/done/:id', element: <RequireAuth><Done /></RequireAuth> },
   { path: '/', element: <RequireAuth><RequireProfile><Today /></RequireProfile></RequireAuth> },
   {
     element: <RequireAuth><Shell /></RequireAuth>,
