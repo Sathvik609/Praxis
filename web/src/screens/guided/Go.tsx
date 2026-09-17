@@ -107,6 +107,7 @@ export function Go() {
     coach.clearOverlay()
   }
 
+  const exertionTone = coach.exertion?.level === 'high' ? 'red' : coach.exertion?.level === 'moderate' ? 'amber' : 'mint'
   const repsPerSet = a?.reps_per_set ?? item?.reps ?? 8
   const sets = a?.sets ?? item?.sets ?? 2
   const repNow = Math.min((a?.rep ?? 0) + 1, repsPerSet)
@@ -124,10 +125,13 @@ export function Go() {
         <span className="text-base text-muted">
           Set {a?.set ?? 1} of {sets} · {verified} verified · {unverified} unverified
         </span>
-        <span className="ml-auto"><Chip tone={label.tone}>{label.chip}</Chip></span>
+        <span className="ml-auto flex items-center gap-3">
+          <Chip tone={exertionTone}>Exertion: {coach.exertion?.level ?? 'low'}</Chip>
+          <Chip tone={label.tone}>{label.chip}</Chip>
+        </span>
       </header>
 
-      <main className="grid min-h-0 grid-cols-2 items-start gap-6 px-6">
+      <main className="grid min-h-0 grid-cols-2 items-center gap-6 px-6">
         <Panel
           className="isolate"
           topLeft={<LiveIndicator active={camActive} />}

@@ -109,7 +109,7 @@ export function Today() {
       </header>
 
       <main className="grid min-h-0 grid-cols-[minmax(0,5fr)_minmax(0,6fr)] items-center gap-10 px-8 pb-6">
-        <div className="mx-auto w-full max-w-[380px]">
+        <div className="mx-auto w-full max-w-[420px]">
           <AvatarPanel
             {...guidedAvatarProps(next?.id ?? items[0]?.id, next?.clip ?? items[0]?.clip, {
               camera: (next ?? items[0])?.view === 'front' ? 'front' : 'side',
@@ -120,7 +120,7 @@ export function Today() {
           />
         </div>
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-auto">
+        <div className="flex min-h-0 w-full max-w-[620px] flex-col gap-4 overflow-auto">
           <div>
             <h1 className="text-4xl">Today</h1>
             {plan && <p className="mt-1 text-xl text-muted">{plan.goal_line}</p>}

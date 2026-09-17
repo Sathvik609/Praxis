@@ -62,7 +62,7 @@ export function Ready() {
         </span>
       </header>
 
-      <main className="grid min-h-0 grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start gap-8 px-8 pb-6">
+      <main className="grid min-h-0 grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-center gap-8 px-8 pb-6">
         <Panel
           className="isolate"
           topLeft={<LiveIndicator active={camActive} />}
