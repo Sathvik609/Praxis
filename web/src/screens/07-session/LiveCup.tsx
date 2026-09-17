@@ -7,6 +7,7 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
@@ -46,6 +47,7 @@ export function LiveCup() {
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
   const flow = useSessionFlow(events, send, stop, connected)
+  const latency = useLatency(events)
   const [whyOpen, setWhyOpen] = useState(false)
   const [declined, setDeclined] = useState(false)
 
@@ -99,6 +101,7 @@ export function LiveCup() {
             feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
             tracking={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : undefined}
             cvLine={`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`}
+            latencyLine={latencyLine(latency)}
             onRetry={() => { stop(); void start() }}
           />
           <Card padding="sm" className="flex items-center gap-4">

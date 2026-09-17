@@ -7,6 +7,7 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
@@ -50,6 +51,7 @@ export function LiveArm() {
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
   const flow = useSessionFlow(events, send, stop, connected)
+  const latency = useLatency(events)
 
   useEffect(() => {
     void start()
@@ -109,6 +111,7 @@ export function LiveArm() {
           tracking={live ? `ghost arm shows target${frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}` : undefined}
           band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
           cvLine={`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`}
+          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 

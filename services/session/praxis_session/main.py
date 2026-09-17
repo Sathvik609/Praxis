@@ -3,6 +3,16 @@
 Edge/privacy mode: 640x480 JPEG frames arrive over WebSocket, are decoded in memory with
 OpenCV 5 (cv2.__version__ == 5.0.0 at authoring), processed, and discarded. Only JSON events
 leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default off).
+
+Frame stream (Sprint D, D-LAT): each binary message is an optional 8-byte little-endian
+float64 `t_capture` (ms since epoch, browser clock) + JPEG (`latency.split_capture_prefix`).
+A reader task feeds one queue; the consumer runs `pipeline.process` in the default thread
+pool, and any frames that queued up meanwhile are dropped oldest-first (`frame.dropped`).
+The browser sends the next frame only after the previous frame's ack event (or a 250 ms
+safety timeout), so the queue normally holds at most one frame. Every `frame`/`heartbeat`
+event carries `t_capture`, `dropped` and `latency = {capture_to_event_ms, proc_ms}`; every
+`coach` event that follows perception events carries `latency = {event_to_cue_ms,
+capture_to_cue_ms}`; the session summary carries the percentiles (`LatencyStats`).
 """
 
 from __future__ import annotations
@@ -11,6 +21,7 @@ import asyncio
 import json
 import os
 import time
+from dataclasses import replace as _replace_event
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -21,7 +32,8 @@ from fastapi import FastAPI, Header, Query, Request, WebSocket, WebSocketDisconn
 from fastapi.responses import JSONResponse
 
 from praxis_session.auth import issue_token, record_failure, revoke, too_many_failures, user_for_token, verify
-from praxis_session.events import EventRing, make_event
+from praxis_session.events import Event, EventRing, make_event
+from praxis_session.latency import LatencyStats, split_capture_prefix
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
@@ -33,6 +45,7 @@ POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_media
 
 CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
 MODES = {"heartbeat", *PIPELINE_MODES}
+COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no coach session or trace
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
 
@@ -50,6 +63,7 @@ async def require_token(request: Request, call_next):  # type: ignore[no-untyped
     return await call_next(request)
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
+latency_stats: dict[str, LatencyStats] = {}  # per session id; summary().latency comes from here
 store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
 store.seed_if_empty()
 _HERE = Path(__file__).resolve()
@@ -124,12 +138,21 @@ def api_trace(session: str | None = None, n: int = 100) -> dict[str, object]:
     return {"session": s.session_id, "rows": s.trace.tail(n)}
 
 
+def _summary_with_latency(coach: CoachSession, t: float | None = None) -> dict[str, object]:
+    """`CoachSession.summary()` plus the `latency` percentiles kept here (session.py is untouched)."""
+    s = coach.summary(t)
+    st = latency_stats.get(coach.session_id)
+    if st is not None:
+        s["latency"] = st.summary()
+    return s
+
+
 @app.get("/api/session/{session_id}/summary")
 def api_summary(session_id: str) -> dict[str, object]:
     s = sessions.get(session_id)
     if s is None:
         return {"error": "unknown session"}
-    return s.summary()
+    return _summary_with_latency(s)
 
 
 @app.get("/api/prescription")
@@ -152,7 +175,7 @@ def api_session(session_id: str) -> dict[str, object]:
     s = store.session(session_id)
     if s is None:
         live = sessions.get(session_id)
-        return {"error": "unknown session"} if live is None else {"id": session_id, "live": True, "summary": live.summary()}
+        return {"error": "unknown session"} if live is None else {"id": session_id, "live": True, "summary": _summary_with_latency(live)}
     return s
 
 
@@ -254,56 +277,143 @@ async def session_ws(
             await ws.close()
             return
     coach: CoachSession | None = None
-    if pipeline is not None:
+    stats = LatencyStats()
+    if pipeline is not None and mode in COACH_MODES:
         coach = CoachSession(mode=mode, prescription=SEED_PRESCRIPTION)
         sessions[coach.session_id] = coach
-        if len(sessions) > 50:
-            sessions.pop(next(iter(sessions)))
+        latency_stats[coach.session_id] = stats
+        while len(sessions) > 50:
+            old = sessions.pop(next(iter(sessions)))
+            latency_stats.pop(old.session_id, None)
     if replay and pipeline is not None and coach is not None:
-        await _replay_loop(ws, replay, pipeline, coach)
+        await _replay_loop(ws, replay, pipeline, coach, stats)
         return
-    frame_index = 0
+    await _live_loop(ws, pipeline, coach, stats)
+
+
+def _is_disconnect(msg: dict) -> bool:
+    return msg.get("type") == "websocket.disconnect"
+
+
+async def _live_loop(ws: WebSocket, pipeline: SessionPipeline | None, coach: CoachSession | None, stats: LatencyStats) -> None:
+    """Reader task -> queue -> consumer. The consumer never blocks the event loop on OpenCV:
+    `pipeline.process` runs in the default thread pool, and frames that queued up meanwhile
+    are dropped oldest-first. Commands are handled in arrival order between frames, so the
+    pipeline and coach are only ever touched from one coroutine at a time."""
+    loop = asyncio.get_running_loop()
+    q: asyncio.Queue[dict] = asyncio.Queue()
+
+    async def reader() -> None:
+        try:
+            while True:
+                msg = await ws.receive()
+                await q.put(msg)
+                if _is_disconnect(msg):
+                    return
+        except (WebSocketDisconnect, RuntimeError):
+            await q.put({"type": "websocket.disconnect"})
+
+    reader_task = asyncio.ensure_future(reader())
+    received = 0  # every frame the socket delivered; dropped ones keep their index
     try:
         while True:
-            msg = await ws.receive()
-            if msg.get("type") == "websocket.disconnect":
+            msg = await q.get()
+            if _is_disconnect(msg):
                 return
             if msg.get("text") is not None:
-                try:
-                    cmd = json.loads(msg["text"])
-                except json.JSONDecodeError:
-                    cmd = {}
-                for e in _handle_command(cmd, pipeline, coach):
-                    ring.append(e)
-                    await ws.send_text(e.to_json())
+                await _run_command(ws, msg["text"], pipeline, coach)
                 continue
-            data = msg.get("bytes") or b""
-            frame = decode_jpeg(data)
+            data, index, dropped = msg.get("bytes") or b"", received, 0
+            received += 1
+            while not q.empty():  # drop-oldest: a newer queued frame replaces this one
+                nxt = q.get_nowait()
+                if _is_disconnect(nxt):
+                    return
+                if nxt.get("text") is not None:
+                    await _run_command(ws, nxt["text"], pipeline, coach)
+                    continue
+                dropped += 1
+                data, index = nxt.get("bytes") or b"", received
+                received += 1
+            t_capture, jpeg = split_capture_prefix(data)
+            frame = decode_jpeg(jpeg)
             if frame is None:
-                await ws.send_text(make_event("error", code="bad_frame").to_json())
+                await ws.send_text(make_event("error", code="bad_frame", frame_index=index).to_json())
                 continue
             if pipeline is None:
                 h, w = frame.shape[:2]
+                now = time.time()
+                lat = {"capture_to_event_ms": _since_ms(t_capture, now), "proc_ms": 0.0}
+                stats.frame(lat["capture_to_event_ms"], 0.0, dropped)
                 e = make_event(
                     "heartbeat",
-                    frame_index=frame_index,
-                    frame={"width": w, "height": h, "bytes": len(data)},
+                    t=now,
+                    frame_index=index,
+                    frame={"width": w, "height": h, "bytes": len(jpeg)},
+                    t_capture=t_capture,
+                    dropped=dropped,
+                    latency=lat,
                 )
                 ring.append(e)
                 await ws.send_text(e.to_json())
             else:
-                now = time.time()
-                evs = pipeline.process(frame, now, frame_index)
-                for e in evs:
-                    await ws.send_text(e.to_json())
-                if coach is not None:
-                    for e in coach.on_events(evs, pipeline.snapshot(now), now):
-                        ring.append(e)
-                        await ws.send_text(e.to_json())
-            frame_index += 1
+                await _run_frame(ws, loop, pipeline, coach, stats, frame, time.time(), index, t_capture, dropped)
             del frame
     except WebSocketDisconnect:
         return
+    finally:
+        reader_task.cancel()
+
+
+def _since_ms(t_capture_ms: float | None, now_s: float) -> float | None:
+    return None if t_capture_ms is None else round(now_s * 1000.0 - t_capture_ms, 1)
+
+
+async def _run_frame(
+    ws: WebSocket,
+    loop: asyncio.AbstractEventLoop,
+    pipeline: SessionPipeline,
+    coach: CoachSession | None,
+    stats: LatencyStats,
+    frame: np.ndarray,
+    t: float,
+    index: int,
+    t_capture: float | None,
+    dropped: int,
+) -> None:
+    """One frame through perception (thread pool) then stop rules + coach (event loop);
+    `t` is wall-clock live and clip time in replay. Frame events gain the latency block,
+    coach events gain event->cue."""
+    t0 = time.perf_counter()
+    evs: list[Event] = await loop.run_in_executor(None, pipeline.process, frame, t, index)
+    proc_ms = round((time.perf_counter() - t0) * 1000.0, 1)
+    t_events = time.time()
+    lat = {"capture_to_event_ms": _since_ms(t_capture, t_events), "proc_ms": proc_ms}
+    stats.frame(lat["capture_to_event_ms"], proc_ms, dropped)
+    for e in evs:
+        if e.type == "frame":
+            e = _replace_event(e, payload={**e.payload, "t_capture": t_capture, "dropped": dropped, "latency": lat})
+        await ws.send_text(e.to_json())
+    if coach is None:
+        return
+    for e in coach.on_events(evs, pipeline.snapshot(t), t):
+        if e.type == "coach":
+            now = time.time()
+            cue_lat = {"event_to_cue_ms": round((now - t_events) * 1000.0, 1), "capture_to_cue_ms": _since_ms(t_capture, now)}
+            stats.cue(cue_lat["event_to_cue_ms"])
+            e = _replace_event(e, payload={**e.payload, "latency": cue_lat})
+        ring.append(e)
+        await ws.send_text(e.to_json())
+
+
+async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> None:
+    try:
+        cmd = json.loads(text)
+    except json.JSONDecodeError:
+        cmd = {}
+    for e in _handle_command(cmd, pipeline, coach, now=now):
+        ring.append(e)
+        await ws.send_text(e.to_json())
 
 
 def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> list:
@@ -335,7 +445,7 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
     if name == "feedback":
         coach.feedback = {k: v for k, v in cmd.items() if k != "cmd"}
         coach.trace.log("feedback", **coach.feedback)
-        summary = coach.summary(now)
+        summary = _summary_with_latency(coach, now)
         store.save_session(summary, coach.checkin, coach.feedback, [r for r in coach.trace.tail(2000) if r.get("kind") == "event"])
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=summary)]
     result = pipeline.command(cmd)
@@ -353,14 +463,16 @@ def _find_clip(clip_id: str) -> Path | None:
     return None
 
 
-async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, coach: CoachSession) -> None:
+async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, coach: CoachSession, stats: LatencyStats) -> None:
     """Judge fallback: the service streams a recorded clip through the identical pipeline at the
-    file's fps while still accepting text commands from the client. Raw frames never leave."""
+    file's fps while still accepting text commands from the client. Raw frames never leave.
+    Frames keep clip time and carry `latency.proc_ms` only (no capture time, nothing dropped)."""
     path = _find_clip(clip_id)
     if path is None:
         await ws.send_text(make_event("error", code="bad_replay", clip=clip_id).to_json())
         await ws.close()
         return
+    loop = asyncio.get_running_loop()
     cap = cv2.VideoCapture(str(path))
     fps = float(cap.get(cv2.CAP_PROP_FPS)) or 10.0
     n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -372,40 +484,22 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
             if not ok or frame is None:
                 await ws.send_text(make_event("replay_end", clip=clip_id, frames=i).to_json())
                 break
-            t = i / fps
-            evs = pipeline.process(frame, t, i)
-            for e in evs:
-                await ws.send_text(e.to_json())
-            for e in coach.on_events(evs, pipeline.snapshot(t), t):
-                ring.append(e)
-                await ws.send_text(e.to_json())
+            await _run_frame(ws, loop, pipeline, coach, stats, frame, i / fps, i, None, 0)
             i += 1
             try:
                 msg = await asyncio.wait_for(ws.receive(), timeout=max(0.005, 1.0 / fps))
-                if msg.get("type") == "websocket.disconnect":
+                if _is_disconnect(msg):
                     return
                 if msg.get("text") is not None:
-                    try:
-                        cmd = json.loads(msg["text"])
-                    except json.JSONDecodeError:
-                        cmd = {}
-                    for e in _handle_command(cmd, pipeline, coach, now=pipeline._last_t):
-                        ring.append(e)
-                        await ws.send_text(e.to_json())
+                    await _run_command(ws, msg["text"], pipeline, coach, now=pipeline._last_t)
             except asyncio.TimeoutError:
                 pass
         while True:  # keep the socket open for feedback after the clip ends
             msg = await ws.receive()
-            if msg.get("type") == "websocket.disconnect":
+            if _is_disconnect(msg):
                 return
             if msg.get("text") is not None:
-                try:
-                    cmd = json.loads(msg["text"])
-                except json.JSONDecodeError:
-                    cmd = {}
-                for e in _handle_command(cmd, pipeline, coach, now=pipeline._last_t):
-                    ring.append(e)
-                    await ws.send_text(e.to_json())
+                await _run_command(ws, msg["text"], pipeline, coach, now=pipeline._last_t)
     except WebSocketDisconnect:
         return
     finally:

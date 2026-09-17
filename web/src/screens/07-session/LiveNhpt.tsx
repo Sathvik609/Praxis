@@ -7,6 +7,7 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
@@ -46,6 +47,7 @@ export function LiveNhpt() {
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })
   const flow = useSessionFlow(events, send, stop, connected)
+  const latency = useLatency(events)
   const [reference, setReference] = useState<'avatar' | 'board'>('board')
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export function LiveNhpt() {
               {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
             </>
           }
+          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 
