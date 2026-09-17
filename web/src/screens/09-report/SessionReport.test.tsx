@@ -69,6 +69,13 @@ test('side is read from the summary when present', async () => {
   expect(await screen.findByText(/right side/)).toBeInTheDocument()
 })
 
+test('an unknown session (200 with an error body) shows the error card instead of crashing', async () => {
+  mockApi({ '/api/sessions/abc': { error: 'unknown session' }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText(/Could not load this report/)).toBeInTheDocument()
+  expect(screen.getByText(/unknown session/)).toBeInTheDocument()
+})
+
 test('error state is a card with a way home', async () => {
   mockApi({})
   renderReport()

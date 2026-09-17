@@ -33,12 +33,16 @@ export function SessionReport() {
   const { data: me } = useApi(() => api.me())
   const [sharing, setSharing] = useState(false)
   const clinician = me?.program?.clinician?.split(',')[0] ?? 'your therapist'
+  // The service answers unknown ids with 200 and `{ error }`, so a body without a summary is
+  // an error too, not a record.
+  const bodyError = data && !(data as Partial<SessionRecord>).summary ? String((data as { error?: string }).error ?? 'no session data') : null
+  const problem = error ?? bodyError
 
-  if (error) {
+  if (problem) {
     return (
       <div className="mx-auto w-full max-w-2xl p-6">
         <Card tone="watch" title="Could not load this report">
-          <p className="text-lg">The report could not be fetched ({error}). It is still queued on this device.</p>
+          <p className="text-lg">The report could not be fetched ({problem}). Reports stay on this device until they are delivered.</p>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => nav('/')}>Back to Home</Button>
           </div>
