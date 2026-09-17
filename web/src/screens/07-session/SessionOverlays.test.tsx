@@ -17,6 +17,12 @@ test('stopped overlay names the rule and says the therapist is flagged', () => {
   expect(screen.getByRole('button', { name: /Save and continue/ })).toBeInTheDocument()
 })
 
+test('rest overlay offers "Rested — continue"', () => {
+  render(<SessionOverlay overlay={{ kind: 'rest', rule: 'exertion', text: 'Take a minute.' }} onResume={vi.fn()} onEnd={vi.fn()} />)
+  expect(screen.getByText('Rest break')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Rested — continue' })).toBeInTheDocument()
+})
+
 test('pain check sends the chosen level', () => {
   const onSubmit = vi.fn()
   render(<PainCheck open onSubmit={onSubmit} onCancel={vi.fn()} />)
@@ -25,8 +31,18 @@ test('pain check sends the chosen level', () => {
   expect(onSubmit).toHaveBeenCalledWith(6)
 })
 
-test('exertion chip always carries the behavioural label', () => {
-  render(<ExertionChip exertion={{ level: 'high', reasons: ['RPE 8/10', 'reps getting slower'], method: 'behavioural' }} />)
+test('exertion chip always carries the behavioural label, an icon, and ≥ 18 px reasons in a card', () => {
+  const { container } = render(<ExertionChip exertion={{ level: 'high', reasons: ['RPE 8/10', 'reps getting slower'], method: 'behavioural' }} />)
   expect(screen.getByText(/Exertion: high/)).toBeInTheDocument()
-  expect(screen.getByText(/behavioural/)).toBeInTheDocument()
+  const reasons = screen.getByText(/behavioural/)
+  expect(reasons.textContent).toMatch(/RPE 8\/10 · reps getting slower/)
+  expect(reasons.className).toMatch(/text-lg/)
+  expect(container.querySelector('svg')).not.toBeNull()
+  expect(container.firstElementChild?.className).toMatch(/rounded-\[var\(--r-card\)\]/)
+})
+
+test('exertion chip with no data reads low · no signs yet', () => {
+  render(<ExertionChip exertion={null} />)
+  expect(screen.getByText(/Exertion: low/)).toBeInTheDocument()
+  expect(screen.getByText(/no signs yet/)).toBeInTheDocument()
 })
