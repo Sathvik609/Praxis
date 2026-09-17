@@ -324,7 +324,7 @@ class SessionPipeline:
                 occupancy=board_d["occupancy"],
                 free_pegs_mm=free,
                 hand_mm=hand_mm,
-                pinch_mm=hand_block.get("pinch_rel_mm", hand_block.get("pinch_mm")),
+                pinch_mm=hand_block.get("pinch_rel_mm"),
                 hand_in_source_zone=in_zone,
             )
             for e in self._nhpt.step(obs):

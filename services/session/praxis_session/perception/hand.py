@@ -5,6 +5,12 @@ Two-stage MediaPipe models from OpenCV Zoo (Apache-2.0, docs/LICENSES.md): palm 
 sheet millimetres through the ArUco calibration: pinch aperture (thumb tip 4 <-> index tip 8),
 path speed, spectral arc length (SPARC, Balasubramanian et al. 2015) of the index-tip speed,
 and tremor as the dominant 3-12 Hz component of the detrended index-tip trace.
+
+Every millimetre here is a sheet-plane projection of a hand that is above the sheet: relative,
+not calibrated to the hand's height (parallax), hence the payload name `pinch_rel_mm`.
+Sprint D-SEG-3: the landmark confidence threshold is the Zoo default 0.5 (was 0.8, which
+dropped most real frames), and the metrics window survives up to `miss_tolerance` (3)
+consecutive missed frames instead of being wiped by one, so SPARC / tremor can populate.
 """
 
 from __future__ import annotations
@@ -88,7 +94,7 @@ class _quiet_cv_logs:
 class HandTracker:
     """Palm detector + hand landmarker through cv2.dnn. `available` is False without models."""
 
-    def __init__(self, models_dir: Path = MODELS_DIR, conf_threshold: float = 0.8) -> None:
+    def __init__(self, models_dir: Path = MODELS_DIR, conf_threshold: float = 0.5) -> None:
         self.models_dir = Path(models_dir)
         self.available = False
         self.last_ms = 0.0
@@ -190,14 +196,16 @@ def pinch_mm(res: HandResult | None, cal: CalibrationResult) -> float | None:
 class HandMetrics:
     """Sliding-window metrics of the index fingertip in sheet mm."""
 
-    def __init__(self, window_s: float = 3.0) -> None:
+    def __init__(self, window_s: float = 3.0, miss_tolerance: int = 3) -> None:
         self.window_s = window_s
+        self.miss_tolerance = miss_tolerance
+        self._misses = 0
         self._hist: deque[tuple[float, np.ndarray]] = deque()
 
     def update(self, t: float, res: HandResult | None, cal: CalibrationResult) -> dict:
         out: dict = {
             "present": res is not None,
-            "pinch_mm": None,
+            "pinch_rel_mm": None,  # sheet-plane projection; relative, not calibrated to height
             "index_tip_mm": None,
             "path_mm_s": None,
             "sparc": None,
@@ -206,10 +214,13 @@ class HandMetrics:
         }
         if res is None or not cal.calibrated:
             if res is None:
-                self._hist.clear()
+                self._misses += 1
+                if self._misses > self.miss_tolerance:
+                    self._hist.clear()
             return out
+        self._misses = 0
         tip = cal.to_mm(res.landmarks_px[[INDEX_TIP]])[0]
-        out["pinch_mm"] = pinch_mm(res, cal)
+        out["pinch_rel_mm"] = pinch_mm(res, cal)
         out["index_tip_mm"] = [round(float(tip[0]), 1), round(float(tip[1]), 1)]
         self._hist.append((t, tip.astype(np.float64)))
         while self._hist and t - self._hist[0][0] > self.window_s:

@@ -129,14 +129,21 @@ export function LiveNhpt() {
           {reference === 'avatar' ? (
             <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="nhpt" compact /></div>
           ) : (
-            <BoardView occupancy={frame?.board?.occupancy ?? {}} nextHole={nextHole} />
+            <BoardView
+              occupancy={frame?.board?.occupancy ?? {}}
+              nextHole={nextHole}
+              onSampleHole={replay ? undefined : (k) => send({ cmd: 'sample_colour', hole: k })}
+              sampled={!!frame?.board?.colour}
+            />
           )}
           <div>
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <span className="text-xl">
                 <b>{pegsDone} of 9</b> seated
               </span>
-              <span className="text-lg text-muted">{nextHole != null ? `next: hole ${nextHole + 1}` : frame?.calibrated ? 'board full' : 'sheet not in view'}</span>
+              <span className="text-lg text-muted">
+                {nextHole != null ? `next: hole ${nextHole + 1}` : !frame?.calibrated ? 'sheet not in view' : pegsDone >= 9 ? 'board full' : 'any hole'}
+              </span>
             </div>
             <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
           </div>

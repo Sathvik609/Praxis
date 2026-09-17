@@ -10,6 +10,12 @@ whole reach and the cup base was seen resting on the destination; otherwise it i
 `unverified` with a reason (marker_lost | cup_occluded). Dots follow ARC (1..5..1); a wrong dot
 is reported and the sequence re-anchors. The slow -> fast phase switch is explicit
 (set_phase), never automatic: the coach proposes and the patient confirms.
+
+Sprint D-SEG-3: the base colour can be sampled from a tap (sample_cup_colour; the blue band
+stays the default), and a placement that was inferred from the hand while the base was hidden
+still counts as verified when the base was seen within `dot_radius_mm` of the destination at
+any time in the last `rest_window_s` (0.6 s) before hand-clear - a hand from above hides the
+base at the moment of release, but the cup is visible again as soon as the fingers open.
 """
 
 from __future__ import annotations
@@ -121,6 +127,7 @@ class CupFSM:
         hand_clear_mm: float = 60.0,
         slow_arcs: int = 2,
         fast_arcs: int = 2,
+        rest_window_s: float = 0.6,
     ) -> None:
         self.spec = spec
         self.dots = [tuple(map(float, d)) for d in spec.targets_mm]
@@ -128,6 +135,8 @@ class CupFSM:
         self.clear_frames = max(1, clear_frames)
         self.stationary_mm, self.hand_clear_mm = stationary_mm, hand_clear_mm
         self.slow_arcs, self.fast_arcs = slow_arcs, fast_arcs
+        self.rest_window_s = rest_window_s
+        self._rest_seen_t: float | None = None  # last t the base was seen on the destination
         self.state = "at_dot"
         self.dot: int | None = None
         self.phase: Phase = "slow"
@@ -255,6 +264,7 @@ class CupFSM:
 
     def _enter_over(self, obs: CupObservation, k: int, occluded: bool) -> list[Event]:
         self._dst, self._occluded, self._count = k, occluded, 1
+        self._rest_seen_t = None if occluded else obs.t
         evs = [self._go("over_dot", obs.t, to_dot=k)]
         return evs + self._maybe_place(obs)
 
@@ -268,6 +278,7 @@ class CupFSM:
             moved = self._last_cup is not None and _d(cup, self._last_cup) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
             self._occluded = False
+            self._rest_seen_t = obs.t
         else:
             if obs.hand_mm is not None and _d(obs.hand_mm, dst) <= self.dot_radius_mm:
                 self._count += 1
@@ -287,6 +298,8 @@ class CupFSM:
         dst = self.dots[self._dst]
         if cup is not None and _d(cup, dst) > self.dot_radius_mm:
             return [self._go("in_transit", obs.t)]  # picked up again before clearing
+        if cup is not None:
+            self._rest_seen_t = obs.t  # base seen resting on the dot while the hand lets go
         if obs.hand_mm is None or _d(obs.hand_mm, dst) > self.hand_clear_mm:
             self._count += 1
         else:
@@ -301,7 +314,11 @@ class CupFSM:
 
     def _complete_reach(self, obs: CupObservation) -> list[Event]:
         assert self._dst is not None and self._src is not None
-        reason = "marker_lost" if self._lost else ("cup_occluded" if self._occluded else None)
+        seen_resting = (
+            self._rest_seen_t is not None and (obs.t - self._rest_seen_t) <= self.rest_window_s
+        )
+        occluded = self._occluded and not seen_resting
+        reason = "marker_lost" if self._lost else ("cup_occluded" if occluded else None)
         expected = self.expected_next
         evs: list[Event] = []
         if expected is not None and self._dst != expected:

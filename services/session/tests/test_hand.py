@@ -76,11 +76,43 @@ def test_pinch_and_metrics_in_mm_with_calibration():
         t = i / fs
         px = cal.to_px(np.array([[100.0 + 50.0 * t, 150.0]], np.float32))[0]
         d = m.update(t, _fake_hand(float(px[0]), float(px[1])), cal)
-    assert d["present"] and d["pinch_mm"] is not None
+    assert d["present"] and d["pinch_rel_mm"] is not None and "pinch_mm" not in d
     assert abs(d["path_mm_s"] - 50.0) < 8.0
     assert d["sparc"] is not None and d["tremor_hz"] is None
     d2 = m.update(2.1, None, cal)
-    assert d2["present"] is False and d2["pinch_mm"] is None
+    assert d2["present"] is False and d2["pinch_rel_mm"] is None
+
+
+def _walk(m: HandMetrics, cal, t0: float, n: int, fs: float = 20.0):
+    d = {}
+    for i in range(n):
+        t = t0 + i / fs
+        px = cal.to_px(np.array([[100.0 + 50.0 * t, 150.0]], np.float32))[0]
+        d = m.update(t, _fake_hand(float(px[0]), float(px[1])), cal)
+    return d
+
+
+def test_metrics_window_survives_up_to_three_missed_frames():
+    frame, _ = camera_frame(NHPT_BOARD)
+    cal = Calibrator(NHPT_BOARD).run(frame)
+    m = HandMetrics(window_s=3.0, miss_tolerance=3)
+    d = _walk(m, cal, 0.0, 30)
+    assert d["path_mm_s"] is not None
+    for k in range(3):  # three misses: window kept
+        d = m.update(1.5 + 0.05 * (k + 1), None, cal)
+        assert d["present"] is False and d["sparc"] is None
+    d = _walk(m, cal, 1.7, 1)
+    assert d["path_mm_s"] is not None and d["sparc"] is not None  # history still there
+    for k in range(4):  # a fourth consecutive miss clears it
+        m.update(1.8 + 0.05 * (k + 1), None, cal)
+    d = _walk(m, cal, 2.1, 1)
+    assert d["present"] and d["path_mm_s"] is None
+
+
+def test_tracker_default_confidence_is_the_zoo_default():
+    import inspect
+
+    assert inspect.signature(HandTracker.__init__).parameters["conf_threshold"].default == 0.5
 
 
 def test_tracker_unavailable_without_models(tmp_path):
