@@ -1,5 +1,4 @@
 import type { ComponentType, SVGProps } from 'react'
-// Hub icons. `Activity` is in design/Icon; the other three are not in the shared set yet and
 import { NavLink } from 'react-router-dom'
 import { Activity, Home as HomeIcon, Settings as SettingsIcon, TrendingUp } from '../design/Icon'
 
