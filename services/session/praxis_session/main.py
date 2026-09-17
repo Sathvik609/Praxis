@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.events import EventRing, make_event
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
@@ -164,6 +164,7 @@ async def session_ws(
     sets: int = 2,
     reps: int = 8,
     replay: str | None = None,
+    for_mode: str = Query("", alias="for"),
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
@@ -189,6 +190,7 @@ async def session_ws(
                 hold_s=hold,
                 sets=sets,
                 reps=reps,
+                for_mode=for_mode or None,
             )
         except ValueError:
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())

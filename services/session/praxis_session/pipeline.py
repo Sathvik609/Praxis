@@ -35,6 +35,10 @@ MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
 POSE_LOSS_FRAMES = 15
 LOSS_FRAMES = 5
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
+REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
+    "default": REQUIRED_CHECKS,
+    "arm": ("camera", "lighting"),  # no sheet; side-view/pose gating lands with the pose checks
+}
 
 
 class SessionPipeline:
@@ -52,9 +56,12 @@ class SessionPipeline:
         hold_s: float = 3.0,
         sets: int = 2,
         reps: int = 8,
+        for_mode: str | None = None,
     ) -> None:
         if mode not in MODES:
             raise ValueError(f"bad mode {mode}")
+        # In calibrate mode, which exercise the setup is for (arm needs no sheet).
+        self.for_mode = for_mode or mode
         if mode == "arm":
             sheet = "nhpt_board" if sheet in ("none", "") else sheet  # no sheet is used in arm mode
         if sheet not in SHEETS:
@@ -176,16 +183,19 @@ class SessionPipeline:
                 "quality", t=t, frame_index=i, lighting=light, steadiness=steady, presence=pres
             ),
         )
+        needs_sheet = self.for_mode != "arm"
         area = task_area_in_view(cal, self.spec, frame_bgr.shape)
-        checks = build_checks(cal, light, steady, area, pres)
-        required_ok = all(c["status"] == "pass" for c in checks if c["id"] in REQUIRED_CHECKS)
+        checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet)
+        required = REQUIRED_BY_MODE.get(self.for_mode, REQUIRED_BY_MODE["default"])
+        required_ok = all(c["status"] == "pass" for c in checks if c["id"] in required)
         self._emit(
             out,
             make_event(
                 "setup_checks", t=t, frame_index=i, checks=checks, all_required_pass=required_ok
             ),
         )
-        self._track_loss(out, cal, t, i)
+        if needs_sheet:
+            self._track_loss(out, cal, t, i)
         return out
 
     def _hand_block(

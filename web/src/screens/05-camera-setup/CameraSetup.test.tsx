@@ -37,3 +37,14 @@ test('continue enables when checks pass and live indicator shows', () => {
   expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeEnabled()
   expect(screen.getByText('Live · not recording')).toBeInTheDocument()
 })
+
+test('arm setup asks for a side view and no sheet', () => {
+  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
+  render(
+    <MemoryRouter initialEntries={['/setup?exercise=arm']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText(/No sheet needed/)).toBeInTheDocument()
+  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
+})

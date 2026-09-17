@@ -24,7 +24,11 @@ export function CameraSetup() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const exercise = sp.get('exercise') ?? 'nhpt'
-  const params = useMemo(() => ({ sheet: SHEET[exercise] ?? 'nhpt_board' }), [exercise])
+  const params = useMemo(() => {
+    const p: Record<string, string> = { sheet: SHEET[exercise] ?? 'nhpt_board' }
+    if (exercise === 'arm') p.for = 'arm' // no sheet; the service skips marker checks
+    return p
+  }, [exercise])
   const { camActive, connected, events, error, start, stop, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'calibrate',
@@ -64,7 +68,9 @@ export function CameraSetup() {
           <div>
             <h1 className="text-4xl">Set up camera and equipment</h1>
             <p className="text-muted">
-              Continue unlocks when every required check passes. {TITLE[exercise] ?? exercise}.
+              {exercise === 'arm'
+                ? 'No sheet needed. Sit sideways to the camera with your shoulder and hip in view.'
+                : `Continue unlocks when every required check passes. ${TITLE[exercise] ?? exercise}.`}
             </p>
           </div>
           <div className="rounded-2xl border border-line bg-surface px-6">

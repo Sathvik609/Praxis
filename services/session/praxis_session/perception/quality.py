@@ -99,8 +99,12 @@ def build_checks(
     area_d: dict,
     presence_d: dict,
     camera_ok: bool = True,
+    needs_sheet: bool = True,
 ) -> list[dict]:
-    """The five wireframe rows, in order; status pass|check|pending with a fix hint."""
+    """The five wireframe rows, in order; status pass|check|pending with a fix hint.
+
+    Arm to the front uses no printed sheet: with needs_sheet=False the marker and task-area
+    rows are replaced by one side-view row (pending until the pose model gates it)."""
 
     def row(id_: str, label: str, ok: bool | None, hint: str | None) -> dict:
         status = "pending" if ok is None else ("pass" if ok else "check")
@@ -116,6 +120,18 @@ def build_checks(
     light_hint = lighting_d.get("hint") or (
         None if steadiness_d["ok"] else "Hold the camera still or rest it on the table."
     )
+    if not needs_sheet:
+        return [
+            row("camera", "Camera permission", camera_ok, "Allow the camera in your browser."),
+            row("person", "One person in view", present, "Sit sideways so your shoulder, elbow and hip are in view."),
+            row(
+                "side_view",
+                "Side of your body to the camera",
+                None,
+                "Turn so your practising shoulder faces the camera; hips and shoulder in view.",
+            ),
+            row("lighting", "Lighting", bool(lighting_d["ok"]), lighting_d.get("hint")),
+        ]
     return [
         row("camera", "Camera permission", camera_ok, "Allow the camera in your browser."),
         row(

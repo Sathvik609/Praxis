@@ -227,3 +227,29 @@ def test_arm_pose_loss_after_15_frames():
         seen += [e.type for e in p.process_pose(None, i * 0.1, i)]
     assert seen.count("perception_lost") == 1
     assert "perception_regained" in [e.type for e in p.process_pose(res, 3.0, 30)]
+
+
+def test_arm_setup_needs_no_sheet():
+    """Arm to the front uses no printed sheet: calibration for it must not require markers or
+    the task area, and must never report perception loss for missing markers (audit A3)."""
+    p = SessionPipeline(mode="calibrate", sheet="nhpt_board", for_mode="arm")
+    frame, _ = camera_frame(NHPT_BOARD, hide_marker=1)
+    seen = []
+    for i in range(8):
+        evs = p.process(frame, i * 0.1, i)
+        seen += _types(evs)
+    checks = evs[2].to_dict()
+    ids = [c["id"] for c in checks["checks"]]
+    assert "markers" not in ids and "task_area" not in ids
+    assert "side_view" in ids
+    assert checks["all_required_pass"] is True
+    assert "perception_lost" not in seen
+    for e in evs:
+        validate_event(e.to_dict())
+
+
+def test_sheet_setup_still_requires_markers():
+    p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
+    frame, _ = camera_frame(NHPT_BOARD, hide_marker=1)
+    checks = p.process(frame, 0.0, 0)[2].to_dict()
+    assert checks["all_required_pass"] is False
