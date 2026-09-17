@@ -38,9 +38,20 @@ test('shows arc label, dot progress, unverified count and hand-clear caption', (
   expect(screen.getByLabelText('3 of 5')).toBeInTheDocument()
   expect(screen.getAllByText(/1 unverified/).length).toBeGreaterThan(0)
   expect(screen.getByText(/cup over dot 3 · hand not clear/)).toBeInTheDocument()
+  expect(screen.getByText(/hand not in view · cup tracked/)).toBeInTheDocument()
 })
 
-test('progression prompt appears when awaiting phase and sends the command', () => {
+test('"This session" shows reaches, verified and unverified as separate numbers', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.getByRole('heading', { name: 'This session' })).toBeInTheDocument()
+  const value = (label: string) => screen.getByText(label).parentElement?.parentElement?.firstElementChild
+  expect(value('reaches')).toHaveTextContent('10')
+  expect(value('verified')).toHaveTextContent('9')
+  expect(value('unverified')).toHaveTextContent('1')
+})
+
+test('progression prompt appears on top when awaiting phase and sends the command', () => {
   const waiting = { ...frame, cup: { ...frame.cup, arcs_done: 2, awaiting_phase: true } }
   mockStream([waiting, { type: 'arc_complete', t: 11, id: 2, arc: 2, phase: 'slow', mean_reach_ms: 1200, unverified: 0, awaiting_phase: true }])
   renderAt('/session?exercise=cup&side=left')
@@ -55,8 +66,9 @@ test('completion opens the feedback overlay', () => {
   expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
-test('replay query is passed to the stream so no webcam is opened', () => {
+test('replay query is passed to the stream so no webcam is opened, and the replay badge shows', () => {
   mockStream([])
   renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_cup_01' }))
+  expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
 })

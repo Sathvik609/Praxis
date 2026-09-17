@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -50,12 +50,44 @@ test('shows elapsed time, seated count, next hole and tracking badge', () => {
   expect(screen.getByText('Tracking')).toBeInTheDocument()
   expect(screen.getByText('Nine-Hole Peg Test · left hand')).toBeInTheDocument()
   expect(screen.getByText('Live · not recording')).toBeInTheDocument()
+  expect(screen.getByText(/Rule-based coach · LLM agent pending/)).toBeInTheDocument()
+})
+
+test('reference toggle is a segmented control: Board view by default, Avatar on demand', () => {
+  mockStream([frame])
+  renderAt('/session?hand=left')
+  const board = screen.getByRole('radio', { name: 'Board view' })
+  const avatar = screen.getByRole('radio', { name: 'Avatar' })
+  expect(board).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByLabelText('board view')).toBeInTheDocument()
+  fireEvent.click(avatar)
+  expect(screen.queryByLabelText('board view')).toBeNull()
+  expect(screen.getByTestId('scene')).toBeInTheDocument()
 })
 
 test('tracking lost badge after perception_lost', () => {
   mockStream([frame, { type: 'perception_lost', t: 11, id: 2, missing: [1] }])
   renderAt('/session?hand=left')
   expect(screen.getByText('Tracking lost')).toBeInTheDocument()
+})
+
+test('replay shows the corner badge instead of the old placeholder sentence and no red live text', () => {
+  mockStream([frame])
+  renderAt('/session?hand=left&replay=synthetic_nhpt_01')
+  expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
+  expect(screen.queryByText(/recorded clip runs on the service/)).toBeNull()
+  expect(screen.queryByText('Live · not recording')).toBeNull()
+  expect(screen.getByRole('status')).toHaveTextContent('Replay')
+})
+
+test('trace toggle swaps the coach column for the trace panel', () => {
+  mockStream([frame, { type: 'rep_complete', t: 11, id: 2, peg: 1 }])
+  renderAt('/session?hand=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
+  expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
+  expect(screen.queryByText(/Rule-based coach · LLM agent pending\.?$/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Hide trace' }))
+  expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
 })
 
 test('navigates to the report when the test completes', () => {

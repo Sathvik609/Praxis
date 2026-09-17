@@ -1,5 +1,6 @@
 /** Top-down verification view of the 3×3 board from occupancy events (wireframe 07 right
- *  panel). Marker squares in the corners echo the printed sheet. */
+ *  panel). Corner brackets echo the ArUco markers the overlay draws on the sheet. Each hole
+ *  carries its number and a state word for screen readers, never colour alone. */
 export function BoardView({
   occupancy,
   nextHole,
@@ -14,14 +15,16 @@ export function BoardView({
     return { k, state }
   })
   const style = {
-    occupied: 'border-mint bg-mint text-white',
-    next: 'border-amber bg-surface text-amber',
-    empty: 'border-line bg-[#1B2C2B] text-muted',
+    occupied: 'border-mint bg-mint text-[#0B1A1C]',
+    next: 'border-[#F2B457] bg-transparent text-[#F2B457] shadow-[0_0_0_4px_rgba(242,180,87,0.25)]',
+    empty: 'border-white/30 bg-white/5 text-white/70',
   } as const
+  const word = { occupied: 'seated', next: 'next', empty: 'empty' } as const
+  const corners = ['left-3 top-3 rounded-tl-lg border-l-4 border-t-4', 'right-3 top-3 rounded-tr-lg border-r-4 border-t-4', 'bottom-3 left-3 rounded-bl-lg border-b-4 border-l-4', 'bottom-3 right-3 rounded-br-lg border-b-4 border-r-4']
   return (
-    <div aria-label="board view" className="relative rounded-2xl bg-[var(--stage-b)] p-8">
-      {['left-3 top-3', 'right-3 top-3', 'left-3 bottom-3', 'right-3 bottom-3'].map((pos) => (
-        <span key={pos} aria-hidden className={`absolute ${pos} h-6 w-6 border-4 border-white bg-black`} />
+    <div aria-label="board view" className="relative rounded-[var(--r-card)] bg-[linear-gradient(180deg,var(--stage-b),var(--stage-a))] p-8">
+      {corners.map((pos) => (
+        <span key={pos} aria-hidden className={`absolute ${pos} h-6 w-6 border-mint`} />
       ))}
       <div className="mx-auto grid w-fit grid-cols-3 gap-3">
         {cells.map(({ k, state }) => (
@@ -29,9 +32,10 @@ export function BoardView({
             key={k}
             data-testid={`hole-${k}`}
             data-state={state}
-            className={`flex h-12 w-12 items-center justify-center rounded-full border-4 text-lg font-bold ${style[state]}`}
+            aria-label={`hole ${k + 1} ${word[state]}`}
+            className={`flex h-14 w-14 items-center justify-center rounded-full border-4 text-xl font-bold ${style[state]}`}
           >
-            <span data-testid="hole">{k + 1}</span>
+            <span data-testid="hole" aria-hidden>{k + 1}</span>
           </span>
         ))}
       </div>

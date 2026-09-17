@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
+import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
+import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
-import { CameraBlocked } from '../../session/CameraBlocked'
-import { LiveIndicator } from '../../session/LiveIndicator'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
-import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
+import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { ProgressionPrompt } from './ProgressionPrompt'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -34,7 +35,7 @@ function caption(f: FrameEvent | null, lost: boolean): string {
 }
 
 /** Screen 07b · Live session, Waiter – cup (GRASP coordination). Reps are verified from the
- *  camera; the avatar (Phase 6) is a pacing reference only. */
+ *  camera; the avatar is a pacing reference only. */
 export function LiveCup() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
@@ -81,51 +82,42 @@ export function LiveCup() {
   const arcLabel = cup ? `arc ${Math.min(cup.arc_index, cup.phase === 'slow' ? planned.slow : planned.slow + planned.fast) - (cup.phase === 'fast' ? planned.slow : 0)} of ${cup.phase === 'slow' ? planned.slow : planned.fast} ${cup.phase}` : 'arc 1 of 2 slow'
   const dotsDone = cup?.dots_in_arc.length ?? 0
   const unverified = cup?.unverified_total ?? 0
+  const reaches = cup?.reaches_total ?? 0
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
-        <span className="font-heading text-2xl font-semibold text-teal">Praxis</span>
-        <span className="text-xl font-bold">Waiter – cup · {side} side</span>
-        <span className="text-muted">Coordination · {arcLabel}</span>
-        <span className="ml-auto flex items-center gap-4">
-          <LiveIndicator active={camActive} replay={!!replay} />
-          <Chip tone={label.tone}>{label.chip}</Chip>
-        </span>
-      </header>
+      <SessionHeader title={`Waiter – cup · ${side} side`} subtitle={`Coordination · ${arcLabel}`} status={status} label={label} />
 
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
-            <div className="absolute left-4 top-3 z-10 text-white/80">
-              <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
-              <b>You</b> · {live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : label.feed}
-            </div>
-            {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
-            <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
-            <div className="absolute bottom-3 left-4 text-white/80">
-              {!live ? label.feed : cup?.dot != null ? `cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : 'place the cup on dot 1'}
-            </div>
-            {(status === 'camera_blocked' || status === 'service_unreachable') && (
-            <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={() => { stop(); void start() }} /></div>
-          )}
-          </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface px-5 py-3">
+          <LiveFeed
+            replay={!!replay}
+            camActive={camActive}
+            status={status}
+            videoRef={videoRef}
+            frame={frame}
+            feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
+            tracking={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : undefined}
+            cvLine={`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`}
+            onRetry={() => { stop(); void start() }}
+          />
+          <Card padding="sm" className="flex items-center gap-4">
             <ProgressDots total={5} done={dotsDone} current={cup?.expected_next ?? undefined} />
-            <span className="ml-auto text-muted">
+            <span className="ml-auto text-lg text-muted">
               {dotsDone} of 5 dots · {unverified} unverified{unverified ? ' (hand covered cup or markers lost)' : ''}
             </span>
-          </div>
+          </Card>
         </div>
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-muted">Reference</span>
-            <span className="ml-auto text-muted">avatar · pacing only</span>
-          </div>
+        <Card
+          className="flex min-h-0 flex-col gap-4 overflow-hidden"
+          padding="sm"
+          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
+          action={<Chip tone="neutral">Pacing only</Chip>}
+        >
           <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="cup" compact /></div>
-          <p className="text-center text-muted">ideal path · dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}</p>
-        </div>
+          <p className="text-center text-lg text-muted">ideal path · dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}</p>
+        </Card>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
           {showPrompt && (
@@ -138,19 +130,18 @@ export function LiveCup() {
             />
           )}
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} /></div>
+            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
           ) : (
             <>
-              <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-5">
-                <div className="text-muted">Coach</div>
-                <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-                <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
-              </div>
-              <div className="rounded-2xl border border-line bg-surface p-5">
-                <div className="text-muted">This session</div>
-                <div className="text-3xl font-bold">{cup?.reaches_total ?? 0} reaches</div>
-                <div className="text-muted">{(cup?.reaches_total ?? 0) - unverified} verified · {unverified} unverified · {cup?.arcs_done ?? 0} arcs done</div>
-              </div>
+              <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
+              <Card title="This session">
+                <div className="grid grid-cols-3 gap-3">
+                  <Stat value={reaches} label="reaches" />
+                  <Stat value={reaches - unverified} label="verified" />
+                  <Stat value={unverified} label="unverified" tone={unverified ? 'amber' : 'default'} />
+                </div>
+                <div className="mt-2 text-lg text-muted">{cup?.arcs_done ?? 0} of {planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar</div>
+              </Card>
               <ExertionChip exertion={coach.exertion} />
             </>
           )}
