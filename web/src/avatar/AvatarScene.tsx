@@ -4,6 +4,7 @@ import type { Clip } from './clips'
 import { MARKER_STYLE, type Marker } from './markers'
 import { BONES, JOINTS, REST, forwardKinematics, type Joint, type Vec3 } from './rig'
 import { sample } from './sampler'
+import { makeBodyMaterial, makeRenderer, makeStage } from './stage'
 
 export type Projection = Record<string, { x: number; y: number }>
 
@@ -18,7 +19,6 @@ type Props = {
   onProject?: (p: Projection) => void
 }
 
-const AQUA = 0x9fe2cf
 const MINT = 0x2fa985
 const AMBER = 0xc97f14
 
@@ -39,7 +39,7 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
     if (!el) return
     let renderer: THREE.WebGLRenderer
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
+      renderer = makeRenderer()
     } catch {
       el.textContent = 'Avatar needs WebGL; your browser has it turned off.'
       return
@@ -48,23 +48,12 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
     renderer.domElement.style.display = 'block'
     el.appendChild(renderer.domElement)
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x071518)
     const cam = new THREE.PerspectiveCamera(32, 1, 0.1, 20)
 
-    // stage
-    const stage = new THREE.Mesh(new THREE.CircleGeometry(0.9, 48), new THREE.MeshStandardMaterial({ color: 0x0f262b, roughness: 0.9 }))
-    stage.rotation.x = -Math.PI / 2
-    stage.position.y = 0.72
-    scene.add(stage)
-    scene.add(new THREE.AmbientLight(0xbfe8de, 0.55))
-    const key = new THREE.DirectionalLight(0xffffff, 1.1)
-    key.position.set(1.5, 3, 2.5)
-    scene.add(key)
-    const rim = new THREE.DirectionalLight(0x2fa985, 0.8)
-    rim.position.set(-2, 2, -2)
-    scene.add(rim)
+    // stage: environment light, gradient backdrop, contact shadow, light rig
+    const stage = makeStage(scene, renderer, REST.hips.offset[1] - 0.14)
 
-    const body = new THREE.MeshStandardMaterial({ color: AQUA, roughness: 0.55, metalness: 0.05 })
+    const body = makeBodyMaterial()
     const dark = new THREE.MeshStandardMaterial({ color: 0x0b1d20, roughness: 0.8 })
     const segs: Record<string, THREE.Mesh> = {}
     for (const [a, b] of BONES) {
@@ -72,16 +61,19 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
       const r = a === 'hips' || a === 'spine' ? 0.17 : a === 'neck' && b === 'head' ? 0.05 : b.endsWith('Elbow') ? 0.06 : b.endsWith('Wrist') ? 0.05 : 0.07
       const geo = new THREE.CapsuleGeometry(r, Math.max(0.01, len - (b === 'head' ? 0.08 : 0)), 6, 14)
       const m = new THREE.Mesh(geo, body)
+      m.castShadow = true
       scene.add(m)
       segs[`${a}-${b}`] = m
     }
     const joints: Partial<Record<Joint, THREE.Mesh>> = {}
     for (const j of JOINTS) {
       const m = new THREE.Mesh(new THREE.SphereGeometry(REST[j].radius, 18, 14), j === 'hips' ? dark : body)
+      m.castShadow = true
       scene.add(m)
       joints[j] = m
     }
     const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.16, 0.24, 20), dark)
+    pelvis.castShadow = true
     scene.add(pelvis)
 
     // cue layer
@@ -187,6 +179,9 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
     return () => {
       cancelAnimationFrame(raf)
       ro.disconnect()
+      stage.dispose()
+      body.dispose()
+      dark.dispose()
       renderer.dispose()
       el.removeChild(renderer.domElement)
     }
