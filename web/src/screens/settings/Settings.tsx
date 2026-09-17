@@ -5,6 +5,8 @@ import { Button } from '../../design/Button'
 import { Chip } from '../../design/Chip'
 import { api, useApi } from '../../lib/api'
 
+const MODE_NAME: Record<string, string> = { nhpt: 'Nine-Hole Peg Test', cup: 'Waiter – cup', arm: 'Arm to the front' }
+
 /** Settings: theme (light default), guidance, privacy statement, and the replay entry
  *  (judge fallback: a recorded clip through the identical pipeline, no webcam). */
 export function Settings() {
@@ -37,14 +39,14 @@ export function Settings() {
         <ul className="mt-3 divide-y divide-line">
           {(clips ?? []).map((c) => (
             <li key={c.id} className="flex items-center gap-4 py-3">
-              <span className="flex-1 text-lg">{c.id} · {c.mode}{c.synthetic ? ' · synthetic render' : ''}</span>
-              <Button variant="secondary" className="min-h-11 px-4 text-base" onClick={() => nav(`/session?exercise=${c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`)}>Replay {c.id}</Button>
+              <span className="flex flex-1 flex-wrap items-center gap-2 text-lg"><b>{MODE_NAME[c.mode] ?? c.mode}</b> · left side{c.synthetic && <Chip tone="neutral">Synthetic render</Chip>}</span>
+              <Button variant="secondary" aria-label={`Replay ${MODE_NAME[c.mode] ?? c.mode}`} onClick={() => nav(`/session?exercise=${c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`)}>Replay</Button>
             </li>
           ))}
-          {clips && clips.length === 0 && <li className="py-3 text-muted">No clips found in evaluation/dataset_v0.</li>}
+          {clips && clips.length === 0 && <li className="py-3 text-muted">No recordings available yet.</li>}
         </ul>
         <h2 className="mt-6 text-2xl">Cloud</h2>
-        <p className="text-muted">Cloud / judge mode (Graviton c8g from the COOL AMI, Bedrock coach) is not enabled in this build; every cloud call is gated by <code>PRAXIS_CLOUD_ENABLED</code>.</p>
+        <p className="text-muted">Cloud mode is off in this build. Everything runs on this device.</p>
       </section>
     </div>
   )

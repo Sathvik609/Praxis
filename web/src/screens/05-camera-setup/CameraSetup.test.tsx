@@ -3,13 +3,13 @@ import { MemoryRouter } from 'react-router-dom'
 import * as hook from '../../session/useWebcamStream'
 import { CameraSetup } from './CameraSetup'
 
-function mockStream(lastEvent: Record<string, unknown> | null, camActive = true) {
+function mockStream(lastEvent: Record<string, unknown> | null, camActive = true, error: string | null = null) {
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive,
     connected: true,
     lastEvent: lastEvent as never,
     events: lastEvent ? [lastEvent as never] : [],
-    error: null,
+    error,
     start: vi.fn(async () => {}),
     stop: vi.fn(),
     send: vi.fn(),
@@ -47,4 +47,15 @@ test('arm setup asks for a side view and no sheet', () => {
   )
   expect(screen.getByText(/No sheet needed/)).toBeInTheDocument()
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
+})
+
+test('camera blocked offers a recorded session and the checklist shows five waiting rows', () => {
+  mockStream(null, false, 'Permission denied')
+  render(
+    <MemoryRouter initialEntries={['/setup?exercise=nhpt']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByRole('button', { name: 'Use a recorded session' })).toBeInTheDocument()
+  expect(screen.getAllByText('Waiting')).toHaveLength(5)
 })

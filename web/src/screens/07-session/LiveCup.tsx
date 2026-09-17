@@ -5,6 +5,7 @@ import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
@@ -105,7 +106,9 @@ export function LiveCup() {
             <div className="absolute bottom-3 left-4 text-white/80">
               {!live ? label.feed : cup?.dot != null ? `cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : 'place the cup on dot 1'}
             </div>
-            {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
+            {(status === 'camera_blocked' || status === 'service_unreachable') && (
+            <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={() => { stop(); void start() }} /></div>
+          )}
           </div>
           <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface px-5 py-3">
             <ProgressDots total={5} done={dotsDone} current={cup?.expected_next ?? undefined} />

@@ -29,7 +29,8 @@ export function Home() {
           <h1 className="text-3xl text-white">Waiter – cup, then Arm to the front</h1>
           <p className="mt-1 text-white/80">About 14 min · cup + target sheet · wrist weight</p>
           <Button full variant="inverse" className="mt-5" onClick={() => nav('/checkin')}>Start session</Button>
-          <button type="button" className="mt-3 min-h-14 w-full rounded-2xl border-2 border-white/60 text-xl font-bold text-white" onClick={() => nav('/coach')}>Ask the coach</button>
+          <button type="button" className="mt-3 min-h-14 w-full rounded-xl border-2 border-white/60 text-lg font-bold text-white" onClick={() => nav('/settings')}>Replay a recorded session · no webcam</button>
+          <button type="button" className="mt-2 min-h-12 w-full text-lg font-bold text-white/85 underline" onClick={() => nav('/coach')}>Ask the coach</button>
         </div>
         <div className="rounded-2xl border border-line bg-surface p-5">
           <div className="flex items-baseline justify-between"><h2 className="text-2xl">This week</h2><span className="text-muted">{WEEK.sessions} days · {WEEK.minutes} min</span></div>
@@ -65,7 +66,7 @@ export function Home() {
           </div>
           <div className="ml-auto flex gap-1 rounded-full border border-line p-1">
             {(['front', 'side', 'both'] as const).map((v) => (
-              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`h-11 rounded-full px-4 font-bold ${view === v ? 'bg-teal text-white' : ''}`}>
+              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`h-12 whitespace-nowrap rounded-full px-4 font-bold ${view === v ? 'bg-teal text-white' : ''}`}>
                 {v === 'front' ? 'Front' : v === 'side' ? 'Left side' : 'Both'}
               </button>
             ))}
@@ -85,7 +86,7 @@ export function Home() {
           <div className="mt-4 space-y-3">
             {region.metrics.map((m) => (
               <div key={m.label} className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold">{m.value}</span>
+                <span className="whitespace-nowrap text-3xl font-bold tabular-nums">{m.value}</span>
                 <span className="text-muted">{m.label}</span>
                 {m.delta && <Chip tone="mint">{m.delta}</Chip>}
               </div>
@@ -105,7 +106,6 @@ export function Home() {
           <div className="flex items-start justify-between"><div><h2 className="text-xl">Assigned program</h2><p className="text-muted">{PROGRAM.short}</p></div><Chip tone="neutral">Read-only</Chip></div>
           <div className="mt-3 border-t border-line pt-3"><div className="font-bold">Next visit</div><div className="text-muted">{PROGRAM.nextVisit}</div></div>
         </div>
-        <button type="button" className="min-h-12 text-left text-teal underline" onClick={() => nav('/settings')}>Replay a recorded session (no webcam)</button>
         <p className="text-base text-muted">Body-map markers and week are illustrative seed data; goal, sessions and reports come from the local store.</p>
       </div>
     </div>

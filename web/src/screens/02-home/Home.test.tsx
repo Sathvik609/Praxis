@@ -21,6 +21,7 @@ test('home shows next practice, week, goal, body map markers and focus panel', (
   renderHome()
   expect(screen.getByText(/Waiter – cup, then Arm to the front/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Replay a recorded session/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
   expect(screen.getByText('This week')).toBeInTheDocument()
   expect(screen.getByText(/Use a cup on my own/)).toBeInTheDocument()

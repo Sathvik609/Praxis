@@ -3,11 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { SESSION_WS_URL } from '../../lib/config'
+import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { Checklist, type Check } from './Checklist'
-import { ProcessingToggle } from './ProcessingToggle'
 
 const SHEET: Record<string, string> = { nhpt: 'nhpt_board', cup: 'cup_targets', arm: 'nhpt_board' }
 const TITLE: Record<string, string> = {
@@ -61,7 +61,11 @@ export function CameraSetup() {
             {cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
             {connected ? '' : ' · connecting…'}
           </div>
-          {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
+          {error && (
+            <div className="absolute inset-0 z-20">
+              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} onRetry={() => { stop(); void start() }} />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-6">
@@ -76,7 +80,7 @@ export function CameraSetup() {
           <div className="rounded-2xl border border-line bg-surface px-6">
             <Checklist checks={checks?.checks ?? []} />
           </div>
-          <ProcessingToggle />
+          <p className="text-muted">Processed on this device. Video is not stored; only measurements and events are saved.</p>
           <div className="flex flex-wrap gap-3">
             <Button
               variant="secondary"
@@ -87,8 +91,6 @@ export function CameraSetup() {
             >
               Retry
             </Button>
-            <Button variant="secondary">Setup guide</Button>
-            <Button variant="secondary">Audio test</Button>
           </div>
         </div>
       </div>

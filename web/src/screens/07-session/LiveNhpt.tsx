@@ -5,6 +5,7 @@ import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
@@ -107,7 +108,9 @@ export function LiveNhpt() {
             {frame?.models?.hand ? ` · dnn hand${frame.hand?.present ? ' ✓' : ''}` : ' · hand model off'}
             {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
           </div>
-          {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
+          {(status === 'camera_blocked' || status === 'service_unreachable') && (
+            <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={() => { stop(); void start() }} /></div>
+          )}
         </div>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4">
