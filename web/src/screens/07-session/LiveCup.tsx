@@ -6,6 +6,7 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
 import { LiveIndicator } from '../../session/LiveIndicator'
+import { liveStatus, statusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { ProgressionPrompt } from './ProgressionPrompt'
@@ -57,6 +58,9 @@ export function LiveCup() {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
   })()
+  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
+  const label = statusLabel(status, 'cup')
+  const live = status === 'tracking' || status === 'replay'
   const lastArc = [...events].reverse().find((e) => e.type === 'arc_complete') as ArcComplete | undefined
   const complete = events.find((e) => e.type === 'cup_complete') as CupComplete | undefined
   const showPrompt = (!!coach.prompt || (!!cup?.awaiting_phase && cup.phase === 'slow')) && !declined
@@ -85,7 +89,7 @@ export function LiveCup() {
         <span className="text-muted">Coordination · {arcLabel}</span>
         <span className="ml-auto flex items-center gap-4">
           <LiveIndicator active={camActive} replay={!!replay} />
-          <Chip tone={lost ? 'amber' : 'mint'}>{lost ? 'Tracking lost' : 'Tracking ready'}</Chip>
+          <Chip tone={label.tone}>{label.chip}</Chip>
         </span>
       </header>
 
@@ -94,12 +98,12 @@ export function LiveCup() {
           <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
             <div className="absolute left-4 top-3 z-10 text-white/80">
               <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
-              <b>You</b> · {frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · {frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}
+              <b>You</b> · {live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : label.feed}
             </div>
             {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
             <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
             <div className="absolute bottom-3 left-4 text-white/80">
-              {cup?.dot != null ? `cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : 'place the cup on dot 1'}
+              {!live ? label.feed : cup?.dot != null ? `cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : 'place the cup on dot 1'}
             </div>
             {error && <div className="absolute inset-x-4 top-12 rounded-xl bg-red p-3">{error}</div>}
           </div>
@@ -111,7 +115,7 @@ export function LiveCup() {
           </div>
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
-            <p className="text-2xl">{coach.caption?.text ?? caption(frame, lost)}</p>
+            <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
             <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
           <ExertionChip exertion={coach.exertion} />

@@ -6,6 +6,7 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
 import { LiveIndicator } from '../../session/LiveIndicator'
+import { liveStatus, statusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { BoardView } from './BoardView'
@@ -55,6 +56,9 @@ export function LiveNhpt() {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
   })()
+  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
+  const label = statusLabel(status, 'nhpt')
+  const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
 
   const finish = (endedEarly: boolean) => {
@@ -86,7 +90,7 @@ export function LiveNhpt() {
         <span className="text-muted">Assessment · attempt 1 of 1</span>
         <span className="ml-auto flex items-center gap-4">
           <LiveIndicator active={camActive} replay={!!replay} />
-          <Chip tone={lost ? 'amber' : 'mint'}>{lost ? 'Tracking lost' : 'Tracking ready'}</Chip>
+          <Chip tone={label.tone}>{label.chip}</Chip>
         </span>
       </header>
 
@@ -94,7 +98,7 @@ export function LiveNhpt() {
         <div className="relative overflow-hidden rounded-3xl bg-[var(--stage-a)] text-white">
           <div className="absolute left-4 top-3 z-10 text-white/80">
             <span className={`mr-2 inline-block h-3 w-3 rounded-full ${replay ? 'bg-amber' : 'bg-red'}`} />
-            <b>You</b> · {hand} hand · board tracking
+            <b>You</b> · {hand} hand · {live ? 'board tracking' : label.feed}
           </div>
           {replay ? <div className="flex aspect-4/3 w-full items-center justify-center text-white/60">Replay · recorded clip runs on the service; frames are not sent to the browser</div> : <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />}
           <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
@@ -151,7 +155,7 @@ export function LiveNhpt() {
           </div>
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
-            <p className="text-2xl">{coach.caption?.text ?? caption(frame, lost)}</p>
+            <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
             <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
           <ExertionChip exertion={coach.exertion} />

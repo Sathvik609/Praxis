@@ -14,7 +14,18 @@ export type Prompt = { id: string; title: string; text: string; options: string[
 export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string }
 export type ExertionState = { level: 'low' | 'moderate' | 'high'; reasons: string[]; method: string }
 
-type Opts = { speak?: (text: string) => void; voice?: boolean }
+export type SpeechPriority = 'instruct' | 'correct' | 'stop'
+type Opts = { speak?: (text: string, priority: SpeechPriority) => void; voice?: boolean }
+
+/** A coach caption stays on screen this long (in event time, from the newest frame) before
+ *  the screen falls back to its state caption ("Hold… 2", "Place the cup on dot 1"). */
+export const CAPTION_TTL_S = 4
+
+function priorityOf(action: string): SpeechPriority {
+  if (action === 'stop') return 'stop'
+  if (action === 'correct' || action === 'rest' || action === 'regress') return 'correct'
+  return 'instruct'
+}
 
 /** Consumes coach / stop-rule / exertion events: latest caption (spoken once), pending prompt,
  *  overlay state (paused | stopped | rest) and the exertion chip. */
@@ -24,13 +35,15 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
   const [resumedAfter, setResumedAfter] = useState(0)
 
   const coachEvents = useMemo(() => events.filter((e) => e.type === 'coach') as CoachEvent[], [events])
-  const caption = coachEvents.length ? coachEvents[coachEvents.length - 1] : null
+  const latest = coachEvents.length ? coachEvents[coachEvents.length - 1] : null
+  const lastFrame = [...events].reverse().find((e) => e.type === 'frame')
+  const caption = latest && (!lastFrame || lastFrame.t - latest.t <= CAPTION_TTL_S) ? latest : null
 
   useEffect(() => {
     for (const e of coachEvents) {
       if (spoken.current.has(e.id)) continue
       spoken.current.add(e.id)
-      if (opts.voice !== false) opts.speak?.(e.text)
+      if (opts.voice !== false) opts.speak?.(e.text, priorityOf(e.action))
     }
   }, [coachEvents, opts])
 
@@ -63,14 +76,48 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
   }
 }
 
-/** Browser text-to-speech (Polly in W6). Safe no-op where unsupported. */
-export function browserSpeak(text: string) {
+/** Browser text-to-speech (Polly in W6). Cues queue instead of cancelling each other
+ *  mid-word (audit A8); a correction drops queued instructions, a stop interrupts. */
+const queue: { text: string; priority: SpeechPriority }[] = []
+let speaking = false
+
+function pump() {
+  if (speaking) return
+  const next = queue.shift()
+  if (!next) return
+  speaking = true
+  const u = new SpeechSynthesisUtterance(next.text)
+  u.rate = 1.0
+  u.onend = u.onerror = () => {
+    speaking = false
+    pump()
+  }
+  window.speechSynthesis.speak(u)
+}
+
+export function resetSpeech() {
+  queue.length = 0
+  speaking = false
+  try {
+    window.speechSynthesis?.cancel()
+  } catch {
+    /* unsupported */
+  }
+}
+
+export function browserSpeak(text: string, priority: SpeechPriority = 'instruct') {
   try {
     if (!('speechSynthesis' in window)) return
-    const u = new SpeechSynthesisUtterance(text)
-    u.rate = 0.95
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(u)
+    if (priority !== 'instruct') {
+      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].priority === 'instruct') queue.splice(i, 1)
+    }
+    if (priority === 'stop') {
+      window.speechSynthesis.cancel()
+      speaking = false
+    }
+    queue.push({ text, priority })
+    if (queue.length > 3) queue.splice(0, queue.length - 3) // stale cues are worse than silence
+    pump()
   } catch {
     /* unsupported */
   }

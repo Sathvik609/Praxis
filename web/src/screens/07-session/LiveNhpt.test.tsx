@@ -47,7 +47,7 @@ test('shows elapsed time, seated count, next hole and tracking badge', () => {
   expect(screen.getByText('24.8')).toBeInTheDocument()
   expect(screen.getByLabelText('5 of 9')).toBeInTheDocument()
   expect(screen.getByText(/next: hole 6/)).toBeInTheDocument()
-  expect(screen.getByText('Tracking ready')).toBeInTheDocument()
+  expect(screen.getByText('Tracking')).toBeInTheDocument()
   expect(screen.getByText('Nine-Hole Peg Test · left hand')).toBeInTheDocument()
   expect(screen.getByText('Live · not recording')).toBeInTheDocument()
 })
