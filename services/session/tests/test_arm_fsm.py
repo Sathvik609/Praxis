@@ -105,3 +105,67 @@ def test_pose_lost_freezes_without_events():
         )
     )
     assert evs == [] and fsm.snapshot()["angle_now"] is None
+
+
+def run_obs(fsm: ArmFSM, samples, t0: float = 0.0, **fields):
+    """Like run() but with extra ArmObservation fields (view and visibility gates)."""
+    evs, t = [], t0
+    for angle, lean, hike in samples:
+        evs += fsm.step(
+            ArmObservation(
+                t=t,
+                shoulder_deg=angle,
+                trunk_lean_deg=lean,
+                shoulder_hike_norm=hike,
+                **({"view_ok": True} | fields),
+            )
+        )
+        t += 1 / FPS
+    return evs, t
+
+
+def test_front_facing_freezes_fsm_with_turn_side_gate():
+    fsm = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = run_obs(fsm, rep_profile(90, 1.2), view_ok=False)
+    assert evs == [] and fsm.state == "start_pose"
+    assert fsm.gate == "turn_side" and fsm.snapshot()["gate"] == "turn_side"
+    # turning to the side unfreezes: the same lift now counts
+    evs, _ = run_obs(fsm, rep_profile(90, 1.2), t0=10.0, view_ok=True)
+    assert types(evs).count("rep_complete") == 1 and fsm.gate is None
+
+
+def test_low_joint_visibility_freezes_with_hips_gate():
+    fsm = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = run_obs(fsm, rep_profile(90, 1.2, lean=20.0), visibility=0.3)
+    assert evs == [] and fsm.gate == "hips_out_of_view"
+    assert fsm.snapshot()["angle_now"] is not None  # still displayed, just not scored
+
+
+def test_lean_needs_visible_hips():
+    fsm = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1, lean_limit_deg=12)
+    evs, _ = run_obs(fsm, rep_profile(90, 1.2, lean=20.0), hip_visibility=0.3)
+    assert types(evs).count("rep_complete") == 1  # the rep itself is still scored
+    assert "compensation_lean" not in types(evs)
+
+
+def test_lean_must_persist_half_a_second():
+    def spike(seconds: float):
+        prof = rep_profile(90, 1.5)
+        n = int(seconds * FPS)
+        start = int(FPS) + 2  # inside the hold
+        return [
+            (a, 20.0 if start <= i < start + n else 0.0, h) for i, (a, _l, h) in enumerate(prof)
+        ]
+
+    short = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = run_obs(short, spike(0.3))
+    assert "compensation_lean" not in types(evs)
+    long = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = run_obs(long, spike(0.6))
+    assert types(evs).count("compensation_lean") == 1
+
+
+def test_hike_needs_both_shoulders_visible():
+    fsm = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1, hike_limit=0.08)
+    evs, _ = run_obs(fsm, rep_profile(90, 1.2, hike=0.3), shoulders_visibility=0.4)
+    assert "shoulder_hiking" not in types(evs) and types(evs).count("rep_complete") == 1

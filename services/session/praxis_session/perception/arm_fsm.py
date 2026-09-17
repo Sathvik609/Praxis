@@ -4,6 +4,13 @@ States: start_pose -> moving -> target_reached -> hold -> return (-> start_pose)
 return. Target is clamped to the ceiling in code (CLAUDE.md guardrails). Events: state_change,
 rep_complete{verified, reason}, target_missed, hold_too_short, compensation_lean,
 shoulder_hiking, set_complete, arm_complete. Angles arrive from pose.py (camera-relative).
+
+Gating (Sprint D): the image-plane angle only means something from the side, so the FSM
+freezes (no transitions, no compensation events; the angle is still reported for display)
+while `view_ok` is False (`gate = "turn_side"`) or the practising-side shoulder/elbow/hip
+visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`). `compensation_lean` needs
+the lean to persist for `lean_persist_s` with both hips visible; `shoulder_hiking` needs both
+shoulders visible. A seated patient with the hips behind a desk therefore gets no lean flags.
 """
 
 from __future__ import annotations
@@ -14,6 +21,8 @@ from typing import Any
 from praxis_session.events import Event, make_event
 
 STATES = ("start_pose", "moving", "target_reached", "hold", "return")
+MIN_VISIBILITY = 0.5
+GATES = ("turn_side", "hips_out_of_view")
 
 
 @dataclass(frozen=True)
@@ -23,6 +32,21 @@ class ArmObservation:
     trunk_lean_deg: float
     shoulder_hike_norm: float
     view_ok: bool
+    visibility: float = 1.0  # min over the practising-side shoulder, elbow, hip
+    hip_visibility: float = 1.0  # min over both hips (lean)
+    shoulders_visibility: float = 1.0  # min over both shoulders (hike)
+
+
+def gate_for(obs: ArmObservation) -> str | None:
+    """Why the FSM is frozen for this observation, or None. No pose at all is not a gate
+    (pose loss is reported separately as perception_lost)."""
+    if obs.shoulder_deg is None:
+        return None
+    if not obs.view_ok:
+        return "turn_side"
+    if obs.visibility < MIN_VISIBILITY:
+        return "hips_out_of_view"
+    return None
 
 
 class ArmFSM:
@@ -39,6 +63,7 @@ class ArmFSM:
         lean_events_to_flag: int = 3,
         hike_limit: float = 0.08,
         baseline_frames: int = 10,
+        lean_persist_s: float = 0.5,
     ) -> None:
         self.ceiling_deg = ceiling_deg
         self.clamped = target_deg > ceiling_deg
@@ -47,6 +72,9 @@ class ArmFSM:
         self.start_below_deg, self.tolerance_deg = start_below_deg, tolerance_deg
         self.lean_limit_deg, self.lean_events_to_flag = lean_limit_deg, lean_events_to_flag
         self.hike_limit, self.baseline_frames = hike_limit, baseline_frames
+        self.lean_persist_s = lean_persist_s
+        self.gate: str | None = None
+        self._lean_since: float | None = None
         self.state = "start_pose"
         self.set, self.rep = 1, 0
         self.finished = False
@@ -86,6 +114,7 @@ class ArmFSM:
             "peak_this_rep": round(self._peak, 1),
             "best_this_set": round(self._best_this_set, 1),
             "trunk_lean_deg": self._lean,
+            "gate": self.gate,
             "reps_total": len(self.reps),
             "unverified_total": sum(1 for r in self.reps if not r["verified"]),
             "flags": {
@@ -97,10 +126,14 @@ class ArmFSM:
         }
 
     def step(self, obs: ArmObservation) -> list[Event]:
+        self.gate = gate_for(obs)
         if self.finished or obs.shoulder_deg is None:
             self._angle = None if obs.shoulder_deg is None else self._angle
             return []
         self._angle, self._lean = obs.shoulder_deg, obs.trunk_lean_deg
+        if self.gate is not None:
+            self._lean_since = None  # frozen: the angle is shown but nothing is scored
+            return []
         evs: list[Event] = []
         if self.state in ("moving", "target_reached", "hold"):
             self._peak = max(self._peak, obs.shoulder_deg)
@@ -120,7 +153,16 @@ class ArmFSM:
 
     def _compensation(self, obs: ArmObservation) -> list[Event]:
         evs: list[Event] = []
-        if abs(obs.trunk_lean_deg) > self.lean_limit_deg and not self._lean_this_rep:
+        leaning = (
+            abs(obs.trunk_lean_deg) > self.lean_limit_deg
+            and obs.hip_visibility >= MIN_VISIBILITY
+        )
+        if not leaning:
+            self._lean_since = None
+        elif self._lean_since is None:
+            self._lean_since = obs.t
+        persisted = leaning and obs.t - (self._lean_since or obs.t) >= self.lean_persist_s
+        if persisted and not self._lean_this_rep:
             self._lean_this_rep = True
             self.lean_count += 1
             evs.append(
@@ -133,7 +175,8 @@ class ArmFSM:
                 )
             )
         hike = obs.shoulder_hike_norm - self._hike_baseline
-        if hike > self.hike_limit and not self._hike_this_rep:
+        shoulders_seen = obs.shoulders_visibility >= MIN_VISIBILITY
+        if hike > self.hike_limit and shoulders_seen and not self._hike_this_rep:
             self._hike_this_rep = True
             self.hike_count += 1
             evs.append(
@@ -149,6 +192,7 @@ class ArmFSM:
         if obs.shoulder_deg > self.start_below_deg + 5:
             self._peak, self._t_move, self._held, self._reason = obs.shoulder_deg, obs.t, 0.0, None
             self._lean_this_rep = self._hike_this_rep = False
+            self._lean_since = None
             return [self._go("moving", obs.t)]
         return []
 

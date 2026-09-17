@@ -74,6 +74,21 @@ def test_right_side_mirrors_left():
     assert abs(arm_angles(_res(figure(60, side="right")), "right")["shoulder_deg"] - 60) < 2
 
 
+def test_visibility_split_by_joint_group():
+    from praxis_session.perception.pose import PoseResult
+
+    vis = np.ones(33, np.float32)
+    vis[HIP[0]] = 0.9
+    vis[HIP[1]] = 0.2  # far hip hidden by the chair
+    vis[SHOULDER[1]] = 0.4  # far shoulder
+    res = PoseResult(
+        landmarks_px=figure(30), visibility=vis, world=np.zeros((33, 3), np.float32), conf=0.9
+    )
+    a = arm_angles(res, "left")
+    assert a["visibility"] == 0.9  # practising-side shoulder, elbow, hip
+    assert a["hip_visibility"] == 0.2 and a["shoulders_visibility"] == 0.4
+
+
 def test_one_euro_smooths_without_overshoot():
     f = OneEuro(min_cutoff=1.0, beta=0.0)
     ys = [f.filter(i / 30.0, 0.0 if i < 10 else 10.0) for i in range(60)]
