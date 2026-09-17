@@ -61,5 +61,49 @@ test('camera blocked offers a recorded session and the checklist shows five wait
   expect(screen.getByRole('alert')).toHaveTextContent('Camera blocked')
   expect(screen.getByRole('button', { name: 'Use a recorded session' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
-  expect(screen.getAllByText('Waiting')).toHaveLength(5)
+  expect(screen.getAllByText('Waiting')).toHaveLength(6)
+})
+
+test('sheet tasks show the overhead-mount diagram and copy; the arm task does not', () => {
+  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
+  const { unmount } = render(
+    <MemoryRouter initialEntries={['/setup?exercise=cup']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByRole('heading', { name: 'Mount the camera above the table' })).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /50 centimetres above the table/ })).toBeInTheDocument()
+  expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
+  unmount()
+  render(
+    <MemoryRouter initialEntries={['/setup?exercise=arm']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.queryByRole('heading', { name: 'Mount the camera above the table' })).not.toBeInTheDocument()
+})
+
+test('the angle row shows the service hint when the camera is too steep', () => {
+  mockStream({
+    type: 'setup_checks',
+    t: 0,
+    id: 1,
+    all_required_pass: false,
+    checks: [
+      {
+        id: 'angle',
+        label: 'Camera looks down at the sheet',
+        status: 'check',
+        hint: 'Mount the camera above the table, pointing straight down (a phone on a stand works).',
+      },
+    ],
+  })
+  render(
+    <MemoryRouter initialEntries={['/setup?exercise=nhpt']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText('Check')).toBeInTheDocument()
+  expect(screen.getByText(/a phone on a stand works/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
 })

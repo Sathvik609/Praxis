@@ -62,7 +62,7 @@ def test_presence_is_pending_before_window_fills():
     assert Presence().update(np.zeros((480, 640, 3), np.uint8))["present"] is None
 
 
-def test_build_checks_has_five_rows_in_wireframe_order():
+def test_build_checks_has_the_wireframe_rows_plus_angle_in_order():
     frame, _ = camera_frame(NHPT_BOARD)
     cal = Calibrator(NHPT_BOARD).run(frame)
     rows = build_checks(
@@ -72,8 +72,27 @@ def test_build_checks_has_five_rows_in_wireframe_order():
         task_area_in_view(cal, NHPT_BOARD, frame.shape),
         {"present": True},
     )
-    assert [r["id"] for r in rows] == ["camera", "person", "task_area", "markers", "lighting"]
+    assert [r["id"] for r in rows] == [
+        "camera",
+        "person",
+        "task_area",
+        "markers",
+        "angle",
+        "lighting",
+    ]
     assert all(r["status"] == "pass" for r in rows)
+
+
+def test_camera_angle_gate_from_calibration_tilt():
+    from praxis_session.perception.quality import camera_angle
+
+    frame, _ = camera_frame(NHPT_BOARD, tilt_deg=40, yaw_deg=5)
+    steep = camera_angle(Calibrator(NHPT_BOARD).run(frame))
+    assert steep["ok"] is False and steep["tilt_deg"] > 25 and "above the table" in steep["hint"]
+    flat = camera_angle(Calibrator(NHPT_BOARD).run(camera_frame(NHPT_BOARD, tilt_deg=10)[0]))
+    assert flat["ok"] is True and flat["hint"] is None
+    none = camera_angle(Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8)))
+    assert none["ok"] is None and none["tilt_deg"] is None
 
 
 def test_build_checks_marks_missing_markers_with_hint():

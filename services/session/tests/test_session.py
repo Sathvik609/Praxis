@@ -7,6 +7,47 @@ def make(mode="cup", tmp_path=None):
     return CoachSession(mode=mode, prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="t")
 
 
+# ---- Sprint D-CAL-2: auto-resume when tracking returns after a perception pause ----------
+
+
+def test_perception_pause_auto_resumes_when_tracking_returns(tmp_path):
+    s = make(mode="nhpt", tmp_path=tmp_path)
+    out = s.on_events([make_event("perception_lost", t=3.0, missing=[1, 2])], snapshot={}, t=3.0)
+    assert [x.type for x in out] == ["pause"] and out[0].payload["rule"] == "perception"
+    assert s.paused and s.pause_rule == "perception"
+    # still lost: nothing new, still paused
+    assert s.on_events([make_event("frame", t=3.5, calibrated=False, missing=[1, 2])], snapshot={}, t=3.5) == []
+    assert s.paused
+    out = s.on_events([make_event("perception_regained", t=4.0)], snapshot={}, t=4.0)
+    resume = next(x for x in out if x.type == "resume")
+    assert resume.payload["rule"] == "perception" and resume.payload["text"] == "Tracking is back. Carry on."
+    assert not s.paused and s.pause_rule is None
+    kinds = [(r["kind"], r.get("rule")) for r in s.trace.tail(10)]
+    assert ("resume", "perception") in kinds
+
+
+def test_patient_pause_is_not_cleared_by_tracking_regain(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.pause(t=1.0)  # rule="patient"
+    out = s.on_events([make_event("perception_regained", t=2.0)], snapshot={}, t=2.0)
+    assert not any(x.type == "resume" for x in out)
+    assert s.paused and s.pause_rule == "patient"
+
+
+def test_other_rule_pauses_are_not_cleared_by_tracking_regain(tmp_path):
+    s = make(mode="arm", tmp_path=tmp_path)
+    s.on_events([make_event("compensation_lean", t=5.0, lean_deg=15, count=3, flagged=True)], snapshot={}, t=5.0)
+    assert s.paused and s.pause_rule == "lean"
+    out = s.on_events([make_event("perception_regained", t=6.0)], snapshot={}, t=6.0)
+    assert not any(x.type == "resume" for x in out) and s.paused
+
+
+def test_regain_without_a_pause_emits_nothing(tmp_path):
+    s = make(mode="nhpt", tmp_path=tmp_path)
+    out = s.on_events([make_event("perception_regained", t=6.0)], snapshot={}, t=6.0)
+    assert not any(x.type == "resume" for x in out) and not s.paused
+
+
 def test_events_flow_through_stop_rules_then_coach(tmp_path):
     s = make(tmp_path=tmp_path)
     e = make_event("reach_complete", t=5.0, to_dot=1, from_dot=0, verified=True, reason=None, reach_ms=1200, arc=1, phase="slow")

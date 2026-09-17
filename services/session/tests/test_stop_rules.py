@@ -50,3 +50,13 @@ def test_perception_loss_pauses_and_exertion_forces_rest():
     evs = sr.on_exertion({"level": "high", "reasons": ["RPE 8/10"]}, high_for_s=61.0, t=100.0)
     assert types(evs) == ["rest", "therapist_flag"] and evs[0].payload["rule"] == "exertion"
     assert sr.on_exertion({"level": "high", "reasons": []}, high_for_s=70.0, t=101.0) == []  # once per episode
+
+
+def test_perception_pause_says_it_will_carry_on_and_fires_again_after_regain():
+    """D-CAL-2: the pause copy promises auto-resume; a second loss after a regain pauses again."""
+    sr = StopRules(SEED_PRESCRIPTION)
+    evs = sr.on_events([make_event("perception_lost", t=3.0, missing=[1, 2])])
+    assert types(evs) == ["pause"] and evs[0].payload["missing"] == [1, 2]
+    assert "carry on" in evs[0].payload["text"].lower()
+    assert sr.on_events([make_event("perception_regained", t=4.0)]) == []
+    assert types(sr.on_events([make_event("perception_lost", t=9.0, missing=[0])])) == ["pause"]
