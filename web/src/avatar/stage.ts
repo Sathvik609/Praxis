@@ -7,7 +7,7 @@ export const STAGE_CENTRE = '#0F262B'
 export const MINT = 0x2fa985
 export const AMBER = 0xc97f14
 export const RED = 0xb9382b
-export const AQUA = 0x74c5ad
+export const AQUA = 0x55b296
 
 /** Renderer with filmic tone mapping and soft shadow maps. Throws when WebGL is unavailable. */
 export function makeRenderer(canvas?: HTMLCanvasElement): THREE.WebGLRenderer {
@@ -51,7 +51,7 @@ export function makeBodyMaterial(): THREE.MeshPhysicalMaterial {
     clearcoatRoughness: 0.5,
     sheen: 0.4,
     sheenColor: new THREE.Color(0xbff5e6),
-    envMapIntensity: 0.45,
+    envMapIntensity: 0.4,
   })
   m.onBeforeCompile = (shader) => {
     shader.fragmentShader = shader.fragmentShader.replace(
@@ -110,9 +110,9 @@ export function makeStage(scene: THREE.Scene, renderer: THREE.WebGLRenderer, flo
   ring.position.y = floorY + 0.001
   group.add(ring)
 
-  const hemi = new THREE.HemisphereLight(0x9fe2cf, 0x050e10, 0.45)
+  const hemi = new THREE.HemisphereLight(0x9fe2cf, 0x050e10, 0.35)
   group.add(hemi)
-  const key = new THREE.DirectionalLight(0xfff4e6, 1.15)
+  const key = new THREE.DirectionalLight(0xfff4e6, 1.25)
   key.position.set(1.5, 3.5, 2.5)
   key.castShadow = true
   key.shadow.mapSize.set(1024, 1024)
