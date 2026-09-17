@@ -259,10 +259,12 @@ async def session_ws(
     debounce: int = 2,
     clear: int = 3,
     side: str = "left",
-    target: float = 90.0,
-    hold: float = 3.0,
-    sets: int = 2,
-    reps: int = 8,
+    exercise: str | None = None,
+    tier: str = "full",
+    target: float | None = None,
+    hold: float | None = None,
+    sets: int | None = None,
+    reps: int | None = None,
     replay: str | None = None,
     for_mode: str = Query("", alias="for"),
     token: str | None = None,
@@ -271,6 +273,10 @@ async def session_ws(
 
     One pipeline per connection; every event goes to the shared ring and back over the socket
     as one JSON text message per event. Frames are decoded in memory and dropped.
+
+    Sprint E: `mode=arm` takes `exercise` (a `perception/exercises.py` id; default `flexion`,
+    which behaves exactly as Arm to the front always did) and `tier` (`full`/`gentle`, the
+    pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
     """
     if user_for_token(token or _bearer(ws.headers.get("authorization"))) is None:
         await ws.close(code=4401)  # handshake refused: sign in first
@@ -295,6 +301,8 @@ async def session_ws(
                 sets=sets,
                 reps=reps,
                 for_mode=for_mode or None,
+                exercise=exercise,
+                tier=tier,
             )
         except ValueError:
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())

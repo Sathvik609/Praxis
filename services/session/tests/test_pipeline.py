@@ -391,3 +391,75 @@ def test_nhpt_next_hole_is_null_in_any_hole_mode():
     frame, _ = camera_frame(NHPT_BOARD)
     d = p.process(frame, 0.0, 0)[0].to_dict()
     assert d["calibrated"] and d["overlay"]["next_hole"] is None
+
+
+# ---- Sprint E: the registry drives arm mode ---------------------------------------------
+def _pose_res(lm):
+    from praxis_session.perception.pose import PoseResult
+
+    return PoseResult(
+        landmarks_px=lm,
+        visibility=np.ones(33, np.float32),
+        world=np.zeros((33, 3), np.float32),
+        conf=0.9,
+    )
+
+
+def test_arm_mode_runs_a_front_view_exercise_from_the_registry():
+    """Gentle abduction: front view, target 60, 2 s hold - all from `perception/exercises.py`."""
+    from praxis_session.schema import validate_event
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left",
+        exercise="abduction", tier="gentle", sets=1, reps=1,
+    )
+    assert p._arm is not None and p._arm.target_deg == 60.0 and p._arm.hold_s == 2.0
+    profile = [5 + 60 * i / 15 for i in range(16)] + [65] * 40 + [65 - 60 * i / 15 for i in range(16)] + [5] * 8
+    evs = []
+    for i, ang in enumerate(profile):
+        evs += p.process_pose(_pose_res(figure(ang, frontal=True)), t=i / 15.0, frame_index=i)
+    types = [e.type for e in evs]
+    assert types.count("rep_complete") == 1 and "arm_complete" in types
+    assert types.count("exercise_start") == 1
+    fr = [e for e in evs if e.type == "frame"][20].to_dict()
+    validate_event(fr)
+    arm = fr["arm"]
+    assert arm["exercise"] == "abduction" and arm["view_required"] == "front"
+    assert arm["tier"] == "gentle" and arm["gate"] is None
+    assert arm["phase"] in ("lift", "hold") and 0.0 <= arm["rep_progress"] <= 1.0
+    assert fr["arm"]["angles"]["metric"] == "abduction"
+
+
+def test_front_view_exercise_gates_when_the_patient_is_side_on():
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left",
+        exercise="abduction", sets=1, reps=1,
+    )
+    evs = []
+    for i, ang in enumerate([5 + 85 * i / 15 for i in range(16)] + [90] * 20):
+        evs += p.process_pose(_pose_res(figure(ang)), t=i / 15.0, frame_index=i)  # side view
+    assert [e for e in evs if e.type in ("state_change", "rep_complete")] == []
+    assert [e.to_dict() for e in evs if e.type == "frame"][10]["arm"]["gate"] == "turn_front"
+
+
+def test_pendulum_mode_counts_swings_without_a_hold():
+    import math
+
+    from tests.test_exercises import swing_figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left",
+        exercise="pendulum", sets=1, reps=2,
+    )
+    evs = []
+    for i in range(int(15 * 4)):
+        deg = 22.0 * math.sin(2 * math.pi * i / 15.0)
+        evs += p.process_pose(_pose_res(swing_figure(deg)), t=i / 15.0, frame_index=i)
+    types = [e.type for e in evs]
+    assert types.count("rep_complete") == 2 and "arm_complete" in types
+    assert "hold_too_short" not in types
+    fr = [e for e in evs if e.type == "frame"][10].to_dict()
+    assert fr["arm"]["kind"] == "oscillation" and fr["overlay"]["ghost_target_px"] is None

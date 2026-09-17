@@ -34,8 +34,8 @@ Metric = Callable[[PoseResult, str], float]
 View = Literal["side", "front"]
 Kind = Literal["hold", "oscillation"]
 
-# Optional targets from the labeled set (mean - 1 sd of correct reps). The file is produced by
-# `evaluation/`; the registry works without it.
+# Optional targets from the labeled reference set. The file is produced by `evaluation/`; the
+# registry works without it and falls back to the constants below.
 REFERENCE_PATH = Path(__file__).resolve().parents[3] / "evaluation" / "results" / "rehab_reference_ranges.json"
 
 
@@ -85,11 +85,27 @@ class Exercise:
         }
 
 
-def load_reference_ranges(path: Path | None = None) -> dict[str, float]:
-    """`{exercise_id: target_deg}` from the labeled set, or `{}` when the file is absent.
+def _mean_minus_sd(block: Any) -> float | None:
+    if not isinstance(block, dict):
+        return None
+    mean = next((block[k] for k in ("mean", "mean_deg") if isinstance(block.get(k), (int, float))), None)
+    if mean is None:
+        return None
+    sd = next((block[k] for k in ("sd", "sd_deg", "std", "std_deg") if isinstance(block.get(k), (int, float))), 0.0)
+    return float(mean) - float(sd)
 
-    Accepted shapes per exercise: `{"target_deg": x}`, or a mean and a standard deviation
-    (`mean_deg`/`mean` with `sd_deg`/`sd`/`std_deg`/`std`) from which we take mean - 1 sd.
+
+def load_reference_ranges(path: Path | None = None) -> dict[str, float]:
+    """`{exercise_id: reference_deg}` from the labeled reference set, or `{}` when the file is
+    absent or unreadable.
+
+    The shipped file (`evaluation/results/rehab_reference_ranges.json`) holds, per exercise, a
+    `source` and `correct` / `incorrect` / `correct_healthy` blocks of `{mean, sd, n}`. We take
+    **mean - 1 sd of the correct reps**. These are Kinect body-frame peaks from *healthy adults*
+    (flexion ~160°, abduction ~155°), far above the GRASP ceiling, so `build_registry`
+    clamps every target to the exercise's own `ceiling_deg` — the reference never raises a
+    ceiling, it only ever lowers a target. `{"target_deg": x}` and a flat `{mean, sd}` are also
+    accepted so an earlier or later file shape still loads.
     """
     p = REFERENCE_PATH if path is None else path
     try:
@@ -104,10 +120,12 @@ def load_reference_ranges(path: Path | None = None) -> dict[str, float]:
         if isinstance(val.get("target_deg"), (int, float)):
             out[key] = float(val["target_deg"])
             continue
-        mean = next((val[k] for k in ("mean_deg", "mean") if isinstance(val.get(k), (int, float))), None)
-        sd = next((val[k] for k in ("sd_deg", "sd", "std_deg", "std") if isinstance(val.get(k), (int, float))), 0.0)
-        if mean is not None:
-            out[key] = float(mean) - float(sd)
+        deg = next(
+            (d for d in (_mean_minus_sd(val.get("correct")), _mean_minus_sd(val.get("correct_healthy")), _mean_minus_sd(val)) if d is not None),
+            None,
+        )
+        if deg is not None:
+            out[key] = deg
     return out
 
 
@@ -202,16 +220,19 @@ _BASE: tuple[Exercise, ...] = (
 )
 
 
-def _with_reference_targets(items: tuple[Exercise, ...]) -> dict[str, Exercise]:
-    ranges = load_reference_ranges()
+def build_registry(ranges: dict[str, float] | None = None, items: tuple[Exercise, ...] = _BASE) -> dict[str, Exercise]:
+    """The registry with reference targets applied where we have them. `None` reads the file;
+    `{}` keeps every constant above. A reference can only lower a target, never raise the
+    ceiling."""
+    ranges = load_reference_ranges() if ranges is None else ranges
     out: dict[str, Exercise] = {}
     for ex in items:
-        target = ranges.get(ex.id)
-        out[ex.id] = ex if target is None else replace(ex, target_deg=min(float(target), ex.ceiling_deg))
+        ref = ranges.get(ex.id)
+        out[ex.id] = ex if ref is None else replace(ex, target_deg=min(float(ref), ex.ceiling_deg))
     return out
 
 
-EXERCISES: dict[str, Exercise] = _with_reference_targets(_BASE)
+EXERCISES: dict[str, Exercise] = build_registry()
 ORDER: tuple[str, ...] = tuple(ex.id for ex in _BASE)
 DEFAULT_ID = "flexion"
 # The gentle tier (pain 4-6) keeps the four exercises that stay below shoulder height or below

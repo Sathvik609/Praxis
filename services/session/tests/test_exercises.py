@@ -130,14 +130,49 @@ def test_unknown_exercise_falls_back_to_flexion():
     assert get("pendulum").id == "pendulum"
 
 
-def test_reference_ranges_loader_reads_mean_minus_one_sd(tmp_path, monkeypatch):
+def test_reference_ranges_loader_reads_mean_minus_one_sd_of_correct_reps(tmp_path, monkeypatch):
+    """The shipped file is healthy-adult Kinect peaks with correct/incorrect blocks."""
     import json
 
     import praxis_session.perception.exercises as ex_mod
 
     path = tmp_path / "rehab_reference_ranges.json"
-    path.write_text(json.dumps({"exercises": {"abduction": {"mean_deg": 80.0, "sd_deg": 6.0}}}))
+    path.write_text(
+        json.dumps(
+            {
+                "exercises": {
+                    "abduction": {
+                        "source": "UI-PRMD m07",
+                        "correct": {"mean": 155.0, "sd": 9.0, "n": 90},
+                        "incorrect": {"mean": 120.0, "sd": 20.0, "n": 90},
+                        "correct_healthy": {"mean": 158.0, "sd": 8.0, "n": 40},
+                    },
+                    "internal_rotation": {"correct": {"mean": 30.0, "sd": 8.0, "n": 30}},
+                    "bogus": "not a block",
+                }
+            }
+        )
+    )
     monkeypatch.setattr(ex_mod, "REFERENCE_PATH", path)
     ranges = ex_mod.load_reference_ranges()
-    assert ranges["abduction"] == pytest.approx(74.0)
+    assert ranges["abduction"] == pytest.approx(146.0)
+    assert ranges["internal_rotation"] == pytest.approx(22.0)
+    assert "bogus" not in ranges
+
+
+def test_registry_falls_back_to_constants_without_the_reference_file(tmp_path):
+    import praxis_session.perception.exercises as ex_mod
+
     assert ex_mod.load_reference_ranges(tmp_path / "missing.json") == {}
+    plain = ex_mod.build_registry({})
+    assert plain["scaption"].target_deg == 75.0 and plain["internal_rotation"].target_deg == 25.0
+
+
+def test_reference_targets_are_clamped_to_the_in_code_ceiling():
+    """Healthy-adult references sit far above the GRASP ceiling; they may lower a target but
+    must never raise one."""
+    import praxis_session.perception.exercises as ex_mod
+
+    reg = ex_mod.build_registry({"abduction": 146.0, "internal_rotation": 22.0})
+    assert reg["abduction"].target_deg == 90.0 == reg["abduction"].ceiling_deg
+    assert reg["internal_rotation"].target_deg == 22.0
