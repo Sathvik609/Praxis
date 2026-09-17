@@ -156,6 +156,7 @@ export function Go() {
                 compact: true,
                 aspect: '4/5',
               })}
+              paced={a && !a.finished ? repProgress(a) : null}
             />
           </div>
           <div className="h-3 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="progress through this rep" aria-valuenow={Math.round(repProgress(a) * 100)} aria-valuemin={0} aria-valuemax={100}>

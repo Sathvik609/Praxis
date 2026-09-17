@@ -69,3 +69,18 @@ test('every rehab clip drives the skeleton without a WebGL context and the arc t
   }
   fig.dispose()
 })
+
+import { advanceClock } from './scene'
+
+test('a paced clock eases toward the target time instead of free-running', () => {
+  const clip = { duration: 4, loop: true }
+  const clock: import('./scene').Clock = { time: 0, playing: true, speed: 1, target: 2 }
+  advanceClock(clock, 0.1, clip)
+  expect(clock.time).toBeGreaterThan(0)
+  expect(clock.time).toBeLessThan(2)
+  for (let i = 0; i < 100; i++) advanceClock(clock, 0.1, clip)
+  expect(clock.time).toBeCloseTo(2, 2)
+  clock.target = null
+  advanceClock(clock, 0.5, clip)
+  expect(clock.time).toBeCloseTo(2.5, 5)
+})

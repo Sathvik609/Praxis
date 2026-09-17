@@ -12,7 +12,28 @@ import { AMBER, MINT, makeRenderer, makeStage } from './stage'
 export type Projection = Record<string, { x: number; y: number }>
 
 /** Mutable playback state owned by the panel and advanced by the stage's loop. */
-export type Clock = { time: number; playing: boolean; speed: number }
+export type Clock = { time: number; playing: boolean; speed: number; target?: number | null }
+
+/** Advance the clip clock by `dt` seconds. When `clock.target` is set (a clip time the figure
+ *  should be at, derived from the patient's own rep progress) the clock eases toward it instead
+ *  of free-running, so the figure lifts, holds and lowers with the person. Pure; unit-tested. */
+export function advanceClock(clock: Clock, dt: number, clip: { duration: number; loop: boolean }): { ended: boolean } {
+  if (clock.target != null) {
+    const target = Math.max(0, Math.min(clip.duration, clock.target))
+    const k = Math.min(1, dt * 6)
+    clock.time += (target - clock.time) * k
+    if (Math.abs(target - clock.time) < 0.005) clock.time = target
+    return { ended: false }
+  }
+  if (clock.playing) clock.time += dt
+  if (!clip.loop && clock.time * clock.speed >= clip.duration) {
+    clock.time = clip.duration / clock.speed
+    const ended = clock.playing
+    clock.playing = false
+    return { ended }
+  }
+  return { ended: false }
+}
 export type Tick = { caption: string; step: number; ended: boolean; t: number; angleDeg: number | null }
 /** How the rig is drawn: the ceramic mannequin or the glowing skeleton with the angle arcs. */
 export type FigureMode = 'body' | 'skeleton'
@@ -244,13 +265,7 @@ export class AvatarStage {
     const dt = this.frames === 0 ? 0 : Math.min(0.1, (now - this.last) / 1000)
     this.last = now
     const clock = p.clock.current
-    if (clock.playing) clock.time += dt
-    let ended = false
-    if (!p.clip.loop && clock.time * clock.speed >= p.clip.duration) {
-      clock.time = p.clip.duration / clock.speed
-      if (clock.playing) ended = true
-      clock.playing = false
-    }
+    const { ended } = advanceClock(clock, dt, p.clip)
     if (!this.props || this.props.clip !== p.clip) this.buildProps(p.clip)
     const wanted = p.figure ?? 'body'
     if (wanted !== this.mode) this.setFigure(wanted)

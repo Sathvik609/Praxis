@@ -3,7 +3,7 @@ import { Button } from '../design/Button'
 import { AvatarScene, type Clock, type FigureMode, type Projection, type Tick } from './AvatarScene'
 import { CLIPS, type Clip, mirror } from './clips'
 import { MARKER_STYLE, type Marker } from './markers'
-import { REHAB_CLIPS, type RehabClipName, isRehabClip } from './rehabClips'
+import { LOOP_BRIDGE_S, REHAB_CLIPS, type RehabClipName, isRehabClip } from './rehabClips'
 import { sample } from './sampler'
 
 export type ClipName = keyof typeof CLIPS | RehabClipName
@@ -24,6 +24,10 @@ type Props = {
   /** Ceramic mannequin or glowing skeleton with angle arcs; defaults to skeleton for the
    *  real-motion rehab clips and body for the three exercise clips and idle. */
   figure?: FigureMode
+  /** Rep progress 0..1 from the camera (lift 0–0.4, hold 0.4–0.8, lower 0.8–1). When given, the
+   *  figure is paced by the patient instead of looping on its own; null = free-running. The
+   *  camera still does the scoring; this only decides where the reference figure is. */
+  paced?: number | null
   className?: string
 }
 
@@ -45,7 +49,7 @@ const LABEL_GAP = 44
 const CAPTION_H = 48 // caption bar height reserved at the bottom of the stage
 
 /** The one avatar: a pacing reference on a dark stage. It never scores the patient. */
-export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'left', markers: markersIn, onMarkerTap, compact = false, showCues = true, onStep, aspect, figure, className = '' }: Props) {
+export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, camera, side = 'left', markers: markersIn, onMarkerTap, compact = false, showCues = true, onStep, aspect, figure, className = '' }: Props) {
   const clip: Clip = useMemo(() => (side === 'right' ? mirror(clipByName(clipName)) : clipByName(clipName)), [clipName, side])
   const mode: FigureMode = figure ?? (isRehabClip(clipName) ? 'skeleton' : 'body')
   // a rehab clip always labels its focus joint (colour never carries the meaning alone)
@@ -80,6 +84,11 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
   useEffect(() => {
     clock.current.time = 0
   }, [clip])
+  useEffect(() => {
+    // Map rep progress onto the clip timeline (before the loop bridge at the end).
+    const span = Math.max(0.1, clip.duration - (clip.loop ? LOOP_BRIDGE_S : 0))
+    clock.current.target = paced == null ? null : Math.max(0, Math.min(1, paced)) * span
+  }, [paced, clip])
 
   const stepRef = useRef(1)
   const onTick = useCallback(
@@ -222,7 +231,7 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
           {view === 'side' ? 'side view' : 'front view'} · {speed}× · {mode === 'skeleton' ? 'skeleton view' : 'same figure as Home'}
         </div>
         {mode === 'skeleton' && clip.arc && showCues && (
-          <div data-testid="arc-readout" className="absolute right-3 top-2 max-w-[58%] truncate rounded-full bg-black/45 px-3 py-1 text-base text-white">
+          <div data-testid="arc-readout" className={`absolute right-3 ${captions ? 'bottom-16' : 'bottom-3'} max-w-[70%] truncate rounded-full bg-black/45 px-3 py-1 text-base text-white`}>
             <span className="text-[#F2B457]">target {Math.round(clip.arc.targetDeg)}°</span>
             {angle !== null && <span className="text-[#7FE0C4]"> · figure {angle}°</span>}
             {clip.source && <span className="text-white/70"> · {clip.source}</span>}
