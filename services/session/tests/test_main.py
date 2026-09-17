@@ -1,3 +1,5 @@
+import json
+
 import cv2
 import numpy as np
 
@@ -199,3 +201,24 @@ def test_ws_replay_streams_a_recorded_clip_without_client_frames(client):
 def test_ws_replay_unknown_clip_errors(client):
     with client.websocket_connect("/session?mode=nhpt&replay=nope") as ws:
         assert ws.receive_json()["code"] == "bad_replay"
+
+
+def test_ws_replay_coach_keeps_speaking_after_an_answer(client):
+    """Replay frames carry clip time; commands must use the same clock or the coach's
+    rate limiter silences every later instruct cue (audit 17 Sep, A2)."""
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets&replay=synthetic_cup_01&clear=1") as ws:
+        assert ws.receive_json()["type"] == "replay_start"
+        prompt_seen = False
+        after_answer: list[str] = []
+        for _ in range(4000):
+            e = ws.receive_json()
+            if e["type"] == "replay_end":
+                break
+            if e["type"] == "coach" and not prompt_seen and e.get("ui", {}).get("prompt"):
+                prompt_seen = True
+                ws.send_text(json.dumps({"cmd": "answer", "prompt": "progression", "choice": "Yes, go faster"}))
+                continue
+            if prompt_seen and e["type"] == "coach" and e["action"] == "instruct":
+                after_answer.append(e["cue_id"])
+    assert prompt_seen, "the progression prompt never appeared on the synthetic cup clip"
+    assert after_answer, "no instruct cue after the answer: replay commands used wall-clock time"

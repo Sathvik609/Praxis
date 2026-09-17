@@ -247,10 +247,13 @@ async def session_ws(
         return
 
 
-def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None) -> list:
-    """Text commands from the browser: pipeline commands and coach-session inputs."""
+def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> list:
+    """Text commands from the browser: pipeline commands and coach-session inputs.
+
+    `now` is wall-clock for live sessions and clip time in replay, so the coach's cooldowns
+    and the exertion timer see one clock."""
     name = cmd.get("cmd")
-    now = time.time()
+    now = time.time() if now is None else now
     out: list = []
     if pipeline is None or coach is None:
         return [make_event("command", cmd=name, ok=False, error="no pipeline")]
@@ -327,7 +330,7 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
                         cmd = json.loads(msg["text"])
                     except json.JSONDecodeError:
                         cmd = {}
-                    for e in _handle_command(cmd, pipeline, coach):
+                    for e in _handle_command(cmd, pipeline, coach, now=pipeline._last_t):
                         ring.append(e)
                         await ws.send_text(e.to_json())
             except asyncio.TimeoutError:
@@ -341,7 +344,7 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
                     cmd = json.loads(msg["text"])
                 except json.JSONDecodeError:
                     cmd = {}
-                for e in _handle_command(cmd, pipeline, coach):
+                for e in _handle_command(cmd, pipeline, coach, now=pipeline._last_t):
                     ring.append(e)
                     await ws.send_text(e.to_json())
     except WebSocketDisconnect:

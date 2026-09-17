@@ -38,7 +38,7 @@ export function LiveCup() {
   const side = sp.get('side') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params })
+  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const coach = useCoach(events, { speak: browserSpeak })

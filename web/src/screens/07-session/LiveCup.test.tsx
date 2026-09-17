@@ -54,3 +54,9 @@ test('completion opens the feedback overlay', () => {
   renderAt('/session?exercise=cup&side=left')
   expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })
+
+test('replay query is passed to the stream so no webcam is opened', () => {
+  mockStream([])
+  renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
+  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_cup_01' }))
+})
