@@ -42,3 +42,6 @@ traces/*.jsonl
 services/session/web_dist/
 services/session/data/
 web/*.tsbuildinfo
+
+# Public rehab motion datasets (downloaded by services/session/tools/fetch_rehab_datasets.py, never committed)
+evaluation/external/
