@@ -21,7 +21,7 @@
  "rep_precision": 1.0,
  "rep_recall": 1.0,
  "rep_f1": 1.0,
- "nhpt_mae_s": 0.1,
+ "nhpt_mae_s": 0.2,
  "n_synthetic": 3,
  "n_real": 0,
  "entries": [
@@ -37,8 +37,8 @@
    "fn": 0,
    "misses": [],
    "nhpt_labeled_s": 17.0,
-   "nhpt_pred_s": 17.1,
-   "nhpt_abs_err_s": 0.1
+   "nhpt_pred_s": 17.2,
+   "nhpt_abs_err_s": 0.2
   },
   {
    "id": "synthetic_cup_01",
