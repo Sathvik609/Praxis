@@ -9,6 +9,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with: { version: "0.12.13" }
       - run: uv sync
+      - uses: actions/cache@v4
+        with:
+          path: services/session/models
+          key: opencv-zoo-models-${{ hashFiles('services/session/tools/fetch_models.py') }}
       - run: uv run python tools/fetch_models.py
       - run: uv run ruff check .
       - run: uv run pytest -q

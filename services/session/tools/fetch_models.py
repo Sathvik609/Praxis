@@ -8,6 +8,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import sys
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -45,6 +47,20 @@ def verify(path: Path, expected: str) -> bool:
     return path.exists() and sha256(path) == expected
 
 
+def download(url: str, path: Path, attempts: int = 5) -> None:
+    """GitHub's LFS media host answers 503 now and then (CI, 17 Sep); retry with backoff."""
+    for i in range(attempts):
+        try:
+            urllib.request.urlretrieve(url, path)
+            return
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as e:
+            if i == attempts - 1:
+                raise
+            wait = 2 ** i * 3
+            print(f"retry  {path.name} in {wait}s ({e})", file=sys.stderr)
+            time.sleep(wait)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=str(DEFAULT_DIR))
@@ -57,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
             print("ok     ", name)
             continue
         print("fetch  ", name)
-        urllib.request.urlretrieve(url, path)
+        download(url, path)
         if not verify(path, digest):
             print("CHECKSUM MISMATCH", name, file=sys.stderr)
             path.unlink(missing_ok=True)
