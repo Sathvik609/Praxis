@@ -43,13 +43,13 @@ export const ASSIGNED_TODAY: ExerciseId[] = ['cup', 'arm']
 
 export const WEEK = { days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], done: [true, true, false, true], todayIndex: 4, sessions: 3, minutes: 42, lastSession: '8 verified · pain 2→2' }
 
-export const REGIONS: Record<string, { title: string; status: Marker['status']; setBy: string; metrics: { value: string; label: string; delta?: string }[]; program: { name: string; tag: string }[]; primary: { label: string; to: string } }> = {
+export const REGIONS: Record<string, { title: string; status: Marker['status']; setBy: string; metrics: { value: string; unit?: string; label: string; delta?: string }[]; program: { name: string; tag: string }[]; primary: { label: string; to: string } }> = {
   lWrist: { title: 'Left hand', status: 'focus', setBy: 'Set by your program · updated today',
-    metrics: [{ value: '41.2 s', label: 'Nine-Hole Peg Test · 12 Sep', delta: '−2.8 s' }, { value: '38 mm', label: 'pinch opening' }, { value: '17', label: 'verified reaches, last' }],
+    metrics: [{ value: '41.2', unit: 's', label: 'Nine-Hole Peg Test · 12 Sep', delta: '−2.8 s' }, { value: '38', unit: 'mm', label: 'pinch opening' }, { value: '17', label: 'verified reaches, last' }],
     program: [{ name: 'Nine-Hole Peg Test', tag: 'weekly' }, { name: 'Waiter – cup', tag: 'camera' }, { name: 'Block towers', tag: 'instructions' }],
     primary: { label: 'Run the peg test', to: '/session?exercise=nhpt&hand=left' } },
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
-    metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2 of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
+    metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2', unit: 'of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
     program: [{ name: 'Arm to the front', tag: 'camera' }],
     primary: { label: 'Practise Arm to the front', to: '/demo?exercise=arm&side=left' } },
   lElbow: { title: 'Left elbow', status: 'stable', setBy: 'No exercise assigned here',
