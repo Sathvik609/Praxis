@@ -90,9 +90,20 @@ export function Progress() {
         <div className="space-y-6">
           <Card title="Practice">
             <div className="flex flex-wrap gap-8">
-              <Stat value={`${p.practice.done}/${p.practice.planned}`} label="planned sessions done" />
-              <Stat value={p.practice.hours} unit="h" label="active time, 4 weeks" />
+              {p.practice.planned == null ? (
+                <Stat value={p.practice.done} label="sessions recorded here" />
+              ) : (
+                <Stat value={`${p.practice.done}/${p.practice.planned}`} label="planned sessions done" />
+              )}
+              <Stat value={p.practice.hours} unit="h" label="active time · rests excluded" />
             </div>
+            {p.sample && (
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-base text-muted">
+                <Chip tone="neutral">Sample</Chip>
+                <span>{`${p.sample.done}/${p.sample.planned}`}</span>
+                <span>planned · {p.sample.hours} h · illustrative history, not added to yours</span>
+              </p>
+            )}
           </Card>
           <Card title="Pain and effort">
             <p className="-mt-3 text-muted">What you reported, per session</p>

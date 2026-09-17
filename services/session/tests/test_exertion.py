@@ -40,3 +40,13 @@ def test_high_for_seconds_tracks_duration():
     assert ex.high_for_s(10.0) == 10.0
     ex.update([], rpe=2, t=20.0)
     assert ex.high_for_s(25.0) == 0.0
+
+
+def test_rpe_contribution_halves_every_two_minutes_of_low_behaviour():
+    ex = Exertion(SEED_PRESCRIPTION)
+    assert ex.update([], rpe=8, t=0.0)["level"] == "high"  # 1.5
+    s = ex.update([], t=120.0)
+    assert s["level"] == "moderate" and s["score"] == 0.75 and any("RPE 8" in r for r in s["reasons"])
+    s = ex.update([], t=240.0)
+    assert s["level"] == "low" and s["score"] == 0.38
+    assert ex.update([], rpe=8, t=300.0)["level"] == "high"  # a fresh RPE starts again

@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SESSION, mockApi } from '../../test/api-mock'
 import { Progress } from './Progress'
 
-const PROGRESS = { nhpt_trend: [{ date: '2026-08-01', total_s: 68 }, { date: '2026-09-12', total_s: 41.2 }], verified_per_session: [{ date: '2026-07-10', verified: 5, limited: false, mode: 'cup' }, { date: '2026-09-10', verified: 8, limited: true, mode: 'cup' }, { date: '2026-09-12', verified: 17, limited: false, mode: 'cup' }, { date: '2026-09-11', verified: 14, limited: false, mode: 'arm' }], practice: { done: 19, planned: 22, hours: 3.4 }, pain_effort: [{ date: '2026-09-08', pain_after: 5, effort: 7, ended_early: true }], goal_log_count: 6 }
+const PROGRESS = { nhpt_trend: [{ date: '2026-08-01', total_s: 68 }, { date: '2026-09-12', total_s: 41.2 }], verified_per_session: [{ date: '2026-07-10', verified: 5, limited: false, mode: 'cup' }, { date: '2026-09-10', verified: 8, limited: true, mode: 'cup' }, { date: '2026-09-12', verified: 17, limited: false, mode: 'cup' }, { date: '2026-09-11', verified: 14, limited: false, mode: 'arm' }], practice: { done: 1, planned: null, hours: 0.2 }, adherence_pct: null, sample: { done: 19, planned: 22, hours: 3.4, illustrative: true as const }, pain_effort: [{ date: '2026-09-08', pain_after: 5, effort: 7, ended_early: true }], goal_log_count: 6 }
 const SESSIONS = { sessions: [SESSION, { ...SESSION, id: 'lim', tracking: 'limited', status: 'complete', title: 'Waiter – cup', date: '2026-09-10' }, { ...SESSION, id: 'early', mode: 'arm', status: 'ended_early', title: 'Arm to the front', date: '2026-09-08', feedback: { pain_after: 5 } }] }
 
 function renderProgress() {
@@ -26,7 +26,12 @@ test('progress shows NHPT trend, verified bars with unverified hatched, practice
   expect(screen.getByRole('img', { name: /Nine-Hole Peg Test.*68 s.*41\.2 s/ })).toBeInTheDocument()
   const bars = screen.getByRole('img', { name: /Waiter – cup/ })
   expect(bars).toHaveAccessibleName(/09-10 8 reaches unverified/)
+  // real practice numbers, and the wireframe's sample history labeled as such next to them
+  expect(screen.getByText('sessions recorded here')).toBeInTheDocument()
+  expect(screen.getByText('active time · rests excluded')).toBeInTheDocument()
+  expect(screen.getByText('Sample')).toBeInTheDocument()
   expect(screen.getByText('19/22')).toBeInTheDocument()
+  expect(screen.getByText(/not added to yours/)).toBeInTheDocument()
   expect(screen.getAllByText('Limited tracking').length).toBeGreaterThan(0)
   expect(screen.getByText(/session ended early/)).toBeInTheDocument()
   expect(screen.getByText(/No recovery score is calculated/)).toBeInTheDocument()

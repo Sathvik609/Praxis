@@ -81,3 +81,47 @@ def test_summary_carries_task_measurements(tmp_path):
                  make_event("compensation_lean", t=6.0, lean_deg=14, count=1, flagged=False)], snapshot={}, t=6.0)
     cam = a.summary(t=7.0)["camera"]
     assert cam["peak_deg"] == [88.0] and cam["peak_verified"] == [True] and cam["posture_cues"] == 1
+
+
+def reach(t, verified=True):
+    return make_event("reach_complete", t=t, to_dot=1, from_dot=0, verified=verified, reason=None if verified else "cup_occluded", reach_ms=1200, arc=1, phase="slow")
+
+
+def test_active_time_excludes_paused_and_rest_time(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.on_events([reach(0.0)], snapshot={}, t=0.0)
+    s.pause(t=10.0)  # patient tap
+    s.resume(t=30.0)
+    s.on_events([reach(40.0)], snapshot={}, t=40.0)
+    assert s.summary(t=40.0)["camera"]["active_s"] == 20.0
+    assert s.summary(t=40.0)["camera"]["paused_s"] == 20.0
+    # a stop-rule pause counts the same way, and an open pause is excluded up to `t`
+    s.on_events([make_event("perception_lost", t=50.0, missing=[1])], snapshot={}, t=50.0)
+    assert s.paused
+    assert s.summary(t=60.0)["camera"]["active_s"] == 30.0
+    s.resume(t=65.0)
+    # a forced rest stops the clock until the patient taps "Rested — continue"
+    s._log_stop([make_event("rest", t=70.0, rule="exertion", text="rest")])
+    s.resume(t=80.0)
+    s.on_events([reach(90.0)], snapshot={}, t=90.0)
+    assert s.summary(t=90.0)["camera"]["paused_s"] == 45.0  # 20 + 15 + 10
+    assert s.summary(t=90.0)["camera"]["active_s"] == 45.0
+
+
+def test_nhpt_tracking_loss_is_counted_and_limits_tracking(tmp_path):
+    s = make(mode="nhpt", tmp_path=tmp_path)
+    s.on_events([make_event("nhpt_start", t=1.0)], snapshot={}, t=1.0)
+    assert s.summary(t=2.0)["tracking"] == "usable" and s.summary(t=2.0)["tracking_lost_events"] == 0
+    s.on_events([make_event("perception_lost", t=5.0, missing=[2, 3])], snapshot={}, t=5.0)
+    summ = s.summary(t=6.0)
+    assert summ["tracking_lost_events"] == 1 and summ["tracking"] == "limited"
+    assert summ["camera"]["tracking_lost_events"] == 1
+
+
+def test_summary_reports_which_clock_it_used(tmp_path):
+    clip = make(mode="cup", tmp_path=tmp_path)
+    clip.on_events([reach(5.0)], snapshot={}, t=5.0)
+    assert clip.summary(t=6.0)["clock"] == "clip"
+    wall = make(mode="cup", tmp_path=tmp_path)
+    wall.on_events([reach(1.7e9)], snapshot={}, t=1.7e9)
+    assert wall.summary(t=1.7e9 + 1)["clock"] == "wall"

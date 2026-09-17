@@ -23,6 +23,10 @@ class StopRules:
         self._exertion_flagged = False
         self.flags: list[dict[str, Any]] = []
 
+    def on_resume(self) -> None:
+        """The patient resumed (after fixing the setup): the unverified streak starts over."""
+        self._unverified_streak = 0
+
     def _flag(self, t: float, rule: str, detail: str) -> Event:
         self.flags.append({"t": t, "rule": rule, "detail": detail})
         return make_event("therapist_flag", t=t, rule=rule, detail=detail)
@@ -57,7 +61,8 @@ class StopRules:
             elif e.type in ("rep_complete", "reach_complete"):
                 if e.payload.get("verified") is False:
                     self._unverified_streak += 1
-                    if self._unverified_streak == self.th.failed_reps:
+                    if self._unverified_streak >= self.th.failed_reps:
+                        self._unverified_streak = 0  # fires again after the next N, not once per session
                         out.append(make_event("pause", t=e.t, rule="failed_reps", text="Three in a row I couldn't verify. Let's pause and check the setup."))
                         out.append(self._flag(e.t, "failed_reps", f"{self.th.failed_reps} consecutive unverified reps ({e.payload.get('reason')})"))
                 else:

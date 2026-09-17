@@ -31,9 +31,15 @@ NHPT_TREND = [
 ]
 
 
+# Wireframe "Practice" card numbers. Served separately as `progress.sample` (flagged
+# illustrative); never summed with real sessions.
+SAMPLE_PRACTICE = {"done": 19, "planned": 22, "hours": 3.4}
+
+
 def _summary(mode, camera, notes, exertion="low", flags=(), stopped=False, nhpt=None):
     s = {
         "mode": mode,
+        "illustrative": True,
         "camera": camera,
         "told_us": {},
         "exertion": {"level": exertion, "reasons": [], "method": "behavioural"},
