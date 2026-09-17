@@ -115,6 +115,9 @@
     "presence": {
       "type": "object"
     },
+    "angle": {
+      "type": "object"
+    },
     "all_required_pass": {
       "type": "boolean"
     },

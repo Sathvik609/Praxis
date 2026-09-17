@@ -110,6 +110,33 @@ def test_two_missing_markers_hold_the_last_homography_for_1_5_s():
     assert cal.run(bad, t=5.5).source == "held"
 
 
+# ---- Sprint D-CAL-3: camera tilt from ArUco pose (cv2.solvePnP) -------------------------
+
+
+@pytest.mark.parametrize("spec", [NHPT_BOARD, CUP_TARGETS])
+@pytest.mark.parametrize("tilt,yaw", [(0, 0), (15, 5), (20, 8), (40, 5), (50, 0)])
+def test_tilt_deg_matches_the_rendered_camera_angle(spec, tilt, yaw):
+    import math
+
+    frame, _ = camera_frame(spec, tilt_deg=tilt, yaw_deg=yaw, noise_sigma=3.0)
+    res = Calibrator(spec).run(frame, t=0.0)
+    # angle between the optical axis and the sheet normal for R = Ry(yaw) @ Rx(tilt)
+    truth = math.degrees(math.acos(math.cos(math.radians(tilt)) * math.cos(math.radians(yaw))))
+    assert res.tilt_deg is not None and abs(res.tilt_deg - truth) < 2.0
+    assert res.to_dict()["tilt_deg"] == round(res.tilt_deg, 1)
+
+
+def test_tilt_is_none_when_uncalibrated_and_carried_while_held():
+    assert Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8)).tilt_deg is None
+    frame, H = camera_frame(NHPT_BOARD, tilt_deg=20, yaw_deg=8)
+    cal = Calibrator(NHPT_BOARD)
+    fresh = cal.run(frame, t=0.0)
+    held = cal.run(hide_markers(frame, H, NHPT_BOARD, [0, 3]), t=0.5)
+    assert held.source == "held" and held.tilt_deg == fresh.tilt_deg
+    partial = cal.run(hide_markers(frame, H, NHPT_BOARD, [3]), t=1.0)
+    assert partial.source == "partial" and abs(partial.tilt_deg - fresh.tilt_deg) < 2.0
+
+
 def test_held_result_validates_against_the_event_schema():
     from praxis_session.events import make_event
     from praxis_session.schema import validate_event

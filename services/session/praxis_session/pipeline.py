@@ -26,6 +26,7 @@ from praxis_session.perception.quality import (
     MarkerSteadiness,
     Presence,
     build_checks,
+    camera_angle,
     lighting,
     task_area_in_view,
 )
@@ -35,7 +36,8 @@ MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
 POSE_LOSS_FRAMES = 15
 # Uncalibrated frames (after the 1.5 s hold in Calibrator) before `perception_lost` (D-CAL-1).
 LOSS_FRAMES = 20
-REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
+# `angle` (camera tilt from the ArUco pose, <= 25°) joined the sheet tasks' gate in D-CAL-3.
+REQUIRED_CHECKS = ("camera", "task_area", "markers", "angle", "lighting")
 REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
     "default": REQUIRED_CHECKS,
     "arm": ("camera", "lighting"),  # no sheet; side-view/pose gating lands with the pose checks
@@ -181,7 +183,13 @@ class SessionPipeline:
         self._emit(
             out,
             make_event(
-                "quality", t=t, frame_index=i, lighting=light, steadiness=steady, presence=pres
+                "quality",
+                t=t,
+                frame_index=i,
+                lighting=light,
+                steadiness=steady,
+                presence=pres,
+                angle=camera_angle(cal),
             ),
         )
         needs_sheet = self.for_mode != "arm"

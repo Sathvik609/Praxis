@@ -73,6 +73,30 @@ def task_area_in_view(
     }
 
 
+MAX_TILT_DEG = 25.0
+ANGLE_HINT = (
+    "Mount the camera above the table, pointing straight down (a phone on a stand works)."
+)
+
+
+def camera_angle(cal: CalibrationResult, max_tilt_deg: float = MAX_TILT_DEG) -> dict:
+    """Overhead-mount gate (D-CAL-3): the sheet-plane homography ignores height, so a peg top
+    or a hand 30-100 mm above the sheet projects tens of mm off at a typical webcam angle.
+    `tilt_deg` comes from cv2.solvePnP on the marker corners (calibration.py); above
+    `max_tilt_deg` the setup asks for the camera to be moved. `ok` is None until there is a fix.
+    """
+    tilt = cal.tilt_deg if cal.calibrated else None
+    if tilt is None:
+        return {"tilt_deg": None, "max_tilt_deg": max_tilt_deg, "ok": None, "hint": ANGLE_HINT}
+    ok = tilt <= max_tilt_deg
+    return {
+        "tilt_deg": round(float(tilt), 1),
+        "max_tilt_deg": max_tilt_deg,
+        "ok": ok,
+        "hint": None if ok else ANGLE_HINT,
+    }
+
+
 class Presence:
     """Motion-energy presence fallback (labeled) until the pose model provides a person check."""
 
@@ -101,10 +125,11 @@ def build_checks(
     camera_ok: bool = True,
     needs_sheet: bool = True,
 ) -> list[dict]:
-    """The five wireframe rows, in order; status pass|check|pending with a fix hint.
+    """The wireframe's five rows plus the camera-angle row (D-CAL-3), in order; status
+    pass|check|pending with a fix hint.
 
-    Arm to the front uses no printed sheet: with needs_sheet=False the marker and task-area
-    rows are replaced by one side-view row (pending until the pose model gates it)."""
+    Arm to the front uses no printed sheet: with needs_sheet=False the marker, angle and
+    task-area rows are replaced by one side-view row (pending until the pose model gates it)."""
 
     def row(id_: str, label: str, ok: bool | None, hint: str | None) -> dict:
         status = "pending" if ok is None else ("pass" if ok else "check")
@@ -126,6 +151,7 @@ def build_checks(
             f"Markers missing: {', '.join(map(str, cal.missing))}. "
             "Flatten the sheet and keep it in view."
         )
+    angle = camera_angle(cal)
     light_ok = bool(lighting_d["ok"] and steadiness_d["ok"])
     light_hint = lighting_d.get("hint") or (
         None if steadiness_d["ok"] else "Hold the camera still or rest it on the table."
@@ -152,5 +178,6 @@ def build_checks(
         ),
         row("task_area", "Hand and task area in view", area_d["ok"], area_d.get("hint")),
         row("markers", "Sheet found · all four corner markers visible", markers_ok, markers_hint),
+        row("angle", "Camera looks down at the sheet", angle["ok"], angle["hint"]),
         row("lighting", "Lighting and steady tracking", light_ok, light_hint),
     ]

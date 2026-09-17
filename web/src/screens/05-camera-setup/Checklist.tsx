@@ -17,6 +17,7 @@ export const DEFAULT_CHECKS: Check[] = [
   { id: 'person', label: 'One person in view', status: 'pending', hint: null },
   { id: 'task_area', label: 'Hand and task area in view', status: 'pending', hint: null },
   { id: 'markers', label: 'Sheet found · all four corner markers visible', status: 'pending', hint: null },
+  { id: 'angle', label: 'Camera looks down at the sheet', status: 'pending', hint: null },
   { id: 'lighting', label: 'Lighting and steady tracking', status: 'pending', hint: null },
 ]
 

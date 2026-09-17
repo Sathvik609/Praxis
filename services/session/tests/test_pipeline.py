@@ -65,6 +65,41 @@ def test_one_covered_marker_never_loses_tracking_after_a_fresh_calibration():
     assert markers["status"] == "check" and checks["all_required_pass"] is False
 
 
+def _check(evs, id_):
+    return next(c for c in evs[2].to_dict()["checks"] if c["id"] == id_)
+
+
+def test_angle_check_passes_for_an_overhead_camera_and_gates_a_steep_one():
+    """D-CAL-3: the synthetic default view (tilt 15°, yaw 5°) passes; 40° must be fixed."""
+    p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
+    evs = p.process(camera_frame(NHPT_BOARD)[0], 0.0, 0)
+    row = _check(evs, "angle")
+    assert row["status"] == "pass" and row["hint"] is None
+    assert row["label"] == "Camera looks down at the sheet"
+    assert evs[2].to_dict()["all_required_pass"] is True
+    assert evs[0].to_dict()["tilt_deg"] is not None
+    for e in evs:
+        validate_event(e.to_dict())
+
+    steep = SessionPipeline(mode="calibrate", sheet="cup_targets")
+    from praxis_session.perception.board_spec import CUP_TARGETS
+
+    evs = steep.process(camera_frame(CUP_TARGETS, tilt_deg=40, yaw_deg=5)[0], 0.0, 0)
+    row = _check(evs, "angle")
+    assert row["status"] == "check" and "above the table" in row["hint"]
+    assert _check(evs, "markers")["status"] == "pass"
+    assert evs[2].to_dict()["all_required_pass"] is False
+
+
+def test_angle_check_is_pending_without_a_sheet_fix_and_absent_for_the_arm():
+    p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
+    evs = p.process(np.zeros((480, 640, 3), np.uint8), 0.0, 0)
+    assert _check(evs, "angle")["status"] == "pending"
+    arm = SessionPipeline(mode="calibrate", sheet="nhpt_board", for_mode="arm")
+    evs = arm.process(camera_frame(NHPT_BOARD)[0], 0.0, 0)
+    assert "angle" not in [c["id"] for c in evs[2].to_dict()["checks"]]
+
+
 def test_no_loss_event_before_first_calibration():
     p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
     bad, _ = camera_frame(NHPT_BOARD, hide_marker=1)

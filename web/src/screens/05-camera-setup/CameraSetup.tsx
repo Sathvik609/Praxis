@@ -21,6 +21,43 @@ const TITLE: Record<string, string> = {
 
 type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 
+/** Overhead-mount guidance for the two sheet tasks (D-CAL-3). The sheet homography ignores
+ *  height, so a webcam looking across the table puts pegs and hands tens of mm off; the
+ *  service measures the tilt from the ArUco pose and asks for ≤ 25°. Inline SVG: a phone on
+ *  a stand about 50 cm above the table, pointing straight down at the sheet. */
+function MountDiagram() {
+  return (
+    <svg
+      role="img"
+      aria-label="A phone on a stand about 50 centimetres above the table, pointing straight down at the printed sheet"
+      viewBox="0 0 240 150"
+      className="h-auto w-full max-w-60 shrink-0"
+    >
+      {/* table */}
+      <line x1="12" y1="128" x2="228" y2="128" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* sheet on the table */}
+      <rect x="70" y="118" width="96" height="10" rx="2" fill="var(--mint)" stroke="currentColor" strokeWidth="1.5" />
+      {/* stand: base, column, arm */}
+      <line x1="176" y1="128" x2="212" y2="128" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <line x1="194" y1="128" x2="194" y2="34" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <line x1="194" y1="34" x2="128" y2="34" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* phone, screen up, camera down */}
+      <rect x="104" y="26" width="40" height="16" rx="4" fill="var(--surface)" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx="118" cy="42" r="3" fill="currentColor" />
+      {/* sight line straight down */}
+      <line x1="118" y1="48" x2="118" y2="114" stroke="var(--amber)" strokeWidth="2" strokeDasharray="4 4" />
+      <polygon points="112,110 124,110 118,118" fill="var(--amber)" />
+      {/* height dimension */}
+      <line x1="40" y1="40" x2="40" y2="122" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="34" y1="40" x2="46" y2="40" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="34" y1="122" x2="46" y2="122" stroke="currentColor" strokeWidth="1.5" />
+      <text x="20" y="86" fontSize="13" fill="currentColor" fontFamily="inherit">
+        ~50 cm
+      </text>
+    </svg>
+  )
+}
+
 /** Screen 05 · Camera setup and calibration. Continue stays disabled until every required
  *  check passes. ArUco markers are required for the two board tasks; the arm task needs no
  *  sheet. The feed is a Panel with the live, mirrored and calibration lines in its corners. */
@@ -88,6 +125,18 @@ export function CameraSetup() {
                 : `Continue unlocks when every required check passes. ${TITLE[exercise] ?? exercise}.`}
             </p>
           </div>
+          {exercise !== 'arm' && (
+            <Card padding="sm" className="flex items-center gap-4">
+              <MountDiagram />
+              <div className="min-w-0">
+                <h2 className="text-xl">Mount the camera above the table</h2>
+                <p className="text-lg text-muted">
+                  Put the phone or webcam on a stand about 50 cm up, pointing straight down at the sheet. Looking across the
+                  table makes pegs and hands land in the wrong place. The check below measures the tilt.
+                </p>
+              </div>
+            </Card>
+          )}
           <Card padding="none" className="px-5">
             <Checklist checks={checks?.checks ?? []} />
           </Card>
