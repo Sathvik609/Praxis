@@ -12,7 +12,7 @@ type Props = {
 /** Fixed control bar on every in-session screen (CLAUDE.md §1 screens rule). */
 export function SessionControls({ onPause, onRest, onPain, onEnd, traceOpen, onToggleTrace }: Props) {
   return (
-    <footer className="flex h-28 items-center gap-4 border-t border-line bg-surface px-8">
+    <footer className="flex h-20 items-center gap-4 border-t border-line bg-surface px-8">
       <Button variant="secondary" onClick={onPause}>
         Pause
       </Button>

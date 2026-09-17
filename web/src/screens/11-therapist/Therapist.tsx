@@ -20,7 +20,7 @@ export function Therapist() {
         <ul className="divide-y divide-line">
           {(patients ?? []).map((p, i) => (
             <li key={p.id} className={`flex items-center justify-between py-3 ${i === 0 ? 'rounded-xl bg-bg px-2' : ''}`}>
-              <div><div className="font-bold">{p.name}{p.illustrative ? ' ·' : ''}</div><div className="text-sm text-muted">{p.program}{p.illustrative ? ' (illustrative)' : ''}</div></div>
+              <div><div className="font-bold">{p.name}{p.illustrative ? ' ·' : ''}</div><div className="text-base text-muted">{p.program}{p.illustrative ? ' (illustrative)' : ''}</div></div>
               {p.open_flags > 0 && <Chip tone="red">{p.open_flags} flag{p.open_flags > 1 ? 's' : ''}</Chip>}
             </li>
           ))}
@@ -29,7 +29,7 @@ export function Therapist() {
       <main className="space-y-6">
         {me && (
           <div className="flex items-start gap-4">
-            <div><h1 className="text-5xl">{me.name}</h1><p className="text-muted">Hospital GRASP, Level {rx?.level ?? 2} · {rx?.side ?? 'left'} side · program v{rx?.version ?? 3} · next visit Thu 18 Sep</p></div>
+            <div><h1 className="text-4xl">{me.name}</h1><p className="text-muted">Hospital GRASP, Level {rx?.level ?? 2} · {rx?.side ?? 'left'} side · program v{rx?.version ?? 3} · next visit Thu 18 Sep</p></div>
             <div className="ml-auto flex gap-3"><Button variant="secondary" title="Editing arrives with clinician accounts (W6)">Edit prescription</Button><Button>Review flags</Button></div>
           </div>
         )}

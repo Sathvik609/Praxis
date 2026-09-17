@@ -33,7 +33,7 @@ export function ChooseExercise() {
     <div className="flex min-h-[calc(100vh-5rem)] flex-col">
       <div className="flex-1 p-8">
         <div className="flex items-start gap-4">
-          <div><h1 className="text-5xl">Choose your exercise</h1><p className="text-muted">Assigned exercises first. Camera coaching is on only where Praxis can verify the task.</p></div>
+          <div><h1 className="text-4xl">Choose your exercise</h1><p className="text-muted">Assigned exercises first. Camera coaching is on only where Praxis can verify the task.</p></div>
           <div className="ml-auto flex gap-2">{tab('assigned', 'Assigned')}{tab('all', 'All GRASP L2')}{tab('equipment', 'Equipment I have')}<Button variant="secondary" onClick={() => nav('/coach')}>Help me choose</Button></div>
         </div>
         <div className="mt-6 grid grid-cols-3 gap-5">

@@ -35,7 +35,7 @@ export function Progress() {
   return (
     <div className="p-8">
       <div className="flex items-center gap-4">
-        <h1 className="text-5xl">Progress and history</h1>
+        <h1 className="text-4xl">Progress and history</h1>
         <div className="ml-auto flex gap-2">
           {[range, 'Waiter – cup', 'Left', 'Compare same setup'].map((f, i) => <span key={f} className={`rounded-full border-2 px-4 py-2 font-bold ${i === 0 ? 'border-teal bg-teal text-white' : 'border-line'}`}>{f}</span>)}
         </div>

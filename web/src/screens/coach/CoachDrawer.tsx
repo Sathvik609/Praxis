@@ -25,7 +25,7 @@ export function CoachDrawer() {
   }
   return (
     <div className="mx-auto max-w-3xl p-8">
-      <div className="flex items-center gap-3"><h1 className="text-4xl">Ask the coach</h1><Chip tone="neutral">Rule-based coach · LLM agent pending</Chip></div>
+      <div className="flex items-center gap-3"><h1 className="text-3xl">Ask the coach</h1><Chip tone="neutral">Rule-based coach · LLM agent pending</Chip></div>
       <p className="text-muted">Answers come from your prescription and your last session. The coach only suggests within what your therapist prescribed.</p>
       <div className="mt-5 flex flex-wrap gap-3">{QUESTIONS.map((q) => <Button key={q} variant="secondary" className="min-h-12 text-base" onClick={() => setLog((l) => [...l, { q, a: answer(q) }])}>{q}</Button>)}</div>
       <div className="mt-6 space-y-4">

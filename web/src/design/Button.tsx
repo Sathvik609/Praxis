@@ -17,7 +17,7 @@ export function Button({ variant = 'primary', full, className = '', ...rest }: P
   return (
     <button
       {...rest}
-      className={`min-h-14 rounded-2xl px-6 text-xl font-bold disabled:opacity-40 ${styles[variant]} ${full ? 'w-full' : ''} ${className}`}
+      className={`min-h-14 rounded-xl px-5 text-lg font-bold disabled:opacity-40 ${styles[variant]} ${full ? 'w-full' : ''} ${className}`}
     />
   )
 }

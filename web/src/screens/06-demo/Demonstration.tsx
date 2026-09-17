@@ -29,7 +29,7 @@ export function Demonstration() {
           )}
         </div>
         <div className="flex flex-col gap-5">
-          <div><h1 className="text-4xl">{ex.name}</h1><p className="text-muted">{ex.category} · GRASP Level 2 · {side} side</p></div>
+          <div><h1 className="text-3xl">{ex.name}</h1><p className="text-muted">{ex.category} · GRASP Level 2 · {side} side</p></div>
           <ol className="divide-y divide-line rounded-2xl border border-line bg-surface px-5">
             {ex.steps.map((s, i) => (
               <li key={i} data-testid="step" className="flex items-start gap-4 py-3">

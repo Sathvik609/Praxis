@@ -120,7 +120,7 @@ export function LiveNhpt() {
                   type="button"
                   aria-pressed={reference === r}
                   onClick={() => setReference(r)}
-                  className={`h-10 rounded-full px-4 font-bold ${reference === r ? 'bg-teal text-white' : 'text-ink'}`}
+                  className={`h-12 rounded-full px-4 font-bold ${reference === r ? 'bg-teal text-white' : 'text-ink'}`}
                 >
                   {r === 'avatar' ? 'Avatar' : 'Board view'}
                 </button>
@@ -156,7 +156,7 @@ export function LiveNhpt() {
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
             <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
           <ExertionChip exertion={coach.exertion} />
         </div>

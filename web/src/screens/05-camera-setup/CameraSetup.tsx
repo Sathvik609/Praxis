@@ -66,7 +66,7 @@ export function CameraSetup() {
 
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-4xl">Set up camera and equipment</h1>
+            <h1 className="text-3xl">Set up camera and equipment</h1>
             <p className="text-muted">
               {exercise === 'arm'
                 ? 'No sheet needed. Sit sideways to the camera with your shoulder and hip in view.'

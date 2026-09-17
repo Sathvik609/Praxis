@@ -18,7 +18,7 @@ export function Settings() {
   return (
     <div className="grid grid-cols-2 gap-6 p-8">
       <section className="rounded-2xl border border-line bg-surface p-6">
-        <h1 className="text-4xl">Settings</h1>
+        <h1 className="text-3xl">Settings</h1>
         <h2 className="mt-4 text-2xl">Theme</h2>
         <div className="mt-2 flex gap-3">
           {(['light', 'dark'] as const).map((t) => <button key={t} type="button" aria-pressed={theme === t} onClick={() => pick(t)} className={`min-h-14 rounded-full border-2 px-6 text-lg font-bold ${theme === t ? 'border-teal bg-teal text-white' : 'border-line'}`}>{t === 'light' ? 'Light' : 'Dark'}</button>)}

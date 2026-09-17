@@ -116,7 +116,7 @@ export function LiveCup() {
           <div className="rounded-2xl border-l-8 border-teal bg-mint/10 p-6">
             <div className="text-muted">Coach</div>
             <p className="text-2xl">{coach.caption?.text ?? label.coach ?? caption(frame, lost)}</p>
-            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
           <ExertionChip exertion={coach.exertion} />
         </div>

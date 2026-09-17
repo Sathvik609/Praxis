@@ -17,13 +17,27 @@
   --color-focus: var(--focus);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
+  /* Named type scale (audit 17 Sep, A5). Body is 18 px on a 16 px root so rem-based
+     spacing, radii and heights keep their designed size. */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.45;
+  --text-caption: 1rem;
+  --text-caption--line-height: 1.35;
 }
 
 html {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: 16px;
   background: var(--bg);
   color: var(--text);
+}
+body {
+  font-size: 1.125rem; /* 18 px minimum for patient-facing text */
+  line-height: 1.45;
 }
 h1,
 h2,

@@ -141,7 +141,7 @@ export function LiveArm() {
           <div className={`rounded-2xl border-l-8 p-6 ${leanRecent ? 'border-amber bg-amber/10' : 'border-teal bg-mint/10'}`}>
             <div className="text-muted">Coach{leanRecent ? ' · posture' : ''}</div>
             <p className="text-2xl">{coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}</p>
-            <div className="mt-2 text-sm text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
+            <div className="mt-2 text-base text-muted">{coach.caption?.label ?? 'Rule-based coach · LLM agent pending'}</div>
           </div>
           <ExertionChip exertion={coach.exertion} />
         </div>

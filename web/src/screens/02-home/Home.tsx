@@ -36,7 +36,7 @@ export function Home() {
           <div className="mt-3 flex gap-2">
             {WEEK.days.map((d, i) => (
               <div key={i} className="flex flex-col items-center gap-1">
-                <span className="text-xs text-muted">{d}</span>
+                <span className="text-base text-muted">{d}</span>
                 <span className={`flex h-10 w-10 items-center justify-center rounded-lg font-bold ${WEEK.done[i] ? 'bg-mint text-white' : i === WEEK.todayIndex ? 'bg-mint/15 text-teal' : 'bg-bg text-muted'}`}>{WEEK.done[i] ? '✓' : i === WEEK.todayIndex ? 'now' : '·'}</span>
               </div>
             ))}
@@ -106,7 +106,7 @@ export function Home() {
           <div className="mt-3 border-t border-line pt-3"><div className="font-bold">Next visit</div><div className="text-muted">{PROGRAM.nextVisit}</div></div>
         </div>
         <button type="button" className="min-h-12 text-left text-teal underline" onClick={() => nav('/settings')}>Replay a recorded session (no webcam)</button>
-        <p className="text-sm text-muted">Body-map markers and week are illustrative seed data; goal, sessions and reports come from the local store.</p>
+        <p className="text-base text-muted">Body-map markers and week are illustrative seed data; goal, sessions and reports come from the local store.</p>
       </div>
     </div>
   )

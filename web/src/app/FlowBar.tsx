@@ -14,7 +14,7 @@ export function FlowBar({
   right: ReactNode
 }) {
   return (
-    <footer className="flex h-28 items-center gap-4 border-t border-line bg-surface px-8">
+    <footer className="flex h-20 items-center gap-4 border-t border-line bg-surface px-8">
       <div className="flex items-center gap-2">
         {Array.from({ length: total }, (_, i) => (
           <span

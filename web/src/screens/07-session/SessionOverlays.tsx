@@ -59,7 +59,7 @@ export function ExertionChip({ exertion }: { exertion: ExertionState | null }) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3">
       <Chip tone={tone}>Exertion: {level}</Chip>
-      <span className="text-sm text-muted">behavioural index{exertion?.reasons.length ? ` · ${exertion.reasons.join(' · ')}` : ' · no signs yet'}</span>
+      <span className="text-base text-muted">behavioural index{exertion?.reasons.length ? ` · ${exertion.reasons.join(' · ')}` : ' · no signs yet'}</span>
     </div>
   )
 }

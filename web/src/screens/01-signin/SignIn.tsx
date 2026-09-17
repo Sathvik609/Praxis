@@ -25,13 +25,13 @@ export function SignIn() {
   return (
     <div className="grid min-h-[calc(100vh-5rem)] grid-cols-[1fr_1fr] gap-8 p-8">
       <div>
-        <h1 className="text-5xl">Welcome back</h1>
+        <h1 className="text-4xl">Welcome back</h1>
         <p className="mt-2 text-muted">Sign in to reach the practice your therapist assigned.</p>
         <div className="mt-6 rounded-2xl border border-line bg-surface p-6">
           <div className="mb-4 flex gap-2"><span className="rounded-full bg-teal px-5 py-2 font-bold text-white">Sign in</span><span className="rounded-full border-2 border-line px-5 py-2">Create account</span></div>
           <label className="block font-bold">Email<input className="mt-1 w-full rounded-xl border border-line p-3 text-lg" defaultValue="alex.m@example.com" /></label>
           <label className="mt-4 block font-bold">Password<input type="password" className="mt-1 w-full rounded-xl border border-line p-3 text-lg" defaultValue="••••••••••" /></label>
-          <p className="mt-2 text-sm text-muted">Local sign-in for the edge build; Cognito arrives with cloud mode.</p>
+          <p className="mt-2 text-base text-muted">Local sign-in for the edge build; Cognito arrives with cloud mode.</p>
           <Button full className="mt-5">Sign in</Button>
           <p className="mt-3 text-muted">Forgot password · Privacy · Terms</p>
         </div>

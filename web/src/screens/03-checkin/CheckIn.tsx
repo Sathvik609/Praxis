@@ -58,7 +58,7 @@ export function CheckIn() {
     <div className="flex min-h-[calc(100vh-5rem)] flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-8 p-8">
         <div>
-          <h1 className="text-5xl">Before you start</h1>
+          <h1 className="text-4xl">Before you start</h1>
           <p className="mt-2 text-muted">Answer by tapping or speaking. This sets today's pace inside your assigned limits.</p>
           <div className="mt-6 space-y-6 rounded-2xl border border-line bg-surface p-6">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
@@ -86,7 +86,7 @@ export function CheckIn() {
           </div>
           <div className="flex items-center justify-between rounded-2xl border border-line bg-surface px-6 py-4">
             <span className="text-lg">Microphone</span>
-            <Button variant="secondary" className="min-h-12 text-base" onClick={listen}>Push to talk</Button>
+            <Button variant="secondary" className="min-h-14" onClick={listen}>Push to talk</Button>
           </div>
           {heard && <p className="text-muted">{heard}</p>}
         </div>

@@ -42,7 +42,7 @@ export function SessionReport() {
     <div className="p-8">
       <div className="flex items-start gap-4">
         <div>
-          <h1 className="text-5xl">Your practice report</h1>
+          <h1 className="text-4xl">Your practice report</h1>
           <p className="text-muted">{s.date} · {s.title} · {s.summary.mode === 'nhpt' ? 'assessment' : 'left side'} · <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.status === 'complete' ? 'Complete' : 'Ended early'}</Chip></p>
         </div>
         <div className="ml-auto flex gap-3"><Button variant="secondary" onClick={dl}>Download</Button><Button variant="secondary" title="Sharing arrives with cloud mode">Sharing</Button><Button onClick={() => nav('/')}>Done — back to Home</Button></div>
@@ -53,7 +53,7 @@ export function SessionReport() {
             <h2 className="text-2xl">What the camera measured</h2>
             <div className="mt-3 grid grid-cols-5 gap-3">
               {[[active, 'active · rest excluded'], [String(cam.verified ?? 0), 'verified movements'], [String(cam.unverified ?? 0), 'unverified (hand hid cup or markers lost)'], [`${cam.coverage_pct ?? Math.round(100 * (cam.verified ?? 0) / Math.max(1, cam.reps_total ?? 1))}%`, 'tracking coverage'], [String(cam.posture_cues ?? cam.corrections ?? 0), 'posture cues']].map(([v, l]) => (
-                <div key={l}><div className="text-3xl font-bold">{v}</div><div className="text-sm text-muted">{l}</div></div>
+                <div key={l}><div className="text-3xl font-bold">{v}</div><div className="text-base text-muted">{l}</div></div>
               ))}
             </div>
             {cam.nhpt_total_s != null && <p className="mt-4 text-xl">Nine-Hole Peg Test: <b>{cam.nhpt_total_s.toFixed(1)} s</b> · insertion-only · timing aid, not a clinical instrument</p>}
@@ -81,7 +81,7 @@ export function SessionReport() {
               <div><div className="text-3xl font-bold">{told.effort != null ? `${String(told.effort)}/10` : 'not recorded'}</div><div className="text-muted">effort</div></div>
             </div>
             <p className="mt-2">{told.compared ? `Felt ${told.compared === 'same' ? 'about the same as' : told.compared === 'first' ? 'like a first time —' : `${String(told.compared)} than`} last time.` : 'Comparison not recorded.'}</p>
-            <p className="mt-2 text-sm text-muted">Exertion: {s.summary.exertion.level} · behavioural index</p>
+            <p className="mt-2 text-base text-muted">Exertion: {s.summary.exertion.level} · behavioural index</p>
           </section>
           <section className="rounded-2xl border border-line bg-surface p-6">
             <h2 className="text-2xl">Next practice</h2>
