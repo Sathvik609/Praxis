@@ -129,6 +129,7 @@ class CupFSM:
         self._count = 0
         self._last_cup: tuple[float, float] | None = None
         self._arc_reaches: list[dict[str, Any]] = []
+        self.arc_means_ms: list[float | None] = []
         self._dots_in_arc: set[int] = set()
 
     # ---- public --------------------------------------------------------------------------
@@ -162,6 +163,7 @@ class CupFSM:
             "unverified_total": sum(1 for r in self.reaches if not r["verified"]),
             "awaiting_phase": self.awaiting_phase,
             "finished": self.finished,
+            "arc_means_ms": list(self.arc_means_ms),
         }
 
     def step(self, obs: CupObservation) -> list[Event]:
@@ -314,14 +316,17 @@ class CupFSM:
         if self._seq_idx >= len(ARC) - 1:
             self.arcs_done += 1
             valid = [r["reach_ms"] for r in self._arc_reaches if r["verified"]]
+            mean_ms = round(sum(valid) / len(valid), 1) if valid else None
+            self.arc_means_ms.append(mean_ms)
             evs.append(
                 make_event(
                     "arc_complete",
                     t=obs.t,
                     arc=self.arcs_done,
                     phase=self.phase,
-                    mean_reach_ms=round(sum(valid) / len(valid), 1) if valid else None,
+                    mean_reach_ms=mean_ms,
                     unverified=sum(1 for r in self._arc_reaches if not r["verified"]),
+                    reaches=len(self._arc_reaches),
                     awaiting_phase=self.awaiting_phase,
                 )
             )

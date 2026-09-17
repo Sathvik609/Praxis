@@ -36,6 +36,7 @@ class CoachSession:
         self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "corrections": 0, "posture_cues": 0}
         self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
+        self._last_cue_t: dict[str, float] = {}
         self._last_level = "low"
         self.t_start: float | None = None
         self.t_end: float | None = None
@@ -121,7 +122,7 @@ class CoachSession:
         out += self._log_stop(self.stop_rules.on_exertion(state, self.exertion.high_for_s(t), t))
         if self.stopped or self.paused:
             return out
-        ctx = CoachContext(mode=self.mode, events=[e for e in events if e.type != "frame"], snapshot=snapshot, exertion=state, prescription=self.prescription, t=t, last_speak_t=self._last_speak_t)
+        ctx = CoachContext(mode=self.mode, events=[e for e in events if e.type != "frame"], snapshot=snapshot, exertion=state, prescription=self.prescription, t=t, last_speak_t=self._last_speak_t, last_cue_t=self._last_cue_t)
         for d in self.coach.decide(ctx):
             out.append(self._coach_event(d, t))
         return out
@@ -150,6 +151,7 @@ class CoachSession:
             self.counts["corrections"] += 1
         self.decisions.append(d.to_dict() | {"t": t})
         self._last_speak_t = t
+        self._last_cue_t[d.cue_id] = t
         return make_event("coach", t=t, **d.to_dict(), speak_id=spoken.id)
 
     def summary(self, t: float | None = None) -> dict[str, Any]:

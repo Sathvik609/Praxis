@@ -26,6 +26,7 @@ class CoachContext:
     prescription: Prescription
     t: float
     last_speak_t: float = -1e9
+    last_cue_t: dict[str, float] = field(default_factory=dict)  # cue_id -> t of its last delivery
 
 
 @dataclass

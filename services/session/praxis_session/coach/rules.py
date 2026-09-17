@@ -6,7 +6,22 @@ from praxis_session.events import Event
 from praxis_session.prescription import clamp
 
 LABEL = "Rule-based coach · LLM agent pending"
-SPEAK_GAP_S = 2.5
+
+# Cadence (audit 17 Sep, A8). One global gap dropped every second cup cue and every arm
+# "hold"/"good lift". Now: a short minimum spacing between any two instruct cues, plus a
+# per-cue cooldown so the same cue is not repeated back to back. Corrections, prompts,
+# rest and regress always pass.
+INSTRUCT_GAP_S = 0.6
+COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8}
+
+# Short in-rep cues (spoken while the patient moves); milestones keep full sentences.
+PHRASES: dict[str, list[str]] = {
+    "cup_onto_dot": ["Dot {n}. Good.", "Onto {n}.", "{n}, nice and level.", "Dot {n}, steady."],
+    "arm_lift": ["Lift slowly to the line.", "Up to the line, slowly.", "Lift, no higher than your shoulder."],
+    "arm_hold": ["Hold… three.", "Hold it there. Three."],
+    "arm_lower": ["Lower for three.", "Down slowly, three."],
+    "arm_rep": ["Good, {rep} of {reps}.", "{rep} of {reps}. Nice.", "That's {rep} of {reps}."],
+}
 
 
 class RuleCoach:
@@ -16,16 +31,28 @@ class RuleCoach:
         self._rested = False
         self._regressed_hold = False
         self._proposed_progression = False
+        self._pool_idx: dict[str, int] = {}
+
+    def _phrase(self, cue_id: str, **kw: object) -> str:
+        pool = PHRASES[cue_id]
+        i = self._pool_idx.get(cue_id, -1) + 1
+        self._pool_idx[cue_id] = i
+        return pool[i % len(pool)].format(**kw)
 
     def decide(self, ctx: CoachContext) -> list[Decision]:
         out: list[Decision] = []
         last_speak = ctx.last_speak_t
+        last_cue = dict(ctx.last_cue_t)
         for e in ctx.events:
             for d in self._for_event(e, ctx):
-                if d.action == "instruct" and e.t - last_speak < SPEAK_GAP_S:
-                    continue  # rate-limited; corrections and prompts always pass
+                if d.action == "instruct":
+                    if e.t - last_cue.get(d.cue_id, -1e9) < COOLDOWN_S.get(d.cue_id, 0.0):
+                        continue  # same cue too soon
+                    if e.t - last_speak < INSTRUCT_GAP_S:
+                        continue  # instruct cues need a little air between them
                 d.label = LABEL
                 out.append(d)
+                last_cue[d.cue_id] = e.t
                 if d.action in ("instruct", "correct", "rest", "regress"):
                     last_speak = e.t
         if ctx.exertion.get("level") == "high" and not self._rested and ctx.events:
@@ -62,7 +89,7 @@ class RuleCoach:
             if e.type == "reach_complete":
                 dot = int(p["to_dot"]) + 1
                 if p.get("verified"):
-                    return [Decision("instruct", "cup_onto_dot", f"Onto dot {dot} — good. Let your hand come back to your lap before the next reach.", "verified reach", ev, {"avatar_clip": "cup"})]
+                    return [Decision("instruct", "cup_onto_dot", self._phrase("cup_onto_dot", n=dot), "verified reach", ev, {"avatar_clip": "cup"})]
                 why = "keep your hand clear after you place it" if p.get("reason") == "cup_occluded" else "keep all four corner markers in view"
                 return [Decision("correct", "cup_unverified", f"I couldn't verify that one — {why}.", f"unverified reach ({p.get('reason')})", ev)]
             if e.type == "wrong_dot":
@@ -83,18 +110,18 @@ class RuleCoach:
                             tool_calls=[{"tool": "get_prescription", "result": {"level": ctx.prescription.level, "fast_arcs": "allowed"}}],
                         )
                     ]
-                return [Decision("instruct", "cup_arc", f"Arc {p.get('arc')} done. Rest your hand for a moment.", "arc complete", ev)]
+                return [self._arc_summary(p, cup, ev)]
             if e.type == "cup_complete":
                 return [Decision("instruct", "cup_done", "All four arcs done. Lovely work.", "cup complete", ev)]
         if m == "arm":
             if e.type == "state_change":
                 to = p.get("to")
                 if to == "moving":
-                    return [Decision("instruct", "arm_lift", "Lift slowly to the line — no higher than your shoulder.", "lift started", ev, {"avatar_clip": "armFront"})]
+                    return [Decision("instruct", "arm_lift", self._phrase("arm_lift"), "lift started", ev, {"avatar_clip": "armFront"})]
                 if to == "hold":
-                    return [Decision("instruct", "arm_hold", "Hold for three.", "target reached", ev)]
+                    return [Decision("instruct", "arm_hold", self._phrase("arm_hold"), "target reached", ev)]
                 if to == "return":
-                    return [Decision("instruct", "arm_lower", "Lower for three.", "returning", ev)]
+                    return [Decision("instruct", "arm_lower", self._phrase("arm_lower"), "returning", ev)]
             if e.type == "compensation_lean":
                 out = [Decision("correct", "arm_lean", "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.", f"trunk lean {p.get('lean_deg')}°", ev)]
                 if p.get("flagged") and not self._regressed_hold:
@@ -122,7 +149,7 @@ class RuleCoach:
                 return [Decision("correct", "arm_missed", "Nearly — a touch higher, up to the line.", "target missed", ev)]
             if e.type == "rep_complete":
                 if p.get("verified"):
-                    return [Decision("instruct", "arm_rep", f"Good lift — {p.get('rep')} of {ctx.prescription.exercises['arm']['reps']}.", "verified lift", ev)]
+                    return [Decision("instruct", "arm_rep", self._phrase("arm_rep", rep=p.get("rep"), reps=ctx.prescription.exercises["arm"]["reps"]), "verified lift", ev)]
                 why = {"target_missed": "it stopped short of the line", "hold_too_short": "the hold was under three"}.get(str(p.get("reason")), "I couldn't verify it")
                 return [Decision("correct", "arm_unverified", f"That one didn't count: {why}. Next one, up to the line and hold for three.", f"unverified lift ({p.get('reason')})", ev)]
             if e.type == "set_complete":
@@ -130,3 +157,26 @@ class RuleCoach:
             if e.type == "arm_complete":
                 return [Decision("instruct", "arm_done", "Both sets done. Rest your arm — good work.", "arm complete", ev)]
         return []
+
+    def _arc_summary(self, p: dict, cup: dict, ev: list[int]) -> Decision:
+        """Milestone with the numbers the decision used (also what a judge reads in the trace)."""
+        arc = int(p.get("arc") or 0)
+        unverified = int(p.get("unverified") or 0)
+        total = int(p.get("reaches") or 0)
+        mean = p.get("mean_reach_ms")
+        means = [m for m in (cup.get("arc_means_ms") or []) if m is not None]
+        trend = ""
+        if mean and len(means) >= 2 and means[-2]:
+            ratio = float(mean) / float(means[-2])
+            if ratio < 0.92:
+                trend = f", quicker than arc {arc - 1}"
+            elif ratio > 1.08:
+                trend = f", a touch slower than arc {arc - 1}"
+        parts = [f"Arc {arc}:"]
+        if total:
+            parts.append(f"{total - unverified} of {total} verified")
+        if mean:
+            parts.append(f"mean reach {float(mean) / 1000:.1f} s{trend}")
+        text = " ".join(parts[:1]) + " " + ", ".join(parts[1:]) + ". Rest your hand for a moment."
+        reason = f"arc {arc} complete: {total - unverified}/{total} verified" + (f", mean {float(mean):.0f} ms" if mean else "") + (f", previous {means[-2]:.0f} ms" if len(means) >= 2 else "")
+        return Decision("instruct", "cup_arc_summary", text, reason, ev, tool_calls=[{"tool": "get_events", "result": {"arc": arc, "reaches": total, "unverified": unverified}}])
