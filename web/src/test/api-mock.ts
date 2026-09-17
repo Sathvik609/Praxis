@@ -15,7 +15,9 @@ export const ME = { id: 'alex', name: 'Alex M.', initial: 'A', side: 'left', goa
 /** Sprint E guided-flow fixtures; shapes from §Contracts of
  *  docs/superpowers/plans/2026-09-17-sprint-e-guided-flow.md. The service side is built in
  *  parallel, so every guided screen test runs against these, never a live endpoint. */
-export const PROFILE = { side: 'left', goal: 'Play badminton again', pain_last: 3, created_at: '2026-09-17T08:00:00', updated_at: '2026-09-17T08:00:00' }
+/** `updated_at` is now, so a screen that asks for today's pain only when the profile is stale
+ *  sees a fresh one by default; tests that want the daily check override it. */
+export const PROFILE = { side: 'left', goal: 'Play badminton again', pain_last: 3, created_at: '2026-09-15T08:00:00', updated_at: new Date().toISOString() }
 const ITEM = { id: 'pendulum', name: 'Pendulum', dose: '2 × 30 s', sets: 2, reps: 8, hold_s: 3, target_deg: 90, ceiling_deg: 90, view: 'side', done_today: false, clip: 'pendulum', steps: ['Lean forward with your good hand on the table.', 'Let the arm hang and swing small circles.'] }
 export const PLAN = {
   tier: 'full',

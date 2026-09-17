@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { SignIn } from '../screens/01-signin/SignIn'
 import { Home } from '../screens/02-home/Home'
 import { CheckIn } from '../screens/03-checkin/CheckIn'
@@ -12,8 +12,10 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
+import { Today } from '../screens/guided/Today'
 import { Welcome } from '../screens/guided/Welcome'
 import { RequireAuth } from './RequireAuth'
+import { RequireProfile } from './RequireProfile'
 import { Shell } from './Shell'
 
 /** Two paths through the app (Sprint E).
@@ -32,7 +34,7 @@ export const router = createBrowserRouter([
   { path: '/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
   { path: '/details/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
   { path: '/welcome', element: <RequireAuth><Welcome /></RequireAuth> },
-  { path: '/', element: <Navigate to="/details" replace /> },
+  { path: '/', element: <RequireAuth><RequireProfile><Today /></RequireProfile></RequireAuth> },
   {
     element: <RequireAuth><Shell /></RequireAuth>,
     children: [
