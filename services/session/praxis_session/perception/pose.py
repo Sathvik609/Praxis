@@ -154,12 +154,18 @@ def arm_angles(res: PoseResult, side: str) -> dict:
     lean = float(np.degrees(np.arctan2(-trunk[0], -trunk[1])))  # 0 when vertical
     hike = float((sh_o[1] - sh[1]) / torso)
     sep = float(np.linalg.norm(sh - sh_o)) / torso
-    used = [SHOULDER[i], ELBOW[i], WRIST[i], HIP[i], SHOULDER[j], HIP[j]]
+    vis = res.visibility
+    # Three visibility groups gate three different things (arm_fsm.py): the practising-side
+    # shoulder/elbow/hip make the angle (freeze below 0.5); both hips make the lean; both
+    # shoulders make the hike.
+    angle_joints = [SHOULDER[i], ELBOW[i], HIP[i]]
     return {
         "shoulder_deg": round(shoulder_deg, 1),
         "elbow_deg": round(elbow_deg, 1),
         "trunk_lean_deg": round(lean, 1),
         "shoulder_hike_norm": round(hike, 3),
         "view_ok": sep < 0.6,
-        "visibility": round(float(np.min(res.visibility[used])), 2),
+        "visibility": round(float(np.min(vis[angle_joints])), 2),
+        "hip_visibility": round(float(np.min(vis[[HIP[i], HIP[j]]])), 2),
+        "shoulders_visibility": round(float(np.min(vis[[SHOULDER[i], SHOULDER[j]]])), 2),
     }

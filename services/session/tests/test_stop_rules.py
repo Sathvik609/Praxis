@@ -43,6 +43,17 @@ def test_three_consecutive_unverified_reps_pause():
     assert sr.on_events([make_event("reach_complete", t=9, verified=True, to_dot=1)]) == []
 
 
+def test_failed_reps_fires_again_after_three_more_and_resets_on_resume():
+    sr = StopRules(SEED_PRESCRIPTION)
+    bad = lambda t: make_event("reach_complete", t=t, verified=False, reason="cup_occluded", to_dot=1)  # noqa: E731
+    assert types(sr.on_events([bad(1), bad(2), bad(3)])) == ["pause", "therapist_flag"]
+    assert types(sr.on_events([bad(4), bad(5), bad(6)])) == ["pause", "therapist_flag"]  # not once-only
+    sr.on_events([bad(7), bad(8)])
+    sr.on_resume()  # the patient fixed the setup: the streak starts over
+    assert sr.on_events([bad(9)]) == []
+    assert types(sr.on_events([bad(10), bad(11)])) == ["pause", "therapist_flag"]
+
+
 def test_perception_loss_pauses_and_exertion_forces_rest():
     sr = StopRules(SEED_PRESCRIPTION)
     evs = sr.on_events([make_event("perception_lost", t=3.0, missing=[1])])

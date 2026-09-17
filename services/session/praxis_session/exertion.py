@@ -13,6 +13,8 @@ import numpy as np
 from praxis_session.events import Event
 from praxis_session.prescription import Prescription
 
+RPE_HALF_LIFE_S = 120.0
+
 
 class Exertion:
     def __init__(self, prescription: Prescription) -> None:
@@ -21,6 +23,10 @@ class Exertion:
         self._peaks: list[float] = []
         self._tremor: list[float] = []
         self._rpe: int | None = None
+        # The last RPE fades: its contribution halves for every RPE_HALF_LIFE_S of low
+        # behavioural score since it was reported (a fresh RPE resets the clock).
+        self._rpe_low_s = 0.0
+        self._last_t: float | None = None
         self._level = "low"
         self._high_since: float | None = None
         self.state: dict[str, Any] = {"level": "low", "score": 0.0, "reasons": [], "method": "behavioural"}
@@ -43,6 +49,7 @@ class Exertion:
                     self._tremor.append(float(hand["tremor_ratio"]))
         if rpe is not None:
             self._rpe = int(rpe)
+            self._rpe_low_s = 0.0
         score, reasons = 0.0, []
         if len(self._durations) >= 6:
             d = np.array(self._durations[-12:])
@@ -61,13 +68,18 @@ class Exertion:
             if tr > 0.45:
                 score += min(1.0, tr)
                 reasons.append(f"tremor share {tr:.0%} of hand motion")
+        behavioural_low = score < 0.5
+        if t is not None and self._last_t is not None and behavioural_low and rpe is None:
+            self._rpe_low_s += max(0.0, t - self._last_t)
+        if t is not None:
+            self._last_t = t
         if self._rpe is not None:
-            if self._rpe >= 7:
-                score += 1.5
-                reasons.append(f"RPE {self._rpe}/10")
-            elif self._rpe >= 5:
-                score += 0.6
-                reasons.append(f"RPE {self._rpe}/10")
+            base = 1.5 if self._rpe >= 7 else 0.6 if self._rpe >= 5 else 0.0
+            if base:
+                decay = 0.5 ** (self._rpe_low_s / RPE_HALF_LIFE_S)
+                score += base * decay
+                fading = f", fading after {self._rpe_low_s:.0f} s of steady work" if decay < 0.9 else ""
+                reasons.append(f"RPE {self._rpe}/10{fading}")
         level = "high" if score >= 1.2 else "moderate" if score >= 0.5 else "low"
         if t is not None:
             if level == "high":

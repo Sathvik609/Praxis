@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from praxis_session.prescription import SEED_PRESCRIPTION
-from praxis_session.seed_data import NHPT_TREND, PATIENT, SESSIONS
+from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 
 DEFAULT_PATH = Path(__file__).resolve().parents[1] / "praxis.db"
 SCHEMA = """
@@ -91,6 +91,7 @@ class Store:
         }
         d["next_practice"] = _next_practice(d["summary"])
         d["delivery"] = d["summary"].get("delivery", "queued · not yet delivered")
+        d["illustrative"] = bool(d["summary"].get("illustrative"))  # seed history, never real
         if with_events:
             d["events"] = [json.loads(e["json"]) for e in self._db.execute("SELECT json FROM events WHERE session_id=? ORDER BY seq", (r["id"],))]
         return d
@@ -114,22 +115,51 @@ class Store:
     def nhpt_trend(self) -> list[dict[str, Any]]:
         return [{"date": r["date"], "total_s": r["total_s"]} for r in self._db.execute("SELECT date, total_s FROM nhpt_trend ORDER BY date")]
 
+    def _practice(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
+        """Practice numbers from real sessions only. `planned` needs a schedule the
+        prescription does not carry yet, so it (and adherence) is None rather than invented."""
+        real = [s for s in sessions if not s["illustrative"]]
+        hours = sum(float(s["summary"].get("camera", {}).get("active_s") or 0) for s in real) / 3600
+        return {"done": len(real), "planned": None, "hours": round(hours, 1)}
+
+    @staticmethod
+    def _adherence(practice: dict[str, Any]) -> int | None:
+        planned = practice.get("planned")
+        return None if not planned else round(100 * practice["done"] / planned)
+
     def progress(self) -> dict[str, Any]:
         sessions = self.sessions(100)
-        per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
-        pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early"} for s in reversed(sessions)]
-        active_s = sum(s["summary"].get("camera", {}).get("active_s", 0) for s in sessions)
-        return {"nhpt_trend": self.nhpt_trend(), "verified_per_session": per, "practice": {"done": 19, "planned": 22, "hours": round(3.4 + active_s / 3600 - sum(s["summary"].get("camera", {}).get("active_s", 0) for s in sessions if s["id"].startswith("s-")) / 3600, 1)}, "pain_effort": pain, "goal_log_count": self._db.execute("SELECT COUNT(*) FROM goal_log").fetchone()[0] + 4}
+        per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"], "illustrative": s["illustrative"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
+        pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early", "illustrative": s["illustrative"]} for s in reversed(sessions)]
+        practice = self._practice(sessions)
+        return {
+            "nhpt_trend": self.nhpt_trend(),
+            "verified_per_session": per,
+            "practice": practice,
+            "adherence_pct": self._adherence(practice),
+            "sample": dict(SAMPLE_PRACTICE) | {"illustrative": True},
+            "pain_effort": pain,
+            "goal_log_count": self._db.execute("SELECT COUNT(*) FROM goal_log").fetchone()[0],
+        }
 
     # ---- writes ------------------------------------------------------------------------
     def save_session(self, summary: dict[str, Any], checkin: dict[str, Any] | None, feedback: dict[str, Any] | None, events: list[dict[str, Any]]) -> str:
         sid = summary.get("session_id") or f"s-{int(time.time())}"
         cam = summary.get("camera", {})
-        started = datetime.fromtimestamp(summary.get("t_start") or time.time()).isoformat(timespec="seconds")
-        ended = datetime.fromtimestamp(summary.get("t_end") or time.time()).isoformat(timespec="seconds")
+        t_start, t_end = summary.get("t_start"), summary.get("t_end")
+        now = time.time()
+        if summary.get("clock") == "clip" or (t_start is not None and t_start < 1e9):
+            # Replay runs on clip time (seconds from 0), which is not an epoch: date the
+            # session by when it was played, keeping its duration.
+            duration = max(0.0, float(t_end or 0) - float(t_start or 0))
+            t_start, t_end = now, now + duration
+        started = datetime.fromtimestamp(t_start or now).isoformat(timespec="seconds")
+        ended = datetime.fromtimestamp(t_end or now).isoformat(timespec="seconds")
         status = "ended_early" if summary.get("stopped") else "complete"
         total = max(1, cam.get("reps_total", 0))
         tracking = "usable" if cam.get("unverified", 0) / total <= 0.3 else "limited"
+        if summary.get("mode") == "nhpt" and (summary.get("tracking_lost_events") or cam.get("tracking_lost_events")):
+            tracking = "limited"  # pegs seated while tracking was lost cannot be verified
         names = {"nhpt": "Nine-Hole Peg Test", "cup": "Waiter – cup", "arm": "Arm to the front"}
         title = names.get(summary.get("mode"), summary.get("mode", "session"))
         if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s"):
@@ -149,7 +179,7 @@ class Store:
     def read_patient_model(self, patient_id: str) -> dict[str, Any]:
         return {
             "patient_id": patient_id,
-            "history": [{"id": s["id"], "date": s["date"], "mode": s["mode"], "status": s["status"], "tracking": s["tracking"], "camera": s["summary"].get("camera", {}), "feedback": s["feedback"]} for s in self.sessions(20)],
+            "history": [{"id": s["id"], "date": s["date"], "mode": s["mode"], "status": s["status"], "tracking": s["tracking"], "camera": s["summary"].get("camera", {}), "feedback": s["feedback"], "illustrative": s["illustrative"]} for s in self.sessions(20)],
             "nhpt_trend": self.nhpt_trend(),
             "open_flags": self.flags(reviewed=False),
         }
@@ -163,7 +193,7 @@ class Store:
         trend = self.nhpt_trend()
         return [{
             "id": p["id"], "name": p["name"], "program": f"GRASP L{p['program']['level']} · {p['side']} · wk 6",
-            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": 86,
+            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self.sessions(100))),
             "nhpt_last_s": trend[-1]["total_s"] if trend else None, "nhpt_first_s": trend[0]["total_s"] if trend else None,
         }, {"id": "priya", "name": "Priya S.", "program": "GRASP L3 · right · wk 3", "open_flags": 0, "adherence_pct": 92, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},
             {"id": "tom", "name": "Tom K.", "program": "GRASP L1 · left · wk 9", "open_flags": 1, "adherence_pct": 71, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},

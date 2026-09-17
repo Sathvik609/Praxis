@@ -40,6 +40,10 @@ class CoachSession:
         self._last_level = "low"
         self.t_start: float | None = None
         self.t_end: float | None = None
+        # Honest active time: the clock stops on every pause/rest and restarts on resume.
+        self.paused_s = 0.0
+        self._paused_at: float | None = None
+        self.tracking_lost_events = 0
         self.trace.log("session", mode=mode, prescription=f"{prescription.program} L{prescription.level} v{prescription.version}", coach=LABEL)
 
     @property
@@ -65,6 +69,7 @@ class CoachSession:
 
     def pause(self, t: float, rule: str = "patient") -> list[Event]:
         self.paused, self.pause_rule = True, rule
+        self._clock_pause(t)
         self.trace.log("pause", rule=rule)
         return [make_event("pause", t=t, rule=rule, text="Paused. Take your time.")]
 
@@ -72,9 +77,25 @@ class CoachSession:
         """Clear a pause. `rule` names the rule that cleared itself (perception auto-resume);
         the patient's own tap carries no rule."""
         self.paused, self.pause_rule = False, None
+        self._clock_resume(t)
+        self.stop_rules.on_resume()
         self.trace.log("resume", rule=rule)
         extra = {k: v for k, v in (("rule", rule), ("text", text)) if v is not None}
         return [make_event("resume", t=t, **extra)]
+
+    # ---- active-time clock ---------------------------------------------------------------
+    def _clock_pause(self, t: float) -> None:
+        if self._paused_at is None:
+            self._paused_at = t
+
+    def _clock_resume(self, t: float) -> None:
+        if self._paused_at is not None:
+            self.paused_s += max(0.0, t - self._paused_at)
+            self._paused_at = None
+
+    def _paused_total(self, t: float | None) -> float:
+        open_pause = 0.0 if self._paused_at is None or t is None else max(0.0, t - self._paused_at)
+        return self.paused_s + open_pause
 
     def on_answer(self, prompt_id: str, choice: str, t: float) -> tuple[dict[str, Any] | None, list[Event]]:
         self.trace.log("answer", prompt=prompt_id, choice=choice)
@@ -114,6 +135,8 @@ class CoachSession:
                 self.measures["splits_s"] = list(e.payload.get("splits_s") or [])
             elif e.type in ("compensation_lean", "shoulder_hiking"):
                 self.counts["posture_cues"] += 1
+            elif e.type == "perception_lost":
+                self.tracking_lost_events += 1
             if e.type != "frame":
                 self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep")})
         out: list[Event] = []
@@ -139,6 +162,8 @@ class CoachSession:
         for e in evs:
             if e.type in ("stop", "pause", "rest"):
                 self.trace.log("stop_rule", action=e.type, rule=e.payload.get("rule"), text=e.payload.get("text"))
+                if e.type in ("pause", "rest"):
+                    self._clock_pause(e.t)  # the patient resumes both with a tap
                 if e.type == "pause":
                     self.paused, self.pause_rule = True, e.payload.get("rule")
             elif e.type == "therapist_flag":
@@ -169,16 +194,35 @@ class CoachSession:
                 notes.append({"text": f"{d['action']}: {d['reason']}", "confidence": conf, "evidence": d["evidence"]})
         seen = set()
         notes = [n for n in notes if not (n["text"] in seen or seen.add(n["text"]))][:6]
+        t_end = t if t is not None else self.t_end
+        # Active time runs to the last perception event, not to when the report was asked for.
+        paused_s = self._paused_total(self.t_end)
+        active_s = 0.0
+        if self.t_start is not None and self.t_end is not None:
+            active_s = max(0.0, (self.t_end - self.t_start) - paused_s)
+        total = self.counts["reps_total"]
+        # NHPT has no per-rep verified flag (occupancy is the verification), so any tracking
+        # loss makes the whole assessment "limited"; the other tasks use the unverified share.
+        if self.mode == "nhpt":
+            limited = self.tracking_lost_events > 0
+        else:
+            limited = total > 0 and self.counts["unverified"] / total > 0.3
         return {
             "session_id": self.session_id,
             "mode": self.mode,
             "t_start": self.t_start,
-            "t_end": t if t is not None else self.t_end,
+            "t_end": t_end,
+            # Replay feeds clip time (seconds from 0), live sessions wall-clock epoch seconds.
+            "clock": "wall" if (self.t_start or 0) >= 1e9 else "clip",
+            "tracking": "limited" if limited else "usable",
+            "tracking_lost_events": self.tracking_lost_events,
             "camera": {
                 **self.counts,
                 **self.measures,
-                "coverage_pct": round(100 * self.counts["verified"] / self.counts["reps_total"]) if self.counts["reps_total"] else None,
-                "active_s": round((self.t_end or 0) - (self.t_start or 0), 1) if self.t_start is not None else 0,
+                "coverage_pct": round(100 * self.counts["verified"] / total) if total else None,
+                "active_s": round(active_s, 1),
+                "paused_s": round(paused_s, 1),
+                "tracking_lost_events": self.tracking_lost_events,
             },
             "told_us": {**self.checkin, **self.feedback},
             "exertion": self.exertion.state,

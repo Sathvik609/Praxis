@@ -4,14 +4,16 @@
  "arm_fp": 0,
  "arm_fn": 0,
  "arm_peak_mae_deg": 0.77,
- "reach_f1": 1.0,
- "reach_tp": 32,
+ "reach_f1": 0.9841,
+ "reach_tp": 31,
  "reach_fp": 0,
- "reach_fn": 0,
- "reach_mae_ms": 0.0,
+ "reach_fn": 1,
+ "reach_mae_ms": 200.0,
  "dataset": "v0",
  "tol_s": 1.0,
  "n_entries": 3,
+ "debounce_frames": 2,
+ "clear_frames": 3,
  "n_labeled_reps": 9,
  "tp": 9,
  "fp": 0,
@@ -19,7 +21,7 @@
  "rep_precision": 1.0,
  "rep_recall": 1.0,
  "rep_f1": 1.0,
- "nhpt_mae_s": 0.0,
+ "nhpt_mae_s": 0.1,
  "n_synthetic": 3,
  "n_real": 0,
  "entries": [
@@ -35,8 +37,8 @@
    "fn": 0,
    "misses": [],
    "nhpt_labeled_s": 17.0,
-   "nhpt_pred_s": 17.0,
-   "nhpt_abs_err_s": 0.0
+   "nhpt_pred_s": 17.1,
+   "nhpt_abs_err_s": 0.1
   },
   {
    "id": "synthetic_cup_01",
@@ -44,11 +46,25 @@
    "synthetic": true,
    "frames": 517,
    "labeled_reps": 32,
-   "pred_reps": 32,
-   "tp": 32,
+   "pred_reps": 31,
+   "tp": 31,
    "fp": 0,
-   "fn": 0,
-   "misses": []
+   "fn": 1,
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "rep": 32,
+      "from_dot": 1,
+      "to_dot": 0,
+      "t_lift": 50.9,
+      "t_placed": 51.3,
+      "reach_ms": 400.0,
+      "arc": 4,
+      "phase": "fast"
+     }
+    }
+   ]
   },
   {
    "id": "synthetic_arm_01",

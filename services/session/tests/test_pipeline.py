@@ -293,6 +293,37 @@ def test_arm_pose_loss_after_15_frames():
     assert "perception_regained" in [e.type for e in p.process_pose(res, 3.0, 30)]
 
 
+def test_arm_frame_carries_gate_and_freezes_when_frontal():
+    from praxis_session.perception.pose import PoseResult
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left", hold_s=1.0
+    )
+    profile = [5 + 85 * i / 15 for i in range(16)] + [90] * 20 + [5] * 20
+    evs = []
+    for i, ang in enumerate(profile):
+        res = PoseResult(
+            landmarks_px=figure(ang, frontal=True),
+            visibility=np.ones(33, np.float32),
+            world=np.zeros((33, 3), np.float32),
+            conf=0.9,
+        )
+        evs += p.process_pose(res, t=i / 15.0, frame_index=i)
+    frames = [e.to_dict() for e in evs if e.type == "frame"]
+    assert frames[5]["arm"]["gate"] == "turn_side"
+    assert not [e for e in evs if e.type in ("state_change", "rep_complete")]
+    # low hip visibility: the gate names the hips; pose absence carries no gate
+    vis = np.ones(33, np.float32)
+    vis[23] = 0.2
+    res = PoseResult(
+        landmarks_px=figure(5), visibility=vis, world=np.zeros((33, 3), np.float32), conf=0.9
+    )
+    d = p.process_pose(res, t=10.0, frame_index=100)[0].to_dict()
+    assert d["arm"]["gate"] == "hips_out_of_view"
+    assert p.process_pose(None, t=10.1, frame_index=101)[0].to_dict()["arm"]["gate"] is None
+
+
 def test_arm_setup_needs_no_sheet():
     """Arm to the front uses no printed sheet: calibration for it must not require markers or
     the task area, and must never report perception loss for missing markers (audit A3)."""

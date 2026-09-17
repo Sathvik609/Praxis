@@ -17,7 +17,7 @@ from praxis_session.perception.board import BoardState
 from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
 from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
-from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation
+from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation, gate_for
 from praxis_session.perception.hand import HandMetrics, HandTracker
 from praxis_session.perception.pose import SKELETON, OneEuro, PoseResult, PoseTracker, arm_angles
 from praxis_session.perception.nhpt import NHPT
@@ -378,7 +378,18 @@ class SessionPipeline:
                 ghost = np.round(best, 1).tolist()
         else:
             self._angle_filter.reset()
-        snap_before = self._arm.snapshot()
+        obs = ArmObservation(
+            t=t,
+            shoulder_deg=None if angles is None else angles["shoulder_deg"],
+            trunk_lean_deg=0.0 if angles is None else angles["trunk_lean_deg"],
+            shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
+            view_ok=bool(angles and angles["view_ok"]),
+            visibility=1.0 if angles is None else angles["visibility"],
+            hip_visibility=1.0 if angles is None else angles["hip_visibility"],
+            shoulders_visibility=1.0 if angles is None else angles["shoulders_visibility"],
+        )
+        # The gate for *this* frame goes out with the frame (the snapshot lags one step).
+        snap_before = self._arm.snapshot() | {"gate": gate_for(obs)}
         self._emit(
             out,
             make_event(
@@ -403,13 +414,6 @@ class SessionPipeline:
             ),
         )
         self._detect_ms = 0.0
-        obs = ArmObservation(
-            t=t,
-            shoulder_deg=None if angles is None else angles["shoulder_deg"],
-            trunk_lean_deg=0.0 if angles is None else angles["trunk_lean_deg"],
-            shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
-            view_ok=bool(angles and angles["view_ok"]),
-        )
         for e in self._arm.step(obs):
             self._emit(out, e)
         # pose loss bookkeeping (mirrors marker loss)
