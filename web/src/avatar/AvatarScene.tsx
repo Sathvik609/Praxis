@@ -1,27 +1,32 @@
-import { useEffect, useRef } from 'react'
+import { type RefObject, useEffect, useRef } from 'react'
 import type { Clip } from './clips'
 import type { Marker } from './markers'
-import { AvatarStage, type Projection } from './scene'
+import { AvatarStage, type Clock, type Projection, type Tick } from './scene'
 
-export type { Projection } from './scene'
+export type { Clock, Projection, Tick } from './scene'
 
 type Props = {
   clip: Clip
-  getTime: () => number
-  speed: number
+  /** Mutable playback state shared with the stage's single loop. */
+  clock: RefObject<Clock>
   camera: 'front' | 'side'
   closeUp: boolean
+  compact: boolean
   showCues: boolean
   markers?: Marker[]
+  /** 10 Hz: caption / step / ended for React state. */
+  onTick?: (t: Tick) => void
+  /** Every frame: screen positions of the joints and the torso centre, for the label layer. */
   onProject?: (p: Projection) => void
+  onContextLost?: () => void
 }
 
 /** WebGL mannequin: primitives only, no assets. All animation comes from the sampler. React
  *  mounts one `AvatarStage` and pushes the latest props into it; the stage owns the loop. */
-export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, markers = [], onProject }: Props) {
+export function AvatarScene({ clip, clock, camera, closeUp, compact, showCues, markers = [], onTick, onProject, onContextLost }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const stageRef = useRef<AvatarStage | null>(null)
-  const props = { clip, getTime, speed, camera, closeUp, showCues, markers, onProject }
+  const props = { clip, clock, camera, closeUp, compact, showCues, markers, onTick, onProject, onContextLost }
   const latest = useRef(props)
   useEffect(() => {
     latest.current = props
@@ -35,7 +40,7 @@ export function AvatarScene({ clip, getTime, speed, camera, closeUp, showCues, m
     try {
       stage = new AvatarStage(el, latest.current)
     } catch {
-      el.textContent = 'Avatar needs WebGL; your browser has it turned off.'
+      latest.current.onContextLost?.()
       return
     }
     stageRef.current = stage

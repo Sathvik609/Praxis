@@ -10,15 +10,38 @@ import { AMBER, MINT, makeRenderer, makeStage } from './stage'
 
 export type Projection = Record<string, { x: number; y: number }>
 
+/** Mutable playback state owned by the panel and advanced by the stage's loop. */
+export type Clock = { time: number; playing: boolean; speed: number }
+export type Tick = { caption: string; step: number; ended: boolean; t: number }
+
 export type StageProps = {
   clip: Clip
-  getTime: () => number
-  speed: number
+  clock: { current: Clock }
   camera: 'front' | 'side'
   closeUp: boolean
+  compact: boolean
   showCues: boolean
   markers: Marker[]
+  onTick?: (t: Tick) => void
   onProject?: (p: Projection) => void
+  onContextLost?: () => void
+}
+
+/** Camera presets (plan B5): front 2.6 m / target 1.30 (Home compact 2.2 m / 1.36), side from
+ *  the practising side, close-up 1.5 m on the hand. Table clips look down a little so the sheet reads. */
+export function cameraPreset(input: Pick<StageProps, 'clip' | 'camera' | 'closeUp' | 'compact'>, hand: THREE.Vector3): { eye: THREE.Vector3; look: THREE.Vector3 } {
+  const { clip, camera, closeUp, compact } = input
+  const sx = clip.side === 'right' ? -1 : 1
+  const hasTable = clip.props.includes('table')
+  if (closeUp) {
+    const look = hand.clone()
+    const eye = camera === 'side' ? new THREE.Vector3(sx * 1.5, look.y + 0.3, look.z + 0.2) : new THREE.Vector3(look.x * 0.5, look.y + 0.45, look.z + 1.35)
+    return { eye, look }
+  }
+  const dist = compact ? 2.25 : 2.3
+  const y = hasTable ? (compact ? 1.26 : 1.22) : compact ? 1.36 : 1.3
+  if (camera === 'side') return { eye: new THREE.Vector3(sx * dist, y + 0.12, 0.2), look: new THREE.Vector3(0, y, 0.16) }
+  return { eye: new THREE.Vector3(0.08, y + (hasTable ? 0.5 : 0.12), dist), look: new THREE.Vector3(0, y - (hasTable ? 0.02 : 0), 0.05) }
 }
 
 /** The floor of the stage: the plinth bottom, a hair above the disc. */
@@ -67,8 +90,11 @@ export class AvatarStage {
   private props: Props | null = null
   private raf = 0
   private frames = 0
-  private lastProject = 0
+  private last = 0
+  private lastTick = 0
+  private lost = false
   private ro: ResizeObserver
+  private look = new THREE.Vector3(0, 1.3, 0)
   input: StageProps
 
   constructor(private el: HTMLElement, input: StageProps) {
@@ -76,6 +102,7 @@ export class AvatarStage {
     this.renderer = makeRenderer()
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.domElement.style.display = 'block'
+    this.renderer.domElement.addEventListener('webglcontextlost', this.onLost, false)
     el.appendChild(this.renderer.domElement)
     this.stage = makeStage(this.scene, this.renderer, FLOOR_Y)
     this.figure = makeFigure()
@@ -105,6 +132,13 @@ export class AvatarStage {
     this.ro.observe(el)
     this.resize()
     this.raf = requestAnimationFrame(this.render)
+  }
+
+  private onLost = (e: Event) => {
+    e.preventDefault()
+    this.lost = true
+    cancelAnimationFrame(this.raf)
+    this.input.onContextLost?.()
   }
 
   private resize() {
@@ -175,10 +209,21 @@ export class AvatarStage {
     this.path = g
   }
 
-  private render = () => {
+  private render = (now: number) => {
+    if (this.lost) return
     const p = this.input
+    const dt = this.frames === 0 ? 0 : Math.min(0.1, (now - this.last) / 1000)
+    this.last = now
+    const clock = p.clock.current
+    if (clock.playing) clock.time += dt
+    let ended = false
+    if (!p.clip.loop && clock.time * clock.speed >= p.clip.duration) {
+      clock.time = p.clip.duration / clock.speed
+      if (clock.playing) ended = true
+      clock.playing = false
+    }
     if (!this.props || this.props.clip !== p.clip) this.buildProps(p.clip)
-    const s = sample(p.clip, p.getTime(), p.speed)
+    const s = sample(p.clip, clock.time, clock.speed)
     this.figure.update({ angles: s.angles, pinch: s.pinch, breath: s.breath })
     const pos = forwardKinematics(s.angles)
     const handJoint: Joint = p.clip.side === 'left' ? 'lHand' : 'rHand'
@@ -225,28 +270,31 @@ export class AvatarStage {
       }
     }
 
-    // camera
-    const focus = p.closeUp && p.clip.pathJoint ? v(pos[p.clip.pathJoint]) : new THREE.Vector3(0, 1.3, 0)
-    const dist = p.closeUp ? 1.5 : 2.6
-    const sx = p.clip.side === 'right' ? -1 : 1
-    const target = p.camera === 'side' ? new THREE.Vector3(sx * dist, focus.y + 0.05, 0.15) : new THREE.Vector3(0.1, focus.y + 0.08, dist)
-    if (this.frames === 0) this.cam.position.copy(target)
-    else this.cam.position.lerp(target, 0.12)
-    this.cam.lookAt(focus)
+    // camera: frame-rate independent ease toward the preset
+    const { eye, look } = cameraPreset(p, hand)
+    const k = this.frames === 0 ? 1 : 1 - Math.pow(0.001, dt)
+    this.cam.position.lerp(eye, k)
+    this.look.lerp(look, k)
+    this.cam.lookAt(this.look)
     this.renderer.render(this.scene, this.cam)
     this.frames += 1
-    const now = performance.now()
-    if (p.onProject && now - this.lastProject > 100) {
-      this.lastProject = now
+
+    if (p.onProject) {
       const out: Projection = {}
       const w = this.el.clientWidth || 300
       const h = this.el.clientHeight || 300
       const tmp = new THREE.Vector3()
-      for (const j of JOINTS) {
-        tmp.copy(v(pos[j])).project(this.cam)
-        out[j] = { x: ((tmp.x + 1) / 2) * w, y: ((1 - tmp.y) / 2) * h }
+      const project = (name: string, x: number, y: number, z: number) => {
+        tmp.set(x, y, z).project(this.cam)
+        out[name] = { x: ((tmp.x + 1) / 2) * w, y: ((1 - tmp.y) / 2) * h }
       }
+      for (const j of JOINTS) project(j, ...pos[j])
+      project('centre', pos.spine[0], pos.spine[1], pos.spine[2])
       p.onProject(out)
+    }
+    if (p.onTick && (ended || now - this.lastTick > 100)) {
+      this.lastTick = now
+      p.onTick({ caption: s.caption, step: s.step, ended, t: s.t })
     }
     this.raf = requestAnimationFrame(this.render)
   }
@@ -254,6 +302,7 @@ export class AvatarStage {
   dispose() {
     cancelAnimationFrame(this.raf)
     this.ro.disconnect()
+    this.renderer.domElement.removeEventListener('webglcontextlost', this.onLost)
     disposeTree(this.cues)
     if (this.props) disposeTree(this.props.group)
     this.figure.dispose()
