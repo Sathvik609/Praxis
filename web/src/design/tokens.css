@@ -1,8 +1,16 @@
 :root {
+  /* brand (fills, stage, charts) */
   --teal: #1f5f5b;
   --mint: #2fa985;
   --amber: #c97f14;
   --red: #b9382b;
+  /* ink = text and outlines on surfaces, AA-measured in design/contrast.test.ts */
+  --teal-ink: #1f5f5b;
+  --mint-ink: #1e7a5f;
+  --amber-ink: #8a5510;
+  --red-ink: #9e2e22;
+  --teal-fill: #1f5f5b;
+  --red-fill: #b9382b;
   --bg: #eef2f0;
   --surface: #ffffff;
   --text: #14201e;
@@ -13,11 +21,30 @@
   --stage-b: #0f262b;
   --font-heading: 'Lora', Georgia, serif;
   --font-body: 'Carlito', 'Calibri', system-ui, sans-serif;
+  /* tints: chips, coach card, selected rows */
+  --tint-mint: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  --tint-amber: color-mix(in srgb, var(--amber) 14%, var(--surface));
+  --tint-red: color-mix(in srgb, var(--red) 14%, var(--surface));
+  --tint-focus: color-mix(in srgb, var(--focus) 14%, var(--surface));
+  --shadow-1: 0 1px 2px rgb(20 32 30 / 0.06), 0 4px 12px rgb(20 32 30 / 0.06);
+  --shadow-2: 0 8px 24px rgb(20 32 30 / 0.16), 0 2px 6px rgb(20 32 30 / 0.08);
+  --r-card: 14px;
+  --r-control: 10px;
+  --r-pill: 999px;
 }
 :root[data-theme='dark'] {
+  --teal-ink: #7fd1c0;
+  --mint-ink: #4ccba1;
+  --amber-ink: #e9a23b;
+  --red-ink: #f08a7c;
+  --teal-fill: #1f6f68;
+  --red-fill: #b23a2c;
   --bg: #0f1a19;
   --surface: #162321;
   --text: #e9f1ee;
   --muted: #9db0ac;
   --line: #27403c;
+  --focus: #8ab8ff;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.3);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.3);
 }

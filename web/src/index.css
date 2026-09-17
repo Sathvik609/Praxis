@@ -15,6 +15,20 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-focus: var(--focus);
+  --color-teal-ink: var(--teal-ink);
+  --color-mint-ink: var(--mint-ink);
+  --color-amber-ink: var(--amber-ink);
+  --color-red-ink: var(--red-ink);
+  --color-teal-fill: var(--teal-fill);
+  --color-red-fill: var(--red-fill);
+  --color-tint-mint: var(--tint-mint);
+  --color-tint-amber: var(--tint-amber);
+  --color-tint-red: var(--tint-red);
+  --color-tint-focus: var(--tint-focus);
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --radius-card: var(--r-card);
+  --radius-control: var(--r-control);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
   /* Named type scale (audit 17 Sep, A5). Body is 18 px on a 16 px root so rem-based
