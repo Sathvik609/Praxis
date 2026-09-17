@@ -37,10 +37,12 @@ export function SessionHeader({ title, subtitle, status, label }: { title: strin
 }
 
 /** The camera stage: Panel with the live indicator + feed label (top-left), the exercise's
- *  tracking words (top-right), an optional dark measurement band and the OpenCV line
- *  (bottom-left), the replay badge (bottom-right) and the camera-blocked card. Frames never
- *  reach the browser in replay; the overlay is drawn from events either way. `isolate` keeps
- *  the slots' z-index inside the panel so session dialogs always paint above it. */
+ *  tracking words (top-right), an optional dark measurement band, the OpenCV line and the
+ *  latency line (bottom-left), the replay badge (bottom-right) and the camera-blocked card.
+ *  Frames never reach the browser in replay; the overlay is drawn from events either way.
+ *  `isolate` keeps the slots' z-index inside the panel so session dialogs always paint above
+ *  it. `latencyLine` is `latencyLine(useLatency(events))`: rolling p50/p95 over the last 60
+ *  frames and cues (Sprint D, D-LAT). */
 export function LiveFeed({
   replay,
   camActive,
@@ -51,6 +53,7 @@ export function LiveFeed({
   tracking,
   band,
   cvLine,
+  latencyLine,
   onRetry,
   className = '',
 }: {
@@ -63,6 +66,7 @@ export function LiveFeed({
   tracking?: ReactNode
   band?: ReactNode
   cvLine: ReactNode
+  latencyLine?: ReactNode
   onRetry: () => void
   className?: string
 }) {
@@ -89,6 +93,7 @@ export function LiveFeed({
         <div className="flex min-w-0 flex-col items-start gap-2">
           {band && <div className="rounded-lg bg-black/65 px-3 py-1.5 text-xl font-bold tabular-nums text-white">{band}</div>}
           <div className="text-base text-white/80">{cvLine}</div>
+          {latencyLine && <div className="text-base tabular-nums text-white/80">{latencyLine}</div>}
         </div>
         {replay && (
           <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[#E9A23B]/70 bg-black/65 px-3 py-1.5 text-lg font-bold text-[#E9A23B]">

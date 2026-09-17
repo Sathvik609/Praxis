@@ -15,6 +15,27 @@ function cap(s: string) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 }
 
+/** `summary.latency` from the service (Sprint D, D-LAT): percentiles over the whole session,
+ *  null when the browser sent no capture time (replay) or nothing happened. */
+type LatencyBlock = {
+  capture_to_event_p50: number | null
+  capture_to_event_p95: number | null
+  proc_p50: number | null
+  proc_p95: number | null
+  event_to_cue_p50: number | null
+  event_to_cue_p95: number | null
+  frames: number
+  dropped: number
+  cues: number
+}
+
+const pp = (a: number | null, b: number | null) => (a != null && b != null ? `${Math.round(a)} / ${Math.round(b)} ms` : '—')
+
+function latencyText(l: LatencyBlock): string {
+  const first = l.capture_to_event_p50 != null ? `capture→event ${pp(l.capture_to_event_p50, l.capture_to_event_p95)}` : `processing ${pp(l.proc_p50, l.proc_p95)}`
+  return `Latency p50 / p95 · ${first} · event→cue ${pp(l.event_to_cue_p50, l.event_to_cue_p95)} · ${l.frames} frames, ${l.dropped} dropped`
+}
+
 /** Side comes from the summary when the service recorded one; never assumed. */
 function sideOf(s: SessionRecord): string | null {
   const cands = [s.summary.camera.side, s.summary.told_us?.side, s.checkin?.side]
@@ -80,6 +101,7 @@ export function SessionReport() {
     : 'Comparison not recorded.'
   const reachS = cam.reach_ms?.map((v) => Math.round(v / 100) / 10)
   const context = s.summary.mode === 'nhpt' ? 'assessment' : side ? `${side} side` : 'practice'
+  const latency = (s.summary as { latency?: LatencyBlock }).latency ?? null
 
   return (
     <div className="p-6">
@@ -121,6 +143,7 @@ export function SessionReport() {
               </div>
             )}
             <p className="mt-3 text-base text-muted">Verified and unverified are counted separately; nothing is combined into a score.</p>
+            {latency && latency.frames > 0 && <p className="mt-2 text-base tabular-nums text-muted">{latencyText(latency)}</p>}
           </Card>
 
           <Card title={`Coach notes for ${clinician}`} action={<Chip tone="neutral">{s.summary.coach.label}</Chip>}>

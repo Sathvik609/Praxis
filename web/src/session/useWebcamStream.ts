@@ -1,17 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { authToken } from '../lib/auth'
 import { parseEvent, type PraxisEvent } from '../lib/events'
+import { ACK_TIMEOUT_MS, ACK_TYPES, nowEpochMs, withCaptureTime } from './latency'
 
 type Opts = { wsUrl: string; mode: string; fps?: number; params?: Record<string, string>; replay?: string | null }
 
 /** Streams 640x480 JPEG frames to the session service and collects the JSON events it returns.
- *  Frames are built on a canvas from the <video>; nothing is recorded. */
+ *  Frames are built on a canvas from the <video>; nothing is recorded.
+ *
+ *  Back-pressure (Sprint D, D-LAT): every frame is prefixed with its capture time (8-byte
+ *  little-endian float64, ms since epoch — see `latency.ts`), and the next frame is captured
+ *  only after the service answered the previous one with a per-frame event (`ACK_TYPES`) or
+ *  after `ACK_TIMEOUT_MS`. `fps` is therefore a ceiling, not a rate: a slow host gets fewer,
+ *  fresher frames instead of a growing queue. */
 export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = null }: Opts) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
   const genRef = useRef(0) // bumps on every start/stop so a stale getUserMedia result is discarded
+  const inflightRef = useRef<{ waiting: boolean; sentAt: number }>({ waiting: false, sentAt: 0 })
   const [camActive, setCamActive] = useState(false)
   const [connected, setConnected] = useState(false)
   const [lastEvent, setLastEvent] = useState<PraxisEvent | null>(null)
@@ -22,6 +30,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
     genRef.current += 1
     if (timerRef.current) window.clearInterval(timerRef.current)
     timerRef.current = null
+    inflightRef.current = { waiting: false, sentAt: 0 }
     const ws = wsRef.current
     if (ws) {
       // Detach before closing: a socket closed before it opened (StrictMode double mount)
@@ -46,6 +55,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
       if (!mine()) return
       const e = parseEvent(String(m.data))
       if (e) {
+        if (ACK_TYPES.has(e.type)) inflightRef.current.waiting = false
         setLastEvent(e)
         setEvents((xs) => [...xs.slice(-199), e])
       }
@@ -94,12 +104,23 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
       canvas.width = 640
       canvas.height = 480
       const ctx = canvas.getContext('2d')!
+      const inflight = inflightRef.current
+      inflight.waiting = false
       timerRef.current = window.setInterval(() => {
         if (ws.readyState !== WebSocket.OPEN || !videoRef.current) return
+        const now = Date.now()
+        if (inflight.waiting && now - inflight.sentAt < ACK_TIMEOUT_MS) return // previous frame still unanswered
+        inflight.waiting = true
+        inflight.sentAt = now
+        const tCapture = nowEpochMs()
         ctx.drawImage(videoRef.current, 0, 0, 640, 480)
         canvas.toBlob(
           (b) => {
-            if (b && ws.readyState === WebSocket.OPEN) b.arrayBuffer().then((buf) => ws.send(buf))
+            if (b && ws.readyState === WebSocket.OPEN) {
+              b.arrayBuffer().then((buf) => ws.send(withCaptureTime(buf, tCapture)))
+            } else {
+              inflight.waiting = false
+            }
           },
           'image/jpeg',
           0.7,

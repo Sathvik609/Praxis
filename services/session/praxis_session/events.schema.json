@@ -208,6 +208,43 @@
     "proc_ms": {
       "type": "number"
     },
+    "t_capture": {
+      "description": "Browser capture time of the frame this event answers, ms since the Unix epoch (performance.timeOrigin + performance.now()), sent as an 8-byte little-endian float64 prefix on the JPEG. null when the frame carried no prefix (bare JPEG, replay).",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "dropped": {
+      "description": "Frames that arrived while this one was queued and were discarded oldest-first (frame_index still counts every received frame, so gaps show drops).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "latency": {
+      "description": "Wall-clock timings on the service. On frame/heartbeat: capture_to_event_ms (null without t_capture; browser clock vs service clock, skew included when they differ) and proc_ms (pipeline time in the executor). On coach: event_to_cue_ms (perception events returned -> cue sent) and capture_to_cue_ms.",
+      "type": "object",
+      "properties": {
+        "capture_to_event_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "proc_ms": {
+          "type": "number"
+        },
+        "event_to_cue_ms": {
+          "type": "number"
+        },
+        "capture_to_cue_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "cup": {
       "type": "object"
     },

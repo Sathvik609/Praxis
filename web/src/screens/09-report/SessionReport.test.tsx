@@ -63,6 +63,27 @@ test('download builds a JSON blob and sharing explains who sees the report', asy
   click.mockRestore()
 })
 
+test('latency percentiles from the summary are shown under the camera measurements', async () => {
+  const latency = { capture_to_event_p50: 48.4, capture_to_event_p95: 91, proc_p50: 20, proc_p95: 30, event_to_cue_p50: 2.2, event_to_cue_p95: 5.6, frames: 120, dropped: 3, cues: 9 }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, latency } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Latency p50 / p95 · capture→event 48 / 91 ms · event→cue 2 / 6 ms · 120 frames, 3 dropped')).toBeInTheDocument()
+})
+
+test('a replay session without capture times shows processing time instead', async () => {
+  const latency = { capture_to_event_p50: null, capture_to_event_p95: null, proc_p50: 20, proc_p95: 30, event_to_cue_p50: null, event_to_cue_p95: null, frames: 40, dropped: 0, cues: 0 }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, latency } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText(/processing 20 \/ 30 ms · event→cue — · 40 frames, 0 dropped/)).toBeInTheDocument()
+})
+
+test('no latency line for a record that carries none (seeded history)', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByRole('heading', { name: 'What the camera measured' })
+  expect(screen.queryByText(/Latency p50/)).not.toBeInTheDocument()
+})
+
 test('side is read from the summary when present', async () => {
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, side: 'right' } } }, '/api/patients/me': ME })
   renderReport()

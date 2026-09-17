@@ -80,6 +80,16 @@ test('replay shows the corner badge instead of the old placeholder sentence and 
   expect(screen.getByRole('status')).toHaveTextContent('Replay')
 })
 
+test('the feed shows the rolling latency line from frame and coach events', () => {
+  mockStream([
+    { ...frame, id: 1, latency: { capture_to_event_ms: 40, proc_ms: 12 }, dropped: 0 },
+    { ...frame, id: 2, latency: { capture_to_event_ms: 60, proc_ms: 14 }, dropped: 1 },
+    { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Go', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending', latency: { event_to_cue_ms: 3, capture_to_cue_ms: 63 } },
+  ])
+  renderAt('/session?hand=left')
+  expect(screen.getByText('latency p50/p95 · capture→event 40/60 ms · event→cue 3/3 ms · 1 dropped')).toBeInTheDocument()
+})
+
 test('trace toggle swaps the coach column for the trace panel', () => {
   mockStream([frame, { type: 'rep_complete', t: 11, id: 2, peg: 1 }])
   renderAt('/session?hand=left')

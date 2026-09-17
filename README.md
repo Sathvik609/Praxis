@@ -61,6 +61,8 @@ Built and tested on synthetic renders: session service (`/health`, `/events`, We
 
 **17 Sep, Sprint C (design craft):** AA-measured light/dark tokens with a contrast test, primitives with hover/focus/pressed states (Button, Chip, Card, Pill, Field, Checkbox, Stat, Panel, icons from lucide), Bars/Line charts with axes and hatched unverified bars, every screen migrated: hubs with real filters, an editable goal, a coach drawer, a clinician header on the therapist view and sign-in outside the shell; flow screens with keyboard-operable scales, a designed camera setup and report with download and sharing; live screens with a designed overlay (numbered holes, bracket corners, cup and dots, hand skeleton, arm ghost), pinned controls, trace with copy. Dev copy and inert controls are gone.
 
+**17 Sep, Sprint D (D-LAT, frame stream):** the browser stamps every frame with its capture time and sends the next one only after the service has answered (250 ms safety valve); the service processes frames off the event loop and drops the oldest queued frame on a slow host instead of falling behind; every frame and coach event carries its latency, the live feed shows `latency p50/p95 · capture→event · event→cue` over the last 60 frames, and the report shows the session percentiles. Setup sockets no longer create a coach session or a trace file. Numbers so far are in-process on one laptop (`docs/TECHNICAL_REPORT.md` §6.2), not a browser measurement.
+
 Not started: real recordings and dataset v1 (Phase 9, needs participants). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout
