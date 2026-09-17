@@ -34,7 +34,7 @@ export function Nav({ program, initial }: { program: string; initial: string }) 
           </NavLink>
         ))}
       </nav>
-      <span className="ml-auto truncate text-muted">Program: {program}</span>
+      <span className="ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
       <NavLink
         to="/settings"
         aria-label="Account and settings"
