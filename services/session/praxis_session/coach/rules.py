@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from praxis_session.coach.base import CoachContext, Decision
 from praxis_session.events import Event
+from praxis_session.perception.exercises import get as get_exercise
 from praxis_session.prescription import clamp
 
 LABEL = "Rule-based coach · LLM agent pending"
@@ -12,12 +13,34 @@ LABEL = "Rule-based coach · LLM agent pending"
 # per-cue cooldown so the same cue is not repeated back to back. Corrections, prompts,
 # rest and regress always pass.
 INSTRUCT_GAP_S = 0.6
-COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8}
+COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8, "arm_swing": 1.5}
+
+# Sprint E: one intro and one done line per exercise, in our own words (GRASP text is UBC /
+# Heart & Stroke material; see docs/LICENSES.md). Everything else reuses the arm pools.
+INTRO: dict[str, str] = {
+    "pendulum": "Pendulum: lean forward on the table, let the arm hang heavy, and swing it gently forward and back.",
+    "flexion": "Arm to the front: sit side-on to me, lift to shoulder height and hold while I count three.",
+    "abduction": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
+    "scaption": "Arm out at an angle: face me and lift half-way between front and side, thumb up.",
+    "extension": "Arm to the back: sit side-on and draw the arm gently behind you. Small range here.",
+    "external_rotation": "Rotate out: elbow tucked against your side, swing the forearm out away from your tummy.",
+    "internal_rotation": "Rotate in: elbow tucked against your side, bring the forearm across toward your tummy.",
+}
+DONE: dict[str, str] = {
+    "pendulum": "That's your swings done — loose and easy, exactly the idea.",
+    "flexion": "Both sets done. Rest your arm — good work.",
+    "abduction": "Both sets done. That's the side lifts finished — rest the shoulder.",
+    "scaption": "Both sets done. That's the angled lifts finished. Nicely controlled.",
+    "extension": "Both sets done. Small range, and you kept it steady — good.",
+    "external_rotation": "Both sets done. The elbow stayed put the whole way — well done.",
+    "internal_rotation": "Both sets done. Rest the arm — that's the rotations finished.",
+}
 
 # Short in-rep cues (spoken while the patient moves); milestones keep full sentences.
 PHRASES: dict[str, list[str]] = {
     "cup_onto_dot": ["Dot {n}. Good.", "Onto {n}.", "{n}, nice and level.", "Dot {n}, steady."],
     "arm_lift": ["Lift slowly to the line.", "Up to the line, slowly.", "Lift, no higher than your shoulder."],
+    "arm_swing": ["Let it swing, loose and easy.", "Gentle swings — let the weight do it.", "Swing it, don't lift it."],
     "arm_hold": ["Hold… three.", "Hold it there. Three."],
     "arm_lower": ["Lower for three.", "Down slowly, three."],
     "arm_rep": ["Good, {rep} of {reps}.", "{rep} of {reps}. Nice.", "That's {rep} of {reps}."],
@@ -114,10 +137,22 @@ class RuleCoach:
             if e.type == "cup_complete":
                 return [Decision("instruct", "cup_done", "All four arcs done. Lovely work.", "cup complete", ev)]
         if m == "arm":
+            ex = self._exercise(ctx, p)
+            if e.type == "exercise_start":
+                return [
+                    Decision(
+                        "instruct", "arm_intro",
+                        INTRO.get(ex.id, f"{ex.name}: {ex.steps[0] if ex.steps else 'follow the figure.'}"),
+                        f"{ex.name} started, {p.get('dose') or ex.dose}", ev,
+                        {"avatar_clip": ex.clip},
+                    )
+                ]
             if e.type == "state_change":
                 to = p.get("to")
+                if to == "moving" and ex.kind == "oscillation":
+                    return [Decision("instruct", "arm_swing", self._phrase("arm_swing"), "swinging started", ev, {"avatar_clip": ex.clip})]
                 if to == "moving":
-                    return [Decision("instruct", "arm_lift", self._phrase("arm_lift"), "lift started", ev, {"avatar_clip": "armFront"})]
+                    return [Decision("instruct", "arm_lift", self._phrase("arm_lift"), "lift started", ev, {"avatar_clip": ex.clip})]
                 if to == "hold":
                     return [Decision("instruct", "arm_hold", self._phrase("arm_hold"), "target reached", ev)]
                 if to == "return":
@@ -148,15 +183,58 @@ class RuleCoach:
             if e.type == "target_missed":
                 return [Decision("correct", "arm_missed", "Nearly — a touch higher, up to the line.", "target missed", ev)]
             if e.type == "rep_complete":
+                reps = self._reps_per_set(ctx, ex)
                 if p.get("verified"):
-                    return [Decision("instruct", "arm_rep", self._phrase("arm_rep", rep=p.get("rep"), reps=ctx.prescription.exercises["arm"]["reps"]), "verified lift", ev)]
-                why = {"target_missed": "it stopped short of the line", "hold_too_short": "the hold was under three"}.get(str(p.get("reason")), "I couldn't verify it")
-                return [Decision("correct", "arm_unverified", f"That one didn't count: {why}. Next one, up to the line and hold for three.", f"unverified lift ({p.get('reason')})", ev)]
+                    return [Decision("instruct", "arm_rep", self._phrase("arm_rep", rep=p.get("rep"), reps=reps), "verified rep", ev)]
+                why = {
+                    "target_missed": "it stopped short of the line",
+                    "hold_too_short": f"the hold was under {ex.hold_s:g}",
+                    "swing_too_small": "the swing was very small",
+                }.get(str(p.get("reason")), "I couldn't verify it")
+                nudge = "Next one, a little more swing — still loose." if ex.kind == "oscillation" else f"Next one, up to the line and hold for {ex.hold_s:g}."
+                return [Decision("correct", "arm_unverified", f"That one didn't count: {why}. {nudge}", f"unverified rep ({p.get('reason')})", ev)]
             if e.type == "set_complete":
-                return [Decision("instruct", "arm_set", f"Set {p.get('set')} done. Rest for thirty seconds.", "set complete", ev)]
+                return [self._set_summary(p, ev)]
             if e.type == "arm_complete":
-                return [Decision("instruct", "arm_done", "Both sets done. Rest your arm — good work.", "arm complete", ev)]
+                return [Decision("instruct", "arm_done", DONE.get(ex.id, "Both sets done. Rest your arm — good work."), "exercise complete", ev)]
         return []
+
+    # ---- Sprint E helpers ----------------------------------------------------------------
+    @staticmethod
+    def _exercise(ctx: CoachContext, payload: dict):
+        """Which registry entry this arm session is running: the event says so at the start,
+        the frame snapshot says so from then on."""
+        return get_exercise(payload.get("exercise") or ctx.snapshot.get("arm", {}).get("exercise"))
+
+    @staticmethod
+    def _reps_per_set(ctx: CoachContext, ex) -> int:
+        """The dose actually running (tier overrides included), not the seed prescription."""
+        reps = ctx.snapshot.get("arm", {}).get("reps_per_set")
+        if isinstance(reps, int) and reps > 0:
+            return reps
+        if ex.id == "flexion":
+            return int(ctx.prescription.exercises.get("arm", {}).get("reps", ex.reps))
+        return ex.reps
+
+    def _set_summary(self, p: dict, ev: list[int]) -> Decision:
+        """Milestone with the numbers the camera verified (the same numbers a judge reads in
+        the trace): reps verified in the set and the best angle of those reps."""
+        total = int(p.get("reps") or 0)
+        verified = p.get("verified_reps")
+        best = p.get("best_deg")
+        parts = [f"Set {p.get('set')} done."]
+        if total and verified is not None:
+            parts.append(f"{verified} of {total} verified.")
+        if best:
+            parts.append(f"Best {float(best):.0f}°.")
+        parts.append("Rest for thirty seconds.")
+        reason = f"set {p.get('set')} complete: {verified if verified is not None else '?'}/{total} verified"
+        if best:
+            reason += f", best {float(best):.0f}°"
+        return Decision(
+            "instruct", "arm_set", " ".join(parts), reason, ev,
+            tool_calls=[{"tool": "get_events", "result": {"set": p.get("set"), "reps": total, "verified_reps": verified, "best_deg": best}}],
+        )
 
     def _arc_summary(self, p: dict, cup: dict, ev: list[int]) -> Decision:
         """Milestone with the numbers the decision used (also what a judge reads in the trace)."""

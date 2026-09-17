@@ -417,3 +417,23 @@ def test_ws_arm_without_an_exercise_is_still_arm_to_the_front(client):
         arm = ws.receive_json()["arm"]
     assert arm["exercise"] == "flexion" and arm["view_required"] == "side"
     assert (arm["target_deg"], arm["hold_s"], arm["sets"], arm["reps_per_set"]) == (90.0, 3.0, 2, 8)
+
+
+def test_ws_arm_session_is_saved_with_its_exercise_and_user(client):
+    import cv2 as _cv2
+    import numpy as _np
+
+    img = _np.zeros((480, 640, 3), _np.uint8)
+    _, buf = _cv2.imencode(".jpg", img)
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=gentle") as ws:
+        ws.send_bytes(buf.tobytes())
+        ws.receive_json()
+        ws.send_text('{"cmd":"feedback","pain_after":2,"effort":3}')
+        m = ws.receive_json()
+        while not (m["type"] == "command" and m.get("cmd") == "feedback"):
+            m = ws.receive_json()
+        sid = m["session_id"]
+        assert m["summary"]["exercise"] == "abduction" and m["summary"]["username"] == "sathvik"
+    row = client.get(f"/api/sessions/{sid}").json()
+    assert row["exercise"] == "abduction" and row["username"] == "sathvik"
+    assert row["title"] == "Arm out to the side"

@@ -289,7 +289,8 @@ async def session_ws(
     which behaves exactly as Arm to the front always did) and `tier` (`full`/`gentle`, the
     pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
     """
-    if user_for_token(token or _bearer(ws.headers.get("authorization"))) is None:
+    user = user_for_token(token or _bearer(ws.headers.get("authorization")))
+    if user is None:
         await ws.close(code=4401)  # handshake refused: sign in first
         return
     await ws.accept()
@@ -322,7 +323,12 @@ async def session_ws(
     coach: CoachSession | None = None
     stats = LatencyStats()
     if pipeline is not None and mode in COACH_MODES:
-        coach = CoachSession(mode=mode, prescription=SEED_PRESCRIPTION)
+        coach = CoachSession(
+            mode=mode,
+            prescription=SEED_PRESCRIPTION,
+            exercise=(exercise or "flexion") if mode == "arm" else None,
+            username=user["username"],
+        )
         sessions[coach.session_id] = coach
         latency_stats[coach.session_id] = stats
         while len(sessions) > 50:
