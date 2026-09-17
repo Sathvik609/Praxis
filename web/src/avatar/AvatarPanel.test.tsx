@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
 vi.mock('./AvatarScene', () => ({
-  AvatarScene: ({ clip }: { clip: { name: string; side: string } }) => (
+  AvatarScene: ({ clip, figure }: { clip: { name: string; side: string }; figure?: string }) => (
     <div data-testid="scene">
-      scene:{clip.name}:{clip.side}
+      scene:{clip.name}:{clip.side}:{figure ?? 'body'}
     </div>
   ),
 }))
@@ -64,6 +64,28 @@ test('side="right" mirrors the clip; aspect and className reach the stage contai
   expect(screen.getByTestId('scene')).toHaveTextContent('scene:cup:right')
   expect(container.firstElementChild!.className).toMatch(/my-panel/)
   expect(container.querySelector('[data-stage]')!.className).toMatch(/aspect-\[3\/4\]/)
+})
+
+test('rehab clips mount in skeleton mode (no WebGL in jsdom) with a labelled focus joint and the target readout', () => {
+  render(<AvatarPanel clip="abduction" autoplay={false} />)
+  expect(screen.getByTestId('scene')).toHaveTextContent('scene:abduction:left:skeleton')
+  expect(screen.getByRole('button', { name: /Left shoulder · Focus/ })).toBeInTheDocument()
+  expect(screen.getByTestId('arc-readout')).toHaveTextContent(/target 158°/)
+  expect(screen.getByTestId('arc-readout')).toHaveTextContent(/UI-PRMD s09 e08/)
+  expect(screen.getByText(/skeleton view/)).toBeInTheDocument()
+  expect(screen.getByText(/Step 1 of 3/)).toBeInTheDocument()
+})
+
+test('rehab clips mirror to the right side and the figure mode can be forced either way', () => {
+  const a = render(<AvatarPanel clip="flexion" side="right" autoplay={false} />)
+  expect(screen.getByTestId('scene')).toHaveTextContent('scene:flexion:right:skeleton')
+  expect(screen.getByRole('button', { name: /Right shoulder · Focus/ })).toBeInTheDocument()
+  a.unmount()
+  const b = render(<AvatarPanel clip="pendulum" figure="body" autoplay={false} />)
+  expect(screen.getByTestId('scene')).toHaveTextContent('scene:pendulum:left:body')
+  b.unmount()
+  render(<AvatarPanel clip="cup" figure="skeleton" autoplay={false} />)
+  expect(screen.getByTestId('scene')).toHaveTextContent('scene:cup:left:skeleton')
 })
 
 test('default aspect is 16/10, compact is 4/5 with a height cap', () => {

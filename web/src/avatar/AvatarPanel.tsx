@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../design/Button'
-import { AvatarScene, type Clock, type Projection, type Tick } from './AvatarScene'
+import { AvatarScene, type Clock, type FigureMode, type Projection, type Tick } from './AvatarScene'
 import { CLIPS, type Clip, mirror } from './clips'
 import { MARKER_STYLE, type Marker } from './markers'
+import { REHAB_CLIPS, type RehabClipName, isRehabClip } from './rehabClips'
 import { sample } from './sampler'
 
+export type ClipName = keyof typeof CLIPS | RehabClipName
+
 type Props = {
-  clip: keyof typeof CLIPS
+  clip: ClipName
   autoplay?: boolean
   camera?: 'front' | 'side'
   /** Practising side; the clip is mirrored for the right side and the side camera moves with it. */
@@ -18,7 +21,17 @@ type Props = {
   onStep?: (step: number) => void
   /** Stage box shape: 16/10 for Demonstration, 4/5 (height-capped) for Home and live panels. */
   aspect?: '3/4' | '16/10' | '4/5'
+  /** Ceramic mannequin or glowing skeleton with angle arcs; defaults to skeleton for the
+   *  real-motion rehab clips and body for the three exercise clips and idle. */
+  figure?: FigureMode
   className?: string
+}
+
+const SIDE_WORD = { left: 'Left', right: 'Right' }
+const JOINT_WORD: Partial<Record<string, string>> = { lShoulder: 'shoulder', rShoulder: 'shoulder', lElbow: 'elbow', rElbow: 'elbow', lWrist: 'hand', rWrist: 'hand' }
+
+function clipByName(name: ClipName): Clip {
+  return isRehabClip(name) ? REHAB_CLIPS[name] : CLIPS[name]
 }
 
 const SPEEDS = [1, 0.5, 0.25]
@@ -32,8 +45,16 @@ const LABEL_GAP = 44
 const CAPTION_H = 48 // caption bar height reserved at the bottom of the stage
 
 /** The one avatar: a pacing reference on a dark stage. It never scores the patient. */
-export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'left', markers = [], onMarkerTap, compact = false, showCues = true, onStep, aspect, className = '' }: Props) {
-  const clip: Clip = useMemo(() => (side === 'right' ? mirror(CLIPS[clipName]) : CLIPS[clipName]), [clipName, side])
+export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'left', markers: markersIn, onMarkerTap, compact = false, showCues = true, onStep, aspect, figure, className = '' }: Props) {
+  const clip: Clip = useMemo(() => (side === 'right' ? mirror(clipByName(clipName)) : clipByName(clipName)), [clipName, side])
+  const mode: FigureMode = figure ?? (isRehabClip(clipName) ? 'skeleton' : 'body')
+  // a rehab clip always labels its focus joint (colour never carries the meaning alone)
+  const markers = useMemo<Marker[]>(() => {
+    if (markersIn?.length) return markersIn
+    if (!clip.focusJoint) return []
+    return [{ joint: clip.focusJoint, status: 'focus', label: `${SIDE_WORD[side]} ${JOINT_WORD[clip.focusJoint] ?? clip.focusJoint}` }]
+  }, [markersIn, clip.focusJoint, side])
+  const [angle, setAngle] = useState<number | null>(null)
   // one mutable clock, read only inside effects, handlers and the stage's loop, which advances `time`
   const clock = useRef<Clock>({ time: 0, playing: autoplay, speed: 1 })
   const [playing, setPlaying] = useState(autoplay)
@@ -64,6 +85,7 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
   const onTick = useCallback(
     (t: Tick) => {
       setCaption(t.caption)
+      setAngle(t.angleDeg === null ? null : Math.round(t.angleDeg))
       if (t.step !== stepRef.current) {
         stepRef.current = t.step
         setStep(t.step)
@@ -153,6 +175,7 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
             compact={compact}
             showCues={showCues}
             markers={markers}
+            figure={mode}
             onTick={onTick}
             onProject={markers.length ? onProject : undefined}
             onContextLost={() => setLost(true)}
@@ -196,8 +219,15 @@ export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'l
           </div>
         )}
         <div className="absolute left-3 top-2 text-base text-white/70">
-          {view === 'side' ? 'side view' : 'front view'} · {speed}× · same figure as Home
+          {view === 'side' ? 'side view' : 'front view'} · {speed}× · {mode === 'skeleton' ? 'skeleton view' : 'same figure as Home'}
         </div>
+        {mode === 'skeleton' && clip.arc && showCues && (
+          <div data-testid="arc-readout" className="absolute right-3 top-2 max-w-[58%] truncate rounded-full bg-black/45 px-3 py-1 text-base text-white">
+            <span className="text-[#F2B457]">target {Math.round(clip.arc.targetDeg)}°</span>
+            {angle !== null && <span className="text-[#7FE0C4]"> · figure {angle}°</span>}
+            {clip.source && <span className="text-white/70"> · {clip.source}</span>}
+          </div>
+        )}
       </div>
       {!compact && (
         <div className="flex flex-wrap gap-2">

@@ -26,6 +26,18 @@ export type Key = {
   parked?: number
 }
 export type Prop = 'table' | 'cupSheet' | 'cup' | 'nhptBoard' | 'dish' | 'ceiling'
+/** Angle cue drawn in skeleton mode: a dashed amber arc to the clip's target angle and a mint
+ *  arc to the figure's current angle, both about `joint`, measured on the `child` bone from
+ *  `startDir` toward `peakDir` (unit vectors in the rig's reference torso frame). It describes
+ *  the reference figure's own movement, never the patient's. */
+export type ArcCue = {
+  kind: 'elevation' | 'rotation'
+  joint: Joint
+  child: Joint
+  targetDeg: number
+  peakDir: Vec3
+  startDir: Vec3
+}
 export type Clip = {
   name: string
   duration: number
@@ -38,6 +50,11 @@ export type Clip = {
   pathJoint?: Joint
   breathHz?: number
   props: Prop[]
+  /** Joint the skeleton mode highlights and labels. */
+  focusJoint?: Joint
+  arc?: ArcCue
+  /** Where the motion came from ("procedural" or dataset + subject + rep), shown on the stage. */
+  source?: string
 }
 
 const D = Math.PI / 180
@@ -188,7 +205,15 @@ export function mirror(clip: Clip): Clip {
     }
     return { ...k, pose }
   })
-  const out: Clip = { ...clip, keys, side: clip.side === 'left' ? 'right' : 'left', pathJoint: clip.pathJoint ? SWAP[clip.pathJoint] : undefined }
+  const mv = (v: Vec3): Vec3 => [-v[0], v[1], v[2]]
+  const out: Clip = {
+    ...clip,
+    keys,
+    side: clip.side === 'left' ? 'right' : 'left',
+    pathJoint: clip.pathJoint ? SWAP[clip.pathJoint] : undefined,
+    focusJoint: clip.focusJoint ? SWAP[clip.focusJoint] : undefined,
+    arc: clip.arc ? { ...clip.arc, joint: SWAP[clip.arc.joint], child: SWAP[clip.arc.child], peakDir: mv(clip.arc.peakDir), startDir: mv(clip.arc.startDir) } : undefined,
+  }
   mirrored.set(clip, out)
   return out
 }

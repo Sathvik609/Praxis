@@ -388,10 +388,12 @@ EXERCISES: tuple[Exercise, ...] = (
              ("Raise the arm halfway between front and side, thumb up", "Hold at the top", "Lower slowly")),
     Exercise("extension", "Shoulder extension", "ui-prmd", ("m08",), (("ui-prmd", "m08"),), "sagittal", "side", "elevation",
              ("Move the straight arm back behind you, trunk still", "Hold", "Return to your side")),
-    Exercise("external_rotation", "Shoulder external rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "front", "rotation",
-             ("Elbow bent to a right angle, turn the forearm up and out", "Hold at the end of the turn", "Turn back to the start")),
-    Exercise("internal_rotation", "Shoulder internal rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "front", "-rotation",
-             ("Elbow bent to a right angle, turn the forearm down and in", "Hold at the end of the turn", "Turn back to the start")),
+    # m09 is performed in the 90/90 position (upper arm out to the side, elbow bent); the forearm
+    # sweeps in the sagittal plane, which only the side camera shows face-on
+    Exercise("external_rotation", "Shoulder external rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "side", "rotation",
+             ("Arm out to the side, elbow bent to a right angle, turn the forearm up", "Hold at the end of the turn", "Turn back to the start")),
+    Exercise("internal_rotation", "Shoulder internal rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "side", "-rotation",
+             ("Arm out to the side, elbow bent to a right angle, turn the forearm down", "Hold at the end of the turn", "Turn back to the start")),
     Exercise("pendulum", "Pendulum", "procedural", (), (), "sagittal", "side", "elevation",
              ("Lean forward on a table, let the arm hang loose", "Swing gently in small circles, no muscle effort", "Stand up slowly")),
 )
@@ -492,20 +494,39 @@ def choose(cands: list[Candidate], kind: str = "elevation") -> Candidate:
 
 
 # ---------------------------------------------------------------- clip assembly
+def rig_arm_directions(shoulder_deg: np.ndarray, elbow_deg: np.ndarray, spine_deg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Upper-arm and forearm world directions the rig's forward kinematics produces for these
+    key angles (rig.ts: rot[lShoulder] = rot[spine] · euler(lShoulder); neck and hips at zero)."""
+    r_spine = euler_xyz(*(np.radians(spine_deg)))
+    r_sh = euler_xyz(*(np.radians(shoulder_deg)))
+    ua = r_spine @ r_sh @ REST_UA
+    fa = r_spine @ r_sh @ rot_x(math.radians(float(elbow_deg[0]))) @ REST_FA
+    return ua, fa
+
+
 def clip_from_frames(ex: Exercise, rep_label: dict, c: Curves, ang: dict[str, np.ndarray], start: int, peak: int, end: int, fps: float, target: float) -> dict:
     idx = key_frames(start, peak, end)
     t0 = start / fps
     keys = []
     for i in idx:
+        sh = [round(float(v), 2) for v in ang["lShoulder"][i]]
+        el = [round(float(v), 2) for v in ang["lElbow"][i]]
+        sp = [round(float(v), 2) for v in ang["spine"][i]]
+        ua, fa = rig_arm_directions(np.array(sh), np.array(el), np.array(sp))
         keys.append({
             "t": round(i / fps - t0, 3),
             "hold": i in (start, peak, end),
-            "lShoulder": [round(float(v), 2) for v in ang["lShoulder"][i]],
-            "lElbow": [round(float(v), 2) for v in ang["lElbow"][i]],
-            "spine": [round(float(v), 2) for v in ang["spine"][i]],
+            "lShoulder": sh,
+            "lElbow": el,
+            "spine": sp,
+            # ua/fa: what the rig's FK must reproduce from these very angles (convention check);
+            # src_*: the source skeleton's directions in the reference torso frame (fidelity,
+            # differs from ua/fa by the key smoothing and the forearm fit)
             "check": {
-                "ua": [round(float(v), 4) for v in (c.spine[i] @ c.ua[i])],
-                "fa": [round(float(v), 4) for v in (c.spine[i] @ c.fa[i])],
+                "ua": [round(float(v), 6) for v in ua],
+                "fa": [round(float(v), 6) for v in fa],
+                "src_ua": [round(float(v), 6) for v in (c.spine[i] @ c.ua[i])],
+                "src_fa": [round(float(v), 6) for v in (c.spine[i] @ c.fa[i])],
                 "elevation_deg": round(float(c.elevation[i]), 1),
                 "bend_deg": round(float(c.bend[i]), 1),
                 "rotation_deg": round(float(c.rotation[i]), 1),

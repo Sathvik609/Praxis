@@ -1,9 +1,9 @@
 import { type RefObject, useEffect, useRef } from 'react'
 import type { Clip } from './clips'
 import type { Marker } from './markers'
-import { AvatarStage, type Clock, type Projection, type Tick } from './scene'
+import { AvatarStage, type Clock, type FigureMode, type Projection, type Tick } from './scene'
 
-export type { Clock, Projection, Tick } from './scene'
+export type { Clock, FigureMode, Projection, Tick } from './scene'
 
 type Props = {
   clip: Clip
@@ -14,6 +14,8 @@ type Props = {
   compact: boolean
   showCues: boolean
   markers?: Marker[]
+  /** Ceramic mannequin (default) or the glowing skeleton with angle arcs. */
+  figure?: FigureMode
   /** 10 Hz: caption / step / ended for React state. */
   onTick?: (t: Tick) => void
   /** Every frame: screen positions of the joints and the torso centre, for the label layer. */
@@ -23,10 +25,10 @@ type Props = {
 
 /** WebGL mannequin: primitives only, no assets. All animation comes from the sampler. React
  *  mounts one `AvatarStage` and pushes the latest props into it; the stage owns the loop. */
-export function AvatarScene({ clip, clock, camera, closeUp, compact, showCues, markers = [], onTick, onProject, onContextLost }: Props) {
+export function AvatarScene({ clip, clock, camera, closeUp, compact, showCues, markers = [], figure = 'body', onTick, onProject, onContextLost }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const stageRef = useRef<AvatarStage | null>(null)
-  const props = { clip, clock, camera, closeUp, compact, showCues, markers, onTick, onProject, onContextLost }
+  const props = { clip, clock, camera, closeUp, compact, showCues, markers, figure, onTick, onProject, onContextLost }
   const latest = useRef(props)
   useEffect(() => {
     latest.current = props

@@ -6,13 +6,16 @@ import { MARKER_STYLE, type Marker } from './markers'
 import { makeCeilingLine, makeCup, makeCupSheet, makeDish, makeNhptBoard, makeTable, targetPosition, type Board, type Cup, type CupSheet, type Dish } from './props'
 import { JOINTS, REST, forwardKinematics, type Joint, type Vec3 } from './rig'
 import { sample, type Sample } from './sampler'
+import { makeSkeletonFigure } from './skeleton'
 import { AMBER, MINT, makeRenderer, makeStage } from './stage'
 
 export type Projection = Record<string, { x: number; y: number }>
 
 /** Mutable playback state owned by the panel and advanced by the stage's loop. */
 export type Clock = { time: number; playing: boolean; speed: number }
-export type Tick = { caption: string; step: number; ended: boolean; t: number }
+export type Tick = { caption: string; step: number; ended: boolean; t: number; angleDeg: number | null }
+/** How the rig is drawn: the ceramic mannequin or the glowing skeleton with the angle arcs. */
+export type FigureMode = 'body' | 'skeleton'
 
 export type StageProps = {
   clip: Clip
@@ -22,6 +25,7 @@ export type StageProps = {
   compact: boolean
   showCues: boolean
   markers: Marker[]
+  figure?: FigureMode
   onTick?: (t: Tick) => void
   onProject?: (p: Projection) => void
   onContextLost?: () => void
@@ -38,8 +42,10 @@ export function cameraPreset(input: Pick<StageProps, 'clip' | 'camera' | 'closeU
     const eye = camera === 'side' ? new THREE.Vector3(sx * 1.5, look.y + 0.3, look.z + 0.2) : new THREE.Vector3(look.x * 0.5, look.y + 0.45, look.z + 1.35)
     return { eye, look }
   }
-  const dist = compact ? 2.25 : 2.3
-  const y = hasTable ? (compact ? 1.26 : 1.22) : compact ? 1.36 : 1.3
+  // arm-elevation clips reach overhead (hand at ~2.1 m): frame a little taller and further back
+  const tall = !!clip.arc
+  const dist = (compact ? 2.25 : 2.3) + (tall ? 0.25 : 0)
+  const y = (hasTable ? (compact ? 1.26 : 1.22) : compact ? 1.36 : 1.3) + (tall ? 0.1 : 0)
   if (camera === 'side') return { eye: new THREE.Vector3(sx * dist, y + 0.12, 0.2), look: new THREE.Vector3(0, y, 0.16) }
   return { eye: new THREE.Vector3(0.08, y + (hasTable ? 0.5 : 0.12), dist), look: new THREE.Vector3(0, y - (hasTable ? 0.02 : 0), 0.05) }
 }
@@ -79,7 +85,9 @@ export class AvatarStage {
   private scene = new THREE.Scene()
   private cam = new THREE.PerspectiveCamera(34, 1, 0.1, 20)
   private stage
-  private figure
+  private figure: ReturnType<typeof makeFigure> | null = null
+  private skeleton: ReturnType<typeof makeSkeletonFigure> | null = null
+  private mode: FigureMode = 'body'
   private cues = new THREE.Group()
   private path: THREE.Group | null = null
   private pathKey = ''
@@ -105,8 +113,7 @@ export class AvatarStage {
     this.renderer.domElement.addEventListener('webglcontextlost', this.onLost, false)
     el.appendChild(this.renderer.domElement)
     this.stage = makeStage(this.scene, this.renderer, FLOOR_Y)
-    this.figure = makeFigure()
-    this.scene.add(this.figure.group)
+    this.setFigure(input.figure ?? 'body')
     this.scene.add(this.cues)
     this.ring = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.006, 16, 48), new THREE.MeshBasicMaterial({ color: AMBER }))
     this.ringGlow = new THREE.Mesh(
@@ -132,6 +139,28 @@ export class AvatarStage {
     this.ro.observe(el)
     this.resize()
     this.raf = requestAnimationFrame(this.render)
+  }
+
+  /** Build the requested figure (body or skeleton), disposing the other. */
+  private setFigure(mode: FigureMode) {
+    if (this.figure) {
+      this.scene.remove(this.figure.group)
+      this.figure.dispose()
+      this.figure = null
+    }
+    if (this.skeleton) {
+      this.scene.remove(this.skeleton.group)
+      this.skeleton.dispose()
+      this.skeleton = null
+    }
+    this.mode = mode
+    if (mode === 'skeleton') {
+      this.skeleton = makeSkeletonFigure()
+      this.scene.add(this.skeleton.group)
+    } else {
+      this.figure = makeFigure()
+      this.scene.add(this.figure.group)
+    }
   }
 
   private onLost = (e: Event) => {
@@ -223,8 +252,15 @@ export class AvatarStage {
       clock.playing = false
     }
     if (!this.props || this.props.clip !== p.clip) this.buildProps(p.clip)
+    const wanted = p.figure ?? 'body'
+    if (wanted !== this.mode) this.setFigure(wanted)
     const s = sample(p.clip, clock.time, clock.speed)
-    this.figure.update({ angles: s.angles, pinch: s.pinch, breath: s.breath })
+    let angleDeg: number | null = null
+    if (this.skeleton) {
+      const focus = p.markers.find((m) => m.status === 'focus')?.joint ?? p.clip.focusJoint ?? null
+      this.skeleton.update({ angles: s.angles, pinch: s.pinch, breath: s.breath }, { focus, arc: p.showCues ? (p.clip.arc ?? null) : null, time: now / 1000 })
+      angleDeg = this.skeleton.currentDeg()
+    } else this.figure!.update({ angles: s.angles, pinch: s.pinch, breath: s.breath })
     const pos = forwardKinematics(s.angles)
     const handJoint: Joint = p.clip.side === 'left' ? 'lHand' : 'rHand'
     const hand = v(pos[handJoint])
@@ -294,7 +330,7 @@ export class AvatarStage {
     }
     if (p.onTick && (ended || now - this.lastTick > 100)) {
       this.lastTick = now
-      p.onTick({ caption: s.caption, step: s.step, ended, t: s.t })
+      p.onTick({ caption: s.caption, step: s.step, ended, t: s.t, angleDeg })
     }
     this.raf = requestAnimationFrame(this.render)
   }
@@ -305,7 +341,8 @@ export class AvatarStage {
     this.renderer.domElement.removeEventListener('webglcontextlost', this.onLost)
     disposeTree(this.cues)
     if (this.props) disposeTree(this.props.group)
-    this.figure.dispose()
+    this.figure?.dispose()
+    this.skeleton?.dispose()
     this.stage.dispose()
     this.renderer.dispose()
     if (this.renderer.domElement.parentNode === this.el) this.el.removeChild(this.renderer.domElement)

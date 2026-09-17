@@ -235,7 +235,14 @@ def test_main_builds_every_clip_and_the_reference_ranges(tmp_path: Path):
         else:
             assert clip["source"]["license"] in ("ODC PDDL 1.0", "CC BY 4.0")
             assert clip["source"]["subject"] and clip["source"]["rep"]
-            assert "check" in clip["keys"][0]
+            for k in clip["keys"]:
+                ch = k["check"]
+                # the stored ua/fa are the rig-convention FK of the stored angles
+                ua, fa = mk.rig_arm_directions(np.array(k["lShoulder"]), np.array(k["lElbow"]), np.array(k["spine"]))
+                assert np.allclose(ua, ch["ua"], atol=1e-3) and np.allclose(fa, ch["fa"], atol=1e-3)
+                # and they stay within the smoothing of the recorded skeleton
+                src = np.array(ch["src_ua"]) / np.linalg.norm(ch["src_ua"])
+                assert np.degrees(np.arccos(np.clip(np.dot(ua, src), -1, 1))) < 6
     abd = json.loads((clips / "abduction.json").read_text())
     assert "s0" in abd["source"]["subject"] and abd["target_deg"] > 100
     fl = json.loads((clips / "flexion.json").read_text())
