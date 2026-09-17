@@ -63,7 +63,8 @@ class StopRules:
                 else:
                     self._unverified_streak = 0
             elif e.type == "perception_lost":
-                out.append(make_event("pause", t=e.t, rule="perception", text="I lost tracking. Paused until the markers or your shoulder are back in view.", missing=e.payload.get("missing")))
+                # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
+                out.append(make_event("pause", t=e.t, rule="perception", text="I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.", missing=e.payload.get("missing")))
         return out
 
     def on_exertion(self, state: dict[str, Any], high_for_s: float, t: float) -> list[Event]:
