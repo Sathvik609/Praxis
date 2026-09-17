@@ -101,12 +101,12 @@ export class AvatarStage {
     const p = this.props
     if (this.tubeClip !== p.clip) this.rebuildTube(p.clip)
     const s = sample(p.clip, p.getTime(), p.speed)
-    this.figure.update({ angles: s.angles, pinch: 0, breath: 0 })
+    this.figure.update({ angles: s.angles, pinch: s.pinch, breath: s.breath })
     const pos = forwardKinematics(s.angles)
     this.cues.visible = p.showCues
-    this.ring.visible = !!p.clip.targetJoint
-    if (p.clip.targetJoint) {
-      this.ring.position.copy(v(pos[p.clip.targetJoint]))
+    this.ring.visible = !!p.clip.pathJoint && !!s.target
+    if (p.clip.pathJoint) {
+      this.ring.position.copy(v(pos[p.clip.pathJoint]))
       this.ring.lookAt(this.cam.position)
     }
     for (const j of JOINTS) {
@@ -132,9 +132,10 @@ export class AvatarStage {
       }
     }
     // camera
-    const focus = p.closeUp && p.clip.targetJoint ? v(pos[p.clip.targetJoint]) : new THREE.Vector3(0, 1.3, 0)
+    const focus = p.closeUp && p.clip.pathJoint ? v(pos[p.clip.pathJoint]) : new THREE.Vector3(0, 1.3, 0)
     const dist = p.closeUp ? 1.5 : 2.6
-    const target = p.camera === 'side' ? new THREE.Vector3(dist, focus.y + 0.05, 0.15) : new THREE.Vector3(0.1, focus.y + 0.08, dist)
+    const sx = p.clip.side === 'right' ? -1 : 1
+    const target = p.camera === 'side' ? new THREE.Vector3(sx * dist, focus.y + 0.05, 0.15) : new THREE.Vector3(0.1, focus.y + 0.08, dist)
     if (this.frames === 0) this.cam.position.copy(target)
     else this.cam.position.lerp(target, 0.12)
     this.cam.lookAt(focus)

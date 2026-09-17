@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../design/Button'
 import { AvatarScene, type Projection } from './AvatarScene'
-import { CLIPS, type Clip } from './clips'
+import { CLIPS, type Clip, mirror } from './clips'
 import { MARKER_STYLE, type Marker } from './markers'
 import { sample } from './sampler'
 
@@ -9,6 +9,8 @@ type Props = {
   clip: keyof typeof CLIPS
   autoplay?: boolean
   camera?: 'front' | 'side'
+  /** Practising side; the clip is mirrored for the right side and the side camera moves with it. */
+  side?: 'left' | 'right'
   markers?: Marker[]
   onMarkerTap?: (m: Marker) => void
   compact?: boolean
@@ -20,8 +22,8 @@ type Props = {
 const SPEEDS = [1, 0.5, 0.25]
 
 /** The one avatar: a pacing reference on a dark stage. It never scores the patient. */
-export function AvatarPanel({ clip: clipName, autoplay = true, camera, markers = [], onMarkerTap, compact = false, showCues = true, onStep, className = '' }: Props) {
-  const clip: Clip = CLIPS[clipName]
+export function AvatarPanel({ clip: clipName, autoplay = true, camera, side = 'left', markers = [], onMarkerTap, compact = false, showCues = true, onStep, className = '' }: Props) {
+  const clip: Clip = useMemo(() => (side === 'right' ? mirror(CLIPS[clipName]) : CLIPS[clipName]), [clipName, side])
   const [playing, setPlaying] = useState(autoplay)
   const [speedIdx, setSpeedIdx] = useState(0)
   const [closeUp, setCloseUp] = useState(false)
