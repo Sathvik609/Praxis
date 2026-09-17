@@ -1,0 +1,21 @@
+/** The icon set Praxis uses (lucide-react 1.47.0, recorded in docs/LICENSES.md). Icons are
+ *  decorative: every control still carries its text or an aria-label. */
+export {
+  Activity,
+  AlertTriangle,
+  Camera,
+  Check,
+  ChevronRight,
+  Download,
+  Flag,
+  Info,
+  Mic,
+  Pause,
+  Play,
+  RotateCcw,
+  Share2,
+  Sparkles,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'

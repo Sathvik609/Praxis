@@ -17,6 +17,7 @@
     "@radix-ui/react-dialog": "1.1.15",
     "@radix-ui/react-toggle-group": "1.1.19",
     "@radix-ui/react-tooltip": "1.2.8",
+    "lucide-react": "1.47.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-router-dom": "7.9.3",

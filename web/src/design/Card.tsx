@@ -1,10 +1,36 @@
 import type { ReactNode } from 'react'
 
-export function Card({ title, children, className = '' }: { title?: string; children: ReactNode; className?: string }) {
+const tones = {
+  default: 'border border-line bg-surface shadow-[var(--shadow-1)]',
+  coach: 'border border-line border-l-8 border-l-teal-ink bg-tint-mint',
+  watch: 'border border-line border-l-8 border-l-amber-ink bg-tint-amber',
+  highlight: 'border-2 border-teal-ink bg-surface shadow-[var(--shadow-1)]',
+  brand: 'bg-teal text-white shadow-[var(--shadow-1)]',
+}
+
+type Props = {
+  title?: ReactNode
+  action?: ReactNode
+  tone?: keyof typeof tones
+  padding?: 'md' | 'sm' | 'none'
+  className?: string
+  children: ReactNode
+  as?: 'section' | 'div' | 'article'
+}
+
+/** The one card. Title row (h2) with an optional action on the right. */
+export function Card({ title, action, tone = 'default', padding = 'md', className = '', children, as = 'section' }: Props) {
+  const Tag = as
+  const pad = padding === 'md' ? 'p-5' : padding === 'sm' ? 'px-4 py-3' : ''
   return (
-    <section className={`rounded-2xl border border-line bg-surface p-6 ${className}`}>
-      {title && <h2 className="mb-3 text-2xl">{title}</h2>}
+    <Tag className={`rounded-[var(--r-card)] ${tones[tone]} ${pad} ${className}`}>
+      {(title || action) && (
+        <div className="mb-3 flex items-start justify-between gap-3">
+          {title && <h2 className="text-2xl">{title}</h2>}
+          {action}
+        </div>
+      )}
       {children}
-    </section>
+    </Tag>
   )
 }

@@ -1,18 +1,21 @@
 import type { ReactNode } from 'react'
 
 const tones = {
-  mint: 'bg-mint/15 text-teal',
-  amber: 'bg-amber/15 text-amber',
-  red: 'bg-red/15 text-red',
-  neutral: 'bg-line text-muted',
-  focus: 'bg-[#DDEBFF] text-[#1F4E9E]',
+  mint: 'bg-tint-mint text-mint-ink',
+  amber: 'bg-tint-amber text-amber-ink',
+  red: 'bg-tint-red text-red-ink',
+  neutral: 'bg-line/60 text-muted',
+  focus: 'bg-tint-focus text-focus',
 }
 
 export type ChipTone = keyof typeof tones
 
-export function Chip({ tone = 'neutral', children }: { tone?: ChipTone; children: ReactNode }) {
+/** Status chip: tint background + AA ink (design/contrast.test.ts). Text always carries the
+ *  meaning; the optional icon is decorative. */
+export function Chip({ tone = 'neutral', icon, children, className = '' }: { tone?: ChipTone; icon?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <span className={`inline-flex items-center rounded-lg px-3 py-1 text-base font-bold ${tones[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1 text-base font-bold ${tones[tone]} ${className}`}>
+      {icon && <span aria-hidden className="inline-flex [&>svg]:h-4 [&>svg]:w-4">{icon}</span>}
       {children}
     </span>
   )
