@@ -27,7 +27,7 @@ test('continue is disabled until all required checks pass', () => {
   expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
 })
 
-test('continue enables when checks pass and live indicator shows', () => {
+test('continue enables when checks pass; the feed shows live, mirrored and calibration lines', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: true, checks: [] })
   render(
     <MemoryRouter initialEntries={['/setup?exercise=nhpt']}>
@@ -36,6 +36,8 @@ test('continue enables when checks pass and live indicator shows', () => {
   )
   expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeEnabled()
   expect(screen.getByText('Live · not recording')).toBeInTheDocument()
+  expect(screen.getByText(/mirrored · processed on this device/)).toBeInTheDocument()
+  expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
 })
 
 test('arm setup asks for a side view and no sheet', () => {
@@ -56,6 +58,8 @@ test('camera blocked offers a recorded session and the checklist shows five wait
       <CameraSetup />
     </MemoryRouter>,
   )
+  expect(screen.getByRole('alert')).toHaveTextContent('Camera blocked')
   expect(screen.getByRole('button', { name: 'Use a recorded session' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   expect(screen.getAllByText('Waiting')).toHaveLength(5)
 })

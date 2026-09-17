@@ -3,11 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
+import { Card } from '../../design/Card'
+import { Checkbox } from '../../design/Checkbox'
+import { Activity, AlertTriangle, Flag } from '../../design/Icon'
+import { Panel } from '../../design/Panel'
 import { EXERCISES } from '../../lib/seed'
 
-/** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip; the
- *  patient confirms readiness before practice starts. Rehearsal runs the live screen
- *  with scoring off. */
+/** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
+ *  dark stage; the numbered step list follows the clip; the patient confirms readiness
+ *  before practice starts. Rehearsal runs the live screen with scoring off. */
 export function Demonstration() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
@@ -23,30 +27,62 @@ export function Demonstration() {
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div className="mx-auto w-full max-w-[336px]">
           {ex.clip ? (
-            <AvatarPanel clip={ex.clip} onStep={setStep} />
+            <Panel className="p-3">
+              <AvatarPanel clip={ex.clip} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
+            </Panel>
           ) : (
-            <div className="rounded-2xl border border-line bg-surface p-8 text-muted">This exercise is instructions-only; there is no camera demonstration.</div>
+            <Card className="text-lg text-muted">This exercise is instructions-only; there is no camera demonstration. Follow the steps and log it yourself.</Card>
           )}
         </div>
         <div className="flex flex-col gap-5">
-          <div><h1 className="text-3xl">{ex.name}</h1><p className="text-muted">{ex.category} · GRASP Level 2 · {side} side</p></div>
-          <ol className="divide-y divide-line rounded-2xl border border-line bg-surface px-5">
-            {ex.steps.map((s, i) => (
-              <li key={i} data-testid="step" className="flex items-start gap-4 py-3">
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold ${step === i + 1 ? 'bg-teal text-white' : 'bg-bg text-muted'}`}>{i + 1}</span>
-                <span className={step === i + 1 ? 'font-bold' : ''}>{s}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="rounded-2xl border border-line bg-surface p-5 leading-relaxed">
-            <div><b>Assigned</b> {ex.dose}</div>
-            {ex.watchFor && <div><b>Watch for</b> {ex.watchFor}</div>}
-            {ex.stopIf && <div><b>Stop if</b> {ex.stopIf}</div>}
+          <div>
+            <h1 className="text-3xl">{ex.name}</h1>
+            <p className="text-muted">{ex.category} · {side} side</p>
           </div>
-          <label className="flex min-h-14 cursor-pointer items-center gap-3 text-lg">
-            <input type="checkbox" checked={ready} onChange={(e) => setReady(e.target.checked)} className="h-7 w-7 accent-teal" aria-label="I understand the movement and I'm ready" />
-            I understand the movement and I'm ready
-          </label>
+          <Card padding="none" as="div">
+            <ol className="divide-y divide-line px-5">
+              {ex.steps.map((s, i) => {
+                const current = step === i + 1
+                return (
+                  <li key={i} data-testid="step" className="flex min-h-14 items-center gap-4 py-2">
+                    <span
+                      aria-current={current ? 'step' : undefined}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold tabular-nums ${
+                        current ? 'bg-teal-fill text-white' : 'border-2 border-line text-muted'
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className={`text-lg ${current ? 'font-bold' : ''}`}>{s}</span>
+                  </li>
+                )
+              })}
+            </ol>
+          </Card>
+          <Card padding="sm" as="div">
+            <dl className="space-y-2 text-lg">
+              <div className="flex items-start gap-3">
+                <Activity aria-hidden className="mt-1 h-5 w-5 shrink-0 text-teal-ink" />
+                <dt className="w-24 shrink-0 font-bold">Assigned</dt>
+                <dd>{ex.dose}</dd>
+              </div>
+              {ex.watchFor && (
+                <div className="flex items-start gap-3">
+                  <AlertTriangle aria-hidden className="mt-1 h-5 w-5 shrink-0 text-amber-ink" />
+                  <dt className="w-24 shrink-0 font-bold">Watch for</dt>
+                  <dd>{ex.watchFor}</dd>
+                </div>
+              )}
+              {ex.stopIf && (
+                <div className="flex items-start gap-3">
+                  <Flag aria-hidden className="mt-1 h-5 w-5 shrink-0 text-red-ink" />
+                  <dt className="w-24 shrink-0 font-bold">Stop if</dt>
+                  <dd>{ex.stopIf}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+          <Checkbox label="I understand the movement and I'm ready" checked={ready} onChange={setReady} />
         </div>
       </div>
       <FlowBar

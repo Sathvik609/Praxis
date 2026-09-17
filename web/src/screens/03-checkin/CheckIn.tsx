@@ -1,28 +1,51 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
+import { Card } from '../../design/Card'
+import { Checkbox } from '../../design/Checkbox'
+import { Mic } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
+import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
 
 export type CheckInData = { pain: number; location: string; energy: string; minutes: number; new_symptoms: boolean }
 
+type Location = 'shoulder' | 'arm' | 'hand' | 'nowhere'
+type Energy = 'comfortable' | 'tired' | 'very_tired'
+type Minutes = '14' | '7'
+
+const LOCATIONS: { value: Location; label: string }[] = [
+  { value: 'shoulder', label: 'Shoulder' },
+  { value: 'arm', label: 'Arm' },
+  { value: 'hand', label: 'Hand' },
+  { value: 'nowhere', label: 'Nowhere' },
+]
+const ENERGY: { value: Energy; label: string }[] = [
+  { value: 'comfortable', label: 'Comfortable' },
+  { value: 'tired', label: 'Tired' },
+  { value: 'very_tired', label: 'Very tired' },
+]
+const MINUTES: { value: Minutes; label: string }[] = [
+  { value: '14', label: 'Full session · 14 min' },
+  { value: '7', label: 'Shorter · one exercise' },
+]
+
 /** Screen 03 · Pre-session check-in. Feeling is self-reported, never read from the face.
  *  Stop rules are shown from the prescription, not inferred. Voice via SpeechRecognition
- *  with a tap fallback for every prompt. */
+ *  with a tap fallback for every prompt. Pain starts unselected; Continue stays disabled
+ *  with a visible hint until a number is chosen. */
 export function CheckIn() {
   const nav = useNavigate()
+  const hintId = useId()
   const { data: rx } = useApi(() => api.prescription())
   const [pain, setPain] = useState<number | null>(null)
-  const [location, setLocation] = useState('hand')
-  const [energy, setEnergy] = useState('comfortable')
-  const [minutes, setMinutes] = useState(14)
+  const [location, setLocation] = useState<Location>('hand')
+  const [energy, setEnergy] = useState<Energy>('comfortable')
+  const [minutes, setMinutes] = useState<Minutes>('14')
   const [symptoms, setSymptoms] = useState(false)
   const [heard, setHeard] = useState<string | null>(null)
 
-  const chip = (value: string, current: string, set: (v: string) => void, label: string) => (
-    <button key={value} type="button" aria-pressed={current === value} onClick={() => set(value)} className={`min-h-14 rounded-full border-2 px-5 text-lg font-bold ${current === value ? 'border-teal bg-teal text-white' : 'border-line bg-surface'}`}>{label}</button>
-  )
   const listen = () => {
     const SR = (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition
     if (!SR) {
@@ -38,13 +61,14 @@ export function CheckIn() {
       if (n) setPain(Number(n[1]))
       if (/tired/.test(text)) setEnergy(/very/.test(text) ? 'very_tired' : 'tired')
       if (/comfortable|fine|good/.test(text)) setEnergy('comfortable')
-      if (/shoulder|arm|hand|nowhere/.test(text)) setLocation((text.match(/shoulder|arm|hand|nowhere/) ?? ['hand'])[0])
+      const loc = text.match(/shoulder|arm|hand|nowhere/)
+      if (loc) setLocation(loc[0] as Location)
     }
     r.onerror = () => setHeard('Did not catch that — tap instead.')
     r.start()
   }
   const go = () => {
-    const data: CheckInData = { pain: pain ?? 0, location, energy, minutes, new_symptoms: symptoms }
+    const data: CheckInData = { pain: pain ?? 0, location, energy, minutes: Number(minutes), new_symptoms: symptoms }
     try {
       sessionStorage.setItem('praxis.checkin', JSON.stringify(data))
     } catch {
@@ -53,45 +77,68 @@ export function CheckIn() {
     nav('/choose')
   }
   const rules = rx?.stop_rules
+  const clinician = rx?.clinician?.split(',')[0] ?? 'your therapist'
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-8 p-8">
+      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div>
           <h1 className="text-4xl">Before you start</h1>
           <p className="mt-2 text-muted">Answer by tapping or speaking. This sets today's pace inside your assigned limits.</p>
-          <div className="mt-6 space-y-6 rounded-2xl border border-line bg-surface p-6">
+          <Card className="mt-5 space-y-5">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
-            <div><div className="mb-2 font-bold">Where is it?</div><div className="flex flex-wrap gap-3">{[['shoulder', 'Shoulder'], ['arm', 'Arm'], ['hand', 'Hand'], ['nowhere', 'Nowhere']].map(([v, l]) => chip(v, location, setLocation, l))}</div></div>
-            <div><div className="mb-2 font-bold">Energy today</div><div className="flex flex-wrap gap-3">{[['comfortable', 'Comfortable'], ['tired', 'Tired'], ['very_tired', 'Very tired']].map(([v, l]) => chip(v, energy, setEnergy, l))}</div></div>
-            <div><div className="mb-2 font-bold">Time you have</div><div className="flex flex-wrap gap-3">
-              <button type="button" aria-pressed={minutes === 14} onClick={() => setMinutes(14)} className={`min-h-14 rounded-full border-2 px-5 text-lg font-bold ${minutes === 14 ? 'border-teal bg-teal text-white' : 'border-line bg-surface'}`}>Full session · 14 min</button>
-              <button type="button" aria-pressed={minutes === 7} onClick={() => setMinutes(7)} className={`min-h-14 rounded-full border-2 px-5 text-lg font-bold ${minutes === 7 ? 'border-teal bg-teal text-white' : 'border-line bg-surface'}`}>Shorter · one exercise</button>
-            </div></div>
-            <label className="flex min-h-12 items-center gap-3 text-lg"><input type="checkbox" checked={symptoms} onChange={(e) => setSymptoms(e.target.checked)} className="h-7 w-7 accent-teal" />Something new or worse since last time</label>
-          </div>
+            <div>
+              <div className="mb-2 font-bold">Where is it?</div>
+              <Pill ariaLabel="Where is it?" value={location} options={LOCATIONS} onChange={setLocation} />
+            </div>
+            <div>
+              <div className="mb-2 font-bold">Energy today</div>
+              <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
+            </div>
+            <div>
+              <div className="mb-2 font-bold">Time you have</div>
+              <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} />
+            </div>
+            <Checkbox label="Something new or worse since last time" checked={symptoms} onChange={setSymptoms} description="Your therapist reviews this before you practise." />
+          </Card>
         </div>
         <div className="flex flex-col gap-5">
-          <div className="rounded-2xl border border-line bg-surface p-6">
-            <h2 className="text-2xl">How this is used</h2>
-            <p className="text-muted">Your answers go into today's report for {rx?.clinician?.split(',')[0] ?? 'your therapist'} and set the coach's pace. Feeling is what you tell us, never read from your face.</p>
-          </div>
-          <div className="rounded-2xl border border-line bg-surface p-6">
-            <h2 className="text-2xl">Stop rules set by your therapist</h2>
-            <ul className="mt-2 divide-y divide-line text-lg">
+          <Card title="How this is used">
+            <p className="text-muted">Your answers go into today's report for {clinician} and set the coach's pace. Feeling is what you tell us, never read from your face.</p>
+          </Card>
+          <Card title="Stop rules set by your therapist">
+            <ul className="divide-y divide-line text-lg">
               <li className="py-2">Pain at or above {rules?.pain_max ?? 5} → session ends, therapist flagged</li>
               <li className="py-2">New or worse symptoms → review before practising</li>
               <li className="py-2">Difficulty never goes above Level {rx?.level ?? 2} dose</li>
             </ul>
-          </div>
-          <div className="flex items-center justify-between rounded-2xl border border-line bg-surface px-6 py-4">
-            <span className="text-lg">Microphone</span>
-            <Button variant="secondary" className="min-h-14" onClick={listen}>Push to talk</Button>
-          </div>
-          {heard && <p className="text-muted">{heard}</p>}
+          </Card>
+          <Card padding="sm">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-lg">Microphone</span>
+              <Button variant="secondary" icon={<Mic />} onClick={listen}>Push to talk</Button>
+            </div>
+            {heard && <p role="status" className="mt-2 text-lg text-muted">{heard}</p>}
+          </Card>
         </div>
       </div>
-      <FlowBar step={0} label="Check-in" left={<Button variant="secondary" onClick={() => nav('/')}>Back to Home</Button>} right={<Button disabled={pain === null} onClick={go}>Continue to exercises</Button>} />
+      <FlowBar
+        step={0}
+        label="Check-in"
+        left={<Button variant="secondary" onClick={() => nav('/')}>Back to Home</Button>}
+        right={
+          <div className="flex flex-col items-end">
+            <Button disabled={pain === null} aria-describedby={pain === null ? hintId : undefined} onClick={go}>
+              Continue to exercises
+            </Button>
+            {pain === null && (
+              <span id={hintId} className="text-lg leading-tight text-muted">
+                Choose a pain number to continue
+              </span>
+            )}
+          </div>
+        }
+      />
     </div>
   )
 }
