@@ -1,0 +1,358 @@
+{
+ "name": "pendulum",
+ "title": "Pendulum",
+ "source": {
+  "dataset": "procedural",
+  "license": "n/a (authored)",
+  "movement": "authored: neither dataset records a pendulum",
+  "subject": null,
+  "rep": null,
+  "arm": "left",
+  "position": "stand",
+  "fps_original": null
+ },
+ "side": "left",
+ "camera": "side",
+ "plane": "sagittal",
+ "focus_joint": "lShoulder",
+ "metric": "elevation",
+ "target_deg": 35.0,
+ "duration": 9.8,
+ "rest": {
+  "rShoulder": [
+   -3.0,
+   0.0,
+   -4.0
+  ],
+  "rElbow": [
+   -8.0,
+   0.0,
+   0.0
+  ]
+ },
+ "keys": [
+  {
+   "t": 0.0,
+   "hold": true,
+   "lShoulder": [
+    -3.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -8.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 1.6,
+   "hold": true,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 2.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    14.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 2.6,
+   "hold": false,
+   "lShoulder": [
+    -45.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 3.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    -6.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 3.6,
+   "hold": false,
+   "lShoulder": [
+    -25.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 4.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    14.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 4.6,
+   "hold": false,
+   "lShoulder": [
+    -45.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 5.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    -6.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 5.6,
+   "hold": false,
+   "lShoulder": [
+    -25.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 6.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    14.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 6.6,
+   "hold": false,
+   "lShoulder": [
+    -45.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 7.1,
+   "hold": false,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    -6.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 7.6,
+   "hold": false,
+   "lShoulder": [
+    -25.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 8.2,
+   "hold": true,
+   "lShoulder": [
+    -35.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -4.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    35.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "t": 9.8,
+   "hold": true,
+   "lShoulder": [
+    -3.0,
+    0.0,
+    4.0
+   ],
+   "lElbow": [
+    -8.0,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "t": 0.0,
+   "step": 1,
+   "caption": "Step 1 of 3 \u00b7 Lean forward on a table, let the arm hang loose"
+  },
+  {
+   "t": 1.6,
+   "step": 2,
+   "caption": "Step 2 of 3 \u00b7 Swing gently in small circles, no muscle effort"
+  },
+  {
+   "t": 8.2,
+   "step": 3,
+   "caption": "Step 3 of 3 \u00b7 Stand up slowly"
+  }
+ ],
+ "fit": null,
+ "note": "Authored procedurally (no dataset has a pendulum); the avatar never scores the patient."
+}

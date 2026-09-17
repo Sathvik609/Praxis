@@ -1,0 +1,465 @@
+{
+ "name": "scaption",
+ "title": "Shoulder scaption",
+ "source": {
+  "dataset": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
+  "license": "ODC PDDL 1.0",
+  "movement": "m10 standing shoulder scaption",
+  "subject": "s06",
+  "rep": "e04",
+  "arm": "right column, mirrored to the left",
+  "position": "stand",
+  "fps_original": 30.0
+ },
+ "side": "left",
+ "camera": "front",
+ "plane": "scapular",
+ "focus_joint": "lShoulder",
+ "metric": "elevation",
+ "target_deg": 108.4,
+ "duration": 1.767,
+ "rest": {
+  "rShoulder": [
+   -3.0,
+   0.0,
+   -4.0
+  ],
+  "rElbow": [
+   -8.0,
+   0.0,
+   0.0
+  ]
+ },
+ "keys": [
+  {
+   "t": 0.0,
+   "hold": true,
+   "lShoulder": [
+    -11.55,
+    29.64,
+    3.59
+   ],
+   "lElbow": [
+    -13.77,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -0.24,
+    1.4,
+    0.56
+   ],
+   "check": {
+    "ua": [
+     0.1191,
+     -0.9885,
+     0.0929
+    ],
+    "fa": [
+     0.3076,
+     -0.9183,
+     0.2491
+    ],
+    "elevation_deg": 8.2,
+    "bend_deg": 14.6,
+    "rotation_deg": 49.4
+   }
+  },
+  {
+   "t": 0.133,
+   "hold": false,
+   "lShoulder": [
+    -38.42,
+    43.31,
+    20.46
+   ],
+   "lElbow": [
+    -19.08,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -0.79,
+    2.8,
+    1.31
+   ],
+   "check": {
+    "ua": [
+     0.323,
+     -0.893,
+     0.3134
+    ],
+    "fa": [
+     0.602,
+     -0.6543,
+     0.4576
+    ],
+    "elevation_deg": 25.4,
+    "bend_deg": 22.7,
+    "rotation_deg": 59.7
+   }
+  },
+  {
+   "t": 0.267,
+   "hold": false,
+   "lShoulder": [
+    -61.03,
+    17.56,
+    33.4
+   ],
+   "lElbow": [
+    -18.01,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.24,
+    4.44,
+    1.97
+   ],
+   "check": {
+    "ua": [
+     0.6596,
+     -0.5155,
+     0.547
+    ],
+    "fa": [
+     0.745,
+     -0.173,
+     0.6442
+    ],
+    "elevation_deg": 56.8,
+    "bend_deg": 21.1,
+    "rotation_deg": 59.0
+   }
+  },
+  {
+   "t": 0.433,
+   "hold": false,
+   "lShoulder": [
+    -78.3,
+    -10.77,
+    42.43
+   ],
+   "lElbow": [
+    -15.73,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.45,
+    4.8,
+    2.19
+   ],
+   "check": {
+    "ua": [
+     0.7756,
+     0.0602,
+     0.6284
+    ],
+    "fa": [
+     0.7124,
+     0.3585,
+     0.6033
+    ],
+    "elevation_deg": 91.0,
+    "bend_deg": 17.6,
+    "rotation_deg": 87.5
+   }
+  },
+  {
+   "t": 0.567,
+   "hold": false,
+   "lShoulder": [
+    -80.82,
+    -25.71,
+    46.86
+   ],
+   "lElbow": [
+    -13.65,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.49,
+    4.51,
+    2.33
+   ],
+   "check": {
+    "ua": [
+     0.7435,
+     0.3074,
+     0.5939
+    ],
+    "fa": [
+     0.6585,
+     0.5265,
+     0.5377
+    ],
+    "elevation_deg": 105.3,
+    "bend_deg": 13.9,
+    "rotation_deg": 102.0
+   }
+  },
+  {
+   "t": 0.7,
+   "hold": true,
+   "lShoulder": [
+    -80.56,
+    -29.71,
+    48.2
+   ],
+   "lElbow": [
+    -12.68,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.6,
+    4.21,
+    2.64
+   ],
+   "check": {
+    "ua": [
+     0.7159,
+     0.3645,
+     0.5955
+    ],
+    "fa": [
+     0.6578,
+     0.5561,
+     0.508
+    ],
+    "elevation_deg": 108.4,
+    "bend_deg": 12.5,
+    "rotation_deg": 115.4
+   }
+  },
+  {
+   "t": 0.867,
+   "hold": false,
+   "lShoulder": [
+    -75.59,
+    -32.3,
+    50.06
+   ],
+   "lElbow": [
+    -11.75,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.7,
+    4.16,
+    2.84
+   ],
+   "check": {
+    "ua": [
+     0.7212,
+     0.3414,
+     0.6028
+    ],
+    "fa": [
+     0.6657,
+     0.5399,
+     0.5151
+    ],
+    "elevation_deg": 106.8,
+    "bend_deg": 12.9,
+    "rotation_deg": 114.5
+   }
+  },
+  {
+   "t": 1.067,
+   "hold": false,
+   "lShoulder": [
+    -74.47,
+    -31.9,
+    50.35
+   ],
+   "lElbow": [
+    -11.84,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.73,
+    4.28,
+    2.85
+   ],
+   "check": {
+    "ua": [
+     0.734,
+     0.3216,
+     0.5981
+    ],
+    "fa": [
+     0.6651,
+     0.5262,
+     0.5299
+    ],
+    "elevation_deg": 105.6,
+    "bend_deg": 13.0,
+    "rotation_deg": 107.3
+   }
+  },
+  {
+   "t": 1.233,
+   "hold": false,
+   "lShoulder": [
+    -67.31,
+    -34.16,
+    53.59
+   ],
+   "lElbow": [
+    -10.13,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.64,
+    4.26,
+    2.71
+   ],
+   "check": {
+    "ua": [
+     0.7348,
+     0.3098,
+     0.6034
+    ],
+    "fa": [
+     0.6693,
+     0.5151,
+     0.5354
+    ],
+    "elevation_deg": 105.0,
+    "bend_deg": 13.0,
+    "rotation_deg": 107.3
+   }
+  },
+  {
+   "t": 1.4,
+   "hold": false,
+   "lShoulder": [
+    -48.23,
+    -25.2,
+    49.42
+   ],
+   "lElbow": [
+    -8.69,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.54,
+    2.95,
+    2.62
+   ],
+   "check": {
+    "ua": [
+     0.7735,
+     -0.0615,
+     0.6308
+    ],
+    "fa": [
+     0.7194,
+     0.0831,
+     0.6896
+    ],
+    "elevation_deg": 83.6,
+    "bend_deg": 9.5,
+    "rotation_deg": 55.8
+   }
+  },
+  {
+   "t": 1.6,
+   "hold": false,
+   "lShoulder": [
+    -27.67,
+    5.46,
+    21.65
+   ],
+   "lElbow": [
+    -9.48,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -1.21,
+    -0.1,
+    2.61
+   ],
+   "check": {
+    "ua": [
+     0.4702,
+     -0.8001,
+     0.3726
+    ],
+    "fa": [
+     0.587,
+     -0.6406,
+     0.4951
+    ],
+    "elevation_deg": 34.0,
+    "bend_deg": 13.4,
+    "rotation_deg": 51.3
+   }
+  },
+  {
+   "t": 1.767,
+   "hold": true,
+   "lShoulder": [
+    -10.94,
+    11.74,
+    5.34
+   ],
+   "lElbow": [
+    -9.31,
+    0.0,
+    0.0
+   ],
+   "spine": [
+    -0.22,
+    -1.56,
+    2.14
+   ],
+   "check": {
+    "ua": [
+     0.1835,
+     -0.9718,
+     0.1478
+    ],
+    "fa": [
+     0.3372,
+     -0.9054,
+     0.2581
+    ],
+    "elevation_deg": 12.0,
+    "bend_deg": 11.5,
+    "rotation_deg": 56.7
+   }
+  }
+ ],
+ "steps": [
+  {
+   "t": 0.0,
+   "step": 1,
+   "caption": "Step 1 of 3 \u00b7 Raise the arm halfway between front and side, thumb up"
+  },
+  {
+   "t": 0.7,
+   "step": 2,
+   "caption": "Step 2 of 3 \u00b7 Hold at the top"
+  },
+  {
+   "t": 0.95,
+   "step": 3,
+   "caption": "Step 3 of 3 \u00b7 Lower slowly"
+  }
+ ],
+ "fit": {
+  "forearm_error_deg_mean": 10.02,
+  "forearm_error_deg_max": 13.6
+ },
+ "note": "Reference motion of one healthy adult, camera-relative body-frame angles; the avatar never scores the patient."
+}
