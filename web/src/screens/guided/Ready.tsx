@@ -73,7 +73,7 @@ export function Ready() {
           <OverlayCanvas width={640} height={480} calibration={cal} frame={frame} />
           {error && (
             <div className="absolute inset-0 z-20">
-              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} onRetry={restart} />
+              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} detail={error} onRetry={restart} />
             </div>
           )}
         </Panel>

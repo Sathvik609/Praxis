@@ -93,6 +93,7 @@ export function LiveNhpt() {
 
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
         <LiveFeed
+          errorDetail={error}
           className="min-h-0 self-start"
           replay={!!replay}
           camActive={camActive}

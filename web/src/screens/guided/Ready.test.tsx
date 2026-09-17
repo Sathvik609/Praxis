@@ -72,10 +72,10 @@ test('Go unlocks when the required checks pass and carries the exercise, side an
 })
 
 test('a blocked camera shows the way forward instead of a dead end', async () => {
-  mockStream([], false, 'Permission denied')
+  mockStream([], false, 'camera: permission denied')
   app()
   await screen.findByText('Pendulum')
-  expect(screen.getByRole('alert')).toHaveTextContent('Camera blocked')
+  expect(screen.getByRole('alert')).toHaveTextContent(/Camera permission needed/)
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
 })
 

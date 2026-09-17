@@ -55,8 +55,7 @@ export function LiveFeed({
   cvLine,
   latencyLine,
   onRetry,
-  className = '',
-}: {
+  className = '', errorDetail}: {
   replay: boolean
   camActive: boolean
   status: LiveStatus
@@ -68,6 +67,7 @@ export function LiveFeed({
   cvLine: ReactNode
   latencyLine?: ReactNode
   onRetry: () => void
+  errorDetail?: string | null
   className?: string
 }) {
   return (
@@ -103,7 +103,7 @@ export function LiveFeed({
         )}
       </div>
       {(status === 'camera_blocked' || status === 'service_unreachable') && (
-        <div className="absolute inset-0 z-20"><CameraBlocked reason={status} onRetry={onRetry} /></div>
+        <div className="absolute inset-0 z-20"><CameraBlocked reason={status} detail={errorDetail} onRetry={onRetry} /></div>
       )}
     </Panel>
   )

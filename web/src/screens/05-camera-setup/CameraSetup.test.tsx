@@ -52,13 +52,13 @@ test('arm setup asks for a side view and no sheet', () => {
 })
 
 test('camera blocked offers a recorded session and the checklist shows five waiting rows', () => {
-  mockStream(null, false, 'Permission denied')
+  mockStream(null, false, 'camera: permission denied')
   render(
     <MemoryRouter initialEntries={['/setup?exercise=nhpt']}>
       <CameraSetup />
     </MemoryRouter>,
   )
-  expect(screen.getByRole('alert')).toHaveTextContent('Camera blocked')
+  expect(screen.getByRole('alert')).toHaveTextContent(/Camera permission needed/)
   expect(screen.getByRole('button', { name: 'Use a recorded session' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   expect(screen.getAllByText('Waiting')).toHaveLength(6)

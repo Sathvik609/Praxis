@@ -142,7 +142,7 @@ export function Go() {
           <OverlayCanvas width={640} height={480} calibration={null} frame={frame} />
           {(status === 'camera_blocked' || status === 'service_unreachable') && (
             <div className="absolute inset-0 z-20">
-              <CameraBlocked reason={status} onRetry={() => { stop(); void start() }} />
+              <CameraBlocked reason={status} detail={error} onRetry={() => { stop(); void start() }} />
             </div>
           )}
         </Panel>

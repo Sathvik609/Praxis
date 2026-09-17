@@ -101,6 +101,7 @@ export function LiveArm() {
 
       <div className="grid min-h-0 grid-cols-[5fr_2fr_2fr] gap-4 p-4">
         <LiveFeed
+          errorDetail={error}
           className="min-h-0 self-start"
           replay={!!replay}
           camActive={camActive}

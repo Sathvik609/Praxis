@@ -93,6 +93,7 @@ export function LiveCup() {
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
           <LiveFeed
+          errorDetail={error}
             replay={!!replay}
             camActive={camActive}
             status={status}
