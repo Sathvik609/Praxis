@@ -361,6 +361,19 @@
     },
     "frames": {
       "type": "integer"
+    },
+    "mode": {
+      "type": "string"
+    },
+    "colour": {
+      "description": "Sampled HSV window (sample_colour reply): h, s, v medians, h_lo/h_hi (OpenCV 0-180, may wrap), s_min, v_min, skin_excluded, source.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "at_mm": {
+      "type": "array"
     }
   }
 }

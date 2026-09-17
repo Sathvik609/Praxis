@@ -21,6 +21,7 @@ import cv2
 import numpy as np
 
 from praxis_session.events import Event, make_event
+from praxis_session.perception.board import hsv_window_from_patch, hue_window_mask
 from praxis_session.perception.board_spec import CUP_TARGETS, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
@@ -50,6 +51,7 @@ class CupSheetState:
         )
         self.lo, self.hi = np.array(cup_hsv_lo, np.uint8), np.array(cup_hsv_hi, np.uint8)
         self.min_diameter_mm = min_diameter_mm
+        self.colour_range: dict[str, Any] | None = None  # set by sample_cup_colour
         self._S = np.diag([px_per_mm, px_per_mm, 1.0])
 
     def warp(self, frame_bgr: np.ndarray, cal: CalibrationResult) -> np.ndarray:
@@ -57,9 +59,22 @@ class CupSheetState:
             raise RuntimeError("warp requires a calibrated frame")
         return cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
 
+    def sample_cup_colour(
+        self, canonical_bgr: np.ndarray, xy_mm: tuple[float, float]
+    ) -> dict[str, Any]:
+        """Set the cup-base colour window from a 6 mm patch at `xy_mm` (the patient taps the
+        cup base); the default blue band applies until then. Returns the range for the trace."""
+        centre = (xy_mm[0] * self.px_per_mm, xy_mm[1] * self.px_per_mm)
+        rng = hsv_window_from_patch(canonical_bgr, centre, 3.0 * self.px_per_mm)
+        self.colour_range = rng
+        return rng
+
     def cup_mask(self, canonical_bgr: np.ndarray) -> np.ndarray:
         hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, self.lo, self.hi)
+        if self.colour_range is None:
+            mask = cv2.inRange(hsv, self.lo, self.hi)
+        else:
+            mask = hue_window_mask(hsv, self.colour_range)
         k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         return cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
 

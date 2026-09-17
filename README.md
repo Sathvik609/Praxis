@@ -25,7 +25,12 @@ cd web && pnpm install && pnpm dev
 #    Click Allow on the camera prompt, hold the printed NHPT sheet in view:
 #    the checklist turns Pass and "Continue to demonstration" unlocks.
 #    → http://localhost:5173/session?hand=left            runs the Nine-Hole Peg Test live.
-#    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (blue band on the cup base, docs/sheets/cup_targets.pdf).
+#      Pegs are found by colour. Bright pegs on a white sheet work out of the box; for wooden
+#      or pale pegs, or a coloured/wooden board, seat one peg and tap that hole in the Board view
+#      ("Tap a seated peg to sample its colour") — the service samples a 6 mm patch and uses a
+#      ±12° hue window from then on (WebSocket command {"cmd":"sample_colour","hole":k}).
+#    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (blue band on the cup base, docs/sheets/cup_targets.pdf;
+#      a different band colour: send {"cmd":"sample_colour","x_mm":..,"y_mm":..} at the cup base, no UI yet).
 #    → http://localhost:5173/session?exercise=arm&side=left runs Arm to the front (side view, no sheet needed).
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline

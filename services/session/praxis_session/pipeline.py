@@ -34,6 +34,7 @@ Mode = Literal["calibrate", "nhpt", "cup", "arm"]
 MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
 POSE_LOSS_FRAMES = 15
 LOSS_FRAMES = 5
+DEBOUNCE_S = 0.25  # NHPT occupancy debounce in seconds (D-SEG-1); frame counts are a floor
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "lighting")
 REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
     "default": REQUIRED_CHECKS,
@@ -97,7 +98,10 @@ class SessionPipeline:
         if mode == "nhpt":
             self._board = BoardState(self.spec)
             self._nhpt = NHPT(
-                spec=self.spec, debounce_frames=debounce_frames, clear_frames=clear_frames
+                spec=self.spec,
+                debounce_frames=debounce_frames,
+                clear_frames=clear_frames,
+                debounce_s=DEBOUNCE_S,
             )
         elif mode == "cup":
             self._cup_sheet = CupSheetState(self.spec)
@@ -125,6 +129,29 @@ class SessionPipeline:
             except ValueError as e:
                 return {"ok": False, "error": str(e)}
             return {"ok": True, "phase": self._cup.phase}
+        if name == "sample_colour" and self.mode in ("nhpt", "cup"):
+            # Tap-to-sample: {"x_mm", "y_mm"} on the sheet, or {"hole": k} for a peg seated in
+            # hole k. Samples the last calibrated canonical view (D-SEG-1 / D-SEG-3).
+            if self._last_canon is None:
+                return {"ok": False, "error": "no calibrated frame seen yet"}
+            if "hole" in cmd:
+                try:
+                    xy = self.spec.targets_mm[int(cmd["hole"])]
+                except (ValueError, TypeError, IndexError):
+                    return {"ok": False, "error": f"bad hole {cmd.get('hole')!r}"}
+            elif "x_mm" in cmd and "y_mm" in cmd:
+                xy = (float(cmd["x_mm"]), float(cmd["y_mm"]))
+            else:
+                return {"ok": False, "error": "sample_colour needs x_mm/y_mm or hole"}
+            try:
+                if self._board is not None:
+                    rng = self._board.sample_peg_colour(self._last_canon, xy)
+                else:
+                    assert self._cup_sheet is not None
+                    rng = self._cup_sheet.sample_cup_colour(self._last_canon, xy)
+            except ValueError as e:
+                return {"ok": False, "error": str(e)}
+            return {"ok": True, "mode": self.mode, "colour": rng, "at_mm": [xy[0], xy[1]]}
         return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
 
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
@@ -144,6 +171,7 @@ class SessionPipeline:
     # ---- internals ----------------------------------------------------------------------
     _last_t: float = 0.0
     _detect_ms: float = 0.0
+    _last_canon: np.ndarray | None = None  # last calibrated canonical view (sample_colour)
 
     def _emit(self, out: list[Event], e: Event) -> None:
         if self.ring is not None:
@@ -200,22 +228,28 @@ class SessionPipeline:
 
     def _hand_block(
         self, frame_bgr: np.ndarray, t: float, cal: CalibrationResult
-    ) -> tuple[dict, tuple[float, float] | None]:
-        """Run the hand tracker (if available) and return (event block, hand position in mm)."""
+    ) -> tuple[dict, tuple[float, float] | None, tuple[float, float, float, float] | None]:
+        """Run the hand tracker (if available) and return (event block, thumb/index midpoint in
+        mm, hand bounding box in sheet mm as x0 y0 x1 y1). Both mm values are sheet-plane
+        projections of a hand above the sheet: relative, not calibrated to the hand's height."""
         if self._hand is None:
-            return {"present": False}, None
+            return {"present": False}, None, None
         res = self._hand.detect(frame_bgr)
         metrics = self._hand_metrics.update(t, res, cal)
         if res is None:
-            return {"present": False}, None
+            return {"present": False}, None, None
         block = res.to_dict() | {k: v for k, v in metrics.items() if k != "present"}
         block["ms"] = round(self._hand.last_ms, 1)
         hand_mm = None
+        rect_mm = None
         if cal.calibrated:
             tips = cal.to_mm(res.landmarks_px[[4, 8]])
             mid = tips.mean(axis=0)
             hand_mm = (float(mid[0]), float(mid[1]))
-        return block, hand_mm
+            lm_mm = cal.to_mm(res.landmarks_px)
+            lo, hi = lm_mm.min(axis=0), lm_mm.max(axis=0)
+            rect_mm = (float(lo[0]), float(lo[1]), float(hi[0]), float(hi[1]))
+        return block, hand_mm, rect_mm
 
     def _process_nhpt(self, frame_bgr: np.ndarray, t: float, i: int) -> list[Event]:
         assert self._board is not None and self._nhpt is not None
@@ -225,15 +259,18 @@ class SessionPipeline:
         cal = self._cal.run(frame_bgr)
         board_d: dict[str, Any] | None = None
         holes_px: list[list[float]] = []
+        # The hand runs first so its box can be excluded from the free-peg blobs (D-SEG-1).
+        hand_block, hand_mm, hand_rect = self._hand_block(frame_bgr, t, cal)
         if cal.calibrated:
             canon = self._board.warp(frame_bgr, cal)
-            board_d = self._board.to_event_payload(canon)
+            self._last_canon = canon
+            board_d = self._board.to_event_payload(
+                canon, exclude_mm=[hand_rect] if hand_rect is not None else None
+            )
             holes_px = self._board.holes_frame_px(cal)
-        hand_block, hand_mm = self._hand_block(frame_bgr, t, cal)
         occ = board_d["occupancy"] if board_d else {}
-        next_hole = next(
-            (k for k in range(len(self.spec.targets_mm)) if occ.get(f"hole_{k}") == "empty"), None
-        )
+        # Any-hole mode: no suggested hole, so the UI draws no amber ring (D-SEG-2).
+        next_hole = None
         snap = self._nhpt.snapshot(t)
         self._emit(
             out,
@@ -249,6 +286,7 @@ class SessionPipeline:
                         "occupancy": occ,
                         "hole_source": board_d["hole_source"],
                         "free_pegs_mm": board_d["free_pegs_mm"],
+                        "colour": board_d["colour"],
                     }
                     if board_d
                     else {}
@@ -289,11 +327,12 @@ class SessionPipeline:
         cup_px = None
         if cal.calibrated:
             canon = self._cup_sheet.warp(frame_bgr, cal)
+            self._last_canon = canon
             cup_mm = self._cup_sheet.cup_mm(canon)
             dots_px = self._cup_sheet.dots_frame_px(cal)
             if cup_mm is not None:
                 cup_px = np.round(cal.to_px(np.array([cup_mm[:2]], np.float32))[0], 1).tolist()
-        hand_block, hand_mm = self._hand_block(frame_bgr, t, cal)
+        hand_block, hand_mm, _ = self._hand_block(frame_bgr, t, cal)
         snap = self._cup.snapshot()
         self._emit(
             out,
@@ -306,6 +345,7 @@ class SessionPipeline:
                 cup=snap
                 | {
                     "cup_mm": None if cup_mm is None else [round(v, 1) for v in cup_mm],
+                    "colour": self._cup_sheet.colour_range,
                     "hand_clear": hand_mm is None
                     or self._cup.dot is None
                     or float(

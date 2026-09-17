@@ -253,3 +253,46 @@ def test_sheet_setup_still_requires_markers():
     frame, _ = camera_frame(NHPT_BOARD, hide_marker=1)
     checks = p.process(frame, 0.0, 0)[2].to_dict()
     assert checks["all_required_pass"] is False
+
+
+# ---- Sprint D-SEG ---------------------------------------------------------------------------
+def test_sample_colour_command_sets_peg_range_and_frames_report_it():
+    from praxis_session.perception.synth import WOOD_BGR
+
+    B = NHPT_BOARD
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=False)
+    assert p.command({"cmd": "sample_colour", "hole": 4})["ok"] is False  # nothing seen yet
+    frame, _ = camera_frame(B, pegs_mm=[B.targets_mm[4]], peg_bgr=WOOD_BGR)
+    d = p.process(frame, 0.0, 0)[0].to_dict()
+    assert d["board"]["occupancy"]["hole_4"] == "empty" and d["board"]["colour"] is None
+    r = p.command({"cmd": "sample_colour", "hole": 4})
+    assert r["ok"] and r["colour"]["source"] == "sampled" and r["mode"] == "nhpt"
+    d = p.process(frame, 0.1, 1)[0].to_dict()
+    assert d["board"]["occupancy"]["hole_4"] == "occupied"
+    assert d["board"]["colour"]["h"] == r["colour"]["h"]
+    validate_event(d)
+    x, y = B.targets_mm[4]
+    assert p.command({"cmd": "sample_colour", "x_mm": x, "y_mm": y})["ok"]
+    assert p.command({"cmd": "sample_colour"})["ok"] is False
+    assert p.command({"cmd": "sample_colour", "hole": 42})["ok"] is False
+
+
+def test_sample_colour_command_in_cup_mode():
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    frame, _ = camera_frame(C, cup_mm=C.targets_mm[0], cup_bgr=(30, 200, 60))  # a green base
+    d = p.process(frame, 0.0, 0)[0].to_dict()
+    assert d["cup"]["cup_mm"] is None and d["cup"]["colour"] is None
+    r = p.command({"cmd": "sample_colour", "x_mm": C.targets_mm[0][0], "y_mm": C.targets_mm[0][1]})
+    assert r["ok"] and r["mode"] == "cup"
+    d = p.process(frame, 0.1, 1)[0].to_dict()
+    assert d["cup"]["cup_mm"] is not None and d["cup"]["colour"]["h"] == r["colour"]["h"]
+    validate_event(d)
+
+
+def test_nhpt_next_hole_is_null_in_any_hole_mode():
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=False)
+    frame, _ = camera_frame(NHPT_BOARD)
+    d = p.process(frame, 0.0, 0)[0].to_dict()
+    assert d["calibrated"] and d["overlay"]["next_hole"] is None
