@@ -62,7 +62,13 @@ export type FrameEvent = PraxisEvent & {
     elapsed_s: number
     total_s: number | null
   }
-  board: { occupancy?: Record<string, 'empty' | 'occupied'>; hole_source?: string; free_pegs_mm?: number[][] }
+  board: {
+    occupancy?: Record<string, 'empty' | 'occupied'>
+    hole_source?: string
+    free_pegs_mm?: number[][]
+    /** Sampled peg colour window (tap-to-sample), null until the patient samples one. */
+    colour?: { h: number; s: number; v: number; source: string; skin_excluded: boolean } | null
+  }
   overlay: {
     holes_px?: number[][]
     target?: number | null
@@ -78,7 +84,7 @@ export type FrameEvent = PraxisEvent & {
   arm?: ArmSnapshot & { angles?: { shoulder_deg: number; elbow_deg: number; trunk_lean_deg: number; shoulder_hike_norm: number; view_ok: boolean; visibility: number } }
   pose?: { present: boolean; landmarks_px?: number[][]; visibility?: number[]; conf?: number; ms?: number }
   cup?: CupSnapshot & { cup_mm?: number[] | null; hand_clear?: boolean }
-  hand?: { present: boolean; landmarks_px?: number[][]; pinch_mm?: number | null; tremor_hz?: number | null; sparc?: number | null; ms?: number }
+  hand?: { present: boolean; landmarks_px?: number[][]; pinch_rel_mm?: number | null; tremor_hz?: number | null; sparc?: number | null; ms?: number }
   models?: { hand: boolean }
   proc_ms?: number
 }

@@ -155,3 +155,84 @@ def test_phase_switch_is_explicit_and_completion_after_four_arcs():
     assert phases == ["slow", "slow", "fast", "fast"]
     with pytest.raises(ValueError):
         fsm.set_phase("turbo")
+
+
+# ---- Sprint D-SEG-3: colour sampling, resting-window verification ------------------------------
+def test_cup_colour_sampling_switches_from_the_default_blue_band():
+    frame, _ = camera_frame(CUP_TARGETS, cup_mm=D[2], cup_bgr=(30, 200, 60))  # a green base
+    cal = Calibrator(CUP_TARGETS).run(frame)
+    st = CupSheetState()
+    canon = st.warp(frame, cal)
+    assert st.cup_mm(canon) is None and st.colour_range is None  # blue band assumed by default
+    rng = st.sample_cup_colour(canon, D[2])
+    assert rng["source"] == "sampled" and st.colour_range == rng
+    cup = st.cup_mm(canon)
+    assert cup is not None and np.hypot(cup[0] - D[2][0], cup[1] - D[2][1]) < 3.0
+
+
+def _occluded_reach_then(fsm: CupFSM, t: float, glimpse_at: float | None, dt: float = 0.1):
+    """Lift from dot 0, place on dot 1 inferred from the hand only (cup hidden); optionally the
+    base is glimpsed resting on dot 1 at `glimpse_at` s after placement while the hand is still
+    over it; then the hand leaves, cup still hidden."""
+    evs = []
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None))
+        t += dt
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None, hand=D[1]))  # over dot 1 by the hand -> placed
+        t += dt
+    assert fsm.state == "placed"
+    t_placed = t
+    while glimpse_at is not None and t < t_placed + glimpse_at:
+        evs += fsm.step(obs(t, cup=None, hand=D[1]))
+        t += dt
+    if glimpse_at is not None:
+        evs += fsm.step(obs(t, cup=D[1], hand=D[1]))
+        t += dt
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None, hand=(D[1][0] + 80, D[1][1] + 80)))
+        t += dt
+    return [e for e in evs if e.type == "reach_complete"]
+
+
+def test_placement_occluded_but_base_seen_resting_within_window_is_verified():
+    fsm = CupFSM(clear_frames=2, rest_window_s=0.6)
+    for _ in range(3):
+        fsm.step(obs(0.0, cup=D[0]))
+    r = _occluded_reach_then(fsm, 0.3, glimpse_at=0.2)
+    assert len(r) == 1
+    assert r[0].payload["verified"] is True and r[0].payload["reason"] is None
+
+
+def test_base_glimpsed_too_long_before_hand_clear_stays_unverified():
+    fsm = CupFSM(clear_frames=2, rest_window_s=0.6)
+    for _ in range(3):
+        fsm.step(obs(0.0, cup=D[0]))
+    # glimpse 0.2 s after placement, but the hand then lingers 1.5 s: outside the 0.6 s window
+    evs = []
+    t = 0.3
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None))
+        t += 0.1
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None, hand=D[1]))
+        t += 0.1
+    evs += fsm.step(obs(t, cup=D[1], hand=D[1]))
+    t += 0.1
+    for _ in range(15):
+        evs += fsm.step(obs(t, cup=None, hand=D[1]))
+        t += 0.1
+    for _ in range(3):
+        evs += fsm.step(obs(t, cup=None, hand=(D[1][0] + 80, D[1][1] + 80)))
+        t += 0.1
+    r = [e for e in evs if e.type == "reach_complete"]
+    assert len(r) == 1 and r[0].payload["verified"] is False
+    assert r[0].payload["reason"] == "cup_occluded"
+
+
+def test_never_seen_resting_stays_unverified():
+    fsm = CupFSM(clear_frames=2)
+    for _ in range(3):
+        fsm.step(obs(0.0, cup=D[0]))
+    r = _occluded_reach_then(fsm, 0.3, glimpse_at=None)
+    assert len(r) == 1 and r[0].payload["reason"] == "cup_occluded"

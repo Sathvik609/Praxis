@@ -16,7 +16,7 @@ const frame = {
   overlay: { holes_px: [], target: null, next_hole: 5, markers_px: {} },
 }
 
-function mockStream(events: Record<string, unknown>[]) {
+function mockStream(events: Record<string, unknown>[], send = vi.fn()) {
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive: true,
     connected: true,
@@ -25,9 +25,10 @@ function mockStream(events: Record<string, unknown>[]) {
     error: null,
     start: vi.fn(async () => {}),
     stop: vi.fn(),
-    send: vi.fn(),
+    send,
     videoRef: { current: null },
   })
+  return send
 }
 
 function renderAt(path: string) {
@@ -63,6 +64,21 @@ test('reference toggle is a segmented control: Board view by default, Avatar on 
   fireEvent.click(avatar)
   expect(screen.queryByLabelText('board view')).toBeNull()
   expect(screen.getByTestId('scene')).toBeInTheDocument()
+})
+
+test('tapping a seated hole in the board view sends sample_colour; null next_hole reads "any hole"', () => {
+  const events = [{ ...frame, board: { occupancy: { hole_4: 'occupied' }, hole_source: 'hough', free_pegs_mm: [], colour: null }, overlay: { ...frame.overlay, next_hole: null } }]
+  const send = mockStream(events)
+  renderAt('/session?hand=left')
+  expect(screen.getByText('any hole')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /hole 5 seated · tap to sample peg colour/ }))
+  expect(send).toHaveBeenCalledWith({ cmd: 'sample_colour', hole: 4 })
+})
+
+test('replay has no tap-to-sample buttons', () => {
+  mockStream([frame])
+  renderAt('/session?hand=left&replay=synthetic_nhpt_01')
+  expect(screen.queryByRole('button', { name: /tap to sample/ })).toBeNull()
 })
 
 test('tracking lost badge after perception_lost', () => {

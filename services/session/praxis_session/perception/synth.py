@@ -15,6 +15,9 @@ from praxis_session.perception.board_spec import SheetSpec
 from praxis_session.perception.render import sheet_canonical
 
 CANON_PX_PER_MM = 3.0
+# Colours for the robustness tests (BGR): a mid-tone skin patch and a light wooden peg / board.
+SKIN_BGR = (120, 160, 220)
+WOOD_BGR = (60, 110, 160)
 
 
 def view_homography(
@@ -56,8 +59,16 @@ def camera_frame(
     cup_mm: tuple[float, float] | None = None,
     cup_bgr: tuple[int, int, int] = (200, 90, 30),
     cup_diameter_mm: float = 60.0,
+    board_bgr: tuple[int, int, int] | None = None,
+    skin_blobs_mm: list[tuple[float, float, float]] | None = None,
+    skin_bgr: tuple[int, int, int] = SKIN_BGR,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return (BGR frame, H_true mm->px). Optional coloured peg discs and a blue cup base disc."""
+    """Return (BGR frame, H_true mm->px). Optional coloured peg discs and a blue cup base disc.
+
+    `board_bgr` tints the sheet's white background (a wooden or coloured board under the
+    print); `skin_blobs_mm` draws skin-coloured discs (x, y, radius) after the pegs, so they
+    occlude the way a hand does.
+    """
     canon = sheet_canonical(spec, CANON_PX_PER_MM)
     if hide_marker is not None:
         cx, cy = spec.marker_centres_mm[hide_marker]
@@ -65,6 +76,8 @@ def camera_frame(
         c = (int(cx * CANON_PX_PER_MM), int(cy * CANON_PX_PER_MM))
         cv2.rectangle(canon, (c[0] - s, c[1] - s), (c[0] + s, c[1] + s), 255, -1)
     canon_bgr = cv2.cvtColor(canon, cv2.COLOR_GRAY2BGR)
+    if board_bgr is not None:
+        canon_bgr[canon == 255] = board_bgr
     if pegs_mm:
         r = int(round(peg_diameter_mm / 2 * CANON_PX_PER_MM))
         for x, y in pegs_mm:
@@ -74,6 +87,9 @@ def camera_frame(
         r = int(round(cup_diameter_mm / 2 * CANON_PX_PER_MM))
         c = (int(round(cup_mm[0] * CANON_PX_PER_MM)), int(round(cup_mm[1] * CANON_PX_PER_MM)))
         cv2.circle(canon_bgr, c, r, cup_bgr, -1, cv2.LINE_AA)
+    for x, y, rad in skin_blobs_mm or []:
+        c = (int(round(x * CANON_PX_PER_MM)), int(round(y * CANON_PX_PER_MM)))
+        cv2.circle(canon_bgr, c, int(round(rad * CANON_PX_PER_MM)), skin_bgr, -1, cv2.LINE_AA)
     H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale)
     S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
     frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=(90, 90, 90))

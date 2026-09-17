@@ -10,6 +10,12 @@ whole reach and the cup base was seen resting on the destination; otherwise it i
 `unverified` with a reason (marker_lost | cup_occluded). Dots follow ARC (1..5..1); a wrong dot
 is reported and the sequence re-anchors. The slow -> fast phase switch is explicit
 (set_phase), never automatic: the coach proposes and the patient confirms.
+
+Sprint D-SEG-3: the base colour can be sampled from a tap (sample_cup_colour; the blue band
+stays the default), and a placement that was inferred from the hand while the base was hidden
+still counts as verified when the base was seen within `dot_radius_mm` of the destination at
+any time in the last `rest_window_s` (0.6 s) before hand-clear - a hand from above hides the
+base at the moment of release, but the cup is visible again as soon as the fingers open.
 """
 
 from __future__ import annotations
@@ -21,6 +27,7 @@ import cv2
 import numpy as np
 
 from praxis_session.events import Event, make_event
+from praxis_session.perception.board import hsv_window_from_patch, hue_window_mask
 from praxis_session.perception.board_spec import CUP_TARGETS, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
@@ -50,6 +57,7 @@ class CupSheetState:
         )
         self.lo, self.hi = np.array(cup_hsv_lo, np.uint8), np.array(cup_hsv_hi, np.uint8)
         self.min_diameter_mm = min_diameter_mm
+        self.colour_range: dict[str, Any] | None = None  # set by sample_cup_colour
         self._S = np.diag([px_per_mm, px_per_mm, 1.0])
 
     def warp(self, frame_bgr: np.ndarray, cal: CalibrationResult) -> np.ndarray:
@@ -57,9 +65,22 @@ class CupSheetState:
             raise RuntimeError("warp requires a calibrated frame")
         return cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
 
+    def sample_cup_colour(
+        self, canonical_bgr: np.ndarray, xy_mm: tuple[float, float]
+    ) -> dict[str, Any]:
+        """Set the cup-base colour window from a 6 mm patch at `xy_mm` (the patient taps the
+        cup base); the default blue band applies until then. Returns the range for the trace."""
+        centre = (xy_mm[0] * self.px_per_mm, xy_mm[1] * self.px_per_mm)
+        rng = hsv_window_from_patch(canonical_bgr, centre, 3.0 * self.px_per_mm)
+        self.colour_range = rng
+        return rng
+
     def cup_mask(self, canonical_bgr: np.ndarray) -> np.ndarray:
         hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, self.lo, self.hi)
+        if self.colour_range is None:
+            mask = cv2.inRange(hsv, self.lo, self.hi)
+        else:
+            mask = hue_window_mask(hsv, self.colour_range)
         k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         return cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
 
@@ -106,6 +127,7 @@ class CupFSM:
         hand_clear_mm: float = 60.0,
         slow_arcs: int = 2,
         fast_arcs: int = 2,
+        rest_window_s: float = 0.6,
     ) -> None:
         self.spec = spec
         self.dots = [tuple(map(float, d)) for d in spec.targets_mm]
@@ -113,6 +135,8 @@ class CupFSM:
         self.clear_frames = max(1, clear_frames)
         self.stationary_mm, self.hand_clear_mm = stationary_mm, hand_clear_mm
         self.slow_arcs, self.fast_arcs = slow_arcs, fast_arcs
+        self.rest_window_s = rest_window_s
+        self._rest_seen_t: float | None = None  # last t the base was seen on the destination
         self.state = "at_dot"
         self.dot: int | None = None
         self.phase: Phase = "slow"
@@ -240,6 +264,7 @@ class CupFSM:
 
     def _enter_over(self, obs: CupObservation, k: int, occluded: bool) -> list[Event]:
         self._dst, self._occluded, self._count = k, occluded, 1
+        self._rest_seen_t = None if occluded else obs.t
         evs = [self._go("over_dot", obs.t, to_dot=k)]
         return evs + self._maybe_place(obs)
 
@@ -253,6 +278,7 @@ class CupFSM:
             moved = self._last_cup is not None and _d(cup, self._last_cup) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
             self._occluded = False
+            self._rest_seen_t = obs.t
         else:
             if obs.hand_mm is not None and _d(obs.hand_mm, dst) <= self.dot_radius_mm:
                 self._count += 1
@@ -272,6 +298,8 @@ class CupFSM:
         dst = self.dots[self._dst]
         if cup is not None and _d(cup, dst) > self.dot_radius_mm:
             return [self._go("in_transit", obs.t)]  # picked up again before clearing
+        if cup is not None:
+            self._rest_seen_t = obs.t  # base seen resting on the dot while the hand lets go
         if obs.hand_mm is None or _d(obs.hand_mm, dst) > self.hand_clear_mm:
             self._count += 1
         else:
@@ -286,7 +314,11 @@ class CupFSM:
 
     def _complete_reach(self, obs: CupObservation) -> list[Event]:
         assert self._dst is not None and self._src is not None
-        reason = "marker_lost" if self._lost else ("cup_occluded" if self._occluded else None)
+        seen_resting = (
+            self._rest_seen_t is not None and (obs.t - self._rest_seen_t) <= self.rest_window_s
+        )
+        occluded = self._occluded and not seen_resting
+        reason = "marker_lost" if self._lost else ("cup_occluded" if occluded else None)
         expected = self.expected_next
         evs: list[Event] = []
         if expected is not None and self._dst != expected:

@@ -3,10 +3,16 @@
 Any-hole targets, timer from the first peg lift (first at_source -> grasped) to the ninth peg
 seated, per-peg splits (seated-to-seated). Emits nhpt_start, nhpt_split, nhpt_complete on top
 of the FSM's own events. This is a timing aid, not a clinical instrument (CLAUDE.md §1).
+
+Occupancy debounce is time-based: `debounce_s` (0.25 s in the product) is converted to a
+frame count from the observed frame gaps (median of the last ten), so a 100 ms flicker is
+ignored at 12 fps and at 30 fps alike; `debounce_frames` stays as a floor for slow streams.
 """
 
 from __future__ import annotations
 
+import math
+from collections import deque
 from typing import Any
 
 from praxis_session.events import Event, make_event
@@ -15,13 +21,33 @@ from praxis_session.perception.peg_fsm import Observation, PegFSM
 
 
 class NHPT:
-    def __init__(self, spec: SheetSpec = NHPT_BOARD, n_pegs: int = 9, **fsm_kwargs: Any) -> None:
+    def __init__(
+        self,
+        spec: SheetSpec = NHPT_BOARD,
+        n_pegs: int = 9,
+        debounce_s: float | None = None,
+        **fsm_kwargs: Any,
+    ) -> None:
         self.fsm = PegFSM(targets=None, spec=spec, **fsm_kwargs)
         self.n_pegs = n_pegs
+        self.debounce_s = debounce_s
+        self._debounce_floor = self.fsm.debounce_frames
+        self._gaps: deque[float] = deque(maxlen=10)
+        self._last_t: float | None = None
         self.t_start: float | None = None
         self.t_end: float | None = None
         self.pegs: list[dict[str, Any]] = []
         self._last_seat_t: float | None = None
+
+    def _update_debounce(self, t: float) -> None:
+        if self._last_t is not None and t > self._last_t:
+            self._gaps.append(t - self._last_t)
+        self._last_t = t
+        if self.debounce_s is None or not self._gaps:
+            return
+        dt = sorted(self._gaps)[len(self._gaps) // 2]
+        frames = math.ceil(self.debounce_s / dt - 1e-9)
+        self.fsm.debounce_frames = max(self._debounce_floor, frames)
 
     @property
     def started(self) -> bool:
@@ -51,6 +77,7 @@ class NHPT:
         return round(t - self.t_start, 4)
 
     def step(self, obs: Observation) -> list[Event]:
+        self._update_debounce(obs.t)
         if self.completed:
             # Timer is frozen, but the FSM still runs so the final rep_complete / hand_clear fire.
             return self.fsm.step(obs)
