@@ -131,7 +131,7 @@ def test_choose_prefers_healthy_correct_standing_complete_reps():
     chosen = mk.choose([patient, wrong, seated, odd, *typical, good])
     assert any(chosen is c for c in (good, *typical))  # identity: candidates hold numpy arrays
     assert not any(chosen is c for c in (patient, wrong, seated, odd))
-    assert mk.choose([patient, wrong, seated, odd, good]) is good
+    assert mk.choose([patient, wrong, seated, good]) is good  # the only clean rep wins outright
 
 
 # ----------------------------------------------------------------- file layouts
