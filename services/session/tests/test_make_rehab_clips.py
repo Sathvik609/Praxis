@@ -129,8 +129,8 @@ def test_choose_prefers_healthy_correct_standing_complete_reps():
     # so assert the property: a healthy, correct, standing, complete rep is chosen, never the
     # patient, incorrect, seated or atypical one; and with no rivals the typical rep wins outright.
     chosen = mk.choose([patient, wrong, seated, odd, *typical, good])
-    assert chosen in (good, *typical)
-    assert chosen not in (patient, wrong, seated, odd)
+    assert any(chosen is c for c in (good, *typical))  # identity: candidates hold numpy arrays
+    assert not any(chosen is c for c in (patient, wrong, seated, odd))
     assert mk.choose([patient, wrong, seated, odd, good]) is good
 
 
