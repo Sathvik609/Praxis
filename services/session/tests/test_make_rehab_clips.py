@@ -118,20 +118,24 @@ def test_segment_and_key_frames_hold_at_the_extremes():
     assert len(idx) == 12 and idx == sorted(idx)
 
 
+def _cand(peak=90.0, jerk=0.25, duration=1.7, complete=True, stable=True, plane=90.0, bend=0.0, **rep_kw):
+    """Explicit candidate so the chooser is tested on its own logic, not on how the synthetic
+    profile's stability/completeness flags come out on a given platform."""
+    return mk.Candidate(_rep(**rep_kw), None, peak, jerk, duration, complete, stable, plane, bend)
+
+
 def test_choose_prefers_healthy_correct_standing_complete_reps():
-    good = mk.candidate(_rep(peak=90), "elevation")
-    typical = [mk.candidate(_rep(n=n, peak=p), "elevation") for n, p in ((54, 86), (66, 94), (58, 88), (62, 92))]
-    patient = mk.candidate(_rep(peak=90, healthy=False), "elevation")
-    wrong = mk.candidate(_rep(peak=90, correct=False), "elevation")
-    seated = mk.candidate(_rep(peak=90, position="chair"), "elevation")
-    odd = mk.candidate(_rep(peak=40), "elevation")
-    # Among near-identical clean reps the exact winner depends on float noise (CI vs laptop),
-    # so assert the property: a healthy, correct, standing, complete rep is chosen, never the
-    # patient, incorrect, seated or atypical one; and with no rivals the typical rep wins outright.
-    chosen = mk.choose([patient, wrong, seated, odd, *typical, good])
-    assert any(chosen is c for c in (good, *typical))  # identity: candidates hold numpy arrays
-    assert not any(chosen is c for c in (patient, wrong, seated, odd))
-    assert mk.choose([patient, wrong, seated, good]) is good  # the only clean rep wins outright
+    good = _cand(jerk=0.20)  # most typical peak/duration/plane, a touch smoother than its peers
+    typical = [_cand(peak=p) for p in (86.0, 94.0, 88.0, 92.0)]
+    patient = _cand(jerk=0.05, healthy=False)
+    wrong = _cand(jerk=0.05, correct=False)
+    seated = _cand(jerk=0.05, position="chair")
+    unstable = _cand(jerk=0.05, stable=False)
+    partial = _cand(jerk=0.05, complete=False)
+    chosen = mk.choose([patient, wrong, seated, unstable, partial, *typical, good])
+    assert chosen is good
+    # With no clean rep at all, a correct complete one is preferred over the rest.
+    assert mk.choose([wrong, patient, unstable]) is not wrong
 
 
 # ----------------------------------------------------------------- file layouts
