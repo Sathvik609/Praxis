@@ -12,7 +12,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+NO_CACHE = {"cache-control": "no-cache"}  # always revalidate (ETag / Last-Modified still apply)
+IMMUTABLE = "public, max-age=31536000, immutable"  # hashed asset names change with content
+
 SERVICE_PREFIXES = ("api", "health", "events", "ws", "docs", "openapi.json")  # /session is also the live page; the WS route takes upgrades
+
+
+class _HashedAssets(StaticFiles):
+    """Vite's content-hashed bundles never change under the same name: cache them for a year."""
+
+    def file_response(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        resp = super().file_response(*args, **kwargs)
+        resp.headers["cache-control"] = IMMUTABLE
+        return resp
 
 
 def mount_web(app: FastAPI, dist: Path | str) -> bool:
@@ -20,6 +32,11 @@ def mount_web(app: FastAPI, dist: Path | str) -> bool:
 
     Call after every API route is registered: the catch-all must come last. Service paths
     listed in SERVICE_PREFIXES never fall back to index.html, so a wrong API URL is a 404.
+
+    Caching: `index.html` (and any other unhashed file) goes out with `Cache-Control: no-cache`
+    so the browser revalidates on every navigation and a fresh deploy shows up on the first
+    click, not only after a reload. Vite's `/assets/*` names carry a content hash, so they are
+    immutable for a year.
     """
     dist = Path(dist).resolve()
     index = dist / "index.html"
@@ -27,7 +44,7 @@ def mount_web(app: FastAPI, dist: Path | str) -> bool:
         return False
     assets = dist / "assets"
     if assets.is_dir():
-        app.mount("/assets", StaticFiles(directory=str(assets)), name="assets")
+        app.mount("/assets", _HashedAssets(directory=str(assets)), name="assets")
 
     @app.get("/{path:path}", include_in_schema=False)
     async def spa(path: str) -> FileResponse:
@@ -35,7 +52,7 @@ def mount_web(app: FastAPI, dist: Path | str) -> bool:
             raise HTTPException(status_code=404)
         candidate = (dist / path).resolve()
         if path and candidate.is_file() and dist in candidate.parents:
-            return FileResponse(candidate)
-        return FileResponse(index)
+            return FileResponse(candidate, headers=NO_CACHE)
+        return FileResponse(index, headers=NO_CACHE)
 
     return True

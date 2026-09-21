@@ -58,3 +58,15 @@ def test_ws_session_alias_for_single_origin(client):
     with client.websocket_connect("/ws/session?mode=heartbeat") as ws:
         ws.send_bytes(buf.tobytes())
         assert ws.receive_json()["type"] == "heartbeat"
+
+
+def test_index_revalidates_and_hashed_assets_are_immutable(tmp_path):
+    """A fresh deploy must show on the first click: the HTML is never served from a heuristic
+    browser cache, while Vite's content-hashed bundles can be cached for a year."""
+    app = FastAPI()
+    mount_web(app, _dist(tmp_path))
+    c = TestClient(app)
+    assert c.get("/").headers["cache-control"] == "no-cache"
+    assert c.get("/details").headers["cache-control"] == "no-cache"
+    assert c.get("/favicon.svg").headers["cache-control"] == "no-cache"
+    assert c.get("/assets/app.js").headers["cache-control"] == "public, max-age=31536000, immutable"
