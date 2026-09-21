@@ -27,13 +27,3 @@ test('the active hub is marked for assistive tech and the account circle links t
   expect(account).toHaveTextContent('A')
 })
 
-test('the signed-in name shows on the account control', () => {
-  render(
-    <MemoryRouter initialEntries={['/']}>
-      <Nav program="Hospital GRASP, Level 2 · Left side" initial="R" name="Rinky" />
-    </MemoryRouter>,
-  )
-  const account = screen.getByRole('link', { name: /Rinky · account and settings/ })
-  expect(account).toHaveTextContent('Rinky')
-  expect(account).toHaveTextContent('R')
-})

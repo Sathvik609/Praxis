@@ -27,15 +27,7 @@ CREATE TABLE IF NOT EXISTS events(session_id TEXT, seq INTEGER, json TEXT, PRIMA
 CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, rule TEXT, detail TEXT, t REAL, date TEXT, reviewed INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
-CREATE TABLE IF NOT EXISTS profiles(username TEXT PRIMARY KEY, json TEXT NOT NULL);
 """
-
-GOAL_MAX = 120  # characters; the onboarding goal is one short line
-
-
-class ProfileError(ValueError):
-    """A rejected onboarding answer; the message is shown to the patient."""
-
 
 def _next_practice(summary: dict[str, Any]) -> dict[str, Any]:
     mode = summary.get("mode")
@@ -102,45 +94,6 @@ class Store:
         row = self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC LIMIT 1").fetchone()
         return json.loads(row["json"])
 
-    # ---- profiles (E-SVC-1: one per signed-in user, keyed by the auth username) ---------
-    def profile(self, username: str) -> dict[str, Any] | None:
-        row = self._db.execute("SELECT json FROM profiles WHERE username=?", (username.lower(),)).fetchone()
-        return None if row is None else json.loads(row["json"])
-
-    @staticmethod
-    def validate_profile(side: str, goal: str, pain: Any) -> tuple[str, str, int]:
-        """Guided-flow onboarding answers. Raises ProfileError with a patient-facing message."""
-        side = (side or "").strip().lower()
-        if side not in ("left", "right"):
-            raise ProfileError("Choose the left or the right arm.")
-        goal = (goal or "").strip()
-        if not 1 <= len(goal) <= GOAL_MAX:
-            raise ProfileError(f"Tell me your goal in 1 to {GOAL_MAX} characters.")
-        try:
-            pain_i = int(pain)
-        except (TypeError, ValueError):
-            raise ProfileError("Pain is a number from 0 to 10.") from None
-        if not 0 <= pain_i <= 10:
-            raise ProfileError("Pain is a number from 0 to 10.")
-        return side, goal, pain_i
-
-    def save_profile(self, username: str, side: str, goal: str, pain: Any) -> dict[str, Any]:
-        """Create or update; `created_at` survives every later edit."""
-        side, goal, pain_i = self.validate_profile(side, goal, pain)
-        key = username.lower()
-        now = datetime.now().isoformat(timespec="seconds")
-        existing = self.profile(key)
-        prof = {
-            "side": side,
-            "goal": goal,
-            "pain_last": pain_i,
-            "created_at": (existing or {}).get("created_at", now),
-            "updated_at": now,
-        }
-        self._db.execute("INSERT OR REPLACE INTO profiles(username, json) VALUES(?,?)", (key, json.dumps(prof)))
-        self._db.commit()
-        return prof
-
     def _row(self, r: sqlite3.Row, with_events: bool = False) -> dict[str, Any]:
         d = {
             "id": r["id"], "mode": r["mode"], "exercise": r["exercise"], "username": r["username"],
@@ -160,15 +113,6 @@ class Store:
             rows = self._db.execute("SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
         else:
             rows = self._db.execute("SELECT * FROM sessions WHERE username=? ORDER BY started_at DESC LIMIT ?", (username.lower(), limit)).fetchall()
-        return [self._row(r) for r in rows]
-
-    def sessions_today(self, username: str, date: str | None = None) -> list[dict[str, Any]]:
-        """This user's sessions dated today — what `plan.today` turns into `done_today`."""
-        day = date or datetime.now().date().isoformat()
-        rows = self._db.execute(
-            "SELECT * FROM sessions WHERE username=? AND started_at LIKE ? ORDER BY started_at DESC",
-            (username.lower(), f"{day}%"),
-        ).fetchall()
         return [self._row(r) for r in rows]
 
     def session(self, sid: str) -> dict[str, Any] | None:

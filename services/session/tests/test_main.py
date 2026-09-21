@@ -419,7 +419,7 @@ def test_ws_arm_without_an_exercise_is_still_arm_to_the_front(client):
     assert (arm["target_deg"], arm["hold_s"], arm["sets"], arm["reps_per_set"]) == (90.0, 3.0, 2, 8)
 
 
-def test_ws_arm_session_is_saved_with_its_exercise_and_user(client):
+def test_ws_arm_session_is_saved_with_its_exercise(client):
     import cv2 as _cv2
     import numpy as _np
 
@@ -433,7 +433,7 @@ def test_ws_arm_session_is_saved_with_its_exercise_and_user(client):
         while not (m["type"] == "command" and m.get("cmd") == "feedback"):
             m = ws.receive_json()
         sid = m["session_id"]
-        assert m["summary"]["exercise"] == "abduction" and m["summary"]["username"] == "sathvik"
+        assert m["summary"]["exercise"] == "abduction"
     row = client.get(f"/api/sessions/{sid}").json()
-    assert row["exercise"] == "abduction" and row["username"] == "sathvik"
+    assert row["exercise"] == "abduction"
     assert row["title"] == "Arm out to the side"

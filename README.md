@@ -18,9 +18,9 @@ Three camera-coached tasks ship: **Nine-Hole Peg Test** (assessment), **Waiter �
 cd services/session && uv sync && uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000
 #    → http://127.0.0.1:8000/health  {"status":"ok","opencv_version":"5.0.0","mode":"edge"}
 
-# 2. Web app (pnpm). Every screen is behind sign-in: accounts Rinky, Shruthi, Sathvik (team-managed, no self sign-up yet).
+# 2. Web app (pnpm). No sign-in: the app opens straight on Home (`/` redirects to `/details`).
 cd web && pnpm install && pnpm dev
-#    → http://localhost:5173/  Home (body map) → Start session → check-in (Phase 8) · /demo?exercise=cup&side=left shows the demonstration
+#    → http://localhost:5173/details  Home (body map) → Start session → check-in (Phase 8) · /demo?exercise=cup&side=left shows the demonstration
 #    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
 #    Click Allow on the camera prompt, hold the printed NHPT sheet in view:
 #    the checklist turns Pass and "Continue to demonstration" unlocks.
@@ -33,15 +33,9 @@ cd web && pnpm install && pnpm dev
 #      a different band colour: send {"cmd":"sample_colour","x_mm":..,"y_mm":..} at the cup base, no UI yet).
 #    → http://localhost:5173/session?exercise=arm&side=left runs Arm to the front (side view, no sheet needed).
 #
-#    Guided shoulder flow (Sprint E, service side). Exercises only — no printed sheet, no cup,
-#    no pegs. Sign in, answer three questions (side, goal, pain now), and Today lists what the
-#    pain tier allows: 0-3 the full seven, 4-6 a gentle four with shorter holds, 7+ a rest day.
-curl -s localhost:8000/api/profile -H "authorization: Bearer $TOKEN"
-curl -s -XPOST localhost:8000/api/profile -H "authorization: Bearer $TOKEN" \
-     -H 'content-type: application/json' -d '{"side":"left","goal":"badminton","pain":3}'
-curl -s "localhost:8000/api/plan/today?pain=5" -H "authorization: Bearer $TOKEN"
-#    Then run one of them (the exercise id comes from the plan's items):
-#    ws://localhost:8000/ws/session?mode=arm&exercise=abduction&tier=gentle&side=left&token=...
+#    Shoulder exercises beyond Arm to the front (no sheet, no cup, no pegs; ids in
+#    services/session/praxis_session/perception/exercises.py):
+#    ws://localhost:8000/ws/session?mode=arm&exercise=abduction&tier=gentle&side=left
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline
 #    In the app: Settings → "Replay synthetic_nhpt_01" (or Home → "Replay a recorded session").
@@ -101,3 +95,5 @@ docs/               PLAN.md, TECHNICAL_REPORT.md, LICENSES.md, RISKS.md, sheets/
 
 ## Licenses and attribution
 See `docs/LICENSES.md`. GRASP concepts are paraphrased from UBC / Heart & Stroke material with our own illustrations. The real-motion avatar clips derive from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0); only derived joint angles are in the repo.
+
+**21 Sep, sign-in and onboarding removed:** the team sign-in gate (`auth.py`, `/api/auth/*`, bearer tokens on every API and WebSocket route, `RequireAuth`) and the Sprint E guided front door (`/welcome` conversation, Today, Get ready, `/go`, Done, `/api/profile`, `/api/plan/today`) are deleted. `/` redirects to `/details` (Home) and the app opens there with no account and no questions. The generalised arm FSM (`?mode=arm&exercise=&tier=`) and the exercise registry stay. The deployed link is public and unauthenticated until Cognito lands in W6.

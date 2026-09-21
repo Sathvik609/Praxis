@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router-dom'
 import { api, useApi } from '../lib/api'
-import { getSession } from '../lib/auth'
 import { PATIENT, PROGRAM } from '../lib/seed'
 import { Nav } from './Nav'
 
@@ -10,7 +9,7 @@ export function Shell() {
   const { data: me } = useApi(() => api.me())
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
-      <Nav program={me?.program?.label ?? PROGRAM.label} initial={getSession()?.user.initial ?? me?.initial ?? PATIENT.initial} name={getSession()?.user.name} />
+      <Nav program={me?.program?.label ?? PROGRAM.label} initial={me?.initial ?? PATIENT.initial} />
       <main className="flex min-h-0 flex-col overflow-auto">
         <Outlet />
       </main>

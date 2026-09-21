@@ -1,5 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
-import { SignIn } from '../screens/01-signin/SignIn'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { Home } from '../screens/02-home/Home'
 import { CheckIn } from '../screens/03-checkin/CheckIn'
 import { ChooseExercise } from '../screens/04-choose/ChooseExercise'
@@ -12,37 +11,21 @@ import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
 import { Demonstration } from '../screens/06-demo/Demonstration'
 import { SessionRouter } from '../screens/07-session/SessionRouter'
 import { AssessmentResult } from '../screens/09-report/AssessmentResult'
-import { Done } from '../screens/guided/Done'
-import { Go } from '../screens/guided/Go'
-import { Ready } from '../screens/guided/Ready'
-import { Today } from '../screens/guided/Today'
-import { Welcome } from '../screens/guided/Welcome'
-import { RequireAuth } from './RequireAuth'
-import { RequireProfile } from './RequireProfile'
 import { Shell } from './Shell'
 
-/** Two paths through the app (Sprint E).
+/** One path through the app: everything built to wireframes v1.1 lives under `/details/*`
+ *  (Home is the front door; `/` redirects there). `/session` and `/report/:id` keep their
+ *  paths so replay links and report links resolve. No sign-in and no onboarding: the app
+ *  opens straight on Home.
  *
- *  The **guided path** is the front door: `/` Today, `/welcome` onboarding, `/ready` get ready,
- *  `/go` session, `/done/:id` finish. It has no nav bar — one screen, one primary action.
- *
- *  The **details hub** is everything built to wireframes v1.1, still reachable under
- *  `/details/*` for the therapist story and for judges. `/session` and `/report/:id` keep their
- *  old paths so replay links and report links from either path resolve.
- *
- *  Sign-in, the live session and the clinician dashboard render outside the patient Shell. */
+ *  The live session and the clinician dashboard render outside the patient Shell. */
 export const router = createBrowserRouter([
-  { path: '/session', element: <RequireAuth><SessionRouter /></RequireAuth> },
-  { path: '/signin', element: <SignIn /> },
-  { path: '/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
-  { path: '/details/therapist', element: <RequireAuth><Therapist /></RequireAuth> },
-  { path: '/welcome', element: <RequireAuth><Welcome /></RequireAuth> },
-  { path: '/ready', element: <RequireAuth><RequireProfile><Ready /></RequireProfile></RequireAuth> },
-  { path: '/go', element: <RequireAuth><RequireProfile><Go /></RequireProfile></RequireAuth> },
-  { path: '/done/:id', element: <RequireAuth><Done /></RequireAuth> },
-  { path: '/', element: <RequireAuth><RequireProfile><Today /></RequireProfile></RequireAuth> },
+  { path: '/', element: <Navigate to="/details" replace /> },
+  { path: '/session', element: <SessionRouter /> },
+  { path: '/therapist', element: <Therapist /> },
+  { path: '/details/therapist', element: <Therapist /> },
   {
-    element: <RequireAuth><Shell /></RequireAuth>,
+    element: <Shell />,
     children: [
       { path: 'report', element: <AssessmentResult /> },
       { path: 'report/:id', element: <SessionReport /> },
@@ -57,6 +40,7 @@ export const router = createBrowserRouter([
       { path: 'details/report', element: <AssessmentResult /> },
       { path: 'details/report/:id', element: <SessionReport /> },
       { path: 'details/coach', element: <CoachDrawer /> },
+      { path: '*', element: <Navigate to="/details" replace /> },
     ],
   },
 ])

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { authToken } from '../lib/auth'
 import { parseEvent, type PraxisEvent } from '../lib/events'
 import { ACK_TIMEOUT_MS, ACK_TYPES, nowEpochMs, withCaptureTime } from './latency'
 
@@ -102,7 +101,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
     const gen = ++genRef.current
     if (replay) {
       // Replay mode: no camera; the service streams the recorded clip through the same pipeline.
-      const q = new URLSearchParams({ mode, ...params, replay, token: authToken() ?? '' }).toString()
+      const q = new URLSearchParams({ mode, ...params, replay }).toString()
       const ws = new WebSocket(`${wsUrl}?${q}`)
       wsRef.current = ws
       attach(ws)
@@ -127,7 +126,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
         }
       }
       setCamActive(true)
-      const q = new URLSearchParams({ mode, ...params, token: authToken() ?? '' }).toString()
+      const q = new URLSearchParams({ mode, ...params }).toString()
       const ws = new WebSocket(`${wsUrl}?${q}`)
       ws.binaryType = 'arraybuffer'
       wsRef.current = ws

@@ -1,4 +1,3 @@
-import { authHeaders, onUnauthorized } from './auth'
 import { SESSION_API_URL } from './config'
 
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string; level: number; version: number } }
@@ -11,26 +10,17 @@ export type Flag = { id: number; session_id: string; rule: string; detail: strin
  *  schedule, so `adherence_pct` is null too); `sample` is the wireframe's illustrative history
  *  and is never added to the real numbers. */
 export type Progress = { nhpt_trend: { date: string; total_s: number }[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; illustrative?: boolean }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean }[]; goal_log_count: number }
-/** Guided flow (Sprint E). `Profile` is the three answers given on `/welcome`; `TodayPlan` is
- *  the day's exercises after the pain tier has been applied. Both shapes are the §Contracts
- *  block of docs/superpowers/plans/2026-09-17-sprint-e-guided-flow.md. */
-export type Profile = { side: 'left' | 'right'; goal: string; pain_last: number; created_at: string; updated_at: string }
-export type PlanItem = { id: string; name: string; dose: string; sets: number; reps: number; hold_s: number; target_deg: number; ceiling_deg: number; view: 'side' | 'front'; done_today: boolean; clip: string; steps: string[] }
-export type Tier = 'full' | 'gentle' | 'rest'
-export type TodayPlan = { tier: Tier; tier_reason: string; goal_line: string; items: PlanItem[]; rest_advice: string | null }
 export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; illustrative?: boolean }
 
 async function get<T>(path: string): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`, { headers: authHeaders() })
-  if (r.status === 401) onUnauthorized()
+  const r = await fetch(`${SESSION_API_URL}${path}`)
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   const body = (await r.json()) as T & { error?: string }
   if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
   return body
 }
 async function post<T>(path: string, body?: unknown): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() }, body: body ? JSON.stringify(body) : undefined })
-  if (r.status === 401) onUnauthorized()
+  const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   return r.json() as Promise<T>
 }
@@ -47,12 +37,6 @@ export const api = {
   therapistPatients: () => get<{ patients: TherapistPatient[] }>('/api/therapist/patients').then((r) => r.patients),
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),
-  /** The envelope is kept: `data === null` from `useApi` means "still loading", while
-   *  `{ profile: null }` means "this patient has not answered the three questions yet". */
-  profile: () => get<{ profile: Profile | null }>('/api/profile'),
-  saveProfile: (p: { side: 'left' | 'right'; goal: string; pain: number }) => post<{ ok: boolean; profile: Profile }>('/api/profile', p),
-  /** `pain` overrides `profile.pain_last` for today (the daily check on Today sends it). */
-  planToday: (pain?: number) => get<TodayPlan>(`/api/plan/today${pain == null ? '' : `?pain=${pain}`}`),
 }
 
 /** Tiny async hook: `{ data, error, reload }`. */

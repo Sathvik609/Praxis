@@ -28,18 +28,15 @@ from pydantic import BaseModel
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, Header, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
-from praxis_session.auth import issue_token, record_failure, revoke, too_many_failures, user_for_token, verify
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
-from praxis_session.plan import today as plan_today
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
-from praxis_session.store import DEFAULT_PATH, ProfileError, Store
+from praxis_session.store import DEFAULT_PATH, Store
 from praxis_session.web import mount_web
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
@@ -50,18 +47,6 @@ COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no 
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
 
-PUBLIC_PATHS = {"/health", "/api/auth/login"}
-
-
-@app.middleware("http")
-async def require_token(request: Request, call_next):  # type: ignore[no-untyped-def]
-    """Every /api route (except login) and /events need a signed bearer token. The static app,
-    /health (Railway) and the OpenAPI docs stay public; the WebSocket checks its own token."""
-    path = request.url.path
-    guarded = (path.startswith("/api/") or path == "/events") and path not in PUBLIC_PATHS
-    if guarded and user_for_token(_bearer(request.headers.get("authorization"))) is None:
-        return JSONResponse({"ok": False, "error": "Sign in first."}, status_code=401)
-    return await call_next(request)
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
 latency_stats: dict[str, LatencyStats] = {}  # per session id; summary().latency comes from here
@@ -86,43 +71,6 @@ def health() -> dict[str, object]:
         },
     }
 
-
-class LoginBody(BaseModel):
-    username: str = ""
-    password: str = ""
-
-
-def _bearer(authorization: str | None) -> str | None:
-    if authorization and authorization.lower().startswith("bearer "):
-        return authorization[7:].strip()
-    return None
-
-
-@app.post("/api/auth/login")
-def api_login(body: LoginBody, request: Request) -> JSONResponse:
-    """Local accounts (praxis_session/auth.py): 401 on a bad pair, 429 after repeated failures."""
-    addr = request.headers.get("x-forwarded-for", request.client.host if request.client else "?").split(",")[0].strip()
-    if too_many_failures(addr):
-        return JSONResponse({"ok": False, "error": "Too many attempts. Try again in ten minutes."}, status_code=429)
-    user = verify(body.username, body.password)
-    if user is None:
-        record_failure(addr)
-        return JSONResponse({"ok": False, "error": "Wrong username or password."}, status_code=401)
-    return JSONResponse({"ok": True, "user": user, "token": issue_token(user["username"])})
-
-
-@app.get("/api/auth/me")
-def api_auth_me(authorization: str | None = Header(default=None)) -> JSONResponse:
-    user = user_for_token(_bearer(authorization))
-    if user is None:
-        return JSONResponse({"ok": False, "error": "Not signed in."}, status_code=401)
-    return JSONResponse({"ok": True, "user": user})
-
-
-@app.post("/api/auth/logout")
-def api_logout(authorization: str | None = Header(default=None)) -> dict[str, object]:
-    revoke(_bearer(authorization))
-    return {"ok": True}
 
 
 @app.get("/events")
@@ -155,39 +103,6 @@ def api_summary(session_id: str) -> dict[str, object]:
         return {"error": "unknown session"}
     return _summary_with_latency(s)
 
-
-class ProfileBody(BaseModel):
-    side: str = ""
-    goal: str = ""
-    pain: int = 0
-
-
-@app.get("/api/profile")
-def api_profile(authorization: str | None = Header(default=None)) -> dict[str, object]:
-    """Guided flow (Sprint E): the signed-in user's profile, or null before onboarding."""
-    user = user_for_token(_bearer(authorization))
-    return {"profile": store.profile(user["username"]) if user else None}
-
-
-@app.post("/api/profile")
-def api_profile_save(body: ProfileBody, authorization: str | None = Header(default=None)) -> JSONResponse:
-    user = user_for_token(_bearer(authorization))
-    assert user is not None  # the middleware refuses unsigned requests before we get here
-    try:
-        prof = store.save_profile(user["username"], body.side, body.goal, body.pain)
-    except ProfileError as e:
-        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
-    return JSONResponse({"ok": True, "profile": prof})
-
-
-@app.get("/api/plan/today")
-def api_plan_today(pain: int | None = None, authorization: str | None = Header(default=None)) -> dict[str, object]:
-    """Today's exercises for the signed-in user. `pain` is the daily check's answer and
-    overrides the profile's last one; the tier rule lives in `plan.py`, in code."""
-    user = user_for_token(_bearer(authorization))
-    username = user["username"] if user else ""
-    profile = store.profile(username) if username else None
-    return plan_today(profile, pain, store.sessions_today(username) if username else [])
 
 
 @app.get("/api/prescription")
@@ -278,7 +193,6 @@ async def session_ws(
     reps: int | None = None,
     replay: str | None = None,
     for_mode: str = Query("", alias="for"),
-    token: str | None = None,
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
@@ -289,10 +203,6 @@ async def session_ws(
     which behaves exactly as Arm to the front always did) and `tier` (`full`/`gentle`, the
     pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
     """
-    user = user_for_token(token or _bearer(ws.headers.get("authorization")))
-    if user is None:
-        await ws.close(code=4401)  # handshake refused: sign in first
-        return
     await ws.accept()
     if mode not in MODES:
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
@@ -327,7 +237,6 @@ async def session_ws(
             mode=mode,
             prescription=SEED_PRESCRIPTION,
             exercise=(exercise or "flexion") if mode == "arm" else None,
-            username=user["username"],
         )
         sessions[coach.session_id] = coach
         latency_stats[coach.session_id] = stats

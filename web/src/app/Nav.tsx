@@ -10,15 +10,14 @@ const hubs: { label: string; to: string; icon: Icon }[] = [
   { label: 'Settings', to: '/details/settings', icon: SettingsIcon },
 ]
 
-/** Details-hub navigation (Sprint E moved the hub under `/details`; the guided path has no
- *  nav bar). The active hub is filled (tint + ink, AA in both themes) and
+/** Hub navigation (the app lives under `/details`; `/` redirects there). The active hub is filled (tint + ink, AA in both themes) and
  *  bold, and NavLink sets aria-current so the state is not colour-only. */
-export function Nav({ program, initial, name }: { program: string; initial: string; name?: string }) {
+export function Nav({ program, initial }: { program: string; initial: string }) {
   return (
     <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
       <Link
-        to="/"
-        aria-label="Praxis · back to today"
+        to="/details"
+        aria-label="Praxis · home"
         className="rounded-[var(--r-control)] px-1 font-heading text-2xl font-semibold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
         Praxis
@@ -41,11 +40,10 @@ export function Nav({ program, initial, name }: { program: string; initial: stri
       <span className="ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
       <NavLink
         to="/details/settings"
-        aria-label={name ? `${name} · account and settings` : 'Account and settings'}
+        aria-label="Account and settings"
         className="flex h-14 shrink-0 items-center gap-2 rounded-full bg-tint-mint pl-1 pr-4 text-lg font-bold text-teal-ink transition-[filter] hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
         <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-fill text-xl text-white">{initial}</span>
-        {name && <span className="whitespace-nowrap">{name}</span>}
       </NavLink>
     </header>
   )
