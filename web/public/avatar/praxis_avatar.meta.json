@@ -1,0 +1,453 @@
+{
+ "fps": 30,
+ "rig": "rig.ts-compatible; Blender bones",
+ "actions": {
+  "idle": {
+   "duration": 8.0,
+   "loop": true,
+   "camera": "front",
+   "props": [],
+   "rep": [
+    0.0,
+    8.0
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Ready when you are."
+    }
+   ],
+   "targets": [],
+   "focus_bone": null,
+   "source": "procedural",
+   "seated": false,
+   "retarget_error_deg": null
+  },
+  "pendulum": {
+   "duration": 10.5,
+   "loop": true,
+   "camera": "side",
+   "props": [],
+   "rep": [
+    0.0,
+    9.8
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 Lean forward on a table, let the arm hang loose"
+    },
+    {
+     "t": 1.6,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 Swing gently in small circles, no muscle effort"
+    },
+    {
+     "t": 8.2,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 Stand up slowly"
+    }
+   ],
+   "targets": [],
+   "focus_bone": "upper_arm_L",
+   "source": "procedural",
+   "seated": false,
+   "retarget_error_deg": null
+  },
+  "flexion": {
+   "duration": 2.833,
+   "loop": true,
+   "camera": "side",
+   "props": [],
+   "rep": [
+    0.0,
+    2.133
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 Lift the straight arm forward, thumb up, trunk still"
+    },
+    {
+     "t": 1.067,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 Hold at the top, shoulders level"
+    },
+    {
+     "t": 1.317,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 Lower slowly back to your side"
+    }
+   ],
+   "targets": [],
+   "focus_bone": "upper_arm_L",
+   "source": "IntelliRehabDS (IRDS)",
+   "seated": false,
+   "retarget_error_deg": 0.0
+  },
+  "abduction": {
+   "duration": 2.7,
+   "loop": true,
+   "camera": "front",
+   "props": [],
+   "rep": [
+    0.0,
+    2.0
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 Raise the straight arm out to the side, palm forward"
+    },
+    {
+     "t": 1.0,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 Hold at the top, no shrugging"
+    },
+    {
+     "t": 1.25,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 Lower slowly"
+    }
+   ],
+   "targets": [],
+   "focus_bone": "upper_arm_L",
+   "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
+   "seated": false,
+   "retarget_error_deg": 0.0
+  },
+  "external_rotation": {
+   "duration": 2.733,
+   "loop": true,
+   "camera": "side",
+   "props": [],
+   "rep": [
+    0.0,
+    2.033
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 Arm out to the side, elbow bent to a right angle, turn the forearm up"
+    },
+    {
+     "t": 0.8,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 Hold at the end of the turn"
+    },
+    {
+     "t": 1.05,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 Turn back to the start"
+    }
+   ],
+   "targets": [],
+   "focus_bone": "forearm_L",
+   "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
+   "seated": false,
+   "retarget_error_deg": 0.0
+  },
+  "internal_rotation": {
+   "duration": 2.533,
+   "loop": true,
+   "camera": "side",
+   "props": [],
+   "rep": [
+    0.0,
+    1.833
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 Arm out to the side, elbow bent to a right angle, turn the forearm down"
+    },
+    {
+     "t": 0.933,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 Hold at the end of the turn"
+    },
+    {
+     "t": 1.183,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 Turn back to the start"
+    }
+   ],
+   "targets": [],
+   "focus_bone": "forearm_L",
+   "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
+   "seated": false,
+   "retarget_error_deg": 0.0
+  },
+  "waiter_cup": {
+   "duration": 16.0,
+   "loop": true,
+   "camera": "front",
+   "props": [
+    "table",
+    "sheet",
+    "cup"
+   ],
+   "rep": [
+    2.2,
+    13.8
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 4 \u00b7 cup on dot 1, hand resting beside it"
+    },
+    {
+     "t": 1.0,
+     "step": 2,
+     "caption": "Step 2 of 4 \u00b7 take hold of the cup"
+    },
+    {
+     "t": 2.1999999999999997,
+     "step": 3,
+     "caption": "Step 3 of 4 \u00b7 lift, move to the next dot, set it down; dot by dot to 5"
+    },
+    {
+     "t": 8.0,
+     "step": 4,
+     "caption": "Step 4 of 4 \u00b7 then back the way you came to dot 1"
+    }
+   ],
+   "targets": [
+    {
+     "t": 2.45,
+     "kind": "dot",
+     "index": 2
+    },
+    {
+     "t": 3.65,
+     "kind": "dot",
+     "index": 2,
+     "landed": true
+    },
+    {
+     "t": 3.9,
+     "kind": "dot",
+     "index": 3
+    },
+    {
+     "t": 5.1,
+     "kind": "dot",
+     "index": 3,
+     "landed": true
+    },
+    {
+     "t": 5.35,
+     "kind": "dot",
+     "index": 4
+    },
+    {
+     "t": 6.55,
+     "kind": "dot",
+     "index": 4,
+     "landed": true
+    },
+    {
+     "t": 6.8,
+     "kind": "dot",
+     "index": 5
+    },
+    {
+     "t": 8.0,
+     "kind": "dot",
+     "index": 5,
+     "landed": true
+    },
+    {
+     "t": 8.25,
+     "kind": "dot",
+     "index": 4
+    },
+    {
+     "t": 9.45,
+     "kind": "dot",
+     "index": 4,
+     "landed": true
+    },
+    {
+     "t": 9.7,
+     "kind": "dot",
+     "index": 3
+    },
+    {
+     "t": 10.9,
+     "kind": "dot",
+     "index": 3,
+     "landed": true
+    },
+    {
+     "t": 11.15,
+     "kind": "dot",
+     "index": 2
+    },
+    {
+     "t": 12.35,
+     "kind": "dot",
+     "index": 2,
+     "landed": true
+    },
+    {
+     "t": 12.6,
+     "kind": "dot",
+     "index": 1
+    },
+    {
+     "t": 13.8,
+     "kind": "dot",
+     "index": 1,
+     "landed": true
+    }
+   ],
+   "focus_bone": "hand_L",
+   "source": "procedural",
+   "seated": true,
+   "retarget_error_deg": null
+  },
+  "nhpt": {
+   "duration": 20.6,
+   "loop": true,
+   "camera": "front",
+   "props": [
+    "table",
+    "pegboard"
+   ],
+   "rep": [
+    0.0,
+    19.8
+   ],
+   "steps": [
+    {
+     "t": 0.0,
+     "step": 1,
+     "caption": "Step 1 of 3 \u00b7 pick a peg from the dish with a pinch"
+    },
+    {
+     "t": 0.75,
+     "step": 2,
+     "caption": "Step 2 of 3 \u00b7 carry it over the board, any hole"
+    },
+    {
+     "t": 1.55,
+     "step": 3,
+     "caption": "Step 3 of 3 \u00b7 seat it and let go; the timer stops at the ninth peg"
+    }
+   ],
+   "targets": [
+    {
+     "t": 0.55,
+     "kind": "hole",
+     "index": 1
+    },
+    {
+     "t": 1.7,
+     "kind": "hole",
+     "index": 1,
+     "landed": true
+    },
+    {
+     "t": 2.75,
+     "kind": "hole",
+     "index": 2
+    },
+    {
+     "t": 3.9,
+     "kind": "hole",
+     "index": 2,
+     "landed": true
+    },
+    {
+     "t": 4.95,
+     "kind": "hole",
+     "index": 3
+    },
+    {
+     "t": 6.1,
+     "kind": "hole",
+     "index": 3,
+     "landed": true
+    },
+    {
+     "t": 7.15,
+     "kind": "hole",
+     "index": 4
+    },
+    {
+     "t": 8.3,
+     "kind": "hole",
+     "index": 4,
+     "landed": true
+    },
+    {
+     "t": 9.35,
+     "kind": "hole",
+     "index": 5
+    },
+    {
+     "t": 10.5,
+     "kind": "hole",
+     "index": 5,
+     "landed": true
+    },
+    {
+     "t": 11.55,
+     "kind": "hole",
+     "index": 6
+    },
+    {
+     "t": 12.7,
+     "kind": "hole",
+     "index": 6,
+     "landed": true
+    },
+    {
+     "t": 13.75,
+     "kind": "hole",
+     "index": 7
+    },
+    {
+     "t": 14.9,
+     "kind": "hole",
+     "index": 7,
+     "landed": true
+    },
+    {
+     "t": 15.95,
+     "kind": "hole",
+     "index": 8
+    },
+    {
+     "t": 17.1,
+     "kind": "hole",
+     "index": 8,
+     "landed": true
+    },
+    {
+     "t": 18.15,
+     "kind": "hole",
+     "index": 9
+    },
+    {
+     "t": 19.3,
+     "kind": "hole",
+     "index": 9,
+     "landed": true
+    }
+   ],
+   "focus_bone": "hand_L",
+   "source": "procedural",
+   "seated": true,
+   "retarget_error_deg": null
+  }
+ }
+}
