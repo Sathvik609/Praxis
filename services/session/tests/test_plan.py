@@ -88,3 +88,18 @@ def test_api_plan_returns_the_tiered_day(client):
     assert body["tier"] == "gentle" and [i["id"] for i in body["items"]] == list(DAY_ORDER)
     assert client.get("/api/plan?pain=9").json()["items"] == []
     assert client.get("/api/plan").json()["tier"] == "full"
+
+
+def test_web_mirror_matches():
+    """`web/src/lib/plan.ts` shows the tier in the exercise list; the service enforces it. The
+    thresholds and the day order must be the same numbers in both places (web `arm` = flexion)."""
+    import re
+    from pathlib import Path
+
+    from praxis_session import plan
+
+    ts = (Path(__file__).resolve().parents[3] / "web" / "src" / "lib" / "plan.ts").read_text()
+    num = lambda name: int(re.search(rf"export const {name} = (\d+)", ts).group(1))  # noqa: E731
+    assert (num("FULL_MAX"), num("GENTLE_MAX"), num("REST_AT"), num("DAY_MINUTES")) == (plan.FULL_MAX, plan.GENTLE_MAX, plan.REST_AT, plan.DAY_MINUTES)
+    web_order = re.findall(r"'(\w+)'", re.search(r"export const DAY_ORDER: ExerciseId\[\] = \[([^\]]*)\]", ts).group(1))
+    assert [{"arm": "flexion"}.get(i, i) for i in web_order] == list(plan.DAY_ORDER)

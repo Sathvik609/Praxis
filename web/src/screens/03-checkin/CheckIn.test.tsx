@@ -13,7 +13,8 @@ test('check-in collects pain, location, energy, time and symptoms, shows stop ru
       </Routes>
     </MemoryRouter>,
   )
-  expect(await screen.findByText(/Pain at or above 5/)).toBeInTheDocument()
+  expect(await screen.findByText(/Pain at or above 7/)).toBeInTheDocument()
+  expect(screen.getByText(/4–6 → gentle day/)).toBeInTheDocument()
   expect(screen.getByText(/Feeling is what you tell us, never read from your face/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Hand' }))

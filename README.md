@@ -6,7 +6,7 @@ An agentic vision coach for therapist-prescribed upper-limb rehab at home, using
 
 Built on **OpenCV 5.0.0** (`opencv-python-headless==5.0.0.93`, pinned). Video is processed in memory and never stored by default; only events, metrics and logs leave the device.
 
-Three camera-coached tasks ship: **Nine-Hole Peg Test** (assessment), **Waiter – cup** (GRASP coordination) and **Arm to the front** (GRASP arm strengthening). Every other GRASP exercise is instructions-only. Design source of truth: `docs/wireframes/Praxis_HiFi_Wireframes_v1.1.pdf`. Build plan: `docs/PLAN.md`.
+The locked exercise set (23 Sep 2026) is seven, in three groups: **Exercises**, camera-coached — Pendulum (warm-up), Arm to the front, Arm out to the side; **Activities**, camera-coached — Waiter – cup and the Nine-Hole Peg Test (weekly); **Demo only** — Rotate out and Rotate in, which the avatar performs and the patient ticks (a single webcam cannot score them, so they never count as verified reps). The default day is Pendulum → Arm to the front → Arm out to the side → Waiter – cup (~15 min), at a dose set by the check-in pain: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag. Design source of truth: `docs/wireframes/Praxis_HiFi_Wireframes_v1.1.pdf`. Build plan: `docs/PLAN.md`.
 
 ## 60-second quickstart (edge / laptop mode)
 
@@ -31,10 +31,13 @@ cd web && pnpm install && pnpm dev
 #      ±12° hue window from then on (WebSocket command {"cmd":"sample_colour","hole":k}).
 #    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (blue band on the cup base, docs/sheets/cup_targets.pdf;
 #      a different band colour: send {"cmd":"sample_colour","x_mm":..,"y_mm":..} at the cup base, no UI yet).
-#    → http://localhost:5173/session?exercise=arm&side=left runs Arm to the front (side view, no sheet needed).
+#    → http://localhost:5173/session?exercise=arm&side=left runs Arm to the front (side view, no sheet needed);
+#      exercise=pendulum (side view) and exercise=abduction (Arm out to the side, face the camera) use the same screen.
+#    → http://localhost:5173/details/demo?exercise=external_rotation  Rotate out: watch the figure, tick "I did a set"
+#      (POST /api/self_report, logged as self-ticked, never camera-verified).
+#    → http://localhost:8000/api/plan?pain=5  today's plan at the gentle tier.
 #
-#    Shoulder exercises beyond Arm to the front (no sheet, no cup, no pegs; ids in
-#    services/session/praxis_session/perception/exercises.py):
+#    Socket form (ids in services/session/praxis_session/perception/exercises.py):
 #    ws://localhost:8000/ws/session?mode=arm&exercise=abduction&tier=gentle&side=left
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline
@@ -101,3 +104,5 @@ See `docs/LICENSES.md`. GRASP concepts are paraphrased from UBC / Heart & Stroke
 **23 Sep, locked exercise set (service registry):** `perception/exercises.py` now holds exactly seven entries with a `mode` field — **exercises** (camera-coached) Pendulum, Arm to the front, Arm out to the side; **activities** (camera-coached) Waiter – cup, Nine-Hole Peg Test (weekly); **demo only** Rotate out, Rotate in. Demo entries have no metric and no pipeline: the arm FSM raises on them and `?mode=arm&exercise=external_rotation` answers `error{code:"demo_only"}`, so the camera can never verify a rotation. Scaption and extension are gone (scaption is indistinguishable from abduction in the front view; extension's range is small and noisy), and so is the rotation metric; their avatar clips (`web/src/avatar/clips/rehab/scaption.json`, `extension.json`), their `make_rehab_clips.py` entries and their reference ranges are deleted, leaving five rehab clips (pendulum, flexion, abduction, external and internal rotation). The seed prescription covers the seven, with the gentle tier's allowed adaptations (pendulum reps 8–10, lifts hold 2–3 s / target 60–90° / reps 6–8, cup fast arcs on/off).
 
 **23 Sep, day order and pain tiers (service):** `praxis_session/plan.py` holds the default day — Pendulum → Arm to the front → Arm out to the side → Waiter – cup (~15 min), the peg test weekly, the rotations as demo-only extras — and the pain tier: **0–3 full**, **4–6 gentle** (reduced dose/range, only inside the prescription's allowed adaptations: fewer swings and reps, 2 s holds, the side lift to 60°, no fast arcs), **≥ 7 rest** (no exercises; the pain stop rule ends the session and flags the therapist — its seed level moved from 5 to 7 so the two are one number). `GET /api/plan?pain=5` returns the day at that tier. The service enforces the tier itself: the `checkin` command tightens a running session to the check-in's tier before the first rep (never looser), and `tier=rest` sockets are refused. `POST /api/self_report {"exercise":"external_rotation"}` logs a demo set as `self_report` with `verified: false`, labelled "Demo only · self-ticked, not camera-verified"; coached exercises are refused there.
+
+**23 Sep, locked exercise set (web):** screen 04 lists the seven under three headings — **Exercises**, **Activities**, **Demo only** — with text badges ("Camera coached", "Weekly assessment", "Demo only · you tick it"). "Today's plan" shows the default day in order (`Today · 1…4`) at the tier the check-in pain gives, with a tier chip and a sentence saying why; a gentle day shows the gentle doses and a rest day offers nothing to start and one **Back to Home**. Pendulum and Arm out to the side now run end to end (setup → demonstration → the live arm screen, which sends the registry id and tier and speaks of swings or a front view where it should). A demo-only exercise goes to the Demonstration, where **I did a set** posts the tick to `/api/self_report` and says "self-reported, not checked by the camera". Check-in (03) and the therapist card (11) show the tiers and the stop level of 7. `web/src/lib/plan.ts` mirrors the tier numbers for display only; the service enforces them.

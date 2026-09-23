@@ -1,13 +1,18 @@
-import { useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { exerciseById } from '../../lib/seed'
 import { LiveArm } from './LiveArm'
 import { LiveCup } from './LiveCup'
 import { LiveNhpt } from './LiveNhpt'
 
-/** `/session?exercise=nhpt|cup|arm` → the matching live screen. */
+/** `/session?exercise=<id>` → the matching live screen: `cup`, `nhpt`, or one of the arm
+ *  exercises (`pendulum`, `arm`, `abduction`). A demo-only exercise has no live screen (the
+ *  camera never scores it), so its link goes to the Demonstration, where it is watched and
+ *  ticked. Anything unknown keeps the old default, the peg test. */
 export function SessionRouter() {
   const [sp] = useSearchParams()
-  const exercise = sp.get('exercise') ?? 'nhpt'
-  if (exercise === 'cup') return <LiveCup />
-  if (exercise === 'arm') return <LiveArm />
+  const ex = exerciseById(sp.get('exercise') ?? 'nhpt')
+  if (ex?.mode === 'demo') return <Navigate to={`/details/demo?exercise=${ex.id}&side=${sp.get('side') ?? 'left'}`} replace />
+  if (ex?.session === 'cup') return <LiveCup />
+  if (ex?.session === 'arm') return <LiveArm />
   return <LiveNhpt />
 }

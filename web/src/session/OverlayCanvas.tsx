@@ -45,6 +45,13 @@ export type ArmSnapshot = {
   unverified_total: number
   flags: { lean: boolean; lean_count: number; hike_count: number }
   finished: boolean
+  /** Registry id the service is scoring (pendulum | flexion | abduction), its rep shape, the
+   *  camera view it needs and the pain tier applied to the dose. */
+  exercise?: string
+  kind?: 'hold' | 'oscillation'
+  view_required?: 'side' | 'front'
+  tier?: 'full' | 'gentle'
+  gate?: string | null
 }
 
 export type FrameEvent = PraxisEvent & {

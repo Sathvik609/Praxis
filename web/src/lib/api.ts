@@ -12,6 +12,8 @@ export type Flag = { id: number; session_id: string; rule: string; detail: strin
 export type Progress = { nhpt_trend: { date: string; total_s: number }[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; illustrative?: boolean }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean }[]; goal_log_count: number }
 export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; illustrative?: boolean }
 
+export type SelfReport = { ok: boolean; exercise: string; verified?: false; source?: 'self_ticked'; label?: string; sets_today?: number; error?: string }
+
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`)
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
@@ -36,6 +38,8 @@ export const api = {
   progress: () => get<Progress>('/api/progress'),
   therapistPatients: () => get<{ patients: TherapistPatient[] }>('/api/therapist/patients').then((r) => r.patients),
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
+  /** A demo-only exercise the patient ticked: logged as self-reported, never as a verified rep. */
+  selfReport: (exercise: string, sets = 1) => post<SelfReport>('/api/self_report', { exercise, sets }),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),
 }
 

@@ -10,14 +10,10 @@ import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
+import { exerciseById } from '../../lib/seed'
 import { Checklist, type Check } from './Checklist'
 
 const SHEET: Record<string, string> = { nhpt: 'nhpt_board', cup: 'cup_targets', arm: 'nhpt_board' }
-const TITLE: Record<string, string> = {
-  nhpt: 'Nine-Hole Peg Test',
-  cup: 'Waiter – cup',
-  arm: 'Arm to the front',
-}
 
 type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 
@@ -65,11 +61,15 @@ export function CameraSetup() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const exercise = sp.get('exercise') ?? 'nhpt'
+  const ex = exerciseById(exercise)
+  // Pendulum, Arm to the front and Arm out to the side all run the arm pipeline: no sheet.
+  const kind = ex?.session ?? 'nhpt'
+  const isArm = kind === 'arm'
   const params = useMemo(() => {
-    const p: Record<string, string> = { sheet: SHEET[exercise] ?? 'nhpt_board' }
-    if (exercise === 'arm') p.for = 'arm' // no sheet; the service skips marker checks
+    const p: Record<string, string> = { sheet: SHEET[kind] ?? 'nhpt_board' }
+    if (kind === 'arm') p.for = 'arm' // no sheet; the service skips marker checks
     return p
-  }, [exercise])
+  }, [kind])
   const { camActive, connected, events, error, start, stop, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'calibrate',
@@ -100,10 +100,10 @@ export function CameraSetup() {
           topRight={<span>mirrored · processed on this device</span>}
           bottomLeft={
             <span>
-              {exercise === 'arm' ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration'}{' '}
-              <b>{exercise === 'arm' ? (connected ? 'ready' : 'connecting…') : cal?.calibrated ? 'locked' : 'searching'}</b>
-              {exercise !== 'arm' && cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
-              {exercise !== 'arm' && !connected ? ' · connecting…' : ''}
+              {isArm ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration'}{' '}
+              <b>{isArm ? (connected ? 'ready' : 'connecting…') : cal?.calibrated ? 'locked' : 'searching'}</b>
+              {!isArm && cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
+              {!isArm && !connected ? ' · connecting…' : ''}
             </span>
           }
         >
@@ -120,12 +120,14 @@ export function CameraSetup() {
           <div>
             <h1 className="text-3xl">Set up camera and equipment</h1>
             <p className="text-muted">
-              {exercise === 'arm'
-                ? 'No sheet needed. Sit sideways to the camera with your shoulder and hip in view.'
-                : `Continue unlocks when every required check passes. ${TITLE[exercise] ?? exercise}.`}
+              {isArm
+                ? ex?.view === 'front'
+                  ? `No sheet needed. ${ex.name}: face the camera with both shoulders and hips in view.`
+                  : `No sheet needed. ${ex?.name ?? 'Arm to the front'}: sit or stand sideways to the camera with your shoulder and hip in view.`
+                : `Continue unlocks when every required check passes. ${ex?.name ?? exercise}.`}
             </p>
           </div>
-          {exercise !== 'arm' && (
+          {!isArm && (
             <Card padding="sm" className="flex items-center gap-4">
               <MountDiagram />
               <div className="min-w-0">

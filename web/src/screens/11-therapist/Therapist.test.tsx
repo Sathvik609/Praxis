@@ -24,7 +24,7 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   expect(screen.getByText(/Open flags/)).toBeInTheDocument()
   expect(screen.getByText(/pain 5\/10 during Arm to the front/)).toBeInTheDocument()
   expect(screen.getByText(/Prescription \(v3\)/)).toBeInTheDocument()
-  expect(screen.getByText(/Stop rules: pain ≥5/)).toBeInTheDocument()
+  expect(screen.getByText(/Stop rules: pain ≥7/)).toBeInTheDocument()
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getByText('Sample')).toBeInTheDocument()
   expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()
