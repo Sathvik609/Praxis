@@ -9,7 +9,7 @@ import type { Joint, Vec3 } from './rig'
  *  Each key carries the source's upper-arm / forearm directions so a test can check that the
  *  rig's forward kinematics reproduces them (`rehabClips.test.ts`). */
 
-export const REHAB_CLIP_NAMES = ['pendulum', 'flexion', 'abduction', 'scaption', 'extension', 'external_rotation', 'internal_rotation'] as const
+export const REHAB_CLIP_NAMES = ['pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation'] as const
 export type RehabClipName = (typeof REHAB_CLIP_NAMES)[number]
 
 /** `ua`/`fa`: directions the rig's FK must reproduce from the key's angles (convention check);
