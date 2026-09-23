@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { PLINTH_DEPTH } from './body'
 import type { Clip } from './clips'
 import { makeFigure } from './figure'
+import { framingPreset } from './framing'
 import { MARKER_STYLE, type Marker } from './markers'
 import { makeCeilingLine, makeCup, makeCupSheet, makeDish, makeNhptBoard, makeTable, targetPosition, type Board, type Cup, type CupSheet, type Dish } from './props'
 import { JOINTS, REST, forwardKinematics, type Joint, type Vec3 } from './rig'
@@ -52,23 +53,11 @@ export type StageProps = {
   onContextLost?: () => void
 }
 
-/** Camera presets (plan B5): front 2.6 m / target 1.30 (Home compact 2.2 m / 1.36), side from
- *  the practising side, close-up 1.5 m on the hand. Table clips look down a little so the sheet reads. */
+/** Camera preset for a procedural clip: `framingPreset` (shared with the GLB figure) on the
+ *  clip's side, table and arc (arm-elevation clips frame a little taller and further back). */
 export function cameraPreset(input: Pick<StageProps, 'clip' | 'camera' | 'closeUp' | 'compact'>, hand: THREE.Vector3): { eye: THREE.Vector3; look: THREE.Vector3 } {
   const { clip, camera, closeUp, compact } = input
-  const sx = clip.side === 'right' ? -1 : 1
-  const hasTable = clip.props.includes('table')
-  if (closeUp) {
-    const look = hand.clone()
-    const eye = camera === 'side' ? new THREE.Vector3(sx * 1.5, look.y + 0.3, look.z + 0.2) : new THREE.Vector3(look.x * 0.5, look.y + 0.45, look.z + 1.35)
-    return { eye, look }
-  }
-  // arm-elevation clips reach overhead (hand at ~2.1 m): frame a little taller and further back
-  const tall = !!clip.arc
-  const dist = (compact ? 2.25 : 2.3) + (tall ? 0.25 : 0)
-  const y = (hasTable ? (compact ? 1.26 : 1.22) : compact ? 1.36 : 1.3) + (tall ? 0.1 : 0)
-  if (camera === 'side') return { eye: new THREE.Vector3(sx * dist, y + 0.12, 0.2), look: new THREE.Vector3(0, y, 0.16) }
-  return { eye: new THREE.Vector3(0.08, y + (hasTable ? 0.5 : 0.12), dist), look: new THREE.Vector3(0, y - (hasTable ? 0.02 : 0), 0.05) }
+  return framingPreset({ camera, closeUp, compact, side: clip.side, hasTable: clip.props.includes('table'), tall: !!clip.arc }, hand)
 }
 
 /** The floor of the stage: the plinth bottom, a hair above the disc. */
