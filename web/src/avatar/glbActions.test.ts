@@ -183,3 +183,13 @@ test('sourceLabel shortens the dataset name for the stage line', () => {
   expect(sourceLabel('procedural')).toBe('procedural motion')
   expect(sourceLabel(undefined)).toBe('procedural motion')
 })
+
+test('sourceLabel says when the recorded rep was scaled down to the ceiling', () => {
+  expect(sourceLabel('IntelliRehabDS (IRDS)', { ceiling_deg: 90, scaled_from_deg: 165.13 })).toBe('motion from IntelliRehabDS · scaled to 90°')
+  expect(sourceLabel('UI-PRMD (x)', { ceiling_deg: 90, scaled_from_deg: 80 })).toBe('motion from UI-PRMD')
+  expect(sourceLabel('procedural', {})).toBe('procedural motion')
+  const m = parseAvatarMeta(metaJson)
+  for (const a of ['flexion', 'abduction']) {
+    if (m.actions[a].ceiling_deg !== undefined) expect(sourceLabel(m.actions[a].source, m.actions[a]), a).toMatch(/scaled to 90°/)
+  }
+})

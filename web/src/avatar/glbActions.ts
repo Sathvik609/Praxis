@@ -24,6 +24,9 @@ export type GlbActionMeta = {
   focus_bone: string | null
   source?: string
   seated?: boolean
+  /** Upper-arm elevation ceiling the recorded rep was scaled to, and its recorded peak. */
+  ceiling_deg?: number
+  scaled_from_deg?: number
   [extra: string]: unknown
 }
 export type AvatarMeta = { fps: number; actions: Record<string, GlbActionMeta> }
@@ -176,8 +179,12 @@ export function parseAvatarMeta(json: unknown): AvatarMeta {
   return { fps: Number(j.fps) || 30, actions }
 }
 
-/** Provenance for the stage line: "motion from UI-PRMD" or "procedural motion". */
-export function sourceLabel(source: string | undefined): string {
-  if (!source || source === 'procedural') return 'procedural motion'
-  return `motion from ${source.split(' (')[0]}`
+/** Provenance for the stage line: "motion from UI-PRMD", "procedural motion", plus
+ *  "· scaled to 90°" when the recorded rep was scaled down to the ceiling (`ceiling_deg` /
+ *  `scaled_from_deg` in the sidecar). */
+export function sourceLabel(source: string | undefined, meta?: { ceiling_deg?: unknown; scaled_from_deg?: unknown }): string {
+  const base = !source || source === 'procedural' ? 'procedural motion' : `motion from ${source.split(' (')[0]}`
+  const ceiling = Number(meta?.ceiling_deg)
+  const from = Number(meta?.scaled_from_deg)
+  return Number.isFinite(ceiling) && Number.isFinite(from) && from > ceiling ? `${base} · scaled to ${Math.round(ceiling)}°` : base
 }

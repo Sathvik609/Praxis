@@ -64,6 +64,12 @@ export function peekAvatarAsset(): AvatarAsset | null {
   return ready
 }
 
+/** Cheap probe before fetching 1.5 MB: no WebGL constructor (old browser, jsdom) ⇒ procedural
+ *  path straight away. A context that still fails to create is caught by the stage. */
+export function webglAvailable(): boolean {
+  return typeof globalThis !== 'undefined' && ('WebGL2RenderingContext' in globalThis || 'WebGLRenderingContext' in globalThis)
+}
+
 export function resetAvatarAssetForTests() {
   pending = null
   ready = null
