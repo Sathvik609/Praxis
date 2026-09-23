@@ -195,6 +195,22 @@ Five shoulder clips in `web/src/avatar/clips/rehab/*.json` (pendulum, flexion, a
 
 **Skeleton view** (`skeleton.ts`, `AvatarPanel figure="skeleton"`, default for these clips): the same rig drawn as white joint spheres with mint halos, mint bone tubes with an additive glow, the lathe torso as a 12 % translucent unlit silhouette so front/back and left/right still read, a pulsing blue halo on the focus joint (always with its ≥ 18 px text label), and the angle cue: a dashed amber arc to the reference rep's target angle with a small ring at its end, and a mint arc to the figure's current angle, both about the shoulder (elevation clips, measured from the torso's down axis in the plane of the peak) or the elbow (rotation clips, from the forearm's start direction). The angle and the source rep are also written as text ("target 158° · figure 64° · UI-PRMD s09 e08"). Rotation clips use the side camera because their arc is edge-on from the front. Everything is still primitives in code; the arcs describe the reference figure only. **The avatar still never scores the patient**: no live pose is mirrored, and reps come from OpenCV events alone.
 
+
+**Blender-built avatar (23 Sep, built and tested; not yet played in the app).** The look approved on 23 Sep is a gender-neutral articulated mannequin: aqua lathe segments, deep-teal ball joints, an egg head, and thumb + index + mitten hands. It is built from scratch in code by headless Blender 5.2.2 (`web/blender/build_avatar.py`, no third-party meshes). Each segment is rigidly weighted to one bone of a rig.ts-compatible skeleton. The props are the chair, the table, the Waiter – cup sheet, the cup, and the NHPT pegboard with nine pegs; the dot and hole anchors reproduce `board_spec.py`.
+
+`web/blender/animate.py` keys eight actions into the committed `web/public/avatar/praxis_avatar.glb` (1.57 MB):
+- idle;
+- pendulum, flexion, abduction, and external and internal rotation, replayed from the rehab clip JSON as armature-space rotations;
+- the seated Waiter – cup and NHPT, where an analytic two-bone IK drives the grip onto the anchors and the cup and pegs are baked to follow the hand.
+
+A sidecar, `praxis_avatar.meta.json`, carries each action's duration, one-rep span, camera, props, captions and targets. `glbAnim.test.ts` poses the GLB with an independent glTF reader (`web/src/test/glb.ts`) and checks four things:
+- the recorded upper-arm and forearm directions are reproduced: 0.000° measured, < 1.5° asserted;
+- the cup is set down on the dot each caption names, and each peg sits in its hole (< 3 mm);
+- every loop is seamless;
+- the sidecar matches the GLB.
+
+The app still renders the procedural skeleton described above until the Three.js `GLTFLoader` / `AnimationMixer` playback lands; the skeleton then remains the fallback. Like everything else here, the new figure demonstrates and never scores.
+
 ## 4. Coach
 Two implementations share `coach/base.py`: the deterministic `RuleCoach` (shipped, labeled "Rule-based coach · LLM agent pending" in every decision and on screen) and, in W6, a Strands agent on Bedrock. Actions are restricted to `instruct | correct | progress | regress | rest | stop`; a `Decision` must cite the perception event ids it was made from, and the tool functions carry the names the agent will bind (`get_events`, `get_exertion_state`, `get_prescription`, `read_patient_model`, `write_session_summary`, `speak`).
 
