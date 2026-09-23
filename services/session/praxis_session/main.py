@@ -32,11 +32,15 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
+import praxis_session.trace as trace_mod
+from praxis_session.perception.exercises import EXERCISES, RUNNABLE_TIERS
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
+from praxis_session.plan import day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
 from praxis_session.store import DEFAULT_PATH, Store
+from praxis_session.trace import Trace
 from praxis_session.web import mount_web
 
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
@@ -154,6 +158,45 @@ def api_progress() -> dict[str, object]:
     return store.progress()
 
 
+@app.get("/api/plan")
+def api_plan(pain: int = 0, nhpt_due: bool = True) -> dict[str, object]:
+    """Today in the default order at the pain tier's dose (`plan.day_plan`). A rule in code."""
+    return day_plan(pain, SEED_PRESCRIPTION, nhpt_due=nhpt_due)
+
+
+class SelfReport(BaseModel):
+    exercise: str
+    sets: int = 1
+
+
+SELF_TICK_LABEL = "Demo only · self-ticked, not camera-verified"
+_self_ticks: dict[tuple[str, str], int] = {}  # (date, exercise) -> sets ticked today
+_self_traces: dict[tuple[str, str], Trace] = {}  # one trace file per day (and trace dir)
+
+
+@app.post("/api/self_report")
+def api_self_report(body: SelfReport) -> dict[str, object]:
+    """A demo-only exercise (Rotate out / Rotate in) the patient did while watching the avatar.
+    It is logged as self-ticked and **never** as a verified rep; a camera-coached exercise is
+    refused here because it only counts from OpenCV events."""
+    ex = EXERCISES.get(body.exercise)
+    if ex is None:
+        return {"ok": False, "error": "unknown_exercise", "exercise": body.exercise}
+    if ex.mode != "demo":
+        return {"ok": False, "error": "not_demo", "exercise": ex.id, "text": f"{ex.name} is counted by the camera, not by a tick."}
+    sets = max(1, min(10, int(body.sets)))
+    today = time.strftime("%Y-%m-%d")
+    _self_ticks[(today, ex.id)] = _self_ticks.get((today, ex.id), 0) + sets
+    key = (today, str(trace_mod.DEFAULT_DIR))
+    tr = _self_traces.get(key)
+    if tr is None:
+        tr = _self_traces[key] = Trace(f"self-{today}")
+    fields = {"exercise": ex.id, "name": ex.name, "mode": ex.mode, "sets": sets, "verified": False, "source": "self_ticked", "label": SELF_TICK_LABEL}
+    tr.log("self_report", **fields, sets_today=_self_ticks[(today, ex.id)])
+    ring.append(make_event("self_report", **fields))
+    return {"ok": True, **fields, "sets_today": _self_ticks[(today, ex.id)]}
+
+
 @app.get("/api/therapist/patients")
 def api_therapist_patients() -> dict[str, object]:
     return {"patients": store.therapist_patients()}
@@ -208,6 +251,11 @@ async def session_ws(
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
         return
+    refusal = _refuse_exercise(mode, exercise, tier)
+    if refusal is not None:
+        await ws.send_text(refusal.to_json())
+        await ws.close()
+        return
     pipeline: SessionPipeline | None = None
     if mode != "heartbeat":
         try:
@@ -247,6 +295,22 @@ async def session_ws(
         await _replay_loop(ws, replay, pipeline, coach, stats)
         return
     await _live_loop(ws, pipeline, coach, stats)
+
+
+def _refuse_exercise(mode: str, exercise: str | None, tier: str) -> Event | None:
+    """Guardrails before any pipeline exists. A demo-only exercise (Rotate out / Rotate in) is
+    never scored by the camera; a sheet activity is not an arm exercise; a tier outside
+    full/gentle has nothing to run (pain >= 7 is a rest day, handled by the stop rule)."""
+    if tier not in RUNNABLE_TIERS:
+        return make_event("error", code="rest_day" if tier == "rest" else "bad_tier", tier=tier)
+    if mode != "arm" or not exercise or exercise not in EXERCISES:
+        return None  # unknown ids keep the old behaviour: Arm to the front
+    ex = EXERCISES[exercise]
+    if ex.mode == "demo":
+        return make_event("error", code="demo_only", exercise=exercise, text=f"{ex.name} is demo only: watch the figure and tick it yourself. The camera does not score it.")
+    if ex.pipeline != "arm":
+        return make_event("error", code="bad_exercise", exercise=exercise, mode=mode)
+    return None
 
 
 def _is_disconnect(msg: dict) -> bool:
@@ -385,8 +449,15 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
     if pipeline is None or coach is None:
         return [make_event("command", cmd=name, ok=False, error="no pipeline")]
     if name == "checkin":
-        out += coach.on_checkin(int(cmd.get("pain", 0)), str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"))
-        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *out]
+        pain = int(cmd.get("pain", 0))
+        # Pain tier (plan.py), enforced here and not left to the client: pain 4-6 tightens the
+        # running dose to gentle before the first rep; >= 7 is a rest day, and the pain stop
+        # rule below ends the session and writes the therapist flag.
+        tier = stricter(tier_for(pain, coach.prescription), pipeline.tier)
+        applied = pipeline.apply_tier(tier)
+        coach.trace.log("tier", rule="pain_tier", pain=pain, tier=tier, running=applied["tier"], changed=applied["changed"], reason=tier_reason(tier, pain))
+        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"))
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, tier=tier, tier_applied=applied["changed"]), *out]
     if name == "pain":
         out += coach.on_pain(int(cmd.get("pain", 0)), now)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *out]

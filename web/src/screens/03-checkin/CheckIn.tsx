@@ -108,7 +108,8 @@ export function CheckIn() {
           </Card>
           <Card title="Stop rules set by your therapist">
             <ul className="divide-y divide-line text-lg">
-              <li className="py-2">Pain at or above {rules?.pain_max ?? 5} → session ends, therapist flagged</li>
+              <li className="py-2">Pain 0–3 → full dose · 4–6 → gentle day (fewer reps, shorter holds, smaller range)</li>
+              <li className="py-2">Pain at or above {Math.min(7, rules?.pain_max ?? 7)} → rest today, session ends, therapist flagged</li>
               <li className="py-2">New or worse symptoms → review before practising</li>
               <li className="py-2">Difficulty never goes above Level {rx?.level ?? 2} dose</li>
             </ul>

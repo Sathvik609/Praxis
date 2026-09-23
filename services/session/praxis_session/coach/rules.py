@@ -15,25 +15,19 @@ LABEL = "Rule-based coach · LLM agent pending"
 INSTRUCT_GAP_S = 0.6
 COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8, "arm_swing": 1.5}
 
-# Sprint E: one intro and one done line per exercise, in our own words (GRASP text is UBC /
-# Heart & Stroke material; see docs/LICENSES.md). Everything else reuses the arm pools.
+# One intro and one done line per camera-coached arm exercise (locked set, 23 Sep), in our own
+# words (GRASP text is UBC / Heart & Stroke material; see docs/LICENSES.md). Everything else
+# reuses the arm pools. The rotations are demo only: no camera event exists for the coach to
+# act on, so they have no lines here (CLAUDE.md working rule 5).
 INTRO: dict[str, str] = {
     "pendulum": "Pendulum: lean forward on the table, let the arm hang heavy, and swing it gently forward and back.",
     "flexion": "Arm to the front: sit side-on to me, lift to shoulder height and hold while I count three.",
     "abduction": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
-    "scaption": "Arm out at an angle: face me and lift half-way between front and side, thumb up.",
-    "extension": "Arm to the back: sit side-on and draw the arm gently behind you. Small range here.",
-    "external_rotation": "Rotate out: elbow tucked against your side, swing the forearm out away from your tummy.",
-    "internal_rotation": "Rotate in: elbow tucked against your side, bring the forearm across toward your tummy.",
 }
 DONE: dict[str, str] = {
     "pendulum": "That's your swings done — loose and easy, exactly the idea.",
     "flexion": "Both sets done. Rest your arm — good work.",
     "abduction": "Both sets done. That's the side lifts finished — rest the shoulder.",
-    "scaption": "Both sets done. That's the angled lifts finished. Nicely controlled.",
-    "extension": "Both sets done. Small range, and you kept it steady — good.",
-    "external_rotation": "Both sets done. The elbow stayed put the whole way — well done.",
-    "internal_rotation": "Both sets done. Rest the arm — that's the rotations finished.",
 }
 
 # Short in-rep cues (spoken while the patient moves); milestones keep full sentences.

@@ -3,7 +3,7 @@
 > Status: **Phase 0–8 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
-Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Three camera-coached tasks (NHPT, Waiter – cup, Arm to the front); all other GRASP exercises are instructions-only.
+Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Locked exercise set (23 Sep 2026): five camera-coached tasks — Pendulum, Arm to the front, Arm out to the side (exercises), Waiter – cup and the Nine-Hole Peg Test (activities) — and two demo-only rotations (Rotate out / Rotate in) that the avatar performs and the patient self-ticks; the camera never scores them. Pain tiers at check-in: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag.
 
 ## 2. System architecture
 One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from the browser) → OpenCV 5 perception → stop rules → coach (rule-based first, Strands/Bedrock agent in W6) → JSON events, captions, overlay geometry back to the browser. Raw frames never leave the process. Design: `docs/superpowers/specs/2026-09-16-praxis-rebuild-design.md`.
@@ -43,7 +43,10 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Sign-in gate (17 Sep) | **removed 21 Sep** — the app is open with no account; `auth.py`, `/api/auth/*`, bearer tokens and `RequireAuth` are deleted. Cognito (W6) is the planned replacement |
 | Sprint D, D-LAT (17 Sep): capture-time frame prefix, ack-driven sending, off-loop processing with drop-oldest, `latency` on frame/coach events and in the summary, on-screen and report latency lines, no coach session or trace file for setup sockets | built, tested (pytest 165, vitest 214); numbers in §6.2 are in-process on one laptop, not a browser measurement |
 | Sprint E web (17 Sep): guided path `/welcome` → `/` Today → `/ready` → `/go` → `/done/:id` | **removed 21 Sep** with `/api/profile` and `/api/plan/today`; `/` redirects to `/details` (Home). The arm FSM's `exercise`/`tier` socket parameters and `perception/exercises.py` stay |
-| Sprint E, E-SVC (17 Sep): per-user profile (`/api/profile`), seven-exercise shoulder registry with per-exercise metrics, generalised arm FSM (registry-driven, front/side gating, pendulum oscillations), pain-tiered `/api/plan/today`, per-exercise coach cues, `exercise`/`username` on the session record | built, tested (pytest 277) on synthetic landmark streams only; front-view rotation metrics and pendulum counting are approximations (§3.7, `docs/RISKS.md`) |
+| Sprint E, E-SVC (17 Sep): per-user profile (`/api/profile`), seven-exercise shoulder registry with per-exercise metrics, generalised arm FSM (registry-driven, front/side gating, pendulum oscillations), pain-tiered `/api/plan/today`, per-exercise coach cues, `exercise`/`username` on the session record | built, tested (pytest 277) on synthetic landmark streams only; **registry replaced 23 Sep** by the locked set below |
+| Locked exercise set (23 Sep): registry of seven with `mode: coached \| demo` — Pendulum, Arm to the front, Arm out to the side (exercises), Waiter – cup, NHPT (activities), Rotate out / Rotate in (demo only, self-ticked); scaption, extension and the rotation metric removed; the arm FSM and the socket refuse demo-only ids | built, tested on synthetic landmark streams only (§3.7) |
+| Day order + pain tiers (23 Sep): `plan.py` (Pendulum → front → side → cup, NHPT weekly; 0–3 full, 4–6 gentle within allowed adaptations, ≥ 7 rest + flag), `GET /api/plan`, tier enforced on check-in (`apply_tier`), gentle cup = slow arcs only, seed stop level 5 → 7, `POST /api/self_report` for demo rotations (`self_report` event, `verified: false`) | built, tested (§3.7.1) |
+| Web for the locked set (23 Sep): screen 04 grouped Exercises / Activities / Demo only with text badges, Today's plan in day order, tier chip + reason from the check-in pain, gentle doses, rest-day card; setup / demonstration / live arm screen run Pendulum and Arm out to the side (registry id + tier on the socket); Demonstration self-tick for demo-only exercises (`/api/self_report`); check-in and therapist card show the tiers and stop level 7; `lib/plan.ts` display mirror kept in step by pytest | built, tested (vitest); not yet checked in a browser |
 | Real recordings, dataset v1, browser-measured latency, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
@@ -81,17 +84,24 @@ Occupancy per hole is the fraction of peg mask inside the disc (≥ 0.35 → occ
 `perception/pose.py` runs the OpenCV Zoo MediaPipe person detector (224×224) and BlazePose landmarker (256×256) through `cv2.dnn` (Apache-2.0, recorded before download; vendored wrappers under `perception/zoo/`; OpenCV 5's graph engine returns the person detector's two outputs in swapped order, which `pose.py` re-sorts by width). From the 33 landmarks we compute, in the image plane, shoulder flexion (angle at the shoulder between upper arm and trunk), elbow angle, trunk lean (hip→shoulder midline from vertical, signed), and shoulder hike (practising shoulder height above the other, normalised by torso length and baselined at the start of the set). The shoulder angle is One-Euro filtered. Side view is the assumption; `view_ok` is false when the shoulders are more than 0.6 torso-lengths apart. BlazePose's per-landmark visibility is reported in three groups because they gate three different things: `visibility` (practising-side shoulder, elbow, hip — the angle), `hip_visibility` (both hips — the lean) and `shoulders_visibility` (both shoulders — the hike). **These are camera-relative progress numbers, not goniometry.**
 
 `perception/arm_fsm.py`: `start_pose → moving → target_reached → hold → return`; target clamped to the 90° ceiling in code (`clamped` reported); a rep is verified when it reached target − 10° and held ≥ 3 s; `target_missed` and `hold_too_short` reps are counted but unverified. **Gating (Sprint D):** the FSM freezes — no transitions, no compensation events, the angle still shown — while the patient faces the camera (`view_ok` false → `arm.gate = "turn_side"` on every frame) or the practising-side joint visibility is below 0.5 (`arm.gate = "hips_out_of_view"`), so a frontal lift can never be scored as a rep and a seated patient with hips behind a desk gets no spurious flags. `compensation_lean` fires once per rep only after |lean| > 12° has persisted for 0.5 s with both hips visible (flagged after three); `shoulder_hiking` needs both shoulders visible and hike > 0.08 torso lengths above baseline. Pipeline mode `arm` needs no sheet; pose absence for 15 frames pauses with `perception_lost`. Because the DNN cannot detect a drawn figure, the evaluation feeds a synthetic 33-point landmark stream through the same FSM (`replay.run_landmark_replay`), which validates the state machine and angle code, not the detector.
-**Sprint E — the exercise registry (`perception/exercises.py`).** One frozen `Exercise` per
-shoulder exercise holds its id, name, avatar clip, the camera view it is scored from, the
-metric function, target, in-code ceiling, tolerance, start threshold, hold, sets, reps, the
-gentle-tier overrides and our own paraphrased steps. Seven ship: pendulum, flexion (Arm to the
-front, unchanged defaults), abduction, scaption, extension, external and internal rotation.
-Three metrics run on the same BlazePose landmarks: `shoulder_elevation_deg` (the image-plane
-angle at the shoulder between upper arm and trunk — flexion or extension from the side,
-abduction from the front), `rotation_deg` (front view, elbow tucked and bent: the wrist's
-sideways offset from the elbow divided by the upper-arm length, arcsined; **+ external, −
-internal**) and `pendulum_swing_deg` (the signed angle of shoulder→wrist from vertical while
-the wrist hangs below the shoulder). Targets are overridden by
+**The exercise registry (`perception/exercises.py`; locked set of 23 Sep 2026).** One frozen
+`Exercise` per entry holds its id, name, avatar clip, `mode` (`coached | demo`), `category`
+(`exercise | activity`), the camera pipeline that verifies it (`arm | cup | nhpt`, or none),
+its frequency, the camera view it is scored from, the metric function, target, in-code
+ceiling, tolerance, start threshold, hold, sets, reps (arcs for the cup), the gentle-tier
+overrides and our own paraphrased steps. Exactly seven ship, in three groups: **exercises**
+(camera-coached) Pendulum (warm-up), Arm to the front (`flexion`, side view, unchanged
+defaults) and Arm out to the side (`abduction`, front view); **activities** (camera-coached)
+Waiter – cup and the Nine-Hole Peg Test (weekly); **demo only** Rotate out and Rotate in.
+A demo entry has no metric and no pipeline (enforced in `Exercise.__post_init__`), the arm
+FSM raises on it, and the socket refuses it with `error{code: "demo_only"}`, so no
+camera-verified rep can exist for a rotation: the patient watches the avatar and ticks it
+(§3.7.1). Scaption and extension were dropped: scaption cannot be told from abduction in the
+front view, and extension's small range is mostly noise. Two metrics run on the BlazePose
+landmarks: `shoulder_elevation_deg` (the image-plane angle at the shoulder between upper arm
+and trunk: flexion from the side, abduction from the front) and `pendulum_swing_deg` (the
+signed angle of shoulder→wrist from vertical while the wrist hangs below the shoulder); the
+former rotation metric is deleted. Targets are overridden by
 `evaluation/results/rehab_reference_ranges.json` when it exists — mean − 1 sd of the correct
 reps — but those are **healthy-adult Kinect peaks** well above the GRASP ceiling, so every
 target is clamped to the exercise's own `ceiling_deg`: a reference can lower a target, never
@@ -108,23 +118,48 @@ hold and no `target_missed`. Every frame's `arm` block now carries `exercise`,
 `rep_progress` (0–1), `exercise_start` opens a session with the dose, and `set_complete`
 carries `verified_reps` and `best_deg`.
 
-**Honest scope for Sprint E.** (a) The front view cannot separate scaption from abduction —
-scaption's 30° forward offset projects away — so scaption is measured as abduction with a
-lower target and is described that way in the code and in the UI. (b) The rotation metric
-approximates a forearm that points at the camera by using the upper-arm length as a stand-in
-for the unknown projected forearm length. (c) Pendulum oscillation counting has only ever run
-on synthetic landmark streams. None of these three has been near a real recording; all of them
-are camera-relative progress, **never clinical goniometry**.
+**Honest scope.** (a) Rotate out / Rotate in are **not measured**: with the elbow tucked the
+forearm points at a single webcam, and the earlier approximation (wrist offset over upper-arm
+length) was not honest enough to score anyone, so both are demo-only and self-ticked, labelled
+that way on screen and in the trace. (b) Abduction in the front view cannot be told apart from
+a cross-body or scaption-plane lift; the number is what the image shows. (c) Pendulum
+oscillation counting has only ever run on synthetic landmark streams. None of the arm numbers
+has been near a real recording; all are camera-relative progress, **never clinical
+goniometry**.
 
-### 3.7.1 Pain tier and today's plan (`plan.py`)
-The tier is a rule in code, not a diagnosis and not the coach's call: pain 0–3 gives the full
-registry at full range, 4–6 gives pendulum, flexion, abduction to 60° and external rotation
-with 2 s holds and fewer reps, and 7 or more gives a rest day with no exercises.
-`GET /api/plan/today?pain=` returns the tier, the reason in plain words, the goal line with
-the week number, the items at the tier's dose (each with `done_today`, true when a session for
-that exercise finished today for this user) and the rest advice. High pain is *not* flagged
-here: the existing pain stop rule raises the therapist flag when the same number arrives at
-check-in, so exactly one place does it.
+### 3.7.1 Day order, pain tier and self-ticked demos (`plan.py`, locked 23 Sep)
+**Day order.** Pendulum → Arm to the front → Arm out to the side → Waiter – cup (about 15
+minutes); the Nine-Hole Peg Test is weekly; Rotate out / Rotate in are offered as demo-only
+extras. `GET /api/plan?pain=&nhpt_due=` returns the day in that order at the tier's dose
+(`items`, each with `order`), the peg test when due (`weekly`), the demo rotations (`demo`,
+`self_ticked: true`, `camera_verified: false`), the reason in plain words, and for a rest day
+the rest advice and `therapist_flag: true`.
+
+**Pain tier** — a rule in code, not a diagnosis and not the coach's call: pain 0–3 → `full`
+(the prescribed dose); 4–6 → `gentle`; ≥ 7 → `rest` (nothing today). The rest threshold is
+`min(7, prescription.stop_rules.pain_max)`, so a therapist can only make it stricter, and the
+seed prescription's pain stop level moved from 5 to **7** so that the rest tier and the pain
+stop rule are the same number: pain ≥ 7 at check-in ends the session through the existing stop
+rule, which writes the one therapist flag. `gentle` is **reduced dose/range within the
+prescription's allowed adaptations**: `exercises.resolve(ex, "gentle", rx)` applies an
+entry's gentle overrides only for fields listed in `allowed_adaptations[ex.rx]`, clamped into
+the allowed range (`prescription.clamp`, which also honours the ceiling); anything else is
+dropped. With the seed prescription that is pendulum 8 swings instead of 10, Arm to the front
+hold 2 s and 6 reps, Arm out to the side to 60° with a 2 s hold and 6 reps, and Waiter – cup
+with the slow arcs only (the peg test is standardized and never adapted).
+
+**Enforced by the service, not the client.** On the `checkin` command the service computes
+the tier from the reported pain, takes the stricter of it and the socket's `tier`, and calls
+`SessionPipeline.apply_tier`, which rebuilds the arm FSM or trims the cup's fast arcs **before
+the first rep** (never after, and never looser). The ack carries `tier` and `tier_applied`,
+and a `tier` trace row records pain, tier, the tier actually running and the reason. A socket
+opened with `tier=rest` is refused (`error{code: "rest_day"}`), and a stored database whose
+seed prescription predates this change is rewritten on start (`Store.seed_if_empty`).
+
+**Self-ticked demos.** `POST /api/self_report {exercise}` accepts only a demo-only id; it logs
+a `self_report` trace row and event with `verified: false`, `source: "self_ticked"` and the
+label "Demo only · self-ticked, not camera-verified", and returns the sets ticked today. A
+camera-coached id is refused (`not_demo`): those count only from OpenCV events.
 
 ### 3.8 Exertion context — Phase 7 (not started)
 
@@ -141,9 +176,9 @@ check-in, so exactly one place does it.
 Tests (`*.test.ts`, headless): rig FK, IK reach accuracy (≤ 4 mm on every dot and hole), body geometry, figure placement, sampler continuity and hold/anticipation behaviour, clip landings against the layout, mirroring, prop builders and target resolution, panel labels/aspect/side. The scene itself is checked in Chrome. The avatar plays no part in verification: reps come from OpenCV events only.
 
 ### 3.9.1 Real-motion reference clips (17 Sep)
-Seven shoulder clips in `web/src/avatar/clips/rehab/*.json` come from recorded human motion instead of authored keys. Sources (licences recorded in `docs/LICENSES.md` before download; `services/session/tools/fetch_rehab_datasets.py` pins SHA-256 digests; raw data lives in the git-ignored `evaluation/external/` and is never redistributed):
+Five shoulder clips in `web/src/avatar/clips/rehab/*.json` (pendulum, flexion, abduction and the two demo-only rotations; scaption and extension were removed with the locked exercise set of 23 Sep) come from recorded human motion instead of authored keys. Sources (licences recorded in `docs/LICENSES.md` before download; `services/session/tools/fetch_rehab_datasets.py` pins SHA-256 digests; raw data lives in the git-ignored `evaluation/external/` and is never redistributed):
 
-- **UI-PRMD** (Vakanski, Jun, Paul, Baker 2018; ODC PDDL 1.0). Kinect stream, 22 joints, 30 Hz, 10 healthy subjects × 10 episodes per movement plus the same subjects performing each movement deliberately incorrectly. The original site is offline; the files are the Internet Archive capture of 2024-07-07 (`Segmented Movements.zip`, `Incorrect Segmented Movements.zip`; only the `Kinect/` members are unpacked, Vicon is unused). Positions are parent-relative in the parent's rotated frame and angles are Euler triplets; we found the stored order to be x, y, z with the composition R = Rz·Rx·Ry by testing every reading against physical consistency (foot height while standing, elbow-angle scatter across m07/m09/m10: 3.7° / 5.9° / 4.1° for this reading vs 5.1° / 12.9° / 6.9° for the paper's literal "YXZ"). Movements used: m07 standing shoulder abduction, m08 extension, m09 internal–external rotation (performed in the 90/90 position), m10 scaption.
+- **UI-PRMD** (Vakanski, Jun, Paul, Baker 2018; ODC PDDL 1.0). Kinect stream, 22 joints, 30 Hz, 10 healthy subjects × 10 episodes per movement plus the same subjects performing each movement deliberately incorrectly. The original site is offline; the files are the Internet Archive capture of 2024-07-07 (`Segmented Movements.zip`, `Incorrect Segmented Movements.zip`; only the `Kinect/` members are unpacked, Vicon is unused). Positions are parent-relative in the parent's rotated frame and angles are Euler triplets; we found the stored order to be x, y, z with the composition R = Rz·Rx·Ry by testing every reading against physical consistency (foot height while standing, elbow-angle scatter across m07/m09/m10: 3.7° / 5.9° / 4.1° for this reading vs 5.1° / 12.9° / 6.9° for the paper's literal "YXZ"). Movements used: m07 standing shoulder abduction and m09 internal–external rotation (performed in the 90/90 position); m10 still appears above only as a check of the Euler reading.
 - **IntelliRehabDS** (Miron, Sadawi, Ismail, Hussain, Grosan 2021; Zenodo 4610859; CC BY 4.0). Kinect One, 25 joints, 30 Hz, metres, one repetition per file, 14 healthy + 15 patients, correctness annotated. Only `SkeletonData/Simplified` is unpacked (no depth images). The gesture names and the column labels are mirror images of each other (gesture "… Left" moves the `*Right` columns), so the practising arm is detected from wrist excursion, never from a label. Gestures used: 2/3 shoulder flexion; 4/5 abduction for the reference ranges.
 
 **Retargeting** (`evaluation/scripts/make_rehab_clips.py`, numpy only, tested on synthetic skeleton files in `services/session/tests/test_make_rehab_clips.py`). For every frame a torso frame is built from the pelvis→chest axis and the shoulder line (X right→left, Y up, Z = X × Y forward); the torso rotation relative to the mean of the first five frames becomes the rig's `spine` channel; the practising arm's upper-arm and forearm directions are expressed in that frame, mirrored to the rig's left arm when the source used the right arm (the panel mirrors back for right-sided patients), and solved to the rig's own conventions (`rig.ts`: Euler XYZ, R = Rx·Ry·Rz; shoulder pitch −90° = forward, left roll +90° = out to the side, elbow pitch negative = flexion): the elbow angle is the bend between the two bones corrected for the rig's 5° rest offset, the shoulder rotation aligns the rest upper arm to the measured one and the elbow crease to the measured forearm, blending toward the zero-twist swing when the arm is straight (a straight arm has no observable twist). One repetition per exercise is chosen automatically: correct, healthy, standing, complete, no tracking dropouts, then the smallest combined z-score of peak angle, jerk, duration and movement plane against that population, with a mild preference for a straight elbow. The rep is segmented around the peak of its progress signal (elevation, or forearm rotation about the upper arm), smoothed over five frames, and cut into 12 keys (start, four on the rise, peak, five on the fall, end; holds at start, peak and end). Each key stores the FK directions the rig must reproduce (`check.ua/fa`) and the recorded directions (`check.src_*`); `rehabClips.test.ts` verifies the rig reproduces the former to < 0.1° at every key and stays within 6° (plus the reported forearm fit) of the latter. The loader appends a 0.7 s ease back to the first key so the clip loops without a jump. Pendulum exists in neither dataset and is authored (lean 35°, arm hanging plumb, three 10° circles), labelled `source: procedural`.
@@ -152,13 +187,11 @@ Seven shoulder clips in `web/src/avatar/clips/rehab/*.json` come from recorded h
 |---|---|---|---|
 | flexion | IRDS gesture 3, subject 104, rep 3, standing, left column | 165° elevation | 4.7° / 6.6° |
 | abduction | UI-PRMD m07 s09 e08, right arm mirrored | 158° | 6.3° / 17.1° |
-| scaption | UI-PRMD m10 s06 e04, right arm mirrored | 108° | 10.0° / 13.6° |
-| extension | UI-PRMD m08 s09 e07, right arm mirrored | 63° | 5.6° / 18.2° |
 | external_rotation | UI-PRMD m09 s03 e03 (return half) + e04 (outward half), continuous in the recording, right arm mirrored | 98° forearm rotation (arc 88° from the start direction) | 0.9° / 1.4° |
 | internal_rotation | UI-PRMD m09 s07 e07, left arm | 35° past forward (arc from the raised start) | 1.6° / 2.6° |
 | pendulum | procedural | 35° (trunk lean) | — |
 
-**Reference ranges** (`evaluation/results/rehab_reference_ranges.json`, regenerated by the same script): peak of the progress signal per repetition, mean ± sd, correct vs incorrect. Flexion IRDS g2 152.9 ± 21.5 (n 229) vs 91.8 ± 22.6 (n 146), g3 159.1 ± 16.2 vs 92.7 ± 28.9; abduction UI-PRMD m07 156.8 ± 7.2 (n 100) vs 125.6 ± 22.9 (n 100), IRDS g4 153.2 ± 19.8 vs 91.5 ± 38.4, g5 157.2 ± 17.7 vs 99.0 ± 32.5; scaption m10 104.5 ± 7.0 vs 87.1 ± 17.7; extension m08 62.4 ± 9.1 vs 57.5 ± 23.7; external rotation m09 108.1 ± 17.8 vs 102.4 ± 21.8; internal rotation m09 29.8 ± 22.9 vs 22.2 ± 36.0. These are Kinect body-frame angles of healthy adults (UI-PRMD's "incorrect" is the same healthy subjects moving suboptimally on purpose), not goniometry and not patient norms; they are for a future plausibility check, not scoring. Known artefacts inherited from Kinect: a straight arm reads 10–30° bent at the elbow, the resting arm reads 10–30° abducted, and IRDS "flexion" rises ~30° lateral of the sagittal plane for most subjects.
+**Reference ranges** (`evaluation/results/rehab_reference_ranges.json`, regenerated by the same script): peak of the progress signal per repetition, mean ± sd, correct vs incorrect. Flexion IRDS g2 152.9 ± 21.5 (n 229) vs 91.8 ± 22.6 (n 146), g3 159.1 ± 16.2 vs 92.7 ± 28.9; abduction UI-PRMD m07 156.8 ± 7.2 (n 100) vs 125.6 ± 22.9 (n 100), IRDS g4 153.2 ± 19.8 vs 91.5 ± 38.4, g5 157.2 ± 17.7 vs 99.0 ± 32.5; external rotation m09 108.1 ± 17.8 vs 102.4 ± 21.8; internal rotation m09 29.8 ± 22.9 vs 22.2 ± 36.0. These are Kinect body-frame angles of healthy adults (UI-PRMD's "incorrect" is the same healthy subjects moving suboptimally on purpose), not goniometry and not patient norms; they are for a future plausibility check, not scoring. Known artefacts inherited from Kinect: a straight arm reads 10–30° bent at the elbow, the resting arm reads 10–30° abducted, and IRDS "flexion" rises ~30° lateral of the sagittal plane for most subjects.
 
 **Skeleton view** (`skeleton.ts`, `AvatarPanel figure="skeleton"`, default for these clips): the same rig drawn as white joint spheres with mint halos, mint bone tubes with an additive glow, the lathe torso as a 12 % translucent unlit silhouette so front/back and left/right still read, a pulsing blue halo on the focus joint (always with its ≥ 18 px text label), and the angle cue: a dashed amber arc to the reference rep's target angle with a small ring at its end, and a mint arc to the figure's current angle, both about the shoulder (elevation clips, measured from the torso's down axis in the plane of the peak) or the elbow (rotation clips, from the forearm's start direction). The angle and the source rep are also written as text ("target 158° · figure 64° · UI-PRMD s09 e08"). Rotation clips use the side camera because their arc is edge-on from the front. Everything is still primitives in code; the arcs describe the reference figure only. **The avatar still never scores the patient**: no live pose is mirrored, and reps come from OpenCV events alone.
 
@@ -194,7 +227,7 @@ W6.
 Video processed in memory only; never stored by default. Only events, metrics, logs leave the device. Clips only with explicit consent, 30-day deletion. Feeling is self-reported, never read from the face; face analysis limited to presence.
 
 ## 9. Limitations and honest scope
-Exercise ceiling: NHPT, Waiter – cup, Arm to the front. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
+Exercise ceiling (23 Sep): Pendulum, Arm to the front, Arm out to the side, Waiter – cup, NHPT camera-coached; Rotate out / Rotate in demo-only and self-ticked, never measured. Pendulum and Arm out to the side are validated on synthetic landmark streams only. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
 
 ## 10. Reproducibility
 Every number in §6–7 will be regenerated by scripts in `evaluation/` and `benchmark/`.

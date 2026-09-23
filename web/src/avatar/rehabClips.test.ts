@@ -15,7 +15,8 @@ const angleDeg = (p: Vec3, q: Vec3) => {
   return Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))) / D
 }
 
-test('all seven rehab clips load with their provenance, captions and a left-side practising arm', () => {
+test('the five rehab clips of the locked set load with their provenance, captions and a left-side practising arm', () => {
+  expect([...REHAB_CLIP_NAMES].sort()).toEqual(['abduction', 'external_rotation', 'flexion', 'internal_rotation', 'pendulum'])
   expect(Object.keys(REHAB_CLIPS).sort()).toEqual([...REHAB_CLIP_NAMES].sort())
   for (const name of REHAB_CLIP_NAMES) {
     const clip = REHAB_CLIPS[name]

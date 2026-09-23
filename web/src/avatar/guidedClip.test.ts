@@ -20,6 +20,12 @@ test('every exercise in the registry resolves to something the avatar can draw',
   }
 })
 
+test('the registry list is the locked set of 23 Sep: the three lifts and the two demo-only rotations', () => {
+  expect(REHAB_EXERCISES).toEqual(['pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation'])
+  expect(guidedClip('scaption')).toEqual({ clip: 'armFront' })
+  expect(guidedClip('extension')).toEqual({ clip: 'armFront' })
+})
+
 test('the plan item’s own clip name wins over the exercise id', () => {
   expect(guidedClip('flexion', 'armFront').clip).toBe('armFront')
 })

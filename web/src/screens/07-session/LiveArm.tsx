@@ -7,6 +7,8 @@ import { ProgressDots } from '../../design/ProgressDots'
 import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { readCheckinPain, tierFor } from '../../lib/plan'
+import { exerciseById } from '../../lib/seed'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
@@ -27,25 +29,32 @@ type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; h
  *  threshold lives in the service. */
 export const LEAN_SHOW_DEG = 12
 
-function caption(f: FrameEvent | null, lost: boolean, lean: boolean): string {
-  if (lost) return 'I cannot see your shoulder and hip. Turn your practising side to the camera.'
+function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side' | 'front', swing: boolean): string {
+  if (lost) return view === 'front' ? 'I cannot see both shoulders. Face the camera with your shoulders and hips in view.' : 'I cannot see your shoulder and hip. Turn your practising side to the camera.'
   if (lean) return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
   const a = f?.arm
   if (!a) return 'Getting the camera ready.'
   if (a.finished) return 'Both sets done. Rest your arm.'
+  if (swing) return a.state === 'start_pose' ? 'Lean on the table and let the arm hang loose.' : "Let it swing, loose and easy — don't lift it."
   if (a.state === 'hold') return `Hold it there… ${Math.max(0, Math.ceil(a.hold_s * (1 - a.hold_progress)))}`
   if (a.state === 'moving') return 'Lift slowly to the line, no higher than your shoulder.'
   if (a.state === 'return') return 'Lower for three.'
   return 'Arm by your side. Lift for three when you are ready.'
 }
 
-/** Screen 07c · Live session, Arm to the front. Ghost arm shows the target; the camera
- *  measures the shoulder angle and watches for leaning. Angles are relative progress. */
+/** Screen 07c · Live session for the three camera-coached exercises of the locked set (23 Sep):
+ *  Pendulum (side view, swings), Arm to the front (side view) and Arm out to the side (front
+ *  view). The registry entry on the service decides the metric, view gate and dose; the pain
+ *  tier from the check-in is sent as `tier` (the service applies the check-in's tier itself and
+ *  never loosens it). Ghost arm shows the target; angles are camera-relative progress. */
 export function LiveArm() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
   const replay = sp.get('replay')
-  const params = useMemo(() => ({ sheet: 'none', side }), [side])
+  const ex = exerciseById(sp.get('exercise')) ?? exerciseById('arm')!
+  const exId = ex.session === 'arm' ? ex.serviceId : 'flexion'
+  const tier = tierFor(readCheckinPain()) === 'gentle' ? 'gentle' : 'full'
+  const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
@@ -94,10 +103,14 @@ export function LiveArm() {
   const leaning = lean > LEAN_SHOW_DEG
   const repsPerSet = a?.reps_per_set ?? 8
   const holdCount = holding ? Math.ceil((a?.hold_s ?? 3) * (a?.hold_progress ?? 0)) : 0
+  const view: 'side' | 'front' = a?.view_required ?? ex.view ?? 'side'
+  const swing = (a?.kind ?? (ex.id === 'pendulum' ? 'oscillation' : 'hold')) === 'oscillation'
+  const turnHint = view === 'front' ? ' · face the camera' : ' · turn your side to the camera'
+  const wrongView = !!frame?.arm?.angles && (view === 'front' ? frame.arm.angles.view_ok : !frame.arm.angles.view_ok)
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`Arm to the front · ${side} side`} subtitle={`Arm strengthening · set ${a?.set ?? 1} of ${a?.sets ?? 2}`} status={status} label={label} />
+      <SessionHeader title={`${ex.name} · ${side} side`} subtitle={`${ex.category} · set ${a?.set ?? 1} of ${a?.sets ?? 2}`} status={status} label={label} />
 
       <div className="grid min-h-0 grid-cols-[5fr_2fr_2fr] gap-4 p-4">
         <LiveFeed
@@ -109,7 +122,7 @@ export function LiveArm() {
           videoRef={videoRef}
           frame={frame}
           feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
-          tracking={live ? `ghost arm shows target${frame?.arm?.angles && !frame.arm.angles.view_ok ? ' · turn your side to the camera' : ''}` : undefined}
+          tracking={live ? `ghost arm shows target${wrongView ? turnHint : ''}` : undefined}
           band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
           cvLine={`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`}
           latencyLine={latencyLine(latency)}
@@ -120,11 +133,11 @@ export function LiveArm() {
           className="flex min-h-0 flex-col gap-3 overflow-hidden"
           padding="sm"
           title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
-          action={<Chip tone={holding ? 'mint' : 'neutral'}>{holding ? 'At target' : 'Lift'}</Chip>}
+          action={<Chip tone={holding ? 'mint' : 'neutral'}>{swing ? 'Swing' : holding ? 'At target' : 'Lift'}</Chip>}
         >
-          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="armFront" camera="side" compact /></div>
-          <p className="text-center text-lg text-muted">side view · shoulder {now != null ? Math.round(now) : '—'}° of {target}°</p>
-          <div className="flex justify-between text-lg text-muted"><span>Lift for 3</span><span>Lower for 3</span></div>
+          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip={ex.clip} camera={view} compact /></div>
+          <p className="text-center text-lg text-muted">{view} view · shoulder {now != null ? Math.round(now) : '—'}° of {target}°</p>
+          <div className="flex justify-between text-lg text-muted">{swing ? <><span>Swing forward</span><span>Swing back</span></> : <><span>Lift for 3</span><span>Lower for 3</span></>}</div>
           <div className="h-3 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="hold progress" aria-valuenow={Math.round((a?.hold_progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-teal-fill transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />
           </div>
@@ -132,7 +145,7 @@ export function LiveArm() {
         </Card>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <Card title={`Rep ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet} · hold ${a?.hold_s ?? 3} s`} action={<span className="whitespace-nowrap text-lg text-muted tabular-nums">count: {holdCount}</span>}>
+          <Card title={swing ? `Swing ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet}` : `Rep ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet} · hold ${a?.hold_s ?? 3} s`} action={swing ? undefined : <span className="whitespace-nowrap text-lg text-muted tabular-nums">count: {holdCount}</span>}>
             <ProgressDots total={repsPerSet} done={a?.rep ?? 0} current={holding ? a?.rep : undefined} />
           </Card>
           <Card>
@@ -148,7 +161,7 @@ export function LiveArm() {
             <>
               <CoachCard
                 watch={leanRecent}
-                text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true) : label.coach ?? caption(frame, lost, false))}
+                text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
                 label={coach.caption?.label ?? COACH_LABEL}
               />
               <ExertionChip exertion={coach.exertion} />

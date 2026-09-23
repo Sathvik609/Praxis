@@ -51,6 +51,24 @@ test('arm setup asks for a side view and no sheet', () => {
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
 })
 
+test('Pendulum and Arm out to the side use the arm setup too; the side lift asks to face the camera', () => {
+  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
+  const { unmount } = render(
+    <MemoryRouter initialEntries={['/setup?exercise=abduction']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText(/Arm out to the side: face the camera/)).toBeInTheDocument()
+  expect(hook.useWebcamStream).toHaveBeenLastCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
+  unmount()
+  render(
+    <MemoryRouter initialEntries={['/setup?exercise=pendulum']}>
+      <CameraSetup />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText(/Pendulum: sit or stand sideways/)).toBeInTheDocument()
+})
+
 test('camera blocked offers a recorded session and the checklist shows five waiting rows', () => {
   mockStream(null, false, 'camera: permission denied')
   render(

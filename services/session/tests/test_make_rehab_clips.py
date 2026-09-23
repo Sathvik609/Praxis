@@ -230,8 +230,10 @@ def test_main_builds_every_clip_and_the_reference_ranges(tmp_path: Path):
     clips = tmp_path / "clips"
     ranges = tmp_path / "ranges.json"
     assert mk.main(["--external", str(ext), "--clips", str(clips), "--ranges", str(ranges)]) == 0
-    names = {"pendulum", "flexion", "abduction", "scaption", "extension", "external_rotation", "internal_rotation"}
+    # Locked set of 23 Sep: m08 extension and m10 scaption are in the fixture tree but no longer built.
+    names = {"pendulum", "flexion", "abduction", "external_rotation", "internal_rotation"}
     assert {p.stem for p in clips.glob("*.json")} == names
+    assert set(json.loads(ranges.read_text())["exercises"]) == names
     for name in names:
         clip = json.loads((clips / f"{name}.json").read_text())
         assert clip["side"] == "left" and clip["camera"] in ("front", "side") and clip["keys"][0]["t"] == 0
@@ -264,6 +266,14 @@ def test_main_builds_every_clip_and_the_reference_ranges(tmp_path: Path):
     assert ui["correct"]["mean"] > ui["incorrect"]["mean"]
     assert {"mean", "sd", "n"} <= set(ui["correct"])
     assert r["exercises"]["pendulum"]["sources"] == []
+
+
+def test_shipped_clips_and_ranges_match_the_locked_set():
+    """What is committed: one clip per shoulder entry of the registry, nothing dropped on 23 Sep."""
+    names = {"pendulum", "flexion", "abduction", "external_rotation", "internal_rotation"}
+    assert {p.stem for p in mk.DEFAULT_CLIPS.glob("*.json")} == names
+    assert set(json.loads(mk.DEFAULT_RANGES.read_text())["exercises"]) == names
+    assert {ex.name for ex in mk.EXERCISES} == names
 
 
 def test_main_fails_clearly_without_data(tmp_path: Path):

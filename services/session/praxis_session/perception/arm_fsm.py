@@ -1,13 +1,14 @@
 """Guided shoulder exercise finite-state machine (no OpenCV call here; the landmarks it scores
 come from `perception/pose.py`, which runs `cv2.dnn` on OpenCV cv2.__version__ == 5.0.0).
 
-One FSM for every exercise in `perception/exercises.py`. A registry entry supplies the metric,
+One FSM for every arm entry in `perception/exercises.py` (pipeline "arm"; demo-only and sheet
+entries are refused with ValueError). A registry entry supplies the metric,
 the required camera view, the target, the in-code ceiling, the dose and the tier overrides, so
 adding an exercise never edits this file. `ArmFSM()` with no argument is still "Arm to the
 front" (`flexion`) with exactly the behaviour that shipped in Phase 5.
 
 Two rep shapes:
-- `kind="hold"` (every lift and rotation): `start_pose -> moving -> target_reached -> hold ->
+- `kind="hold"` (Arm to the front, Arm out to the side): `start_pose -> moving -> target_reached -> hold ->
   return (-> start_pose)`, one rep per return. A rep is verified when it reached
   target - tolerance and held for `hold_s`; `target_missed` / `hold_too_short` reps are
   counted but unverified.
@@ -99,6 +100,10 @@ class ArmFSM:
         lean_persist_s: float = 0.5,
     ) -> None:
         ex = resolve(exercise, tier)
+        if ex.pipeline != "arm" or ex.metric is None:
+            # Demo-only entries (the rotations) and the sheet activities have no pose metric:
+            # the arm FSM must never produce a camera-verified rep for them.
+            raise ValueError(f"{ex.id} is not scored by the arm FSM (mode={ex.mode}, pipeline={ex.pipeline})")
         self.exercise, self.tier = ex, tier
         self.view, self.kind = ex.view, ex.kind
         self.ceiling_deg = ex.ceiling_deg if ceiling_deg is None else ceiling_deg

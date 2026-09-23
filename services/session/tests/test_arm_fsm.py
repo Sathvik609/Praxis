@@ -193,6 +193,17 @@ def test_registry_entry_sets_target_view_and_dose():
     assert ArmFSM().exercise.id == "flexion"  # unchanged default
 
 
+def test_demo_only_and_sheet_exercises_cannot_run_in_the_arm_fsm():
+    """Rotate out/in are demo only: no camera-verified rep can exist for them."""
+    import pytest
+
+    for ex in ("external_rotation", "internal_rotation", "cup", "nhpt"):
+        with pytest.raises(ValueError):
+            ArmFSM(ex)
+    with pytest.raises(ValueError):
+        ArmFSM("flexion", tier="rest")
+
+
 def test_gentle_tier_lowers_target_hold_and_reps():
     f = ArmFSM("abduction", tier="gentle")
     assert (f.target_deg, f.hold_s, f.reps_per_set) == (60.0, 2.0, 6)

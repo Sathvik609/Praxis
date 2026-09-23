@@ -463,3 +463,35 @@ def test_pendulum_mode_counts_swings_without_a_hold():
     assert "hold_too_short" not in types
     fr = [e for e in evs if e.type == "frame"][10].to_dict()
     assert fr["arm"]["kind"] == "oscillation" and fr["overlay"]["ghost_target_px"] is None
+
+
+# ---- pain tiers in the pipeline (23 Sep) ------------------------------------------------
+def test_gentle_cup_runs_the_slow_arcs_only():
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False, tier="gentle")
+    cup = p.snapshot()["cup"]
+    assert cup["arcs_planned"] == {"slow": 2, "fast": 0}
+    full = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    assert full.snapshot()["cup"]["arcs_planned"] == {"slow": 2, "fast": 2}
+
+
+def test_apply_tier_only_ever_makes_the_session_more_careful():
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    assert p.apply_tier("gentle") == {"tier": "gentle", "changed": True}
+    arm = p.snapshot()["arm"]
+    assert (arm["tier"], arm["target_deg"], arm["hold_s"], arm["reps_per_set"]) == ("gentle", 60.0, 2.0, 6)
+    assert p.apply_tier("full") == {"tier": "gentle", "changed": False}  # never loosened
+    assert p.snapshot()["arm"]["target_deg"] == 60.0
+    cup = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    assert cup.apply_tier("gentle")["changed"] is True
+    assert cup.snapshot()["cup"]["arcs_planned"]["fast"] == 0
+
+
+def test_apply_tier_keeps_the_running_dose_once_reps_have_started():
+    from tests.test_pose import figure
+
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="flexion", hold_s=0.5, sets=1, reps=3)
+    profile = [5 + 85 * i / 15 for i in range(16)] + [90] * 10 + [90 - 85 * i / 15 for i in range(16)] + [5] * 8
+    for i, ang in enumerate(profile):
+        p.process_pose(_pose_res(figure(ang)), t=i / 15.0, frame_index=i)
+    assert p.snapshot()["arm"]["reps_total"] == 1
+    assert p.apply_tier("gentle") == {"tier": "full", "changed": False}

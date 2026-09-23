@@ -5,17 +5,21 @@ import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
-import { Chip } from '../../design/Chip'
+import { Chip, type ChipTone } from '../../design/Chip'
 import { X } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
-import { ASSIGNED_TODAY, DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
+import { DAY_ORDER, TIER_TEXT, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
+import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, GROUPS, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
 
-const BADGE: Record<Exercise['kind'], { tone: 'neutral' | 'mint'; text: string }> = {
-  assessment: { tone: 'neutral', text: 'Assessment' },
-  camera: { tone: 'mint', text: 'Camera coached' },
-  instructions: { tone: 'neutral', text: 'Instructions only' },
+/** Badge text always carries the meaning; the tone only repeats it. */
+function badge(e: Exercise): { tone: ChipTone; text: string } {
+  if (e.mode === 'demo') return { tone: 'neutral', text: 'Demo only · you tick it' }
+  if (e.weekly) return { tone: 'neutral', text: 'Weekly assessment' }
+  return { tone: 'mint', text: 'Camera coached' }
 }
-type Filter = 'assigned' | 'all' | 'equipment'
+const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest: 'red' }
+
+type Filter = 'today' | 'all' | 'equipment'
 const EQUIPMENT_KEY = 'praxis.equipment'
 
 function readEquipment(): EquipmentId[] {
@@ -60,37 +64,40 @@ type Time = '5' | '15'
 type Pain = 'none' | 'some' | 'high'
 type HasKit = 'yes' | 'no'
 
-/** Rule-based pick from three answers. High pain is a stop rule, not a recommendation. */
+/** Rule-based pick from three answers, inside today's plan. Pain 7 or more is a rest day. */
 function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pick: ExerciseId | null; why: string } {
-  if (pain === 'high') return { pick: null, why: 'Pain at 5 or more is a stop rule in your program. Skip practice today and tell your therapist at check-in.' }
-  if (!time || !pain || !kit) return { pick: null, why: 'Answer all three and Praxis will suggest one assigned task.' }
+  if (pain === 'high') return { pick: null, why: 'Pain at 7 or more is a rest day in your program. No exercises today; your therapist is told at check-in.' }
+  if (!time || !pain || !kit) return { pick: null, why: 'Answer all three and Praxis will suggest one exercise from today’s plan.' }
+  const care = pain === 'some' ? ' Pain 4–6 makes it a gentle day: fewer reps, shorter holds, no fast arcs.' : ''
+  if (time === '15') return { pick: 'pendulum', why: `Pendulum, then today’s order: Arm to the front, Arm out to the side, Waiter – cup.${care}` }
   const pick: ExerciseId = kit === 'yes' ? 'cup' : 'arm'
   const name = EXERCISES.find((e) => e.id === pick)?.name ?? pick
-  const then = time === '15' ? (pick === 'cup' ? ', then Arm to the front if you still feel fresh' : ', then Waiter – cup once the sheet is out') : ''
-  const care = pain === 'some' ? ' Keep to the slow arcs and stop if pain rises.' : ''
-  return { pick, why: `${name}${then}.${care}` }
+  return { pick, why: `${name}.${care}` }
 }
 
-/** Screen 04 · Choose exercise. Assigned tasks first; cards select on tap and the one primary
- *  action lives in the flow bar. Camera coaching only where Praxis can verify the task. */
+/** Screen 04 · Choose exercise. The locked set of 23 Sep under three headings — Exercises,
+ *  Activities, Demo only. "Today's plan" is the default day in order at the tier the check-in
+ *  pain gives (0–3 full, 4–6 gentle, ≥ 7 rest). The service enforces the same tier when the
+ *  session starts; this screen only shows it. Cards select on tap; the one primary action lives
+ *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera. */
 export function ChooseExercise() {
   const nav = useNavigate()
-  const [filter, setFilter] = useState<Filter>('assigned')
-  const [selected, setSelected] = useState<ExerciseId>(ASSIGNED_TODAY[0])
-  const [sheet, setSheet] = useState<Exercise | null>(null)
-  const [logged, setLogged] = useState<Record<string, number>>({})
+  const pain = readCheckinPain()
+  const tier = tierFor(pain)
+  const [filter, setFilter] = useState<Filter>('today')
+  const [selected, setSelected] = useState<ExerciseId>(DAY_ORDER[0])
   const [owned, setOwned] = useState<EquipmentId[]>(() => readEquipment())
   const [kitOpen, setKitOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [time, setTime] = useState<Time | null>(null)
-  const [pain, setPain] = useState<Pain | null>(null)
+  const [painAnswer, setPainAnswer] = useState<Pain | null>(null)
   const [kit, setKit] = useState<HasKit | null>(null)
   const side = readSide()
 
-  const assignedFirst = [...EXERCISES].sort((a, b) => Number(ASSIGNED_TODAY.includes(b.id)) - Number(ASSIGNED_TODAY.includes(a.id)))
-  const list = filter === 'assigned' ? assignedFirst.filter((e) => ASSIGNED_TODAY.includes(e.id)) : filter === 'equipment' ? assignedFirst.filter((e) => e.needs.every((n) => owned.includes(n))) : assignedFirst
+  const list = filter === 'today' ? DAY_ORDER.map((id) => EXERCISES.find((e) => e.id === id)!) : filter === 'equipment' ? EXERCISES.filter((e) => e.needs.every((n) => owned.includes(n))) : EXERCISES
   const current = EXERCISES.find((e) => e.id === selected) ?? EXERCISES[0]
   const currentVisible = list.some((e) => e.id === selected)
+  const rest = tier === 'rest'
 
   const saveOwned = (next: EquipmentId[]) => {
     setOwned(next)
@@ -100,8 +107,8 @@ export function ChooseExercise() {
       /* private mode */
     }
   }
-  const begin = () => nav(`/details/setup?exercise=${current.id}&side=${side}`)
-  const advice = suggest(time, pain, kit)
+  const begin = () => nav(current.mode === 'demo' ? `/details/demo?exercise=${current.id}&side=${side}` : `/details/setup?exercise=${current.id}&side=${side}`)
+  const advice = suggest(time, painAnswer, kit)
   const usePick = () => {
     if (!advice.pick) return
     setSelected(advice.pick)
@@ -112,7 +119,7 @@ export function ChooseExercise() {
     setHelpOpen(o)
     if (o) {
       setTime(null)
-      setPain(null)
+      setPainAnswer(null)
       setKit(null)
     }
   }
@@ -123,56 +130,76 @@ export function ChooseExercise() {
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0 flex-1">
             <h1 className="text-4xl">Choose your exercise</h1>
-            <p className="text-muted">Assigned exercises first. Camera coaching is on only where Praxis can verify the task.</p>
+            <p className="flex flex-wrap items-center gap-2 text-muted">
+              <Chip tone={TIER_TONE[tier]}>{TIER_TEXT[tier].chip}</Chip>
+              <span>{pain == null ? 'No check-in yet: showing your prescribed dose.' : `Pain ${pain} today: ${TIER_TEXT[tier].line}`}</span>
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Pill ariaLabel="Show" value={filter} onChange={setFilter} options={[{ value: 'assigned', label: 'Assigned' }, { value: 'all', label: 'All GRASP L2' }, { value: 'equipment', label: 'Equipment I have' }]} />
+            <Pill ariaLabel="Show" value={filter} onChange={setFilter} options={[{ value: 'today', label: "Today's plan" }, { value: 'all', label: 'All' }, { value: 'equipment', label: 'Equipment I have' }]} />
             {filter === 'equipment' && <Button variant="secondary" onClick={() => setKitOpen(true)}>What I have</Button>}
             <Button variant="secondary" onClick={() => openHelp(true)}>Help me choose</Button>
           </div>
         </div>
 
+        {rest && (
+          <Card tone="watch" as="div" className="mt-5">
+            <p className="text-xl">Rest the arm today. Nothing here will start until your pain is below 7; your therapist has been told.</p>
+          </Card>
+        )}
         {list.length === 0 && (
-          <Card className="mt-5">
+          <Card as="div" className="mt-5">
             <p className="text-xl">Nothing matches the equipment you have yet.</p>
             <Button variant="secondary" className="mt-3" onClick={() => setKitOpen(true)}>What I have</Button>
           </Card>
         )}
-        <div className="mt-5 grid auto-rows-fr grid-cols-3 gap-4">
-          {list.map((e) => {
-            const on = e.id === selected
-            return (
-              <Card key={e.id} as="article" tone={on ? 'highlight' : 'default'} padding="none" className="flex flex-col">
-                <button
-                  type="button"
-                  aria-pressed={on}
-                  aria-label={`Select ${e.name}`}
-                  aria-describedby={`choose-${e.id}-details`}
-                  onClick={() => setSelected(e.id)}
-                  className="flex flex-1 flex-col rounded-t-[var(--r-card)] p-5 text-left transition-colors hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
-                >
-                  <div className="flex w-full flex-wrap items-start justify-between gap-2">
-                    <span className="text-base text-muted">{e.category}</span>
-                    <span className="flex gap-2">
-                      {ASSIGNED_TODAY.includes(e.id) && <Chip tone="focus">Today</Chip>}
-                      <Chip tone={BADGE[e.kind].tone}>{BADGE[e.kind].text}</Chip>
-                    </span>
-                  </div>
-                  <h2 className="mt-2 text-2xl">{e.name}</h2>
-                  <div id={`choose-${e.id}-details`}>
-                    <p className="mt-1">{e.equipment}</p>
-                    <p>{e.dose}</p>
-                    <p className="mt-1 text-muted">{e.note}</p>
-                  </div>
-                </button>
-                <div className="flex items-center justify-between gap-3 px-5 pb-5">
-                  <span className={`text-base font-bold ${on ? 'text-teal-ink' : 'text-muted'}`}>{on ? 'Selected' : 'Tap to select'}</span>
-                  {e.kind === 'instructions' && <Button variant="secondary" onClick={() => setSheet(e)}>View instructions</Button>}
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+        {GROUPS.map((g) => {
+          const items = list.filter((e) => e.group === g.id)
+          if (!items.length) return null
+          return (
+            <section key={g.id} aria-label={g.title} className="mt-5">
+              <h2 className="text-2xl">{g.title}</h2>
+              <p className="text-muted">{g.blurb}</p>
+              <div className="mt-3 grid auto-rows-fr grid-cols-3 gap-4">
+                {items.map((e) => {
+                  const on = e.id === selected
+                  const order = DAY_ORDER.indexOf(e.id)
+                  const b = badge(e)
+                  const dose = rest ? e.dose : doseFor(e, tier)
+                  return (
+                    <Card key={e.id} as="article" tone={on ? 'highlight' : 'default'} padding="none" className="flex flex-col">
+                      <button
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={`Select ${e.name}`}
+                        aria-describedby={`choose-${e.id}-details`}
+                        onClick={() => setSelected(e.id)}
+                        className="flex min-h-14 flex-1 flex-col rounded-t-[var(--r-card)] p-5 text-left transition-colors hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+                      >
+                        <div className="flex w-full flex-wrap items-start justify-between gap-2">
+                          <span className="text-base text-muted">{e.category}</span>
+                          <span className="flex flex-wrap gap-2">
+                            {order >= 0 && !rest && <Chip tone="focus">{`Today · ${order + 1}`}</Chip>}
+                            <Chip tone={b.tone}>{b.text}</Chip>
+                          </span>
+                        </div>
+                        <h3 className="mt-2 text-2xl">{e.name}</h3>
+                        <div id={`choose-${e.id}-details`}>
+                          <p className="mt-1">{e.equipment}</p>
+                          <p>{dose}</p>
+                          <p className="mt-1 text-muted">{e.note}</p>
+                        </div>
+                      </button>
+                      <div className="px-5 pb-5">
+                        <span className={`text-base font-bold ${on ? 'text-teal-ink' : 'text-muted'}`}>{on ? 'Selected' : 'Tap to select'}</span>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            </section>
+          )
+        })}
       </div>
 
       <FlowBar
@@ -185,26 +212,15 @@ export function ChooseExercise() {
           </>
         }
         right={
-          current.kind === 'instructions' ? (
-            <Button onClick={() => setSheet(current)}>View instructions</Button>
+          rest ? (
+            <Button onClick={() => nav('/details')}>Back to Home</Button>
+          ) : current.mode === 'demo' ? (
+            <Button onClick={begin} disabled={!currentVisible}>Watch the demo</Button>
           ) : (
             <Button onClick={begin} disabled={!currentVisible}>Begin setup</Button>
           )
         }
       />
-
-      <Sheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)} title={sheet?.name ?? ''} description={sheet ? `${sheet.category} · ${sheet.equipment} · ${sheet.dose}. Instructions paraphrased from your program; no camera for this one.` : ''}>
-        {sheet && (
-          <>
-            <ol className="mt-4 list-decimal space-y-2 pl-6 text-xl">{sheet.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
-            <p className="mt-4 text-muted">Logged from your own count: {logged[sheet.id] ?? 0} set{(logged[sheet.id] ?? 0) === 1 ? '' : 's'} today.</p>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setLogged((l) => ({ ...l, [sheet.id]: (l[sheet.id] ?? 0) + 1 }))}>Log 1 set</Button>
-              <Button onClick={() => setSheet(null)}>Done</Button>
-            </div>
-          </>
-        )}
-      </Sheet>
 
       <Sheet open={kitOpen} onOpenChange={setKitOpen} title="What I have" description="Tick what is within reach today. The list is kept on this device and drives the Equipment I have filter.">
         <div className="mt-4 grid grid-cols-2 gap-x-6">
@@ -223,13 +239,13 @@ export function ChooseExercise() {
           </div>
           <div>
             <div className="mb-2 font-bold">Any pain right now?</div>
-            <Pill ariaLabel="Pain" value={pain ?? ''} onChange={(v) => setPain(v as Pain)} options={[{ value: 'none', label: 'None' }, { value: 'some', label: 'Some (under 5)' }, { value: 'high', label: '5 or more' }]} />
+            <Pill ariaLabel="Pain" value={painAnswer ?? ''} onChange={(v) => setPainAnswer(v as Pain)} options={[{ value: 'none', label: 'None (0–3)' }, { value: 'some', label: 'Some (4–6)' }, { value: 'high', label: '7 or more' }]} />
           </div>
           <div>
             <div className="mb-2 font-bold">Is the cup and the printed target sheet within reach?</div>
             <Pill ariaLabel="Equipment" value={kit ?? ''} onChange={(v) => setKit(v as HasKit)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
           </div>
-          <Card tone={advice.pick ? 'coach' : pain === 'high' ? 'watch' : 'default'} padding="sm">
+          <Card as="div" tone={advice.pick ? 'coach' : painAnswer === 'high' ? 'watch' : 'default'} padding="sm">
             <p className="text-xl">{advice.why}</p>
           </Card>
         </div>

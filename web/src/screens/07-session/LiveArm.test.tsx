@@ -67,6 +67,30 @@ test('completion opens the feedback overlay', () => {
   expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
+test('Arm to the front sends the flexion registry id and the tier from the check-in', () => {
+  sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 5 }))
+  mockStream([frame])
+  renderAt('/session?exercise=arm&side=left')
+  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ mode: 'arm', params: expect.objectContaining({ exercise: 'flexion', tier: 'gentle', side: 'left' }) }))
+  sessionStorage.clear()
+})
+
+test('Arm out to the side runs the same screen from the front view with its own name', () => {
+  mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'abduction', view_required: 'front', angles: { ...frame.arm.angles, view_ok: false } } }])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ params: expect.objectContaining({ exercise: 'abduction', tier: 'full' }) }))
+  expect(screen.getByText('Arm out to the side · left side')).toBeInTheDocument()
+  expect(screen.getByText(/front view · shoulder 72° of 90°/)).toBeInTheDocument()
+})
+
+test('Pendulum counts swings: no hold count, no lift/lower labels', () => {
+  mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'pendulum', kind: 'oscillation', state: 'moving', hold_s: 0, target_deg: 20, ceiling_deg: 45, reps_per_set: 10, rep: 3 } }])
+  renderAt('/session?exercise=pendulum&side=left')
+  expect(screen.getByText('Pendulum · left side')).toBeInTheDocument()
+  expect(screen.getByText(/Swing 4 of 10/)).toBeInTheDocument()
+  expect(screen.queryByText('Lift for 3')).toBeNull()
+})
+
 test('replay query is passed to the stream so no webcam is opened', () => {
   mockStream([])
   renderAt('/session?exercise=arm&side=left&replay=synthetic_arm_01')

@@ -22,6 +22,28 @@ def test_seed_matches_wireframe(tmp_path):
     assert len(st.sessions()) == len(sessions)
 
 
+def test_an_existing_database_picks_up_the_current_seed_prescription(tmp_path):
+    """A database seeded before 23 Sep holds pain_max 5 and the old exercise list. The seed
+    prescription is code, so the same version is rewritten on start; a newer version (a real
+    therapist edit) is never touched."""
+    import json
+
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    old = st.prescription() | {"stop_rules": st.prescription()["stop_rules"] | {"pain_max": 5}, "exercises": {"blocks": {}}}
+    st._db.execute("UPDATE prescriptions SET json=?", (json.dumps(old),))
+    st._db.commit()
+    assert st.prescription()["stop_rules"]["pain_max"] == 5
+    st.seed_if_empty()
+    p = st.prescription()
+    assert p["stop_rules"]["pain_max"] == 7 and "abduction" in p["exercises"] and "blocks" not in p["exercises"]
+    newer = p | {"version": 4, "stop_rules": p["stop_rules"] | {"pain_max": 6}}
+    st._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES('alex', 4, ?)", (json.dumps(newer),))
+    st._db.commit()
+    st.seed_if_empty()
+    assert st.prescription()["version"] == 4 and st.prescription()["stop_rules"]["pain_max"] == 6
+
+
 def test_save_session_and_report(tmp_path):
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()

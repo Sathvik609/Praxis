@@ -9,7 +9,7 @@ def types(evs):
 
 def test_pain_at_threshold_stops_and_flags():
     sr = StopRules(SEED_PRESCRIPTION)
-    evs = sr.on_pain(5, t=1.0)
+    evs = sr.on_pain(7, t=1.0)  # seed stop level = the rest tier (23 Sep)
     assert types(evs) == ["stop", "therapist_flag"]
     assert evs[0].payload["rule"] == "pain" and sr.stopped
     assert sr.on_pain(2, t=2.0) == [] or sr.stopped
@@ -17,7 +17,7 @@ def test_pain_at_threshold_stops_and_flags():
 
 def test_pain_below_threshold_does_nothing():
     sr = StopRules(SEED_PRESCRIPTION)
-    assert sr.on_pain(4, t=1.0) == [] and not sr.stopped
+    assert sr.on_pain(6, t=1.0) == [] and not sr.stopped  # 4-6 is the gentle tier, not a stop
 
 
 def test_new_symptoms_block_before_session():

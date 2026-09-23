@@ -7,32 +7,49 @@ import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
 import { Activity, AlertTriangle, Flag } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
-import { EXERCISES } from '../../lib/seed'
+import { api } from '../../lib/api'
+import { doseFor, readCheckinPain, tierFor } from '../../lib/plan'
+import { EXERCISES, exerciseById } from '../../lib/seed'
 
 /** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
  *  dark stage (16:10 AvatarPanel capped at 640 px wide, so ~400 px tall inside the 800 px
  *  budget); the numbered step list follows the clip; the patient confirms readiness before
- *  practice starts. Rehearsal runs the live screen with scoring off. */
+ *  practice starts. Rehearsal runs the live screen with scoring off.
+ *
+ *  Demo-only exercises (Rotate out / Rotate in, locked set of 23 Sep) end here: there is no
+ *  practice session, the patient ticks each set, and the tick goes to `/api/self_report`, which
+ *  traces it as self-reported, never as a camera-verified rep. */
 export function Demonstration() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const id = sp.get('exercise') ?? 'cup'
   const side = sp.get('side') ?? 'left'
-  const ex = EXERCISES.find((e) => e.id === id) ?? EXERCISES[1]
+  const ex = exerciseById(id) ?? EXERCISES.find((e) => e.id === 'cup')!
+  const demo = ex.mode === 'demo'
   const [ready, setReady] = useState(false)
   const [step, setStep] = useState(1)
+  const [ticked, setTicked] = useState(0)
+  const [tickError, setTickError] = useState<string | null>(null)
+  const tick = () => {
+    setTickError(null)
+    api
+      .selfReport(ex.serviceId)
+      .then((r) => (r.ok ? setTicked(r.sets_today ?? ticked + 1) : setTickError(r.error ?? 'not saved')))
+      .catch(() => setTickError('the session service is not reachable'))
+  }
   const sessionUrl = `/session?exercise=${ex.id}&${ex.id === 'nhpt' ? `hand=${side}` : `side=${side}`}`
 
   return (
     <div className="flex min-h-full flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div className="mx-auto w-full max-w-[640px]">
-          {ex.clip ? (
-            <Panel className="p-3">
-              <AvatarPanel clip={ex.clip} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
-            </Panel>
-          ) : (
-            <Card className="text-lg text-muted">This exercise is instructions-only; there is no camera demonstration. Follow the steps and log it yourself.</Card>
+          <Panel className="p-3">
+            <AvatarPanel clip={ex.clip} side={side === 'right' ? 'right' : 'left'} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
+          </Panel>
+          {demo && (
+            <Card tone="watch" as="div" className="mt-4">
+              <p className="text-lg"><b>Demo only.</b> Follow the figure and tick each set yourself. The camera does not score this one: one webcam cannot measure a forearm turning toward it honestly.</p>
+            </Card>
           )}
         </div>
         <div className="flex flex-col gap-5">
@@ -65,7 +82,7 @@ export function Demonstration() {
               <div className="flex items-start gap-3">
                 <Activity aria-hidden className="mt-1 h-5 w-5 shrink-0 text-teal-ink" />
                 <dt className="w-24 shrink-0 font-bold">Assigned</dt>
-                <dd>{ex.dose}</dd>
+                <dd>{doseFor(ex, tierFor(readCheckinPain()))}</dd>
               </div>
               {ex.watchFor && (
                 <div className="flex items-start gap-3">
@@ -83,7 +100,17 @@ export function Demonstration() {
               )}
             </dl>
           </Card>
-          <Checkbox label="I understand the movement and I'm ready" checked={ready} onChange={setReady} />
+          {demo ? (
+            <p role="status" className="text-lg">
+              {tickError
+                ? `Could not save the tick: ${tickError}.`
+                : ticked > 0
+                  ? `${ticked} set${ticked === 1 ? '' : 's'} ticked today · self-reported, not checked by the camera`
+                  : 'No sets ticked yet today.'}
+            </p>
+          ) : (
+            <Checkbox label="I understand the movement and I'm ready" checked={ready} onChange={setReady} />
+          )}
         </div>
       </div>
       <FlowBar
@@ -92,10 +119,14 @@ export function Demonstration() {
         left={
           <>
             <Button variant="secondary" onClick={() => nav('/details/coach')}>Ask a question</Button>
-            <Button variant="secondary" onClick={() => nav(`${sessionUrl}&rehearse=1`)}>Rehearse without scoring</Button>
+            {demo ? (
+              <Button variant="secondary" onClick={() => nav('/details/choose')}>Back to exercises</Button>
+            ) : (
+              <Button variant="secondary" onClick={() => nav(`${sessionUrl}&rehearse=1`)}>Rehearse without scoring</Button>
+            )}
           </>
         }
-        right={<Button disabled={!ready} onClick={() => nav(sessionUrl)}>Start practice</Button>}
+        right={demo ? <Button onClick={tick}>I did a set</Button> : <Button disabled={!ready} onClick={() => nav(sessionUrl)}>Start practice</Button>}
       />
     </div>
   )

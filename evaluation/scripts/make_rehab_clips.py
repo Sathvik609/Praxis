@@ -8,8 +8,9 @@ services/session/tools/fetch_rehab_datasets.py):
                             the composition R = Rz·Rx·Ry (chosen empirically: it is the only reading
                             under which the elbow angle is stable across m07/m09/m10; the paper's
                             literal "YXZ" reading doubles the elbow scatter). Forward kinematics
-                            here rebuilds world joints. Movements used: m07 abduction, m08 extension,
-                            m09 internal–external rotation (90/90 position), m10 scaption.
+                            here rebuilds world joints. Movements used: m07 abduction and m09
+                            internal–external rotation (90/90 position). m08 extension and m10
+                            scaption were dropped with the locked exercise set of 23 Sep 2026.
   IRDS     (CC BY 4.0)     Kinect One, 25 joints, 30 Hz, metres, one repetition per file.
                             Gesture 2/3 "shoulder flexion" (straight arm to the front). The gesture
                             names and the Simplified column labels are mirror images of each other
@@ -163,7 +164,7 @@ UIPRMD_PARENT = {
     "l_upper_leg": "waist", "l_lower_leg": "l_upper_leg", "l_foot": "l_lower_leg", "l_toes": "l_foot",
     "r_upper_leg": "waist", "r_lower_leg": "r_upper_leg", "r_foot": "r_lower_leg", "r_toes": "r_foot",
 }
-UIPRMD_MOVEMENTS = {7: "standing shoulder abduction", 8: "standing shoulder extension", 9: "standing shoulder internal-external rotation", 10: "standing shoulder scaption"}
+UIPRMD_MOVEMENTS = {7: "standing shoulder abduction", 9: "standing shoulder internal-external rotation"}  # m08, m10 unused since 23 Sep
 IRDS_GESTURES = {0: "elbow flexion", 1: "elbow flexion", 2: "shoulder flexion", 3: "shoulder flexion", 4: "shoulder abduction", 5: "shoulder abduction", 6: "shoulder forward elevation (both arms)"}
 IRDS_COLS = {"SpineBase": 0, "SpineMid": 1, "Neck": 2, "Head": 3, "ShoulderLeft": 4, "ElbowLeft": 5, "WristLeft": 6, "HandLeft": 7, "ShoulderRight": 8, "ElbowRight": 9, "WristRight": 10, "HandRight": 11, "SpineShoulder": 20}
 
@@ -384,10 +385,8 @@ EXERCISES: tuple[Exercise, ...] = (
              ("Lift the straight arm forward, thumb up, trunk still", "Hold at the top, shoulders level", "Lower slowly back to your side")),
     Exercise("abduction", "Shoulder abduction", "ui-prmd", ("m07",), (("ui-prmd", "m07"), ("irds", "g4"), ("irds", "g5")), "frontal", "front", "elevation",
              ("Raise the straight arm out to the side, palm forward", "Hold at the top, no shrugging", "Lower slowly")),
-    Exercise("scaption", "Shoulder scaption", "ui-prmd", ("m10",), (("ui-prmd", "m10"),), "scapular", "front", "elevation",
-             ("Raise the arm halfway between front and side, thumb up", "Hold at the top", "Lower slowly")),
-    Exercise("extension", "Shoulder extension", "ui-prmd", ("m08",), (("ui-prmd", "m08"),), "sagittal", "side", "elevation",
-             ("Move the straight arm back behind you, trunk still", "Hold", "Return to your side")),
+    # The rotations are demo only in the app (a single webcam cannot score them): the avatar
+    # performs these clips and the patient ticks the set.
     # m09 is performed in the 90/90 position (upper arm out to the side, elbow bent); the forearm
     # sweeps in the sagittal plane, which only the side camera shows face-on
     Exercise("external_rotation", "Shoulder external rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "side", "rotation",

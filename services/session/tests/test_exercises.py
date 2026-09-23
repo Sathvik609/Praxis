@@ -1,4 +1,4 @@
-"""E-SVC-2: the shoulder exercise registry and its camera-relative metrics.
+"""The exercise registry (locked set of 23 Sep 2026) and its camera-relative metrics.
 
 Synthetic landmark figures only (never a live camera). The figures are the same 33-point
 BlazePose layout the tracker returns; `tests/test_pose.py::figure` builds the side view.
@@ -7,15 +7,13 @@ BlazePose layout the tracker returns; `tests/test_pose.py::figure` builds the si
 import numpy as np
 import pytest
 
-from praxis_session.perception.exercises import EXERCISES, GENTLE_IDS, ORDER, get, resolve
+from praxis_session.perception.exercises import DEMO_IDS, EXERCISES, ORDER, Exercise, get, resolve
 from praxis_session.perception.pose import (
     ELBOW,
-    HIP,
     SHOULDER,
     WRIST,
     PoseResult,
     pendulum_swing_deg,
-    rotation_deg,
     shoulder_elevation_deg,
 )
 from tests.test_pose import figure
@@ -28,28 +26,6 @@ def _res(lm):
         world=np.zeros((33, 3), np.float32),
         conf=0.9,
     )
-
-
-def front_figure(lateral: float = 0.0, side: str = "left"):
-    """Front view, elbow tucked at the waist and bent 90° so the forearm points at the camera.
-
-    `lateral` is the wrist's sideways offset from the elbow in px: positive = away from the
-    body (external rotation), negative = across the body (internal). Upper arm is 120 px, so
-    lateral = 120 is a 90° rotation in the image plane.
-    """
-    lm = np.zeros((33, 2), np.float32)
-    hip_mid = np.array([320.0, 400.0])
-    sh_mid = hip_mid + [0.0, -200.0]
-    sep = 160.0  # front view: shoulders 0.8 torso lengths apart
-    li, ri = (0, 1) if side == "left" else (1, 0)
-    out = -1.0 if side == "left" else 1.0  # away from the other shoulder, in +/- x
-    lm[SHOULDER[li]], lm[SHOULDER[ri]] = sh_mid, sh_mid + [-out * sep, 0.0]
-    lm[HIP[li]], lm[HIP[ri]] = hip_mid, hip_mid + [-out * sep, 0.0]
-    lm[ELBOW[li]] = lm[SHOULDER[li]] + [0.0, 120.0]
-    lm[WRIST[li]] = lm[ELBOW[li]] + [out * lateral, 0.0]
-    lm[ELBOW[ri]] = lm[SHOULDER[ri]] + [0.0, 120.0]
-    lm[WRIST[ri]] = lm[ELBOW[ri]] + [0.0, 100.0]
-    return lm
 
 
 def swing_figure(deg: float, side: str = "left"):
@@ -74,15 +50,6 @@ def test_abduction_ninety_in_the_front_view():
     assert abs(shoulder_elevation_deg(_res(figure(45, frontal=True)), "left") - 45) < 2
 
 
-def test_external_rotation_is_positive_and_internal_negative():
-    assert abs(rotation_deg(_res(front_figure(0.0)), "left")) < 2
-    assert rotation_deg(_res(front_figure(60.0)), "left") > 25
-    assert abs(rotation_deg(_res(front_figure(120.0)), "left") - 90) < 2
-    assert rotation_deg(_res(front_figure(-60.0)), "left") < -25
-    # mirrored on the right side
-    assert abs(rotation_deg(_res(front_figure(120.0, side="right")), "right") - 90) < 2
-
-
 def test_pendulum_swing_is_signed_and_zero_at_rest():
     assert abs(pendulum_swing_deg(_res(swing_figure(0.0)), "left")) < 1
     assert abs(pendulum_swing_deg(_res(swing_figure(20.0)), "left") - 20) < 2
@@ -92,22 +59,63 @@ def test_pendulum_swing_is_signed_and_zero_at_rest():
 
 
 # ---- registry --------------------------------------------------------------------------
-def test_registry_holds_the_seven_shoulder_exercises():
-    assert set(EXERCISES) == {
-        "pendulum",
-        "flexion",
-        "abduction",
-        "scaption",
-        "extension",
-        "external_rotation",
-        "internal_rotation",
-    }
-    assert ORDER[0] == "pendulum" and set(ORDER) == set(EXERCISES)
+LOCKED = {
+    "pendulum",
+    "flexion",
+    "abduction",
+    "cup",
+    "nhpt",
+    "external_rotation",
+    "internal_rotation",
+}
+
+
+def test_registry_holds_the_locked_seven_of_23_sep():
+    """Three exercises + two activities camera-coached, two rotations demo-only (23 Sep)."""
+    assert set(EXERCISES) == LOCKED
+    assert "scaption" not in EXERCISES and "extension" not in EXERCISES
+    assert ORDER == ("pendulum", "flexion", "abduction", "cup", "nhpt", "external_rotation", "internal_rotation")
+    groups = {ex.id: ex.group for ex in EXERCISES.values()}
+    assert [i for i in ORDER if groups[i] == "exercise"] == ["pendulum", "flexion", "abduction"]
+    assert [i for i in ORDER if groups[i] == "activity"] == ["cup", "nhpt"]
+    assert [i for i in ORDER if groups[i] == "demo"] == ["external_rotation", "internal_rotation"]
     for ex in EXERCISES.values():
-        assert ex.view in ("side", "front") and ex.kind in ("hold", "oscillation")
-        assert 0 < ex.target_deg <= ex.ceiling_deg
+        assert ex.mode in ("coached", "demo") and ex.category in ("exercise", "activity")
         assert ex.steps and all(isinstance(s, str) for s in ex.steps)
-        assert ex.metric(_res(figure(0)), "left") is not None
+        assert ex.dose
+        if ex.pipeline == "arm":
+            assert ex.view in ("side", "front") and ex.kind in ("hold", "oscillation")
+            assert 0 < ex.target_deg <= ex.ceiling_deg
+            assert ex.metric is not None and ex.metric(_res(figure(0)), "left") is not None
+
+
+def test_the_lifts_are_scored_from_the_view_that_shows_them():
+    assert EXERCISES["flexion"].view == "side" and EXERCISES["flexion"].name == "Arm to the front"
+    assert EXERCISES["abduction"].view == "front" and EXERCISES["abduction"].name == "Arm out to the side"
+    assert EXERCISES["pendulum"].kind == "oscillation"
+    assert EXERCISES["cup"].pipeline == "cup" and EXERCISES["nhpt"].pipeline == "nhpt"
+    assert EXERCISES["nhpt"].frequency == "weekly" and EXERCISES["cup"].frequency == "daily"
+
+
+def test_demo_exercises_have_no_camera_metric_and_no_pipeline():
+    """A single webcam cannot measure the rotations honestly, so nothing can score them."""
+    assert DEMO_IDS == ("external_rotation", "internal_rotation")
+    for i in DEMO_IDS:
+        ex = EXERCISES[i]
+        assert ex.mode == "demo" and ex.pipeline is None and ex.metric is None
+        d = ex.to_dict()
+        assert d["mode"] == "demo" and d["group"] == "demo"
+        assert d["camera_verified"] is False and d["self_ticked"] is True
+    for i in ("pendulum", "flexion", "abduction", "cup", "nhpt"):
+        d = EXERCISES[i].to_dict()
+        assert d["mode"] == "coached" and d["camera_verified"] is True and d["self_ticked"] is False
+
+
+def test_a_demo_entry_with_a_pipeline_or_an_arm_entry_without_a_metric_is_refused():
+    with pytest.raises(ValueError):
+        Exercise(id="x", name="X", clip="x", view="front", mode="demo", pipeline="arm", metric=shoulder_elevation_deg)
+    with pytest.raises(ValueError):
+        Exercise(id="y", name="Y", clip="y", view="front", pipeline="arm", metric=None)
 
 
 def test_flexion_defaults_match_the_shipped_arm_exercise():
@@ -116,18 +124,43 @@ def test_flexion_defaults_match_the_shipped_arm_exercise():
     assert ex.tolerance_deg == 10.0 and ex.start_below_deg == 25.0 and ex.view == "side"
 
 
-def test_gentle_tier_softens_the_four_gentle_exercises():
-    assert GENTLE_IDS == ("pendulum", "flexion", "abduction", "external_rotation")
+def test_gentle_tier_softens_within_the_prescription():
     g = resolve("abduction", "gentle")
     assert g.target_deg == 60.0 and g.hold_s == 2.0 and g.reps == 6
     assert resolve("abduction", "full").target_deg == 90.0
     assert resolve("flexion", "gentle").hold_s == 2.0
+    assert resolve("pendulum", "gentle").reps == 8
+    cup = resolve("cup", "gentle")
+    assert cup.slow_arcs == 2 and cup.fast_arcs == 0 and "fast" not in cup.dose
+    assert "fast" in resolve("cup", "full").dose
     assert "×" in g.dose
+
+
+def test_gentle_overrides_outside_the_allowed_adaptations_are_dropped_or_clamped():
+    """Guardrail in code: a tier can only move a field the prescription allows, inside its range."""
+    from praxis_session.prescription import SEED_PRESCRIPTION
+
+    narrow = SEED_PRESCRIPTION.model_copy(deep=True)
+    narrow.allowed_adaptations["abduction"] = {"target_deg": [70.0, 90.0]}  # no hold_s, no reps
+    g = resolve("abduction", "gentle", narrow)
+    assert g.target_deg == 70.0  # clamped up into the allowed range
+    assert g.hold_s == EXERCISES["abduction"].hold_s and g.reps == EXERCISES["abduction"].reps
+    nothing = SEED_PRESCRIPTION.model_copy(deep=True)
+    nothing.allowed_adaptations.pop("cup")
+    assert resolve("cup", "gentle", nothing).fast_arcs == 2
+
+
+def test_rest_and_unknown_tiers_are_not_runnable():
+    with pytest.raises(ValueError):
+        resolve("flexion", "rest")
+    with pytest.raises(ValueError):
+        resolve("flexion", "turbo")
 
 
 def test_unknown_exercise_falls_back_to_flexion():
     assert get("nope").id == "flexion" and get(None).id == "flexion"
     assert get("pendulum").id == "pendulum"
+    assert get("scaption").id == "flexion" and get("extension").id == "flexion"
 
 
 def test_reference_ranges_loader_reads_mean_minus_one_sd_of_correct_reps(tmp_path, monkeypatch):
@@ -165,7 +198,7 @@ def test_registry_falls_back_to_constants_without_the_reference_file(tmp_path):
 
     assert ex_mod.load_reference_ranges(tmp_path / "missing.json") == {}
     plain = ex_mod.build_registry({})
-    assert plain["scaption"].target_deg == 75.0 and plain["internal_rotation"].target_deg == 25.0
+    assert plain["abduction"].target_deg == 90.0 and plain["pendulum"].target_deg == 20.0
 
 
 def test_reference_targets_are_clamped_to_the_in_code_ceiling():
@@ -173,6 +206,8 @@ def test_reference_targets_are_clamped_to_the_in_code_ceiling():
     must never raise one."""
     import praxis_session.perception.exercises as ex_mod
 
-    reg = ex_mod.build_registry({"abduction": 146.0, "internal_rotation": 22.0})
+    reg = ex_mod.build_registry({"abduction": 146.0, "flexion": 70.0, "internal_rotation": 22.0})
     assert reg["abduction"].target_deg == 90.0 == reg["abduction"].ceiling_deg
-    assert reg["internal_rotation"].target_deg == 22.0
+    assert reg["flexion"].target_deg == 70.0
+    # demo entries have nothing to score, so a reference never gives them a target
+    assert reg["internal_rotation"] == ex_mod.build_registry({})["internal_rotation"]

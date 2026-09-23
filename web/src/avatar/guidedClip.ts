@@ -2,9 +2,11 @@ import type { ComponentProps } from 'react'
 import type { AvatarPanel } from './AvatarPanel'
 import { CLIPS } from './clips'
 
-/** The seven shoulder exercises in the service registry (E-SVC-2). Each one's recorded clip is
+/** The shoulder entries of the service registry (locked set, 23 Sep): the three camera-coached lifts
+ *  and the two demo-only rotations (the avatar performs them; the camera never scores them). The
+ *  cup and peg activities use `CLIPS`. Each one's recorded clip is
  *  named after it. */
-export const REHAB_EXERCISES: string[] = ['pendulum', 'flexion', 'abduction', 'scaption', 'extension', 'external_rotation', 'internal_rotation']
+export const REHAB_EXERCISES: string[] = ['pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation']
 
 /** Capability probe, not an import: the rehab clips (`avatar/clips/rehab/*.json`) and the
  *  `figure="skeleton"` mode land on their own branch. `import.meta.glob` is `{}` here and the
