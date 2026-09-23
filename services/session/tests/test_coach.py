@@ -135,9 +135,17 @@ def test_exercise_start_introduces_that_exercise_with_its_clip():
     assert len(d) == 1 and d[0].action == "instruct" and d[0].cue_id == "arm_intro"
     assert d[0].text.startswith("Pendulum:") and d[0].evidence == [e.id]
     assert d[0].ui["avatar_clip"] == "pendulum"
-    e2 = make_event("exercise_start", t=1.0, exercise="external_rotation", name="Rotate out")
-    d2 = RuleCoach().decide(ctx("arm", [e2], 1.0, snapshot=arm_snap("external_rotation")))
-    assert "elbow" in d2[0].text.lower() and d2[0].ui["avatar_clip"] == "rotationOut"
+    e2 = make_event("exercise_start", t=1.0, exercise="abduction", name="Arm out to the side")
+    d2 = RuleCoach().decide(ctx("arm", [e2], 1.0, snapshot=arm_snap("abduction")))
+    assert d2[0].text.startswith("Arm out to the side:") and d2[0].ui["avatar_clip"] == "abduction"
+
+
+def test_the_coach_has_no_cues_for_dropped_or_demo_only_exercises():
+    """Scaption and extension were dropped on 23 Sep; the rotations are demo only, so no
+    camera event can ever reach the coach for them."""
+    from praxis_session.coach.rules import DONE, INTRO
+
+    assert set(INTRO) == set(DONE) == {"pendulum", "flexion", "abduction"}
 
 
 def test_set_summary_cites_verified_count_and_best_angle():

@@ -32,15 +32,22 @@ SEED_PRESCRIPTION = Prescription(
     level=2,
     side="left",
     clinician="Dr. Anita Rao, OT",
+    # The locked set of 23 Sep 2026, keyed by the registry's `rx` (flexion keeps "arm").
     exercises={
-        "nhpt": {"frequency": "weekly", "hands": ["left"]},
-        "cup": {"slow_arcs": 2, "fast_arcs": 2},
+        "pendulum": {"sets": 2, "reps": 10},
         "arm": {"sets": 2, "reps": 8, "hold_s": 3.0, "target_deg": 90.0, "ceiling_deg": 90.0, "weight_lb": 0.5},
-        "blocks": {"sets": 3, "reps": 5, "mode": "instructions"},
+        "abduction": {"sets": 2, "reps": 8, "hold_s": 3.0, "target_deg": 90.0, "ceiling_deg": 90.0},
+        "cup": {"slow_arcs": 2, "fast_arcs": 2},
+        "nhpt": {"frequency": "weekly", "hands": ["left"]},
+        "external_rotation": {"sets": 2, "reps": 8, "hold_s": 3.0, "mode": "demo"},
+        "internal_rotation": {"sets": 2, "reps": 8, "hold_s": 3.0, "mode": "demo"},
     },
+    # What the gentle pain tier (and the coach) may change, and how far. Nothing else moves.
     allowed_adaptations={
+        "pendulum": {"reps": [8, 10]},
+        "arm": {"hold_s": [2.0, 3.0], "target_deg": [60.0, 90.0], "reps": [6, 8]},
+        "abduction": {"hold_s": [2.0, 3.0], "target_deg": [60.0, 90.0], "reps": [6, 8]},
         "cup": {"fast_arcs": True},
-        "arm": {"hold_s": [2.0, 3.0], "target_deg": [60.0, 90.0]},
     },
     stop_rules=StopRuleThresholds(),
 )

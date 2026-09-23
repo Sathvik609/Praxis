@@ -437,3 +437,20 @@ def test_ws_arm_session_is_saved_with_its_exercise(client):
     row = client.get(f"/api/sessions/{sid}").json()
     assert row["exercise"] == "abduction"
     assert row["title"] == "Arm out to the side"
+
+
+def test_ws_arm_refuses_a_demo_only_exercise(client):
+    """Rotate out / Rotate in are demo only (23 Sep): the socket never scores them."""
+    for ex in ("external_rotation", "internal_rotation"):
+        with client.websocket_connect(f"/session?mode=arm&exercise={ex}") as ws:
+            msg = ws.receive_json()
+        assert msg["type"] == "error" and msg["code"] == "demo_only" and msg["exercise"] == ex
+
+
+def test_ws_arm_refuses_a_sheet_activity_and_an_unknown_tier(client):
+    with client.websocket_connect("/session?mode=arm&exercise=cup") as ws:
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and msg["code"] == "bad_exercise"
+    with client.websocket_connect("/session?mode=arm&exercise=flexion&tier=turbo") as ws:
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and msg["code"] == "bad_tier"

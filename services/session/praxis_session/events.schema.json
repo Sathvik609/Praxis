@@ -441,7 +441,7 @@
       ]
     },
     "exercise": {
-      "description": "Exercise id from perception/exercises.py (pendulum, flexion, abduction, scaption, extension, external_rotation, internal_rotation).",
+      "description": "Arm-FSM exercise id from perception/exercises.py (pendulum, flexion, abduction); on self_report a demo-only id (external_rotation, internal_rotation).",
       "type": "string"
     },
     "name": {

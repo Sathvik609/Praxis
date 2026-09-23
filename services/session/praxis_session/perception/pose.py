@@ -146,36 +146,17 @@ def _sides(side: str) -> tuple[int, int]:
 def shoulder_elevation_deg(res: PoseResult, side: str) -> float:
     """Image-plane angle at the shoulder between the upper arm and the trunk.
 
-    In the **side** view this is shoulder flexion (arm to the front) or extension (arm to the
-    back) — the sign is not recoverable, so both read as a positive elevation. In the **front**
-    view the same number is abduction; scaption (the arm 30° forward of the frontal plane)
-    projects onto the same measurement, so the registry treats scaption as abduction with a
-    lower target and says so. Cross-body motion is indistinguishable from abduction here.
+    In the **side** view this is shoulder flexion (Arm to the front); the sign is not
+    recoverable, so a reach behind the body would also read as a positive elevation. In the
+    **front** view the same number is abduction (Arm out to the side); cross-body motion is
+    indistinguishable from abduction here, which is one reason scaption was dropped (23 Sep).
+    Shoulder rotation has no metric at all: the forearm points at a single webcam, so Rotate
+    out / Rotate in are demo-only and self-ticked (`exercises.py`).
     """
     i, _ = _sides(side)
     lm = res.landmarks_px
     sh, el, hp = lm[SHOULDER[i]], lm[ELBOW[i]], lm[HIP[i]]
     return round(_angle(el - sh, hp - sh), 1)
-
-
-def rotation_deg(res: PoseResult, side: str) -> float:
-    """Front-view shoulder rotation with the elbow tucked and bent ~90°: **positive = external**
-    (the wrist swings away from the body), negative = internal (the wrist crosses toward it).
-
-    The forearm points at the camera, so its image length is a projection. We take the wrist's
-    sideways offset from the elbow and divide by the *upper arm* length as a stand-in for the
-    forearm's true length (they are close in these landmarks), then arcsine it. This is an
-    approximation validated on synthetic landmarks only — see docs/RISKS.md.
-    """
-    i, j = _sides(side)
-    lm = res.landmarks_px
-    sh, el, wr, sh_o = lm[SHOULDER[i]], lm[ELBOW[i]], lm[WRIST[i]], lm[SHOULDER[j]]
-    inward = 1.0 if sh_o[0] >= sh[0] else -1.0  # +x points at the other shoulder
-    ref = float(np.linalg.norm(el - sh))
-    if ref < 1e-6:
-        return 0.0
-    lateral = -float(wr[0] - el[0]) * inward  # + = away from the body
-    return round(float(np.degrees(np.arcsin(np.clip(lateral / ref, -1.0, 1.0)))), 1)
 
 
 def pendulum_swing_deg(res: PoseResult, side: str) -> float:

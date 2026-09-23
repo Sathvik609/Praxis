@@ -32,6 +32,7 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
+from praxis_session.perception.exercises import EXERCISES, RUNNABLE_TIERS
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.prescription import SEED_PRESCRIPTION
@@ -208,6 +209,11 @@ async def session_ws(
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
         return
+    refusal = _refuse_exercise(mode, exercise, tier)
+    if refusal is not None:
+        await ws.send_text(refusal.to_json())
+        await ws.close()
+        return
     pipeline: SessionPipeline | None = None
     if mode != "heartbeat":
         try:
@@ -247,6 +253,22 @@ async def session_ws(
         await _replay_loop(ws, replay, pipeline, coach, stats)
         return
     await _live_loop(ws, pipeline, coach, stats)
+
+
+def _refuse_exercise(mode: str, exercise: str | None, tier: str) -> Event | None:
+    """Guardrails before any pipeline exists. A demo-only exercise (Rotate out / Rotate in) is
+    never scored by the camera; a sheet activity is not an arm exercise; a tier outside
+    full/gentle has nothing to run (pain >= 7 is a rest day, handled by the stop rule)."""
+    if tier not in RUNNABLE_TIERS:
+        return make_event("error", code="rest_day" if tier == "rest" else "bad_tier", tier=tier)
+    if mode != "arm" or not exercise or exercise not in EXERCISES:
+        return None  # unknown ids keep the old behaviour: Arm to the front
+    ex = EXERCISES[exercise]
+    if ex.mode == "demo":
+        return make_event("error", code="demo_only", exercise=exercise, text=f"{ex.name} is demo only: watch the figure and tick it yourself. The camera does not score it.")
+    if ex.pipeline != "arm":
+        return make_event("error", code="bad_exercise", exercise=exercise, mode=mode)
+    return None
 
 
 def _is_disconnect(msg: dict) -> bool:
