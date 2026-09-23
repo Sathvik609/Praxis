@@ -53,6 +53,8 @@ action's clip.
 armature-space rotations. The posed skeleton therefore has the same world bone directions as
 `rig.ts` forward kinematics.
 
+**90° ceiling.** No clip lifts the upper arm above 90° (torso-relative). Recorded reps that go higher are scaled in their own plane so they peak at 90°, the same rule as `capElevation` in `rehabClips.ts`. The sidecar records `ceiling_deg` and `scaled_from_deg`.
+
 **Table tasks.** These are authored as targets. An analytic two-bone IK puts the grip point on
 `anchor_dot_k`, or the pinch point on `anchor_hole_k`. The cup and pegs are then baked to follow
 the hand while they are carried.

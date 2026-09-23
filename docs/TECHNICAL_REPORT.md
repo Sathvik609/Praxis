@@ -209,6 +209,8 @@ A sidecar, `praxis_avatar.meta.json`, carries each action's duration, one-rep sp
 - every loop is seamless;
 - the sidecar matches the GLB.
 
+**90° ceiling for the demonstration (23 Sep).** The avatar never lifts the upper arm above the 90° prescription ceiling. Every recorded rep that goes higher (flexion 165°, abduction 157°, the rotations' 90/90 start at 96–101°) is scaled so it peaks at 90°: at each key the upper arm turns back toward hanging down, in its own plane of elevation, by the same proportion. Timing, plane, elbow bend and trunk are kept, and the readout says "scaled to 90°". The web skeleton (`capElevation`) and the Blender GLB (`cap_elevation`) implement the same rule. Tests sample every frame of both, and check the GLB against the web clips key by key.
+
 The app still renders the procedural skeleton described above until the Three.js `GLTFLoader` / `AnimationMixer` playback lands; the skeleton then remains the fallback. Like everything else here, the new figure demonstrates and never scores.
 
 ## 4. Coach

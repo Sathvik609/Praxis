@@ -1,5 +1,5 @@
 import { mirror } from './clips'
-import { LOOP_BRIDGE_S, REHAB_CLIP_NAMES, REHAB_CLIPS, REHAB_JSON } from './rehabClips'
+import { AVATAR_ELEVATION_CEILING_DEG, LOOP_BRIDGE_S, REHAB_CLIP_NAMES, REHAB_CLIPS, REHAB_JSON, REHAB_JSON_RECORDED, torsoElevationDeg, upperArmDir } from './rehabClips'
 import { JOINTS, forwardKinematics, type Vec3 } from './rig'
 import { sample } from './sampler'
 
@@ -104,9 +104,10 @@ test('arc cues: elevation arcs hang from straight down, rotation arcs span the f
   expect(abd.kind).toBe('elevation')
   expect(abd.startDir).toEqual([0, -1, 0])
   expect(abd.targetDeg).toBeCloseTo(REHAB_JSON.abduction.target_deg, 6)
-  expect(abd.peakDir[1]).toBeGreaterThan(0.5) // a 158° abduction ends over the head …
-  expect(abd.peakDir[0]).toBeGreaterThan(0.2) // … on the figure's left, not in front (|z| small)
-  expect(Math.abs(abd.peakDir[2])).toBeLessThan(0.3)
+  expect(abd.targetDeg).toBeCloseTo(AVATAR_ELEVATION_CEILING_DEG, 6)
+  expect(Math.abs(abd.peakDir[1])).toBeLessThan(0.2) // capped at 90°: level with the shoulder …
+  expect(abd.peakDir[0]).toBeGreaterThan(0.85) // … out on the figure's left (recorded plane a little forward)
+  expect(Math.abs(abd.peakDir[2])).toBeLessThan(0.5) // recorded plane ~25° forward of pure frontal
   const ext = REHAB_CLIPS.external_rotation.arc!
   expect(ext.kind).toBe('rotation')
   expect(ext.joint).toBe('lElbow')
@@ -119,4 +120,52 @@ test('arc cues: elevation arcs hang from straight down, rotation arcs span the f
   const mid = REHAB_JSON.abduction.keys.find((k) => k.check && k.check.elevation_deg > 60 && k.check.elevation_deg < 120)!
   const p = forwardKinematics(sample(m, mid.t).angles)
   expect(p.rElbow[0]).toBeLessThan(p.rShoulder[0] - 0.1) // half-way up, the right arm is out to the right
+})
+
+test('no clip lifts the upper arm above the 90° ceiling (torso-relative), at any sampled instant', () => {
+  for (const name of REHAB_CLIP_NAMES) {
+    const clip = REHAB_CLIPS[name]
+    for (let t = 0; t <= clip.duration; t += 0.02) {
+      const a = sample(clip, t).angles
+      expect(torsoElevationDeg(a.lShoulder), `${name} t=${t.toFixed(2)}`).toBeLessThan(AVATAR_ELEVATION_CEILING_DEG + 1)
+    }
+  }
+})
+
+test('scaling keeps the recorded rep: elevation shrinks in proportion, the plane and the elbow bend are unchanged', () => {
+  for (const name of ['flexion', 'abduction', 'external_rotation', 'internal_rotation'] as const) {
+    const rec = REHAB_JSON_RECORDED[name]
+    const cap = REHAB_JSON[name]
+    const recPeak = Math.max(...rec.keys.map((k) => torsoElevationDeg(k.lShoulder.map((v) => v * D) as Vec3)))
+    expect(recPeak, name).toBeGreaterThan(AVATAR_ELEVATION_CEILING_DEG) // every one of these went past 90°
+    expect(cap.scaled).toMatchObject({ ceiling_deg: 90 })
+    expect(cap.scaled!.recorded_peak_deg).toBeCloseTo(recPeak, 1)
+    const s = AVATAR_ELEVATION_CEILING_DEG / recPeak
+    rec.keys.forEach((rk, i) => {
+      const ck = cap.keys[i]
+      expect(ck.t).toBe(rk.t)
+      expect(ck.lElbow).toEqual(rk.lElbow)
+      expect(ck.spine).toEqual(rk.spine)
+      const e0 = torsoElevationDeg(rk.lShoulder.map((v) => v * D) as Vec3)
+      const e1 = torsoElevationDeg(ck.lShoulder.map((v) => v * D) as Vec3)
+      expect(e1, `${name} key ${i}`).toBeCloseTo(e0 * s, 1)
+      // same plane of elevation: the horizontal heading of the upper arm is kept when it is lifted
+      if (e0 > 20) {
+        const heading = (v: Vec3) => {
+          const u = upperArmDir(v.map((x) => x * D) as Vec3)
+          return Math.atan2(u[0], u[2]) / D
+        }
+        const dh = heading(ck.lShoulder) - heading(rk.lShoulder)
+        expect(Math.abs(((dh + 540) % 360) - 180), `${name} heading key ${i}`).toBeLessThan(1)
+      }
+    })
+  }
+  // pendulum stays below the ceiling and is untouched
+  expect(REHAB_JSON.pendulum.scaled).toBeUndefined()
+  expect(REHAB_JSON.pendulum.keys).toEqual(REHAB_JSON_RECORDED.pendulum.keys)
+})
+
+test('the stage readout says the rep was scaled', () => {
+  expect(REHAB_CLIPS.flexion.source).toMatch(/scaled to 90°/)
+  expect(REHAB_CLIPS.pendulum.source).not.toMatch(/scaled/)
 })

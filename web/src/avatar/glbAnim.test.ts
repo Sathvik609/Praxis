@@ -1,18 +1,21 @@
 /** Animation contract for the Blender-built avatar (`web/blender/animate.py` → `praxis_avatar.glb`
  *  + `praxis_avatar.meta.json`). The GLB is sampled and posed here by an independent reader
  *  (`src/test/glb.ts`), so these checks do not trust Blender's own bookkeeping:
- *  - the real-motion clips reproduce the dataset's upper-arm and forearm directions (glTF's frame
- *    is the rig.ts frame, so the JSON `check` vectors compare directly);
+ *  - the real-motion clips reproduce the upper-arm and forearm directions of the web app's own
+ *    clips after the 90° ceiling (`REHAB_JSON`, scaled in TypeScript), so the Blender and web
+ *    implementations of that rule are checked against each other (glTF's frame is the rig.ts frame);
+ *  - no standing clip lifts the upper arm past the ceiling;
  *  - the cup lands on the dot and each peg in the hole the caption names;
  *  - every action loops without a jump, and the sidecar agrees with the GLB. */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { Glb, angleDeg, len, sub, type V3 } from '../test/glb'
+import { Glb, angleDeg, len, sub, unit, type V3 } from '../test/glb'
+import { AVATAR_ELEVATION_CEILING_DEG, REHAB_JSON } from './rehabClips'
 
 const DIR = resolve(__dirname, '../../public/avatar')
 const glb = new Glb(resolve(DIR, 'praxis_avatar.glb'))
 type Target = { t: number; kind: 'dot' | 'hole'; index: number; landed?: boolean }
-type ActionMeta = { duration: number; loop: boolean; camera: 'front' | 'side'; props: string[]; rep: [number, number]; steps: { t: number; step: number; caption: string }[]; targets: Target[]; seated: boolean }
+type ActionMeta = { ceiling_deg?: number; scaled_from_deg?: number; duration: number; loop: boolean; camera: 'front' | 'side'; props: string[]; rep: [number, number]; steps: { t: number; step: number; caption: string }[]; targets: Target[]; seated: boolean }
 const meta = JSON.parse(readFileSync(resolve(DIR, 'praxis_avatar.meta.json'), 'utf8')) as { fps: number; actions: Record<string, ActionMeta> }
 
 const ACTIONS = ['idle', 'pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation', 'waiter_cup', 'nhpt']
@@ -53,12 +56,10 @@ test('seated table tasks show their props; standing exercises show none', () => 
   }
 })
 
-type Check = { ua: V3; fa: V3 }
-type RehabJson = { name: string; camera: string; keys: { t: number; check?: Check }[] }
-const rehab = (n: string) => JSON.parse(readFileSync(resolve(__dirname, `clips/rehab/${n}.json`), 'utf8')) as RehabJson
+const rehab = (n: 'flexion' | 'abduction' | 'external_rotation' | 'internal_rotation') => REHAB_JSON[n]
 
-test.each(['flexion', 'abduction', 'external_rotation', 'internal_rotation'])(
-  '%s reproduces the recorded upper-arm and forearm directions at every key (< 1.5°)',
+test.each(['flexion', 'abduction', 'external_rotation', 'internal_rotation'] as const)(
+  '%s reproduces the web clip\'s upper-arm and forearm directions at every key (< 1.5°)',
   (name) => {
     const clip = rehab(name)
     expect(meta.actions[name].camera).toBe(clip.camera)
@@ -70,6 +71,24 @@ test.each(['flexion', 'abduction', 'external_rotation', 'internal_rotation'])(
       const fa = sub(at(w, 'hand_L'), at(w, 'forearm_L'))
       expect(angleDeg(ua, k.check!.ua), `${name} ua t=${k.t}`).toBeLessThan(1.5)
       expect(angleDeg(fa, k.check!.fa), `${name} fa t=${k.t}`).toBeLessThan(1.5)
+    }
+  },
+)
+
+test.each(['idle', 'pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation'])(
+  '%s never lifts the upper arm past the 90° ceiling (torso-relative, sampled every frame)',
+  (name) => {
+    let peak = 0
+    for (let f = 0; f <= Math.round(glb.duration(name) * FPS); f++) {
+      const w = glb.world(name, f / FPS)
+      const up = unit(sub(at(w, 'neck'), at(w, 'chest')))
+      const ua = unit(sub(at(w, 'forearm_L'), at(w, 'upper_arm_L')))
+      peak = Math.max(peak, angleDeg(ua, [-up[0], -up[1], -up[2]]))
+    }
+    expect(peak).toBeLessThan(AVATAR_ELEVATION_CEILING_DEG + 1.5)
+    if (name === 'flexion' || name === 'abduction') {
+      expect(peak).toBeGreaterThan(AVATAR_ELEVATION_CEILING_DEG - 3) // it does reach shoulder height
+      expect(meta.actions[name]).toMatchObject({ ceiling_deg: 90 })
     }
   },
 )

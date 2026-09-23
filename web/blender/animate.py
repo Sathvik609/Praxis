@@ -69,6 +69,46 @@ def rig_world(angles: dict) -> dict:
     return out
 
 
+# The avatar never lifts the upper arm above the prescription ceiling (CLAUDE.md §1). Same rule,
+# same maths as `capElevation` in web/src/avatar/rehabClips.ts; glbAnim.test.ts checks they agree.
+ELEVATION_CEILING_DEG = 90.0
+UA_REST = Vector((0.025, -0.27, 0.0)).normalized()  # rig.ts REST.lElbow.offset, rig frame
+
+
+def torso_elevation(lsh_deg) -> float:
+    u = euler_xyz(lsh_deg) @ UA_REST
+    return math.degrees(math.acos(max(-1.0, min(1.0, -u.y))))
+
+
+def cap_elevation(keys: list, ceiling=ELEVATION_CEILING_DEG):
+    """Scale a recorded rep so its torso-relative upper-arm elevation peaks at `ceiling`: each
+    key's upper arm turns back toward hanging down, in its own plane, by the same proportion.
+    Returns (keys, scale info or None) and each key's world-frame correction for its checks."""
+    peak = max(torso_elevation(k["lShoulder"]) for k in keys)
+    if peak <= ceiling:
+        return keys, None, [Matrix.Identity(3)] * len(keys)
+    scale = ceiling / peak
+    out, turns = [], []
+    for k in keys:
+        E = euler_xyz(k["lShoulder"])
+        u = E @ UA_REST
+        e = math.acos(max(-1.0, min(1.0, -u.y)))
+        axis = Vector((-u.z, 0.0, u.x))  # down x u: turning about it by +a lifts the arm
+        if axis.length < 1e-9:
+            out.append(k)
+            turns.append(Matrix.Identity(3))
+            continue
+        R = Matrix.Rotation(e * scale - e, 3, axis.normalized())
+        E2 = R @ E
+        lsh = [math.degrees(a) for a in E2.to_euler("ZYX")]  # Blender 'ZYX' == Rx @ Ry @ Rz, rig.ts order
+        back = euler_xyz(lsh)
+        assert max(abs(back[i][j] - E2[i][j]) for i in range(3) for j in range(3)) < 1e-6, "Euler order mismatch"
+        S = euler_xyz(k["spine"])
+        out.append({**k, "lShoulder": lsh})
+        turns.append(S @ R @ S.transposed())
+    return out, {"ceiling_deg": ceiling, "recorded_peak_deg": round(peak, 2), "scale": scale}, turns
+
+
 def slerp_half(m: Matrix) -> Matrix:
     return Quaternion().slerp(m.to_quaternion(), 0.5).to_matrix()
 
@@ -261,10 +301,13 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
     prev = {}
     right = {k: tuple(v) for k, v in j["rest"].items()}
     errors = []
-    keys = list(j["keys"])
+    keys, scaled, turns = cap_elevation(list(j["keys"]))
+    keys = list(keys)
+    turns = list(turns)
     bridge = dict(keys[0])
     bridge["t"] = j["duration"] + 0.7  # ease back to the first pose so the loop never jumps
-    for k in keys + [bridge]:
+    turns.append(turns[0])
+    for k, turn in zip(keys + [bridge], turns):
         angles = {"lShoulder": k["lShoulder"], "lElbow": k["lElbow"], "spine": k["spine"], **right}
         pose = finger_pose(sk, pose_from_rig(angles), "L", 0.0, RELAXED)
         pose = finger_pose(sk, pose, "R", 0.0, RELAXED)
@@ -273,7 +316,7 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
         if chk:
             for bone_from, bone_to, want in (("upper_arm_L", "forearm_L", chk["ua"]), ("forearm_L", "hand_L", chk["fa"])):
                 got = (sk.head(pose, bone_to) - sk.head(pose, bone_from)).normalized()
-                want_b = C @ Vector(want).normalized()
+                want_b = C @ (turn @ Vector(want)).normalized()
                 errors.append(math.degrees(got.angle(want_b)))
     push_nla(rig, name, act, 0)
     duration = j["duration"] + 0.7
@@ -284,6 +327,7 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
         "focus_bone": "upper_arm_L" if j["metric"] == "elevation" else "forearm_L",
         "source": j["source"]["dataset"], "seated": False,
         "retarget_error_deg": round(max(errors), 3) if errors else None,
+        **({"ceiling_deg": scaled["ceiling_deg"], "scaled_from_deg": scaled["recorded_peak_deg"]} if scaled else {}),
     }
 
 

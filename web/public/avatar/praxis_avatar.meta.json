@@ -86,7 +86,9 @@
    "focus_bone": "upper_arm_L",
    "source": "IntelliRehabDS (IRDS)",
    "seated": false,
-   "retarget_error_deg": 0.0
+   "retarget_error_deg": 0.0,
+   "ceiling_deg": 90.0,
+   "scaled_from_deg": 165.13
   },
   "abduction": {
    "duration": 2.7,
@@ -118,7 +120,9 @@
    "focus_bone": "upper_arm_L",
    "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
    "seated": false,
-   "retarget_error_deg": 0.0
+   "retarget_error_deg": 0.0,
+   "ceiling_deg": 90.0,
+   "scaled_from_deg": 157.41
   },
   "external_rotation": {
    "duration": 2.733,
@@ -150,7 +154,9 @@
    "focus_bone": "forearm_L",
    "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
    "seated": false,
-   "retarget_error_deg": 0.0
+   "retarget_error_deg": 0.0,
+   "ceiling_deg": 90.0,
+   "scaled_from_deg": 101.06
   },
   "internal_rotation": {
    "duration": 2.533,
@@ -182,7 +188,9 @@
    "focus_bone": "forearm_L",
    "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
    "seated": false,
-   "retarget_error_deg": 0.0
+   "retarget_error_deg": 0.0,
+   "ceiling_deg": 90.0,
+   "scaled_from_deg": 95.67
   },
   "waiter_cup": {
    "duration": 16.0,

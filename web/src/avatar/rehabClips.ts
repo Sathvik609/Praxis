@@ -1,5 +1,5 @@
 import type { ArcCue, Clip, Key } from './clips'
-import type { Joint, Vec3 } from './rig'
+import { REST, euler, type Joint, type Mat3, type Vec3 } from './rig'
 
 /** Real-motion reference clips: one healthy adult's repetition from a public rehabilitation
  *  dataset (UI-PRMD, ODC PDDL 1.0; IntelliRehabDS, CC BY 4.0), retargeted offline to this rig's
@@ -32,6 +32,8 @@ export type RehabClipJson = {
   steps: { t: number; step: number; caption: string }[]
   fit: { forearm_error_deg_mean: number; forearm_error_deg_max: number } | null
   note: string
+  /** Present when the recorded rep was scaled under the elevation ceiling (see `capElevation`). */
+  scaled?: { ceiling_deg: number; recorded_peak_deg: number; scale: number }
 }
 
 const D = Math.PI / 180
@@ -40,6 +42,81 @@ const D = Math.PI / 180
 export const LOOP_BRIDGE_S = 0.7
 
 const rad = (v: Vec3): Vec3 => [v[0] * D, v[1] * D, v[2] * D]
+
+/** The avatar never lifts the upper arm above the prescription ceiling (CLAUDE.md §1: Arm to the
+ *  front and Arm out to the side stop at 90°). Every recorded rep that goes higher is scaled so
+ *  its peak sits exactly on the ceiling: at each key the upper arm is turned back toward hanging
+ *  straight down, in its own plane of elevation, by the same proportion. Timing, the plane of the
+ *  movement, the elbow bend and the trunk are the recording's; only the height changes. The same
+ *  rule is applied to the Blender avatar by `web/blender/animate.py` (and `glbAnim.test.ts` checks
+ *  the two agree). Elevation is torso-relative: the angle between the upper arm and the trunk's
+ *  down axis. */
+export const AVATAR_ELEVATION_CEILING_DEG = 90
+
+const mul3 = (a: Mat3, b: Mat3): Mat3 =>
+  [0, 1, 2].map((i) => [0, 1, 2].map((j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j])) as Mat3
+const app3 = (m: Mat3, v: Vec3): Vec3 => [0, 1, 2].map((i) => m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2]) as Vec3
+const tr3 = (m: Mat3): Mat3 => [0, 1, 2].map((i) => [0, 1, 2].map((j) => m[j][i])) as Mat3
+const unit3 = (v: Vec3): Vec3 => {
+  const n = Math.hypot(v[0], v[1], v[2])
+  return [v[0] / n, v[1] / n, v[2] / n]
+}
+/** Rotation by `a` radians about unit axis `n` (Rodrigues). */
+function axisAngle(n: Vec3, a: number): Mat3 {
+  const [x, y, z] = n
+  const c = Math.cos(a), s = Math.sin(a), k = 1 - c
+  return [
+    [c + x * x * k, x * y * k - z * s, x * z * k + y * s],
+    [y * x * k + z * s, c + y * y * k, y * z * k - x * s],
+    [z * x * k - y * s, z * y * k + x * s, c + z * z * k],
+  ]
+}
+/** Inverse of rig.ts `euler` (M = Rx·Ry·Rz), radians. */
+function eulerOf(m: Mat3): Vec3 {
+  const y = Math.asin(Math.max(-1, Math.min(1, m[0][2])))
+  return [Math.atan2(-m[1][2], m[2][2]), y, Math.atan2(-m[0][1], m[0][0])]
+}
+const UPPER_ARM_REST = unit3(REST.lElbow.offset)
+
+/** Left upper-arm direction in the trunk's frame for a shoulder Euler (radians). */
+export function upperArmDir(lShoulder: Vec3): Vec3 {
+  return app3(euler(lShoulder), UPPER_ARM_REST)
+}
+/** Torso-relative elevation of the left upper arm (0° hanging down, 90° level), degrees. */
+export function torsoElevationDeg(lShoulder: Vec3): number {
+  return Math.acos(Math.max(-1, Math.min(1, -upperArmDir(lShoulder)[1]))) / D
+}
+
+export function capElevation(json: RehabClipJson, ceilingDeg = AVATAR_ELEVATION_CEILING_DEG): RehabClipJson {
+  const peak = Math.max(...json.keys.map((k) => torsoElevationDeg(rad(k.lShoulder))))
+  if (peak <= ceilingDeg) return json
+  const scale = ceilingDeg / peak
+  const keys = json.keys.map((k): RehabKeyJson => {
+    const E = euler(rad(k.lShoulder))
+    const u = app3(E, UPPER_ARM_REST)
+    const e = Math.acos(Math.max(-1, Math.min(1, -u[1])))
+    const axis: Vec3 = [-u[2], 0, u[0]] // down × u: turning about it by +a lifts the arm
+    if (Math.hypot(axis[0], axis[2]) < 1e-9) return k
+    const R = axisAngle(unit3(axis), e * scale - e)
+    const lShoulder = eulerOf(mul3(R, E)).map((v) => v / D) as Vec3
+    if (!k.check) return { ...k, lShoulder }
+    // the check vectors are world directions: turn them by the same rotation seen through the trunk
+    const S = euler(rad(k.spine))
+    const Rw = mul3(mul3(S, R), tr3(S))
+    const turn = (v: Vec3) => app3(Rw, v)
+    return {
+      ...k,
+      lShoulder,
+      check: { ...k.check, ua: turn(k.check.ua), fa: turn(k.check.fa), src_ua: turn(k.check.src_ua), src_fa: turn(k.check.src_fa), elevation_deg: k.check.elevation_deg * scale },
+    }
+  })
+  return {
+    ...json,
+    keys,
+    target_deg: json.metric === 'elevation' ? ceilingDeg : json.target_deg,
+    scaled: { ceiling_deg: ceilingDeg, recorded_peak_deg: Math.round(peak * 100) / 100, scale },
+  }
+}
 
 /** Arc cue for the shoulder: elevation clips measure the upper arm from hanging straight down in
  *  the plane of the rep's peak; rotation clips measure the forearm about the elbow from its
@@ -81,7 +158,8 @@ export function toClip(json: RehabClipJson): Clip {
   keys.push({ t: json.duration + LOOP_BRIDGE_S, hold: true, pose: { lShoulder: first.pose.lShoulder!, lElbow: first.pose.lElbow!, spine: first.pose.spine! } })
   // short provenance for the stage readout: "UI-PRMD s03 e03+e04" (the full text stays in the JSON)
   const rep = (json.source.rep ?? '').replace(/\s*\([^)]*\)/g, '').replace(/\s*\+\s*/g, '+')
-  const label = json.source.dataset === 'procedural' ? 'procedural' : `${json.source.dataset.split(' (')[0]} ${json.source.subject} ${rep}`
+  const base = json.source.dataset === 'procedural' ? 'procedural' : `${json.source.dataset.split(' (')[0]} ${json.source.subject} ${rep}`
+  const label = json.scaled ? `${base} · scaled to ${json.scaled.ceiling_deg}°` : base
   return {
     name: json.name,
     duration: json.duration + LOOP_BRIDGE_S,
@@ -99,8 +177,14 @@ export function toClip(json: RehabClipJson): Clip {
 }
 
 const files = import.meta.glob<RehabClipJson>('./clips/rehab/*.json', { eager: true, import: 'default' })
-export const REHAB_JSON: Record<RehabClipName, RehabClipJson> = Object.fromEntries(
+/** The clips exactly as recorded and retargeted (provenance, fidelity checks). */
+export const REHAB_JSON_RECORDED: Record<RehabClipName, RehabClipJson> = Object.fromEntries(
   Object.values(files).map((j) => [j.name, j]),
+) as Record<RehabClipName, RehabClipJson>
+
+/** What the avatar plays: the recorded clips under the elevation ceiling. */
+export const REHAB_JSON: Record<RehabClipName, RehabClipJson> = Object.fromEntries(
+  Object.entries(REHAB_JSON_RECORDED).map(([n, j]) => [n, capElevation(j)]),
 ) as Record<RehabClipName, RehabClipJson>
 
 export const REHAB_CLIPS: Record<RehabClipName, Clip> = Object.fromEntries(
