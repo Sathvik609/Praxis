@@ -1,0 +1,559 @@
+"""Praxis avatar animations: eight actions keyed onto the rig built by `build_avatar.py`.
+
+Blender 5.2.2 LTS (bpy 5.2). Imported and run by `build_avatar.py` before the glTF export; not a
+standalone script.
+
+Two sources of motion, both deterministic:
+
+* Real-motion clips (`web/src/avatar/clips/rehab/*.json`: flexion, abduction, external and
+  internal rotation from UI-PRMD / IntelliRehabDS, pendulum authored procedurally). Each JSON
+  key holds the web rig's joint angles (Euler XYZ, degrees, rig frame: y up, +z forward, +x the
+  figure's left). They are replayed here as armature-space rotations, so the posed Blender
+  skeleton has the same world bone directions as `web/src/avatar/rig.ts` forward kinematics.
+  `retarget_error_deg` in the sidecar compares every key's upper-arm and forearm direction
+  with the direction the JSON's `check` block says the rig produces.
+* Scripted table tasks (Waiter – cup, Nine-Hole Peg Test) and the idle loop. The figure sits at
+  the table; reaches are *targets* (the `anchor_dot_k` / `anchor_hole_k` empties) solved with an
+  analytic two-bone IK, so the grip lands on the dot or hole the caption names. The cup and the
+  pegs are keyed to follow the hand while carried.
+
+Every action is pushed to an NLA track named after it on each object it moves, and the exporter
+runs in NLA_TRACKS mode, so one glTF animation per action carries the body and its props.
+The sidecar `praxis_avatar.meta.json` lists, per action: duration, loop, camera, visible props,
+one repetition's time span (what the app's rep pacing maps 0..1 onto), captions, and the
+dot / hole targets with their times. The avatar demonstrates; it never scores anyone.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+
+import bpy
+from mathutils import Matrix, Quaternion, Vector
+
+FPS = 30
+HERE = os.path.dirname(os.path.abspath(__file__))
+REHAB_DIR = os.path.join(os.path.dirname(HERE), "src", "avatar", "clips", "rehab")
+META_OUT = os.path.join(os.path.dirname(HERE), "public", "avatar", "praxis_avatar.meta.json")
+
+D = math.pi / 180
+# rig.ts frame (x left, y up, z forward) -> Blender (x left, y back, z up)
+C = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))
+CT = C.transposed()
+
+RIG_JOINTS = ["hips", "spine", "neck", "head", "lShoulder", "lElbow", "lWrist", "rShoulder", "rElbow", "rWrist"]
+RIG_PARENT = {"hips": None, "spine": "hips", "neck": "spine", "head": "neck",
+              "lShoulder": "neck", "lElbow": "lShoulder", "lWrist": "lElbow",
+              "rShoulder": "neck", "rElbow": "rShoulder", "rWrist": "rElbow"}
+# rig joint whose world rotation drives each Blender bone (rotation at a rig joint moves its subtree)
+BONE_FROM_RIG = {"chest": "spine", "neck": "neck", "head": "head",
+                 "upper_arm_L": "lShoulder", "forearm_L": "lElbow", "hand_L": "lWrist",
+                 "upper_arm_R": "rShoulder", "forearm_R": "rElbow", "hand_R": "rWrist"}
+# rig.ts rest: arms hang with a slight natural bend and abduction (clips.ts REST_POSE), degrees
+REST_DEG = {"lShoulder": (-3, 0, 4), "rShoulder": (-3, 0, -4), "lElbow": (-8, 0, 0), "rElbow": (-8, 0, 0)}
+
+
+def euler_xyz(deg) -> Matrix:
+    x, y, z = (a * D for a in deg)
+    return Matrix.Rotation(x, 3, "X") @ Matrix.Rotation(y, 3, "Y") @ Matrix.Rotation(z, 3, "Z")
+
+
+def rig_world(angles: dict) -> dict:
+    """World rotation of every rig joint (rig frame), parent chain x own Euler, as rig.ts does."""
+    out = {}
+    for j in RIG_JOINTS:
+        own = euler_xyz(angles.get(j, (0, 0, 0)))
+        out[j] = own if RIG_PARENT[j] is None else out[RIG_PARENT[j]] @ own
+    return out
+
+
+def slerp_half(m: Matrix) -> Matrix:
+    return Quaternion().slerp(m.to_quaternion(), 0.5).to_matrix()
+
+
+# ---------------------------------------------------------------------------------------------
+# Pose = armature-space rotation delta per bone (rest -> posed) + root translation. Bones not
+# listed inherit their parent's delta (no local rotation).
+# ---------------------------------------------------------------------------------------------
+class Pose:
+    def __init__(self, deltas: dict | None = None, root: Vector | None = None):
+        self.d = dict(deltas or {})
+        self.root = Vector(root or (0, 0, 0))
+
+    def copy(self) -> "Pose":
+        return Pose(self.d, self.root)
+
+
+def pose_from_rig(angles: dict, legs: dict | None = None, root=None) -> Pose:
+    """Blender deltas reproducing rig.ts joint angles. The rig's single `spine` pivot (1.26 m) is
+    shared between Blender's spine (half) and chest (full) so a deep lean bends the back smoothly;
+    bone directions above the chest are unchanged by the split."""
+    w = rig_world(angles)
+    d = {}
+    hips = C @ w["hips"] @ CT
+    d["spine"] = hips @ (C @ slerp_half(euler_xyz(angles.get("spine", (0, 0, 0)))) @ CT)
+    for bone, joint in BONE_FROM_RIG.items():
+        d[bone] = C @ w[joint] @ CT
+    d.update(legs or {})
+    return Pose(d, root)
+
+
+class Skeleton:
+    """Rest data + forward kinematics for Blender-space deltas (for IK and the carry bake)."""
+
+    def __init__(self, rig):
+        self.rig = rig
+        self.bones = {b.name: b for b in rig.data.bones}
+        self.order = [b.name for b in rig.data.bones if b.parent is None]
+        stack = list(self.order)
+        self.order = []
+        while stack:
+            n = stack.pop(0)
+            self.order.append(n)
+            stack.extend(c.name for c in self.bones[n].children)
+
+    def rest_head(self, n):
+        return self.bones[n].head_local.copy()
+
+    def rest_tail(self, n):
+        return self.bones[n].tail_local.copy()
+
+    def delta(self, pose: Pose, n):
+        while n is not None:
+            if n in pose.d:
+                return pose.d[n]
+            p = self.bones[n].parent
+            n = p.name if p else None
+        return Matrix.Identity(3)
+
+    def head(self, pose: Pose, n):
+        b = self.bones[n]
+        if b.parent is None:
+            return b.head_local + pose.root
+        p = b.parent.name
+        return self.head(pose, p) + self.delta(pose, p) @ (b.head_local - b.parent.head_local)
+
+    def point(self, pose: Pose, n, rest_point: Vector):
+        """Where a point rigidly attached to bone n (given at rest) ends up."""
+        return self.head(pose, n) + self.delta(pose, n) @ (rest_point - self.bones[n].head_local)
+
+    def key(self, pose: Pose, frame: int, prev: dict):
+        for n in self.order:
+            b = self.bones[n]
+            pb = self.rig.pose.bones[n]
+            r = b.matrix_local.to_3x3()
+            dp = self.delta(pose, b.parent.name) if b.parent else Matrix.Identity(3)
+            basis = r.inverted() @ dp.inverted() @ self.delta(pose, n) @ r
+            q = basis.to_quaternion()
+            if n in prev:
+                q.make_compatible(prev[n])
+            prev[n] = q
+            pb.rotation_mode = "QUATERNION"
+            pb.rotation_quaternion = q
+            pb.keyframe_insert("rotation_quaternion", frame=frame, group=n)
+            if b.parent is None:
+                pb.location = r.inverted() @ pose.root
+                pb.keyframe_insert("location", frame=frame, group=n)
+
+
+def rot_between(a: Vector, b: Vector) -> Matrix:
+    return a.normalized().rotation_difference(b.normalized()).to_matrix()
+
+
+def solve_arm(sk: Skeleton, pose: Pose, side: str, grip_rest: Vector, target: Vector, pole: Vector,
+              pronation=0.0, wrist_flex=0.0, iters=6) -> Pose:
+    """Analytic two-bone IK: put the hand-attached point `grip_rest` (rest coords) on `target`.
+    The upper arm and forearm take the minimal rotations onto the solved directions, then the
+    forearm pronates about its own axis and the wrist flexes; the loop re-solves because the grip
+    point hangs off the hand."""
+    s = side
+    ua, fa, hand = f"upper_arm_{s}", f"forearm_{s}", f"hand_{s}"
+    S0, E0, W0 = sk.rest_head(ua), sk.rest_head(fa), sk.rest_head(hand)
+    L1, L2 = (E0 - S0).length, (W0 - E0).length
+    out = pose.copy()
+    wrist_target = target.copy()
+    for _ in range(iters):
+        S = sk.head(out, ua)
+        v = wrist_target - S
+        d = min(v.length, (L1 + L2) * 0.999)
+        u = v.normalized()
+        a = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+        h = math.sqrt(max(0.0, L1 * L1 - a * a))
+        n = (pole - u * u.dot(pole)).normalized()
+        E = S + u * a + n * h
+        W = S + u * d
+        parent = sk.delta(out, f"clavicle_{s}")
+        d_ua = rot_between(parent @ (E0 - S0), E - S) @ parent
+        d_fa = rot_between(d_ua @ (W0 - E0), W - E) @ d_ua
+        axis = (W - E).normalized()
+        sgn = 1 if s == "L" else -1
+        d_fa = Matrix.Rotation(pronation * D * sgn, 3, axis) @ d_fa
+        lateral = (d_fa @ Vector((0, -1, 0))).cross(axis).normalized()  # wrist flexion axis
+        d_hand = Matrix.Rotation(wrist_flex * D * sgn, 3, lateral) @ d_fa
+        out.d[ua], out.d[fa], out.d[hand] = d_ua, d_fa, d_hand
+        grip = sk.point(out, hand, grip_rest)
+        wrist_target = wrist_target + (target - grip)
+    return out
+
+
+def finger_pose(sk: Skeleton, pose: Pose, side: str, pinch: float, grip: float) -> Pose:
+    """pinch 0..1 closes thumb onto index (peg); grip 0..1 curls index + mitten around a cup."""
+    s, sgn = side, (1 if side == "L" else -1)
+    dh = sk.delta(pose, f"hand_{s}")
+    flex = lambda deg: Matrix.Rotation(deg * D * sgn, 3, "Y")  # noqa: E731 curls toward the palm
+    out = pose.copy()
+    out.d[f"thumb_{s}"] = dh @ Matrix.Rotation((24 * pinch + 18 * grip) * D, 3, "X")
+    out.d[f"index_{s}"] = dh @ flex(14 * pinch + 38 * grip)
+    out.d[f"mitten_{s}"] = dh @ flex(10 * pinch + 44 * grip)
+    return out
+
+
+RELAXED = 0.22  # a resting hand's fingers are slightly curled, never splayed
+
+# ---------------------------------------------------------------------------------------------
+# Standing and seated bases
+# ---------------------------------------------------------------------------------------------
+SEAT_DROP = 0.41  # hip joint 0.935 -> 0.525 m: thighs level on a 0.46 m seat
+
+
+def seated_legs():
+    thigh = Matrix.Rotation(-90 * D, 3, "X")  # thighs forward
+    shin = Matrix.Rotation(-4 * D, 3, "X")    # shins down, knees a touch past 90
+    return {"thigh_L": thigh, "thigh_R": thigh, "shin_L": shin, "shin_R": shin, "foot_L": shin, "foot_R": shin}
+
+
+def seated_base(lean_deg=6.0, yaw_deg=0.0) -> Pose:
+    angles = dict(REST_DEG)
+    angles["spine"] = (lean_deg, yaw_deg, 0)
+    p = pose_from_rig(angles, seated_legs(), Vector((0, 0, -SEAT_DROP)))
+    # the resting (right) forearm lies on the table edge
+    return p
+
+
+# ---------------------------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------------------------
+def new_action(obj, name):
+    obj.animation_data_create()
+    act = bpy.data.actions.new(f"{name}__{obj.name}")
+    obj.animation_data.action = act
+    return act
+
+
+def push_nla(obj, name, act, start):
+    track = obj.animation_data.nla_tracks.new()
+    track.name = name
+    strip = track.strips.new(name, int(start), act)
+    strip.name = name
+    obj.animation_data.action = None
+
+
+def frame_of(t):
+    return round(t * FPS)
+
+
+def rehab_action(sk: Skeleton, name: str, meta: dict):
+    j = json.load(open(os.path.join(REHAB_DIR, f"{name}.json")))
+    rig = sk.rig
+    act = new_action(rig, name)
+    prev = {}
+    right = {k: tuple(v) for k, v in j["rest"].items()}
+    errors = []
+    keys = list(j["keys"])
+    bridge = dict(keys[0])
+    bridge["t"] = j["duration"] + 0.7  # ease back to the first pose so the loop never jumps
+    for k in keys + [bridge]:
+        angles = {"lShoulder": k["lShoulder"], "lElbow": k["lElbow"], "spine": k["spine"], **right}
+        pose = finger_pose(sk, pose_from_rig(angles), "L", 0.0, RELAXED)
+        pose = finger_pose(sk, pose, "R", 0.0, RELAXED)
+        sk.key(pose, frame_of(k["t"]), prev)
+        chk = k.get("check")
+        if chk:
+            for bone_from, bone_to, want in (("upper_arm_L", "forearm_L", chk["ua"]), ("forearm_L", "hand_L", chk["fa"])):
+                got = (sk.head(pose, bone_to) - sk.head(pose, bone_from)).normalized()
+                want_b = C @ Vector(want).normalized()
+                errors.append(math.degrees(got.angle(want_b)))
+    push_nla(rig, name, act, 0)
+    duration = j["duration"] + 0.7
+    steps = [{"t": s["t"], "step": s["step"], "caption": s["caption"]} for s in j["steps"]]
+    meta[name] = {
+        "duration": round(duration, 4), "loop": True, "camera": j["camera"], "props": [],
+        "rep": [0.0, round(j["duration"], 4)], "steps": steps, "targets": [],
+        "focus_bone": "upper_arm_L" if j["metric"] == "elevation" else "forearm_L",
+        "source": j["source"]["dataset"], "seated": False,
+        "retarget_error_deg": round(max(errors), 3) if errors else None,
+    }
+
+
+def idle_action(sk: Skeleton, meta: dict):
+    rig = sk.rig
+    act = new_action(rig, "idle")
+    prev = {}
+    period = 8.0
+    for i in range(9):
+        t = period * i / 8
+        ph = 2 * math.pi * i / 8
+        angles = dict(REST_DEG)
+        angles["spine"] = (0.8 * math.sin(2 * ph), 2.0 * math.sin(ph), 0.6 * math.sin(ph))
+        angles["head"] = (1.5 * math.sin(2 * ph + 1), -3.0 * math.sin(ph + 0.6), 0)
+        angles["lShoulder"] = (-3 + 1.2 * math.sin(ph), 0, 4)
+        angles["rShoulder"] = (-3 - 1.2 * math.sin(ph), 0, -4)
+        pose = finger_pose(sk, pose_from_rig(angles), "L", 0.0, RELAXED)
+        sk.key(finger_pose(sk, pose, "R", 0.0, RELAXED), frame_of(t), prev)
+    push_nla(rig, "idle", act, 0)
+    meta["idle"] = {"duration": period, "loop": True, "camera": "front", "props": [], "rep": [0.0, period],
+                    "steps": [{"t": 0.0, "step": 1, "caption": "Ready when you are."}], "targets": [],
+                    "focus_bone": None, "source": "procedural", "seated": False, "retarget_error_deg": None}
+
+
+# Grip points, in rest coordinates of the left hand (mirror x for the right).
+CUP_GRIP = Vector((0.235, -0.012, 0.815))    # between palm, index and mitten
+PINCH_POINT = Vector((0.238, -0.046, 0.728))  # where thumb tip meets index tip when closed
+CUP_GRIP_HEIGHT = 0.055                       # grip ring above the cup's base
+CUP_RADIUS = 0.035
+CUP_POLE = Vector((1.0, 0.7, -0.15))  # elbow out to the side and back, about level with the wrist
+CUP_PRON, CUP_FLEX = 0.0, 12.0
+
+
+def anchor(name) -> Vector:
+    return bpy.data.objects[name].matrix_world.translation.copy()
+
+
+class Timeline:
+    """Keys a sequence of (t, pose, pinch, grip) and remembers carried-object spans for the bake."""
+
+    def __init__(self, sk, name):
+        self.sk, self.name = sk, name
+        self.act = new_action(sk.rig, name)
+        self.prev = {}
+        self.poses = []  # (t, Pose)
+
+    def key(self, t, pose: Pose, pinch=0.0, grip=0.0):
+        pose = finger_pose(self.sk, pose, "L", pinch, grip)
+        self.sk.key(pose, frame_of(t), self.prev)
+        self.poses.append((t, pose))
+        return pose
+
+    def done(self):
+        push_nla(self.sk.rig, self.name, self.act, 0)
+
+    def pose_at(self, t):
+        return next(p for tt, p in self.poses if abs(tt - t) < 1e-6)
+
+
+def bake_follow(sk: Skeleton, obj, act_rig, spans, rest_loc: Vector, name: str, end_t: float,
+                after=None, rot_keys=()):
+    """Key `obj` so that while carried (spans of (t0, t1, grip_rest, lift)) its origin sits at the
+    hand's grip point minus a fixed world offset `lift`: an upright cup or peg hangs under the
+    fingers however the hand turns. Orientation is keyed separately (`rot_keys` = (t, euler)).
+    Otherwise it stays where it was put down (`after` overrides the resting place once carried)."""
+    act = new_action(obj, name)
+    rig = sk.rig
+    scene = bpy.context.scene
+    tracks = list(rig.animation_data.nla_tracks)
+    for tr in tracks:
+        tr.mute = True
+    rig.animation_data.action = act_rig
+    loc = rest_loc.copy()
+    for f in range(0, frame_of(end_t) + 1):
+        t = f / FPS
+        carried = next((sp for sp in spans if sp[0] <= t <= sp[1]), None)
+        if carried:
+            scene.frame_set(f)
+            local = sk.bones["hand_L"].matrix_local.inverted() @ carried[2]
+            loc = (rig.matrix_world @ rig.pose.bones["hand_L"].matrix) @ local - carried[3]
+        elif after is not None and any(t > sp[1] for sp in spans):
+            loc = after
+        obj.location = loc
+        obj.keyframe_insert("location", frame=f)
+    for t, e in rot_keys:
+        obj.rotation_euler = e
+        obj.keyframe_insert("rotation_euler", frame=frame_of(t))
+    rig.animation_data.action = None
+    for tr in tracks:
+        tr.mute = False
+    push_nla(obj, name, act, 0)
+
+
+def hand_error_mm(sk: Skeleton, act_rig, pose: "Pose", t: float) -> float:
+    """Our FK vs Blender's evaluated pose at a key: proves the keyed basis reproduces the deltas."""
+    rig = sk.rig
+    tracks = list(rig.animation_data.nla_tracks)
+    for tr in tracks:
+        tr.mute = True
+    rig.animation_data.action = act_rig
+    bpy.context.scene.frame_set(frame_of(t))
+    got = (rig.matrix_world @ rig.pose.bones["hand_L"].matrix).translation
+    want = rig.matrix_world @ sk.head(pose, "hand_L")
+    rig.animation_data.action = None
+    for tr in tracks:
+        tr.mute = False
+    return (got - want).length * 1000
+
+
+def reach_pose(sk, base: Pose, target: Vector, grip_rest: Vector, pole=None, pron=0.0, flex=0.0):
+    pole = pole or Vector((0.6, 0.25, -1.0))
+    return solve_arm(sk, base, "L", grip_rest, target, pole, pron, flex)
+
+
+def cup_action(sk: Skeleton, meta: dict):
+    """Waiter – cup, GRASP Coordination Level 2: carry the cup dot to dot along the arc, 1 -> 5 and
+    back, lifting it clear and setting it down on each dot. One slow pass; the app plays the fast
+    passes by running the same action quicker."""
+    name = "waiter_cup"
+    dots = [anchor(f"anchor_dot_{k}") for k in range(1, 6)]
+    cup = bpy.data.objects["prop_cup"]
+    tl = Timeline(sk, name)
+    grip_at = lambda p, lift=0.0: p + Vector((CUP_RADIUS + 0.012, 0.012, CUP_GRIP_HEIGHT + lift))  # noqa: E731
+    lean = lambda k: 9 - 2 * abs(k - 2)  # noqa: E731 the arc's apex (dot 3) is farthest
+
+    def at(k, lift=0.0, base=None):
+        b = base or seated_base(lean(k), -4 * (k - 2))
+        return reach_pose(sk, b, grip_at(dots[k], lift), CUP_GRIP, pole=CUP_POLE, pron=CUP_PRON, flex=CUP_FLEX)
+
+    beside = dots[0] + Vector((0.09, 0.08, 0.0))
+    rest_hand = reach_pose(sk, seated_base(5), beside + Vector((0, 0, 0.045)), CUP_GRIP, pole=CUP_POLE,
+                           pron=CUP_PRON, flex=CUP_FLEX)
+    steps, targets, spans = [], [], []
+    t = 0.0
+    tl.key(t, rest_hand, grip=0.0)
+    steps.append({"t": t, "step": 1, "caption": "Step 1 of 4 · cup on dot 1, hand resting beside it"})
+    t += 1.0
+    tl.key(t, rest_hand, grip=0.0)
+    steps.append({"t": t, "step": 2, "caption": "Step 2 of 4 · take hold of the cup"})
+    t += 0.9
+    tl.key(t, at(0), grip=0.0)
+    t += 0.3
+    tl.key(t, at(0), grip=1.0)
+    rep0 = t
+    order = [1, 2, 3, 4, 3, 2, 1, 0]
+    carry_t0 = t
+    for i, k in enumerate(order):
+        if i == 0:
+            steps.append({"t": t, "step": 3, "caption": "Step 3 of 4 · lift, move to the next dot, set it down; dot by dot to 5"})
+        if i == 4:
+            steps.append({"t": t, "step": 4, "caption": "Step 4 of 4 · then back the way you came to dot 1"})
+        frm = order[i - 1] if i else 0
+        t += 0.25
+        tl.key(t, at(frm, 0.05), grip=1.0)
+        targets.append({"t": round(t, 4), "kind": "dot", "index": k + 1})
+        t += 0.75
+        tl.key(t, at(k, 0.05), grip=1.0)
+        t += 0.25
+        tl.key(t, at(k), grip=1.0)
+        t += 0.2
+        tl.key(t, at(k), grip=1.0)
+        targets.append({"t": round(t, 4), "kind": "dot", "index": k + 1, "landed": True})
+    rep1 = t
+    carry_t1 = t
+    t += 0.3
+    tl.key(t, at(0), grip=0.0)
+    t += 0.9
+    tl.key(t, rest_hand, grip=0.0)
+    t += 1.0
+    tl.key(t, rest_hand, grip=0.0)
+    end = t
+    tl.done()
+    grasp_pose = tl.pose_at(carry_t0)
+    err = hand_error_mm(sk, tl.act, grasp_pose, carry_t0)
+    assert err < 1.0, f"cup grasp: keyed pose is {err:.2f} mm off our FK"
+    base_rest = cup.location.copy()
+    lift = grip_at(dots[0]) - dots[0] + (dots[0] - base_rest)  # grip point -> cup origin
+    bake_follow(sk, cup, tl.act, [(carry_t0, carry_t1, CUP_GRIP, lift)], base_rest, name, end)
+    meta[name] = {"duration": round(end, 4), "loop": True, "camera": "front", "props": ["table", "sheet", "cup"],
+                  "rep": [round(rep0, 4), round(rep1, 4)], "steps": steps, "targets": targets,
+                  "focus_bone": "hand_L", "source": "procedural", "seated": True, "retarget_error_deg": None}
+
+
+def nhpt_action(sk: Skeleton, meta: dict):
+    """Nine-Hole Peg Test: pinch each peg from the dish across its middle, carry it over the board
+    (it turns upright on the way), seat it in hole k, let go, back to the dish. All nine, in board
+    order starting on the practising side."""
+    name = "nhpt"
+    holes = [anchor(f"anchor_hole_{k}") for k in range(1, 10)]
+    pegs = [bpy.data.objects[f"prop_peg_{k}"] for k in range(1, 10)]
+    tl = Timeline(sk, name)
+    PEG_LEN, SINK, ABOVE = 0.032, 0.012, 0.006  # peg length, depth seated, pinch above peg centre
+
+    def over(p, lift, lean=10):
+        return reach_pose(sk, seated_base(lean), p + Vector((0, 0, ABOVE + lift)), PINCH_POINT,
+                          pole=Vector((0.8, 0.3, -0.6)), pron=62, flex=38)
+
+    seat_c = [h + Vector((0, 0, PEG_LEN / 2 - SINK)) for h in holes]  # upright peg centre when seated
+    src_c = [pg.location.copy() for pg in pegs]
+    steps, targets, spans = [], [], []
+    t = 0.0
+    tl.key(t, over(src_c[0], 0.06), pinch=0.0)
+    rep0 = t
+    per = 2.2
+    for k in range(9):
+        T = t
+        if k == 0:
+            steps.append({"t": T, "step": 1, "caption": "Step 1 of 3 · pick a peg from the dish with a pinch"})
+        tl.key(T + 0.35, over(src_c[k], 0.0), pinch=0.0)
+        tl.key(T + 0.55, over(src_c[k], 0.0), pinch=1.0)
+        targets.append({"t": round(T + 0.55, 4), "kind": "hole", "index": k + 1})
+        tl.key(T + 0.75, over(src_c[k], 0.07), pinch=1.0)
+        if k == 0:
+            steps.append({"t": T + 0.75, "step": 2, "caption": "Step 2 of 3 · carry it over the board, any hole"})
+        tl.key(T + 1.3, over(seat_c[k], 0.05), pinch=1.0)
+        tl.key(T + 1.55, over(seat_c[k], 0.0), pinch=1.0)
+        if k == 0:
+            steps.append({"t": T + 1.55, "step": 3, "caption": "Step 3 of 3 · seat it and let go; the timer stops at the ninth peg"})
+        tl.key(T + 1.7, over(seat_c[k], 0.0), pinch=0.0)
+        targets.append({"t": round(T + 1.7, 4), "kind": "hole", "index": k + 1, "landed": True})
+        nxt = src_c[k + 1] if k < 8 else src_c[0]
+        tl.key(T + per, over(nxt, 0.06), pinch=0.0)
+        spans.append((T + 0.55, T + 1.7))
+        t = T + per
+    rep1 = t
+    end = t + 0.8
+    tl.key(end, over(src_c[0], 0.06), pinch=0.0)
+    tl.done()
+    for k, pg in enumerate(pegs):
+        t0, t1 = spans[k]
+        grasp = tl.pose_at(t0)
+        if k == 0:
+            err = hand_error_mm(sk, tl.act, grasp, t0)
+            assert err < 1.0, f"peg grasp: keyed pose is {err:.2f} mm off our FK"
+        lying = pg.rotation_euler.copy()
+        upright = lying.copy()
+        upright.x = 0.0
+        rot_keys = [(0.0, lying), (t0 + 0.1, lying), (t0 + 0.6, upright), (end - 1 / FPS, upright), (end, lying)]
+        bake_follow(sk, pg, tl.act, [(t0, t1, PINCH_POINT, Vector((0, 0, ABOVE)))], src_c[k], name, end,
+                    after=seat_c[k], rot_keys=rot_keys)
+        # the loop restarts with every peg back in the dish
+        pg.location = src_c[k]
+        pg.keyframe_insert("location", frame=frame_of(end))
+    meta[name] = {"duration": round(end, 4), "loop": True, "camera": "front", "props": ["table", "pegboard"],
+                  "rep": [round(rep0, 4), round(rep1, 4)], "steps": steps, "targets": targets,
+                  "focus_bone": "hand_L", "source": "procedural", "seated": True, "retarget_error_deg": None}
+
+
+REHAB_ACTIONS = ["pendulum", "flexion", "abduction", "external_rotation", "internal_rotation"]
+ACTIONS = ["idle", *REHAB_ACTIONS, "waiter_cup", "nhpt"]
+
+
+def build_actions(rig) -> dict:
+    scene = bpy.context.scene
+    scene.render.fps = FPS
+    sk = Skeleton(rig)
+    meta: dict = {}
+    idle_action(sk, meta)
+    for n in REHAB_ACTIONS:
+        rehab_action(sk, n, meta)
+    cup_action(sk, meta)
+    nhpt_action(sk, meta)
+    for pb in rig.pose.bones:
+        pb.rotation_quaternion = Quaternion()
+        pb.location = (0, 0, 0)
+    scene.frame_set(0)
+    return {"fps": FPS, "rig": "rig.ts-compatible; Blender bones", "actions": {n: meta[n] for n in ACTIONS}}
+
+
+def write_meta(meta: dict):
+    with open(META_OUT, "w") as f:
+        json.dump(meta, f, indent=1)
+        f.write("\n")

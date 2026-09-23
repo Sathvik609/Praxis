@@ -34,9 +34,14 @@ from __future__ import annotations
 import math
 import os
 
+import sys
+
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import animate  # noqa: E402  (sibling module; Blender's --python does not add the script dir)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BLEND_OUT = os.path.join(HERE, "praxis_avatar.blend")
@@ -647,6 +652,7 @@ def main() -> None:
     build_pegboard(wood, peg_mat)
     build_cup(cup_mat)
 
+    meta = animate.build_actions(rig)
     activate(rig)
     tris = tri_count(body)
     assert tris < BODY_TRIANGLE_BUDGET, tris
@@ -660,7 +666,13 @@ def main() -> None:
         export_format="GLB",
         export_yup=True,
         export_apply=False,
-        export_animations=False,
+        export_animations=True,
+        export_animation_mode="NLA_TRACKS",
+        export_force_sampling=True,
+        export_frame_step=1,
+        export_optimize_animation_size=True,
+        export_optimize_animation_keep_anim_armature=True,
+        export_anim_slide_to_zero=False,
         export_skins=True,
         export_influence_nb=4,
         export_materials="EXPORT",
@@ -672,7 +684,10 @@ def main() -> None:
         export_tangents=False,
         use_selection=False,
     )
-    print(f"[praxis] wrote {BLEND_OUT} and {GLB_OUT} ({os.path.getsize(GLB_OUT)} bytes)")
+    animate.write_meta(meta)
+    print(f"[praxis] wrote {BLEND_OUT} and {GLB_OUT} ({os.path.getsize(GLB_OUT)} bytes) and {animate.META_OUT}")
+    for name, a in meta["actions"].items():
+        print(f"[praxis] action {name}: {a['duration']} s, rep {a['rep']}, retarget error {a['retarget_error_deg']}")
 
 
 if __name__ == "__main__":
