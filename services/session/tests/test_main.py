@@ -117,7 +117,7 @@ def test_ws_checkin_pain_stop_rule_and_trace(client):
         ack = ws.receive_json()
         assert ack["type"] == "command" and ack["ok"] is True and ack["session_id"]
         sid = ack["session_id"]
-        ws.send_text('{"cmd":"pain","pain":6}')
+        ws.send_text('{"cmd":"pain","pain":7}')  # stop level = rest tier (23 Sep)
         msgs = [ws.receive_json() for _ in range(3)]
         types = [m["type"] for m in msgs]
         assert "stop" in types and "therapist_flag" in types
@@ -454,3 +454,90 @@ def test_ws_arm_refuses_a_sheet_activity_and_an_unknown_tier(client):
     with client.websocket_connect("/session?mode=arm&exercise=flexion&tier=turbo") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "error" and msg["code"] == "bad_tier"
+    with client.websocket_connect("/session?mode=arm&exercise=flexion&tier=rest") as ws:
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and msg["code"] == "rest_day"
+
+
+# ---- pain tier from the check-in, enforced by the service (23 Sep) -------------------------
+def _checkin(ws, pain: int) -> list[dict]:
+    """Everything the check-in produced, ending with its ack. A trailing `rpe` command marks
+    the end (its ack is the first message that is not the check-in's)."""
+    ws.send_text(json.dumps({"cmd": "checkin", "pain": pain, "energy": "comfortable", "minutes": 14, "new_symptoms": False}))
+    ws.send_text(json.dumps({"cmd": "rpe", "rpe": 2}))
+    out = [ws.receive_json()]
+    while not (out[-1]["type"] == "command" and out[-1].get("cmd") == "rpe"):
+        out.append(ws.receive_json())
+    out.pop()
+    ack = next(m for m in out if m["type"] == "command" and m.get("cmd") == "checkin")
+    return [m for m in out if m is not ack] + [ack]
+
+
+def _arm_frame(ws) -> dict:
+    img = np.zeros((480, 640, 3), np.uint8)
+    _, buf = cv2.imencode(".jpg", img)
+    ws.send_bytes(buf.tobytes())
+    m = ws.receive_json()
+    while m["type"] != "frame":
+        m = ws.receive_json()
+    return m["arm"]
+
+
+def test_checkin_pain_4_to_6_makes_the_session_gentle_even_if_the_client_asked_for_full(client):
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=full") as ws:
+        ack = _checkin(ws, 5)[-1]
+        assert ack["ok"] is True and ack["tier"] == "gentle" and ack["tier_applied"] is True
+        arm = _arm_frame(ws)
+    assert (arm["tier"], arm["target_deg"], arm["hold_s"], arm["reps_per_set"]) == ("gentle", 60.0, 2.0, 6)
+
+
+def test_checkin_low_pain_never_loosens_a_gentle_session(client):
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=gentle") as ws:
+        ack = _checkin(ws, 1)[-1]
+        assert ack["tier"] == "gentle"
+        assert _arm_frame(ws)["target_deg"] == 60.0
+
+
+def test_checkin_pain_7_is_a_rest_day_stop_and_therapist_flag(client):
+    with client.websocket_connect("/session?mode=arm&exercise=flexion") as ws:
+        msgs = _checkin(ws, 7)
+    types = [m["type"] for m in msgs]
+    assert "stop" in types and "therapist_flag" in types
+    stop = next(m for m in msgs if m["type"] == "stop")
+    assert stop["rule"] == "pain" and stop["pain"] == 7
+    assert msgs[-1]["tier"] == "rest"
+
+
+def test_checkin_pain_6_does_not_stop_the_session(client):
+    with client.websocket_connect("/session?mode=arm&exercise=flexion") as ws:
+        msgs = _checkin(ws, 6)
+    assert "stop" not in [m["type"] for m in msgs] and msgs[-1]["tier"] == "gentle"
+
+
+# ---- demo-only exercises are self-ticked and traced as such --------------------------------
+def test_self_report_logs_a_demo_set_as_self_ticked_never_verified(client, monkeypatch, tmp_path):
+    import praxis_session.main as main
+    import praxis_session.trace as trace
+    from praxis_session.schema import validate_event
+
+    monkeypatch.setattr(trace, "DEFAULT_DIR", tmp_path / "traces")
+    monkeypatch.setattr(main, "_self_ticks", {})
+    r = client.post("/api/self_report", json={"exercise": "external_rotation"}).json()
+    assert r["ok"] is True and r["verified"] is False and r["source"] == "self_ticked"
+    assert r["label"] == "Demo only · self-ticked, not camera-verified"
+    assert r["sets_today"] == 1
+    assert client.post("/api/self_report", json={"exercise": "external_rotation"}).json()["sets_today"] == 2
+    rows = [json.loads(line) for f in (tmp_path / "traces").glob("*.jsonl") for line in f.read_text().splitlines()]
+    ticks = [row for row in rows if row["kind"] == "self_report"]
+    assert len(ticks) == 2 and all(t["verified"] is False and t["mode"] == "demo" for t in ticks)
+    assert all(t["label"] == "Demo only · self-ticked, not camera-verified" for t in ticks)
+    ev = client.get("/events?n=5").json()["events"][-1]
+    validate_event(ev)
+    assert ev["type"] == "self_report" and ev["verified"] is False
+
+
+def test_self_report_refuses_a_camera_coached_exercise(client):
+    """A coached exercise is only ever counted from OpenCV events, never from a tap."""
+    for ex in ("flexion", "cup", "nhpt", "scaption"):
+        r = client.post("/api/self_report", json={"exercise": ex}).json()
+        assert r["ok"] is False and r["error"] in ("not_demo", "unknown_exercise")

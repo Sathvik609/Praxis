@@ -46,7 +46,8 @@
         "therapist_flag",
         "exertion",
         "replay_start",
-        "replay_end"
+        "replay_end",
+        "self_report"
       ]
     },
     "t": {
@@ -83,8 +84,10 @@
         "fresh",
         "held",
         "partial",
+        "self_ticked",
         null
-      ]
+      ],
+      "description": "calibration: where the homography came from (fresh | partial | held | null). self_report: always 'self_ticked' (the patient's own tick on a demo-only exercise, never a camera-verified rep)."
     },
     "age_s": {
       "type": "number"

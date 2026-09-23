@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class StopRuleThresholds(BaseModel):
-    pain_max: int = 5  # pain at or above this ends the session
+    pain_max: int = 7  # pain at or above this ends the session = the rest tier (plan.py, 23 Sep)
     lean_deg: float = 12.0
     lean_events: int = 3
     failed_reps: int = 3  # consecutive unverified reps -> pause

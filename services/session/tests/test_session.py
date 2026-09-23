@@ -62,7 +62,7 @@ def test_events_flow_through_stop_rules_then_coach(tmp_path):
 
 def test_pain_stop_silences_the_coach(tmp_path):
     s = make(tmp_path=tmp_path)
-    out = s.on_pain(6, t=3.0)
+    out = s.on_pain(7, t=3.0)
     assert [x.type for x in out] == ["stop", "therapist_flag"] and s.stopped
     e = make_event("reach_complete", t=5.0, to_dot=1, from_dot=0, verified=True, reason=None, reach_ms=1200, arc=1, phase="slow")
     assert [x.type for x in s.on_events([e], snapshot={}, t=5.0)] == []

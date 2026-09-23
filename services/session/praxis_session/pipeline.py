@@ -18,6 +18,7 @@ from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
 from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
 from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation, gate_for
+from praxis_session.perception.exercises import resolve
 from praxis_session.perception.hand import HandMetrics, HandTracker
 from praxis_session.perception.pose import (
     SKELETON,
@@ -44,6 +45,7 @@ POSE_LOSS_FRAMES = 15
 # Uncalibrated frames (after the 1.5 s hold in Calibrator) before `perception_lost` (D-CAL-1).
 LOSS_FRAMES = 20
 DEBOUNCE_S = 0.25  # NHPT occupancy debounce in seconds (D-SEG-1); frame counts are a floor
+TIER_RANK: dict[str, int] = {"full": 0, "gentle": 1, "rest": 2}  # same order as plan.TIER_RANK
 # `angle` (camera tilt from the ArUco pose, <= 25°) joined the sheet tasks' gate in D-CAL-3.
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "angle", "lighting")
 REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
@@ -106,15 +108,10 @@ class SessionPipeline:
         self._pose_miss = 0
         self._pose_lost = False
         self._pose_seen = False
+        self.tier = tier
+        self._arm_args: dict[str, Any] = {"target_deg": target_deg, "hold_s": hold_s, "sets": sets, "reps_per_set": reps}
         if mode == "arm":
-            self._arm = ArmFSM(
-                exercise,
-                tier,
-                target_deg=target_deg,
-                hold_s=hold_s,
-                sets=sets,
-                reps_per_set=reps,
-            )
+            self._arm = ArmFSM(exercise, tier, **self._arm_args)
             if use_pose:
                 tracker = PoseTracker()
                 self._pose = tracker if tracker.available else None
@@ -128,7 +125,8 @@ class SessionPipeline:
             )
         elif mode == "cup":
             self._cup_sheet = CupSheetState(self.spec)
-            self._cup = CupFSM(spec=self.spec, clear_frames=clear_frames)
+            dose = resolve("cup", tier)  # gentle: slow arcs only, if the prescription allows it
+            self._cup = CupFSM(spec=self.spec, clear_frames=clear_frames, slow_arcs=dose.slow_arcs, fast_arcs=dose.fast_arcs)
 
     # ---- public -------------------------------------------------------------------------
     def process(self, frame_bgr: np.ndarray, t: float, frame_index: int) -> list[Event]:
@@ -142,6 +140,27 @@ class SessionPipeline:
             self._detect_ms = (time.perf_counter() - t0) * 1000.0
             return self.process_pose(res, t, frame_index)
         return self._process_nhpt(frame_bgr, t, frame_index)
+
+    def apply_tier(self, tier: str) -> dict[str, Any]:
+        """Tighten the running dose to `tier` (the pain tier from the check-in). Never loosens,
+        and never changes a dose the patient has already started: once a rep or a reach exists
+        the session keeps its tier. `rest` changes nothing here; the pain stop rule ends the
+        session. Returns the tier now running and whether it changed."""
+        if tier not in TIER_RANK or TIER_RANK[tier] <= TIER_RANK.get(self.tier, 0) or tier == "rest":
+            return {"tier": self.tier, "changed": False}
+        if self._arm is None and self._cup is None:
+            return {"tier": self.tier, "changed": False}  # the peg test is standardized: no tier
+        if self._arm is not None:
+            if self._arm.started or self._arm.reps:
+                return {"tier": self.tier, "changed": False}
+            self._arm = ArmFSM(self._arm.exercise.id, tier, **self._arm_args)
+        if self._cup is not None:
+            if self._cup.reaches:
+                return {"tier": self.tier, "changed": False}
+            dose = resolve("cup", tier)
+            self._cup.slow_arcs, self._cup.fast_arcs = dose.slow_arcs, dose.fast_arcs
+        self.tier = tier
+        return {"tier": tier, "changed": True}
 
     def command(self, cmd: dict[str, Any]) -> dict[str, Any]:
         """Text commands from the client (progression prompt answers etc.)."""

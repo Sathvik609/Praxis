@@ -60,8 +60,22 @@ class Store:
         self._db.commit()
 
     # ---- seed --------------------------------------------------------------------------
+    def _refresh_seed_prescription(self) -> None:
+        """The seed prescription lives in code (`prescription.SEED_PRESCRIPTION`). When the
+        newest stored row is that same version but older content (e.g. pain_max 5 and the
+        pre-23-Sep exercise list), rewrite it so the API shows the rules the service enforces.
+        A newer version is left alone."""
+        row = self._db.execute("SELECT id, version, json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
+        seed = SEED_PRESCRIPTION.model_dump_json()
+        if row is None or row["version"] != SEED_PRESCRIPTION.version or json.loads(row["json"]) == json.loads(seed):
+            return
+        self._db.execute("UPDATE prescriptions SET json=? WHERE id=?", (seed, row["id"]))
+        self._db.commit()
+
     def seed_if_empty(self) -> None:
+        """Seed an empty database; on an existing one, bring the seed prescription up to date."""
         if self._db.execute("SELECT COUNT(*) FROM patients").fetchone()[0]:
+            self._refresh_seed_prescription()
             return
         self._db.execute("INSERT INTO patients(id, json) VALUES(?, ?)", (PATIENT["id"], json.dumps(PATIENT)))
         self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], SEED_PRESCRIPTION.version, SEED_PRESCRIPTION.model_dump_json()))

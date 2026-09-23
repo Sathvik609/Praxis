@@ -45,6 +45,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Sprint E web (17 Sep): guided path `/welcome` → `/` Today → `/ready` → `/go` → `/done/:id` | **removed 21 Sep** with `/api/profile` and `/api/plan/today`; `/` redirects to `/details` (Home). The arm FSM's `exercise`/`tier` socket parameters and `perception/exercises.py` stay |
 | Sprint E, E-SVC (17 Sep): per-user profile (`/api/profile`), seven-exercise shoulder registry with per-exercise metrics, generalised arm FSM (registry-driven, front/side gating, pendulum oscillations), pain-tiered `/api/plan/today`, per-exercise coach cues, `exercise`/`username` on the session record | built, tested (pytest 277) on synthetic landmark streams only; **registry replaced 23 Sep** by the locked set below |
 | Locked exercise set (23 Sep): registry of seven with `mode: coached \| demo` — Pendulum, Arm to the front, Arm out to the side (exercises), Waiter – cup, NHPT (activities), Rotate out / Rotate in (demo only, self-ticked); scaption, extension and the rotation metric removed; the arm FSM and the socket refuse demo-only ids | built, tested on synthetic landmark streams only (§3.7) |
+| Day order + pain tiers (23 Sep): `plan.py` (Pendulum → front → side → cup, NHPT weekly; 0–3 full, 4–6 gentle within allowed adaptations, ≥ 7 rest + flag), `GET /api/plan`, tier enforced on check-in (`apply_tier`), gentle cup = slow arcs only, seed stop level 5 → 7, `POST /api/self_report` for demo rotations (`self_report` event, `verified: false`) | built, tested (§3.7.1) |
 | Real recordings, dataset v1, browser-measured latency, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
@@ -125,15 +126,39 @@ oscillation counting has only ever run on synthetic landmark streams. None of th
 has been near a real recording; all are camera-relative progress, **never clinical
 goniometry**.
 
-### 3.7.1 Pain tier and today's plan (`plan.py`)
-The tier is a rule in code, not a diagnosis and not the coach's call: pain 0–3 gives the full
-registry at full range, 4–6 gives pendulum, flexion, abduction to 60° and external rotation
-with 2 s holds and fewer reps, and 7 or more gives a rest day with no exercises.
-`GET /api/plan/today?pain=` returns the tier, the reason in plain words, the goal line with
-the week number, the items at the tier's dose (each with `done_today`, true when a session for
-that exercise finished today for this user) and the rest advice. High pain is *not* flagged
-here: the existing pain stop rule raises the therapist flag when the same number arrives at
-check-in, so exactly one place does it.
+### 3.7.1 Day order, pain tier and self-ticked demos (`plan.py`, locked 23 Sep)
+**Day order.** Pendulum → Arm to the front → Arm out to the side → Waiter – cup (about 15
+minutes); the Nine-Hole Peg Test is weekly; Rotate out / Rotate in are offered as demo-only
+extras. `GET /api/plan?pain=&nhpt_due=` returns the day in that order at the tier's dose
+(`items`, each with `order`), the peg test when due (`weekly`), the demo rotations (`demo`,
+`self_ticked: true`, `camera_verified: false`), the reason in plain words, and for a rest day
+the rest advice and `therapist_flag: true`.
+
+**Pain tier** — a rule in code, not a diagnosis and not the coach's call: pain 0–3 → `full`
+(the prescribed dose); 4–6 → `gentle`; ≥ 7 → `rest` (nothing today). The rest threshold is
+`min(7, prescription.stop_rules.pain_max)`, so a therapist can only make it stricter, and the
+seed prescription's pain stop level moved from 5 to **7** so that the rest tier and the pain
+stop rule are the same number: pain ≥ 7 at check-in ends the session through the existing stop
+rule, which writes the one therapist flag. `gentle` is **reduced dose/range within the
+prescription's allowed adaptations**: `exercises.resolve(ex, "gentle", rx)` applies an
+entry's gentle overrides only for fields listed in `allowed_adaptations[ex.rx]`, clamped into
+the allowed range (`prescription.clamp`, which also honours the ceiling); anything else is
+dropped. With the seed prescription that is pendulum 8 swings instead of 10, Arm to the front
+hold 2 s and 6 reps, Arm out to the side to 60° with a 2 s hold and 6 reps, and Waiter – cup
+with the slow arcs only (the peg test is standardized and never adapted).
+
+**Enforced by the service, not the client.** On the `checkin` command the service computes
+the tier from the reported pain, takes the stricter of it and the socket's `tier`, and calls
+`SessionPipeline.apply_tier`, which rebuilds the arm FSM or trims the cup's fast arcs **before
+the first rep** (never after, and never looser). The ack carries `tier` and `tier_applied`,
+and a `tier` trace row records pain, tier, the tier actually running and the reason. A socket
+opened with `tier=rest` is refused (`error{code: "rest_day"}`), and a stored database whose
+seed prescription predates this change is rewritten on start (`Store.seed_if_empty`).
+
+**Self-ticked demos.** `POST /api/self_report {exercise}` accepts only a demo-only id; it logs
+a `self_report` trace row and event with `verified: false`, `source: "self_ticked"` and the
+label "Demo only · self-ticked, not camera-verified", and returns the sets ticked today. A
+camera-coached id is refused (`not_demo`): those count only from OpenCV events.
 
 ### 3.8 Exertion context — Phase 7 (not started)
 
