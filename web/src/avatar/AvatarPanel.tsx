@@ -44,7 +44,7 @@ function clipByName(name: ClipName): Clip {
 const SPEEDS = [1, 0.5, 0.25]
 const ASPECT: Record<NonNullable<Props['aspect']>, string> = {
   '16/10': 'aspect-[16/10]',
-  '4/5': 'aspect-[4/5] max-h-[400px]',
+  '4/5': 'aspect-[4/5] max-h-[525px]',
   '3/4': 'aspect-[3/4]',
 }
 const LABEL_OFFSET = 70
@@ -285,7 +285,7 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
             {caption || `Step ${step} of ${stepsTotal}`}
           </div>
         )}
-        <div className="absolute left-3 top-2 text-base text-white/70">
+        <div className={`absolute left-3 top-2 text-base leading-snug text-white/70 ${compact ? 'right-[11.5rem]' : 'right-3'}`}>
           {view === 'side' ? 'side view' : 'front view'} · {speed}× · {am ? sourceLabel(am.source, am) : mode === 'skeleton' ? 'skeleton view' : 'same figure as Home'}
         </div>
         {mode === 'skeleton' && clip.arc && showCues && (

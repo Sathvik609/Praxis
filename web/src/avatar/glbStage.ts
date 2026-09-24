@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { framingPreset } from './framing'
+import { type Box, fitFraming, framingPreset } from './framing'
 import { type GlbAction, advanceGlbClock, boneFor, stepAt, targetAt } from './glbActions'
 import { AvatarInstance, type AvatarAsset } from './glbAsset'
 import { TABLE_Y, type Side } from './layout'
@@ -52,6 +52,8 @@ export class GlbStage {
   private look = new THREE.Vector3(0, 1.3, 0)
   private tmp = new THREE.Vector3()
   private hand = new THREE.Vector3()
+  private framedFor = ''
+  private box: Box = { min: new THREE.Vector3(-0.5, 0, -0.3), max: new THREE.Vector3(0.5, 1.85, 0.5) }
   input: GlbStageProps
 
   constructor(private el: HTMLElement, input: GlbStageProps) {
@@ -96,6 +98,33 @@ export class GlbStage {
     this.renderer.setSize(w, h, true)
     this.cam.aspect = w / h
     this.cam.updateProjectionMatrix()
+  }
+
+  /** The space an action uses: every bone sampled across the action (plus the sheet or pegboard
+   *  for a table task), padded for the body's thickness. The camera frames this box, so each
+   *  exercise fills the panel and the view stays still while it plays. */
+  private sampleBox(meta: { duration: number; props: string[] }, restoreTime: number): Box {
+    const box = new THREE.Box3()
+    const bones: THREE.Object3D[] = []
+    this.inst.root.traverse((o) => {
+      // joints plus the exported bone tips (`*_leaf`: top of the head, fingertips, toes)
+      if ((o as THREE.Bone).isBone || o.name.endsWith('_leaf')) bones.push(o)
+    })
+    const v = new THREE.Vector3()
+    for (let i = 0; i <= 24; i++) {
+      this.inst.setTime((meta.duration * i) / 24)
+      this.inst.root.updateMatrixWorld(true)
+      for (const b of bones) box.expandByPoint(b.getWorldPosition(v))
+    }
+    for (const [prop, node] of [['sheet', 'prop_sheet'], ['pegboard', 'prop_pegboard']] as const) {
+      if (!meta.props.includes(prop)) continue
+      this.inst.worldPosition(node, v)
+      box.expandByPoint(v.clone().add(new THREE.Vector3(0.14, 0, 0.1)))
+      box.expandByPoint(v.clone().add(new THREE.Vector3(-0.14, 0, -0.1)))
+    }
+    this.inst.setTime(restoreTime)
+    box.expandByScalar(0.07)
+    return { min: box.min, max: box.max }
   }
 
   /** Dot + additive halo for a marker joint, created on first use. */
@@ -150,13 +179,23 @@ export class GlbStage {
     }
     for (const [j, d] of this.dots) if (!shown.has(j)) d.dot.visible = false
 
-    // camera: the shared presets, lowered to the GLB's table; frame-rate independent ease
+    // camera: frame the space the action uses (sampled once per action and side); the hand
+    // close-up keeps its preset. Frame-rate independent ease between framings.
     const hasTable = meta.props.includes('table')
+    const key = `${p.action}|${p.side}`
+    if (key !== this.framedFor) {
+      this.framedFor = key
+      this.box = this.sampleBox(meta, clock.time)
+      // Home's body map is about the arm and hand: frame the upper body (hands included), not the feet
+      if (p.compact && p.action === 'idle') this.box.min.y = Math.max(this.box.min.y, 0.62)
+    }
     this.inst.worldPosition(boneFor(p.side === 'right' ? 'rHand' : 'lHand', p.side), this.hand)
-    const { eye, look } = framingPreset(
-      { camera: p.camera, closeUp: p.closeUp, compact: p.compact, side: p.side, hasTable, tall: !meta.seated && p.action !== 'idle', yShift: hasTable ? this.tableTop - TABLE_Y : 0 },
-      this.hand,
-    )
+    const { eye, look } = p.closeUp
+      ? framingPreset(
+          { camera: p.camera, closeUp: true, compact: p.compact, side: p.side, hasTable, tall: false, yShift: hasTable ? this.tableTop - TABLE_Y : 0 },
+          this.hand,
+        )
+      : fitFraming(this.box, p.camera, p.side, this.cam.aspect, this.cam.fov, hasTable ? 24 : 6)
     const k = this.frames === 0 ? 1 : 1 - Math.pow(0.001, dt)
     this.cam.position.lerp(eye, k)
     this.look.lerp(look, k)

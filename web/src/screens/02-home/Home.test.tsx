@@ -27,7 +27,9 @@ beforeEach(() => {
 
 test('home shows next practice, week, goal, body map markers and focus panel', () => {
   renderHome()
-  expect(screen.getByText(/Waiter – cup, then Arm to the front/)).toBeInTheDocument()
+  // the day card follows the locked day order in lib/plan.ts (the service enforces the same order)
+  expect(screen.getByText(/Pendulum → Arm to the front → Arm out to the side → Waiter – cup/)).toBeInTheDocument()
+  expect(screen.getByText(/About 15 min/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Replay a recorded session/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()

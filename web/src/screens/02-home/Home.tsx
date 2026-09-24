@@ -9,7 +9,8 @@ import { AlertTriangle, Check, RotateCcw, Sparkles, ZoomIn, ZoomOut } from '../.
 import { Pill } from '../../design/Pill'
 import { Stat } from '../../design/Stat'
 import { api, useApi } from '../../lib/api'
-import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK } from '../../lib/seed'
+import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
+import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK, exerciseById } from '../../lib/seed'
 import { CoachSheet } from '../coach/CoachDrawer'
 
 const tone: Record<string, ChipTone> = { focus: 'focus', watch: 'amber', stable: 'mint' }
@@ -86,8 +87,8 @@ export function Home() {
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
           <div className="text-white/80">Next practice · today</div>
-          <h1 className="text-3xl text-white">Waiter – cup, then Arm to the front</h1>
-          <p className="mt-1 text-white/80">About 14 min · cup + target sheet · wrist weight</p>
+          <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' → ')}</h1>
+          <p className="mt-1 text-white/80">About {DAY_MINUTES} min · cup + target sheet</p>
           <Button full variant="inverse" className="mt-5" onClick={() => nav('/details/checkin')}>Start session</Button>
           <Button full variant="secondary" className="mt-3 whitespace-normal! border-white/70! bg-transparent! text-white! hover:bg-white/10!" onClick={() => nav('/details/settings')}>Replay a recorded session · no webcam</Button>
           <Button full variant="link" className="mt-2 text-white/90! hover:bg-white/10!" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
@@ -158,7 +159,7 @@ export function Home() {
           </div>
           <Pill ariaLabel="Avatar view" size="sm" className="ml-auto shrink-0" value={view} onChange={pickView} options={[{ value: 'front', label: 'Front' }, { value: 'side', label: 'Left side' }, { value: 'both', label: 'Both' }]} />
         </div>
-        <div className="relative mx-auto mt-3 w-full max-w-[352px]">
+        <div className="relative mx-auto mt-3 w-full max-w-[420px]">
           <div className="absolute right-2 top-2 z-10 flex gap-1">
             <Button variant="inverse" className="w-14 px-0!" aria-label="Zoom in" disabled={zoomIdx === ZOOMS.length - 1} icon={<ZoomIn />} onClick={() => setZoomIdx((i) => Math.min(ZOOMS.length - 1, i + 1))} />
             <Button variant="inverse" className="w-14 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
