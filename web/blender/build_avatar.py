@@ -83,6 +83,12 @@ SHOULDER = V(0.225, 0.0, 1.41)
 ELBOW = V(0.25, 0.0, 1.14)
 WRIST = V(0.25, 0.0, 0.89)
 KNUCKLE = V(0.25, 0.0, 0.80)
+# Left-hand digit joint chains at rest (palm faces the thigh, -x; fingers point down; thumb in
+# front): base -> knuckle -> middle joint -> tip. Index on the front edge of the palm, the fused
+# middle/ring/little "mitten" behind it, the thumb from the heel of the palm, forward and down.
+INDEX = [V(0.248, -0.030, 0.800), V(0.247, -0.031, 0.754), V(0.246, -0.032, 0.728), V(0.245, -0.033, 0.707)]
+MITTEN = [V(0.249, 0.011, 0.798), V(0.248, 0.012, 0.750), V(0.247, 0.012, 0.722), V(0.246, 0.012, 0.700)]
+THUMB = [V(0.236, -0.026, 0.870), V(0.231, -0.052, 0.830), V(0.228, -0.067, 0.800), V(0.225, -0.078, 0.777)]  # base on the palm side
 
 # (name, head, tail, parent, deform); left-side names end in _L and are mirrored to _R.
 CENTRE_BONES = [
@@ -98,9 +104,15 @@ LEFT_BONES = [
     ("upper_arm_L", SHOULDER, ELBOW, "clavicle_L", True),
     ("forearm_L", ELBOW, WRIST, "upper_arm_L", True),
     ("hand_L", WRIST, KNUCKLE, "forearm_L", True),
-    ("thumb_L", V(0.244, -0.030, 0.866), V(0.236, -0.068, 0.792), "hand_L", True),
-    ("index_L", V(0.248, -0.030, 0.797), V(0.238, -0.034, 0.718), "hand_L", True),
-    ("mitten_L", V(0.249, 0.010, 0.795), V(0.240, 0.012, 0.722), "hand_L", True),
+    *[(n, h, t, par, True) for n, h, t, par in (
+        # three phalanges per digit so the fingers curl and the thumb opposes (joint chains below)
+        ("thumb_L", THUMB[0], THUMB[1], "hand_L"), ("thumb_2_L", THUMB[1], THUMB[2], "thumb_L"),
+        ("thumb_3_L", THUMB[2], THUMB[3], "thumb_2_L"),
+        ("index_L", INDEX[0], INDEX[1], "hand_L"), ("index_2_L", INDEX[1], INDEX[2], "index_L"),
+        ("index_3_L", INDEX[2], INDEX[3], "index_2_L"),
+        ("mitten_L", MITTEN[0], MITTEN[1], "hand_L"), ("mitten_2_L", MITTEN[1], MITTEN[2], "mitten_L"),
+        ("mitten_3_L", MITTEN[2], MITTEN[3], "mitten_2_L"),
+    )],
     ("thigh_L", V(0.09, 0.0, 0.935), V(0.095, -0.005, 0.51), "hips", True),
     ("shin_L", V(0.095, -0.005, 0.51), V(0.10, 0.015, 0.085), "thigh_L", True),
     ("foot_L", V(0.10, 0.015, 0.085), V(0.105, -0.125, 0.02), "shin_L", True),
@@ -184,7 +196,7 @@ def ellipse_fn(r):
     return lambda t: r * math.sqrt(max(0.0, 1 - (2 * t - 1) ** 2))
 
 
-def ball(name, c, r, sq=(1.0, 1.0, 1.0), seg=24, rings=14):
+def ball(name, c, r, sq=(1.0, 1.0, 1.0), seg=20, rings=12):
     c = Vector(c)
     return lathe(name, c - V(0, 0, r * sq[2]), c + V(0, 0, r * sq[2]), ellipse_fn(r), sq[0], sq[1], V(0, -1, 0), seg, rings)
 
@@ -259,12 +271,18 @@ def body_pieces():
         # palm: wide front-to-back, thin across, facing the thigh
         add(limb(f"palm_{S}", wr + V(0, -0.004, -0.010), V(wr.x - 0.002 * s, -0.004, 0.800), 0.038, 0.045,
                  0, 0, 0.012, 0.014, 1.0, 0.46, V(1, 0, 0), seg=24, rings=14), f"hand_{S}")
-        add(limb(f"thumb_{S}", m(V(0.244, -0.030, 0.860)), m(V(0.238, -0.060, 0.806)), 0.0135, 0.0110,
-                 -0.004, 0, 0.010, 0.009, seg=16, rings=10), f"thumb_{S}")
-        add(limb(f"index_{S}", m(V(0.248, -0.030, 0.797)), m(V(0.238, -0.034, 0.718)), 0.0112, 0.0096,
-                 -0.006, 0, 0.009, 0.008, seg=16, rings=10), f"index_{S}")
-        add(limb(f"mitten_{S}", m(V(0.249, 0.010, 0.795)), m(V(0.240, 0.012, 0.722)), 0.026, 0.022,
-                 -0.006, 0, 0.012, 0.014, 1.0, 0.46, V(1, 0, 0), seg=20, rings=12), f"mitten_{S}")
+        # digits: one capsule per phalanx whose round ends overlap at the joints, so a bent finger
+        # stays one smooth piece (the mannequin's knuckles), each rigid to its own bone
+        def digit(name, chain, radii, flat=1.0, seg=14, rings=8):
+            pts = [m(p) for p in chain]
+            bones = [name, f"{name.split('_')[0]}_2", f"{name.split('_')[0]}_3"]
+            for i in range(3):
+                r0, r1 = radii[i], radii[i + 1]
+                add(limb(f"{bones[i]}_{S}", pts[i], pts[i + 1], r0, r1, -0.75 * r0, -0.75 * r1, 0.9 * r0, 0.9 * r1,
+                         1.0, flat, V(1, 0, 0), seg=seg, rings=rings), f"{bones[i]}_{S}")
+        digit("thumb", THUMB, (0.0135, 0.0118, 0.0104, 0.0090))
+        digit("index", INDEX, (0.0092, 0.0085, 0.0078, 0.0070))
+        digit("mitten", MITTEN, (0.0250, 0.0232, 0.0212, 0.0185), flat=0.44, seg=16, rings=8)
 
         hip, knee, ank = m(V(0.09, 0.0, 0.935)), m(V(0.095, -0.005, 0.51)), m(V(0.10, 0.015, 0.085))
         hip_ball = hip + V(-0.004 * s, 0, -0.050)
@@ -593,7 +611,7 @@ def build_pegboard(wood, peg_mat):
     dish_c = c + V(DISH_OFFSET_X, 0, 0)
     for k in range(9):
         ang = math.radians(20 + 37 * k)
-        rr = 0.012 + 0.012 * ((k * 5) % 3)
+        rr = 0.008 + 0.006 * ((k * 5) % 3)  # clustered mid-dish so both pinch pads land inside it
         peg = cylinder(f"prop_peg_{k + 1}", PEG_RADIUS, PEG_LENGTH, peg_mat, 20, 0.0015)
         peg.rotation_euler = (math.radians(90), 0, ang + math.radians(90))
         peg.location = dish_c + V(rr * math.cos(ang), rr * math.sin(ang), sz - 0.010 + PEG_RADIUS + 0.001 * (k % 3))
@@ -675,6 +693,7 @@ def main() -> None:
         export_anim_slide_to_zero=False,
         export_skins=True,
         export_influence_nb=4,
+        export_leaf_bone=True,  # adds <bone>_leaf nodes: fingertip positions for the hand tests
         export_materials="EXPORT",
         export_cameras=False,
         export_lights=False,

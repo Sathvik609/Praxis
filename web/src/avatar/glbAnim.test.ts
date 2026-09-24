@@ -150,3 +150,65 @@ test('seated actions put the pelvis on the chair seat and the feet on the floor'
     expect(at(w, 'foot_L')[1]).toBeLessThan(0.12)
   }
 })
+
+// ---------------------------------------------------------------------------------------------
+// Hands: three-phalanx digits; tips are the exporter's `<bone>_leaf` nodes.
+const DIGIT_R: Record<string, number> = {
+  index_L: 0.0085, index_2_L: 0.0078, index_3_L: 0.007, mitten_L: 0.01, mitten_2_L: 0.0093, mitten_3_L: 0.0082,
+  thumb_L: 0.0118, thumb_2_L: 0.0104, thumb_3_L: 0.009,
+}
+const PAD_GAP = 0.008 + 0.007 + 0.009 // peg diameter + index and thumb tip radii
+
+test('NHPT: thumb and index tips pinch each peg pad to pad, with the peg between them', () => {
+  const tg = meta.actions.nhpt.targets
+  const picks = tg.filter((t) => !t.landed)
+  const seats = tg.filter((t) => t.landed)
+  expect(picks).toHaveLength(9)
+  for (const [t, k] of [...picks.map((p) => [atFrame(p.t), p.index] as const), ...seats.map((p) => [atFrame(p.t - 0.15), p.index] as const)]) {
+    const w = glb.world('nhpt', t)
+    const it = at(w, 'index_3_L_leaf')
+    const tt = at(w, 'thumb_3_L_leaf')
+    expect(Math.abs(len(sub(it, tt)) - PAD_GAP), `tips apart, peg ${k} t=${t}`).toBeLessThan(0.0025)
+    const mid: V3 = [(it[0] + tt[0]) / 2, (it[1] + tt[1]) / 2, (it[2] + tt[2]) / 2]
+    // the pads meet the peg on its upper half: its centre sits 4 mm below the pad midpoint
+    expect(len(sub([mid[0], mid[1] - 0.004, mid[2]], at(w, `prop_peg_${k}`))), `peg ${k} between the pads`).toBeLessThan(0.003)
+  }
+})
+
+test('NHPT: no part of the hand goes into the board or the dish at any frame (fingertip pads may touch)', () => {
+  const rest = glb.world()
+  const top = at(rest, 'anchor_hole_1')[1]
+  const board = at(rest, 'prop_pegboard')
+  const dish = [board[0] + 0.068, board[2]]
+  const surface = (x: number, z: number) => {
+    const r = Math.hypot(x - dish[0], z - dish[1])
+    return r < 0.052 ? top + 0.004 - 0.016 * Math.sqrt(1 - (r / 0.052) ** 2) : top
+  }
+  let worst = Infinity
+  for (let f = 0; f <= Math.round(glb.duration('nhpt') * FPS); f++) {
+    const w = glb.world('nhpt', f / FPS)
+    for (const [bone, r] of Object.entries(DIGIT_R)) {
+      const p = at(w, bone)
+      worst = Math.min(worst, p[1] - r - surface(p[0], p[2]))
+    }
+    for (const tipNode of ['index_3_L_leaf', 'thumb_3_L_leaf', 'mitten_3_L_leaf']) {
+      const p = at(w, tipNode)
+      const r = DIGIT_R[tipNode.replace('_leaf', '')]
+      worst = Math.min(worst, p[1] - r - surface(p[0], p[2]) + (tipNode.startsWith('mitten') ? 0 : 0.006))
+    }
+  }
+  expect(worst).toBeGreaterThan(-0.0015)
+})
+
+test('Waiter – cup: the fingers wrap the cup without going through it', () => {
+  for (const tg of meta.actions.waiter_cup.targets.filter((t) => t.landed)) {
+    const w = glb.world('waiter_cup', atFrame(tg.t))
+    const cup = at(w, 'prop_cup')
+    for (const n of ['index_3_L_leaf', 'mitten_3_L_leaf', 'thumb_3_L_leaf', 'index_2_L', 'mitten_2_L']) {
+      const p = at(w, n)
+      const fromAxis = Math.hypot(p[0] - cup[0], p[2] - cup[2])
+      expect(fromAxis, `${n} dot ${tg.index}`).toBeGreaterThan(0.03) // outside the cup wall
+      expect(fromAxis, `${n} dot ${tg.index}`).toBeLessThan(0.075) // but on it, not in the air
+    }
+  }
+})

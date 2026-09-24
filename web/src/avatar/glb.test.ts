@@ -73,7 +73,9 @@ const dist = (a: V3, b: V3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
 const SIDES = ['L', 'R'] as const
 const BONES = [
   'root', 'hips', 'spine', 'chest', 'neck', 'head',
-  ...SIDES.flatMap((s) => ['clavicle', 'upper_arm', 'forearm', 'hand', 'thumb', 'index', 'mitten', 'thigh', 'shin', 'foot'].map((b) => `${b}_${s}`)),
+  ...SIDES.flatMap((s) =>
+    ['clavicle', 'upper_arm', 'forearm', 'hand', 'thumb', 'thumb_2', 'thumb_3', 'index', 'index_2', 'index_3', 'mitten', 'mitten_2', 'mitten_3', 'thigh', 'shin', 'foot'].map((b) => `${b}_${s}`),
+  ),
 ]
 const PROPS = ['prop_chair', 'prop_table', 'prop_cup', 'prop_sheet', 'prop_pegboard', ...Array.from({ length: 9 }, (_, i) => `prop_peg_${i + 1}`)]
 

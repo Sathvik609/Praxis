@@ -203,7 +203,7 @@ def rot_between(a: Vector, b: Vector) -> Matrix:
 
 
 def solve_arm(sk: Skeleton, pose: Pose, side: str, grip_rest: Vector, target: Vector, pole: Vector,
-              pronation=0.0, wrist_flex=0.0, iters=6) -> Pose:
+              pronation=0.0, wrist_flex=0.0, iters=8, align=None) -> Pose:
     """Analytic two-bone IK: put the hand-attached point `grip_rest` (rest coords) on `target`.
     The upper arm and forearm take the minimal rotations onto the solved directions, then the
     forearm pronates about its own axis and the wrist flexes; the loop re-solves because the grip
@@ -229,6 +229,13 @@ def solve_arm(sk: Skeleton, pose: Pose, side: str, grip_rest: Vector, target: Ve
         d_fa = rot_between(d_ua @ (W0 - E0), W - E) @ d_ua
         axis = (W - E).normalized()
         sgn = 1 if s == "L" else -1
+        if align is not None:  # roll the forearm so a hand-local axis points as close to `world` as it can
+            local, world = align
+            v = d_fa @ local
+            vp = (v - axis * v.dot(axis)).normalized()
+            wp = (world - axis * world.dot(axis)).normalized()
+            roll = math.atan2(vp.cross(wp).dot(axis), vp.dot(wp))
+            d_fa = Matrix.Rotation(roll, 3, axis) @ d_fa
         d_fa = Matrix.Rotation(pronation * D * sgn, 3, axis) @ d_fa
         lateral = (d_fa @ Vector((0, -1, 0))).cross(axis).normalized()  # wrist flexion axis
         d_hand = Matrix.Rotation(wrist_flex * D * sgn, 3, lateral) @ d_fa
@@ -238,19 +245,160 @@ def solve_arm(sk: Skeleton, pose: Pose, side: str, grip_rest: Vector, target: Ve
     return out
 
 
-def finger_pose(sk: Skeleton, pose: Pose, side: str, pinch: float, grip: float) -> Pose:
-    """pinch 0..1 closes thumb onto index (peg); grip 0..1 curls index + mitten around a cup."""
+# ---------------------------------------------------------------------------------------------
+# Hands. Each digit has three phalanges. Index and mitten (fused middle/ring/little) flex toward
+# the palm; the thumb swings from its base (two angles) and flexes its two outer joints. Shapes
+# are solved once per skeleton in the hand's own rest frame, so contact is exact:
+#   relaxed  resting curl                 open  pre-shaped aperture while reaching for a peg
+#   pinch    thumb pad meets index pad either side of a peg (tip-to-tip precision grip)
+#   cup_open / cup  fingers and thumb wrapped round the cup (cylindrical power grip)
+# ---------------------------------------------------------------------------------------------
+DIGITS = {"index": ("index", "index_2", "index_3"), "mitten": ("mitten", "mitten_2", "mitten_3"),
+          "thumb": ("thumb", "thumb_2", "thumb_3")}
+PEG_DIAMETER = 0.008
+INDEX_TIP_R, THUMB_TIP_R = 0.0070, 0.0090  # fingertip radii (build_avatar.py digit radii)
+CUP_R_GRIP = 0.034  # cup radius at the grip ring
+
+
+class HandShape:
+    def __init__(self, index, mitten, thumb):
+        self.index, self.mitten, self.thumb = tuple(index), tuple(mitten), tuple(thumb)
+
+    def mix(self, other: "HandShape", f: float) -> "HandShape":
+        lerp = lambda a, b: tuple(x + (y - x) * f for x, y in zip(a, b))  # noqa: E731
+        return HandShape(lerp(self.index, other.index), lerp(self.mitten, other.mitten), lerp(self.thumb, other.thumb))
+
+
+def digit_deltas(sk: "Skeleton", side: str, shape: HandShape, dh: Matrix) -> dict:
     s, sgn = side, (1 if side == "L" else -1)
-    dh = sk.delta(pose, f"hand_{s}")
-    flex = lambda deg: Matrix.Rotation(deg * D * sgn, 3, "Y")  # noqa: E731 curls toward the palm
-    out = pose.copy()
-    out.d[f"thumb_{s}"] = dh @ Matrix.Rotation((24 * pinch + 18 * grip) * D, 3, "X")
-    out.d[f"index_{s}"] = dh @ flex(14 * pinch + 38 * grip)
-    out.d[f"mitten_{s}"] = dh @ flex(10 * pinch + 44 * grip)
+    out = {}
+    for dg in ("index", "mitten"):
+        m = dh
+        for bone, ang in zip(DIGITS[dg], getattr(shape, dg)):
+            m = m @ Matrix.Rotation(ang * D * sgn, 3, "Y")  # flex toward the palm
+            out[f"{bone}_{s}"] = m
+    a, b, f = shape.thumb
+    tdir = (sk.rest_head(f"thumb_2_{s}") - sk.rest_head(f"thumb_{s}")).normalized()
+    n = tdir.cross(Vector((-sgn, 0.0, 0.0))).normalized()  # thumb flexion axis
+    m = dh @ Matrix.Rotation(a * D, 3, "X") @ Matrix.Rotation(b * D * sgn, 3, "Z")
+    out[f"thumb_{s}"] = m
+    for bone in ("thumb_2", "thumb_3"):
+        m = m @ Matrix.Rotation(f * D, 3, n)
+        out[f"{bone}_{s}"] = m
     return out
 
 
-RELAXED = 0.22  # a resting hand's fingers are slightly curled, never splayed
+def hand_pose(sk: "Skeleton", pose: "Pose", side: str, shape: HandShape) -> "Pose":
+    out = pose.copy()
+    out.d.update(digit_deltas(sk, side, shape, sk.delta(pose, f"hand_{side}")))
+    return out
+
+
+def tip(sk, pose, bone):
+    return sk.point(pose, bone, sk.bones[bone].tail_local)
+
+
+def local_points(sk, side, shape):
+    """Digit joint and tip positions with the hand at rest (hand-local, rest coordinates)."""
+    p = Pose(digit_deltas(sk, side, shape, Matrix.Identity(3)))
+    return p, {bone: tip(sk, p, f"{bone}_{side}") for dg in DIGITS.values() for bone in dg}
+
+
+def descend(f, x, step, lo, hi, iters=400):
+    """Derivative-free coordinate descent (small, deterministic, good enough for 3 joint angles)."""
+    x, best = list(x), f(x)
+    step = list(step)
+    for _ in range(iters):
+        moved = False
+        for i in range(len(x)):
+            for d in (step[i], -step[i]):
+                y = list(x)
+                y[i] = min(hi[i], max(lo[i], y[i] + d))
+                v = f(y)
+                if v < best - 1e-12:
+                    x, best, moved = y, v, True
+        if not moved:
+            step = [st * 0.5 for st in step]
+            if max(step) < 0.02:
+                break
+    return x, best
+
+
+class Hands:
+    """Solved hand shapes for one skeleton (left hand; the right mirrors by construction)."""
+
+    def __init__(self, sk: "Skeleton"):
+        self.sk = sk
+        L = "L"
+        self.relaxed = HandShape((10, 16, 8), (14, 20, 10), (0, 0, 8))
+        # precision grip: index curls into a C, mitten tucks into the palm clear of the board
+        idx, mit = (45, 45, 15), (72, 88, 55)
+        self.pinch = self.solve_pinch(idx, mit, PEG_DIAMETER)
+        self.pinch_empty = self.solve_pinch(idx, mit, 0.0)
+        self.open = self.solve_pinch((30, 30, 8), (64, 80, 50), 0.030)  # pre-shape, high above the target
+        self.near = self.solve_pinch(idx, mit, PEG_DIAMETER + 0.008)   # last approach and release: pads just apart
+        _, pts = local_points(sk, L, self.pinch)
+        self.pinch_point = (pts["index_3"] + pts["thumb_3"]) / 2  # hand-local, between the pads
+        # power grip round a vertical cup: cylinder axis along the hand's y (index on top)
+        palm_x = sk.rest_head("hand_L").x - 0.021
+        self.cup_centre = Vector((palm_x - CUP_R_GRIP, -0.010, 0.818))
+        self.cup = self.solve_cup(CUP_R_GRIP)
+        self.cup_open = self.solve_cup(CUP_R_GRIP + 0.022)
+
+    def pads_gap(self, gap):
+        # centre-line distance between the thumb and index tips when their pads touch an object
+        return gap + INDEX_TIP_R + THUMB_TIP_R
+
+    def solve_pinch(self, idx, mit, gap):
+        """Index curl and thumb angles together, so the thumb tip sits straight across from the
+        index tip, `gap` apart pad to pad along the hand's front-back axis (level when the palm
+        faces down). The index is kept near `idx`, a natural precision-grip curl."""
+        sk = self.sk
+
+        def split(x):
+            return HandShape(x[:3], mit, x[3:])
+
+        def cost(x):
+            _, p = local_points(sk, "L", split(x))
+            target = p["index_3"] + Vector((0.0, -self.pads_gap(gap), 0.0))
+            c = (p["thumb_3"] - target).length_squared * 1e4
+            c += 1e-6 * sum((a - b) ** 2 for a, b in zip(x[:3], idx))
+            return c + 1e-7 * (x[3] ** 2 + x[4] ** 2)
+        best = None
+        for th in ([0, 0, 20], [30, -30, 30], [-30, 30, 30], [40, 20, 50], [-20, -40, 10]):
+            x, c = descend(cost, list(idx) + th, [8, 8, 8, 10, 10, 10], [0, 0, 0, -90, -90, -20], [90, 100, 70, 90, 90, 90])
+            if best is None or c < best[1]:
+                best = (x, c)
+        shape = split(best[0])
+        _, p = local_points(sk, "L", shape)
+        miss = (p["thumb_3"] - p["index_3"] - Vector((0.0, -self.pads_gap(gap), 0.0))).length
+        assert miss < 0.002, f"pinch not reachable: {miss * 1000:.1f} mm"
+        return shape
+
+    def solve_cup(self, radius):
+        sk, cc = self.sk, self.cup_centre
+
+        def off_axis(p):  # distance from the cup axis (parallel to local y through cc)
+            return math.hypot(p.x - cc.x, p.z - cc.z)
+
+        def finger(dg, r_f):
+            def cost(a):
+                sh = HandShape(a if dg == "index" else (0, 0, 0), a if dg == "mitten" else (0, 0, 0), (0, 0, 0))
+                _, p = local_points(sk, "L", sh)
+                return sum((off_axis(p[b]) - (radius + r_f)) ** 2 for b in DIGITS[dg][1:] + (DIGITS[dg][0],)) * 1e4
+            a, _ = descend(cost, [30, 40, 30], [10, 10, 10], [0, 0, 0], [95, 110, 80])
+            return tuple(a)
+        idx = finger("index", 0.0085)
+        mit = finger("mitten", 0.0095)
+
+        def tcost(th):
+            _, p = local_points(sk, "L", HandShape(idx, mit, th))
+            c = sum((off_axis(p[b]) - (radius + 0.011)) ** 2 for b in ("thumb_2", "thumb_3")) * 1e4
+            c += 1e-3 * max(0.0, p["thumb_3"].x - cc.x) ** 2 * 1e4  # thumb on the far side of the cup
+            return c
+        th, _ = descend(tcost, [20, -20, 20], [10, 10, 10], [-80, -80, -10], [80, 80, 85])
+        return HandShape(idx, mit, th)
+
 
 # ---------------------------------------------------------------------------------------------
 # Standing and seated bases
@@ -309,8 +457,8 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
     turns.append(turns[0])
     for k, turn in zip(keys + [bridge], turns):
         angles = {"lShoulder": k["lShoulder"], "lElbow": k["lElbow"], "spine": k["spine"], **right}
-        pose = finger_pose(sk, pose_from_rig(angles), "L", 0.0, RELAXED)
-        pose = finger_pose(sk, pose, "R", 0.0, RELAXED)
+        pose = hand_pose(sk, pose_from_rig(angles), "L", sk.hands.relaxed)
+        pose = hand_pose(sk, pose, "R", sk.hands.relaxed)
         sk.key(pose, frame_of(k["t"]), prev)
         chk = k.get("check")
         if chk:
@@ -344,8 +492,8 @@ def idle_action(sk: Skeleton, meta: dict):
         angles["head"] = (1.5 * math.sin(2 * ph + 1), -3.0 * math.sin(ph + 0.6), 0)
         angles["lShoulder"] = (-3 + 1.2 * math.sin(ph), 0, 4)
         angles["rShoulder"] = (-3 - 1.2 * math.sin(ph), 0, -4)
-        pose = finger_pose(sk, pose_from_rig(angles), "L", 0.0, RELAXED)
-        sk.key(finger_pose(sk, pose, "R", 0.0, RELAXED), frame_of(t), prev)
+        pose = hand_pose(sk, pose_from_rig(angles), "L", sk.hands.relaxed)
+        sk.key(hand_pose(sk, pose, "R", sk.hands.relaxed), frame_of(t), prev)
     push_nla(rig, "idle", act, 0)
     meta["idle"] = {"duration": period, "loop": True, "camera": "front", "props": [], "rep": [0.0, period],
                     "steps": [{"t": 0.0, "step": 1, "caption": "Ready when you are."}], "targets": [],
@@ -353,12 +501,15 @@ def idle_action(sk: Skeleton, meta: dict):
 
 
 # Grip points, in rest coordinates of the left hand (mirror x for the right).
-CUP_GRIP = Vector((0.235, -0.012, 0.815))    # between palm, index and mitten
-PINCH_POINT = Vector((0.238, -0.046, 0.728))  # where thumb tip meets index tip when closed
 CUP_GRIP_HEIGHT = 0.055                       # grip ring above the cup's base
 CUP_RADIUS = 0.035
 CUP_POLE = Vector((1.0, 0.7, -0.15))  # elbow out to the side and back, about level with the wrist
-CUP_PRON, CUP_FLEX = 0.0, 12.0
+CUP_ALIGN = (Vector((0, -1, 0)), Vector((0, 0, 1)))  # index edge of the hand up: fingers wrap the cup
+PINCH_ALIGN = (Vector((-1, 0, 0)), Vector((0, 0.6, -0.8)).normalized())  # palm down and back toward the body: fingertips lead, knuckles high
+# Hand posture for the peg pinch, found by searching roll x wrist angle for the pose in which no
+# part of the hand except the fingertip pads comes within 1 mm of the board or the dish (pickup
+# and seating): rolled 40 deg so the thumb-index side is lowest and the curled fingers ride above.
+PINCH_PRON, PINCH_FLEX = 40.0, 10.0
 
 
 def anchor(name) -> Vector:
@@ -374,8 +525,9 @@ class Timeline:
         self.prev = {}
         self.poses = []  # (t, Pose)
 
-    def key(self, t, pose: Pose, pinch=0.0, grip=0.0):
-        pose = finger_pose(self.sk, pose, "L", pinch, grip)
+    def key(self, t, pose: Pose, hand: "HandShape"):
+        pose = hand_pose(self.sk, pose, "L", hand)
+        pose = hand_pose(self.sk, pose, "R", self.sk.hands.relaxed)
         self.sk.key(pose, frame_of(t), self.prev)
         self.poses.append((t, pose))
         return pose
@@ -437,9 +589,9 @@ def hand_error_mm(sk: Skeleton, act_rig, pose: "Pose", t: float) -> float:
     return (got - want).length * 1000
 
 
-def reach_pose(sk, base: Pose, target: Vector, grip_rest: Vector, pole=None, pron=0.0, flex=0.0):
+def reach_pose(sk, base: Pose, target: Vector, grip_rest: Vector, pole=None, pron=0.0, flex=0.0, align=None):
     pole = pole or Vector((0.6, 0.25, -1.0))
-    return solve_arm(sk, base, "L", grip_rest, target, pole, pron, flex)
+    return solve_arm(sk, base, "L", grip_rest, target, pole, pron, flex, align=align)
 
 
 def cup_action(sk: Skeleton, meta: dict):
@@ -450,27 +602,28 @@ def cup_action(sk: Skeleton, meta: dict):
     dots = [anchor(f"anchor_dot_{k}") for k in range(1, 6)]
     cup = bpy.data.objects["prop_cup"]
     tl = Timeline(sk, name)
-    grip_at = lambda p, lift=0.0: p + Vector((CUP_RADIUS + 0.012, 0.012, CUP_GRIP_HEIGHT + lift))  # noqa: E731
+    H = sk.hands
+    grip_at = lambda p, lift=0.0: p + Vector((0, 0, CUP_GRIP_HEIGHT + lift))  # noqa: E731 cup axis at the grip ring
     lean = lambda k: 9 - 2 * abs(k - 2)  # noqa: E731 the arc's apex (dot 3) is farthest
 
     def at(k, lift=0.0, base=None):
         b = base or seated_base(lean(k), -4 * (k - 2))
-        return reach_pose(sk, b, grip_at(dots[k], lift), CUP_GRIP, pole=CUP_POLE, pron=CUP_PRON, flex=CUP_FLEX)
+        return reach_pose(sk, b, grip_at(dots[k], lift), H.cup_centre, pole=CUP_POLE, align=CUP_ALIGN)
 
     beside = dots[0] + Vector((0.09, 0.08, 0.0))
-    rest_hand = reach_pose(sk, seated_base(5), beside + Vector((0, 0, 0.045)), CUP_GRIP, pole=CUP_POLE,
-                           pron=CUP_PRON, flex=CUP_FLEX)
+    rest_hand = reach_pose(sk, seated_base(5), beside + Vector((0, 0, 0.040)), H.cup_centre, pole=CUP_POLE,
+                           align=CUP_ALIGN)
     steps, targets, spans = [], [], []
     t = 0.0
-    tl.key(t, rest_hand, grip=0.0)
+    tl.key(t, rest_hand, H.relaxed)
     steps.append({"t": t, "step": 1, "caption": "Step 1 of 4 · cup on dot 1, hand resting beside it"})
     t += 1.0
-    tl.key(t, rest_hand, grip=0.0)
+    tl.key(t, rest_hand, H.relaxed)
     steps.append({"t": t, "step": 2, "caption": "Step 2 of 4 · take hold of the cup"})
     t += 0.9
-    tl.key(t, at(0), grip=0.0)
+    tl.key(t, at(0), H.cup_open)
     t += 0.3
-    tl.key(t, at(0), grip=1.0)
+    tl.key(t, at(0), H.cup)
     rep0 = t
     order = [1, 2, 3, 4, 3, 2, 1, 0]
     carry_t0 = t
@@ -481,31 +634,31 @@ def cup_action(sk: Skeleton, meta: dict):
             steps.append({"t": t, "step": 4, "caption": "Step 4 of 4 · then back the way you came to dot 1"})
         frm = order[i - 1] if i else 0
         t += 0.25
-        tl.key(t, at(frm, 0.05), grip=1.0)
+        tl.key(t, at(frm, 0.05), H.cup)
         targets.append({"t": round(t, 4), "kind": "dot", "index": k + 1})
         t += 0.75
-        tl.key(t, at(k, 0.05), grip=1.0)
+        tl.key(t, at(k, 0.05), H.cup)
         t += 0.25
-        tl.key(t, at(k), grip=1.0)
+        tl.key(t, at(k), H.cup)
         t += 0.2
-        tl.key(t, at(k), grip=1.0)
+        tl.key(t, at(k), H.cup)
         targets.append({"t": round(t, 4), "kind": "dot", "index": k + 1, "landed": True})
     rep1 = t
     carry_t1 = t
     t += 0.3
-    tl.key(t, at(0), grip=0.0)
+    tl.key(t, at(0), H.cup_open)
     t += 0.9
-    tl.key(t, rest_hand, grip=0.0)
+    tl.key(t, rest_hand, H.relaxed)
     t += 1.0
-    tl.key(t, rest_hand, grip=0.0)
+    tl.key(t, rest_hand, H.relaxed)
     end = t
     tl.done()
     grasp_pose = tl.pose_at(carry_t0)
     err = hand_error_mm(sk, tl.act, grasp_pose, carry_t0)
     assert err < 1.0, f"cup grasp: keyed pose is {err:.2f} mm off our FK"
     base_rest = cup.location.copy()
-    lift = grip_at(dots[0]) - dots[0] + (dots[0] - base_rest)  # grip point -> cup origin
-    bake_follow(sk, cup, tl.act, [(carry_t0, carry_t1, CUP_GRIP, lift)], base_rest, name, end)
+    lift = grip_at(dots[0]) - base_rest  # cup axis point at the grip ring -> cup origin (base)
+    bake_follow(sk, cup, tl.act, [(carry_t0, carry_t1, H.cup_centre, lift)], base_rest, name, end)
     meta[name] = {"duration": round(end, 4), "loop": True, "camera": "front", "props": ["table", "sheet", "cup"],
                   "rep": [round(rep0, 4), round(rep1, 4)], "steps": steps, "targets": targets,
                   "focus_bone": "hand_L", "source": "procedural", "seated": True, "retarget_error_deg": None}
@@ -519,42 +672,47 @@ def nhpt_action(sk: Skeleton, meta: dict):
     holes = [anchor(f"anchor_hole_{k}") for k in range(1, 10)]
     pegs = [bpy.data.objects[f"prop_peg_{k}"] for k in range(1, 10)]
     tl = Timeline(sk, name)
-    PEG_LEN, SINK, ABOVE = 0.032, 0.012, 0.006  # peg length, depth seated, pinch above peg centre
+    PEG_LEN, SINK, ABOVE = 0.032, 0.012, 0.004  # peg length, depth seated; pads meet the peg on its upper half
+
+    H = sk.hands
 
     def over(p, lift, lean=10):
-        return reach_pose(sk, seated_base(lean), p + Vector((0, 0, ABOVE + lift)), PINCH_POINT,
-                          pole=Vector((0.8, 0.3, -0.6)), pron=62, flex=38)
+        return reach_pose(sk, seated_base(lean), p + Vector((0, 0, ABOVE + lift)), H.pinch_point,
+                          pole=Vector((0.8, 0.3, -0.6)), pron=PINCH_PRON, flex=PINCH_FLEX, align=PINCH_ALIGN)
 
     seat_c = [h + Vector((0, 0, PEG_LEN / 2 - SINK)) for h in holes]  # upright peg centre when seated
     src_c = [pg.location.copy() for pg in pegs]
     steps, targets, spans = [], [], []
     t = 0.0
-    tl.key(t, over(src_c[0], 0.06), pinch=0.0)
+    tl.key(t, over(src_c[0], 0.06), H.open)
     rep0 = t
     per = 2.2
     for k in range(9):
         T = t
         if k == 0:
             steps.append({"t": T, "step": 1, "caption": "Step 1 of 3 · pick a peg from the dish with a pinch"})
-        tl.key(T + 0.35, over(src_c[k], 0.0), pinch=0.0)
-        tl.key(T + 0.55, over(src_c[k], 0.0), pinch=1.0)
+        tl.key(T + 0.30, over(src_c[k], 0.020), H.open)  # pre-shaped hand arrives above the peg
+        tl.key(T + 0.45, over(src_c[k], 0.005), H.near)  # narrows as it settles
+        tl.key(T + 0.55, over(src_c[k], 0.0), H.pinch)
         targets.append({"t": round(T + 0.55, 4), "kind": "hole", "index": k + 1})
-        tl.key(T + 0.75, over(src_c[k], 0.07), pinch=1.0)
+        tl.key(T + 0.75, over(src_c[k], 0.07), H.pinch)
         if k == 0:
             steps.append({"t": T + 0.75, "step": 2, "caption": "Step 2 of 3 · carry it over the board, any hole"})
-        tl.key(T + 1.3, over(seat_c[k], 0.05), pinch=1.0)
-        tl.key(T + 1.55, over(seat_c[k], 0.0), pinch=1.0)
+        tl.key(T + 1.3, over(seat_c[k], 0.05), H.pinch)
+        tl.key(T + 1.55, over(seat_c[k], 0.0), H.pinch)
         if k == 0:
             steps.append({"t": T + 1.55, "step": 3, "caption": "Step 3 of 3 · seat it and let go; the timer stops at the ninth peg"})
-        tl.key(T + 1.7, over(seat_c[k], 0.0), pinch=0.0)
+        tl.key(T + 1.7, over(seat_c[k], 0.0), H.pinch)  # peg seated, still held
+        tl.key(T + 1.8, over(seat_c[k], 0.006), H.near)  # let go: pads part as the hand rises
+        tl.key(T + 1.95, over(seat_c[k], 0.025), H.open)  # then lift clear and open
         targets.append({"t": round(T + 1.7, 4), "kind": "hole", "index": k + 1, "landed": True})
         nxt = src_c[k + 1] if k < 8 else src_c[0]
-        tl.key(T + per, over(nxt, 0.06), pinch=0.0)
+        tl.key(T + per, over(nxt, 0.06), H.open)
         spans.append((T + 0.55, T + 1.7))
         t = T + per
     rep1 = t
     end = t + 0.8
-    tl.key(end, over(src_c[0], 0.06), pinch=0.0)
+    tl.key(end, over(src_c[0], 0.06), H.open)
     tl.done()
     for k, pg in enumerate(pegs):
         t0, t1 = spans[k]
@@ -566,7 +724,7 @@ def nhpt_action(sk: Skeleton, meta: dict):
         upright = lying.copy()
         upright.x = 0.0
         rot_keys = [(0.0, lying), (t0 + 0.1, lying), (t0 + 0.6, upright), (end - 1 / FPS, upright), (end, lying)]
-        bake_follow(sk, pg, tl.act, [(t0, t1, PINCH_POINT, Vector((0, 0, ABOVE)))], src_c[k], name, end,
+        bake_follow(sk, pg, tl.act, [(t0, t1, H.pinch_point, Vector((0, 0, ABOVE)))], src_c[k], name, end,
                     after=seat_c[k], rot_keys=rot_keys)
         # the loop restarts with every peg back in the dish
         pg.location = src_c[k]
@@ -584,6 +742,7 @@ def build_actions(rig) -> dict:
     scene = bpy.context.scene
     scene.render.fps = FPS
     sk = Skeleton(rig)
+    sk.hands = Hands(sk)
     meta: dict = {}
     idle_action(sk, meta)
     for n in REHAB_ACTIONS:
