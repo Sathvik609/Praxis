@@ -10,7 +10,7 @@ import type { Joint } from './rig'
 export const GLB_ACTIONS = ['idle', 'pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation', 'waiter_cup', 'nhpt'] as const
 export type GlbAction = (typeof GLB_ACTIONS)[number]
 
-export type GlbProp = 'table' | 'sheet' | 'cup' | 'pegboard'
+export type GlbProp = 'table' | 'chair' | 'sheet' | 'cup' | 'pegboard'
 export type GlbStep = { t: number; step: number; caption: string }
 export type GlbTarget = { t: number; kind: 'dot' | 'hole'; index: number; landed?: boolean }
 /** Pace curve of a lift / hold / lower exercise (from `web/blender/animate.py`): for the way up
@@ -95,11 +95,12 @@ export function isPropNode(name: string): boolean {
   return name.startsWith('prop_')
 }
 
-/** Is prop node `name` shown for an action with `props`? table ⇒ table + chair; sheet ⇒ sheet;
+/** Is prop node `name` shown for an action with `props`? table ⇒ table + chair; chair ⇒ chair; sheet ⇒ sheet;
  *  cup ⇒ cup; pegboard ⇒ pegboard + the nine pegs. Everything else is hidden. */
 export function propVisible(name: string, props: readonly string[]): boolean {
   const has = (p: GlbProp) => props.includes(p)
-  if (name === 'prop_table' || name === 'prop_chair') return has('table')
+  if (name === 'prop_table') return has('table')
+  if (name === 'prop_chair') return has('table') || has('chair')
   if (name === 'prop_sheet') return has('sheet')
   if (name === 'prop_cup') return has('cup')
   if (name === 'prop_pegboard' || /^prop_peg_\d+$/.test(name)) return has('pegboard')

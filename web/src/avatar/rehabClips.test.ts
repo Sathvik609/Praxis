@@ -27,8 +27,10 @@ test('the five rehab clips of the locked set load with their provenance, caption
     expect(clip.steps).toBe(3)
     expect(clip.focusJoint).toBe('lShoulder')
     expect(clip.source).toBeTruthy()
-    if (name === 'pendulum') expect(json.source.dataset).toBe('procedural')
-    else {
+    if (name === 'pendulum' || name === 'external_rotation' || name === 'internal_rotation') {
+      // authored: the pendulum has no dataset rep; the rotations are shown elbow at the side, as instructed
+      expect(json.source.dataset).toBe('procedural')
+    } else {
       expect(json.source.license).toMatch(/PDDL|CC BY/)
       expect(json.source.subject).toBeTruthy()
     }
@@ -111,7 +113,7 @@ test('arc cues: elevation arcs hang from straight down, rotation arcs span the f
   const ext = REHAB_CLIPS.external_rotation.arc!
   expect(ext.kind).toBe('rotation')
   expect(ext.joint).toBe('lElbow')
-  expect(ext.targetDeg).toBeGreaterThan(60)
+  expect(ext.targetDeg).toBeGreaterThan(40) // forearm swings ~50° outward, elbow at the side
   const m = mirror(REHAB_CLIPS.abduction)
   expect(m.side).toBe('right')
   expect(m.focusJoint).toBe('rShoulder')
@@ -133,7 +135,7 @@ test('no clip lifts the upper arm above the 90° ceiling (torso-relative), at an
 })
 
 test('scaling keeps the recorded rep: elevation shrinks in proportion, the plane and the elbow bend are unchanged', () => {
-  for (const name of ['flexion', 'abduction', 'external_rotation', 'internal_rotation'] as const) {
+  for (const name of ['flexion', 'abduction'] as const) {
     const rec = REHAB_JSON_RECORDED[name]
     const cap = REHAB_JSON[name]
     const recPeak = Math.max(...rec.keys.map((k) => torsoElevationDeg(k.lShoulder.map((v) => v * D) as Vec3)))
@@ -160,9 +162,11 @@ test('scaling keeps the recorded rep: elevation shrinks in proportion, the plane
       }
     })
   }
-  // pendulum stays below the ceiling and is untouched
-  expect(REHAB_JSON.pendulum.scaled).toBeUndefined()
-  expect(REHAB_JSON.pendulum.keys).toEqual(REHAB_JSON_RECORDED.pendulum.keys)
+  // pendulum and the authored rotations (elbow at the side) stay below the ceiling and are untouched
+  for (const name of ['pendulum', 'external_rotation', 'internal_rotation'] as const) {
+    expect(REHAB_JSON[name].scaled, name).toBeUndefined()
+    expect(REHAB_JSON[name].keys).toEqual(REHAB_JSON_RECORDED[name].keys)
+  }
 })
 
 test('the stage readout says the rep was scaled', () => {

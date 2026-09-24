@@ -41,10 +41,11 @@ test('props are visible exactly per meta.props for every action', () => {
   const expected: Record<string, string[]> = {
     idle: [],
     pendulum: [],
-    flexion: [],
-    abduction: [],
-    external_rotation: [],
-    internal_rotation: [],
+    // the "Sit tall" exercises are shown seated on the chair
+    flexion: ['prop_chair'],
+    abduction: ['prop_chair'],
+    external_rotation: ['prop_chair'],
+    internal_rotation: ['prop_chair'],
     waiter_cup: ['prop_chair', 'prop_cup', 'prop_sheet', 'prop_table'],
     nhpt: ['prop_chair', 'prop_pegboard', ...pegs, 'prop_table'].sort(),
   }

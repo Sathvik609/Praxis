@@ -79,6 +79,7 @@ describe('prop visibility follows meta.props exactly', () => {
   })
   test('table brings the chair; sheet and cup for Waiter – cup', () => {
     expect(shown(['table', 'sheet', 'cup']).sort()).toEqual(['prop_chair', 'prop_cup', 'prop_sheet', 'prop_table'])
+    expect(shown(['chair'])).toEqual(['prop_chair']) // seated arm exercises: the chair alone
   })
   test('pegboard brings all nine pegs', () => {
     expect(shown(['table', 'pegboard']).sort()).toEqual(['prop_chair', 'prop_pegboard', ...Array.from({ length: 9 }, (_, i) => `prop_peg_${i + 1}`), 'prop_table'].sort())

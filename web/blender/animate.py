@@ -527,7 +527,9 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
     turns.append(turns[0])
     for k, turn in zip(keys + [bridge], turns):
         angles = {"lShoulder": k["lShoulder"], "lElbow": k["lElbow"], "spine": k["spine"], **right}
-        pose = hand_pose(sk, pose_from_rig(angles), "L", sk.hands.relaxed)
+        seated = name in SEATED_ACTIONS
+        base = pose_from_rig(angles, seated_legs(), Vector((0, 0, -SEAT_DROP))) if seated else pose_from_rig(angles)
+        pose = hand_pose(sk, base, "L", sk.hands.relaxed)
         pose = hand_pose(sk, pose, "R", sk.hands.relaxed)
         sk.key(pose, frame_of(k["t"]), prev)
         chk = k.get("check")
@@ -541,10 +543,11 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
     duration = j["duration"] + 0.7
     steps = [{"t": s["t"], "step": s["step"], "caption": s["caption"]} for s in j["steps"]]
     meta[name] = {
-        "duration": round(duration, 4), "loop": True, "camera": j["camera"], "props": [],
+        "duration": round(duration, 4), "loop": True, "camera": j["camera"],
+        "props": ["chair"] if name in SEATED_ACTIONS else [],
         "rep": [0.0, round(j["duration"], 4)], "steps": steps, "targets": [],
         "focus_bone": "upper_arm_L" if j["metric"] == "elevation" else "forearm_L",
-        "source": j["source"]["dataset"], "seated": False,
+        "source": j["source"]["dataset"], "seated": name in SEATED_ACTIONS,
         "retarget_error_deg": round(max(errors), 3) if errors else None,
         **({"ceiling_deg": scaled["ceiling_deg"], "scaled_from_deg": scaled["recorded_peak_deg"]} if scaled else {}),
         **({"pace": pace} if pace else {}),
@@ -552,6 +555,8 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
 
 
 PACED_ACTIONS = ("flexion", "abduction")  # lift / hold / lower arm exercises paced by the service's rep_progress
+# exercises the app instructs sitting ("Sit tall ..."): the figure sits on the chair for them
+SEATED_ACTIONS = ("flexion", "abduction", "external_rotation", "internal_rotation")
 
 
 def pace_curve(sk: Skeleton, act, rep_end: float) -> dict:

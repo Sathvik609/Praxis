@@ -242,7 +242,7 @@ def test_main_builds_every_clip_and_the_reference_ranges(tmp_path: Path):
         for k in clip["keys"]:
             for j in ("lShoulder", "lElbow", "spine"):
                 assert len(k[j]) == 3 and all(abs(v) <= 360 for v in k[j])
-        if name == "pendulum":
+        if name in ("pendulum", "external_rotation", "internal_rotation"):
             assert clip["source"]["dataset"] == "procedural"
         else:
             assert clip["source"]["license"] in ("ODC PDDL 1.0", "CC BY 4.0")
@@ -266,6 +266,27 @@ def test_main_builds_every_clip_and_the_reference_ranges(tmp_path: Path):
     assert ui["correct"]["mean"] > ui["incorrect"]["mean"]
     assert {"mean", "sd", "n"} <= set(ui["correct"])
     assert r["exercises"]["pendulum"]["sources"] == []
+    assert r["exercises"]["external_rotation"]["sources"] == [] and r["exercises"]["internal_rotation"]["sources"] == []
+
+
+def test_rotations_are_authored_elbow_at_the_side_as_the_instructions_say():
+    """Rotate out / Rotate in (demo only) are shown the way the app instructs them: sitting, elbow
+    tucked at the side and bent to a right angle, the forearm swinging outward (out) or across
+    toward the tummy (in). Not the 90/90 dataset rep, which is a different exercise."""
+    for name, sign in (("external_rotation", 1), ("internal_rotation", -1)):
+        clip = mk.rotation_clip(next(e for e in mk.EXERCISES if e.name == name))
+        assert clip["source"]["dataset"] == "procedural" and clip["source"]["position"] == "sit"
+        assert clip["metric"] == "rotation" and clip["keys"][0]["hold"] and clip["keys"][-1]["hold"]
+        swing = []
+        for k in clip["keys"]:
+            ua, fa = mk.rig_arm_directions(np.array(k["lShoulder"]), np.array(k["lElbow"]), np.array(k["spine"]))
+            assert np.allclose(ua, k["check"]["ua"], atol=1e-3) and np.allclose(fa, k["check"]["fa"], atol=1e-3)
+            assert np.degrees(np.arccos(-ua[1])) < 12  # upper arm hangs at the side
+            assert abs(fa[1]) < 0.1  # forearm level: elbow at a right angle
+            swing.append(math.degrees(math.atan2(fa[0], fa[2])))  # 0 = straight ahead, + = outward (left arm)
+        peak = max(swing) if sign > 0 else min(swing)
+        assert 40 <= sign * peak <= 65
+        assert abs(swing[0]) < 5 and abs(swing[-1]) < 5  # starts and ends pointing ahead
 
 
 def test_shipped_clips_and_ranges_match_the_locked_set():

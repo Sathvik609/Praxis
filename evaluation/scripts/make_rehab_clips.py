@@ -386,13 +386,13 @@ EXERCISES: tuple[Exercise, ...] = (
     Exercise("abduction", "Shoulder abduction", "ui-prmd", ("m07",), (("ui-prmd", "m07"), ("irds", "g4"), ("irds", "g5")), "frontal", "front", "elevation",
              ("Raise the straight arm out to the side, palm forward", "Hold at the top, no shrugging", "Lower slowly")),
     # The rotations are demo only in the app (a single webcam cannot score them): the avatar
-    # performs these clips and the patient ticks the set.
-    # m09 is performed in the 90/90 position (upper arm out to the side, elbow bent); the forearm
-    # sweeps in the sagittal plane, which only the side camera shows face-on
-    Exercise("external_rotation", "Shoulder external rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "side", "rotation",
-             ("Arm out to the side, elbow bent to a right angle, turn the forearm up", "Hold at the end of the turn", "Turn back to the start")),
-    Exercise("internal_rotation", "Shoulder internal rotation", "ui-prmd", ("m09",), (("ui-prmd", "m09"),), "transverse", "side", "-rotation",
-             ("Arm out to the side, elbow bent to a right angle, turn the forearm down", "Hold at the end of the turn", "Turn back to the start")),
+    # performs them and the patient ticks the set. They are authored, not recorded: the app
+    # instructs them sitting, elbow tucked at the side and bent to a right angle, and the only
+    # dataset rep (UI-PRMD m09) is performed in the 90/90 position, a different exercise.
+    Exercise("external_rotation", "Shoulder external rotation", "procedural", (), (), "transverse", "front", "rotation",
+             ("Elbow tucked at your side, bent to a right angle", "Swing the forearm outward, away from your tummy, and hold", "Return slowly to the start")),
+    Exercise("internal_rotation", "Shoulder internal rotation", "procedural", (), (), "transverse", "front", "-rotation",
+             ("Elbow tucked at your side, bent to a right angle", "Bring the forearm across toward your tummy, and hold", "Return slowly to the start")),
     Exercise("pendulum", "Pendulum", "procedural", (), (), "sagittal", "side", "elevation",
              ("Lean forward on a table, let the arm hang loose", "Swing gently in small circles, no muscle effort", "Stand up slowly")),
 )
@@ -689,6 +689,55 @@ def pendulum_clip() -> dict:
     }
 
 
+ROTATION_DEG = {"external_rotation": 50.0, "internal_rotation": -55.0}  # forearm swing, + = outward (left arm)
+
+
+def rotation_clip(ex: Exercise) -> dict:
+    """Authored, not recorded: sitting, upper arm at the side, elbow at a right angle so the
+    forearm points straight ahead; the forearm swings about the upper arm (shoulder rotation) out
+    to 50° (external) or across toward the tummy to 55° (internal), holds, and returns.
+    Labelled procedural; the check block is the rig's own FK of each key."""
+    swing = ROTATION_DEG[ex.name]
+    keys = []
+
+    def add(t: float, rot: float, hold: bool = False) -> None:
+        sh = np.array([0.0, rot, 0.0])
+        el = np.array([-90.0, 0.0, 0.0])
+        sp = np.array([0.0, 0.0, 0.0])
+        ua, fa = rig_arm_directions(sh, el, sp)
+        # key times sit on 30 fps frames, as the Blender avatar is keyed
+        keys.append({
+            "t": round(round(t * 30) / 30, 4), "hold": hold, "lShoulder": [round(float(v), 2) for v in sh], "lElbow": [round(float(v), 2) for v in el],
+            "spine": [0.0, 0.0, 0.0],
+            "check": {"ua": [round(float(v), 6) for v in ua], "fa": [round(float(v), 6) for v in fa],
+                      "src_ua": [round(float(v), 6) for v in ua], "src_fa": [round(float(v), 6) for v in fa],
+                      "elevation_deg": round(float(np.degrees(np.arccos(-ua[1]))), 1), "bend_deg": 90.0, "rotation_deg": round(rot, 1)},
+        })
+    add(0.0, 0.0, True)
+    add(0.8, 0.0, True)
+    for f in (0.25, 0.6, 0.9):
+        add(0.8 + 1.4 * f, swing * (0.5 - 0.5 * math.cos(math.pi * f)))
+    add(2.2, swing, True)
+    add(3.2, swing, True)
+    for f in (0.25, 0.6, 0.9):
+        add(3.2 + 1.4 * f, swing * (0.5 + 0.5 * math.cos(math.pi * f)))
+    add(4.6, 0.0, True)
+    add(5.2, 0.0, True)
+    return {
+        "name": ex.name, "title": ex.title,
+        "source": {"dataset": "procedural", "license": LICENSE["procedural"], "movement": "authored: elbow at the side, as the app instructs (the dataset rep is the 90/90 variant)", "subject": None, "rep": None, "arm": "left", "position": "sit", "fps_original": None},
+        "side": "left", "camera": ex.camera, "plane": ex.plane, "focus_joint": "lShoulder", "metric": "rotation",
+        "target_deg": abs(swing), "duration": keys[-1]["t"], "rest": REST_OTHER_ARM, "keys": keys,
+        "steps": [
+            {"t": 0.0, "step": 1, "caption": f"Step 1 of 3 · {ex.captions[0]}"},
+            {"t": 0.8, "step": 2, "caption": f"Step 2 of 3 · {ex.captions[1]}"},
+            {"t": 3.2, "step": 3, "caption": f"Step 3 of 3 · {ex.captions[2]}"},
+        ],
+        "fit": None,
+        "note": "Authored procedurally to match the app's instructions (elbow at the side); the avatar never scores the patient.",
+    }
+
+
 def stats(values: list[float]) -> dict | None:
     if not values:
         return None
@@ -719,7 +768,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         log(f"{ex.name}:")
         if ex.dataset == "procedural":
-            clip = pendulum_clip()
+            clip = pendulum_clip() if ex.name == "pendulum" else rotation_clip(ex)
             ranges["exercises"][ex.name] = {"sources": [], "note": "procedural clip; no dataset reference"}
         else:
             clip, populations = build_dataset_clip(ex, external, log)
@@ -734,6 +783,10 @@ def main(argv: list[str] | None = None) -> int:
             }
         (clips_dir / f"{ex.name}.json").write_text(json.dumps(clip, indent=1) + "\n")
         log(f"  wrote {clips_dir / (ex.name + '.json')} ({len(clip['keys'])} keys, {clip['duration']} s, target {clip['target_deg']}°)")
+    if args.only and ranges_path.exists():  # a partial run updates its entries and keeps the rest
+        merged = json.loads(ranges_path.read_text())
+        merged["exercises"].update(ranges["exercises"])
+        ranges = {**merged, "generated": ranges["generated"]}
     ranges_path.write_text(json.dumps(ranges, indent=1) + "\n")
     log(f"wrote {ranges_path}")
     return 0

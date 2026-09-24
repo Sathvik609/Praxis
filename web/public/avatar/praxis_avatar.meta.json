@@ -60,7 +60,9 @@
    "duration": 2.833,
    "loop": true,
    "camera": "side",
-   "props": [],
+   "props": [
+    "chair"
+   ],
    "rep": [
     0.0,
     2.133
@@ -85,7 +87,7 @@
    "targets": [],
    "focus_bone": "upper_arm_L",
    "source": "IntelliRehabDS (IRDS)",
-   "seated": false,
+   "seated": true,
    "retarget_error_deg": 0.0,
    "ceiling_deg": 90.0,
    "scaled_from_deg": 165.13,
@@ -330,7 +332,9 @@
    "duration": 2.7,
    "loop": true,
    "camera": "front",
-   "props": [],
+   "props": [
+    "chair"
+   ],
    "rep": [
     0.0,
     2.0
@@ -355,7 +359,7 @@
    "targets": [],
    "focus_bone": "upper_arm_L",
    "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
-   "seated": false,
+   "seated": true,
    "retarget_error_deg": 0.0,
    "ceiling_deg": 90.0,
    "scaled_from_deg": 157.41,
@@ -581,72 +585,72 @@
    }
   },
   "external_rotation": {
-   "duration": 2.733,
+   "duration": 5.9,
    "loop": true,
-   "camera": "side",
-   "props": [],
+   "camera": "front",
+   "props": [
+    "chair"
+   ],
    "rep": [
     0.0,
-    2.033
+    5.2
    ],
    "steps": [
     {
      "t": 0.0,
      "step": 1,
-     "caption": "Step 1 of 3 \u00b7 Arm out to the side, elbow bent to a right angle, turn the forearm up"
+     "caption": "Step 1 of 3 \u00b7 Elbow tucked at your side, bent to a right angle"
     },
     {
      "t": 0.8,
      "step": 2,
-     "caption": "Step 2 of 3 \u00b7 Hold at the end of the turn"
+     "caption": "Step 2 of 3 \u00b7 Swing the forearm outward, away from your tummy, and hold"
     },
     {
-     "t": 1.05,
+     "t": 3.2,
      "step": 3,
-     "caption": "Step 3 of 3 \u00b7 Turn back to the start"
+     "caption": "Step 3 of 3 \u00b7 Return slowly to the start"
     }
    ],
    "targets": [],
    "focus_bone": "forearm_L",
-   "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
-   "seated": false,
-   "retarget_error_deg": 0.0,
-   "ceiling_deg": 90.0,
-   "scaled_from_deg": 101.06
+   "source": "procedural",
+   "seated": true,
+   "retarget_error_deg": 0.0
   },
   "internal_rotation": {
-   "duration": 2.533,
+   "duration": 5.9,
    "loop": true,
-   "camera": "side",
-   "props": [],
+   "camera": "front",
+   "props": [
+    "chair"
+   ],
    "rep": [
     0.0,
-    1.833
+    5.2
    ],
    "steps": [
     {
      "t": 0.0,
      "step": 1,
-     "caption": "Step 1 of 3 \u00b7 Arm out to the side, elbow bent to a right angle, turn the forearm down"
+     "caption": "Step 1 of 3 \u00b7 Elbow tucked at your side, bent to a right angle"
     },
     {
-     "t": 0.933,
+     "t": 0.8,
      "step": 2,
-     "caption": "Step 2 of 3 \u00b7 Hold at the end of the turn"
+     "caption": "Step 2 of 3 \u00b7 Bring the forearm across toward your tummy, and hold"
     },
     {
-     "t": 1.183,
+     "t": 3.2,
      "step": 3,
-     "caption": "Step 3 of 3 \u00b7 Turn back to the start"
+     "caption": "Step 3 of 3 \u00b7 Return slowly to the start"
     }
    ],
    "targets": [],
    "focus_bone": "forearm_L",
-   "source": "UI-PRMD (University of Idaho Physical Rehabilitation Movements Data Set)",
-   "seated": false,
-   "retarget_error_deg": 0.0,
-   "ceiling_deg": 90.0,
-   "scaled_from_deg": 95.67
+   "source": "procedural",
+   "seated": true,
+   "retarget_error_deg": 0.0
   },
   "waiter_cup": {
    "duration": 16.0,

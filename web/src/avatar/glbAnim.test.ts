@@ -47,11 +47,15 @@ test('the GLB carries exactly the eight actions, and the sidecar matches it', ()
   }
 })
 
-test('seated table tasks show their props; standing exercises show none', () => {
+test('postures match the instructions: table tasks and the "Sit tall" exercises seated, pendulum standing', () => {
   expect(meta.actions.waiter_cup).toMatchObject({ seated: true, camera: 'front' })
   expect(meta.actions.waiter_cup.props).toEqual(expect.arrayContaining(['table', 'sheet', 'cup']))
   expect(meta.actions.nhpt.props).toEqual(expect.arrayContaining(['table', 'pegboard']))
-  for (const n of ['idle', 'pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation']) {
+  for (const n of ['flexion', 'abduction', 'external_rotation', 'internal_rotation']) {
+    expect(meta.actions[n].seated, n).toBe(true)
+    expect(meta.actions[n].props, n).toEqual(['chair'])
+  }
+  for (const n of ['idle', 'pendulum']) {
     expect(meta.actions[n].seated, n).toBe(false)
     expect(meta.actions[n].props, n).toEqual([])
   }
@@ -151,7 +155,7 @@ test.each(['waiter_cup', 'nhpt'])('%s: every prop is back where it started when 
 })
 
 test('seated actions put the pelvis on the chair seat and the feet on the floor', () => {
-  for (const n of ['waiter_cup', 'nhpt']) {
+  for (const n of ['waiter_cup', 'nhpt', 'flexion', 'abduction', 'external_rotation', 'internal_rotation']) {
     const w = glb.world(n, 1)
     expect(at(w, 'hips')[1], `${n} hips`).toBeGreaterThan(0.5)
     expect(at(w, 'hips')[1]).toBeLessThan(0.7)
