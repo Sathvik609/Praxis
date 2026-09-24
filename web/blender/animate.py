@@ -540,7 +540,7 @@ class Timeline:
 
 
 def bake_follow(sk: Skeleton, obj, act_rig, spans, rest_loc: Vector, name: str, end_t: float,
-                after=None, rot_keys=()):
+                after=None, rot_keys=(), loc_keys=()):
     """Key `obj` so that while carried (spans of (t0, t1, grip_rest, lift)) its origin sits at the
     hand's grip point minus a fixed world offset `lift`: an upright cup or peg hangs under the
     fingers however the hand turns. Orientation is keyed separately (`rot_keys` = (t, euler)).
@@ -567,6 +567,9 @@ def bake_follow(sk: Skeleton, obj, act_rig, spans, rest_loc: Vector, name: str, 
     for t, e in rot_keys:
         obj.rotation_euler = e
         obj.keyframe_insert("rotation_euler", frame=frame_of(t))
+    for t, l in loc_keys:  # overrides the baked value at that frame (e.g. the loop reset)
+        obj.location = l
+        obj.keyframe_insert("location", frame=frame_of(t))
     rig.animation_data.action = None
     for tr in tracks:
         tr.mute = False
@@ -724,11 +727,10 @@ def nhpt_action(sk: Skeleton, meta: dict):
         upright = lying.copy()
         upright.x = 0.0
         rot_keys = [(0.0, lying), (t0 + 0.1, lying), (t0 + 0.6, upright), (end - 1 / FPS, upright), (end, lying)]
+        # the loop restarts with every peg back in the dish (keyed inside the action, not after it)
         bake_follow(sk, pg, tl.act, [(t0, t1, H.pinch_point, Vector((0, 0, ABOVE)))], src_c[k], name, end,
-                    after=seat_c[k], rot_keys=rot_keys)
-        # the loop restarts with every peg back in the dish
-        pg.location = src_c[k]
-        pg.keyframe_insert("location", frame=frame_of(end))
+                    after=seat_c[k], rot_keys=rot_keys, loc_keys=[(end, src_c[k])])
+        assert pg.animation_data.action is None, "a stray active action would override the NLA track"
     meta[name] = {"duration": round(end, 4), "loop": True, "camera": "front", "props": ["table", "pegboard"],
                   "rep": [round(rep0, 4), round(rep1, 4)], "steps": steps, "targets": targets,
                   "focus_bone": "hand_L", "source": "procedural", "seated": True, "retarget_error_deg": None}

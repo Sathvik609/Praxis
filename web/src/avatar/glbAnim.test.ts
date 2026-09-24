@@ -142,6 +142,13 @@ test.each(ACTIONS)('%s loops without a jump (every joint within 5 mm of its firs
   }
 })
 
+test.each(['waiter_cup', 'nhpt'])('%s: every prop is back where it started when the loop restarts', (name) => {
+  const a = glb.world(name, 0)
+  const b = glb.world(name, glb.duration(name))
+  const props = name === 'nhpt' ? Array.from({ length: 9 }, (_, i) => `prop_peg_${i + 1}`) : ['prop_cup']
+  for (const p of props) expect(len(sub(at(a, p), at(b, p))), p).toBeLessThan(0.002)
+})
+
 test('seated actions put the pelvis on the chair seat and the feet on the floor', () => {
   for (const n of ['waiter_cup', 'nhpt']) {
     const w = glb.world(n, 1)
