@@ -246,36 +246,50 @@ def solve_arm(sk: Skeleton, pose: Pose, side: str, grip_rest: Vector, target: Ve
 
 
 # ---------------------------------------------------------------------------------------------
-# Hands. Each digit has three phalanges. Index and mitten (fused middle/ring/little) flex toward
-# the palm; the thumb swings from its base (two angles) and flexes its two outer joints. Shapes
-# are solved once per skeleton in the hand's own rest frame, so contact is exact:
-#   relaxed  resting curl                 open  pre-shaped aperture while reaching for a peg
-#   pinch    thumb pad meets index pad either side of a peg (tip-to-tip precision grip)
+# Hands. Thumb and four separate fingers, three phalanges each. Fingers flex toward the palm in
+# their own planes, a few millimetres apart; the thumb swings from its base (two angles) and flexes
+# its two outer joints. Shapes are solved once per skeleton in the hand's own rest frame:
+#   relaxed  resting cascade              open  pre-shaped aperture while reaching for a peg
+#   near     pads just apart (last approach, release)
+#   pinch    thumb pad meets index pad either side of a peg; middle/ring/little tucked
 #   cup_open / cup  fingers and thumb wrapped round the cup (cylindrical power grip)
 # ---------------------------------------------------------------------------------------------
-DIGITS = {"index": ("index", "index_2", "index_3"), "mitten": ("mitten", "mitten_2", "mitten_3"),
-          "thumb": ("thumb", "thumb_2", "thumb_3")}
+FINGER_NAMES = ("index", "middle", "ring", "little")
+DIGITS = {d: (d, f"{d}_2", f"{d}_3") for d in ("thumb", *FINGER_NAMES)}
+# capsule radius per phalanx (the larger end, from build_avatar.DIGIT_RADII) for collision checks
+PHALANX_R = {
+    "thumb": 0.0135, "thumb_2": 0.0118, "thumb_3": 0.0104,
+    "index": 0.0086, "index_2": 0.0080, "index_3": 0.0074,
+    "middle": 0.0088, "middle_2": 0.0082, "middle_3": 0.0076,
+    "ring": 0.0082, "ring_2": 0.0077, "ring_3": 0.0071,
+    "little": 0.0072, "little_2": 0.0067, "little_3": 0.0062,
+}
 PEG_DIAMETER = 0.008
-INDEX_TIP_R, THUMB_TIP_R = 0.0070, 0.0090  # fingertip radii (build_avatar.py digit radii)
+INDEX_TIP_R, THUMB_TIP_R = 0.0066, 0.0090  # fingertip radii (build_avatar.DIGIT_RADII)
 CUP_R_GRIP = 0.034  # cup radius at the grip ring
 
 
 class HandShape:
-    def __init__(self, index, mitten, thumb):
-        self.index, self.mitten, self.thumb = tuple(index), tuple(mitten), tuple(thumb)
+    """Flexion (deg) of the three joints of each finger, and the thumb's (base x, base z, flex)."""
 
-    def mix(self, other: "HandShape", f: float) -> "HandShape":
-        lerp = lambda a, b: tuple(x + (y - x) * f for x, y in zip(a, b))  # noqa: E731
-        return HandShape(lerp(self.index, other.index), lerp(self.mitten, other.mitten), lerp(self.thumb, other.thumb))
+    def __init__(self, fingers: dict, thumb):
+        self.fingers = {k: tuple(v) for k, v in fingers.items()}
+        self.thumb = tuple(thumb)
+
+    def with_(self, **kw) -> "HandShape":
+        f = dict(self.fingers)
+        th = kw.pop("thumb", self.thumb)
+        f.update(kw)
+        return HandShape(f, th)
 
 
 def digit_deltas(sk: "Skeleton", side: str, shape: HandShape, dh: Matrix) -> dict:
     s, sgn = side, (1 if side == "L" else -1)
     out = {}
-    for dg in ("index", "mitten"):
+    for dg, angles in shape.fingers.items():
         m = dh
-        for bone, ang in zip(DIGITS[dg], getattr(shape, dg)):
-            m = m @ Matrix.Rotation(ang * D * sgn, 3, "Y")  # flex toward the palm
+        for bone, ang in zip(DIGITS[dg], angles):
+            m = m @ Matrix.Rotation(ang * D * sgn, 3, "Y")  # flex toward the palm, in the finger's own plane
             out[f"{bone}_{s}"] = m
     a, b, f = shape.thumb
     tdir = (sk.rest_head(f"thumb_2_{s}") - sk.rest_head(f"thumb_{s}")).normalized()
@@ -304,8 +318,40 @@ def local_points(sk, side, shape):
     return p, {bone: tip(sk, p, f"{bone}_{side}") for dg in DIGITS.values() for bone in dg}
 
 
+def local_segments(sk, side, shape):
+    """Each phalanx as a segment (head, tip) in hand-local coordinates."""
+    p, tips = local_points(sk, side, shape)
+    return {bone: (sk.head(p, f"{bone}_{side}"), tips[bone]) for dg in DIGITS.values() for bone in dg}
+
+
+def seg_dist(p1, q1, p2, q2) -> float:
+    """Shortest distance between segments p1q1 and p2q2."""
+    d1, d2, r = q1 - p1, q2 - p2, p1 - p2
+    a, e, f = d1.dot(d1), d2.dot(d2), d2.dot(r)
+    c, b = d1.dot(r), d1.dot(d2)
+    den = a * e - b * b
+    s = min(1.0, max(0.0, (b * f - c * e) / den)) if den > 1e-12 else 0.0
+    t = (b * s + f) / e if e > 1e-12 else 0.0
+    if t < 0.0:
+        t, s = 0.0, min(1.0, max(0.0, -c / a))
+    elif t > 1.0:
+        t, s = 1.0, min(1.0, max(0.0, (b - c) / a))
+    return ((p1 + d1 * s) - (p2 + d2 * t)).length
+
+
+def thumb_overlap(segs, margin=0.001) -> float:
+    """How far (metres, summed) the thumb's phalanges push into any finger. 0 when every capsule clears."""
+    worst = 0.0
+    for tb in DIGITS["thumb"]:
+        for fg in FINGER_NAMES:
+            for fb in DIGITS[fg]:
+                need = PHALANX_R[tb] + PHALANX_R[fb] + margin
+                worst += max(0.0, need - seg_dist(*segs[tb], *segs[fb]))
+    return worst
+
+
 def descend(f, x, step, lo, hi, iters=400):
-    """Derivative-free coordinate descent (small, deterministic, good enough for 3 joint angles)."""
+    """Derivative-free coordinate descent (small, deterministic, good enough for a few joint angles)."""
     x, best = list(x), f(x)
     step = list(step)
     for _ in range(iters):
@@ -325,47 +371,56 @@ def descend(f, x, step, lo, hi, iters=400):
 
 
 class Hands:
-    """Solved hand shapes for one skeleton (left hand; the right mirrors by construction)."""
+    """Solved hand shapes for one skeleton (left hand; the right mirrors by construction). Fingers
+    flex in their own planes, a few millimetres apart, so they never touch each other; the thumb is
+    solved with a penalty that keeps it off every finger."""
 
     def __init__(self, sk: "Skeleton"):
         self.sk = sk
-        L = "L"
-        self.relaxed = HandShape((10, 16, 8), (14, 20, 10), (0, 0, 8))
-        # precision grip: index curls into a C, mitten tucks into the palm clear of the board
-        idx, mit = (45, 45, 15), (72, 88, 55)
-        self.pinch = self.solve_pinch(idx, mit, PEG_DIAMETER)
-        self.pinch_empty = self.solve_pinch(idx, mit, 0.0)
-        self.open = self.solve_pinch((30, 30, 8), (64, 80, 50), 0.030)  # pre-shape, high above the target
-        self.near = self.solve_pinch(idx, mit, PEG_DIAMETER + 0.008)   # last approach and release: pads just apart
-        _, pts = local_points(sk, L, self.pinch)
+        # resting cascade: each finger toward the little one curls a touch more
+        self.relaxed = HandShape({"index": (10, 16, 8), "middle": (13, 18, 9), "ring": (16, 21, 10), "little": (19, 24, 12)},
+                                 (0, 0, 8))
+        # precision grip: index curls into a C to meet the thumb; the others tuck, the little most
+        tuck = {"middle": (64, 82, 46), "ring": (74, 90, 55), "little": (84, 96, 62)}
+        loose = {"middle": (40, 50, 25), "ring": (50, 60, 32), "little": (58, 68, 38)}
+        self.pinch = self.solve_pinch((45, 45, 15), tuck, PEG_DIAMETER)
+        self.near = self.solve_pinch((45, 45, 15), tuck, PEG_DIAMETER + 0.008)  # last approach / release
+        self.open = self.solve_pinch((30, 30, 8), loose, 0.030)  # pre-shape while reaching
+        _, pts = local_points(sk, "L", self.pinch)
         self.pinch_point = (pts["index_3"] + pts["thumb_3"]) / 2  # hand-local, between the pads
         # power grip round a vertical cup: cylinder axis along the hand's y (index on top)
         palm_x = sk.rest_head("hand_L").x - 0.021
-        self.cup_centre = Vector((palm_x - CUP_R_GRIP, -0.010, 0.818))
+        # grip ring placed so the little finger sits near the cup's base and the thumb near its rim
+        self.cup_centre = Vector((palm_x - CUP_R_GRIP, -0.025, 0.818))
         self.cup = self.solve_cup(CUP_R_GRIP)
         self.cup_open = self.solve_cup(CUP_R_GRIP + 0.022)
+        for name in ("relaxed", "pinch", "near", "open", "cup", "cup_open"):
+            ov = thumb_overlap(local_segments(sk, "L", getattr(self, name)), margin=0.0)
+            assert ov < 0.0005, f"hand shape {name}: thumb overlaps a finger by {ov * 1000:.1f} mm"
 
     def pads_gap(self, gap):
         # centre-line distance between the thumb and index tips when their pads touch an object
         return gap + INDEX_TIP_R + THUMB_TIP_R
 
-    def solve_pinch(self, idx, mit, gap):
+    def solve_pinch(self, idx, others, gap):
         """Index curl and thumb angles together, so the thumb tip sits straight across from the
         index tip, `gap` apart pad to pad along the hand's front-back axis (level when the palm
-        faces down). The index is kept near `idx`, a natural precision-grip curl."""
+        faces down), with the thumb clear of every finger. The index stays near `idx`."""
         sk = self.sk
 
         def split(x):
-            return HandShape(x[:3], mit, x[3:])
+            return HandShape({"index": x[:3], **others}, x[3:])
 
         def cost(x):
-            _, p = local_points(sk, "L", split(x))
-            target = p["index_3"] + Vector((0.0, -self.pads_gap(gap), 0.0))
-            c = (p["thumb_3"] - target).length_squared * 1e4
+            sh = split(x)
+            segs = local_segments(sk, "L", sh)
+            target = segs["index_3"][1] + Vector((0.0, -self.pads_gap(gap), 0.0))
+            c = (segs["thumb_3"][1] - target).length_squared * 1e4
+            c += 1e2 * thumb_overlap(segs) ** 2 * 1e4
             c += 1e-6 * sum((a - b) ** 2 for a, b in zip(x[:3], idx))
             return c + 1e-7 * (x[3] ** 2 + x[4] ** 2)
         best = None
-        for th in ([0, 0, 20], [30, -30, 30], [-30, 30, 30], [40, 20, 50], [-20, -40, 10]):
+        for th in ([0, 0, 20], [30, -30, 30], [-30, 30, 30], [40, 20, 50], [-20, -40, 10], [20, -60, 40]):
             x, c = descend(cost, list(idx) + th, [8, 8, 8, 10, 10, 10], [0, 0, 0, -90, -90, -20], [90, 100, 70, 90, 90, 90])
             if best is None or c < best[1]:
                 best = (x, c)
@@ -375,29 +430,44 @@ class Hands:
         assert miss < 0.002, f"pinch not reachable: {miss * 1000:.1f} mm"
         return shape
 
-    def solve_cup(self, radius):
+    def solve_cup(self, radius, wall=CUP_R_GRIP):
+        """Fingers and thumb on a cylinder of `radius` round the cup axis; never inside the real `wall`."""
         sk, cc = self.sk, self.cup_centre
 
         def off_axis(p):  # distance from the cup axis (parallel to local y through cc)
             return math.hypot(p.x - cc.x, p.z - cc.z)
 
-        def finger(dg, r_f):
-            def cost(a):
-                sh = HandShape(a if dg == "index" else (0, 0, 0), a if dg == "mitten" else (0, 0, 0), (0, 0, 0))
-                _, p = local_points(sk, "L", sh)
-                return sum((off_axis(p[b]) - (radius + r_f)) ** 2 for b in DIGITS[dg][1:] + (DIGITS[dg][0],)) * 1e4
+        fingers = {}
+        for dg in FINGER_NAMES:
+            r_f = PHALANX_R[f"{dg}_2"]
+
+            def cost(a, dg=dg, r_f=r_f):
+                _, p = local_points(sk, "L", HandShape({dg: a}, (0, 0, 0)))
+                return sum((off_axis(p[b]) - (radius + r_f)) ** 2 for b in DIGITS[dg]) * 1e4
             a, _ = descend(cost, [30, 40, 30], [10, 10, 10], [0, 0, 0], [95, 110, 80])
-            return tuple(a)
-        idx = finger("index", 0.0085)
-        mit = finger("mitten", 0.0095)
+            fingers[dg] = tuple(a)
 
         def tcost(th):
-            _, p = local_points(sk, "L", HandShape(idx, mit, th))
-            c = sum((off_axis(p[b]) - (radius + 0.011)) ** 2 for b in ("thumb_2", "thumb_3")) * 1e4
+            sh = HandShape(fingers, th)
+            _, p = local_points(sk, "L", sh)
+            segs = local_segments(sk, "L", sh)
+            c = sum((off_axis(p[b]) - (radius + PHALANX_R[b])) ** 2 for b in ("thumb_2", "thumb_3")) * 1e4
+            for b in DIGITS["thumb"]:  # never inside the cup wall (head and tip of each phalanx)
+                for q in segs[b]:
+                    c += 1e2 * max(0.0, wall + PHALANX_R[b] - off_axis(q)) ** 2 * 1e4
             c += 1e-3 * max(0.0, p["thumb_3"].x - cc.x) ** 2 * 1e4  # thumb on the far side of the cup
+            c += 1e2 * thumb_overlap(segs) ** 2 * 1e4
             return c
-        th, _ = descend(tcost, [20, -20, 20], [10, 10, 10], [-80, -80, -10], [80, 80, 85])
-        return HandShape(idx, mit, th)
+        best = None
+        for start in ([20, -20, 20], [40, 0, 30], [0, -40, 40], [50, -30, 10], [30, 30, 30]):
+            th, cst = descend(tcost, start, [10, 10, 10], [-80, -80, -10], [80, 80, 85])
+            if best is None or cst < best[1]:
+                best = (th, cst)
+        th = best[0]
+        segs = local_segments(sk, "L", HandShape(fingers, th))
+        inside = max(wall + PHALANX_R[b] - off_axis(q) for b in DIGITS["thumb"] for q in segs[b])
+        assert inside < 0.002, f"cup grip: thumb {inside * 1000:.1f} mm inside the cup wall"
+        return HandShape(fingers, th)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -508,8 +578,8 @@ CUP_ALIGN = (Vector((0, -1, 0)), Vector((0, 0, 1)))  # index edge of the hand up
 PINCH_ALIGN = (Vector((-1, 0, 0)), Vector((0, 0.6, -0.8)).normalized())  # palm down and back toward the body: fingertips lead, knuckles high
 # Hand posture for the peg pinch, found by searching roll x wrist angle for the pose in which no
 # part of the hand except the fingertip pads comes within 1 mm of the board or the dish (pickup
-# and seating): rolled 40 deg so the thumb-index side is lowest and the curled fingers ride above.
-PINCH_PRON, PINCH_FLEX = 40.0, 10.0
+# and seating): rolled 45 deg so the thumb-index side is lowest and the curled fingers ride above.
+PINCH_PRON, PINCH_FLEX = 45.0, 0.0
 
 
 def anchor(name) -> Vector:

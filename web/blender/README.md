@@ -21,10 +21,10 @@ port any hand edits back into the script.
 - **Mannequin (look approved 23 Sep 2026).** A gender-neutral articulated figure in the style of
   an artist's mannequin: smooth aqua (`#55B296`) segments and deep-teal (`#1F5F5B`) ball joints at
   the shoulder, elbow, wrist, waist, hip, knee and ankle, with an egg-shaped, featureless head.
-  Hands have a thumb, an index finger and a fused three-finger block, each with three jointed
-  segments, so they curl, pinch and grip. About 28k triangles.
+  Hands have a thumb and four separate fingers, each with three jointed segments. There are a few
+  millimetres between neighbouring fingers, so they curl, pinch and grip without touching. About 28k triangles.
 - **Rig.** `root → hips → spine → chest → neck → head`, `clavicle → upper_arm → forearm → hand →
-  thumb | index | mitten`, `thigh → shin → foot`, with `_L` / `_R` suffixes. Bone names contain no
+  thumb | index | middle | ring | little` (each `<digit>`, `<digit>_2`, `<digit>_3`), `thigh → shin → foot`, with `_L` / `_R` suffixes. Bone names contain no
   dots, so they survive Three.js `GLTFLoader` name sanitising. Rest joint positions are the same
   as `web/src/avatar/rig.ts`.
 - **Skinning.** Each segment is weighted 1.0 to exactly one bone. Poses therefore never smear the
@@ -60,10 +60,10 @@ armature-space rotations. The posed skeleton therefore has the same world bone d
 - `relaxed`: a resting curl for the standing clips
 - `open`: the hand opens while reaching for a peg
 - `near`: pads just apart, for the final approach and the release
-- `pinch`: the thumb pad meets the index pad either side of the peg; the index curl and the thumb angles are solved together
+- `pinch`: the thumb pad meets the index pad either side of the peg (the index curl and the thumb angles are solved together), and the other three fingers tuck
 - `cup`: the fingers and thumb wrap the cup
 
-For the peg the hand is rolled 40° (thumb and index side lowest) with a 10° wrist tilt. That posture came from a search for the one in which nothing but the fingertip pads comes near the board or the dish. The pads meet the peg on its upper half, and the loose pegs sit in the middle of the dish.
+For the peg the hand is rolled 45° (thumb and index side lowest) with a straight wrist, and the middle, ring and little fingers tuck in a cascade. That posture came from a search for the one in which nothing but the fingertip pads comes near the board or the dish. The pads meet the peg on its upper half, and the loose pegs sit in the middle of the dish.
 
 **Table tasks.** These are authored as targets. An analytic two-bone IK puts the grip point on
 `anchor_dot_k`, or the pinch point on `anchor_hole_k`. The cup and pegs are then baked to follow
@@ -88,6 +88,7 @@ and checks that:
 - the pads pinch each peg pad to pad (< 2.5 mm)
 - no part of the hand enters the board or the dish at any frame; only the fingertip pads may press up to 6 mm
 - the fingers wrap the cup without passing through its wall
+- no two digits of either hand touch at any frame of any action
 - the sidecar agrees with the GLB
 
 ## Coordinates

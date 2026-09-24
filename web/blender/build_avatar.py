@@ -11,7 +11,7 @@ the next run and must be ported back here. Same script -> same output (no random
 
 How the body is made (look approved 23 Sep 2026): an artist's-mannequin figure, deliberately
 free of sex-typed shaping. Every body segment (egg head, neck, ribcage, pelvis, upper arm,
-forearm, palm, thumb, index, three-finger mitten, thigh, shin, foot) is a smooth surface of
+forearm, palm, thumb and four fingers, thigh, shin, foot) is a smooth surface of
 revolution with an elliptical cross-section, and every joint (shoulder, elbow, wrist, waist,
 hip, knee, ankle) is a ball in a deeper teal. Each piece is weighted 100 % to exactly one bone,
 so poses never smear or collapse the surface; the joint balls hide the seams. The figure is
@@ -84,10 +84,22 @@ ELBOW = V(0.25, 0.0, 1.14)
 WRIST = V(0.25, 0.0, 0.89)
 KNUCKLE = V(0.25, 0.0, 0.80)
 # Left-hand digit joint chains at rest (palm faces the thigh, -x; fingers point down; thumb in
-# front): base -> knuckle -> middle joint -> tip. Index on the front edge of the palm, the fused
-# middle/ring/little "mitten" behind it, the thumb from the heel of the palm, forward and down.
-INDEX = [V(0.248, -0.030, 0.800), V(0.247, -0.031, 0.754), V(0.246, -0.032, 0.728), V(0.245, -0.033, 0.707)]
-MITTEN = [V(0.249, 0.011, 0.798), V(0.248, 0.012, 0.750), V(0.247, 0.012, 0.722), V(0.246, 0.012, 0.700)]
+# front): base -> knuckle -> middle joint -> tip. Four separate fingers spread across the palm
+# (index at the front edge, little at the back) with a few millimetres between neighbours, and
+# the thumb from the heel of the palm, forward and down.
+FINGERS = {
+    "index": [V(0.248, -0.034, 0.800), V(0.247, -0.035, 0.755), V(0.246, -0.036, 0.729), V(0.245, -0.037, 0.709)],
+    "middle": [V(0.249, -0.012, 0.797), V(0.248, -0.012, 0.748), V(0.247, -0.012, 0.719), V(0.246, -0.012, 0.697)],
+    "ring": [V(0.249, 0.009, 0.799), V(0.248, 0.010, 0.753), V(0.247, 0.011, 0.725), V(0.246, 0.011, 0.704)],
+    "little": [V(0.248, 0.028, 0.805), V(0.247, 0.030, 0.769), V(0.246, 0.031, 0.748), V(0.245, 0.032, 0.730)],
+}
+DIGIT_RADII = {  # base, knuckle, middle joint, tip (metres)
+    "thumb": (0.0135, 0.0118, 0.0104, 0.0090),
+    "index": (0.0086, 0.0080, 0.0074, 0.0066),
+    "middle": (0.0088, 0.0082, 0.0076, 0.0068),
+    "ring": (0.0082, 0.0077, 0.0071, 0.0063),
+    "little": (0.0072, 0.0067, 0.0062, 0.0056),
+}
 THUMB = [V(0.236, -0.026, 0.870), V(0.231, -0.052, 0.830), V(0.228, -0.067, 0.800), V(0.225, -0.078, 0.777)]  # base on the palm side
 
 # (name, head, tail, parent, deform); left-side names end in _L and are mirrored to _R.
@@ -104,15 +116,9 @@ LEFT_BONES = [
     ("upper_arm_L", SHOULDER, ELBOW, "clavicle_L", True),
     ("forearm_L", ELBOW, WRIST, "upper_arm_L", True),
     ("hand_L", WRIST, KNUCKLE, "forearm_L", True),
-    *[(n, h, t, par, True) for n, h, t, par in (
-        # three phalanges per digit so the fingers curl and the thumb opposes (joint chains below)
-        ("thumb_L", THUMB[0], THUMB[1], "hand_L"), ("thumb_2_L", THUMB[1], THUMB[2], "thumb_L"),
-        ("thumb_3_L", THUMB[2], THUMB[3], "thumb_2_L"),
-        ("index_L", INDEX[0], INDEX[1], "hand_L"), ("index_2_L", INDEX[1], INDEX[2], "index_L"),
-        ("index_3_L", INDEX[2], INDEX[3], "index_2_L"),
-        ("mitten_L", MITTEN[0], MITTEN[1], "hand_L"), ("mitten_2_L", MITTEN[1], MITTEN[2], "mitten_L"),
-        ("mitten_3_L", MITTEN[2], MITTEN[3], "mitten_2_L"),
-    )],
+    # three phalanges per digit so the fingers curl and the thumb opposes (joint chains above)
+    *[(f"{d}{sfx}_L", ch[i], ch[i + 1], "hand_L" if i == 0 else f"{d}{('', '_2')[i - 1]}_L", True)
+      for d, ch in [("thumb", THUMB), *FINGERS.items()] for i, sfx in enumerate(("", "_2", "_3"))],
     ("thigh_L", V(0.09, 0.0, 0.935), V(0.095, -0.005, 0.51), "hips", True),
     ("shin_L", V(0.095, -0.005, 0.51), V(0.10, 0.015, 0.085), "thigh_L", True),
     ("foot_L", V(0.10, 0.015, 0.085), V(0.105, -0.125, 0.02), "shin_L", True),
@@ -273,16 +279,16 @@ def body_pieces():
                  0, 0, 0.012, 0.014, 1.0, 0.46, V(1, 0, 0), seg=24, rings=14), f"hand_{S}")
         # digits: one capsule per phalanx whose round ends overlap at the joints, so a bent finger
         # stays one smooth piece (the mannequin's knuckles), each rigid to its own bone
-        def digit(name, chain, radii, flat=1.0, seg=14, rings=8):
+        def digit(name, chain, radii, seg=12, rings=7):
             pts = [m(p) for p in chain]
-            bones = [name, f"{name.split('_')[0]}_2", f"{name.split('_')[0]}_3"]
+            bones = [name, f"{name}_2", f"{name}_3"]
             for i in range(3):
                 r0, r1 = radii[i], radii[i + 1]
                 add(limb(f"{bones[i]}_{S}", pts[i], pts[i + 1], r0, r1, -0.75 * r0, -0.75 * r1, 0.9 * r0, 0.9 * r1,
-                         1.0, flat, V(1, 0, 0), seg=seg, rings=rings), f"{bones[i]}_{S}")
-        digit("thumb", THUMB, (0.0135, 0.0118, 0.0104, 0.0090))
-        digit("index", INDEX, (0.0092, 0.0085, 0.0078, 0.0070))
-        digit("mitten", MITTEN, (0.0250, 0.0232, 0.0212, 0.0185), flat=0.44, seg=16, rings=8)
+                         seg=seg, rings=rings), f"{bones[i]}_{S}")
+        digit("thumb", THUMB, DIGIT_RADII["thumb"], seg=14, rings=8)
+        for fname, chain in FINGERS.items():
+            digit(fname, chain, DIGIT_RADII[fname])
 
         hip, knee, ank = m(V(0.09, 0.0, 0.935)), m(V(0.095, -0.005, 0.51)), m(V(0.10, 0.015, 0.085))
         hip_ball = hip + V(-0.004 * s, 0, -0.050)

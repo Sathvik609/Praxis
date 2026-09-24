@@ -160,9 +160,32 @@ test('seated actions put the pelvis on the chair seat and the feet on the floor'
 
 // ---------------------------------------------------------------------------------------------
 // Hands: three-phalanx digits; tips are the exporter's `<bone>_leaf` nodes.
-const DIGIT_R: Record<string, number> = {
-  index_L: 0.0085, index_2_L: 0.0078, index_3_L: 0.007, mitten_L: 0.01, mitten_2_L: 0.0093, mitten_3_L: 0.0082,
-  thumb_L: 0.0118, thumb_2_L: 0.0104, thumb_3_L: 0.009,
+// capsule radius per phalanx (larger end), as in web/blender/animate.py PHALANX_R
+const PHALANX_R: Record<string, number> = {
+  thumb: 0.0135, thumb_2: 0.0118, thumb_3: 0.0104,
+  index: 0.0086, index_2: 0.008, index_3: 0.0074,
+  middle: 0.0088, middle_2: 0.0082, middle_3: 0.0076,
+  ring: 0.0082, ring_2: 0.0077, ring_3: 0.0071,
+  little: 0.0072, little_2: 0.0067, little_3: 0.0062,
+}
+const DIGIT_NAMES = ['thumb', 'index', 'middle', 'ring', 'little']
+const phalanges = (d: string) => [d, `${d}_2`, `${d}_3`]
+const DIGIT_R: Record<string, number> = Object.fromEntries(Object.entries(PHALANX_R).map(([k, v]) => [`${k}_L`, v]))
+/** Phalanx k of a digit as a segment: its joint node to the next joint (or the fingertip leaf). */
+function segment(w: Map<string, V3>, bone: string, side: 'L' | 'R'): [V3, V3] {
+  const [d, n] = bone.includes('_') ? [bone.split('_')[0], Number(bone.split('_')[1])] : [bone, 1]
+  const next = n === 3 ? `${d}_3_${side}_leaf` : `${d}_${n + 1}_${side}`
+  return [at(w, `${bone}_${side}`), at(w, next)]
+}
+function segDist(p1: V3, q1: V3, p2: V3, q2: V3): number {
+  const d1 = sub(q1, p1), d2 = sub(q2, p2), r = sub(p1, p2)
+  const dot = (a: V3, b: V3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+  const a = dot(d1, d1), e = dot(d2, d2), f = dot(d2, r), c = dot(d1, r), b = dot(d1, d2)
+  const den = a * e - b * b
+  let s = den > 1e-12 ? Math.min(1, Math.max(0, (b * f - c * e) / den)) : 0
+  let t = e > 1e-12 ? (b * s + f) / e : 0
+  if (t < 0) { t = 0; s = Math.min(1, Math.max(0, -c / a)) } else if (t > 1) { t = 1; s = Math.min(1, Math.max(0, (b - c) / a)) }
+  return len(sub([p1[0] + d1[0] * s, p1[1] + d1[1] * s, p1[2] + d1[2] * s], [p2[0] + d2[0] * t, p2[1] + d2[1] * t, p2[2] + d2[2] * t]))
 }
 const PAD_GAP = 0.008 + 0.007 + 0.009 // peg diameter + index and thumb tip radii
 
@@ -198,10 +221,10 @@ test('NHPT: no part of the hand goes into the board or the dish at any frame (fi
       const p = at(w, bone)
       worst = Math.min(worst, p[1] - r - surface(p[0], p[2]))
     }
-    for (const tipNode of ['index_3_L_leaf', 'thumb_3_L_leaf', 'mitten_3_L_leaf']) {
+    for (const tipNode of ['index_3_L_leaf', 'thumb_3_L_leaf', 'middle_3_L_leaf', 'ring_3_L_leaf', 'little_3_L_leaf']) {
       const p = at(w, tipNode)
       const r = DIGIT_R[tipNode.replace('_leaf', '')]
-      worst = Math.min(worst, p[1] - r - surface(p[0], p[2]) + (tipNode.startsWith('mitten') ? 0 : 0.006))
+      worst = Math.min(worst, p[1] - r - surface(p[0], p[2]) + (/^(index|thumb)/.test(tipNode) ? 0.006 : 0))
     }
   }
   expect(worst).toBeGreaterThan(-0.0015)
@@ -211,11 +234,32 @@ test('Waiter – cup: the fingers wrap the cup without going through it', () => 
   for (const tg of meta.actions.waiter_cup.targets.filter((t) => t.landed)) {
     const w = glb.world('waiter_cup', atFrame(tg.t))
     const cup = at(w, 'prop_cup')
-    for (const n of ['index_3_L_leaf', 'mitten_3_L_leaf', 'thumb_3_L_leaf', 'index_2_L', 'mitten_2_L']) {
+    for (const n of ['index_3_L_leaf', 'middle_3_L_leaf', 'ring_3_L_leaf', 'little_3_L_leaf', 'thumb_3_L_leaf', 'index_2_L', 'middle_2_L']) {
       const p = at(w, n)
       const fromAxis = Math.hypot(p[0] - cup[0], p[2] - cup[2])
       expect(fromAxis, `${n} dot ${tg.index}`).toBeGreaterThan(0.03) // outside the cup wall
       expect(fromAxis, `${n} dot ${tg.index}`).toBeLessThan(0.075) // but on it, not in the air
     }
   }
+})
+
+test.each(ACTIONS)('%s: no two digits of either hand touch at any frame (fingers stay separate)', (name) => {
+  let worst = Infinity
+  let where = ''
+  for (let f = 0; f <= Math.round(glb.duration(name) * FPS); f += 2) {
+    const w = glb.world(name, f / FPS)
+    for (const side of ['L', 'R'] as const) {
+      for (let i = 0; i < DIGIT_NAMES.length; i++) {
+        for (let j = i + 1; j < DIGIT_NAMES.length; j++) {
+          for (const a of phalanges(DIGIT_NAMES[i])) {
+            for (const b of phalanges(DIGIT_NAMES[j])) {
+              const gap = segDist(...segment(w, a, side), ...segment(w, b, side)) - PHALANX_R[a] - PHALANX_R[b]
+              if (gap < worst) { worst = gap; where = `${a}/${b}_${side} f${f}` }
+            }
+          }
+        }
+      }
+    }
+  }
+  expect(worst, where).toBeGreaterThan(-0.0005)
 })

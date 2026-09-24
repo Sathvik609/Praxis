@@ -74,7 +74,7 @@ const SIDES = ['L', 'R'] as const
 const BONES = [
   'root', 'hips', 'spine', 'chest', 'neck', 'head',
   ...SIDES.flatMap((s) =>
-    ['clavicle', 'upper_arm', 'forearm', 'hand', 'thumb', 'thumb_2', 'thumb_3', 'index', 'index_2', 'index_3', 'mitten', 'mitten_2', 'mitten_3', 'thigh', 'shin', 'foot'].map((b) => `${b}_${s}`),
+    ['clavicle', 'upper_arm', 'forearm', 'hand', 'thumb', 'thumb_2', 'thumb_3', ...['index', 'middle', 'ring', 'little'].flatMap((f) => [f, `${f}_2`, `${f}_3`]), 'thigh', 'shin', 'foot'].map((b) => `${b}_${s}`),
   ),
 ]
 const PROPS = ['prop_chair', 'prop_table', 'prop_cup', 'prop_sheet', 'prop_pegboard', ...Array.from({ length: 9 }, (_, i) => `prop_peg_${i + 1}`)]
