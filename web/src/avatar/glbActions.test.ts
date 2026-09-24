@@ -48,13 +48,26 @@ describe('actionFor: app clip / exercise names → GLB action', () => {
   })
 })
 
-test('pacedActionTime maps rep progress onto the action rep window, clamped', () => {
-  expect(pacedActionTime([2.2, 13.8], 0)).toBeCloseTo(2.2)
-  expect(pacedActionTime([2.2, 13.8], 1)).toBeCloseTo(13.8)
-  expect(pacedActionTime([2.2, 13.8], 0.5)).toBeCloseTo(8)
-  expect(pacedActionTime([0, 2.133], 0.4)).toBeCloseTo(0.8532)
-  expect(pacedActionTime([0, 2], -0.3)).toBe(0)
-  expect(pacedActionTime([0, 2], 1.7)).toBe(2)
+test('pacedActionTime without a pace curve maps rep progress linearly onto the rep window, clamped', () => {
+  const a = (rep: [number, number]) => ({ rep })
+  expect(pacedActionTime(a([2.2, 13.8]), 0)).toBeCloseTo(2.2)
+  expect(pacedActionTime(a([2.2, 13.8]), 1)).toBeCloseTo(13.8)
+  expect(pacedActionTime(a([2.2, 13.8]), 0.5)).toBeCloseTo(8)
+  expect(pacedActionTime(a([0, 2]), -0.3)).toBe(0)
+  expect(pacedActionTime(a([0, 2]), 1.7)).toBe(2)
+})
+
+test('pacedActionTime with a pace curve follows the service phases: lift by angle, hold by time, lower by angle', () => {
+  const pace = { lift: [[0, 0], [0.5, 0.4], [1, 1]] as [number, number][], hold: [1, 1.4] as [number, number], lower: [[0, 2], [0.5, 1.8], [1, 1.4]] as [number, number][] }
+  const a = { rep: [0, 2] as [number, number], pace }
+  expect(pacedActionTime(a, 0)).toBeCloseTo(0)
+  expect(pacedActionTime(a, 0.2)).toBeCloseTo(0.4) // half way up by angle
+  expect(pacedActionTime(a, 0.4)).toBeCloseTo(1) // at the top
+  expect(pacedActionTime(a, 0.6)).toBeCloseTo(1.2) // half the hold
+  expect(pacedActionTime(a, 0.8)).toBeCloseTo(1.4) // end of hold
+  expect(pacedActionTime(a, 0.9)).toBeCloseTo(1.8) // half way down by angle
+  expect(pacedActionTime(a, 1)).toBeCloseTo(2)
+  expect(pacedActionTime(a, 1.5)).toBeCloseTo(2)
 })
 
 describe('prop visibility follows meta.props exactly', () => {

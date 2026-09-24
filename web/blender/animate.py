@@ -536,6 +536,7 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
                 got = (sk.head(pose, bone_to) - sk.head(pose, bone_from)).normalized()
                 want_b = C @ (turn @ Vector(want)).normalized()
                 errors.append(math.degrees(got.angle(want_b)))
+    pace = pace_curve(sk, act, j["duration"]) if name in PACED_ACTIONS else None
     push_nla(rig, name, act, 0)
     duration = j["duration"] + 0.7
     steps = [{"t": s["t"], "step": s["step"], "caption": s["caption"]} for s in j["steps"]]
@@ -546,7 +547,51 @@ def rehab_action(sk: Skeleton, name: str, meta: dict):
         "source": j["source"]["dataset"], "seated": False,
         "retarget_error_deg": round(max(errors), 3) if errors else None,
         **({"ceiling_deg": scaled["ceiling_deg"], "scaled_from_deg": scaled["recorded_peak_deg"]} if scaled else {}),
+        **({"pace": pace} if pace else {}),
     }
+
+
+PACED_ACTIONS = ("flexion", "abduction")  # lift / hold / lower arm exercises paced by the service's rep_progress
+
+
+def pace_curve(sk: Skeleton, act, rep_end: float) -> dict:
+    """How the figure's rep lines up with the service's rep_progress (arm_fsm.rep_progress: lift
+    0..0.4 by angle, hold 0.4..0.8 by time, lower 0.8..1 by angle). Samples the keyed action every
+    frame for the torso-relative upper-arm elevation, then publishes, for the way up and the way
+    down, (fraction of the peak elevation, time) pairs, monotone in the fraction, and the hold
+    window around the peak. The app inverts these so the figure is as far up as the patient."""
+    rig = sk.rig
+    tracks = list(rig.animation_data.nla_tracks)
+    for tr in tracks:
+        tr.mute = True
+    rig.animation_data.action = act
+    samples = []
+    for f in range(0, frame_of(rep_end) + 1):
+        bpy.context.scene.frame_set(f)
+        pb = rig.pose.bones
+        ua = pb["forearm_L"].head - pb["upper_arm_L"].head
+        up = pb["neck"].head - pb["chest"].head
+        samples.append((f / FPS, math.degrees(ua.angle(-up))))
+    rig.animation_data.action = None
+    for tr in tracks:
+        tr.mute = False
+    lo = min(e for _, e in samples[:3])
+    peak = max(e for _, e in samples)
+    frac = [(t, max(0.0, (e - lo) / (peak - lo))) for t, e in samples]
+    near = [t for t, fr in frac if fr >= 0.97]
+    hold_in, hold_out = near[0], near[-1]
+
+    def monotone(points, rising):
+        out, best = [], -1.0
+        for t, fr in points:
+            if fr > best + 1e-4:
+                out.append([round(fr, 4), round(t, 4)])
+                best = fr
+        return out
+    up_pts = monotone([(t, fr) for t, fr in frac if t <= hold_in], True)
+    down_pts = monotone([(t, fr) for t, fr in reversed(frac) if t >= hold_out], False)  # fraction rising backwards in time
+    return {"lift": up_pts, "hold": [round(hold_in, 4), round(hold_out, 4)], "lower": down_pts,
+            "peak_deg": round(peak, 1), "rest_deg": round(lo, 1)}
 
 
 def idle_action(sk: Skeleton, meta: dict):

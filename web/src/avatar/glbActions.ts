@@ -13,6 +13,10 @@ export type GlbAction = (typeof GLB_ACTIONS)[number]
 export type GlbProp = 'table' | 'sheet' | 'cup' | 'pegboard'
 export type GlbStep = { t: number; step: number; caption: string }
 export type GlbTarget = { t: number; kind: 'dot' | 'hole'; index: number; landed?: boolean }
+/** Pace curve of a lift / hold / lower exercise (from `web/blender/animate.py`): for the way up
+ *  and the way down, [fraction of the peak elevation, time] pairs (fraction ascending), and the
+ *  hold window at the top. */
+export type GlbPace = { lift: [number, number][]; hold: [number, number]; lower: [number, number][] }
 export type GlbActionMeta = {
   duration: number
   loop: boolean
@@ -27,6 +31,7 @@ export type GlbActionMeta = {
   /** Upper-arm elevation ceiling the recorded rep was scaled to, and its recorded peak. */
   ceiling_deg?: number
   scaled_from_deg?: number
+  pace?: GlbPace
   [extra: string]: unknown
 }
 export type AvatarMeta = { fps: number; actions: Record<string, GlbActionMeta> }
@@ -59,9 +64,31 @@ export function actionFor(name: string | null | undefined): GlbAction {
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x))
 
-/** Where rep progress p (0..1, from the camera) puts the figure: `rep[0] + p·(rep[1] − rep[0])`. */
-export function pacedActionTime(rep: [number, number], p: number): number {
-  return rep[0] + clamp01(p) * (rep[1] - rep[0])
+/** Time for fraction f on a [fraction, time] curve with ascending fractions (clamped at both ends). */
+function timeAtFraction(curve: [number, number][], f: number): number {
+  if (!curve.length) return 0
+  if (f <= curve[0][0]) return curve[0][1]
+  for (let i = 1; i < curve.length; i++) {
+    const [f1, t1] = curve[i]
+    if (f <= f1) {
+      const [f0, t0] = curve[i - 1]
+      return t0 + ((f - f0) / (f1 - f0)) * (t1 - t0)
+    }
+  }
+  return curve[curve.length - 1][1]
+}
+
+/** Where rep progress p (0..1, the service's `rep_progress`) puts the figure. With a pace curve
+ *  the phases line up with `arm_fsm.rep_progress`: 0..0.4 lift, by the patient's angle, so the
+ *  figure is as far up as they are; 0.4..0.8 hold, the figure stays at the top through the hold;
+ *  0.8..1 lower, by angle again. Without one (cup, NHPT, rotations), linear over the rep window. */
+export function pacedActionTime(action: { rep: [number, number]; pace?: GlbPace }, p: number): number {
+  const q = clamp01(p)
+  const pace = action.pace
+  if (!pace) return action.rep[0] + q * (action.rep[1] - action.rep[0])
+  if (q <= 0.4) return timeAtFraction(pace.lift, q / 0.4)
+  if (q <= 0.8) return pace.hold[0] + ((q - 0.4) / 0.4) * (pace.hold[1] - pace.hold[0])
+  return timeAtFraction(pace.lower, 1 - (q - 0.8) / 0.2)
 }
 
 export function isPropNode(name: string): boolean {

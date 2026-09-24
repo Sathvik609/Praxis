@@ -58,13 +58,13 @@ test('props are visible exactly per meta.props for every action', () => {
 test('the mixer poses the figure at the paced time: flexion lifts the elbow, lowering brings it back', () => {
   const inst = new AvatarInstance(asset)
   const m = inst.setAction('flexion')
-  inst.setTime(pacedActionTime(m.rep, 0))
+  inst.setTime(pacedActionTime(m, 0))
   const low = pos(inst, 'forearm_L').y
   const peakT = m.steps.find((s) => s.step === 2)!.t
   inst.setTime(peakT)
   const high = pos(inst, 'forearm_L').y
   expect(high - low).toBeGreaterThan(0.15)
-  inst.setTime(pacedActionTime(m.rep, 1))
+  inst.setTime(pacedActionTime(m, 1))
   expect(Math.abs(pos(inst, 'forearm_L').y - low)).toBeLessThan(0.05)
   inst.dispose()
 })

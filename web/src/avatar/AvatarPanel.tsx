@@ -121,7 +121,7 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
   useEffect(() => {
     if (am) {
       // GLB: rep progress p puts the figure at rep[0] + p·(rep[1] − rep[0]) of the action
-      clock.current.target = paced == null ? null : pacedActionTime(am.rep, paced)
+      clock.current.target = paced == null ? null : pacedActionTime(am, paced)
       return
     }
     // Map rep progress onto the clip timeline (before the loop bridge at the end).

@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { Glb, angleDeg, len, sub, unit, type V3 } from '../test/glb'
 import { AVATAR_ELEVATION_CEILING_DEG, REHAB_JSON } from './rehabClips'
+import { pacedActionTime, parseAvatarMeta } from './glbActions'
 
 const DIR = resolve(__dirname, '../../public/avatar')
 const glb = new Glb(resolve(DIR, 'praxis_avatar.glb'))
@@ -263,3 +264,24 @@ test.each(ACTIONS)('%s: no two digits of either hand touch at any frame (fingers
   }
   expect(worst, where).toBeGreaterThan(-0.0005)
 })
+
+test.each(['flexion', 'abduction'])(
+  '%s: paced by the service rep_progress, the figure is as far up as the patient (lift/lower by angle, still at the top while holding)',
+  (name) => {
+    const am = parseAvatarMeta(meta).actions[name]
+    expect(am.pace).toBeTruthy()
+    const elev = (t: number) => {
+      const w = glb.world(name, t)
+      const up = unit(sub(at(w, 'neck'), at(w, 'chest')))
+      return angleDeg(sub(at(w, 'forearm_L'), at(w, 'upper_arm_L')), [-up[0], -up[1], -up[2]])
+    }
+    const lo = elev(pacedActionTime(am, 0))
+    const hi = elev(pacedActionTime(am, 0.4))
+    expect(hi).toBeGreaterThan(AVATAR_ELEVATION_CEILING_DEG - 3)
+    const frac = (p: number) => (elev(pacedActionTime(am, p)) - lo) / (hi - lo)
+    // service: lift 0..0.4 proportional to the patient's angle, hold 0.4..0.8, lower 0.8..1 by angle
+    for (const p of [0.1, 0.2, 0.3]) expect(Math.abs(frac(p) - p / 0.4), `lift p=${p}`).toBeLessThan(0.06)
+    for (const p of [0.45, 0.6, 0.75]) expect(frac(p), `hold p=${p}`).toBeGreaterThan(0.95)
+    for (const p of [0.85, 0.9, 0.95]) expect(Math.abs(frac(p) - (1 - (p - 0.8) / 0.2)), `lower p=${p}`).toBeLessThan(0.06)
+  },
+)
