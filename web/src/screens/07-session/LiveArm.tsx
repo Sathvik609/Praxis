@@ -135,7 +135,7 @@ export function LiveArm() {
           title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
           action={<Chip tone={holding ? 'mint' : 'neutral'}>{swing ? 'Swing' : holding ? 'At target' : 'Lift'}</Chip>}
         >
-          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip={ex.clip} camera={view} compact /></div>
+          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip={ex.clip} camera={view} side={side === 'right' ? 'right' : 'left'} paced={a && !a.finished ? (a.rep_progress ?? null) : null} compact /></div>
           <p className="text-center text-lg text-muted">{view} view · shoulder {now != null ? Math.round(now) : '—'}° of {target}°</p>
           <div className="flex justify-between text-lg text-muted">{swing ? <><span>Swing forward</span><span>Swing back</span></> : <><span>Lift for 3</span><span>Lower for 3</span></>}</div>
           <div className="h-3 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="hold progress" aria-valuenow={Math.round((a?.hold_progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>

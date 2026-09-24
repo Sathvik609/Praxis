@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../design/Button'
 import { AvatarScene, type Clock, type FigureMode, type Projection, type Tick } from './AvatarScene'
 import { CLIPS, type Clip, mirror } from './clips'
+import { GlbScene } from './GlbScene'
+import { actionFor, focusJointOf, pacedActionTime, sourceLabel, stepAt } from './glbActions'
+import { type AvatarAsset, loadAvatarAsset, peekAvatarAsset, webglAvailable } from './glbAsset'
 import { MARKER_STYLE, type Marker } from './markers'
 import { LOOP_BRIDGE_S, REHAB_CLIPS, type RehabClipName, isRehabClip } from './rehabClips'
 import { sample } from './sampler'
@@ -48,16 +51,47 @@ const LABEL_OFFSET = 70
 const LABEL_GAP = 44
 const CAPTION_H = 48 // caption bar height reserved at the bottom of the stage
 
-/** The one avatar: a pacing reference on a dark stage. It never scores the patient. */
+/** The Blender GLB when it loads; null while loading or once it has failed (no WebGL, network,
+ *  parse, lost context), in which case the procedural figure is drawn unchanged. */
+function useGlbAsset(): { asset: AvatarAsset | null; loading: boolean; fail: () => void } {
+  const [failed, setFailed] = useState(() => !webglAvailable())
+  const [asset, setAsset] = useState<AvatarAsset | null>(() => peekAvatarAsset())
+  useEffect(() => {
+    if (failed || asset) return
+    let live = true
+    loadAvatarAsset().then(
+      (a) => live && setAsset(a),
+      () => live && setFailed(true),
+    )
+    return () => {
+      live = false
+    }
+  }, [failed, asset])
+  const fail = useCallback(() => setFailed(true), [])
+  return { asset: failed ? null : asset, loading: !failed && !asset, fail }
+}
+
+/** The one avatar: a pacing reference on a dark stage. It never scores the patient. It plays the
+ *  Blender-built GLB (one action per exercise, see `glbActions.ts`) and falls back to the
+ *  procedural figure when the GLB or WebGL is unavailable. */
 export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, camera, side = 'left', markers: markersIn, onMarkerTap, compact = false, showCues = true, onStep, aspect, figure, className = '' }: Props) {
   const clip: Clip = useMemo(() => (side === 'right' ? mirror(clipByName(clipName)) : clipByName(clipName)), [clipName, side])
-  const mode: FigureMode = figure ?? (isRehabClip(clipName) ? 'skeleton' : 'body')
+  const { asset: glb, loading: glbLoading, fail: glbFail } = useGlbAsset()
+  const action = actionFor(clipName)
+  const am = glb?.meta.actions[action] ?? null
+  // the GLB brings its own materials and has no skeleton arcs, so it counts as the body figure
+  const mode: FigureMode = am ? 'body' : (figure ?? (isRehabClip(clipName) ? 'skeleton' : 'body'))
+  const focusJoint = am ? focusJointOf(am.focus_bone, side) : clip.focusJoint
   // a rehab clip always labels its focus joint (colour never carries the meaning alone)
   const markers = useMemo<Marker[]>(() => {
     if (markersIn?.length) return markersIn
-    if (!clip.focusJoint) return []
-    return [{ joint: clip.focusJoint, status: 'focus', label: `${SIDE_WORD[side]} ${JOINT_WORD[clip.focusJoint] ?? clip.focusJoint}` }]
-  }, [markersIn, clip.focusJoint, side])
+    if (!focusJoint) return []
+    return [{ joint: focusJoint, status: 'focus', label: `${SIDE_WORD[side]} ${JOINT_WORD[focusJoint] ?? focusJoint}` }]
+  }, [markersIn, focusJoint, side])
+  const firstCaption = am ? stepAt(am.steps, 0).caption : sample(clip, 0).caption
+  const stepsTotal = am ? Math.max(1, am.steps.length) : clip.steps
+  // what is playing (GLB action or procedural clip): a change resets the clock, caption and step
+  const current: object = am ?? clip
   const [angle, setAngle] = useState<number | null>(null)
   // one mutable clock, read only inside effects, handlers and the stage's loop, which advances `time`
   const clock = useRef<Clock>({ time: 0, playing: autoplay, speed: 1 })
@@ -66,29 +100,34 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
   const [closeUp, setCloseUp] = useState(false)
   const [captions, setCaptions] = useState(true)
   const [lost, setLost] = useState(false)
-  const [caption, setCaption] = useState(() => sample(clip, 0).caption)
+  const [caption, setCaption] = useState(firstCaption)
   const [step, setStep] = useState(1)
-  const [clipKey, setClipKey] = useState(clip)
+  const [clipKey, setClipKey] = useState(current)
   const speed = SPEEDS[speedIdx]
   useEffect(() => {
     clock.current.speed = speed
     clock.current.playing = playing
   }, [speed, playing])
 
-  if (clipKey !== clip) {
-    // clip changed: reset during render (React's recommended pattern instead of an effect)
-    setClipKey(clip)
-    setCaption(sample(clip, 0).caption)
+  if (clipKey !== current) {
+    // clip (or figure) changed: reset during render (React's recommended pattern instead of an effect)
+    setClipKey(current)
+    setCaption(firstCaption)
     setStep(1)
   }
   useEffect(() => {
     clock.current.time = 0
-  }, [clip])
+  }, [current])
   useEffect(() => {
+    if (am) {
+      // GLB: rep progress p puts the figure at rep[0] + p·(rep[1] − rep[0]) of the action
+      clock.current.target = paced == null ? null : pacedActionTime(am.rep, paced)
+      return
+    }
     // Map rep progress onto the clip timeline (before the loop bridge at the end).
     const span = Math.max(0.1, clip.duration - (clip.loop ? LOOP_BRIDGE_S : 0))
     clock.current.target = paced == null ? null : Math.max(0, Math.min(1, paced)) * span
-  }, [paced, clip])
+  }, [paced, clip, am])
 
   const stepRef = useRef(1)
   const onTick = useCallback(
@@ -159,13 +198,13 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
 
   const replay = () => {
     clock.current.time = 0
-    setCaption(sample(clip, 0).caption)
+    setCaption(firstCaption)
     setStep(1)
     stepRef.current = 1
     setPlaying(true)
   }
 
-  const view = camera ?? clip.camera
+  const view = camera ?? am?.camera ?? clip.camera
   const box = ASPECT[aspect ?? (compact ? '4/5' : '16/10')]
 
   return (
@@ -174,6 +213,25 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
         {lost ? (
           <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#0F262B,#050E10)] p-6 text-center text-lg text-white/80">
             Reference only. The 3D figure could not be drawn on this device; follow the written steps.
+          </div>
+        ) : glb ? (
+          <GlbScene
+            asset={glb}
+            action={action}
+            side={side}
+            clock={clock}
+            camera={view}
+            closeUp={closeUp}
+            compact={compact}
+            showCues={showCues}
+            markers={markers}
+            onTick={onTick}
+            onProject={markers.length ? onProject : undefined}
+            onContextLost={glbFail}
+          />
+        ) : glbLoading ? (
+          <div role="status" className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#0F262B,#050E10)] text-lg text-white/80">
+            Loading the figure…
           </div>
         ) : (
           <AvatarScene
@@ -224,11 +282,11 @@ export function AvatarPanel({ clip: clipName, paced = null, autoplay = true, cam
         ))}
         {captions && (
           <div className="absolute inset-x-0 bottom-0 bg-black/50 px-4 py-2 text-lg text-white">
-            {caption || `Step ${step} of ${clip.steps}`}
+            {caption || `Step ${step} of ${stepsTotal}`}
           </div>
         )}
         <div className="absolute left-3 top-2 text-base text-white/70">
-          {view === 'side' ? 'side view' : 'front view'} · {speed}× · {mode === 'skeleton' ? 'skeleton view' : 'same figure as Home'}
+          {view === 'side' ? 'side view' : 'front view'} · {speed}× · {am ? sourceLabel(am.source, am) : mode === 'skeleton' ? 'skeleton view' : 'same figure as Home'}
         </div>
         {mode === 'skeleton' && clip.arc && showCues && (
           <div data-testid="arc-readout" className={`absolute right-3 ${captions ? 'bottom-16' : 'bottom-3'} max-w-[70%] truncate rounded-full bg-black/45 px-3 py-1 text-base text-white`}>

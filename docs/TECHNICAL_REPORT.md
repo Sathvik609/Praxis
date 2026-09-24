@@ -31,7 +31,8 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Hand model (OpenCV Zoo palm + landmark ONNX via `cv2.dnn`), pinch / SPARC / tremor metrics, hand proximity into the peg FSM, overlay | built; unit-tested on synthetic signals and a blank frame; **live webcam check done on 16 Sep (model loads, ~6 ms/stage)** |
 | Waiter – cup: cup base segmentation on the target sheet, reach FSM with verified/unverified reaches, arcs and explicit phase switch, pipeline `cup` mode, WS commands, screen 07b + report, synthetic clip + reach metrics | built, tested on synthetic frames (at product defaults: reach F1 0.984 = 31/32, reach-time MAE 200 ms — pipeline validation only; the earlier 1.0 / 0 ms came from a scorer that used debounce 1 / clear 1, which the app never shipped) |
 | Arm to the front: OpenCV Zoo person + BlazePose via `cv2.dnn`, One-Euro-smoothed shoulder angle, trunk lean, shoulder hike, arm FSM with hold timing and ceiling clamp, pipeline `arm` mode, screen 07c + report, landmark replay + evaluation | built; FSM/angles tested on synthetic landmark streams (rep F1 1.0, peak MAE 0.77°); Sprint D added side-view and visibility gating (`arm.gate`) and 0.5 s lean persistence; live model check pending a person in front of the webcam |
-| Avatar: procedural Three.js mannequin, keyframed clips (idle, NHPT, cup, arm front), cue layer, markers; Home body map (02), Demonstration (06), reference panels in 07/07b/07c | built; rig/sampler unit-tested, scene checked in Chrome |
+| Avatar: procedural Three.js mannequin, keyframed clips (idle, NHPT, cup, arm front), cue layer, markers; Home body map (02), Demonstration (06), reference panels in 07/07b/07c | built; rig/sampler unit-tested, scene checked in Chrome; since 23 Sep the fallback when the Blender GLB cannot be drawn |
+| Avatar: Blender GLB played with `GLTFLoader` / `AnimationMixer` (eight actions, props per action, captions, target ring, focus label, paced by `rep_progress` on 07c) (§3.9) | built; loader/mixer tested on the CPU with the shipped GLB, panel tested with mocks, checked in Chrome |
 | Prescription clamps, behavioural exertion index, hard-coded stop rules (pain, symptoms, lean, failed reps, exertion, perception loss) with therapist flags | built, tested |
 | Rule-based coach behind the Coach interface (six actions, evidence ids, tool names), JSON decision trace, `/api/trace`, session summary | built, tested; labeled "Rule-based coach · LLM agent pending" |
 | Web: captioned + spoken cues, progression prompt from coach events, paused/stopped/rest overlays, pain check, exertion chip, decision trace panel | built, tested |
@@ -196,7 +197,7 @@ Five shoulder clips in `web/src/avatar/clips/rehab/*.json` (pendulum, flexion, a
 **Skeleton view** (`skeleton.ts`, `AvatarPanel figure="skeleton"`, default for these clips): the same rig drawn as white joint spheres with mint halos, mint bone tubes with an additive glow, the lathe torso as a 12 % translucent unlit silhouette so front/back and left/right still read, a pulsing blue halo on the focus joint (always with its ≥ 18 px text label), and the angle cue: a dashed amber arc to the reference rep's target angle with a small ring at its end, and a mint arc to the figure's current angle, both about the shoulder (elevation clips, measured from the torso's down axis in the plane of the peak) or the elbow (rotation clips, from the forearm's start direction). The angle and the source rep are also written as text ("target 158° · figure 64° · UI-PRMD s09 e08"). Rotation clips use the side camera because their arc is edge-on from the front. Everything is still primitives in code; the arcs describe the reference figure only. **The avatar still never scores the patient**: no live pose is mirrored, and reps come from OpenCV events alone.
 
 
-**Blender-built avatar (23 Sep, built and tested; not yet played in the app).** The look approved on 23 Sep is a gender-neutral articulated mannequin: aqua lathe segments, deep-teal ball joints, an egg head, and five-finger hands with jointed digits. It is built from scratch in code by headless Blender 5.2.2 (`web/blender/build_avatar.py`, no third-party meshes). Each segment is rigidly weighted to one bone of a rig.ts-compatible skeleton. The props are the chair, the table, the Waiter – cup sheet, the cup, and the NHPT pegboard with nine pegs; the dot and hole anchors reproduce `board_spec.py`.
+**Blender-built avatar (23 Sep, built, tested and played in the app).** The look approved on 23 Sep is a gender-neutral articulated mannequin: aqua lathe segments, deep-teal ball joints, an egg head, and five-finger hands with jointed digits. It is built from scratch in code by headless Blender 5.2.2 (`web/blender/build_avatar.py`, no third-party meshes). Each segment is rigidly weighted to one bone of a rig.ts-compatible skeleton. The props are the chair, the table, the Waiter – cup sheet, the cup, and the NHPT pegboard with nine pegs; the dot and hole anchors reproduce `board_spec.py`.
 
 `web/blender/animate.py` keys eight actions into the committed `web/public/avatar/praxis_avatar.glb` (1.57 MB):
 - idle;
@@ -213,7 +214,42 @@ A sidecar, `praxis_avatar.meta.json`, carries each action's duration, one-rep sp
 
 **90° ceiling for the demonstration (23 Sep).** The avatar never lifts the upper arm above the 90° prescription ceiling. Every recorded rep that goes higher (flexion 165°, abduction 157°, the rotations' 90/90 start at 96–101°) is scaled so it peaks at 90°: at each key the upper arm turns back toward hanging down, in its own plane of elevation, by the same proportion. Timing, plane, elbow bend and trunk are kept, and the readout says "scaled to 90°". The web skeleton (`capElevation`) and the Blender GLB (`cap_elevation`) implement the same rule. Tests sample every frame of both, and check the GLB against the web clips key by key.
 
-The app still renders the procedural skeleton described above until the Three.js `GLTFLoader` / `AnimationMixer` playback lands; the skeleton then remains the fallback. Like everything else here, the new figure demonstrates and never scores.
+**Playback in the app (23 Sep).** The app now plays the GLB. `AvatarPanel` (Home, Demonstration, and the reference panels in 07/07b/07c) works like this:
+
+- **Loading.** The GLB and its sidecar are fetched once per page and cached (`glbAsset.ts`, parsed by three 0.186's own `GLTFLoader`, no new dependency). Each panel gets its own `SkeletonUtils.clone` and one `AnimationMixer`.
+- **Choosing the action.** `glbActions.ts` holds the pure, unit-tested glue. `actionFor` maps any app name to an action: flexion, armFront and "Arm to the front" play `flexion`; "Waiter – cup" plays `waiter_cup`; Home and any unknown name play `idle`.
+- **Props.** `propVisible` shows exactly `meta.props`: a table brings its chair, and the pegboard brings all nine pegs.
+- **Captions and targets.** `stepAt` / `targetAt` read the captions and the amber target ring from `meta.steps` and `meta.targets`. The ring sits on the `anchor_dot_k` / `anchor_hole_k` empty being reached and hides once that target has landed.
+- **Time.** The panel's clock owns time and the stage sets `action.time` every frame. Free-running advances by dt × speed, so Slower is the time scale, and Replay restarts. When the session supplies rep progress p, the figure eases toward `rep[0] + p·(rep[1] − rep[0])` (`pacedActionTime`).
+- **Live screen 07c.** 07c now passes the service's `rep_progress`, and also the practising side, which it did not pass before. So "Figure paces with you" on that panel is now true.
+- **Right side.** The right side is the left-arm recording mirrored in x.
+- **Camera.** It uses the shared front/side/close-up presets (`framing.ts`), lowered by the GLB's table height for seated tasks.
+- **Focus label.** The focus halo and its text label follow `meta.focus_bone`: upper_arm → shoulder, forearm → elbow, hand → hand. The stage line names where the motion came from ("motion from UI-PRMD" / "procedural motion").
+
+The skeleton's angle arc and its "target … · figure …" readout are **not drawn on the GLB**. They measure the procedural rig's own joint frames and have not been re-derived from the GLB bones, so the GLB would show a number nobody has checked. Instead, the stage line says when the motion was scaled, e.g. "motion from UI-PRMD · scaled to 90°", taken from `meta.ceiling_deg`.
+
+**Fallback.** The procedural figure above is drawn unchanged when:
+- no WebGL constructor exists (probe, before any fetch);
+- the fetch or the parse fails, or the GLB lacks an action the sidecar names;
+- the WebGL context cannot be created or is lost.
+
+**Tests.** `glbAsset.test.ts` runs the shipped GLB through three's own loader, clone and mixer on the CPU. It checks four things:
+- props per action;
+- a paced flexion lifts the elbow;
+- one action runs at a time;
+- the mirroring and the seated pose are right.
+
+`AvatarPanel.glb.test.tsx` covers the mapping, the loading state, the fallbacks, pacing, Slower and Replay.
+
+**Checked in Chrome** (dev server, 23 Sep):
+- the GLB loads with no console errors;
+- Demonstration shows flexion from the side with the captions cycling;
+- Waiter – cup shows the table, sheet and cup with the amber ring on a dot;
+- NHPT on the right side is mirrored, with a working close-up;
+- Home idle keeps its three body-map labels;
+- 07c shows abduction from the front.
+
+Like everything else here, the figure demonstrates and never scores.
 
 ## 4. Coach
 Two implementations share `coach/base.py`: the deterministic `RuleCoach` (shipped, labeled "Rule-based coach · LLM agent pending" in every decision and on screen) and, in W6, a Strands agent on Bedrock. Actions are restricted to `instruct | correct | progress | regress | rest | stop`; a `Decision` must cite the perception event ids it was made from, and the tool functions carry the names the agent will bind (`get_events`, `get_exertion_state`, `get_prescription`, `read_patient_model`, `write_session_summary`, `speak`).

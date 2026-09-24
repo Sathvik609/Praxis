@@ -108,7 +108,8 @@ Inside Blender that is Z up, facing −Y, with the left on +X.
 - the rest-pose coordinate contract
 - the board_spec geometry of the dots and holes
 
-## Not yet
+## In the app
 
-Three.js `GLTFLoader` / `AnimationMixer` playback in the app. Until then, the app still renders the
-procedural skeleton avatar.
+`web/src/avatar/glbAsset.ts` loads the GLB and the sidecar once per page, and each avatar panel
+plays its action with Three.js `GLTFLoader` / `AnimationMixer` (`glbStage.ts`, `GlbScene.tsx`). The
+procedural figure takes over if WebGL is unavailable or the GLB fails to load.

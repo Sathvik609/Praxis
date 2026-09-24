@@ -52,6 +52,8 @@ export type ArmSnapshot = {
   view_required?: 'side' | 'front'
   tier?: 'full' | 'gentle'
   gate?: string | null
+  /** 0..1 through the current rep (lift 0–0.4, hold 0.4–0.8, lower 0.8–1); paces the avatar. */
+  rep_progress?: number
 }
 
 export type FrameEvent = PraxisEvent & {
