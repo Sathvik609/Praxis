@@ -103,15 +103,20 @@ test('the feed shows the rolling latency line from frame and coach events', () =
     { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Go', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending', latency: { event_to_cue_ms: 3, capture_to_cue_ms: 63 } },
   ])
   renderAt('/session?hand=left')
+  expect(screen.queryByText(/latency p50\/p95/)).toBeNull() // developer line: only with the trace open
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByText('latency p50/p95 · capture→event 40/60 ms · event→cue 3/3 ms · 1 dropped')).toBeInTheDocument()
 })
 
-test('trace toggle swaps the coach column for the trace panel', () => {
+test('trace toggle opens the trace panel and the caption stays on screen', () => {
   mockStream([frame, { type: 'rep_complete', t: 11, id: 2, peg: 1 }])
   renderAt('/session?hand=left')
+  expect(screen.queryByText(/findContours \+ HoughCircles/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
-  expect(screen.queryByText(/Rule-based coach · LLM agent pending\.?$/)).toBeNull()
+  expect(screen.getByText(/findContours \+ HoughCircles/)).toBeInTheDocument()
+  expect(screen.getByText('Coach')).toBeInTheDocument()
+  expect(screen.getByText(/Timer is running/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Hide trace' }))
   expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
 })

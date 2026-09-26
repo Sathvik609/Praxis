@@ -105,14 +105,6 @@ export function LiveNhpt() {
           frame={frame}
           feedLabel={replay ? `recorded session · ${hand} hand` : `${hand} hand · ${label.feed}`}
           tracking={live ? ['board tracking', handSeen].filter(Boolean).join(' · ') : undefined}
-          cvLine={
-            <>
-              cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}
-              {frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}
-              {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
-            </>
-          }
-          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 
@@ -163,13 +155,21 @@ export function LiveNhpt() {
             </div>
           </Card>
           <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="pegs" />
+          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
+          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
+            <div className="min-h-0 flex-1">
+              <TracePanel
+                events={events}
+                replay={!!replay}
+                pipeline={[
+                  `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`,
+                  latencyLine(latency),
+                ]}
+              />
+            </div>
           ) : (
-            <>
-              <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
-              <ExertionChip exertion={coach.exertion} />
-            </>
+            <ExertionChip exertion={coach.exertion} />
           )}
         </div>
       </div>

@@ -124,8 +124,6 @@ export function LiveArm() {
           feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
           tracking={live ? `ghost arm shows target${wrongView ? turnHint : ''}` : undefined}
           band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
-          cvLine={`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`}
-          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 
@@ -156,17 +154,22 @@ export function LiveArm() {
             </div>
           </Card>
           <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swings' : 'lifts'} />
+          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
+          <CoachCard
+            watch={leanRecent}
+            text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
+            label={coach.caption?.label ?? COACH_LABEL}
+          />
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
-          ) : (
-            <>
-              <CoachCard
-                watch={leanRecent}
-                text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
-                label={coach.caption?.label ?? COACH_LABEL}
+            <div className="min-h-0 flex-1">
+              <TracePanel
+                events={events}
+                replay={!!replay}
+                pipeline={[`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`, latencyLine(latency)]}
               />
-              <ExertionChip exertion={coach.exertion} />
-            </>
+            </div>
+          ) : (
+            <ExertionChip exertion={coach.exertion} />
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -113,4 +113,14 @@ test('verified and unverified counts are on the live arm screen, from the camera
   expect(tally).toHaveTextContent('3 verified')
   expect(tally).toHaveTextContent('1 unverified')
   expect(tally).toHaveTextContent('4 lifts')
+})
+
+test('the pose line is a developer line under Show trace; the caption stays with the trace open', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=arm&side=left')
+  expect(screen.queryByText(/cv2 dnn pose/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
+  expect(screen.getByText(/cv2 dnn pose · shoulder–elbow–hip angle/)).toBeInTheDocument()
+  expect(screen.getByText('Coach')).toBeInTheDocument()
+  expect(screen.getByText(/Hold it there/)).toBeInTheDocument()
 })

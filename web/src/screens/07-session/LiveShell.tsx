@@ -38,12 +38,12 @@ export function SessionHeader({ title, subtitle, status, label }: { title: strin
 }
 
 /** The camera stage: Panel with the live indicator + feed label (top-left), the exercise's
- *  tracking words (top-right), an optional dark measurement band, the OpenCV line and the
- *  latency line (bottom-left), the replay badge (bottom-right) and the camera-blocked card.
+ *  tracking words (top-right), an optional dark measurement band (bottom-left), the replay
+ *  badge (bottom-right) and the camera-blocked card. The OpenCV and latency lines are developer
+ *  text and live in the trace panel ("Show trace"), not over the patient's video.
  *  Frames never reach the browser in replay; the overlay is drawn from events either way.
  *  `isolate` keeps the slots' z-index inside the panel so session dialogs always paint above
- *  it. `latencyLine` is `latencyLine(useLatency(events))`: rolling p50/p95 over the last 60
- *  frames and cues (Sprint D, D-LAT). */
+ *  it. */
 export function LiveFeed({
   replay,
   camActive,
@@ -53,8 +53,6 @@ export function LiveFeed({
   feedLabel,
   tracking,
   band,
-  cvLine,
-  latencyLine,
   onRetry,
   className = '', errorDetail}: {
   replay: boolean
@@ -65,8 +63,6 @@ export function LiveFeed({
   feedLabel: ReactNode
   tracking?: ReactNode
   band?: ReactNode
-  cvLine: ReactNode
-  latencyLine?: ReactNode
   onRetry: () => void
   errorDetail?: string | null
   className?: string
@@ -88,13 +84,10 @@ export function LiveFeed({
         <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
       )}
       <OverlayCanvas width={640} height={480} calibration={null} frame={frame} mirrored={!replay} />
-      {/* Bottom bar: measurement band + OpenCV line on the left, replay badge on the right; a
-          flex row so the badge never overlaps a long OpenCV line. */}
+      {/* Bottom bar: measurement band on the left, replay badge on the right. */}
       <div className="pointer-events-none absolute inset-x-4 bottom-3 z-10 flex items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col items-start gap-2">
           {band && <div className="rounded-lg bg-black/65 px-3 py-1.5 text-xl font-bold tabular-nums text-white">{band}</div>}
-          <div className="text-base text-white/80">{cvLine}</div>
-          {latencyLine && <div className="text-base tabular-nums text-white/80">{latencyLine}</div>}
         </div>
         {replay && (
           <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[#E9A23B]/70 bg-black/65 px-3 py-1.5 text-lg font-bold text-[#E9A23B]">
