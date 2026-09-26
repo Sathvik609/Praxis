@@ -20,6 +20,7 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   const header = screen.getByRole('banner')
   expect(within(header).getByText('Clinician view')).toBeInTheDocument()
   expect(within(header).getByText(/Dr. Anita Rao/)).toBeInTheDocument()
+  expect(within(header).getByRole('link', { name: 'Back to patient app' })).toHaveAttribute('href', '/details')
   expect(screen.queryByRole('link', { name: 'Exercises' })).not.toBeInTheDocument()
   expect(screen.getByText(/Open flags/)).toBeInTheDocument()
   expect(screen.getByText(/pain 5\/10 during Arm to the front/)).toBeInTheDocument()

@@ -16,6 +16,7 @@ export {
   RotateCcw,
   Share2,
   Sparkles,
+  Stethoscope,
   TrendingUp,
   Settings,
   X,

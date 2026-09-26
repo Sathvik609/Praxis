@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
@@ -46,6 +47,12 @@ export function Therapist() {
         <Chip tone="mint">Clinician view</Chip>
         <span className="ml-auto text-muted">{PROGRAM.clinician}</span>
         <Chip tone="neutral">Read-only</Chip>
+        <Link
+          to="/details"
+          className="flex h-14 items-center rounded-[var(--r-control)] border-2 border-teal-ink px-4 text-lg font-bold text-teal-ink hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+        >
+          Back to patient app
+        </Link>
       </header>
 
       <div className="grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">

@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Activity, Home as HomeIcon, Settings as SettingsIcon, TrendingUp } from '../design/Icon'
+import { Activity, Home as HomeIcon, Settings as SettingsIcon, Stethoscope, TrendingUp } from '../design/Icon'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 const hubs: { label: string; to: string; icon: Icon }[] = [
@@ -38,6 +38,15 @@ export function Nav({ program, initial }: { program: string; initial: string }) 
         ))}
       </nav>
       <span className="ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
+      {/* Screen 11 lives outside the patient shell; this is its only way in (no clinician
+          accounts until Cognito in W6, so the label says it is read-only). */}
+      <Link
+        to="/therapist"
+        className="flex h-14 shrink-0 items-center gap-2 rounded-[var(--r-control)] border-2 border-teal-ink px-3 text-lg font-bold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+      >
+        <Stethoscope aria-hidden className="h-5 w-5" />
+        Therapist view (read-only)
+      </Link>
       <NavLink
         to="/details/settings"
         aria-label="Account and settings"
