@@ -100,7 +100,7 @@ export const REGIONS: Record<string, { title: string; status: Marker['status']; 
   lWrist: { title: 'Left hand', status: 'focus', setBy: 'Set by your program · updated today',
     metrics: [{ value: '41.2', unit: 's', label: 'Nine-Hole Peg Test · 12 Sep', delta: '−2.8 s' }, { value: '38', unit: 'mm', label: 'pinch opening' }, { value: '17', label: 'verified reaches, last' }],
     program: [{ name: 'Nine-Hole Peg Test', tag: 'weekly' }, { name: 'Waiter – cup', tag: 'camera' }],
-    primary: { label: 'Run the peg test', to: '/session?exercise=nhpt&hand=left' } },
+    primary: { label: 'Run the peg test', to: '/details/checkin?next=nhpt' } },
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
     metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2', unit: 'of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
     program: [{ name: 'Pendulum', tag: 'camera' }, { name: 'Arm to the front', tag: 'camera' }, { name: 'Arm out to the side', tag: 'camera' }, { name: 'Rotate out', tag: 'demo only' }, { name: 'Rotate in', tag: 'demo only' }],

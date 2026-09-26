@@ -8,6 +8,7 @@ import { Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
 import { api, useApi, type SessionRecord } from '../../lib/api'
+import { DayNext, useDayRun } from './DayNext'
 
 const conf = { high: 'mint', medium: 'amber', low: 'neutral' } as const
 
@@ -52,6 +53,7 @@ export function SessionReport() {
   const nav = useNavigate()
   const { data, error } = useApi(() => api.session(id ?? ''), [id])
   const { data: me } = useApi(() => api.me())
+  const dayRun = useDayRun(data?.summary ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped) // day flow (Track C)
   const [sharing, setSharing] = useState(false)
   const clinician = me?.program?.clinician?.split(',')[0] ?? 'your therapist'
   // The service answers unknown ids with 200 and `{ error }`, so a body without a summary is
@@ -116,9 +118,10 @@ export function SessionReport() {
         <div className="ml-auto flex flex-wrap gap-3">
           <Button variant="secondary" icon={<Download />} onClick={dl}>Download JSON</Button>
           <Button variant="secondary" icon={<Share2 />} onClick={() => setSharing(true)}>Sharing</Button>
-          <Button onClick={() => nav('/details')}>Done — back to Home</Button>
+          <Button variant={dayRun ? 'secondary' : 'primary'} onClick={() => nav('/details')}>Done — back to Home</Button>
         </div>
       </div>
+      {dayRun && <DayNext day={dayRun} />}
 
       <div className="mt-5 grid grid-cols-[3fr_2fr] gap-5">
         <div className="space-y-5">

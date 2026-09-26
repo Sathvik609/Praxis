@@ -15,7 +15,7 @@ import {
   writeSide,
 } from './day'
 import { readCheckinPain } from './plan'
-import { exerciseById } from './seed'
+import { REGIONS, exerciseById } from './seed'
 
 const BASE = { location: 'hand', energy: 'comfortable', minutes: 14 }
 
@@ -145,6 +145,10 @@ test('a shorter day is one exercise', async () => {
 test('demos seen today are remembered', () => {
   markDemoSeen('arm')
   expect(readDay().demosSeen).toContain('arm')
+})
+
+test("Home's Run the peg test goes through today's check-in and then the peg test's setup", () => {
+  expect(REGIONS.lWrist.primary.to).toBe('/details/checkin?next=nhpt')
 })
 
 test('session urls carry the side; the peg test carries the hand', () => {
