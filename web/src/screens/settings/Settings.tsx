@@ -9,8 +9,8 @@ import { Play } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
+import { exerciseOfSession } from '../../lib/seed'
 
-const MODE_NAME: Record<string, string> = { nhpt: 'Nine-Hole Peg Test', cup: 'Waiter – cup', arm: 'Arm to the front' }
 const GUIDANCE_KEY = 'praxis.guidance'
 type Guidance = { spoken: boolean; captions: boolean; larger: boolean; helper: boolean }
 const GUIDANCE_DEFAULT: Guidance = { spoken: true, captions: true, larger: false, helper: false }
@@ -74,16 +74,21 @@ export function Settings() {
         <Card title="Replay a recorded session" action={<Chip tone="amber">Replay</Chip>}>
           <p className="-mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live.</p>
           <div className="mt-4 space-y-3">
-            {(clips ?? []).map((c) => (
+            {(clips ?? []).map((c) => {
+              // Named from the one exercise registry (a clip may carry its arm exercise id).
+              const ex = exerciseOfSession({ mode: c.mode, exercise: (c as { exercise?: string }).exercise })
+              const name = ex?.name ?? c.mode
+              return (
               <Card key={c.id} as="div" padding="sm" className="flex flex-wrap items-center gap-3">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-bold">{MODE_NAME[c.mode] ?? c.mode}</span>
+                  <span className="block text-lg font-bold">{name}</span>
                   <span className="block text-base text-muted">Left side · {c.synthetic ? 'rendered test clip' : 'recorded with consent'}</span>
                 </span>
                 {c.synthetic && <Chip tone="neutral">Synthetic render</Chip>}
-                <Button variant="secondary" icon={<Play />} aria-label={`Replay ${MODE_NAME[c.mode] ?? c.mode}`} onClick={() => nav(`/session?exercise=${c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`)}>Replay</Button>
+                <Button variant="secondary" icon={<Play />} aria-label={`Replay ${name}`} onClick={() => nav(`/session?exercise=${ex?.id ?? c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`)}>Replay</Button>
               </Card>
-            ))}
+              )
+            })}
             {!clips && !error && <p className="text-muted" role="status">Loading recordings…</p>}
             {error && <p className="text-red-ink" role="alert">Could not list recordings — the session service is not reachable.</p>}
             {clips && clips.length === 0 && <p className="text-muted">No recordings available yet.</p>}

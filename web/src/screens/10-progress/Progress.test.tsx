@@ -4,7 +4,16 @@ import { SESSION, mockApi } from '../../test/api-mock'
 import { Progress } from './Progress'
 
 const PROGRESS = { nhpt_trend: [{ date: '2026-08-01', total_s: 68 }, { date: '2026-09-12', total_s: 41.2 }], verified_per_session: [{ date: '2026-07-10', verified: 5, limited: false, mode: 'cup' }, { date: '2026-09-10', verified: 8, limited: true, mode: 'cup' }, { date: '2026-09-12', verified: 17, limited: false, mode: 'cup' }, { date: '2026-09-11', verified: 14, limited: false, mode: 'arm' }], practice: { done: 1, planned: null, hours: 0.2 }, adherence_pct: null, sample: { done: 19, planned: 22, hours: 3.4, illustrative: true as const }, pain_effort: [{ date: '2026-09-08', pain_after: 5, effort: 7, ended_early: true }], goal_log_count: 6 }
-const SESSIONS = { sessions: [SESSION, { ...SESSION, id: 'lim', tracking: 'limited', status: 'complete', title: 'Waiter – cup', date: '2026-09-10' }, { ...SESSION, id: 'early', mode: 'arm', status: 'ended_early', title: 'Arm to the front', date: '2026-09-08', feedback: { pain_after: 5 } }] }
+const cam = (verified: number) => ({ ...SESSION.summary, camera: { ...SESSION.summary.camera, verified } })
+const SESSIONS = { sessions: [
+  SESSION,
+  { ...SESSION, id: 'lim', tracking: 'limited', status: 'complete', title: 'Waiter – cup', date: '2026-09-10', summary: cam(8) },
+  { ...SESSION, id: 'jul', title: 'Waiter – cup', date: '2026-07-10', summary: cam(5) },
+  { ...SESSION, id: 'early', mode: 'arm', status: 'ended_early', title: 'Arm to the front', date: '2026-09-11', feedback: { pain_after: 5 }, summary: { ...cam(14), mode: 'arm' } },
+  { ...SESSION, id: 'abd', mode: 'arm', exercise: 'abduction', title: 'Arm out to the side', date: '2026-09-12', summary: { ...cam(12), mode: 'arm', exercise: 'abduction' } },
+  { ...SESSION, id: 'pend', mode: 'arm', exercise: 'pendulum', title: 'Pendulum', date: '2026-09-12', summary: { ...cam(20), mode: 'arm', exercise: 'pendulum' } },
+  { ...SESSION, id: 'nhpt', mode: 'nhpt', title: 'Nine-Hole Peg Test · 41.2 s', date: '2026-09-12', summary: { ...cam(9), mode: 'nhpt' } },
+] }
 
 function renderProgress() {
   return render(
@@ -69,4 +78,37 @@ test('empty state when there are no sessions yet', async () => {
   renderProgress()
   expect(await screen.findByText(/No sessions yet/)).toBeInTheDocument()
   expect(screen.getByText(/No assessments yet/)).toBeInTheDocument()
+})
+
+test('each arm exercise has its own filter and chart; rotations say self-ticked, not camera-verified', async () => {
+  mockApi({ '/api/progress': PROGRESS, '/api/sessions': SESSIONS })
+  renderProgress()
+  await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
+  for (const name of ['Pendulum', 'Arm to the front', 'Arm out to the side', 'Waiter – cup', 'Rotate out / in']) {
+    expect(screen.getByRole('radio', { name })).toBeInTheDocument()
+  }
+  fireEvent.click(screen.getByRole('radio', { name: 'Arm out to the side' }))
+  expect(screen.getByRole('img', { name: /^Arm out to the side/ })).toHaveAccessibleName(/09-12 12 lifts/)
+  expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(1)
+  fireEvent.click(screen.getByRole('radio', { name: 'Pendulum' }))
+  expect(screen.getByRole('img', { name: /^Pendulum/ })).toHaveAccessibleName(/09-12 20 swings/)
+  fireEvent.click(screen.getByRole('radio', { name: 'Rotate out / in' }))
+  expect(screen.getByText(/Self-ticked, not camera-verified/)).toBeInTheDocument()
+  expect(screen.queryByRole('img', { name: /Rotate/ })).not.toBeInTheDocument()
+})
+
+test('sample history is labeled Sample on the chart, the list and the peg-test trend', async () => {
+  const sample = { sessions: [{ ...SESSION, illustrative: true }] }
+  mockApi({ '/api/progress': PROGRESS, '/api/sessions': sample })
+  renderProgress()
+  await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
+  expect(screen.getByText('Includes sample')).toBeInTheDocument() // no real peg-test session backs the trend
+  expect(screen.getAllByText('Sample').length).toBeGreaterThanOrEqual(3) // practice card, chart card, list row
+  expect(screen.getByText(/Sample history is illustrative, not yours/)).toBeInTheDocument()
+})
+
+test('without the session list the chart falls back to verified_per_session by mode', async () => {
+  mockApi({ '/api/progress': PROGRESS })
+  renderProgress()
+  expect(await screen.findByRole('img', { name: /Waiter – cup/ })).toHaveAccessibleName(/09-12 17 reaches/)
 })

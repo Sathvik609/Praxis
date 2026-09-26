@@ -42,3 +42,11 @@ test('guidance checkboxes persist to localStorage and load back', async () => {
   renderSettings()
   expect(screen.getByLabelText(/^Larger text/)).toBeChecked()
 })
+
+test('replay clips are named from the exercise registry, including arm clips by exercise id', async () => {
+  mockApi({ '/api/replay/list': { clips: [{ id: 'arm_abd_01', mode: 'arm', exercise: 'abduction', sheet: 'none', path: 'a.mp4', synthetic: true }, { id: 'cup_01', mode: 'cup', sheet: 'cup_targets', path: 'c.mp4', synthetic: false }] } })
+  renderSettings()
+  expect(await screen.findByText('Arm out to the side')).toBeInTheDocument()
+  expect(screen.getByText('Waiter – cup')).toBeInTheDocument()
+  expect(screen.queryByText('Arm to the front')).not.toBeInTheDocument()
+})
