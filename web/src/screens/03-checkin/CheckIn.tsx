@@ -1,15 +1,20 @@
-import { useId, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useId, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
+import { Chip, type ChipTone } from '../../design/Chip'
 import { Mic } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
+import { readDay, readSide, saveCheckin, setupUrl, stopReason, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
+import { TIER_TEXT, tierFor, type Tier } from '../../lib/plan'
+import { exerciseById } from '../../lib/seed'
 
-export type CheckInData = { pain: number; location: string; energy: string; minutes: number; new_symptoms: boolean }
+/** Kept for older imports: what screen 03 collects. */
+export type CheckInData = CheckinAnswers
 
 type Location = 'shoulder' | 'arm' | 'hand' | 'nowhere'
 type Energy = 'comfortable' | 'tired' | 'very_tired'
@@ -30,21 +35,139 @@ const MINUTES: { value: Minutes; label: string }[] = [
   { value: '14', label: 'Full session · 14 min' },
   { value: '7', label: 'Shorter · one exercise' },
 ]
+const SIDES: { value: Side; label: string }[] = [
+  { value: 'left', label: 'Left arm' },
+  { value: 'right', label: 'Right arm' },
+]
+const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest: 'red' }
 
-/** Screen 03 · Pre-session check-in. Feeling is self-reported, never read from the face.
- *  Stop rules are shown from the prescription, not inferred. Voice via SpeechRecognition
- *  with a tap fallback for every prompt. Pain starts unselected; Continue stays disabled
- *  with a visible hint until a number is chosen. */
+/** Screen 03 · Pre-session check-in, once a day. Feeling is self-reported, never read from the
+ *  face. Stop rules are shown from the prescription, not inferred. Voice via SpeechRecognition
+ *  with a tap fallback for every prompt. Pain starts unselected; Continue stays disabled with a
+ *  visible hint until a number (and, the first time, the practising side) is chosen.
+ *
+ *  The check-in goes to the service (`POST /api/checkin`, `lib/day.ts`), which sets the tier
+ *  and writes the therapist flag. New or worse symptoms, or pain at the stop level, end the day
+ *  here, before any setup or demonstration. "Your therapist has been told" appears only when
+ *  the service says it flagged; offline, the check-in is kept on this device and posted again
+ *  on the next load. A second visit the same day reuses today's answers (one tap to go on).
+ *  `?next=<exercise>` continues to that exercise's camera setup instead of the list (Home →
+ *  "Run the peg test"). */
 export function CheckIn() {
   const nav = useNavigate()
-  const hintId = useId()
+  const [sp] = useSearchParams()
+  const nextEx = exerciseById(sp.get('next'))
+  const nextCoached = nextEx && nextEx.mode === 'coached' ? nextEx : undefined
   const { data: rx } = useApi(() => api.prescription())
+  const [day, setDay] = useState<Day>(readDay)
+  const [again, setAgain] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    void syncCheckin().then(() => alive && setDay(readDay()))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const continueLabel = nextCoached ? `Continue to ${nextCoached.name}` : 'Continue to exercises'
+  const goOn = (side: Side) => nav(nextCoached ? setupUrl(nextCoached.id, side) : '/details/choose')
+  const c = day.checkin
+
+  if (c && day.stopped && !again) {
+    return <Stopped day={day} painMax={rx?.stop_rules?.pain_max} onHome={() => nav('/details')} onAgain={() => setAgain(true)} />
+  }
+  if (c && !again) {
+    return (
+      <div className="flex min-h-full flex-col">
+        <div className="mx-auto w-full max-w-3xl flex-1 p-6">
+          <h1 className="text-4xl">You checked in today</h1>
+          <Card className="mt-5 space-y-3">
+            <p className="flex flex-wrap items-center gap-3 text-xl">
+              <span>Pain {c.pain}</span>
+              <Chip tone={TIER_TONE[c.tier]}>{TIER_TEXT[c.tier].chip}</Chip>
+            </p>
+            <p className="text-lg">Practising side: {c.side} arm · {c.minutes < 14 ? 'shorter day, one exercise' : 'full day'}</p>
+            {c.new_symptoms && <p className="text-lg">You told us something is new or worse.</p>}
+            {!c.synced && <p className="text-lg text-muted">{therapistLine(c)}</p>}
+          </Card>
+          <p className="mt-4 text-lg text-muted">If your pain has changed since, check in again. Today's plan follows your latest answer.</p>
+        </div>
+        <FlowBar
+          step={0}
+          label="Check-in"
+          left={
+            <>
+              <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
+              <Button variant="secondary" onClick={() => setAgain(true)}>Check in again</Button>
+            </>
+          }
+          right={<Button onClick={() => goOn(c.side)}>{continueLabel}</Button>}
+        />
+      </div>
+    )
+  }
+  return (
+    <CheckInForm
+      painMax={rx?.stop_rules?.pain_max}
+      level={rx?.level}
+      clinician={rx?.clinician?.split(',')[0] ?? 'your therapist'}
+      continueLabel={continueLabel}
+      onBack={() => nav('/details')}
+      onSaved={(side) => {
+        const d = readDay()
+        setDay(d)
+        setAgain(false)
+        if (!d.stopped) goOn(side ?? d.checkin?.side ?? 'left')
+      }}
+    />
+  )
+}
+
+/** The day ends at check-in: new or worse symptoms, pain at the stop level, or a stop rule
+ *  earlier today. Extends screen 03 (no frame in wireframes v1.1; docs/PLAN.md). */
+function Stopped({ day, painMax, onHome, onAgain }: { day: Day; painMax?: number; onHome: () => void; onAgain: () => void }) {
+  const c = day.checkin!
+  const stop = day.stopped
+  const title = stop === 'rest' ? 'Rest today' : stop === 'session' ? 'Stopped for today' : 'No exercises today'
+  const body =
+    stop === 'new_symptoms'
+      ? "You told us something is new or worse. Rest the arm, and don't practise until your therapist has looked at it."
+      : stop === 'rest'
+        ? `Pain ${c.pain} is at or above your stop level of ${Math.min(7, painMax ?? 7)}. Rest the arm today.`
+        : "A stop rule ended today's practice. Rest the arm today."
+  return (
+    <div className="flex min-h-full flex-col">
+      <div className="mx-auto w-full max-w-3xl flex-1 p-6">
+        <Card tone="watch" as="div" className="space-y-3">
+          <h1 className="text-4xl">{title}</h1>
+          <p className="text-xl">{body}</p>
+          {stop !== 'session' && <p className="text-xl">{therapistLine(c)}</p>}
+          <p className="text-lg text-muted">If it feels urgent, call your care team.</p>
+        </Card>
+        {stop === 'rest' && <p className="mt-4 text-lg text-muted">Pain can settle. If it has, you can check in again later today.</p>}
+      </div>
+      <FlowBar
+        step={0}
+        label="Check-in"
+        left={stop === 'rest' ? <Button variant="secondary" onClick={onAgain}>Check in again</Button> : undefined}
+        right={<Button onClick={onHome}>Back to Home</Button>}
+      />
+    </div>
+  )
+}
+
+function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved }: { painMax?: number; level?: number; clinician: string; continueLabel: string; onBack: () => void; onSaved: (side: Side | null) => void }) {
+  const hintId = useId()
   const [pain, setPain] = useState<number | null>(null)
+  const [side, setSide] = useState<Side | null>(() => readSide())
+  const [askSide, setAskSide] = useState(() => readSide() === null)
   const [location, setLocation] = useState<Location>('hand')
   const [energy, setEnergy] = useState<Energy>('comfortable')
   const [minutes, setMinutes] = useState<Minutes>('14')
   const [symptoms, setSymptoms] = useState(false)
   const [heard, setHeard] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const listen = () => {
     const SR = (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition
@@ -63,21 +186,30 @@ export function CheckIn() {
       if (/comfortable|fine|good/.test(text)) setEnergy('comfortable')
       const loc = text.match(/shoulder|arm|hand|nowhere/)
       if (loc) setLocation(loc[0] as Location)
+      if (askSide) {
+        if (/\bleft\b/.test(text)) setSide('left')
+        else if (/\bright\b/.test(text)) setSide('right')
+      }
     }
     r.onerror = () => setHeard('Did not catch that — tap instead.')
     r.start()
   }
-  const go = () => {
-    const data: CheckInData = { pain: pain ?? 0, location, energy, minutes: Number(minutes), new_symptoms: symptoms }
+
+  const stopping = symptoms ? 'new_symptoms' : pain != null && stopReason({ pain, new_symptoms: false, tier: tierFor(pain, painMax) }) ? 'rest' : null
+  const label = stopping === 'new_symptoms' ? 'Tell my therapist and stop for today' : stopping === 'rest' ? 'Rest today and tell my therapist' : continueLabel
+  // The side is only needed to practise; a day that stops here does not ask for it.
+  const hint = pain === null ? 'Choose a pain number to continue' : side === null && !stopping ? 'Choose the arm you are practising to continue' : null
+
+  const go = async () => {
+    if (pain === null) return
+    setBusy(true)
     try {
-      sessionStorage.setItem('praxis.checkin', JSON.stringify(data))
-    } catch {
-      /* private mode */
+      await saveCheckin({ pain, location, energy, minutes: Number(minutes), new_symptoms: symptoms }, side, painMax)
+    } finally {
+      setBusy(false)
     }
-    nav('/details/choose')
+    onSaved(side)
   }
-  const rules = rx?.stop_rules
-  const clinician = rx?.clinician?.split(',')[0] ?? 'your therapist'
 
   return (
     <div className="flex min-h-full flex-col">
@@ -87,6 +219,18 @@ export function CheckIn() {
           <p className="mt-2 text-muted">Answer by tapping or speaking. This sets today's pace inside your assigned limits.</p>
           <Card className="mt-5 space-y-5">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
+            {askSide ? (
+              <div>
+                <div className="mb-2 font-bold">Which arm are you practising?</div>
+                <Pill ariaLabel="Which arm are you practising?" value={side ?? ('' as Side)} options={SIDES} onChange={setSide} />
+                <p className="mt-1 text-lg text-muted">Asked once. The camera setup and the figure follow this side.</p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-lg">Practising side: {side} arm</span>
+                <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
+              </div>
+            )}
             <div>
               <div className="mb-2 font-bold">Where is it?</div>
               <Pill ariaLabel="Where is it?" value={location} options={LOCATIONS} onChange={setLocation} />
@@ -99,7 +243,7 @@ export function CheckIn() {
               <div className="mb-2 font-bold">Time you have</div>
               <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} />
             </div>
-            <Checkbox label="Something new or worse since last time" checked={symptoms} onChange={setSymptoms} description="Your therapist reviews this before you practise." />
+            <Checkbox label="Something new or worse since last time" checked={symptoms} onChange={setSymptoms} description="If so, there are no exercises today and your therapist reviews it first." />
           </Card>
         </div>
         <div className="flex flex-col gap-5">
@@ -109,9 +253,9 @@ export function CheckIn() {
           <Card title="Stop rules set by your therapist">
             <ul className="divide-y divide-line text-lg">
               <li className="py-2">Pain 0–3 → full dose · 4–6 → gentle day (fewer reps, shorter holds, smaller range)</li>
-              <li className="py-2">Pain at or above {Math.min(7, rules?.pain_max ?? 7)} → rest today, session ends, therapist flagged</li>
+              <li className="py-2">Pain at or above {Math.min(7, painMax ?? 7)} → rest today, session ends, therapist flagged</li>
               <li className="py-2">New or worse symptoms → review before practising</li>
-              <li className="py-2">Difficulty never goes above Level {rx?.level ?? 2} dose</li>
+              <li className="py-2">Difficulty never goes above Level {level ?? 2} dose</li>
             </ul>
           </Card>
           <Card padding="sm">
@@ -126,15 +270,15 @@ export function CheckIn() {
       <FlowBar
         step={0}
         label="Check-in"
-        left={<Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>}
+        left={<Button variant="secondary" onClick={onBack}>Back to Home</Button>}
         right={
           <div className="flex flex-col items-end">
-            <Button disabled={pain === null} aria-describedby={pain === null ? hintId : undefined} onClick={go}>
-              Continue to exercises
+            <Button disabled={hint !== null || busy} aria-describedby={hint ? hintId : undefined} onClick={() => void go()}>
+              {busy ? 'Saving…' : label}
             </Button>
-            {pain === null && (
+            {hint && (
               <span id={hintId} className="text-lg leading-tight text-muted">
-                Choose a pain number to continue
+                {hint}
               </span>
             )}
           </div>

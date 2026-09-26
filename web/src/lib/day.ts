@@ -173,10 +173,11 @@ function applyResult(c: DayCheckin, r: CheckinResult | null): DayCheckin {
 
 /** Save today's check-in on this device first, then post it. Resolves with what is known:
  *  `synced: false` means the therapist has not been told. `painMax` is the prescription's stop
- *  level for the local fallback tier. */
-export async function saveCheckin(answers: CheckinAnswers, side: Side, painMax?: number): Promise<DayCheckin> {
-  writeSide(side)
-  const local: DayCheckin = { ...answers, side, tier: tierFor(answers.pain, painMax), flagged: false, reasons: [], synced: false, at: new Date().toISOString() }
+ *  level for the local fallback tier. `side` may be null when the day stops at check-in before
+ *  the patient picked one; it is then not written to the profile. */
+export async function saveCheckin(answers: CheckinAnswers, side: Side | null, painMax?: number): Promise<DayCheckin> {
+  if (side) writeSide(side)
+  const local: DayCheckin = { ...answers, side: side ?? readSide() ?? 'left', tier: tierFor(answers.pain, painMax), flagged: false, reasons: [], synced: false, at: new Date().toISOString() }
   const commit = (c: DayCheckin) =>
     update((d) => ({ ...d, checkin: c, stopped: stopReason(c) ?? (d.stopped === 'session' ? 'session' : null) }))
   commit(local)
