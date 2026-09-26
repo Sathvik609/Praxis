@@ -281,3 +281,25 @@ def test_pendulum_at_rest_produces_no_reps():
     f = ArmFSM("pendulum", sets=1, reps_per_set=2)
     evs, _ = run(f, [(0.5, 0.0, 0.0)] * 60)
     assert "rep_complete" not in types(evs) and f.snapshot()["phase"] == "start"
+
+
+# ---- 24 Sep review: the pendulum instruction *is* to lean forward ------------------------
+def leaning_swing(peak: float, lean: float, cycles: int, hike: float = 0.0):
+    return [(a, lean, hike) for a, _l, _h in swing(peak, cycles=cycles)]
+
+
+def test_pendulum_forward_lean_is_the_instruction_not_a_compensation():
+    f = ArmFSM("pendulum", sets=1, reps_per_set=10)
+    evs, _ = run(f, leaning_swing(20.0, lean=35.0, cycles=12, hike=0.3))
+    assert "compensation_lean" not in types(evs) and "shoulder_hiking" not in types(evs)
+    assert f.snapshot()["flags"]["lean_count"] == 0 and f.snapshot()["flags"]["lean"] is False
+    assert types(evs).count("rep_complete") == 10
+
+
+def test_flexion_still_flags_a_sustained_lean():
+    f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=3)
+    t, evs = 0.0, []
+    for _ in range(3):
+        e, t = run(f, rep_profile(90, 1.2, lean=35.0), t)
+        evs += e
+    assert types(evs).count("compensation_lean") == 3

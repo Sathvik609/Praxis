@@ -28,6 +28,8 @@ the view the exercise needs, so the FSM freezes (no transitions, no compensation
 angle is still reported for display) while the view is wrong (`gate = "turn_side"` for
 side-view exercises, `"turn_front"` for front-view ones) or the practising-side
 shoulder/elbow/hip visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`).
+Compensation checks run for `kind="hold"` only: the pendulum is done leaning forward on purpose,
+so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
 `compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
 `shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
 therefore gets no lean flags.
@@ -341,7 +343,9 @@ class ArmFSM:
             evs.append(self._go("moving", obs.t))
         self._swing_lo, self._swing_hi = min(self._swing_lo, a), max(self._swing_hi, a)
         self._peak = round(self._swing_hi - self._swing_lo, 1)
-        evs += self._compensation(obs)
+        # No lean or shoulder-hike check here: the pendulum is *done* leaning forward on a table
+        # with the arm hanging (exercises.py steps), so a forward trunk is the instruction, not
+        # a compensation (24 Sep review, P0).
         sign = 1 if a > self.swing_band_deg else (-1 if a < -self.swing_band_deg else 0)
         if sign == 0 or sign == self._swing_sign:
             return evs

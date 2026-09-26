@@ -173,3 +173,40 @@ def test_summary_carries_the_exercise_and_the_signed_in_user():
     out = s.summary()
     assert out["exercise"] == "abduction" and out["username"] == "sathvik"
     assert CoachSession(mode="cup", prescription=SEED_PRESCRIPTION).summary()["exercise"] is None
+
+
+# ---- 24 Sep review ------------------------------------------------------------------------
+def _drive_arm(tmp_path, fsm, samples, lean=0.0):
+    """Feed angle samples through a real ArmFSM and a CoachSession, like main._run_frame."""
+    from praxis_session.perception.arm_fsm import ArmObservation
+
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, exercise=fsm.exercise.id)
+    out, t = [], 0.0
+    for angle in samples:
+        evs = fsm.step(ArmObservation(t=t, shoulder_deg=angle, trunk_lean_deg=lean, shoulder_hike_norm=0.0, view_ok=True))
+        out += evs + s.on_events(evs, snapshot={"arm": fsm.snapshot()}, t=t)
+        t += 1 / 15
+    return s, out
+
+
+def _lift(peak=90.0, hold_frames=50):
+    up = [5 + (peak - 5) * i / 15 for i in range(16)]
+    return up + [peak] * hold_frames + list(reversed(up)) + [5.0] * 8
+
+
+def test_pendulum_lean_never_pauses_or_flags_but_flexion_does(tmp_path):
+    """P0: Pendulum is done leaning forward on a table; a 35° sustained lean must not raise
+    compensation_lean, a pause or a therapist flag. Flexion still does."""
+    import math
+
+    from praxis_session.perception.arm_fsm import ArmFSM
+
+    swings = [20.0 * math.sin(2 * math.pi * i / 15) for i in range(15 * 25)]
+    s, out = _drive_arm(tmp_path, ArmFSM("pendulum"), swings, lean=35.0)
+    seen = [e.type for e in out]
+    assert "compensation_lean" not in seen and "pause" not in seen and "therapist_flag" not in seen
+    assert not s.paused and s.summary()["flags"] == []
+
+    s, out = _drive_arm(tmp_path, ArmFSM("flexion"), _lift() * 4, lean=35.0)
+    seen = [e.type for e in out]
+    assert "compensation_lean" in seen and "pause" in seen and "therapist_flag" in seen
