@@ -99,7 +99,9 @@ def test_pause_resume_and_summary(tmp_path):
     assert not s.paused
     s.on_events([make_event("rep_complete", t=8.0, set=1, rep=2, peak_deg=70, hold_s=1.0, verified=False, reason="target_missed")], snapshot={}, t=8.0)
     summ = s.summary(t=9.0)
-    assert summ["camera"]["reps_total"] == 2 and summ["camera"]["unverified"] == 1
+    # a missed target is the patient's performance, not a rep the camera could not verify
+    assert summ["camera"]["reps_total"] == 2 and summ["camera"]["missed"] == 1
+    assert summ["camera"]["unverified"] == 0
     assert summ["coach"]["label"].startswith("Rule-based")
     assert any(n["confidence"] in ("high", "medium") for n in summ["coach"]["notes"])
     assert summ["flags"] and summ["flags"][0]["rule"] == "lean"
@@ -210,6 +212,25 @@ def test_pendulum_lean_never_pauses_or_flags_but_flexion_does(tmp_path):
     s, out = _drive_arm(tmp_path, ArmFSM("flexion"), _lift() * 4, lean=35.0)
     seen = [e.type for e in out]
     assert "compensation_lean" in seen and "pause" in seen and "therapist_flag" in seen
+
+
+def test_summary_counts_unverified_and_missed_apart(tmp_path):
+    """Unverified (the camera could not check it) is not failed (the camera saw a miss):
+    tracking quality only looks at the unverified share."""
+    s = make(mode="arm", tmp_path=tmp_path)
+    reps = [
+        make_event("rep_complete", t=float(i), set=1, rep=i + 1, peak_deg=60.0, hold_s=0.5, verified=False, reason="target_missed")
+        for i in range(2)
+    ] + [make_event("rep_complete", t=3.0, set=1, rep=3, peak_deg=90.0, hold_s=3.0, verified=True, reason=None)]
+    s.on_events(reps, snapshot={}, t=3.0)
+    summ = s.summary(t=4.0)
+    cam = summ["camera"]
+    assert (cam["reps_total"], cam["verified"], cam["unverified"], cam["missed"]) == (3, 1, 0, 2)
+    assert summ["tracking"] == "usable"  # two misses say nothing about the camera
+    c = make(mode="cup", tmp_path=tmp_path)
+    c.on_events([reach(1.0, verified=False), reach(2.0)], snapshot={}, t=2.0)
+    cam = c.summary(t=3.0)["camera"]
+    assert (cam["unverified"], cam["missed"]) == (1, 0)
 
 
 def test_second_lean_regresses_and_queues_a_clamped_set_hold(tmp_path):

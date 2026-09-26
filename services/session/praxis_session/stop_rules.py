@@ -4,6 +4,14 @@ stop  -> session ends, partial report saved, therapist flagged
 pause -> session paused until the patient resumes (or the condition clears)
 rest  -> forced rest break
 Every stop/pause/rest that a clinician should see also emits `therapist_flag`.
+
+Unverified is not failed (24 Sep review). A rep with `verified: false` is either
+- **unverified**: the camera could not check it (`cup_occluded`, `marker_lost`,
+  `no_hand_near_hole`, anything not listed below) -> `failed_reps` pause, "check the setup"; or
+- **missed**: the camera saw it clearly and it fell short (`MISS_REASONS`: `target_missed`,
+  `hold_too_short`, `swing_too_small`) -> `missed_reps` gentle rest, never "check the setup".
+The two streaks and thresholds are separate; a miss restarts the unverified streak (the camera
+was working), a verified rep restarts both.
 """
 from __future__ import annotations
 
@@ -12,21 +20,31 @@ from typing import Any
 from praxis_session.events import Event, make_event
 from praxis_session.prescription import Prescription
 
+MISS_REASONS: frozenset[str] = frozenset({"target_missed", "hold_too_short", "swing_too_small"})
+
+
+def is_miss(payload: dict[str, Any]) -> bool:
+    """A `verified: false` rep the camera saw fall short (performance, not perception)."""
+    return payload.get("verified") is False and payload.get("reason") in MISS_REASONS
+
 
 class StopRules:
     def __init__(self, prescription: Prescription) -> None:
         self.p = prescription
         self.th = prescription.stop_rules
         self.stopped = False
-        self._unverified_streak = 0
+        self._unverified_streak = 0  # reps the camera could not verify (perception)
+        self._missed_streak = 0  # reps the camera saw fall short (performance)
+        self._missed_reasons: list[str] = []
         self._lean_seen = 0  # the FSM's running lean count at the last lean event
         self._lean_base = 0  # ... and at the last lean pause: the rule re-arms from there
         self._exertion_flagged = False
         self.flags: list[dict[str, Any]] = []
 
     def on_resume(self) -> None:
-        """The patient resumed (after fixing the setup): the unverified streak starts over."""
+        """The patient resumed (after fixing the setup or resting): both streaks start over."""
         self._unverified_streak = 0
+        self._missed_streak, self._missed_reasons = 0, []
 
     def _flag(self, t: float, rule: str, detail: str) -> Event:
         self.flags.append({"t": t, "rule": rule, "detail": detail})
@@ -65,14 +83,24 @@ class StopRules:
                     out.append(make_event("pause", t=e.t, rule="lean", text="You're leaning to lift. Let's pause, sit tall, and lower the target a little."))
                     out.append(self._flag(e.t, "lean", f"trunk lean > {self.th.lean_deg:g}° in {count} lifts ({self.th.lean_events} since the last lean pause)"))
             elif e.type in ("rep_complete", "reach_complete"):
-                if e.payload.get("verified") is False:
+                if e.payload.get("verified") is not False:
+                    self._unverified_streak = self._missed_streak = 0
+                elif is_miss(e.payload):
+                    # The camera saw the rep clearly and it fell short: performance, not setup.
+                    self._unverified_streak = 0
+                    self._missed_streak += 1
+                    self._missed_reasons.append(str(e.payload.get("reason")))
+                    if self._missed_streak >= self.th.missed_reps:
+                        reasons = ", ".join(self._missed_reasons[-self.th.missed_reps:])
+                        self._missed_streak, self._missed_reasons = 0, []  # re-arms after the next N
+                        out.append(make_event("rest", t=e.t, rule="missed_reps", text="A few in a row fell a little short. That's fine — take a short rest, and keep the next ones smaller and slower."))
+                        out.append(self._flag(e.t, "missed_reps", f"{self.th.missed_reps} consecutive missed reps ({reasons})"))
+                else:
                     self._unverified_streak += 1
                     if self._unverified_streak >= self.th.failed_reps:
                         self._unverified_streak = 0  # fires again after the next N, not once per session
                         out.append(make_event("pause", t=e.t, rule="failed_reps", text="Three in a row I couldn't verify. Let's pause and check the setup."))
                         out.append(self._flag(e.t, "failed_reps", f"{self.th.failed_reps} consecutive unverified reps ({e.payload.get('reason')})"))
-                else:
-                    self._unverified_streak = 0
             elif e.type == "perception_lost":
                 # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
                 out.append(make_event("pause", t=e.t, rule="perception", text="I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.", missing=e.payload.get("missing")))

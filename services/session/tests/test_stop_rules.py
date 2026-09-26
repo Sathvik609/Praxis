@@ -37,6 +37,45 @@ def lean(t, count):
     return make_event("compensation_lean", t=t, lean_deg=15.0, count=count, flagged=count >= 3)
 
 
+def rep(t, reason):
+    return make_event("rep_complete", t=t, set=1, rep=int(t), peak_deg=70.0, hold_s=1.0, verified=reason is None, reason=reason)
+
+
+def test_performance_misses_are_not_setup_failures():
+    """24 Sep review: target_missed / hold_too_short / swing_too_small are the patient's
+    performance, not perception. They never say "check the setup"; three in a row is a gentle
+    rest (and a therapist flag), counted apart from reps the camera could not verify."""
+    sr = StopRules(SEED_PRESCRIPTION)
+    evs = sr.on_events([rep(1, "target_missed"), rep(2, "hold_too_short"), rep(3, "target_missed")])
+    assert types(evs) == ["rest", "therapist_flag"]
+    assert evs[0].payload["rule"] == "missed_reps"
+    text = evs[0].payload["text"].lower()
+    assert "setup" not in text and "verify" not in text and "rest" in text
+    assert "missed" in evs[1].payload["detail"] and "target_missed" in evs[1].payload["detail"]
+
+
+def test_perception_and_performance_streaks_are_counted_separately():
+    sr = StopRules(SEED_PRESCRIPTION)
+    occl = lambda t: make_event("reach_complete", t=t, verified=False, reason="cup_occluded", to_dot=1)  # noqa: E731
+    assert sr.on_events([occl(1), occl(2), rep(3, "target_missed"), rep(4, "swing_too_small")]) == []
+    # a miss means the camera saw the rep clearly: the perception streak starts over
+    assert sr.on_events([occl(5), occl(6)]) == []
+    evs = sr.on_events([occl(7)])
+    assert types(evs) == ["pause", "therapist_flag"] and evs[0].payload["rule"] == "failed_reps"
+    assert "setup" in evs[0].payload["text"]
+    evs = sr.on_events([rep(8, "hold_too_short")])
+    assert types(evs) == ["rest", "therapist_flag"] and evs[0].payload["rule"] == "missed_reps"
+
+
+def test_missed_reps_threshold_comes_from_the_prescription_and_re_arms():
+    rx = SEED_PRESCRIPTION.model_copy(deep=True)
+    rx.stop_rules.missed_reps = 2
+    sr = StopRules(rx)
+    assert types(sr.on_events([rep(1, "target_missed"), rep(2, "target_missed")])) == ["rest", "therapist_flag"]
+    assert sr.on_events([rep(3, "target_missed")]) == []
+    assert sr.on_events([rep(4, None), rep(5, "target_missed")]) == []  # a verified rep resets it
+
+
 def test_lean_rule_does_not_pause_on_the_second_lean():
     """The coach regresses on the second lean; the stop rule must leave it that event."""
     sr = StopRules(SEED_PRESCRIPTION)

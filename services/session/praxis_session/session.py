@@ -10,7 +10,7 @@ from praxis_session.coach.rules import LABEL, RuleCoach
 from praxis_session.events import Event, make_event
 from praxis_session.exertion import Exertion
 from praxis_session.prescription import Prescription
-from praxis_session.stop_rules import StopRules
+from praxis_session.stop_rules import StopRules, is_miss
 from praxis_session.trace import Trace
 
 WHY_TEXT = {
@@ -39,7 +39,7 @@ class CoachSession:
         # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
         # main after each frame and applied through `SessionPipeline.command`, which clamps.
         self.commands: list[dict[str, Any]] = []
-        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "corrections": 0, "posture_cues": 0}
+        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "missed": 0, "corrections": 0, "posture_cues": 0}
         self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
         self._last_cue_t: dict[str, float] = {}
@@ -129,7 +129,11 @@ class CoachSession:
             if e.type in ("rep_complete", "reach_complete"):
                 self.counts["reps_total"] += 1
                 # NHPT rep_complete carries no `verified` flag: occupancy is the verification.
-                self.counts["verified" if e.payload.get("verified", True) else "unverified"] += 1
+                # Unverified (the camera could not check it) is not missed (it saw a miss).
+                if e.payload.get("verified", True):
+                    self.counts["verified"] += 1
+                else:
+                    self.counts["missed" if is_miss(e.payload) else "unverified"] += 1
             if e.type == "reach_complete":
                 self.measures.setdefault("reach_ms", []).append(e.payload.get("reach_ms"))
                 self.measures.setdefault("reach_verified", []).append(bool(e.payload.get("verified")))
