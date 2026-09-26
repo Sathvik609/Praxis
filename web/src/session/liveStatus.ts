@@ -1,4 +1,5 @@
 import type { ChipTone } from '../design/Chip'
+import { processingPlace } from '../lib/config'
 import type { Overlay } from './useCoach'
 
 /** One status for the header chip, the feed label and the coach fallback, so the screen
@@ -51,7 +52,7 @@ export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm'): Status
     case 'calibrating':
       return { chip: mode === 'arm' ? 'Looking for you' : 'Looking for the sheet', tone: 'amber', feed: sheet, coach: sheet }
     case 'tracking':
-      return { chip: 'Tracking', tone: 'mint', feed: 'Live · processed on this device', coach: null }
+      return { chip: 'Tracking', tone: 'mint', feed: `Live · ${processingPlace()}`, coach: null }
     case 'lost':
       return { chip: 'Tracking lost', tone: 'amber', feed: 'Tracking lost', coach: mode === 'arm' ? 'I cannot see your shoulder and hip. Turn your practising side to the camera.' : 'I lost the sheet. Keep all four corner markers in view.' }
     case 'replay':

@@ -58,6 +58,7 @@ test('download builds a JSON blob and sharing explains who sees the report', asy
   const dialog = screen.getByRole('dialog', { name: /Who sees this report/ })
   expect(dialog).toHaveTextContent(/review queue/)
   expect(dialog).toHaveTextContent(/never video/i)
+  expect(dialog).toHaveTextContent(/Video is processed on this device, never stored/)
   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   click.mockRestore()

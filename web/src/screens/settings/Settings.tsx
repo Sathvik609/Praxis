@@ -8,6 +8,7 @@ import { Chip } from '../../design/Chip'
 import { Play } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
+import { processingPlace } from '../../lib/config'
 
 const MODE_NAME: Record<string, string> = { nhpt: 'Nine-Hole Peg Test', cup: 'Waiter – cup', arm: 'Arm to the front' }
 const GUIDANCE_KEY = 'praxis.guidance'
@@ -66,7 +67,7 @@ export function Settings() {
           </div>
         </Card>
         <Card title="Privacy">
-          <p className="text-lg">Video is processed in memory on this device and never stored. Only events, measurements and logs are kept. Feeling is what you tell us, never read from your face. Clips are recorded only with your explicit consent and deleted after 30 days.</p>
+          <p className="text-lg">Video is {processingPlace()}. Only events, measurements and logs are kept. Feeling is what you tell us, never read from your face. Clips are recorded only with your explicit consent and deleted after 30 days.</p>
         </Card>
       </div>
       <div className="space-y-6">
@@ -89,7 +90,7 @@ export function Settings() {
           </div>
         </Card>
         <Card title="Cloud">
-          <p className="-mt-2 text-muted">Cloud mode is off in this build. Everything runs on this device.</p>
+          <p className="-mt-2 text-muted">Cloud mode (AWS) is off in this build. Video is {processingPlace()}.</p>
         </Card>
       </div>
     </div>

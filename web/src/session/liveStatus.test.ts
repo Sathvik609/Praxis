@@ -1,3 +1,4 @@
+import { processingPlace } from '../lib/config'
 import { liveStatus, statusLabel } from './liveStatus'
 
 const base = { connected: true, camActive: true, error: null, replay: false, frame: { calibrated: true }, lost: false, overlay: null, ended: false }
@@ -25,4 +26,8 @@ test('labels never contradict: tracking has no coach override; blocked offers re
   expect(statusLabel('camera_blocked', 'nhpt').coach).toMatch(/recorded session/)
   expect(statusLabel('calibrating', 'arm').chip).toBe('Looking for you')
   expect(statusLabel('lost', 'nhpt').tone).toBe('amber')
+})
+
+test('the live feed label says where frames are processed, from the one helper', () => {
+  expect(statusLabel('tracking', 'cup').feed).toBe(`Live · ${processingPlace()}`)
 })

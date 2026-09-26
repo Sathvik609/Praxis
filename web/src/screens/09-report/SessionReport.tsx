@@ -8,6 +8,7 @@ import { Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
 import { api, useApi, type SessionRecord } from '../../lib/api'
+import { processingPlace } from '../../lib/config'
 
 const conf = { high: 'mint', medium: 'amber', low: 'neutral' } as const
 
@@ -63,7 +64,7 @@ export function SessionReport() {
     return (
       <div className="mx-auto w-full max-w-2xl p-6">
         <Card tone="watch" title="Could not load this report">
-          <p className="text-lg">The report could not be fetched ({problem}). Reports stay on this device until they are delivered.</p>
+          <p className="text-lg">The report could not be fetched ({problem}). Reports are kept in the Praxis session store until they are delivered.</p>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
           </div>
@@ -205,7 +206,7 @@ export function SessionReport() {
       <Overlay open={sharing} title="Who sees this report" description="How this report is shared." onClose={() => setSharing(false)} className="w-[min(640px,92vw)]">
         <ul className="mt-4 space-y-3 text-lg">
           <li>It goes to <b>{clinician}'s review queue</b> and nowhere else.</li>
-          <li>It contains measurements, events, coach notes and what you told us — <b>never video</b>. Video is processed on this device and not stored.</li>
+          <li>It contains measurements, events, coach notes and what you told us — <b>never video</b>. Video is {processingPlace()}.</li>
           <li>
             Status right now: <Chip tone="amber">{cap(s.delivery)}</Chip>
           </li>

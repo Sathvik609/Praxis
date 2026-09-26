@@ -23,7 +23,9 @@ test('settings switches theme and lists replay clips with a replay entry', async
   expect(document.documentElement.dataset.theme).toBe('dark')
   expect(await screen.findByText('Nine-Hole Peg Test')).toBeInTheDocument()
   expect(screen.getByText('Synthetic render')).toBeInTheDocument()
-  expect(screen.getByText(/Video is processed in memory/)).toBeInTheDocument()
+  // jsdom runs on localhost, so the edge wording applies; hosted builds say "on the Praxis service"
+  expect(screen.getByText(/Video is processed on this device, never stored\. Only events/)).toBeInTheDocument()
+  expect(screen.queryByText(/Everything runs on this device/)).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Replay Nine-Hole Peg Test' }))
   expect(screen.getByText('SESSION')).toBeInTheDocument()
 })
