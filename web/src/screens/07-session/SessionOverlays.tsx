@@ -5,6 +5,7 @@ import { Chip } from '../../design/Chip'
 import { Activity } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay } from '../../design/Overlay'
+import { REST_AT } from '../../lib/plan'
 import type { ExertionState, Overlay as OverlayState } from '../../session/useCoach'
 
 const RULE_TITLE: Record<string, string> = {
@@ -40,13 +41,14 @@ export function SessionOverlay({ overlay, onResume, onEnd }: { overlay: OverlayS
   )
 }
 
-/** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. */
+/** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. The copy
+ *  quotes the locked stop level (CLAUDE.md §1: pain ≥ 7), the same number the plan uses. */
 export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmit: (pain: number) => void; onCancel: () => void }) {
   const [pain, setPain] = useState<number | null>(null)
   if (!open) return null
   return (
     <Overlay open title="How is the pain right now?">
-      <p className="mt-2 text-muted">Pain at or above 5 ends the session and flags your therapist. Take your time.</p>
+      <p className="mt-2 text-muted">Pain at or above {REST_AT} ends the session and flags your therapist. Take your time.</p>
       <div className="mt-5"><NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" /></div>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <Button variant="secondary" onClick={onCancel}>Back to session</Button>

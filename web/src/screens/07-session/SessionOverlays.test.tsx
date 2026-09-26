@@ -23,6 +23,12 @@ test('rest overlay offers "Rested — continue"', () => {
   expect(screen.getByRole('button', { name: 'Rested — continue' })).toBeInTheDocument()
 })
 
+test('pain check states the real stop level (7, from the plan), never 5', () => {
+  render(<PainCheck open onSubmit={vi.fn()} onCancel={vi.fn()} />)
+  expect(screen.getByText(/Pain at or above 7 ends the session/)).toBeInTheDocument()
+  expect(screen.queryByText(/above 5/)).not.toBeInTheDocument()
+})
+
 test('pain check sends the chosen level', () => {
   const onSubmit = vi.fn()
   render(<PainCheck open onSubmit={onSubmit} onCancel={vi.fn()} />)
