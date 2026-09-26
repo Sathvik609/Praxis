@@ -38,8 +38,25 @@ export function liveStatus(a: {
 
 export type StatusLabel = { chip: string; tone: ChipTone; feed: string; coach: string | null }
 
-export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm'): StatusLabel {
-  const sheet = mode === 'arm' ? 'Turn your practising side to the camera.' : 'Show all four corner markers of the sheet.'
+/** Which way the camera looks at the task: arm exercises are scored from the side (Pendulum,
+ *  Arm to the front) or the front (Arm out to the side); cup and NHPT look down at a sheet. */
+export type CameraView = 'side' | 'front' | 'table'
+
+const FIND: Record<CameraView, string> = {
+  side: 'Turn your practising side to the camera.',
+  front: 'Face the camera with both shoulders and hips in view.',
+  table: 'Show all four corner markers of the sheet.',
+}
+const LOST: Record<CameraView, string> = {
+  side: 'I cannot see your shoulder and hip. Turn your practising side to the camera.',
+  front: 'I cannot see both shoulders. Face the camera with your shoulders and hips in view.',
+  table: 'I lost the sheet. Keep all four corner markers in view.',
+}
+
+/** `view` defaults to the side view for arm work and the sheet for cup / NHPT. */
+export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm', view?: CameraView): StatusLabel {
+  const v: CameraView = mode === 'arm' ? (view === 'front' ? 'front' : 'side') : 'table'
+  const sheet = FIND[v]
   switch (s) {
     case 'connecting':
       return { chip: 'Connecting', tone: 'neutral', feed: 'Connecting to the coach service', coach: 'Connecting to the coach service.' }
@@ -54,7 +71,7 @@ export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm'): Status
     case 'tracking':
       return { chip: 'Tracking', tone: 'mint', feed: `Live · ${processingPlace()}`, coach: null }
     case 'lost':
-      return { chip: 'Tracking lost', tone: 'amber', feed: 'Tracking lost', coach: mode === 'arm' ? 'I cannot see your shoulder and hip. Turn your practising side to the camera.' : 'I lost the sheet. Keep all four corner markers in view.' }
+      return { chip: 'Tracking lost', tone: 'amber', feed: 'Tracking lost', coach: LOST[v] }
     case 'replay':
       return { chip: 'Replay', tone: 'amber', feed: 'Replay · processed on the service', coach: null }
     case 'paused':

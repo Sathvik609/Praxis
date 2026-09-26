@@ -83,6 +83,14 @@ test('Arm out to the side runs the same screen from the front view with its own 
   expect(screen.getByText(/front view · shoulder 72° of 90°/)).toBeInTheDocument()
 })
 
+test('front-view Arm out to the side never tells the patient to turn sideways', () => {
+  const lostEv = { type: 'perception_lost', t: 11, id: 2 }
+  mockStream([{ ...frame, calibrated: false, arm: { ...frame.arm, exercise: 'abduction', view_required: 'front' } }, lostEv])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.getAllByText(/Face the camera/).length).toBeGreaterThan(0)
+  expect(screen.queryByText(/side to the camera/)).toBeNull()
+})
+
 test('Pendulum counts swings: no hold count, no lift/lower labels', () => {
   mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'pendulum', kind: 'oscillation', state: 'moving', hold_s: 0, target_deg: 20, ceiling_deg: 45, reps_per_set: 10, rep: 3 } }])
   renderAt('/session?exercise=pendulum&side=left')

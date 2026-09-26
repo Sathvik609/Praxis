@@ -31,3 +31,20 @@ test('labels never contradict: tracking has no coach override; blocked offers re
 test('the live feed label says where frames are processed, from the one helper', () => {
   expect(statusLabel('tracking', 'cup').feed).toBe(`Live · ${processingPlace()}`)
 })
+
+test('arm status text follows the exercise view: side view turns sideways, front view faces the camera', () => {
+  expect(statusLabel('calibrating', 'arm', 'side').coach).toMatch(/Turn your practising side to the camera/)
+  expect(statusLabel('lost', 'arm', 'side').coach).toMatch(/Turn your practising side to the camera/)
+  for (const l of [statusLabel('calibrating', 'arm', 'front'), statusLabel('lost', 'arm', 'front')]) {
+    expect(l.coach).toMatch(/Face the camera/)
+    expect(l.coach).not.toMatch(/side to the camera/)
+    expect(l.feed).not.toMatch(/side to the camera/)
+  }
+  expect(statusLabel('lost', 'arm', 'front').coach).toMatch(/both shoulders/)
+})
+
+test('table tasks (cup, NHPT) talk about the sheet markers; arm defaults to the side view', () => {
+  expect(statusLabel('calibrating', 'cup').coach).toMatch(/four corner markers/)
+  expect(statusLabel('lost', 'nhpt', 'table').coach).toMatch(/four corner markers/)
+  expect(statusLabel('calibrating', 'arm').coach).toMatch(/side to the camera/)
+})

@@ -30,7 +30,7 @@ type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; h
 export const LEAN_SHOW_DEG = 12
 
 function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side' | 'front', swing: boolean): string {
-  if (lost) return view === 'front' ? 'I cannot see both shoulders. Face the camera with your shoulders and hips in view.' : 'I cannot see your shoulder and hip. Turn your practising side to the camera.'
+  if (lost) return statusLabel('lost', 'arm', view).coach ?? ''
   if (lean) return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
   const a = f?.arm
   if (!a) return 'Getting the camera ready.'
@@ -74,7 +74,6 @@ export function LiveArm() {
     return last?.type === 'perception_lost'
   })()
   const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
-  const label = statusLabel(status, 'arm')
   const live = status === 'tracking' || status === 'replay'
   const lastLean = [...events].reverse().find((e) => e.type === 'compensation_lean')
   const leanRecent = !!lastLean && (frame ? frame.t - lastLean.t < 4 : true)
@@ -104,6 +103,7 @@ export function LiveArm() {
   const repsPerSet = a?.reps_per_set ?? 8
   const holdCount = holding ? Math.ceil((a?.hold_s ?? 3) * (a?.hold_progress ?? 0)) : 0
   const view: 'side' | 'front' = a?.view_required ?? ex.view ?? 'side'
+  const label = statusLabel(status, 'arm', view)
   const swing = (a?.kind ?? (ex.id === 'pendulum' ? 'oscillation' : 'hold')) === 'oscillation'
   const turnHint = view === 'front' ? ' · face the camera' : ' · turn your side to the camera'
   const wrongView = !!frame?.arm?.angles && (view === 'front' ? frame.arm.angles.view_ok : !frame.arm.angles.view_ok)
