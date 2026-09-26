@@ -183,7 +183,7 @@ def _drive_arm(tmp_path, fsm, samples, lean=0.0):
     s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, exercise=fsm.exercise.id)
     out, t = [], 0.0
     for angle in samples:
-        evs = fsm.step(ArmObservation(t=t, shoulder_deg=angle, trunk_lean_deg=lean, shoulder_hike_norm=0.0, view_ok=True))
+        evs = fsm.step(ArmObservation(t=t, shoulder_deg=angle, trunk_lean_deg=lean, shoulder_hike_norm=0.0, view_ok=fsm.view != "front"))
         out += evs + s.on_events(evs, snapshot={"arm": fsm.snapshot()}, t=t)
         t += 1 / 15
     return s, out
@@ -210,3 +210,21 @@ def test_pendulum_lean_never_pauses_or_flags_but_flexion_does(tmp_path):
     s, out = _drive_arm(tmp_path, ArmFSM("flexion"), _lift() * 4, lean=35.0)
     seen = [e.type for e in out]
     assert "compensation_lean" in seen and "pause" in seen and "therapist_flag" in seen
+
+
+def test_second_lean_regresses_and_queues_a_clamped_set_hold(tmp_path):
+    """The regress now happens (second lean, before the third-lean pause) and becomes a
+    pipeline command for the running exercise's prescription key."""
+    from praxis_session.perception.arm_fsm import ArmFSM
+
+    fsm = ArmFSM("abduction")
+    s, out = _drive_arm(tmp_path, fsm, [a for a in _lift()] * 2, lean=20.0)
+    coach = [e for e in out if e.type == "coach"]
+    reg = [e for e in coach if e.payload["action"] == "regress"]
+    assert reg and reg[0].payload["ui"]["apply"] == {"abduction": {"hold_s": 2.0}}
+    lean2 = next(e for e in out if e.type == "compensation_lean" and e.payload["count"] == 2)
+    assert reg[0].payload["evidence"] == [lean2.id]
+    assert not s.paused  # the third-lean pause has not happened yet
+    cmds = s.take_commands()
+    assert cmds == [{"cmd": "set_hold", "hold_s": 2.0, "rx": "abduction", "evidence": [lean2.id]}]
+    assert s.take_commands() == []

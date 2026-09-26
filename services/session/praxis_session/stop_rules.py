@@ -19,7 +19,8 @@ class StopRules:
         self.th = prescription.stop_rules
         self.stopped = False
         self._unverified_streak = 0
-        self._lean_flagged = False
+        self._lean_seen = 0  # the FSM's running lean count at the last lean event
+        self._lean_base = 0  # ... and at the last lean pause: the rule re-arms from there
         self._exertion_flagged = False
         self.flags: list[dict[str, Any]] = []
 
@@ -54,10 +55,15 @@ class StopRules:
         if self.stopped:
             return out
         for e in events:
-            if e.type == "compensation_lean" and e.payload.get("flagged") and not self._lean_flagged:
-                self._lean_flagged = True
-                out.append(make_event("pause", t=e.t, rule="lean", text="You're leaning to lift. Let's pause, sit tall, and lower the target a little."))
-                out.append(self._flag(e.t, "lean", f"trunk lean > {self.th.lean_deg}° in {e.payload.get('count')} lifts"))
+            if e.type == "compensation_lean":
+                # Counted here against the prescription's `lean_events` (not the FSM's copy of
+                # it), and re-armed after each pause: another N leans pause again.
+                count = int(e.payload.get("count") or self._lean_seen + 1)
+                self._lean_seen = count
+                if count - self._lean_base >= self.th.lean_events:
+                    self._lean_base = count
+                    out.append(make_event("pause", t=e.t, rule="lean", text="You're leaning to lift. Let's pause, sit tall, and lower the target a little."))
+                    out.append(self._flag(e.t, "lean", f"trunk lean > {self.th.lean_deg:g}° in {count} lifts ({self.th.lean_events} since the last lean pause)"))
             elif e.type in ("rep_complete", "reach_complete"):
                 if e.payload.get("verified") is False:
                     self._unverified_streak += 1

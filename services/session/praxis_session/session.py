@@ -36,6 +36,9 @@ class CoachSession:
         self.feedback: dict[str, Any] = {}
         self.decisions: list[dict[str, Any]] = []
         self.pending_prompt: dict[str, Any] | None = None
+        # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
+        # main after each frame and applied through `SessionPipeline.command`, which clamps.
+        self.commands: list[dict[str, Any]] = []
         self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "corrections": 0, "posture_cues": 0}
         self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
@@ -160,6 +163,11 @@ class CoachSession:
             out.append(self._coach_event(d, t))
         return out
 
+    def take_commands(self) -> list[dict[str, Any]]:
+        """Hand the queued pipeline commands to the caller (once)."""
+        out, self.commands = self.commands, []
+        return out
+
     # ---- internals ---------------------------------------------------------------------
     def _log_stop(self, evs: list[Event]) -> list[Event]:
         for e in evs:
@@ -182,6 +190,9 @@ class CoachSession:
         self.trace.log("action", kind="speak", text=d.text, ui=d.ui)
         if d.ui.get("prompt"):
             self.pending_prompt = d.ui["prompt"]
+        for rx_key, fields in (d.ui.get("apply") or {}).items():
+            if isinstance(fields, dict) and "hold_s" in fields:
+                self.commands.append({"cmd": "set_hold", "hold_s": fields["hold_s"], "rx": rx_key, "evidence": list(d.evidence)})
         if d.action == "correct":
             self.counts["corrections"] += 1
         self.decisions.append(d.to_dict() | {"t": t})

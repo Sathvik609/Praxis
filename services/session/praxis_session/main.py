@@ -426,6 +426,21 @@ async def _run_frame(
             e = _replace_event(e, payload={**e.payload, "latency": cue_lat})
         ring.append(e)
         await ws.send_text(e.to_json())
+    for e in _apply_coach_commands(pipeline, coach):
+        ring.append(e)
+        await ws.send_text(e.to_json())
+
+
+def _apply_coach_commands(pipeline: SessionPipeline, coach: CoachSession) -> list[Event]:
+    """Apply what a coach decision asked of the pipeline (today: a regress's `set_hold`).
+    `SessionPipeline.command` clamps it to the prescription in code; the result goes back as
+    a `command` event (`source: coach`) and a trace row citing the decision's evidence."""
+    out: list[Event] = []
+    for cmd in coach.take_commands():
+        result = pipeline.command(cmd)
+        coach.trace.log("apply", cmd=cmd.get("cmd"), requested=cmd, evidence=cmd.get("evidence", []), **result)
+        out.append(make_event("command", cmd=cmd.get("cmd"), source="coach", session_id=coach.session_id, **result))
+    return out
 
 
 async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> None:

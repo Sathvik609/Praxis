@@ -13,6 +13,12 @@ LABEL = "Rule-based coach · LLM agent pending"
 # per-cue cooldown so the same cue is not repeated back to back. Corrections, prompts,
 # rest and regress always pass.
 INSTRUCT_GAP_S = 0.6
+
+
+def regress_at_lean(prescription) -> int:
+    """The lean count the hold regress fires on: one before the stop rule's lean pause
+    (`stop_rules.lean_events`, 3 in the seed), because the pause silences the coach."""
+    return max(1, int(prescription.stop_rules.lean_events) - 1)
 COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8, "arm_swing": 1.5}
 
 # One intro and one done line per camera-coached arm exercise (locked set, 23 Sep), in our own
@@ -153,27 +159,18 @@ class RuleCoach:
                     return [Decision("instruct", "arm_lower", self._phrase("arm_lower"), "returning", ev)]
             if e.type == "compensation_lean":
                 out = [Decision("correct", "arm_lean", "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.", f"trunk lean {p.get('lean_deg')}°", ev)]
-                if p.get("flagged") and not self._regressed_hold:
-                    try:
-                        hold = clamp(ctx.prescription, "arm", "hold_s", 2.0)
-                    except KeyError:
-                        hold = None
-                    if hold is not None:
+                # Regress on the second lean: the stop rule pauses on the third
+                # (`stop_rules.lean_events`) before the coach ever sees it (24 Sep review).
+                if int(p.get("count") or 0) >= regress_at_lean(ctx.prescription) and ex.kind == "hold" and not self._regressed_hold:
+                    reg = self._regress_hold(ctx, ex, int(p.get("count") or 0), ev)
+                    if reg is not None:
                         self._regressed_hold = True
-                        out.append(
-                            Decision(
-                                "regress", "arm_regress_hold",
-                                f"Let's make it easier: hold for {hold:g} instead of 3, still no higher than the shoulder.",
-                                f"three lean events; hold_s clamped to {hold:g} within the prescription",
-                                ev, {"apply": {"arm": {"hold_s": hold}}},
-                                tool_calls=[{"tool": "get_prescription", "result": {"arm.hold_s": ctx.prescription.allowed_adaptations["arm"]["hold_s"]}}],
-                            )
-                        )
+                        out.append(reg)
                 return out
             if e.type == "shoulder_hiking":
                 return [Decision("correct", "arm_hike", "Let the shoulder drop; lift from the arm, not the shoulder.", "shoulder hiking", ev)]
             if e.type == "hold_too_short":
-                return [Decision("correct", "arm_short_hold", "A little longer at the top next time — count to three.", "hold too short", ev)]
+                return [Decision("correct", "arm_short_hold", f"A little longer at the top next time — hold for {self._hold(ctx, ex):g}.", "hold too short", ev)]
             if e.type == "target_missed":
                 return [Decision("correct", "arm_missed", "Nearly — a touch higher, up to the line.", "target missed", ev)]
             if e.type == "rep_complete":
@@ -182,10 +179,10 @@ class RuleCoach:
                     return [Decision("instruct", "arm_rep", self._phrase("arm_rep", rep=p.get("rep"), reps=reps), "verified rep", ev)]
                 why = {
                     "target_missed": "it stopped short of the line",
-                    "hold_too_short": f"the hold was under {ex.hold_s:g}",
+                    "hold_too_short": f"the hold was under {self._hold(ctx, ex):g}",
                     "swing_too_small": "the swing was very small",
                 }.get(str(p.get("reason")), "I couldn't verify it")
-                nudge = "Next one, a little more swing — still loose." if ex.kind == "oscillation" else f"Next one, up to the line and hold for {ex.hold_s:g}."
+                nudge = "Next one, a little more swing — still loose." if ex.kind == "oscillation" else f"Next one, up to the line and hold for {self._hold(ctx, ex):g}."
                 return [Decision("correct", "arm_unverified", f"That one didn't count: {why}. {nudge}", f"unverified rep ({p.get('reason')})", ev)]
             if e.type == "set_complete":
                 return [self._set_summary(p, ev)]
@@ -199,6 +196,32 @@ class RuleCoach:
         """Which registry entry this arm session is running: the event says so at the start,
         the frame snapshot says so from then on."""
         return get_exercise(payload.get("exercise") or ctx.snapshot.get("arm", {}).get("exercise"))
+
+    @staticmethod
+    def _hold(ctx: CoachContext, ex) -> float:
+        """The hold the FSM is actually asking for (tier and any regress applied)."""
+        hold = ctx.snapshot.get("arm", {}).get("hold_s")
+        return float(hold) if isinstance(hold, (int, float)) else float(ex.hold_s)
+
+    def _regress_hold(self, ctx: CoachContext, ex, count: int, ev: list[int]) -> Decision | None:
+        """One second off the hold, clamped to the running exercise's own allowed range
+        (`allowed_adaptations[ex.rx].hold_s`). No decision when the prescription does not list
+        the hold as adaptable or the hold is already at its floor. The pipeline applies it as
+        `set_hold` and clamps again in code."""
+        current = self._hold(ctx, ex)
+        try:
+            hold = clamp(ctx.prescription, ex.rx, "hold_s", current - 1.0)
+        except KeyError:
+            return None
+        if hold >= current:
+            return None
+        return Decision(
+            "regress", "arm_regress_hold",
+            f"Let's make it easier: hold for {hold:g} instead of {current:g}, still no higher than the shoulder.",
+            f"{count} lean events in {ex.name}; hold_s {current:g} → {hold:g}, clamped to {ex.rx}.hold_s within the prescription",
+            ev, {"apply": {ex.rx: {"hold_s": hold}}},
+            tool_calls=[{"tool": "get_prescription", "result": {f"{ex.rx}.hold_s": ctx.prescription.allowed_adaptations[ex.rx]["hold_s"]}}],
+        )
 
     @staticmethod
     def _reps_per_set(ctx: CoachContext, ex) -> int:

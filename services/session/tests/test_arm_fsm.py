@@ -296,6 +296,26 @@ def test_pendulum_forward_lean_is_the_instruction_not_a_compensation():
     assert types(evs).count("rep_complete") == 10
 
 
+def test_set_hold_shortens_the_hold_the_next_rep_needs():
+    f = ArmFSM("flexion", sets=1, reps_per_set=2)
+    evs, t = run(f, rep_profile(90, 2.3))
+    assert [e.payload["reason"] for e in evs if e.type == "rep_complete"] == ["hold_too_short"]
+    f.set_hold(2.0)
+    evs, _ = run(f, rep_profile(90, 2.3), t)
+    rep = [e for e in evs if e.type == "rep_complete"][0].payload
+    assert rep["verified"] is True and f.snapshot()["hold_s"] == 2.0
+
+
+def test_lean_limits_default_to_the_prescription():
+    from praxis_session.prescription import SEED_PRESCRIPTION
+
+    rx = SEED_PRESCRIPTION.model_copy(deep=True)
+    rx.stop_rules.lean_deg = 40.0
+    f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=1, prescription=rx)
+    evs, _ = run(f, rep_profile(90, 1.2, lean=35.0))
+    assert "compensation_lean" not in types(evs)
+
+
 def test_flexion_still_flags_a_sustained_lean():
     f = ArmFSM("flexion", hold_s=1.0, sets=1, reps_per_set=3)
     t, evs = 0.0, []
