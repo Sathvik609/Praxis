@@ -3,8 +3,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
+import { readDay, todayKey, writeSide } from '../../lib/day'
 import { mockApi } from '../../test/api-mock'
 import { Demonstration } from './Demonstration'
+
+beforeEach(() => {
+  localStorage.clear()
+  sessionStorage.clear()
+})
 
 function renderDemo(path: string) {
   return render(
@@ -61,4 +67,26 @@ test('a demo-only exercise is watched and self-ticked: no practice, no camera, t
   const [url, init] = fetchMock.mock.calls[0]
   expect(String(url)).toContain('/api/self_report')
   expect(JSON.parse(String(init?.body))).toEqual({ exercise: 'external_rotation', sets: 1 })
+})
+
+test('Start practice marks the demo as seen and the exercise as the day\'s current one', () => {
+  renderDemo('/demo?exercise=arm&side=left')
+  fireEvent.click(screen.getByRole('checkbox', { name: /I understand the movement/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Start practice' }))
+  expect(readDay().current).toBe('arm')
+  expect(readDay().demosSeen).toContain('arm')
+})
+
+test('without a side in the link the saved side is used, not a silent left', () => {
+  writeSide('right')
+  renderDemo('/demo?exercise=abduction')
+  expect(screen.getByText(/right side/)).toBeInTheDocument()
+})
+
+test('a day stopped at check-in lets you watch but not start', () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 8, new_symptoms: false, tier: 'rest', flagged: true, synced: true, side: 'left', minutes: 14 }, done: [], demosSeen: [], current: null, finished: [], stopped: 'rest' }))
+  renderDemo('/demo?exercise=arm&side=left')
+  expect(screen.getByText(/No exercises today/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Start practice' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Rehearse without scoring' })).toBeDisabled()
 })
