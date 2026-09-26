@@ -45,6 +45,7 @@ test('"This session" shows reaches, verified and unverified as separate numbers'
   mockStream([frame])
   renderAt('/session?exercise=cup&side=left')
   expect(screen.getByRole('heading', { name: 'This session' })).toBeInTheDocument()
+  expect(screen.getByLabelText('Verified and unverified counts')).toBeInTheDocument()
   const value = (label: string) => screen.getByText(label).parentElement?.parentElement?.firstElementChild
   expect(value('reaches')).toHaveTextContent('10')
   expect(value('verified')).toHaveTextContent('9')

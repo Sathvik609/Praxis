@@ -134,3 +134,15 @@ test('feedback acknowledgement navigates to the persisted report', () => {
   )
   expect(screen.getByText('REPORT sid42')).toBeInTheDocument()
 })
+
+test('verified and unverified counts are on the live peg-test screen', () => {
+  mockStream([frame])
+  renderAt('/session?hand=left')
+  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/5 verified · 0 unverified · 5 pegs/)
+})
+
+test('unverified pegs come from the service total when it sends one', () => {
+  mockStream([{ ...frame, nhpt: { ...frame.nhpt, unverified_total: 1 } }])
+  renderAt('/session?hand=left')
+  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/4 verified · 1 unverified/)
+})

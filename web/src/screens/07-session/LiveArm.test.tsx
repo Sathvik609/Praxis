@@ -105,3 +105,12 @@ test('replay query is passed to the stream so no webcam is opened', () => {
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_arm_01' }))
   expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
 })
+
+test('verified and unverified counts are on the live arm screen, from the camera totals', () => {
+  mockStream([{ ...frame, arm: { ...frame.arm, reps_total: 4, unverified_total: 1 } }])
+  renderAt('/session?exercise=arm&side=left')
+  const tally = screen.getByLabelText('Verified and unverified counts')
+  expect(tally).toHaveTextContent('3 verified')
+  expect(tally).toHaveTextContent('1 unverified')
+  expect(tally).toHaveTextContent('4 lifts')
+})

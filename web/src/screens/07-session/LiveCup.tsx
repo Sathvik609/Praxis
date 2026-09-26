@@ -4,7 +4,6 @@ import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { ProgressDots } from '../../design/ProgressDots'
-import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
 import { latencyLine, useLatency } from '../../session/latency'
@@ -15,7 +14,7 @@ import { ProgressionPrompt } from './ProgressionPrompt'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -138,14 +137,7 @@ export function LiveCup() {
           ) : (
             <>
               <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
-              <Card title="This session">
-                <div className="grid grid-cols-3 gap-3">
-                  <Stat value={reaches} label="reaches" />
-                  <Stat value={reaches - unverified} label="verified" />
-                  <Stat value={unverified} label="unverified" tone={unverified ? 'amber' : 'default'} />
-                </div>
-                <div className="mt-2 text-lg text-muted">{cup?.arcs_done ?? 0} of {planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar</div>
-              </Card>
+              <VerifiedTally total={reaches} unverified={unverified} noun="reaches" note={`${cup?.arcs_done ?? 0} of ${planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar`} />
               <ExertionChip exertion={coach.exertion} />
             </>
           )}

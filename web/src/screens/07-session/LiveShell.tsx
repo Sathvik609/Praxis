@@ -3,6 +3,7 @@ import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { AlertTriangle, Camera, Check, Pause, Play, X } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
+import { Stat } from '../../design/Stat'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
@@ -122,3 +123,32 @@ export function CoachCard({ text, label, watch = false }: { text: string; label:
 }
 
 export const COACH_LABEL = 'Rule-based coach · LLM agent pending'
+
+/** Verified vs unverified, the same component on every live screen (CLAUDE.md §1: "verified vs
+ *  unverified counts everywhere"). Counts come from the camera totals the service sends, never
+ *  from the avatar. The word carries the meaning; amber only echoes a non-zero unverified.
+ *  `compact` is one line for the tighter arm and peg-test columns; the full card is the
+ *  wireframe's "This session" block (07b). */
+export function VerifiedTally({ total, unverified, noun, note, compact = false }: { total: number; unverified: number; noun: string; note?: ReactNode; compact?: boolean }) {
+  const verified = Math.max(0, total - unverified)
+  if (compact) {
+    return (
+      <Card as="div" padding="sm" aria-label="Verified and unverified counts">
+        <p className="text-lg tabular-nums">
+          <b>{verified}</b> verified · <b className={unverified ? 'text-amber-ink' : ''}>{unverified}</b> unverified · {total} {noun}
+        </p>
+        {note && <p className="text-lg text-muted">{note}</p>}
+      </Card>
+    )
+  }
+  return (
+    <Card title="This session" aria-label="Verified and unverified counts">
+      <div className="grid grid-cols-3 gap-3">
+        <Stat value={total} label={noun} />
+        <Stat value={verified} label="verified" />
+        <Stat value={unverified} label="unverified" tone={unverified ? 'amber' : 'default'} />
+      </div>
+      {note && <div className="mt-2 text-lg text-muted">{note}</div>}
+    </Card>
+  )
+}

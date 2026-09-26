@@ -15,7 +15,7 @@ import { BoardView } from './BoardView'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
@@ -83,6 +83,9 @@ export function LiveNhpt() {
   }, [complete?.id])
 
   const pegsDone = frame?.nhpt?.pegs_done ?? 0
+  // Occupancy is the peg test's verification; a peg is unverified only when the service says so
+  // (`unverified_total`) or a rep_complete arrives with `verified: false`.
+  const pegsUnverified = Number((frame?.nhpt as { unverified_total?: number } | undefined)?.unverified_total ?? events.filter((e) => e.type === 'rep_complete' && e.verified === false).length)
   const nextHole = frame?.overlay.next_hole ?? null
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
@@ -159,6 +162,7 @@ export function LiveNhpt() {
               <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
             </div>
           </Card>
+          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="pegs" />
           {traceOpen ? (
             <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
           ) : (

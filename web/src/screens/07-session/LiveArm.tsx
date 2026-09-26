@@ -16,7 +16,7 @@ import { useWebcamStream } from '../../session/useWebcamStream'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { SetCheckIn } from './SetCheckIn'
@@ -155,6 +155,7 @@ export function LiveArm() {
               <Stat value={`${lean}°`} label="trunk lean" tone={leaning ? 'amber' : 'default'} extra={leaning ? <span className="font-bold text-amber-ink">(leaning)</span> : undefined} />
             </div>
           </Card>
+          <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swings' : 'lifts'} />
           {traceOpen ? (
             <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
           ) : (
