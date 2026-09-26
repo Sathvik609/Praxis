@@ -1,0 +1,73 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://praxis.local/evaluation/labels.schema.json",
+ "title": "Praxis ground-truth labels for one recorded clip (praxis.labels/1)",
+ "description": "One file per clip, next to it: raw/<participant>/<exercise>/<timestamp>.labels.json. Written by services/session/tools/label_clip.py; validated by tools/dataset_v1.py:validate_labels. Times are seconds from the first frame of the clip (frame_index / fps). Indices are 0-based and match the pipeline's events: NHPT `hole` 0..8, cup `to_dot` 0..4 (printed dot number minus 1).",
+ "type": "object",
+ "required": ["schema", "clip_id", "exercise", "labeller", "reps"],
+ "additionalProperties": false,
+ "properties": {
+  "schema": {"const": "praxis.labels/1"},
+  "clip_id": {"type": "string", "minLength": 1},
+  "exercise": {"enum": ["pendulum", "flexion", "abduction", "cup", "nhpt"]},
+  "labeller": {"type": "string", "minLength": 1, "description": "Initials of the person who labelled (not the participant)."},
+  "labelled_at": {"type": "string"},
+  "fps": {"type": "number", "exclusiveMinimum": 0},
+  "complete": {"type": "boolean", "description": "true once every rep in the clip is labelled; eval.py scores complete files only."},
+  "notes": {"type": "string"},
+  "reps": {"type": "array", "items": {"$ref": "#/$defs/rep"}},
+  "nhpt": {
+   "type": "object",
+   "description": "NHPT only. t_start = first peg lifted, t_end = ninth peg seated (the product's timer definition). Derived from the reps when the labeller saves.",
+   "required": ["t_start", "t_end", "total_s"],
+   "additionalProperties": false,
+   "properties": {
+    "t_start": {"type": "number", "minimum": 0},
+    "t_end": {"type": "number", "minimum": 0},
+    "total_s": {"type": "number", "minimum": 0}
+   }
+  },
+  "drops": {"type": "array", "items": {"type": "number", "minimum": 0}, "description": "NHPT only: times a peg was dropped."}
+ },
+ "$defs": {
+  "rep": {
+   "type": "object",
+   "required": ["rep", "t_start", "t_end", "expected"],
+   "additionalProperties": false,
+   "properties": {
+    "rep": {"type": "integer", "minimum": 1},
+    "t_start": {"type": "number", "minimum": 0, "description": "Arm: arm starts to move. Cup: cup lifted off its dot. NHPT: peg lifted from the dish."},
+    "t_end": {"type": "number", "minimum": 0, "description": "Arm: arm back at the start position (pendulum: one full to-and-fro swing done). Cup: cup set down on the next dot. NHPT: peg seated in the hole."},
+    "expected": {"enum": ["verified", "unverified"], "description": "What the product SHOULD say: verified = a correct rep, fully visible; unverified = the camera could not or should not verify it (occluded, marker lost, swing too small, hold too short, target missed)."},
+    "reason": {"type": ["string", "null"], "description": "Why the rep should be unverified (occluded, marker_lost, swing_too_small, hold_too_short, target_missed, other)."},
+    "deliberate_error": {"enum": [null, "lean", "hike", "small_swing", "occluded_cup", "dropped_peg", "short_hold", "other"], "description": "Set when the participant performed a scripted error rep (PROTOCOL.md)."},
+    "hole": {"type": "integer", "minimum": 0, "maximum": 8},
+    "to_dot": {"type": "integer", "minimum": 0, "maximum": 4},
+    "peak_deg_goniometer": {"type": ["number", "null"], "minimum": 0, "maximum": 180, "description": "Arm lifts: shoulder angle read from the goniometer app at the top of the rep (PROTOCOL.md). null when not measured."},
+    "compensation": {
+     "type": "object",
+     "required": ["lean", "hike"],
+     "additionalProperties": false,
+     "properties": {
+      "lean": {"type": "boolean", "description": "Trunk visibly leaned during the rep."},
+      "hike": {"type": "boolean", "description": "Shoulder visibly shrugged/hiked during the rep."}
+     }
+    }
+   }
+  }
+ },
+ "allOf": [
+  {
+   "if": {"properties": {"exercise": {"const": "nhpt"}}},
+   "then": {"required": ["nhpt"], "properties": {"reps": {"items": {"required": ["hole"]}}}}
+  },
+  {
+   "if": {"properties": {"exercise": {"const": "cup"}}},
+   "then": {"properties": {"reps": {"items": {"required": ["to_dot"]}}}}
+  },
+  {
+   "if": {"properties": {"exercise": {"enum": ["pendulum", "flexion", "abduction"]}}},
+   "then": {"properties": {"reps": {"items": {"required": ["compensation"]}}}}
+  }
+ ]
+}
