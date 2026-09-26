@@ -10,27 +10,16 @@ import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
 import { exerciseOfSession } from '../../lib/seed'
+import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
 
-const GUIDANCE_KEY = 'praxis.guidance'
-type Guidance = { spoken: boolean; captions: boolean; larger: boolean; helper: boolean }
-const GUIDANCE_DEFAULT: Guidance = { spoken: true, captions: true, larger: false, helper: false }
+/** Every toggle here is read by the code it names (session/guidance.ts). Captions are not a
+ *  toggle: they are always on. The old "Helper for setup" toggle was never read and is gone. */
 const GUIDANCE_ITEMS: { key: keyof Guidance; label: string; description: string }[] = [
   { key: 'spoken', label: 'Spoken instructions', description: 'Coach cues read aloud by this browser' },
-  { key: 'captions', label: 'Captions', description: 'Every spoken cue also shown as text' },
-  { key: 'larger', label: 'Larger text', description: 'Bigger cues and labels in session' },
-  { key: 'helper', label: 'Helper for setup', description: 'Extra guidance while placing the camera and sheet' },
+  { key: 'larger', label: 'Larger text', description: 'Everything in the app about an eighth bigger' },
 ]
 
-function readGuidance(): Guidance {
-  try {
-    const raw = localStorage.getItem(GUIDANCE_KEY)
-    return raw ? { ...GUIDANCE_DEFAULT, ...(JSON.parse(raw) as Partial<Guidance>) } : GUIDANCE_DEFAULT
-  } catch {
-    return GUIDANCE_DEFAULT
-  }
-}
-
-/** Settings: theme (light default), guidance (persisted on this device), privacy statement, and
+/** Settings: theme (light default), guidance (kept in this browser), privacy statement, and
  *  the replay entry (judge fallback: a recorded clip through the identical pipeline, no webcam). */
 export function Settings() {
   const nav = useNavigate()
@@ -44,11 +33,7 @@ export function Settings() {
   const setG = (key: keyof Guidance, v: boolean) => {
     const next = { ...guidance, [key]: v }
     setGuidance(next)
-    try {
-      localStorage.setItem(GUIDANCE_KEY, JSON.stringify(next))
-    } catch {
-      /* private mode: kept for this page only */
-    }
+    writeGuidance(next)
   }
   return (
     <div className="grid grid-cols-2 gap-6 p-8">
@@ -65,6 +50,7 @@ export function Settings() {
               <Checkbox key={g.key} label={g.label} description={g.description} checked={guidance[g.key]} onChange={(v) => setG(g.key, v)} />
             ))}
           </div>
+          <p className="mt-2 text-lg text-muted">Captions are always on: every spoken cue is also shown as text.</p>
         </Card>
         <Card title="Privacy">
           <p className="text-lg">Video is {processingPlace()}. Only events, measurements and logs are kept. Feeling is what you tell us, never read from your face. Clips are recorded only with your explicit consent and deleted after 30 days.</p>

@@ -17,7 +17,9 @@ import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { readGuidance } from '../../session/guidance'
+import { useRestBreak } from '../../session/useRestBreak'
+import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
@@ -58,7 +60,11 @@ export function LiveArm() {
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  const coach = useCoach(events, { speak: browserSpeak })
+  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
+  const [spoken] = useState(() => readGuidance().spoken)
+  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const rest = useRestBreak(send, coach.clearOverlay)
+  const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
 
@@ -176,11 +182,12 @@ export function LiveArm() {
 
       <SetCheckIn open={setCheckOpen} setNumber={setDone?.set ?? 1} onSubmit={(r) => { if (r !== null) send({ cmd: 'rpe', rpe: r }); setAskedSets((s) => [...s, setDone?.set ?? 0]) }} />
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
         onPause={() => send({ cmd: 'pause' })}
-        onRest={() => send({ cmd: 'pause' })}
+        onRest={rest.start}
         onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}

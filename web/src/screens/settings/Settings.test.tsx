@@ -14,7 +14,10 @@ function renderSettings() {
   )
 }
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  delete document.documentElement.dataset.text
+})
 
 test('settings switches theme and lists replay clips with a replay entry', async () => {
   mockApi({ '/api/replay/list': { clips: [{ id: 'synthetic_nhpt_01', mode: 'nhpt', sheet: 'nhpt_board', path: 'synthetic_nhpt_01.mp4', synthetic: true }] } })
@@ -33,10 +36,12 @@ test('settings switches theme and lists replay clips with a replay entry', async
 test('guidance checkboxes persist to localStorage and load back', async () => {
   mockApi({ '/api/replay/list': { clips: [] } })
   const { unmount } = renderSettings()
-  expect(screen.getByLabelText(/^Captions/)).toBeChecked()
+  expect(screen.getByLabelText(/^Spoken instructions/)).toBeChecked()
   expect(screen.getByLabelText(/^Larger text/)).not.toBeChecked()
   fireEvent.click(screen.getByLabelText(/^Larger text/))
   expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(true)
+  // larger text is real: the root font scales at once
+  expect(document.documentElement.dataset.text).toBe('large')
   expect(await screen.findByText(/No recordings available yet/)).toBeInTheDocument()
   unmount()
   renderSettings()
@@ -49,4 +54,13 @@ test('replay clips are named from the exercise registry, including arm clips by 
   expect(await screen.findByText('Arm out to the side')).toBeInTheDocument()
   expect(screen.getByText('Waiter – cup')).toBeInTheDocument()
   expect(screen.queryByText('Arm to the front')).not.toBeInTheDocument()
+})
+
+test('no decorative toggles: captions are stated as always on, and there is no setup-helper toggle', async () => {
+  mockApi({ '/api/replay/list': { clips: [] } })
+  renderSettings()
+  expect(screen.queryByLabelText(/^Captions/)).not.toBeInTheDocument()
+  expect(screen.queryByLabelText(/Helper for setup/)).not.toBeInTheDocument()
+  expect(screen.getByText(/Captions are always on/)).toBeInTheDocument()
+  await screen.findByText(/No recordings available yet/)
 })
