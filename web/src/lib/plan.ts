@@ -25,15 +25,25 @@ export function tierFor(pain: number | null, painMax: number = REST_AT): Tier {
 export const TIER_TEXT: Record<Tier, { chip: string; line: string }> = {
   full: { chip: 'Full dose', line: 'the full day at your prescribed dose.' },
   gentle: { chip: 'Gentle day', line: 'a gentle day. Fewer reps, shorter holds, the side lift to 60° and no fast arcs, all inside what your therapist allows.' },
-  rest: { chip: 'Rest day', line: 'a rest day. No exercises today, and your therapist has been told.' },
+  // Whether the therapist was told depends on the service answer (`day.ts` therapistLine), never on this text.
+  rest: { chip: 'Rest day', line: 'a rest day. No exercises today.' },
 }
 
 export function doseFor(ex: Exercise, tier: Tier): string {
   return tier === 'gentle' && ex.gentleDose ? ex.gentleDose : ex.dose
 }
 
-/** Pain from today's check-in (screen 03 stores it), or null when there is none. */
+/** Pain from today's check-in (screen 03 stores it via `day.ts`), or null when there is none.
+ *  Reads today's day record first, then the per-tab session key older code writes. */
 export function readCheckinPain(): number | null {
+  try {
+    const day = JSON.parse(localStorage.getItem('praxis.day') ?? 'null') as { date?: string; checkin?: { pain?: unknown } | null } | null
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (day?.date === today && typeof day.checkin?.pain === 'number') return day.checkin.pain
+  } catch {
+    /* fall through */
+  }
   try {
     const raw = sessionStorage.getItem('praxis.checkin')
     if (!raw) return null

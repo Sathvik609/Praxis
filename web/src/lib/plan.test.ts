@@ -32,3 +32,15 @@ test('the check-in pain is read from session storage and survives junk', () => {
   sessionStorage.removeItem('praxis.checkin')
   expect(readCheckinPain()).toBeNull()
 })
+
+test("today's check-in from the day record wins over the per-tab key; yesterday's does not count", () => {
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 1 }))
+  localStorage.setItem('praxis.day', JSON.stringify({ date: today, checkin: { pain: 6 } }))
+  expect(readCheckinPain()).toBe(6)
+  localStorage.setItem('praxis.day', JSON.stringify({ date: '2000-01-01', checkin: { pain: 6 } }))
+  expect(readCheckinPain()).toBe(1)
+  localStorage.removeItem('praxis.day')
+  sessionStorage.removeItem('praxis.checkin')
+})
