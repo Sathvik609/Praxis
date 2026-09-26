@@ -27,8 +27,11 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   expect(screen.getByText(/Prescription \(v3\)/)).toBeInTheDocument()
   expect(screen.getByText(/Stop rules: pain ≥7/)).toBeInTheDocument()
   expect(screen.getByText('86')).toBeInTheDocument()
-  expect(screen.getByText('Sample')).toBeInTheDocument()
+  expect(screen.getAllByText('Sample').length).toBeGreaterThan(0)
   expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()
+  // pain summary comes from the stored sessions, not a hard-coded sentence
+  expect(screen.queryByText(/one spike to 5 on 8 Sep/)).not.toBeInTheDocument()
+  expect(await screen.findByText(/Pain before → after · 09-12: 2 → 2/)).toBeInTheDocument()
   expect(screen.getAllByRole('button', { name: 'Open trace' }).length).toBeGreaterThan(0)
   fireEvent.click(screen.getAllByRole('button', { name: 'Mark reviewed' })[0])
   expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/flags/1/reviewed'))).toBe(true)
@@ -57,4 +60,11 @@ test('edit prescription and review flags scroll to their sections; the trace pan
   expect(await screen.findByText(/Decision trace/)).toBeInTheDocument()
   expect(screen.queryByText(/jsonl/)).not.toBeInTheDocument()
   expect(screen.getByText(/No trace rows for this session/)).toBeInTheDocument()
+})
+
+test('sample sessions in the pain summary are labeled Sample', async () => {
+  mockApi({ ...ROUTES, '/api/sessions': { sessions: [{ ...SESSION, illustrative: true }] } })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  const line = await screen.findByText(/Pain before → after/)
+  expect(line.closest('div')).toHaveTextContent('Sample')
 })

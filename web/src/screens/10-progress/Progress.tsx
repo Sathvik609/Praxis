@@ -174,7 +174,7 @@ export function Progress() {
         </Card>
         <div className="space-y-6">
           <Card title="Everyday goal log">
-            <p className="text-lg">Used a cup with my left hand — {p.goal_log_count} times this month</p>
+            <p className="text-lg">{p.goal_log_count} attempts logged at your everyday goal</p>
             {logNote && <p className="text-base text-muted" role="status">{logNote}</p>}
             <Button variant="secondary" className="mt-3" onClick={logAttempt}>Log an attempt</Button>
           </Card>

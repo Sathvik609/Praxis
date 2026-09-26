@@ -64,6 +64,13 @@ test('filters are real: range, task and compare-same-setup change the bars and t
   expect(screen.getByText(/Ended early · pain 5/)).toBeInTheDocument()
 })
 
+test('goal log count is not dressed up as this month or as a fixed goal sentence', async () => {
+  mockApi({ '/api/progress': PROGRESS, '/api/sessions': SESSIONS })
+  renderProgress()
+  expect(await screen.findByText(/6 attempts logged/)).toBeInTheDocument()
+  expect(screen.queryByText(/this month/)).not.toBeInTheDocument()
+})
+
 test('log an attempt refetches instead of reloading the page', async () => {
   const fetchMock = mockApi({ '/api/progress': PROGRESS, '/api/sessions': SESSIONS, '/api/goal-log': { ok: true, goal_attempts: 7 } })
   renderProgress()

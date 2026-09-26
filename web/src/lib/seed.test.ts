@@ -1,4 +1,4 @@
-import { angleTarget, exerciseOfSession, sessionExerciseName } from './seed'
+import { angleTarget, exerciseOfSession, sessionExerciseName, upcomingVisit } from './seed'
 
 test('a stored session resolves to its registry exercise from the service id, the summary or the mode', () => {
   expect(exerciseOfSession({ mode: 'arm', exercise: 'abduction' })?.name).toBe('Arm out to the side')
@@ -23,4 +23,14 @@ test('angle target: Pendulum has none; the summary target wins; a null ceiling m
   expect(angleTarget({}, 'arm')).toBe(90)
   expect(angleTarget({ target_deg: 60 }, 'abduction')).toBe(60)
   expect(angleTarget({ ceiling_deg: null }, 'arm')).toBeUndefined()
+})
+
+test('a visit date in the past is not shown as the next visit', () => {
+  const now = new Date(2026, 8, 25, 12) // 25 Sep 2026
+  expect(upcomingVisit('Thu 18 Sep, 2:30 PM', now)).toBeNull()
+  expect(upcomingVisit('Thu 25 Sep, 2:30 PM', now)).toBe('Thu 25 Sep, 2:30 PM') // later today still counts
+  expect(upcomingVisit('Thu 2 Oct, 2:30 PM', now)).toBe('Thu 2 Oct, 2:30 PM')
+  expect(upcomingVisit('Tue 12 Jan', new Date(2026, 11, 20))).toBe('Tue 12 Jan') // early next year
+  expect(upcomingVisit('', now)).toBeNull()
+  expect(upcomingVisit(undefined, now)).toBeNull()
 })

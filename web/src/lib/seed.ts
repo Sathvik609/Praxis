@@ -123,6 +123,21 @@ export function angleTarget(summary: { target_deg?: number | null; ceiling_deg?:
   return summary.target_deg ?? 90
 }
 
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+/** The next visit as the store gives it ("Thu 18 Sep, 2:30 PM"), or null once that day has
+ *  passed, so a stale seeded date is never shown as upcoming. A month more than six months
+ *  back is read as next year. Text without a day and month is passed through. */
+export function upcomingVisit(text: string | null | undefined, now: Date = new Date()): string | null {
+  if (!text) return null
+  const m = text.match(/(\d{1,2})\s+([A-Za-z]{3})/)
+  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1
+  if (!m || month < 0) return text
+  let day = new Date(now.getFullYear(), month, Number(m[1]), 23, 59, 59)
+  if (now.getTime() - day.getTime() > 182 * 86400e3) day = new Date(now.getFullYear() + 1, month, Number(m[1]), 23, 59, 59)
+  return day >= now ? text : null
+}
+
 export const WEEK = { days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], done: [true, true, false, true], todayIndex: 4, sessions: 3, minutes: 42, lastSession: '8 verified · pain 2→2' }
 
 export const REGIONS: Record<string, { title: string; status: Marker['status']; setBy: string; metrics: { value: string; unit?: string; label: string; delta?: string }[]; program: { name: string; tag: string }[]; primary: { label: string; to: string } }> = {

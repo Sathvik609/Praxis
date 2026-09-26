@@ -108,3 +108,26 @@ test('rotate flips front and side; Both alternates every 4 s', () => {
     vi.useRealTimers()
   }
 })
+
+test('region metrics are sample data and say so; the card lists today from the plan', () => {
+  renderHome()
+  const card = screen.getByRole('heading', { name: 'Left hand' }).closest('section')!
+  expect(card).toHaveTextContent('Sample')
+  expect(card).toHaveTextContent(/Today/)
+  for (const name of ['Pendulum', 'Arm to the front', 'Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) {
+    expect(card).toHaveTextContent(name)
+  }
+  expect(card).toHaveTextContent(/weekly/)
+})
+
+test('a next visit in the past is not shown as upcoming', () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 8, 25, 12))
+  try {
+    renderHome()
+    expect(screen.queryByText(/18 Sep/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Not booked yet/)).toBeInTheDocument()
+  } finally {
+    vi.useRealTimers()
+  }
+})
