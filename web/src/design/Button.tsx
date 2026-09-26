@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'inverse' | 'link'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'safety' | 'inverse' | 'link'
   full?: boolean
   icon?: ReactNode
 }
@@ -17,6 +17,9 @@ const styles = {
   secondary: 'border-2 border-teal-ink bg-surface text-teal-ink hover:bg-tint-mint',
   danger: 'bg-red-fill text-white shadow-[var(--shadow-1)] hover:brightness-110',
   ghost: 'border-2 border-red-ink bg-surface text-red-ink hover:bg-tint-red',
+  /** Safety actions (Pain / feel unwell): thick red outline on a red tint, always with an icon
+   *  and words, so it stands out without relying on colour. */
+  safety: 'border-4 border-red-ink bg-tint-red text-red-ink hover:brightness-95',
   inverse: 'bg-white text-teal hover:brightness-95',
   link: 'min-h-12 px-2 text-teal-ink underline underline-offset-4 hover:bg-tint-mint',
 }
