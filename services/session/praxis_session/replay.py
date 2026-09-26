@@ -4,12 +4,23 @@ This is the guaranteed judge fallback. Timestamps are derived from the file's fp
 index, so results are deterministic. Uses cv2.VideoCapture (cv2.__version__ == 5.0.0).
 
     uv run python -m praxis_session.replay clip.mp4 --mode nhpt [--events-out ev.jsonl] [--quiet]
+    uv run python -m praxis_session.replay --list          # every clip the app can replay
+
+Clip discovery (`list_replay_clips`) has two sources:
+  1. the synthetic dataset_v0 manifest (OpenCV renders, listed with `synthetic: true`);
+  2. any `<name>.mp4` with a `<name>.json` sidecar naming a camera-coached exercise under the
+     replay folders (`evaluation/dataset_v1/raw` and `evaluation/replay`, or
+     `PRAXIS_REPLAY_DIRS`, os.pathsep-separated). A real (non-synthetic) clip is listed only if
+     its sidecar carries the participant's replay-demo consent, the 30-day deletion date has not
+     passed and the clip has not been deleted. Nothing is fabricated: no clip, no entry.
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -31,6 +42,7 @@ class ReplayResult:
     nhpt_total_s: float | None
     events: list[Event] = field(default_factory=list)
     snapshot: dict[str, Any] = field(default_factory=dict)
+    models: dict[str, bool] = field(default_factory=dict)
 
     def summary(self) -> dict[str, Any]:
         counts: dict[str, int] = {}
@@ -45,7 +57,127 @@ class ReplayResult:
             "nhpt_total_s": self.nhpt_total_s,
             "event_counts": counts,
             "snapshot": self.snapshot,
+            "models": self.models,
         }
+
+
+REPO = Path(__file__).resolve().parents[3]
+DEFAULT_V0_DIR = REPO / "evaluation" / "dataset_v0"
+DEFAULT_REPLAY_DIRS: tuple[Path, ...] = (REPO / "evaluation" / "dataset_v1" / "raw", REPO / "evaluation" / "replay")
+SHEET_BY_PIPELINE = {"nhpt": "nhpt_board", "cup": "cup_targets", "arm": "none"}
+
+
+@dataclass(frozen=True)
+class ReplayClip:
+    id: str
+    exercise: str  # registry id (nhpt, cup, pendulum, flexion, abduction)
+    pipeline: str  # SessionPipeline mode (nhpt, cup, arm)
+    sheet: str
+    path: Path
+    synthetic: bool
+    source: str  # "manifest" (dataset_v0) or "sidecar"
+    side: str | None = None
+    view: str | None = None
+    name: str = ""
+
+    def to_api(self) -> dict[str, Any]:
+        """`mode` is the registry exercise id: the web routes `/session?exercise=<mode>` on it
+        (identical to the pipeline mode for nhpt and cup, the arm exercise id otherwise)."""
+        return {
+            "id": self.id,
+            "mode": self.exercise,
+            "exercise": self.exercise,
+            "name": self.name,
+            "pipeline": self.pipeline,
+            "sheet": self.sheet,
+            "side": self.side,
+            "view": self.view,
+            "path": self.path.name,
+            "synthetic": self.synthetic,
+            "source": self.source,
+        }
+
+
+def replay_dirs() -> list[Path]:
+    env = os.environ.get("PRAXIS_REPLAY_DIRS")
+    if env is not None:
+        return [Path(p) for p in env.split(os.pathsep) if p]
+    return list(DEFAULT_REPLAY_DIRS)
+
+
+def _coached() -> dict[str, Any]:
+    from praxis_session.perception.exercises import EXERCISES
+
+    return {k: ex for k, ex in EXERCISES.items() if ex.mode == "coached" and ex.pipeline}
+
+
+def _sidecar_clip(sidecar: Path, meta: dict[str, Any], today: dt.date) -> ReplayClip | None:
+    ex = _coached().get(str(meta.get("exercise", "")))
+    video = sidecar.with_suffix(".mp4")
+    if ex is None or not video.exists():
+        return None
+    synthetic = bool(meta.get("synthetic", False))
+    if not synthetic:
+        consent = meta.get("consent") or {}
+        try:
+            until = dt.date.fromisoformat(str(consent.get("delete_after")))
+        except ValueError:
+            return None
+        if not consent.get("replay_demo") or today >= until or meta.get("clip_deleted_on"):
+            return None
+    return ReplayClip(
+        id=str(meta.get("clip_id") or sidecar.stem),
+        exercise=ex.id,
+        pipeline=ex.pipeline,
+        sheet=SHEET_BY_PIPELINE[ex.pipeline],
+        path=video,
+        synthetic=synthetic,
+        source="sidecar",
+        side=meta.get("side"),
+        view=meta.get("view") or ex.view,
+        name=ex.name,
+    )
+
+
+def list_replay_clips(
+    v0_dir: Path | None = None, dirs: list[Path] | None = None, today: dt.date | None = None
+) -> list[ReplayClip]:
+    """Every clip the app may replay, synthetic renders first; ids are unique."""
+    v0_dir = DEFAULT_V0_DIR if v0_dir is None else Path(v0_dir)
+    today = today or dt.date.today()
+    reg = _coached()
+    out: dict[str, ReplayClip] = {}
+    manifest = v0_dir / "manifest.json"
+    if manifest.exists():
+        for e in json.loads(manifest.read_text()).get("entries", []):
+            video = v0_dir / str(e.get("video", ""))
+            if not e.get("video") or not video.exists() or e.get("mode") not in reg:
+                continue
+            out[e["id"]] = ReplayClip(
+                id=e["id"], exercise=e["mode"], pipeline=e["mode"], sheet=e.get("sheet", "nhpt_board"),
+                path=video, synthetic=bool(e.get("synthetic", False)), source="manifest",
+                side=e.get("side"), view=reg[e["mode"]].view, name=reg[e["mode"]].name,
+            )
+    for d in replay_dirs() if dirs is None else dirs:
+        if not Path(d).exists():
+            continue
+        for sc in sorted(Path(d).rglob("*.json")):
+            if sc.name.endswith((".labels.json", ".pred.json")):
+                continue
+            try:
+                meta = json.loads(sc.read_text())
+            except (OSError, ValueError):
+                continue
+            clip = _sidecar_clip(sc, meta, today) if isinstance(meta, dict) else None
+            if clip is not None and clip.id not in out:
+                out[clip.id] = clip
+    return list(out.values())
+
+
+def find_replay_clip(
+    clip_id: str, v0_dir: Path | None = None, dirs: list[Path] | None = None, today: dt.date | None = None
+) -> ReplayClip | None:
+    return next((c for c in list_replay_clips(v0_dir, dirs, today) if c.id == clip_id), None)
 
 
 def run_replay(
@@ -88,6 +220,7 @@ def run_replay(
         nhpt_total_s=snap["nhpt"]["total_s"] if snap.get("nhpt") else None,
         events=events,
         snapshot=snap,
+        models={"hand": pipeline._hand is not None, "pose": pipeline._pose is not None},
     )
 
 
@@ -158,8 +291,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("video")
+    ap.add_argument("video", nargs="?")
+    ap.add_argument("--list", action="store_true", help="list every replayable clip and exit")
     ap.add_argument("--mode", choices=list(MODES), default="nhpt")
+    ap.add_argument("--exercise", default=None, help="arm mode: registry id (pendulum, flexion, abduction)")
     ap.add_argument("--sheet", default="nhpt_board")
     ap.add_argument("--fps", type=float, default=None, help="override the file fps")
     ap.add_argument("--events-out", default=None, help="write events JSONL here")
@@ -168,8 +303,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--side", default="left")
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args(argv)
-    if args.mode == "arm" or str(args.video).endswith(".jsonl"):
-        res = run_landmark_replay(args.video, side=args.side)
+    if args.list:
+        print(json.dumps([c.to_api() for c in list_replay_clips()], indent=2))
+        return 0
+    if not args.video:
+        ap.error("a video (or --list) is required")
+    extra = {"exercise": args.exercise} if args.exercise else {}
+    if str(args.video).endswith(".jsonl"):
+        res = run_landmark_replay(args.video, side=args.side, **extra)
+    elif args.mode == "arm":
+        res = run_replay(args.video, mode="arm", sheet="none", fps_override=args.fps, side=args.side, **extra)
     else:
         res = run_replay(
             args.video,
