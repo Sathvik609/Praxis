@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from praxis_session.perception.exercises import EXERCISES
+from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 
@@ -72,10 +72,25 @@ class Store:
         self._db.execute("UPDATE prescriptions SET json=? WHERE id=?", (seed, row["id"]))
         self._db.commit()
 
+    def _refresh_seed_sessions(self) -> None:
+        """The illustrative seed history is code too. Rewrite each seed row (by its seed id) from
+        `seed_data.SESSIONS`, so a database seeded before 28 Sep stops naming Arm to the front.
+        Rows that are not seed ids (real sessions) are never touched."""
+        for s in SESSIONS:
+            if self._db.execute("SELECT 1 FROM sessions WHERE id=?", (s["id"],)).fetchone() is None:
+                continue
+            self._db.execute(
+                "UPDATE sessions SET mode=?, title=?, summary_json=?, exercise=? WHERE id=?",
+                (s["mode"], s["title"], json.dumps(s["summary"]), s.get("exercise"), s["id"]),
+            )
+        self._db.commit()
+
     def seed_if_empty(self) -> None:
-        """Seed an empty database; on an existing one, bring the seed prescription up to date."""
+        """Seed an empty database; on an existing one, bring the seed prescription and the
+        illustrative seed history up to date."""
         if self._db.execute("SELECT COUNT(*) FROM patients").fetchone()[0]:
             self._refresh_seed_prescription()
+            self._refresh_seed_sessions()
             return
         self._db.execute("INSERT INTO patients(id, json) VALUES(?, ?)", (PATIENT["id"], json.dumps(PATIENT)))
         self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], SEED_PRESCRIPTION.version, SEED_PRESCRIPTION.model_dump_json()))
@@ -123,15 +138,21 @@ class Store:
         return d
 
     def sessions(self, limit: int = 50, username: str | None = None) -> list[dict[str, Any]]:
+        """Newest first. Sessions of a hidden exercise (28 Sep) stay stored but are not listed,
+        so no screen, total or coach history names one."""
+        hidden = ",".join("?" * len(HIDDEN_IDS)) or "''"
+        visible = f"(exercise IS NULL OR exercise NOT IN ({hidden}))"
         if username is None:
-            rows = self._db.execute("SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
+            rows = self._db.execute(f"SELECT * FROM sessions WHERE {visible} ORDER BY started_at DESC LIMIT ?", (*HIDDEN_IDS, limit)).fetchall()
         else:
-            rows = self._db.execute("SELECT * FROM sessions WHERE username=? ORDER BY started_at DESC LIMIT ?", (username.lower(), limit)).fetchall()
+            rows = self._db.execute(f"SELECT * FROM sessions WHERE username=? AND {visible} ORDER BY started_at DESC LIMIT ?", (username.lower(), *HIDDEN_IDS, limit)).fetchall()
         return [self._row(r) for r in rows]
 
     def session(self, sid: str) -> dict[str, Any] | None:
         r = self._db.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone()
-        return None if r is None else self._row(r, with_events=True)
+        if r is None or r["exercise"] in HIDDEN_IDS:
+            return None  # a hidden exercise's session stays stored but is never shown (28 Sep)
+        return self._row(r, with_events=True)
 
     def flags(self, reviewed: bool | None = None) -> list[dict[str, Any]]:
         q = "SELECT * FROM flags" + ("" if reviewed is None else f" WHERE reviewed={1 if reviewed else 0}") + " ORDER BY date DESC, id DESC"
@@ -189,7 +210,7 @@ class Store:
         tracking = "usable" if cam.get("unverified", 0) / total <= 0.3 else "limited"
         if summary.get("mode") == "nhpt" and (summary.get("tracking_lost_events") or cam.get("tracking_lost_events")):
             tracking = "limited"  # pegs seated while tracking was lost cannot be verified
-        names = {"nhpt": "Nine-Hole Peg Test", "cup": "Waiter – cup", "arm": "Arm to the front"}
+        names = {"nhpt": "Nine-Hole Peg Test", "cup": "Waiter – cup", "arm": EXERCISES["abduction"].name}
         exercise = summary.get("exercise")
         username = (summary.get("username") or "").lower() or None
         title = names.get(summary.get("mode"), summary.get("mode", "session"))

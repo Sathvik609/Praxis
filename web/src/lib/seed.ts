@@ -2,8 +2,8 @@
  *  Phase 8 replaces this with the session service's store; all values are labeled illustrative. */
 import type { Marker } from '../avatar/markers'
 
-/** Web ids. `arm` is Arm to the front (kept so `/session?exercise=arm` and replay links still
- *  resolve); every other id is the service registry id (`perception/exercises.py`). */
+/** Web ids. `arm` is Arm to the front (hidden since 28 Sep); every other id is the service
+ *  registry id (`perception/exercises.py`). */
 export type ExerciseId = 'pendulum' | 'arm' | 'abduction' | 'cup' | 'nhpt' | 'external_rotation' | 'internal_rotation'
 /** The list's three headings (locked set, 23 Sep 2026). */
 export type ExerciseGroup = 'exercise' | 'activity' | 'demo'
@@ -34,6 +34,9 @@ export type Exercise = {
   region: 'hand' | 'shoulder'
   /** Equipment ids (EQUIPMENT) the task needs; drives the "Equipment I have" filter. */
   needs: EquipmentId[]
+  /** 28 Sep lock: dormant. Kept (clip, steps, service code) so the decision is reversible, but
+   *  never shown, scheduled, demonstrated or run. Mirrors `visible=False` in the registry. */
+  hidden?: true
 }
 
 export type EquipmentId = 'pegboard' | 'sheets' | 'cup' | 'weight' | 'table' | 'chair'
@@ -53,14 +56,15 @@ export const PROGRAM = { label: 'Hospital GRASP, Level 2 · Left side', short: '
 
 const STOP_IF = 'pain rises or you feel dizzy'
 
-/** The locked set of 23 Sep 2026, in list order. Mirrors the service registry; steps are our own
- *  paraphrase (GRASP text is UBC / Heart & Stroke material, docs/LICENSES.md). */
-export const EXERCISES: Exercise[] = [
-  { id: 'pendulum', serviceId: 'pendulum', name: 'Pendulum', category: 'Warm-up · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'side',
+/** Every registry entry, in list order, including the four hidden on 28 Sep (Pendulum, Arm to
+ *  the front, Rotate out, Rotate in). Mirrors the service registry; steps are our own paraphrase
+ *  (GRASP text is UBC / Heart & Stroke material, docs/LICENSES.md). Screens use `EXERCISES`. */
+export const ALL_EXERCISES: Exercise[] = [
+  { id: 'pendulum', serviceId: 'pendulum', name: 'Pendulum', category: 'Warm-up · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'side', hidden: true,
     equipment: 'A sturdy table', dose: '2 × 10 swings', gentleDose: '2 × 8 swings', note: 'Camera counts the swings from the side.', clip: 'pendulum', region: 'shoulder', needs: ['table'],
     steps: ['Stand and lean forward, resting your good hand on a table', 'Let the practising arm hang straight down, loose and heavy', "Swing it gently forward and back — let the weight do the work, don't lift", 'Stop if anything sharpens. This one should feel easy'],
     watchFor: 'lifting the arm instead of letting it swing', stopIf: STOP_IF },
-  { id: 'arm', serviceId: 'flexion', name: 'Arm to the front', category: 'Arm strengthening · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'side',
+  { id: 'arm', serviceId: 'flexion', name: 'Arm to the front', category: 'Arm strengthening · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'side', hidden: true,
     equipment: 'Chair · wrist weight 0.5–1 lb if prescribed', dose: '2 × 8 · hold 3 s · no higher than shoulder', gentleDose: '2 × 6 · hold 2 s · no higher than shoulder', note: 'Camera measures arm angle from the side and watches for leaning.', clip: 'armFront', region: 'shoulder', needs: ['chair'],
     steps: ['Sit tall, practising side toward the camera, arm by your side', 'Lift the straight arm to the front for a count of three', 'Hold at shoulder height for three — never higher', 'Lower for a count of three', 'Eight lifts, rest, then eight more'],
     watchFor: 'leaning back to lift, shoulder hiking', stopIf: STOP_IF },
@@ -76,15 +80,22 @@ export const EXERCISES: Exercise[] = [
     equipment: 'Pegboard + 9 pegs · printed marker sheet', dose: 'Timed, one attempt each hand · weekly', note: 'Timer starts at first peg lift, stops at ninth seated peg.', clip: 'nhpt', region: 'hand', needs: ['pegboard', 'sheets'],
     steps: ['Pegs in the dish on the marked side, board on the printed sheet', 'When ready, pick up the first peg — the timer starts on your first lift', 'Place pegs in any hole, one at a time, as quickly as you comfortably can', 'The timer stops when the ninth peg is seated'],
     watchFor: 'dropping pegs off the sheet', stopIf: STOP_IF },
-  { id: 'external_rotation', serviceId: 'external_rotation', name: 'Rotate out', category: 'Shoulder rotation', group: 'demo', mode: 'demo', session: null,
+  { id: 'external_rotation', serviceId: 'external_rotation', name: 'Rotate out', category: 'Shoulder rotation', group: 'demo', mode: 'demo', session: null, hidden: true,
     equipment: 'Chair', dose: '2 × 8 · hold 3 s', note: 'Demo only: the figure shows it, you tick it. One webcam cannot measure this honestly.', clip: 'external_rotation', region: 'shoulder', needs: ['chair'],
     steps: ['Sit tall, elbow tucked against your side and bent to a right angle', 'Keeping the elbow against you, swing the forearm outward, away from your tummy', 'Hold, then return slowly', 'The elbow stays glued to your side the whole time'],
     stopIf: STOP_IF },
-  { id: 'internal_rotation', serviceId: 'internal_rotation', name: 'Rotate in', category: 'Shoulder rotation', group: 'demo', mode: 'demo', session: null,
+  { id: 'internal_rotation', serviceId: 'internal_rotation', name: 'Rotate in', category: 'Shoulder rotation', group: 'demo', mode: 'demo', session: null, hidden: true,
     equipment: 'Chair', dose: '2 × 8 · hold 3 s', note: 'Demo only: the figure shows it, you tick it. One webcam cannot measure this honestly.', clip: 'internal_rotation', region: 'shoulder', needs: ['chair'],
     steps: ['Sit tall, elbow tucked against your side and bent to a right angle', 'Keeping the elbow against you, bring the forearm across toward your tummy', 'Hold, then return slowly', 'Small and slow beats big and fast'],
     stopIf: STOP_IF },
 ]
+
+/** The three exercises of the 28 Sep lock: Arm out to the side, Waiter – cup, Nine-Hole Peg
+ *  Test. Everything the patient sees is drawn from this list. */
+export const EXERCISES: Exercise[] = ALL_EXERCISES.filter((e) => !e.hidden)
+
+/** True when an id (web or service) names a hidden exercise: a deep link to it is redirected. */
+export const isHiddenExercise = (id: string | null | undefined): boolean => ALL_EXERCISES.some((e) => e.hidden && (e.id === id || e.serviceId === id))
 
 export const GROUPS: { id: ExerciseGroup; title: string; blurb: string }[] = [
   { id: 'exercise', title: 'Exercises', blurb: 'Camera coached. Reps count only when the camera verifies them.' },
@@ -92,7 +103,11 @@ export const GROUPS: { id: ExerciseGroup; title: string; blurb: string }[] = [
   { id: 'demo', title: 'Demo only', blurb: 'The figure shows the movement and you tick each set yourself. The camera does not score these.' },
 ]
 
+/** Visible exercises only: a hidden id resolves to nothing, so no screen can show it. */
 export const exerciseById = (id: string | null | undefined): Exercise | undefined => EXERCISES.find((e) => e.id === id || e.serviceId === id)
+
+/** What a bare `mode: 'arm'` runs since 28 Sep (the service's `DEFAULT_VISIBLE_ID`). */
+const MODE_DEFAULT: Record<string, ExerciseId> = { arm: 'abduction' }
 
 /** Enough of a stored session (or its summary) to say which exercise it was. The service puts
  *  `exercise` (registry id) on records and summaries; newer summaries also carry `exercise_id`,
@@ -103,14 +118,23 @@ export type SessionRef = {
   summary?: { mode?: string; exercise?: string | null; exercise_id?: string | null; exercise_name?: string | null }
 }
 
+const sessionExerciseId = (s: SessionRef) => s.summary?.exercise_id ?? s.summary?.exercise ?? s.exercise
+
+/** A stored session of an exercise hidden on 28 Sep (the service no longer lists those). */
+export const isHiddenSession = (s: SessionRef): boolean => isHiddenExercise(sessionExerciseId(s))
+
 /** The one place a report, the progress page or settings turns a session into an exercise.
- *  A bare `mode: 'arm'` resolves to Arm to the front: before Sprint E arm mode only ran
- *  flexion, and the service still defaults to it. */
+ *  A bare `mode: 'arm'` resolves to Arm out to the side, as the service runs it since 28 Sep. A
+ *  session of a hidden exercise resolves to nothing (the service does not list those). */
 export function exerciseOfSession(s: SessionRef): Exercise | undefined {
-  return exerciseById(s.summary?.exercise_id ?? s.summary?.exercise ?? s.exercise) ?? exerciseById(s.summary?.mode ?? s.mode)
+  const id = sessionExerciseId(s)
+  if (isHiddenExercise(id)) return undefined
+  const mode = s.summary?.mode ?? s.mode
+  return exerciseById(id) ?? exerciseById(mode) ?? exerciseById(MODE_DEFAULT[mode ?? ''])
 }
 
 export function sessionExerciseName(s: SessionRef): string {
+  if (isHiddenExercise(sessionExerciseId(s))) return 'Session'
   return s.summary?.exercise_name || exerciseOfSession(s)?.name || s.summary?.mode || s.mode || 'Session'
 }
 
@@ -118,7 +142,7 @@ export function sessionExerciseName(s: SessionRef): string {
  *  angle) or when the service sends a null ceiling; else the session's own target, else the
  *  locked 90° ceiling. */
 export function angleTarget(summary: { target_deg?: number | null; ceiling_deg?: number | null }, exerciseId: string | undefined): number | undefined {
-  if (exerciseById(exerciseId)?.id === 'pendulum') return undefined
+  if (exerciseId === 'pendulum') return undefined
   if (summary.ceiling_deg === null) return undefined
   return summary.target_deg ?? 90
 }
@@ -147,8 +171,8 @@ export const REGIONS: Record<string, { title: string; status: Marker['status']; 
     primary: { label: 'Run the peg test', to: '/details/checkin?next=nhpt' } },
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
     metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2', unit: 'of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
-    program: [{ name: 'Pendulum', tag: 'camera' }, { name: 'Arm to the front', tag: 'camera' }, { name: 'Arm out to the side', tag: 'camera' }, { name: 'Rotate out', tag: 'demo only' }, { name: 'Rotate in', tag: 'demo only' }],
-    primary: { label: 'Practise Arm to the front', to: '/details/demo?exercise=arm&side=left' } },
+    program: [{ name: 'Arm out to the side', tag: 'camera' }],
+    primary: { label: 'Practise Arm out to the side', to: '/details/demo?exercise=abduction&side=left' } },
   lElbow: { title: 'Left elbow', status: 'stable', setBy: 'No exercise assigned here',
     metrics: [{ value: '170°', label: 'elbow extension during lifts' }],
     program: [],

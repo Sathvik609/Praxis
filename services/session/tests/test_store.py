@@ -111,3 +111,48 @@ def test_nhpt_with_tracking_loss_is_limited(tmp_path):
     st.seed_if_empty()
     st.save_session(_summary(session_id="n1", mode="nhpt", tracking_lost_events=1, camera={"reps_total": 9, "verified": 9, "unverified": 0, "corrections": 0, "nhpt_total_s": 30.0}), checkin={}, feedback={}, events=[])
     assert st.session("n1")["tracking"] == "limited"
+
+
+def test_no_seeded_session_names_a_hidden_exercise(tmp_path):
+    """28 Sep: the illustrative history only names the three visible exercises."""
+    import json
+
+    from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
+
+    hidden = [EXERCISES[i].name.lower() for i in HIDDEN_IDS] + ["pendulum", "arm to the front", "rotate "]
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    for s in st.sessions():
+        blob = json.dumps(s, ensure_ascii=False).lower()
+        assert not [h for h in hidden if h in blob], s["id"]
+        assert s["exercise"] not in HIDDEN_IDS
+    assert [s["exercise"] for s in st.sessions() if s["mode"] == "arm"] == ["abduction"]
+
+
+def test_an_existing_database_gets_the_relabelled_seed_history(tmp_path):
+    """A database seeded before 28 Sep holds seed rows titled Arm to the front: they are
+    rewritten from the code seed on start. Real (non-seed) sessions are not touched."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st._db.execute("UPDATE sessions SET title='Arm to the front', exercise=NULL WHERE id='s-0908-arm'")
+    st._db.commit()
+    st.save_session(_summary(session_id="real1", mode="cup"), checkin={}, feedback={}, events=[])
+    before = st.session("real1")
+    st.seed_if_empty()
+    row = st.session("s-0908-arm")
+    assert row["title"] == "Arm out to the side" and row["exercise"] == "abduction"
+    assert st.session("real1") == before
+
+
+def test_sessions_of_a_hidden_exercise_are_not_listed(tmp_path):
+    """A session saved before 28 Sep for a now-hidden exercise stays in the database (data is
+    never deleted) but is not listed, so no screen shows a hidden exercise name."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    n = len(st.sessions())
+    st.save_session(_summary(session_id="s-old-flexion", mode="arm", exercise="flexion"), checkin={}, feedback={}, events=[])
+    assert st._db.execute("SELECT COUNT(*) FROM sessions WHERE id='s-old-flexion'").fetchone()[0] == 1  # kept
+    assert st.session("s-old-flexion") is None  # but a report link cannot open it either
+    assert len(st.sessions()) == n and "s-old-flexion" not in [s["id"] for s in st.sessions()]
+    st.save_session(_summary(session_id="s-side", mode="arm", exercise="abduction"), checkin={}, feedback={}, events=[])
+    assert "s-side" in [s["id"] for s in st.sessions()]

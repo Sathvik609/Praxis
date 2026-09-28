@@ -126,9 +126,16 @@ test('the service exercise name and target are used when the summary carries the
   expect(screen.getByText(/dashed = target 60/)).toBeInTheDocument()
 })
 
-test('Pendulum has no target line and counts swings, not lifts', async () => {
-  mockApi({ '/api/sessions/abc': ARM('pendulum', { ceiling_deg: null }), '/api/patients/me': ME })
+test.each(['pendulum', 'flexion'])('a stored session of hidden %s is never shown, even from a direct link', async (id) => {
+  mockApi({ '/api/sessions/abc': { ...ARM(id, { exercise_name: id === 'pendulum' ? 'Pendulum' : 'Arm to the front' }), title: 'hidden' }, '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByRole('img', { name: /^Pendulum · swing size per swing/ })).toBeInTheDocument()
-  expect(screen.queryByText(/dashed = target/)).not.toBeInTheDocument()
+  expect(await screen.findByText(/Could not load this report/)).toBeInTheDocument()
+  expect(screen.getByText(/not part of your program/)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front/)
+})
+
+test('a bare arm session (no exercise id) is reported as Arm out to the side', async () => {
+  mockApi({ '/api/sessions/abc': { ...ARM('abduction'), exercise: undefined, summary: { ...ARM('abduction').summary, exercise: undefined } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per lift/ })).toBeInTheDocument()
 })

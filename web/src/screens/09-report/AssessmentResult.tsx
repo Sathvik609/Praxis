@@ -18,7 +18,7 @@ type NhptResult = {
 type Reach = { rep: number; from_dot: number; to_dot: number; reach_ms: number; verified: boolean; reason: string | null; arc: number; phase: string }
 type CupResult = { kind: 'cup'; side: string; arcs: number; reaches: Reach[]; ended_early: boolean }
 type ArmRep = { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
-type ArmResult = { kind: 'arm'; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; ceiling_deg: number }
+type ArmResult = { kind: 'arm'; name?: string; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; ceiling_deg: number }
 type Result = NhptResult | CupResult | ArmResult
 
 const tenth = (v: number) => Math.round(v * 10) / 10
@@ -45,7 +45,7 @@ function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
   const unverified = r.reps.length - verified
   const best = r.reps.filter((x) => x.verified).reduce((m, x) => Math.max(m, x.peak_deg), 0)
   return (
-    <Frame title={`Arm to the front · ${r.side} side`} endedEarly={r.ended_early} caveat={`Camera-relative angles, not goniometry. Ceiling ${r.ceiling_deg}° enforced in code.`} onDone={onDone}>
+    <Frame title={`${r.name ?? 'Arm out to the side'} · ${r.side} side`} endedEarly={r.ended_early} caveat={`Camera-relative angles, not goniometry. Ceiling ${r.ceiling_deg}° enforced in code.`} onDone={onDone}>
       <Card>
         <div className="grid grid-cols-4 gap-4">
           <Stat value={r.sets} label="sets" />

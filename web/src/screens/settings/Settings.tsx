@@ -9,7 +9,7 @@ import { Play } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
-import { exerciseOfSession } from '../../lib/seed'
+import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
 import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
 
 /** Every toggle here is read by the code it names (session/guidance.ts). Captions are not a
@@ -60,7 +60,8 @@ export function Settings() {
         <Card title="Replay a recorded session" action={<Chip tone="amber">Replay</Chip>}>
           <p className="-mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live.</p>
           <div className="mt-4 space-y-3">
-            {(clips ?? []).map((c) => {
+            {/* The service never lists a hidden exercise's clip (28 Sep); filtered here too. */}
+            {(clips ?? []).filter((c) => !isHiddenExercise((c as { exercise?: string }).exercise ?? c.mode)).map((c) => {
               // Named from the one exercise registry (a clip may carry its arm exercise id).
               const ex = exerciseOfSession({ mode: c.mode, exercise: (c as { exercise?: string }).exercise })
               const name = ex?.name ?? c.mode

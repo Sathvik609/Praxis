@@ -33,7 +33,7 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 import praxis_session.trace as trace_mod
-from praxis_session.perception.exercises import EXERCISES, RUNNABLE_TIERS
+from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, RUNNABLE_TIERS
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
@@ -177,12 +177,15 @@ _self_traces: dict[tuple[str, str], Trace] = {}  # one trace file per day (and t
 
 @app.post("/api/self_report")
 def api_self_report(body: SelfReport) -> dict[str, object]:
-    """A demo-only exercise (Rotate out / Rotate in) the patient did while watching the avatar.
-    It is logged as self-ticked and **never** as a verified rep; a camera-coached exercise is
-    refused here because it only counts from OpenCV events."""
+    """A demo-only exercise the patient did while watching the avatar. It is logged as
+    self-ticked and **never** as a verified rep; a camera-coached exercise is refused here
+    because it only counts from OpenCV events. Since 28 Sep the only demo-only entries (Rotate
+    out / Rotate in) are hidden, so this path is dormant: a hidden exercise is `not_offered`."""
     ex = EXERCISES.get(body.exercise)
     if ex is None:
         return {"ok": False, "error": "unknown_exercise", "exercise": body.exercise}
+    if not ex.visible:
+        return {"ok": False, "error": "not_offered", "exercise": ex.id, "text": f"{ex.name} is not part of your program."}
     if ex.mode != "demo":
         return {"ok": False, "error": "not_demo", "exercise": ex.id, "text": f"{ex.name} is counted by the camera, not by a tick."}
     sets = max(1, min(10, int(body.sets)))
@@ -239,15 +242,18 @@ async def session_ws(
     One pipeline per connection; every event goes to the shared ring and back over the socket
     as one JSON text message per event. Frames are decoded in memory and dropped.
 
-    Sprint E: `mode=arm` takes `exercise` (a `perception/exercises.py` id; default `flexion`,
-    which behaves exactly as Arm to the front always did) and `tier` (`full`/`gentle`, the
-    pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
+    Sprint E: `mode=arm` takes `exercise` (a `perception/exercises.py` id) and `tier`
+    (`full`/`gentle`, the pain-tier overrides). `target`/`hold`/`sets`/`reps` still override
+    both when given. Since 28 Sep a missing or unknown arm exercise runs `DEFAULT_VISIBLE_ID`
+    (Arm out to the side) and a hidden one is refused (`not_offered`).
     """
     await ws.accept()
     clip = find_replay_clip(replay, EVAL_DIR) if replay else None
     if clip is not None:  # a recorded clip knows its own pipeline, exercise and side
         mode, sheet, side = clip.pipeline, clip.sheet, clip.side or side
         exercise = clip.exercise if clip.pipeline == "arm" else exercise
+    if mode == "arm" and (not exercise or exercise not in EXERCISES):
+        exercise = DEFAULT_VISIBLE_ID  # never fall back to a hidden exercise
     if mode not in MODES:
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
@@ -285,7 +291,7 @@ async def session_ws(
         coach = CoachSession(
             mode=mode,
             prescription=SEED_PRESCRIPTION,
-            exercise=(exercise or "flexion") if mode == "arm" else None,
+            exercise=exercise if mode == "arm" else None,
         )
         sessions[coach.session_id] = coach
         latency_stats[coach.session_id] = stats
@@ -299,14 +305,17 @@ async def session_ws(
 
 
 def _refuse_exercise(mode: str, exercise: str | None, tier: str) -> Event | None:
-    """Guardrails before any pipeline exists. A demo-only exercise (Rotate out / Rotate in) is
-    never scored by the camera; a sheet activity is not an arm exercise; a tier outside
-    full/gentle has nothing to run (pain >= 7 is a rest day, handled by the stop rule)."""
+    """Guardrails before any pipeline exists. A hidden exercise (28 Sep: Pendulum, Arm to the
+    front, Rotate out, Rotate in) is not offered; a demo-only exercise is never scored by the
+    camera; a sheet activity is not an arm exercise; a tier outside full/gentle has nothing to
+    run (pain >= 7 is a rest day, handled by the stop rule)."""
     if tier not in RUNNABLE_TIERS:
         return make_event("error", code="rest_day" if tier == "rest" else "bad_tier", tier=tier)
     if mode != "arm" or not exercise or exercise not in EXERCISES:
-        return None  # unknown ids keep the old behaviour: Arm to the front
+        return None
     ex = EXERCISES[exercise]
+    if not ex.visible:
+        return make_event("error", code="not_offered", exercise=exercise, text=f"{ex.name} is not part of your program.")
     if ex.mode == "demo":
         return make_event("error", code="demo_only", exercise=exercise, text=f"{ex.name} is demo only: watch the figure and tick it yourself. The camera does not score it.")
     if ex.pipeline != "arm":

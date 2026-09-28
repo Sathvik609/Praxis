@@ -123,14 +123,11 @@ export function Therapist() {
             <Card title={`Prescription (v${rx?.version ?? 3})`} action={<Chip tone="neutral">Read-only</Chip>}>
               <section ref={rxRef} aria-label="Prescription" className="scroll-mt-6">
                 <ul className="divide-y divide-line text-lg">
-                  <li className="flex justify-between gap-2 py-2"><span>Pendulum · {String(rx?.exercises.pendulum?.sets ?? 2)}×{String(rx?.exercises.pendulum?.reps ?? 10)} swings</span><Chip tone="mint">camera</Chip></li>
-                  <li className="flex justify-between gap-2 py-2"><span>Arm to the front · {String(rx?.exercises.arm?.sets ?? 2)}×{String(rx?.exercises.arm?.reps ?? 8)} · hold {String(rx?.exercises.arm?.hold_s ?? 3)} · ≤{String(rx?.exercises.arm?.ceiling_deg ?? 90)}°</span><Chip tone="mint">camera</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">camera</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">camera</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="neutral">weekly</Chip></li>
-                  <li className="flex justify-between gap-2 py-2"><span>Rotate out · Rotate in · 2×8</span><Chip tone="neutral">demo only · self-ticked</Chip></li>
                 </ul>
-                <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (swings 8, lifts 2×6 hold 2 s, side lift ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
+                <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
                 <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new symptoms · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
                 <p className="mt-3 text-base text-muted">Prescription edits arrive with clinician accounts. Until then this card is the reference the coach is clamped to.</p>
               </section>

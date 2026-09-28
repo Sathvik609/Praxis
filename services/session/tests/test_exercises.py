@@ -7,7 +7,17 @@ BlazePose layout the tracker returns; `tests/test_pose.py::figure` builds the si
 import numpy as np
 import pytest
 
-from praxis_session.perception.exercises import DEMO_IDS, EXERCISES, ORDER, Exercise, get, resolve
+from praxis_session.perception.exercises import (
+    DEFAULT_VISIBLE_ID,
+    DEMO_IDS,
+    EXERCISES,
+    HIDDEN_IDS,
+    ORDER,
+    VISIBLE_IDS,
+    Exercise,
+    get,
+    resolve,
+)
 from praxis_session.perception.pose import (
     ELBOW,
     SHOULDER,
@@ -87,6 +97,22 @@ def test_registry_holds_the_locked_seven_of_23_sep():
             assert ex.view in ("side", "front") and ex.kind in ("hold", "oscillation")
             assert 0 < ex.target_deg <= ex.ceiling_deg
             assert ex.metric is not None and ex.metric(_res(figure(0)), "left") is not None
+
+
+def test_only_the_three_of_28_sep_are_visible_and_the_rest_stay_dormant():
+    """28 Sep lock: Arm out to the side, Waiter – cup, Nine-Hole Peg Test. Pendulum, Arm to the
+    front and the two rotations stay in the registry (code, clips, tests) but are hidden."""
+    assert VISIBLE_IDS == ("abduction", "cup", "nhpt")
+    assert HIDDEN_IDS == ("pendulum", "flexion", "external_rotation", "internal_rotation")
+    assert set(VISIBLE_IDS) | set(HIDDEN_IDS) == set(ORDER)
+    for i in VISIBLE_IDS:
+        assert EXERCISES[i].visible and EXERCISES[i].mode == "coached"
+        assert EXERCISES[i].to_dict()["visible"] is True
+    for i in HIDDEN_IDS:
+        assert not EXERCISES[i].visible and EXERCISES[i].to_dict()["visible"] is False
+    assert DEFAULT_VISIBLE_ID == "abduction" and EXERCISES[DEFAULT_VISIBLE_ID].pipeline == "arm"
+    # dormant, not deleted: the hidden lifts keep their metric and still resolve
+    assert EXERCISES["pendulum"].metric is not None and EXERCISES["flexion"].metric is not None
 
 
 def test_the_lifts_are_scored_from_the_view_that_shows_them():

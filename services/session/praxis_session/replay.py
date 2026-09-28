@@ -70,7 +70,7 @@ SHEET_BY_PIPELINE = {"nhpt": "nhpt_board", "cup": "cup_targets", "arm": "none"}
 @dataclass(frozen=True)
 class ReplayClip:
     id: str
-    exercise: str  # registry id (nhpt, cup, pendulum, flexion, abduction)
+    exercise: str  # visible registry id (nhpt, cup, abduction)
     pipeline: str  # SessionPipeline mode (nhpt, cup, arm)
     sheet: str
     path: Path
@@ -108,7 +108,8 @@ def replay_dirs() -> list[Path]:
 def _coached() -> dict[str, Any]:
     from praxis_session.perception.exercises import EXERCISES
 
-    return {k: ex for k, ex in EXERCISES.items() if ex.mode == "coached" and ex.pipeline}
+    # 28 Sep: a hidden exercise (Pendulum, Arm to the front) is never offered for replay
+    return {k: ex for k, ex in EXERCISES.items() if ex.mode == "coached" and ex.pipeline and ex.visible}
 
 
 def _sidecar_clip(sidecar: Path, meta: dict[str, Any], today: dt.date) -> ReplayClip | None:

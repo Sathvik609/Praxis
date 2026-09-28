@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
@@ -10,7 +10,7 @@ import { Panel } from '../../design/Panel'
 import { api } from '../../lib/api'
 import { markDemoSeen, readDay, sessionUrl as liveUrl, sideOr, startExercise } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor } from '../../lib/plan'
-import { EXERCISES, exerciseById } from '../../lib/seed'
+import { EXERCISES, exerciseById, isHiddenExercise } from '../../lib/seed'
 import { DayStrip } from '../04-choose/DayStrip'
 
 /** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
@@ -18,7 +18,9 @@ import { DayStrip } from '../04-choose/DayStrip'
  *  budget); the numbered step list follows the clip; the patient confirms readiness before
  *  practice starts. Rehearsal runs the live screen with scoring off.
  *
- *  Demo-only exercises (Rotate out / Rotate in, locked set of 23 Sep) end here: there is no
+ *  A hidden exercise (28 Sep) is never demonstrated: its deep link goes back to Choose exercise.
+ *
+ *  Demo-only exercises (none visible since 28 Sep; the path is kept dormant) end here: there is no
  *  practice session, the patient ticks each set, and the tick goes to `/api/self_report`, which
  *  traces it as self-reported, never as a camera-verified rep.
  *
@@ -27,6 +29,12 @@ import { DayStrip } from '../04-choose/DayStrip'
  *  next exercise. The side falls back to the patient's saved side, never a silent "left". A day
  *  stopped at check-in shows the demonstration but nothing can start. */
 export function Demonstration() {
+  const [sp] = useSearchParams()
+  if (isHiddenExercise(sp.get('exercise'))) return <Navigate to="/details/choose" replace />
+  return <DemonstrationFor />
+}
+
+function DemonstrationFor() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const id = sp.get('exercise') ?? 'cup'

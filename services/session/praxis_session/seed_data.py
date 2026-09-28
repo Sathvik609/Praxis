@@ -1,6 +1,9 @@
 """Illustrative seed matching the wireframes (Alex M., Dr. Rao, Hospital GRASP L2 v3).
 
 Loaded once into an empty store. Every number here is illustrative and labeled so in the UI.
+Since 28 Sep the history names only the three visible exercises (Arm out to the side, Waiter –
+cup, Nine-Hole Peg Test); the rows that said Arm to the front were relabelled, and an existing
+database picks the relabelled rows up on start (`Store.seed_if_empty`).
 """
 from __future__ import annotations
 
@@ -55,12 +58,12 @@ def _summary(mode, camera, notes, exertion="low", flags=(), stopped=False, nhpt=
 
 SESSIONS = [
     {
-        "id": "s-0908-arm", "mode": "arm", "started_at": "2026-09-08T10:02:00", "ended_at": "2026-09-08T10:09:00",
-        "status": "ended_early", "tracking": "usable", "title": "Arm to the front",
+        "id": "s-0908-arm", "mode": "arm", "exercise": "abduction", "started_at": "2026-09-08T10:02:00", "ended_at": "2026-09-08T10:09:00",
+        "status": "ended_early", "tracking": "usable", "title": "Arm out to the side",
         "checkin": {"pain_before": 3, "energy": "tired", "minutes": 14, "new_symptoms": False},
         "feedback": {"pain_after": 5, "effort": 7, "compared": "harder"},
         "summary": _summary("arm", {"reps_total": 6, "verified": 5, "unverified": 1, "corrections": 2, "coverage_pct": 91, "posture_cues": 1, "active_s": 380},
-                            [{"text": "stop: pain 5/10 during Arm to the front, rep 6 of set 2", "confidence": "high", "evidence": [41]}],
+                            [{"text": "stop: pain 5/10 during Arm out to the side, rep 6 of set 2", "confidence": "high", "evidence": [41]}],
                             exertion="high", flags=[{"t": 380.0, "rule": "pain", "detail": "pain 5/10 reported (stop level 5)"}], stopped=True),
         "events": [],
     },
@@ -84,7 +87,7 @@ SESSIONS = [
     },
     {
         "id": "s-0912-cuparm", "mode": "cup", "started_at": "2026-09-12T09:05:00", "ended_at": "2026-09-12T09:19:00",
-        "status": "complete", "tracking": "usable", "title": "Waiter – cup + Arm to the front",
+        "status": "complete", "tracking": "usable", "title": "Waiter – cup + Arm out to the side",
         "checkin": {"pain_before": 2, "energy": "comfortable", "minutes": 14, "new_symptoms": False},
         "feedback": {"pain_after": 2, "effort": 4, "compared": "same"},
         "summary": _summary("cup", {"reps_total": 20, "verified": 17, "unverified": 3, "corrections": 2, "coverage_pct": 86, "posture_cues": 2, "active_s": 702,

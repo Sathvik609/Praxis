@@ -5,7 +5,7 @@ import { Therapist } from './Therapist'
 
 const ROUTES = {
   '/api/therapist/patients': { patients: [{ id: 'alex', name: 'Alex M.', program: 'GRASP L2 · left · wk 6', open_flags: 2, adherence_pct: 86, nhpt_last_s: 41.2, nhpt_first_s: 68 }, { id: 'priya', name: 'Priya S.', program: 'GRASP L3 · right · wk 3', open_flags: 0, adherence_pct: 92, nhpt_last_s: null, nhpt_first_s: null, illustrative: true }] },
-  '/api/flags': { flags: [{ id: 1, session_id: 's1', rule: 'pain', detail: 'pain 5/10 during Arm to the front', t: 380, date: '2026-09-08', reviewed: false }, { id: 2, session_id: 's2', rule: 'lean', detail: 'trunk lean in 2 of 16 lifts', t: 610, date: '2026-09-12', reviewed: false }] },
+  '/api/flags': { flags: [{ id: 1, session_id: 's1', rule: 'pain', detail: 'pain 5/10 during Arm out to the side', t: 380, date: '2026-09-08', reviewed: false }, { id: 2, session_id: 's2', rule: 'lean', detail: 'trunk lean in 2 of 16 lifts', t: 610, date: '2026-09-12', reviewed: false }] },
   '/api/prescription': PRESCRIPTION,
   '/api/sessions': { sessions: [SESSION] },
   '/api/flags/1/reviewed': { ok: true },
@@ -23,8 +23,12 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   expect(within(header).getByRole('link', { name: 'Back to patient app' })).toHaveAttribute('href', '/details')
   expect(screen.queryByRole('link', { name: 'Exercises' })).not.toBeInTheDocument()
   expect(screen.getByText(/Open flags/)).toBeInTheDocument()
-  expect(screen.getByText(/pain 5\/10 during Arm to the front/)).toBeInTheDocument()
+  expect(screen.getByText(/pain 5\/10 during Arm out to the side/)).toBeInTheDocument()
   expect(screen.getByText(/Prescription \(v3\)/)).toBeInTheDocument()
+  // 28 Sep: the prescription card lists the three visible exercises only
+  const rx = screen.getByRole('region', { name: 'Prescription' })
+  for (const name of ['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) expect(rx).toHaveTextContent(name)
+  expect(rx.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|swings/)
   expect(screen.getByText(/Stop rules: pain ≥7/)).toBeInTheDocument()
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getAllByText('Sample').length).toBeGreaterThan(0)

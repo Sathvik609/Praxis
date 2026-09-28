@@ -1,6 +1,6 @@
-/** The exercise day (locked 23 Sep 2026): one check-in per day, then the default day in order
- *  (Pendulum → Arm to the front → Arm out to the side → Waiter – cup), each exercise straight
- *  from its report to the next exercise's camera setup. The Nine-Hole Peg Test is weekly and
+/** The exercise day (locked 28 Sep 2026): one check-in per day, then the default day in order
+ *  (Arm out to the side → Waiter – cup), each exercise straight from its report to the next
+ *  exercise's camera setup. The Nine-Hole Peg Test is weekly and
  *  never takes a day slot.
  *
  *  Everything here lives in the browser (`localStorage`, keyed by the local date, wrapped in
@@ -10,7 +10,7 @@
  *  and posted again by `syncCheckin()` on the next load. */
 import { api, type CheckinResult } from './api'
 import { DAY_ORDER, WEEKLY, tierFor, type Tier } from './plan'
-import { exerciseById, type Exercise, type ExerciseId } from './seed'
+import { exerciseById, isHiddenExercise, type Exercise, type ExerciseId } from './seed'
 
 export type Side = 'left' | 'right'
 export type StopReason = 'rest' | 'new_symptoms' | 'session'
@@ -63,7 +63,16 @@ export function readDay(): Day {
     if (!raw) return fresh()
     const d = JSON.parse(raw) as Partial<Day>
     if (!d || d.date !== todayKey()) return fresh()
-    return { ...fresh(), ...d, done: d.done ?? [], demosSeen: d.demosSeen ?? [], finished: d.finished ?? [] }
+    // A day stored before the 28 Sep lock may name a now-hidden exercise: drop it.
+    const shown = (ids: ExerciseId[] | undefined) => (ids ?? []).filter((id) => !isHiddenExercise(id))
+    return {
+      ...fresh(),
+      ...d,
+      done: shown(d.done),
+      demosSeen: shown(d.demosSeen),
+      current: d.current && !isHiddenExercise(d.current) ? d.current : null,
+      finished: (d.finished ?? []).filter((f) => !isHiddenExercise(f.exercise)),
+    }
   } catch {
     return fresh()
   }

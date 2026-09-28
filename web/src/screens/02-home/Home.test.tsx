@@ -27,9 +27,10 @@ beforeEach(() => {
 
 test('home shows next practice, week, goal, body map markers and focus panel', () => {
   renderHome()
-  // the day card follows the locked day order in lib/plan.ts (the service enforces the same order)
-  expect(screen.getByText(/Pendulum → Arm to the front → Arm out to the side → Waiter – cup/)).toBeInTheDocument()
-  expect(screen.getByText(/About 15 min/)).toBeInTheDocument()
+  // the day card follows the 28 Sep day order in lib/plan.ts (the service enforces the same order)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Arm out to the side → Waiter – cup$/)
+  expect(screen.getByText(/About 10 min/)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Replay a recorded session/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
@@ -46,7 +47,8 @@ test('tapping a marker switches the focus panel', () => {
   renderHome()
   fireEvent.click(screen.getByRole('button', { name: /Left shoulder · Watch/ }))
   expect(screen.getByRole('heading', { name: 'Left shoulder' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Practise Arm to the front' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Practise Arm out to the side' })).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
 })
 
 test('start session goes to check-in', () => {
@@ -75,7 +77,7 @@ test('open report goes to the last session report when there is one, else progre
   mockApi({ '/api/sessions': { sessions: [SESSION] } })
   renderHome()
   const btn = screen.getByRole('button', { name: 'Open report' })
-  await screen.findByText(/Waiter – cup \+ Arm to the front/)
+  await screen.findByText(/Waiter – cup \+ Arm out to the side/)
   fireEvent.click(btn)
   expect(screen.getByText('REPORT')).toBeInTheDocument()
 })
@@ -114,9 +116,10 @@ test('region metrics are sample data and say so; the card lists today from the p
   const card = screen.getByRole('heading', { name: 'Left hand' }).closest('section')!
   expect(card).toHaveTextContent('Sample')
   expect(card).toHaveTextContent(/Today/)
-  for (const name of ['Pendulum', 'Arm to the front', 'Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) {
+  for (const name of ['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) {
     expect(card).toHaveTextContent(name)
   }
+  expect(card.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
   expect(card).toHaveTextContent(/weekly/)
 })
 

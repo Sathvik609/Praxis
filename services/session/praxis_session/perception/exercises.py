@@ -1,16 +1,23 @@
-"""Exercise registry: the locked set of 23 Sep 2026 (OpenCV cv2.__version__ == 5.0.0).
+"""Exercise registry (OpenCV cv2.__version__ == 5.0.0): the 28 Sep 2026 lock.
 
-Seven entries in three groups, and nothing else:
+Seven entries, of which **three are visible** (28 Sep, supersedes the 23 Sep seven): Arm out
+to the side, Waiter – cup and the Nine-Hole Peg Test. The other four are `visible=False`:
+their code, clips, GLB actions and perception tests stay, dormant, so the decision is
+reversible, but nothing may show, schedule, self-tick, replay or run them (the socket refuses
+them with `not_offered`). Depth over breadth: 300+ real reps are feasible on three.
 
-| group    | id                | name                | camera                                     |
-|----------|-------------------|---------------------|--------------------------------------------|
-| exercise | pendulum          | Pendulum (warm-up)  | coached, side view, arm FSM (oscillation)  |
-| exercise | flexion           | Arm to the front    | coached, side view, arm FSM                |
-| exercise | abduction         | Arm out to the side | coached, front view, arm FSM               |
-| activity | cup               | Waiter – cup        | coached, 5-dot sheet, cup FSM              |
-| activity | nhpt              | Nine-Hole Peg Test  | coached, board sheet, peg FSM (weekly)     |
-| demo     | external_rotation | Rotate out          | **demo only**: avatar + patient self-tick  |
-| demo     | internal_rotation | Rotate in           | **demo only**: avatar + patient self-tick  |
+| group    | id                | name                | camera                                     | visible |
+|----------|-------------------|---------------------|--------------------------------------------|---------|
+| exercise | pendulum          | Pendulum (warm-up)  | coached, side view, arm FSM (oscillation)  | hidden  |
+| exercise | flexion           | Arm to the front    | coached, side view, arm FSM                | hidden  |
+| exercise | abduction         | Arm out to the side | coached, front view, arm FSM               | yes     |
+| activity | cup               | Waiter – cup        | coached, 5-dot sheet, cup FSM              | yes     |
+| activity | nhpt              | Nine-Hole Peg Test  | coached, board sheet, peg FSM (weekly)     | yes     |
+| demo     | external_rotation | Rotate out          | **demo only**: avatar + patient self-tick  | hidden  |
+| demo     | internal_rotation | Rotate in           | **demo only**: avatar + patient self-tick  | hidden  |
+
+`get()` still falls back to `flexion` so the dormant perception code and its tests behave as
+they always did; the service boundary (`main.py`) runs `DEFAULT_VISIBLE_ID` instead.
 
 `mode="coached"` entries are verified from OpenCV events only. `mode="demo"` entries have no
 metric and no pipeline, so nothing can produce a camera-verified rep for them: a single webcam
@@ -69,6 +76,7 @@ class Exercise:
     view: View
     metric: Metric | None = field(default=None, compare=False, repr=False)
     mode: Mode = "coached"
+    visible: bool = True  # 28 Sep: False = dormant (kept in code, never shown, scheduled or run)
     category: Category = "exercise"
     pipeline: Pipeline | None = "arm"  # which camera pipeline verifies it; None = demo only
     frequency: Frequency = "daily"
@@ -121,6 +129,7 @@ class Exercise:
             "clip": self.clip,
             "view": self.view,
             "mode": self.mode,
+            "visible": self.visible,
             "category": self.category,
             "group": self.group,
             "pipeline": self.pipeline,
@@ -230,12 +239,12 @@ _STEPS: dict[str, list[str]] = {
 _BASE: tuple[Exercise, ...] = (
     Exercise(
         id="pendulum", name="Pendulum", clip="pendulum", view="side", metric=pendulum_swing_deg,
-        target_deg=20.0, ceiling_deg=45.0, tolerance_deg=5.0, start_below_deg=5.0,
+        visible=False, target_deg=20.0, ceiling_deg=45.0, tolerance_deg=5.0, start_below_deg=5.0,
         hold_s=0.0, sets=2, reps=10, kind="oscillation",
         gentle={"reps": 8}, steps=_STEPS["pendulum"],
     ),
     Exercise(
-        id="flexion", name="Arm to the front", clip="armFront", view="side", rx_key="arm",
+        id="flexion", name="Arm to the front", clip="armFront", view="side", rx_key="arm", visible=False,
         metric=shoulder_elevation_deg, target_deg=90.0, ceiling_deg=90.0, tolerance_deg=10.0,
         start_below_deg=25.0, hold_s=3.0, sets=2, reps=8,
         gentle={"hold_s": 2.0, "reps": 6}, steps=_STEPS["flexion"],
@@ -258,12 +267,12 @@ _BASE: tuple[Exercise, ...] = (
     ),
     Exercise(
         id="external_rotation", name="Rotate out", clip="external_rotation", view="front",
-        mode="demo", pipeline=None, sets=2, reps=8, hold_s=3.0,
+        mode="demo", visible=False, pipeline=None, sets=2, reps=8, hold_s=3.0,
         steps=_STEPS["external_rotation"],
     ),
     Exercise(
         id="internal_rotation", name="Rotate in", clip="internal_rotation", view="front",
-        mode="demo", pipeline=None, sets=2, reps=8, hold_s=3.0,
+        mode="demo", visible=False, pipeline=None, sets=2, reps=8, hold_s=3.0,
         steps=_STEPS["internal_rotation"],
     ),
 )
@@ -284,7 +293,10 @@ def build_registry(ranges: dict[str, float] | None = None, items: tuple[Exercise
 EXERCISES: dict[str, Exercise] = build_registry()
 ORDER: tuple[str, ...] = tuple(ex.id for ex in _BASE)
 DEMO_IDS: tuple[str, ...] = tuple(ex.id for ex in _BASE if ex.mode == "demo")
-DEFAULT_ID = "flexion"
+VISIBLE_IDS: tuple[str, ...] = tuple(ex.id for ex in _BASE if ex.visible)
+HIDDEN_IDS: tuple[str, ...] = tuple(ex.id for ex in _BASE if not ex.visible)
+DEFAULT_ID = "flexion"  # dormant perception default (see the module docstring)
+DEFAULT_VISIBLE_ID = "abduction"  # what a bare `/session?mode=arm` runs since 28 Sep
 TIERS: tuple[str, ...] = ("full", "gentle", "rest")
 RUNNABLE_TIERS: tuple[str, ...] = ("full", "gentle")
 

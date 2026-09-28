@@ -35,20 +35,20 @@ beforeEach(() => {
 })
 
 test('mid-day the report offers the next exercise as the one full-width primary, straight to its setup', async () => {
-  storeDay({ done: ['pendulum'], current: 'arm' })
+  storeDay({ current: 'abduction' })
   mockApi({ '/api/sessions/abc': armSession, '/api/patients/me': ME })
   renderReport()
-  const next = await screen.findByRole('button', { name: 'Next: Arm out to the side' })
+  const next = await screen.findByRole('button', { name: 'Next: Waiter – cup' })
   expect(next.className).toMatch(/w-full/)
-  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 4 done')
+  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 1 of 2 done')
   expect(screen.getByRole('button', { name: 'Done — back to Home' }).className).not.toMatch(/bg-teal-fill/)
-  expect(readDay().done).toEqual(['pendulum', 'arm'])
+  expect(readDay().done).toEqual(['abduction'])
   fireEvent.click(next)
-  expect(screen.getByText('AT /details/setup?exercise=abduction&side=right')).toBeInTheDocument()
+  expect(screen.getByText('AT /details/setup?exercise=cup&side=right')).toBeInTheDocument()
 })
 
 test('after the last exercise the report says done for today', async () => {
-  storeDay({ done: ['pendulum', 'arm', 'abduction'], current: 'cup' })
+  storeDay({ done: ['abduction'], current: 'cup' })
   mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
   renderReport()
   fireEvent.click(await screen.findByRole('button', { name: 'Done for today' }))
@@ -65,7 +65,7 @@ test('a stop rule in the session ends the day on the report', async () => {
 })
 
 test('an old report opened from history shows no day controls and keeps its own primary', async () => {
-  storeDay({ done: ['pendulum'] })
+  storeDay({ done: ['abduction'] })
   mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
   renderReport()
   const done = await screen.findByRole('button', { name: 'Done — back to Home' })

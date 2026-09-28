@@ -56,6 +56,14 @@ test('replay clips are named from the exercise registry, including arm clips by 
   expect(screen.queryByText('Arm to the front')).not.toBeInTheDocument()
 })
 
+test('a clip of an exercise hidden on 28 Sep is never offered for replay', async () => {
+  mockApi({ '/api/replay/list': { clips: [{ id: 'p01_pendulum_1', mode: 'pendulum', exercise: 'pendulum', sheet: 'none', path: 'p.mp4', synthetic: false }, { id: 'cup_01', mode: 'cup', sheet: 'cup_targets', path: 'c.mp4', synthetic: false }] } })
+  renderSettings()
+  expect(await screen.findByText('Waiter – cup')).toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: /^Replay / })).toHaveLength(1)
+  expect(screen.queryByText(/pendulum/i)).not.toBeInTheDocument()
+})
+
 test('no decorative toggles: captions are stated as always on, and there is no setup-helper toggle', async () => {
   mockApi({ '/api/replay/list': { clips: [] } })
   renderSettings()

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
@@ -7,7 +7,7 @@ import { RotateCcw } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
 import { SESSION_WS_URL, processingPlace } from '../../lib/config'
 import { demoUrl, readDay, sessionUrl, sideOr, startExercise, syncCheckin, therapistLine, type Day, type Side } from '../../lib/day'
-import { EXERCISES, exerciseById, type Exercise } from '../../lib/seed'
+import { EXERCISES, exerciseById, isHiddenExercise, type Exercise } from '../../lib/seed'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
@@ -23,7 +23,7 @@ type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 
 /** Screen 05 · Camera setup and calibration. Continue stays disabled until every required
  *  check passes. The checklist, the placement diagram and the copy follow the exercise's
- *  camera view (`setupView.ts`): side (Pendulum, Arm to the front), front (Arm out to the side)
+ *  camera view (`setupView.ts`): front (Arm out to the side), side (hidden since 28 Sep, dormant)
  *  or table (Waiter – cup, NHPT, ArUco markers required). Pose rows the service does not
  *  measure yet are patient self-checks and say so. The feed is a Panel with the live, mirrored
  *  and calibration lines in its corners.
@@ -31,6 +31,13 @@ type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
  *  Day flow: the day strip shows where this exercise sits; a demonstration already watched
  *  today can be skipped; a day stopped at check-in never opens the camera. */
 export function CameraSetup() {
+  const [sp] = useSearchParams()
+  // A hidden exercise (28 Sep) never opens the camera: back to Choose exercise.
+  if (isHiddenExercise(sp.get('exercise'))) return <Navigate to="/details/choose" replace />
+  return <CameraSetupFor />
+}
+
+function CameraSetupFor() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const [day, setDay] = useState<Day>(readDay)
@@ -70,7 +77,7 @@ export function CameraSetup() {
 
 function SetupLive({ ex, side, day }: { ex: Exercise; side: Side; day: Day }) {
   const nav = useNavigate()
-  // Pendulum, Arm to the front and Arm out to the side all run the arm pipeline: no sheet.
+  // The arm exercises run the arm pipeline: no sheet.
   const kind = ex.session ?? 'nhpt'
   const isArm = kind === 'arm'
   const view = setupViewFor(ex)

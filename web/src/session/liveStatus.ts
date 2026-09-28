@@ -38,8 +38,8 @@ export function liveStatus(a: {
 
 export type StatusLabel = { chip: string; tone: ChipTone; feed: string; coach: string | null }
 
-/** Which way the camera looks at the task: arm exercises are scored from the side (Pendulum,
- *  Arm to the front) or the front (Arm out to the side); cup and NHPT look down at a sheet. */
+/** Which way the camera looks at the task: Arm out to the side is scored from the front (the
+ *  side view serves the exercises hidden on 28 Sep); cup and NHPT look down at a sheet. */
 export type CameraView = 'side' | 'front' | 'table'
 
 const FIND: Record<CameraView, string> = {

@@ -406,7 +406,8 @@ def test_ws_arm_takes_an_exercise_and_tier(client):
     assert arm["reps_per_set"] == 6 and arm["dose"]
 
 
-def test_ws_arm_without_an_exercise_is_still_arm_to_the_front(client):
+def test_ws_arm_without_an_exercise_is_arm_out_to_the_side(client):
+    """28 Sep: Arm to the front is hidden, so a bare `mode=arm` runs the one visible lift."""
     import cv2 as _cv2
     import numpy as _np
 
@@ -415,7 +416,7 @@ def test_ws_arm_without_an_exercise_is_still_arm_to_the_front(client):
     with client.websocket_connect("/session?mode=arm") as ws:
         ws.send_bytes(buf.tobytes())
         arm = ws.receive_json()["arm"]
-    assert arm["exercise"] == "flexion" and arm["view_required"] == "side"
+    assert arm["exercise"] == "abduction" and arm["view_required"] == "front"
     assert (arm["target_deg"], arm["hold_s"], arm["sets"], arm["reps_per_set"]) == (90.0, 3.0, 2, 8)
 
 
@@ -439,22 +440,37 @@ def test_ws_arm_session_is_saved_with_its_exercise(client):
     assert row["title"] == "Arm out to the side"
 
 
-def test_ws_arm_refuses_a_demo_only_exercise(client):
-    """Rotate out / Rotate in are demo only (23 Sep): the socket never scores them."""
-    for ex in ("external_rotation", "internal_rotation"):
-        with client.websocket_connect(f"/session?mode=arm&exercise={ex}") as ws:
-            msg = ws.receive_json()
-        assert msg["type"] == "error" and msg["code"] == "demo_only" and msg["exercise"] == ex
+def test_ws_arm_refuses_a_hidden_exercise(client):
+    """28 Sep: Pendulum, Arm to the front, Rotate out and Rotate in are hidden. Their code is
+    dormant; the socket refuses them before any pipeline exists, whatever the tier."""
+    for ex in ("pendulum", "flexion", "external_rotation", "internal_rotation"):
+        for tier in ("full", "gentle"):
+            with client.websocket_connect(f"/session?mode=arm&exercise={ex}&tier={tier}") as ws:
+                msg = ws.receive_json()
+            assert msg["type"] == "error" and msg["code"] == "not_offered" and msg["exercise"] == ex
+
+
+def test_ws_arm_still_refuses_a_demo_only_exercise_if_it_is_shown_again(client, monkeypatch):
+    """Reversible: un-hiding a rotation must not make the camera score it."""
+    from dataclasses import replace
+
+    import praxis_session.main as main
+
+    shown = dict(main.EXERCISES, external_rotation=replace(main.EXERCISES["external_rotation"], visible=True))
+    monkeypatch.setattr(main, "EXERCISES", shown)
+    with client.websocket_connect("/session?mode=arm&exercise=external_rotation") as ws:
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and msg["code"] == "demo_only"
 
 
 def test_ws_arm_refuses_a_sheet_activity_and_an_unknown_tier(client):
     with client.websocket_connect("/session?mode=arm&exercise=cup") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "error" and msg["code"] == "bad_exercise"
-    with client.websocket_connect("/session?mode=arm&exercise=flexion&tier=turbo") as ws:
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=turbo") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "error" and msg["code"] == "bad_tier"
-    with client.websocket_connect("/session?mode=arm&exercise=flexion&tier=rest") as ws:
+    with client.websocket_connect("/session?mode=arm&exercise=abduction&tier=rest") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "error" and msg["code"] == "rest_day"
 
@@ -499,7 +515,7 @@ def test_checkin_low_pain_never_loosens_a_gentle_session(client):
 
 
 def test_checkin_pain_7_is_a_rest_day_stop_and_therapist_flag(client):
-    with client.websocket_connect("/session?mode=arm&exercise=flexion") as ws:
+    with client.websocket_connect("/session?mode=arm&exercise=abduction") as ws:
         msgs = _checkin(ws, 7)
     types = [m["type"] for m in msgs]
     assert "stop" in types and "therapist_flag" in types
@@ -509,19 +525,35 @@ def test_checkin_pain_7_is_a_rest_day_stop_and_therapist_flag(client):
 
 
 def test_checkin_pain_6_does_not_stop_the_session(client):
-    with client.websocket_connect("/session?mode=arm&exercise=flexion") as ws:
+    with client.websocket_connect("/session?mode=arm&exercise=abduction") as ws:
         msgs = _checkin(ws, 6)
     assert "stop" not in [m["type"] for m in msgs] and msgs[-1]["tier"] == "gentle"
 
 
 # ---- demo-only exercises are self-ticked and traced as such --------------------------------
+def test_self_report_refuses_a_hidden_exercise(client, monkeypatch):
+    """28 Sep: the rotations are hidden, so there is nothing left to self-tick."""
+    import praxis_session.main as main
+
+    monkeypatch.setattr(main, "_self_ticks", {})
+    for ex in ("external_rotation", "internal_rotation", "pendulum", "flexion"):
+        r = client.post("/api/self_report", json={"exercise": ex}).json()
+        assert r["ok"] is False and r["error"] == "not_offered" and r["exercise"] == ex
+    assert main._self_ticks == {}
+
+
 def test_self_report_logs_a_demo_set_as_self_ticked_never_verified(client, monkeypatch, tmp_path):
+    """Dormant path, kept reversible: a demo rotation shown again is self-ticked, never verified."""
+    from dataclasses import replace
+
     import praxis_session.main as main
     import praxis_session.trace as trace
     from praxis_session.schema import validate_event
 
     monkeypatch.setattr(trace, "DEFAULT_DIR", tmp_path / "traces")
     monkeypatch.setattr(main, "_self_ticks", {})
+    shown = dict(main.EXERCISES, external_rotation=replace(main.EXERCISES["external_rotation"], visible=True))
+    monkeypatch.setattr(main, "EXERCISES", shown)
     r = client.post("/api/self_report", json={"exercise": "external_rotation"}).json()
     assert r["ok"] is True and r["verified"] is False and r["source"] == "self_ticked"
     assert r["label"] == "Demo only · self-ticked, not camera-verified"
@@ -538,7 +570,7 @@ def test_self_report_logs_a_demo_set_as_self_ticked_never_verified(client, monke
 
 def test_self_report_refuses_a_camera_coached_exercise(client):
     """A coached exercise is only ever counted from OpenCV events, never from a tap."""
-    for ex in ("flexion", "cup", "nhpt", "scaption"):
+    for ex in ("abduction", "cup", "nhpt", "scaption"):
         r = client.post("/api/self_report", json={"exercise": ex}).json()
         assert r["ok"] is False and r["error"] in ("not_demo", "unknown_exercise")
 
