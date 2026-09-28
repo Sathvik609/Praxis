@@ -65,7 +65,8 @@ test('shows a loading state, then the GLB figure playing the mapped action with 
   expect(screen.queryByTestId('scene')).toBeNull()
   expect(screen.getByText(metaJson.actions.flexion.steps[0].caption)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Left shoulder · Focus/ })).toBeInTheDocument()
-  expect(screen.getByText(/motion from IntelliRehabDS · scaled to 90°/)).toBeInTheDocument()
+  expect(screen.getByTestId('view-line')).toHaveTextContent(/^Side view · 1×$/)
+  expect(screen.getByTestId('view-line')).toHaveAttribute('title', expect.stringMatching(/motion from IntelliRehabDS · scaled to 90°/))
   expect(screen.queryByTestId('arc-readout')).toBeNull()
 })
 
@@ -130,4 +131,43 @@ test('Slower scales the action clock, Replay restarts it, captions follow the st
   fireEvent.click(screen.getByRole('button', { name: 'Replay' }))
   expect(clock.current.time).toBe(0)
   expect(screen.getByText(metaJson.actions.flexion.steps[0].caption)).toBeInTheDocument()
+})
+
+test('Arm out to the side plays its script: palm-down captions, the prescribed hold, Replay rewinds the warp', async () => {
+  h.load.mockResolvedValue(asset)
+  const { rerender } = render(<AvatarPanel clip="abduction" holdS={2} />)
+  await screen.findByTestId('glb-scene')
+  expect(screen.getByText('Step 1 of 4 · Sit tall facing the camera, arm by your side')).toBeInTheDocument()
+  expect(screen.getByTestId('view-line').getAttribute('data-provenance')).toMatch(/UI-PRMD · scaled to 90° · paced to the prescription/)
+  const p = h.lastGlb as unknown as { script: { steps: string[]; total: number } }
+  expect(p.script.steps[1]).toMatch(/palm down/)
+  expect(p.script.steps[2]).toMatch(/Hold for 2 s/)
+  expect(p.script.total).toBeCloseTo(1 + 3 + 2 + 3 + 1)
+  const clock = h.lastGlb!.clock
+  clock.current.warp = 5
+  clock.current.time = 1
+  fireEvent.click(screen.getByRole('button', { name: 'Replay' }))
+  expect(clock.current.warp).toBe(0)
+  expect(clock.current.time).toBe(0)
+  rerender(<AvatarPanel clip="abduction" holdS={3} />)
+  expect((h.lastGlb as unknown as { script: { steps: string[] } }).script.steps[2]).toMatch(/Hold for 3 s/)
+})
+
+test('the cup and peg test play their scripts (same steps as the Demonstration list)', async () => {
+  h.load.mockResolvedValue(asset)
+  const { rerender } = render(<AvatarPanel clip="cup" />)
+  await screen.findByTestId('glb-scene')
+  expect(screen.getByText('Step 1 of 5 · Cup on dot 1 of the sheet, your hand resting beside it')).toBeInTheDocument()
+  rerender(<AvatarPanel clip="nhpt" />)
+  expect(screen.getByText(/^Step 1 of 4 · Pick a peg from the dish/)).toBeInTheDocument()
+})
+
+test('the stage keeps the figure clear of the labels and the caption bar (insets), and passes the zoom', async () => {
+  h.load.mockResolvedValue(asset)
+  render(<AvatarPanel clip="idle" camera="front" compact zoom={1.5} overlayTop={64} markers={[{ joint: 'lWrist', status: 'focus', label: 'Left hand' }]} />)
+  await screen.findByTestId('glb-scene')
+  const p = h.lastGlb as unknown as { zoom: number; insets: { top: number; bottom: number; left: number; right: number } }
+  expect(p.zoom).toBe(1.5)
+  expect(p.insets.bottom).toBeGreaterThanOrEqual(48)
+  expect(p.insets.top).toBeGreaterThanOrEqual(32)
 })

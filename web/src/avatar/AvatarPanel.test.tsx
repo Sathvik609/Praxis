@@ -71,9 +71,20 @@ test('rehab clips mount in skeleton mode (no WebGL in jsdom) with a labelled foc
   expect(screen.getByTestId('scene')).toHaveTextContent('scene:abduction:left:skeleton')
   expect(screen.getByRole('button', { name: /Left shoulder · Focus/ })).toBeInTheDocument()
   expect(screen.getByTestId('arc-readout')).toHaveTextContent(/target 90°/)
-  expect(screen.getByTestId('arc-readout')).toHaveTextContent(/UI-PRMD s09 e08 · scaled to 90°/)
-  expect(screen.getByText(/skeleton view/)).toBeInTheDocument()
+  // provenance is for reviewers (title / data-provenance), not the patient's view line
+  expect(screen.getByTestId('arc-readout')).not.toHaveTextContent(/UI-PRMD/)
+  expect(screen.getByTestId('arc-readout')).toHaveAttribute('title', expect.stringMatching(/UI-PRMD s09 e08 · scaled to 90°/))
+  expect(screen.getByTestId('view-line')).toHaveTextContent(/^Front view · 1×$/)
+  expect(screen.getByTestId('view-line')).toHaveAttribute('data-provenance', expect.stringMatching(/skeleton view/))
   expect(screen.getByText(/Step 1 of 3/)).toBeInTheDocument()
+})
+
+test('the view line tells the patient only the view and the speed', () => {
+  render(<AvatarPanel clip="cup" />)
+  const line = screen.getByTestId('view-line')
+  expect(line).toHaveTextContent(/^Front view · 1×$/)
+  expect(line.textContent).not.toMatch(/procedural|UI-PRMD|motion|scaled/)
+  expect(line.getAttribute('title')).toMatch(/procedural/)
 })
 
 test('rehab clips mirror to the right side and the figure mode can be forced either way', () => {
