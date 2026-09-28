@@ -5,8 +5,8 @@ beforeEach(() => {
   delete document.documentElement.dataset.text
 })
 
-test('defaults: spoken cues on, normal text size', () => {
-  expect(readGuidance()).toEqual({ spoken: true, larger: false })
+test('defaults: spoken cues off for now (captions always on), normal text size', () => {
+  expect(readGuidance()).toEqual({ spoken: false, larger: false })
 })
 
 test('writes persist and read back; stale keys from older builds are dropped', () => {
@@ -25,5 +25,5 @@ test('larger text scales the root font; turning it off restores it', () => {
 
 test('a broken stored value falls back to the defaults', () => {
   localStorage.setItem('praxis.guidance', '{nope')
-  expect(readGuidance()).toEqual({ spoken: true, larger: false })
+  expect(readGuidance()).toEqual({ spoken: false, larger: false })
 })

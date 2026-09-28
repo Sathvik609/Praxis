@@ -36,7 +36,7 @@ test('settings switches theme and lists replay clips with a replay entry', async
 test('guidance checkboxes persist to localStorage and load back', async () => {
   mockApi({ '/api/replay/list': { clips: [] } })
   const { unmount } = renderSettings()
-  expect(screen.getByLabelText(/^Spoken instructions/)).toBeChecked()
+  expect(screen.getByLabelText(/^Spoken instructions/)).not.toBeChecked()
   expect(screen.getByLabelText(/^Larger text/)).not.toBeChecked()
   fireEvent.click(screen.getByLabelText(/^Larger text/))
   expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(true)

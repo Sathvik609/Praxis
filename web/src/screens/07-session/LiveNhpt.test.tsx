@@ -201,19 +201,18 @@ test('the service pause event that answers a rest does not stack the pause overl
   expect(screen.queryByRole('dialog', { name: 'Paused' })).not.toBeInTheDocument()
 })
 
-test('Spoken instructions follow Settings: on by default, muted when turned off; the caption stays', () => {
+test('Spoken instructions follow Settings: off by default for now, voiced when turned on; the caption stays', () => {
   const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
   const speak = vi.spyOn(coachMod, 'browserSpeak').mockImplementation(() => {})
   try {
     mockStream([frame, cue])
     const first = renderAt('/session?hand=left')
-    expect(speak).toHaveBeenCalledWith('Next peg, nice and steady.', 'instruct')
-    first.unmount()
-    speak.mockClear()
-    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: false, larger: false }))
-    renderAt('/session?hand=left')
     expect(speak).not.toHaveBeenCalled()
     expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()
+    first.unmount()
+    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true, larger: false }))
+    renderAt('/session?hand=left')
+    expect(speak).toHaveBeenCalledWith('Next peg, nice and steady.', 'instruct')
   } finally {
     localStorage.clear()
     speak.mockRestore()

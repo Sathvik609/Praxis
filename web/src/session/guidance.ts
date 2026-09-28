@@ -7,7 +7,7 @@
 export type Guidance = { spoken: boolean; larger: boolean }
 
 export const GUIDANCE_KEY = 'praxis.guidance'
-export const GUIDANCE_DEFAULT: Guidance = { spoken: true, larger: false }
+export const GUIDANCE_DEFAULT: Guidance = { spoken: false, larger: false }
 
 export function readGuidance(): Guidance {
   try {
