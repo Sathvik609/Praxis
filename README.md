@@ -40,6 +40,9 @@ cd web && pnpm install && pnpm dev
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline
 #    In the app: Settings → "Replay synthetic_nhpt_01" (or Home → "Replay a recorded session").
+#    A replayed session is saved as `source: replay`: listed with a Replay badge (Progress,
+#    therapist view, report, Home), never counted in trends, practice totals, pain lists,
+#    adherence or the NHPT trend.
 #    From the CLI:
 cd services/session
 uv run python -m praxis_session.replay ../../evaluation/dataset_v0/synthetic_nhpt_01.mp4 --mode nhpt --quiet
