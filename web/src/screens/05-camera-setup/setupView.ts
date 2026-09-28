@@ -1,6 +1,6 @@
 /** Screen 05's checklist per camera view (locked set, 23 Sep 2026).
  *
- *  - `side`  (Pendulum, Arm to the front): practising side square to the camera.
+ *  - `side`  (hidden since 28 Sep, dormant): practising side square to the camera.
  *  - `front` (Arm out to the side): facing the camera.
  *  - `table` (Waiter – cup, NHPT): the printed sheet under an overhead camera.
  *

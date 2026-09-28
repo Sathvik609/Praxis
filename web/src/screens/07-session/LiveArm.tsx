@@ -44,17 +44,17 @@ function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side
   return 'Arm by your side. Lift for three when you are ready.'
 }
 
-/** Screen 07c · Live session for the three camera-coached exercises of the locked set (23 Sep):
- *  Pendulum (side view, swings), Arm to the front (side view) and Arm out to the side (front
- *  view). The registry entry on the service decides the metric, view gate and dose; the pain
+/** Screen 07c · Live session for the camera-coached arm exercise of the 28 Sep lock, Arm out to
+ *  the side (front view). The swing and side-view branches below serve the hidden, dormant
+ *  entries and never run while those stay hidden. The registry entry on the service decides the metric, view gate and dose; the pain
  *  tier from the check-in is sent as `tier` (the service applies the check-in's tier itself and
  *  never loosens it). Ghost arm shows the target; angles are camera-relative progress. */
 export function LiveArm() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
   const replay = sp.get('replay')
-  const ex = exerciseById(sp.get('exercise')) ?? exerciseById('arm')!
-  const exId = ex.session === 'arm' ? ex.serviceId : 'flexion'
+  const ex = exerciseById(sp.get('exercise')) ?? exerciseById('abduction')!
+  const exId = ex.session === 'arm' ? ex.serviceId : 'abduction'
   const tier = tierFor(readCheckinPain()) === 'gentle' ? 'gentle' : 'full'
   const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
@@ -91,7 +91,7 @@ export function LiveArm() {
 
   const finish = (endedEarly: boolean) => {
     flow.finish({
-        kind: 'arm', side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
+        kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
         lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
       })
   }

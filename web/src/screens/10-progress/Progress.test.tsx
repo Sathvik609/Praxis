@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SESSION, mockApi } from '../../test/api-mock'
 import { Progress } from './Progress'
@@ -9,8 +9,9 @@ const SESSIONS = { sessions: [
   SESSION,
   { ...SESSION, id: 'lim', tracking: 'limited', status: 'complete', title: 'Waiter – cup', date: '2026-09-10', summary: cam(8) },
   { ...SESSION, id: 'jul', title: 'Waiter – cup', date: '2026-07-10', summary: cam(5) },
-  { ...SESSION, id: 'early', mode: 'arm', status: 'ended_early', title: 'Arm to the front', date: '2026-09-11', feedback: { pain_after: 5 }, summary: { ...cam(14), mode: 'arm' } },
+  { ...SESSION, id: 'early', mode: 'arm', status: 'ended_early', title: 'Arm out to the side', date: '2026-09-11', feedback: { pain_after: 5 }, summary: { ...cam(14), mode: 'arm' } },
   { ...SESSION, id: 'abd', mode: 'arm', exercise: 'abduction', title: 'Arm out to the side', date: '2026-09-12', summary: { ...cam(12), mode: 'arm', exercise: 'abduction' } },
+  // a session of an exercise hidden on 28 Sep: the service no longer lists these; the page ignores one anyway
   { ...SESSION, id: 'pend', mode: 'arm', exercise: 'pendulum', title: 'Pendulum', date: '2026-09-12', summary: { ...cam(20), mode: 'arm', exercise: 'pendulum' } },
   { ...SESSION, id: 'nhpt', mode: 'nhpt', title: 'Nine-Hole Peg Test · 41.2 s', date: '2026-09-12', summary: { ...cam(9), mode: 'nhpt' } },
 ] }
@@ -58,9 +59,9 @@ test('filters are real: range, task and compare-same-setup change the bars and t
   expect(screen.getByRole('img', { name: /Waiter – cup/ })).toHaveAccessibleName(/07-10/)
   fireEvent.click(screen.getByLabelText(/Compare same setup only/))
   expect(screen.getByRole('img', { name: /Waiter – cup/ })).not.toHaveAccessibleName(/09-10/)
-  fireEvent.click(screen.getByRole('radio', { name: 'Arm to the front' }))
-  expect(screen.getByRole('img', { name: /Arm to the front/ })).toHaveAccessibleName(/09-11 14/)
-  expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(1)
+  fireEvent.click(screen.getByRole('radio', { name: 'Arm out to the side' }))
+  expect(screen.getByRole('img', { name: /Arm out to the side/ })).toHaveAccessibleName(/09-11 14/)
+  expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(2)
   expect(screen.getByText(/Ended early · pain 5/)).toBeInTheDocument()
 })
 
@@ -87,21 +88,16 @@ test('empty state when there are no sessions yet', async () => {
   expect(screen.getByText(/No assessments yet/)).toBeInTheDocument()
 })
 
-test('each arm exercise has its own filter and chart; rotations say self-ticked, not camera-verified', async () => {
+test('the task filter offers only the visible practice exercises; a hidden exercise never shows', async () => {
   mockApi({ '/api/progress': PROGRESS, '/api/sessions': SESSIONS })
   renderProgress()
   await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
-  for (const name of ['Pendulum', 'Arm to the front', 'Arm out to the side', 'Waiter – cup', 'Rotate out / in']) {
-    expect(screen.getByRole('radio', { name })).toBeInTheDocument()
-  }
+  const task = screen.getByLabelText('Task')
+  expect(within(task).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Arm out to the side', 'Waiter – cup'])
   fireEvent.click(screen.getByRole('radio', { name: 'Arm out to the side' }))
   expect(screen.getByRole('img', { name: /^Arm out to the side/ })).toHaveAccessibleName(/09-12 12 lifts/)
-  expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(1)
-  fireEvent.click(screen.getByRole('radio', { name: 'Pendulum' }))
-  expect(screen.getByRole('img', { name: /^Pendulum/ })).toHaveAccessibleName(/09-12 20 swings/)
-  fireEvent.click(screen.getByRole('radio', { name: 'Rotate out / in' }))
-  expect(screen.getByText(/Self-ticked, not camera-verified/)).toBeInTheDocument()
-  expect(screen.queryByRole('img', { name: /Rotate/ })).not.toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
+  expect(screen.queryByText(/20 swings/)).not.toBeInTheDocument()
 })
 
 test('sample history is labeled Sample on the chart, the list and the peg-test trend', async () => {

@@ -44,7 +44,7 @@ const ARM_EVENT = {
   checks: [
     { id: 'camera', label: 'Camera permission', status: 'pass', hint: null },
     { id: 'person', label: 'One person in view', status: 'pass', hint: null },
-    { id: 'side_view', label: 'Side of your body to the camera', status: 'pending', hint: 'Turn so your practising shoulder faces the camera; hips and shoulder in view.' },
+    { id: 'front_view', label: 'You face the camera', status: 'pending', hint: null },
     { id: 'lighting', label: 'Lighting', status: 'pass', hint: null },
   ],
 }
@@ -72,57 +72,51 @@ test('continue enables when checks pass; the feed shows live, mirrored, where it
   expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
 })
 
-test('arm setup asks for a side view and no sheet', () => {
+test('the arm setup (Arm out to the side) asks to face the camera and needs no sheet', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
-  renderSetup('/setup?exercise=arm')
+  renderSetup('/setup?exercise=abduction')
   expect(screen.getByText(/No sheet needed/)).toBeInTheDocument()
-  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
-})
-
-test('Pendulum and Arm out to the side use the arm setup too; the side lift asks to face the camera', () => {
-  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
-  const { unmount } = renderSetup('/setup?exercise=abduction')
   expect(screen.getByText(/Arm out to the side: face the camera/)).toBeInTheDocument()
   expect(hook.useWebcamStream).toHaveBeenLastCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
-  unmount()
-  renderSetup('/setup?exercise=pendulum')
-  expect(screen.getByText(/Pendulum: stand sideways/)).toBeInTheDocument()
 })
 
-test('Pendulum shows pose rows, never the sheet rows, even before the first check arrives', () => {
+test.each(['pendulum', 'arm', 'flexion', 'external_rotation', 'internal_rotation'])('a deep link to hidden %s goes back to Choose and never opens the camera', (id) => {
+  const start = mockStream(null)
+  renderSetup(`/setup?exercise=${id}&side=left`)
+  expect(screen.getByText('AT /details/choose')).toBeInTheDocument()
+  expect(start).not.toHaveBeenCalled()
+  expect(hook.useWebcamStream).not.toHaveBeenCalled()
+})
+
+test('the front view shows pose rows, never the sheet rows, even before the first check arrives', () => {
   mockStream(null)
-  renderSetup('/setup?exercise=pendulum&side=left')
+  renderSetup('/setup?exercise=abduction&side=left')
   expect(screen.queryByText(/Sheet found/)).not.toBeInTheDocument()
   expect(screen.queryByText('Camera looks down at the sheet')).not.toBeInTheDocument()
-  expect(screen.getByText('Your left side faces the camera')).toBeInTheDocument()
-  expect(screen.getByText('Hip in view')).toBeInTheDocument()
-  expect(screen.getByText('Shoulder, elbow and wrist in view')).toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /about table height, 1.5 to 2 metres/ })).toBeInTheDocument()
+  expect(screen.getByText('You face the camera')).toBeInTheDocument()
 })
 
 test('pose rows the camera does not check yet are labelled self-checks and must be ticked', () => {
   mockStream(ARM_EVENT)
-  renderSetup('/setup?exercise=arm&side=right')
-  expect(screen.getByText('Your right side faces the camera')).toBeInTheDocument()
-  expect(screen.getAllByText('You check')).toHaveLength(3)
+  renderSetup('/setup?exercise=abduction&side=right')
+  expect(screen.getAllByText('You check')).toHaveLength(2)
   expect(screen.getByText(/the camera does not check these yet/i)).toBeInTheDocument()
   const cont = screen.getByRole('button', { name: /Continue to demonstration/ })
   expect(cont).toBeDisabled()
   for (const b of screen.getAllByRole('button', { name: /yes, I can see it/ })) fireEvent.click(b)
-  expect(screen.getAllByText('You checked')).toHaveLength(3)
+  expect(screen.getAllByText('You checked')).toHaveLength(2)
   expect(cont).toBeEnabled()
-  expect(screen.getByRole('img', { name: /seated shoulder height, 1.5 to 2 metres/ })).toBeInTheDocument()
 })
 
 test('once the service decides a pose row, the camera wins over the tick', () => {
   mockStream({
     ...ARM_EVENT,
-    checks: [...ARM_EVENT.checks.filter((c) => c.id !== 'side_view'), { id: 'side_view', label: 'x', status: 'check', hint: null }],
+    checks: [...ARM_EVENT.checks.filter((c) => c.id !== 'front_view'), { id: 'front_view', label: 'x', status: 'check', hint: null }],
   })
-  renderSetup('/setup?exercise=arm&side=left')
-  expect(screen.getAllByText('You check')).toHaveLength(2)
+  renderSetup('/setup?exercise=abduction&side=left')
+  expect(screen.getAllByText('You check')).toHaveLength(1)
   expect(screen.getByText('Check')).toBeInTheDocument()
-  expect(screen.getByText(/Turn so your left shoulder is closest to the camera/)).toBeInTheDocument()
+  expect(screen.getByText(/Turn your chair so you face the camera straight on/)).toBeInTheDocument()
   for (const b of screen.getAllByRole('button', { name: /yes, I can see it/ })) fireEvent.click(b)
   expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
 })
@@ -154,9 +148,9 @@ test('sheet tasks show the overhead-mount diagram and copy; the arm task does no
   expect(screen.getByRole('img', { name: /two-thirds of the picture/ })).toBeInTheDocument()
   expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
   unmount()
-  renderSetup('/setup?exercise=arm')
+  renderSetup('/setup?exercise=abduction')
   expect(screen.queryByRole('heading', { name: 'Mount the camera above the table' })).not.toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Place the camera beside you' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
 })
 
 test('the angle row shows the service hint when the camera is too steep', () => {
@@ -198,7 +192,7 @@ test('no Skip demo for a demo not seen today', () => {
 test('a stopped day never opens the camera', () => {
   localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 2, new_symptoms: true, tier: 'full', flagged: true, synced: true, side: 'left', minutes: 14 }, done: [], demosSeen: [], current: null, finished: [], stopped: 'new_symptoms' }))
   const start = mockStream(null)
-  renderSetup('/setup?exercise=arm')
+  renderSetup('/setup?exercise=abduction')
   expect(screen.getByRole('heading', { name: 'No exercises today' })).toBeInTheDocument()
   expect(start).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
@@ -206,8 +200,8 @@ test('a stopped day never opens the camera', () => {
 })
 
 test('mid-day the setup shows where this exercise sits in the day', () => {
-  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 2, new_symptoms: false, tier: 'full', flagged: false, synced: true, side: 'left', minutes: 14 }, done: ['pendulum'], demosSeen: [], current: null, finished: [], stopped: null }))
+  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 2, new_symptoms: false, tier: 'full', flagged: false, synced: true, side: 'left', minutes: 14 }, done: ['abduction'], demosSeen: [], current: null, finished: [], stopped: null }))
   mockStream(null)
-  renderSetup('/setup?exercise=arm')
-  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 4 · Arm to the front')
+  renderSetup('/setup?exercise=cup')
+  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 2 · Waiter – cup')
 })

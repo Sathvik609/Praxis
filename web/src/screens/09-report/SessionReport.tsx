@@ -9,7 +9,7 @@ import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
 import { api, useApi, type SessionRecord } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
-import { angleTarget, exerciseById, exerciseOfSession, sessionExerciseName } from '../../lib/seed'
+import { angleTarget, exerciseById, exerciseOfSession, isHiddenSession, sessionExerciseName } from '../../lib/seed'
 import { DayNext, useDayRun } from './DayNext'
 
 const conf = { high: 'mint', medium: 'amber', low: 'neutral' } as const
@@ -61,7 +61,9 @@ export function SessionReport() {
   // The service answers unknown ids with 200 and `{ error }`, so a body without a summary is
   // an error too, not a record.
   const bodyError = data && !(data as Partial<SessionRecord>).summary ? String((data as { error?: string }).error ?? 'no session data') : null
-  const problem = error ?? bodyError
+  // 28 Sep: a session of a hidden exercise is never shown (the service does not serve it either).
+  const hiddenError = data?.summary && isHiddenSession(data) ? 'this exercise is not part of your program' : null
+  const problem = error ?? bodyError ?? hiddenError
 
   if (problem) {
     return (
@@ -107,9 +109,9 @@ export function SessionReport() {
   const context = s.summary.mode === 'nhpt' ? 'assessment' : side ? `${side} side` : 'practice'
   const latency = (s.summary as { latency?: LatencyBlock }).latency ?? null
   // Peak angles belong to an arm exercise: the one this session ran, named from the registry
-  // (or the service's own name); a combined sample session falls back to Arm to the front.
+  // (or the service's own name); a combined sample session falls back to Arm out to the side.
   const ex = exerciseOfSession(s)
-  const armEx = ex?.session === 'arm' ? ex : exerciseById('arm')!
+  const armEx = ex?.session === 'arm' ? ex : exerciseById('abduction')!
   const armName = ex?.session === 'arm' ? sessionExerciseName(s) : armEx.name
   const swings = armEx.id === 'pendulum'
   const peakTarget = angleTarget(s.summary as { target_deg?: number | null; ceiling_deg?: number | null }, armEx.id)

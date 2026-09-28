@@ -18,6 +18,7 @@ function renderDemo(path: string) {
       <Routes>
         <Route path="/demo" element={<Demonstration />} />
         <Route path="/session" element={<div>SESSION</div>} />
+        <Route path="/details/choose" element={<div>CHOOSE</div>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -39,8 +40,8 @@ test('cup demonstration lists five numbered steps and gates Start practice on re
 })
 
 test('arm demonstration shows assigned, watch-for and stop-if lines and rehearsal', () => {
-  renderDemo('/demo?exercise=arm&side=left')
-  expect(screen.getByRole('heading', { name: 'Arm to the front' })).toBeInTheDocument()
+  renderDemo('/demo?exercise=abduction&side=left')
+  expect(screen.getByRole('heading', { name: 'Arm out to the side' })).toBeInTheDocument()
   expect(screen.getByText('Assigned')).toBeInTheDocument()
   expect(screen.getByText(/Watch for/)).toBeInTheDocument()
   expect(screen.getByText(/Stop if/)).toBeInTheDocument()
@@ -55,26 +56,20 @@ test('Arm out to the side starts its own live session', () => {
   expect(screen.getByText('SESSION')).toBeInTheDocument()
 })
 
-test('a demo-only exercise is watched and self-ticked: no practice, no camera, the tick is posted and labelled', async () => {
-  const fetchMock = mockApi({ '/api/self_report': { ok: true, exercise: 'external_rotation', verified: false, source: 'self_ticked', label: 'Demo only · self-ticked, not camera-verified', sets_today: 1 } })
-  renderDemo('/demo?exercise=external_rotation&side=left')
-  expect(screen.getByRole('heading', { name: 'Rotate out' })).toBeInTheDocument()
-  expect(screen.getByText(/The camera does not score this one/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Start practice' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Rehearse without scoring' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'I did a set' }))
-  expect(await screen.findByText(/1 set ticked today · self-reported, not checked by the camera/)).toBeInTheDocument()
-  const [url, init] = fetchMock.mock.calls[0]
-  expect(String(url)).toContain('/api/self_report')
-  expect(JSON.parse(String(init?.body))).toEqual({ exercise: 'external_rotation', sets: 1 })
+test.each(['pendulum', 'arm', 'flexion', 'external_rotation', 'internal_rotation'])('a deep link to hidden %s goes back to Choose and shows nothing of it', (id) => {
+  const fetchMock = mockApi({})
+  renderDemo(`/demo?exercise=${id}&side=left`)
+  expect(screen.getByText('CHOOSE')).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
+  expect(fetchMock).not.toHaveBeenCalled()
 })
 
 test('Start practice marks the demo as seen and the exercise as the day\'s current one', () => {
-  renderDemo('/demo?exercise=arm&side=left')
+  renderDemo('/demo?exercise=abduction&side=left')
   fireEvent.click(screen.getByRole('checkbox', { name: /I understand the movement/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Start practice' }))
-  expect(readDay().current).toBe('arm')
-  expect(readDay().demosSeen).toContain('arm')
+  expect(readDay().current).toBe('abduction')
+  expect(readDay().demosSeen).toContain('abduction')
 })
 
 test('without a side in the link the saved side is used, not a silent left', () => {
@@ -85,7 +80,7 @@ test('without a side in the link the saved side is used, not a silent left', () 
 
 test('a day stopped at check-in lets you watch but not start', () => {
   localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 8, new_symptoms: false, tier: 'rest', flagged: true, synced: true, side: 'left', minutes: 14 }, done: [], demosSeen: [], current: null, finished: [], stopped: 'rest' }))
-  renderDemo('/demo?exercise=arm&side=left')
+  renderDemo('/demo?exercise=abduction&side=left')
   expect(screen.getByText(/No exercises today/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Start practice' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Rehearse without scoring' })).toBeDisabled()

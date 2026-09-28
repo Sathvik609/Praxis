@@ -9,6 +9,8 @@ test('coach drawer answers from the prescription and is labeled rule-based', asy
   expect(await screen.findByText(/Rule-based coach · LLM agent pending/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: /What is my program today/ }))
   expect(await screen.findByText(/2 slow arcs then 2 fast arcs/)).toBeInTheDocument()
+  expect(screen.getByText(/Today: Arm out to the side \(2 sets of 8, hold 3 s/)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
   fireEvent.click(screen.getByRole('button', { name: /Can I do more/ }))
   expect(await screen.findByText(/never goes above Level 2/)).toBeInTheDocument()
 })

@@ -1,4 +1,4 @@
-import { DAY_ORDER, WEEKLY, doseFor, readCheckinPain, tierFor } from './plan'
+import { DAY_MINUTES, DAY_ORDER, WEEKLY, doseFor, readCheckinPain, tierFor } from './plan'
 import { EXERCISES } from './seed'
 
 test('pain tiers: 0–3 full, 4–6 gentle, 7 and up rest (mirrors services/session/praxis_session/plan.py)', () => {
@@ -11,9 +11,12 @@ test('pain tiers: 0–3 full, 4–6 gentle, 7 and up rest (mirrors services/sess
   expect(tierFor(7, 9)).toBe('rest')
 })
 
-test('default day order is Pendulum, Arm to the front, Arm out to the side, Waiter – cup; the peg test is weekly', () => {
-  expect(DAY_ORDER).toEqual(['pendulum', 'arm', 'abduction', 'cup'])
+test('default day (28 Sep) is Arm out to the side then Waiter – cup, about 10 minutes; the peg test is weekly', () => {
+  expect(DAY_ORDER).toEqual(['abduction', 'cup'])
   expect(WEEKLY).toEqual(['nhpt'])
+  expect(DAY_MINUTES).toBe(10)
+  // nothing scheduled is hidden, and every scheduled id is a visible exercise
+  for (const id of [...DAY_ORDER, ...WEEKLY]) expect(EXERCISES.some((e) => e.id === id)).toBe(true)
 })
 
 test('the gentle dose is shown for exercises that have one', () => {

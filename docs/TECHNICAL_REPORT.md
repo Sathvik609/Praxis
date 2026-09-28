@@ -3,7 +3,7 @@
 > Status: **Phase 0–8 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
-Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Locked exercise set (23 Sep 2026): five camera-coached tasks — Pendulum, Arm to the front, Arm out to the side (exercises), Waiter – cup and the Nine-Hole Peg Test (activities) — and two demo-only rotations (Rotate out / Rotate in) that the avatar performs and the patient self-ticks; the camera never scores them. Pain tiers at check-in: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag.
+Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Locked exercise set (28 Sep 2026, supersedes the 23 Sep seven): three camera-coached exercises — Arm out to the side (daily, front view, pose model), Waiter – cup (daily, printed 5-dot sheet) and the Nine-Hole Peg Test (weekly assessment). Pendulum, Arm to the front, Rotate out and Rotate in are hidden: their code stays dormant behind the registry's `visible` flag, and nothing shows, schedules or runs them. Default day: Arm out to the side → Waiter – cup (~10 min). Pain tiers at check-in: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag.
 
 ## 2. System architecture
 One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from the browser) → OpenCV 5 perception → stop rules → coach (rule-based first, Strands/Bedrock agent in W6) → JSON events, captions, overlay geometry back to the browser. Raw frames never leave the process. Design: `docs/superpowers/specs/2026-09-16-praxis-rebuild-design.md`.
@@ -49,6 +49,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Day order + pain tiers (23 Sep): `plan.py` (Pendulum → front → side → cup, NHPT weekly; 0–3 full, 4–6 gentle within allowed adaptations, ≥ 7 rest + flag), `GET /api/plan`, tier enforced on check-in (`apply_tier`), gentle cup = slow arcs only, seed stop level 5 → 7, `POST /api/self_report` for demo rotations (`self_report` event, `verified: false`) | built, tested (§3.7.1) |
 | Web for the locked set (23 Sep): screen 04 grouped Exercises / Activities / Demo only with text badges, Today's plan in day order, tier chip + reason from the check-in pain, gentle doses, rest-day card; setup / demonstration / live arm screen run Pendulum and Arm out to the side (registry id + tier on the socket); Demonstration self-tick for demo-only exercises (`/api/self_report`); check-in and therapist card show the tiers and stop level 7; `lib/plan.ts` display mirror kept in step by pytest | built, tested (vitest); not yet checked in a browser |
 | Day flow + camera setup per view (25 Sep, web): one check-in per day (`web/src/lib/day.ts`, localStorage keyed by date) posted to `POST /api/checkin` — tier and therapist flag from the service; "told" only when `flagged: true`; offline check-ins kept on the device and re-posted on the next load; new/worse symptoms or pain ≥ 7 end the day at screen 03. Practising side asked once and persisted. Report → "Next: <exercise>" straight to that exercise's setup; "Skip demo" when watched today; Home's peg test routed through check-in + setup. Screen 05 checklist, diagram and copy per view (side / front / table); pose rows are patient self-checks because calibrate mode runs no pose model (a decided service row with the same id takes over); privacy label from `processingPlace()` | built, tested (vitest); `/api/checkin` mocked — service endpoint from the service track; not yet checked in a browser |
+| Three-exercise lock (28 Sep): registry `visible` flag — Arm out to the side, Waiter – cup, NHPT visible; Pendulum, Arm to the front, Rotate out / in hidden (code, clips, GLB actions, perception tests kept dormant); default day abduction → cup (~10 min), NHPT weekly; socket refuses hidden ids (`not_offered`) and a bare `mode=arm` runs abduction; self-report, replay list and session list skip hidden exercises; seed history relabelled and refreshed on an existing database; web `EXERCISES` = the three (`ALL_EXERCISES` dormant), deep links to a hidden exercise redirect to Choose | built, tested (pytest + vitest) |
 | Real recordings, dataset v1, browser-measured latency, pilots | not started (Phase 9, needs people) |
 | Agent on Bedrock, AWS, COOL | deferred (W6) |
 
@@ -86,7 +87,11 @@ Occupancy per hole is the fraction of peg mask inside the disc (≥ 0.35 → occ
 `perception/pose.py` runs the OpenCV Zoo MediaPipe person detector (224×224) and BlazePose landmarker (256×256) through `cv2.dnn` (Apache-2.0, recorded before download; vendored wrappers under `perception/zoo/`; OpenCV 5's graph engine returns the person detector's two outputs in swapped order, which `pose.py` re-sorts by width). From the 33 landmarks we compute, in the image plane, shoulder flexion (angle at the shoulder between upper arm and trunk), elbow angle, trunk lean (hip→shoulder midline from vertical, signed), and shoulder hike (practising shoulder height above the other, normalised by torso length and baselined at the start of the set). The shoulder angle is One-Euro filtered. Side view is the assumption; `view_ok` is false when the shoulders are more than 0.6 torso-lengths apart. BlazePose's per-landmark visibility is reported in three groups because they gate three different things: `visibility` (practising-side shoulder, elbow, hip — the angle), `hip_visibility` (both hips — the lean) and `shoulders_visibility` (both shoulders — the hike). **These are camera-relative progress numbers, not goniometry.**
 
 `perception/arm_fsm.py`: `start_pose → moving → target_reached → hold → return`; target clamped to the 90° ceiling in code (`clamped` reported); a rep is verified when it reached target − 10° and held ≥ 3 s; `target_missed` and `hold_too_short` reps are counted but unverified. **Gating (Sprint D):** the FSM freezes — no transitions, no compensation events, the angle still shown — while the patient faces the camera (`view_ok` false → `arm.gate = "turn_side"` on every frame) or the practising-side joint visibility is below 0.5 (`arm.gate = "hips_out_of_view"`), so a frontal lift can never be scored as a rep and a seated patient with hips behind a desk gets no spurious flags. `compensation_lean` fires once per rep only after |lean| > 12° has persisted for 0.5 s with both hips visible (flagged after three); `shoulder_hiking` needs both shoulders visible and hike > 0.08 torso lengths above baseline. Pipeline mode `arm` needs no sheet; pose absence for 15 frames pauses with `perception_lost`. Because the DNN cannot detect a drawn figure, the evaluation feeds a synthetic 33-point landmark stream through the same FSM (`replay.run_landmark_replay`), which validates the state machine and angle code, not the detector.
-**The exercise registry (`perception/exercises.py`; locked set of 23 Sep 2026).** One frozen
+**The exercise registry (`perception/exercises.py`; locked set of 23 Sep 2026, narrowed on 28 Sep).**
+Since 28 Sep only three entries are `visible`: Arm out to the side, Waiter – cup and the
+Nine-Hole Peg Test. Pendulum, Arm to the front, Rotate out and Rotate in are `visible=False`:
+still described below and still tested, but dormant — never listed, scheduled, self-ticked,
+replayed or run (the socket answers `error{code: "not_offered"}`). One frozen
 `Exercise` per entry holds its id, name, avatar clip, `mode` (`coached | demo`), `category`
 (`exercise | activity`), the camera pipeline that verifies it (`arm | cup | nhpt`, or none),
 its frequency, the camera view it is scored from, the metric function, target, in-code
@@ -129,10 +134,11 @@ oscillation counting has only ever run on synthetic landmark streams. None of th
 has been near a real recording; all are camera-relative progress, **never clinical
 goniometry**.
 
-### 3.7.1 Day order, pain tier and self-ticked demos (`plan.py`, locked 23 Sep)
-**Day order.** Pendulum → Arm to the front → Arm out to the side → Waiter – cup (about 15
-minutes); the Nine-Hole Peg Test is weekly; Rotate out / Rotate in are offered as demo-only
-extras. `GET /api/plan?pain=&nhpt_due=` returns the day in that order at the tier's dose
+### 3.7.1 Day order, pain tier and self-ticked demos (`plan.py`, tiers 23 Sep, day 28 Sep)
+**Day order (28 Sep).** Arm out to the side → Waiter – cup (about 10 minutes); the Nine-Hole
+Peg Test is weekly. Until 28 Sep the day was Pendulum → Arm to the front → Arm out to the side
+→ Waiter – cup with the rotations as demo-only extras; those four are now hidden, `demo` is
+always empty and `POST /api/self_report` refuses them (`not_offered`). `GET /api/plan?pain=&nhpt_due=` returns the day in that order at the tier's dose
 (`items`, each with `order`), the peg test when due (`weekly`), the demo rotations (`demo`,
 `self_ticked: true`, `camera_verified: false`), the reason in plain words, and for a rest day
 the rest advice and `therapist_flag: true`.
@@ -288,7 +294,7 @@ W6.
 Video processed in memory only; never stored by default. Only events, metrics, logs leave the device. Clips only with explicit consent, 30-day deletion. Feeling is self-reported, never read from the face; face analysis limited to presence.
 
 ## 9. Limitations and honest scope
-Exercise ceiling (23 Sep): Pendulum, Arm to the front, Arm out to the side, Waiter – cup, NHPT camera-coached; Rotate out / Rotate in demo-only and self-ticked, never measured. Pendulum and Arm out to the side are validated on synthetic landmark streams only. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
+Exercise ceiling (28 Sep): Arm out to the side, Waiter – cup and the NHPT, all camera-coached. Shoulder rotations are not measured because a single webcam cannot measure them honestly; Pendulum and Arm to the front are dormant (code and tests kept, hidden from every screen and refused by the service). Arm out to the side is validated on synthetic landmark streams only. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
 
 ## 10. Reproducibility
 Every number in §6–7 will be regenerated by scripts in `evaluation/` and `benchmark/`.

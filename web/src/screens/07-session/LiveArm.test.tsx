@@ -33,7 +33,7 @@ function renderAt(path: string) {
 
 test('shows set, rep, angle tiles and the shoulder band in the feed (not over the video)', () => {
   mockStream([frame])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   expect(screen.getByText(/set 1 of 2/)).toBeInTheDocument()
   expect(screen.getByText(/Rep 5 of 8/)).toBeInTheDocument()
   expect(screen.getByText('72°')).toBeInTheDocument()
@@ -47,7 +47,7 @@ test('shows set, rep, angle tiles and the shoulder band in the feed (not over th
 
 test('trunk lean over 12° is amber and says "(leaning)" so colour is never alone', () => {
   mockStream([{ ...frame, arm: { ...frame.arm, trunk_lean_deg: -15 } }])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   const lean = screen.getByText('15°')
   expect(lean.className).toMatch(/text-amber-ink/)
   expect(screen.getByText('(leaning)')).toBeInTheDocument()
@@ -55,7 +55,7 @@ test('trunk lean over 12° is amber and says "(leaning)" so colour is never alon
 
 test('posture cue appears after a compensation_lean event in the watch tone', () => {
   mockStream([frame, { type: 'compensation_lean', t: 11, id: 2, lean_deg: 15, count: 1, flagged: false }])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   expect(screen.getByText(/Sit tall/)).toBeInTheDocument()
   expect(screen.getByText('Coach · posture')).toBeInTheDocument()
   expect(screen.getByText(/Sit tall/).closest('section')?.className).toMatch(/border-l-amber-ink/)
@@ -63,15 +63,15 @@ test('posture cue appears after a compensation_lean event in the watch tone', ()
 
 test('completion opens the feedback overlay', () => {
   mockStream([frame, { type: 'arm_complete', t: 12, id: 3, sets: 2, reps: 16 }])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
-test('Arm to the front sends the flexion registry id and the tier from the check-in', () => {
+test('Arm out to the side sends the abduction registry id and the tier from the check-in', () => {
   sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 5 }))
   mockStream([frame])
-  renderAt('/session?exercise=arm&side=left')
-  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ mode: 'arm', params: expect.objectContaining({ exercise: 'flexion', tier: 'gentle', side: 'left' }) }))
+  renderAt('/session?exercise=abduction&side=left')
+  expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ mode: 'arm', params: expect.objectContaining({ exercise: 'abduction', tier: 'gentle', side: 'left' }) }))
   sessionStorage.clear()
 })
 
@@ -91,24 +91,24 @@ test('front-view Arm out to the side never tells the patient to turn sideways', 
   expect(screen.queryByText(/side to the camera/)).toBeNull()
 })
 
-test('Pendulum counts swings: no hold count, no lift/lower labels', () => {
-  mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'pendulum', kind: 'oscillation', state: 'moving', hold_s: 0, target_deg: 20, ceiling_deg: 45, reps_per_set: 10, rep: 3 } }])
-  renderAt('/session?exercise=pendulum&side=left')
-  expect(screen.getByText('Pendulum · left side')).toBeInTheDocument()
-  expect(screen.getByText(/Swing 4 of 10/)).toBeInTheDocument()
-  expect(screen.queryByText('Lift for 3')).toBeNull()
+test.each(['pendulum', 'arm', 'flexion', null])('a hidden or missing exercise (%s) never reaches the service: the arm screen runs Arm out to the side', (id) => {
+  mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'abduction', view_required: 'front' } }])
+  renderAt(`/session?${id ? `exercise=${id}&` : ''}side=left`)
+  expect(hook.useWebcamStream).toHaveBeenLastCalledWith(expect.objectContaining({ params: expect.objectContaining({ exercise: 'abduction' }) }))
+  expect(screen.getByText('Arm out to the side · left side')).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front/)
 })
 
 test('replay query is passed to the stream so no webcam is opened', () => {
   mockStream([])
-  renderAt('/session?exercise=arm&side=left&replay=synthetic_arm_01')
+  renderAt('/session?exercise=abduction&side=left&replay=synthetic_arm_01')
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_arm_01' }))
   expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
 })
 
 test('verified and unverified counts are on the live arm screen, from the camera totals', () => {
   mockStream([{ ...frame, arm: { ...frame.arm, reps_total: 4, unverified_total: 1 } }])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   const tally = screen.getByLabelText('Verified and unverified counts')
   expect(tally).toHaveTextContent('3 verified')
   expect(tally).toHaveTextContent('1 unverified')
@@ -117,7 +117,7 @@ test('verified and unverified counts are on the live arm screen, from the camera
 
 test('the pose line is a developer line under Show trace; the caption stays with the trace open', () => {
   mockStream([frame])
-  renderAt('/session?exercise=arm&side=left')
+  renderAt('/session?exercise=abduction&side=left')
   expect(screen.queryByText(/cv2 dnn pose/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByText(/cv2 dnn pose · shoulder–elbow–hip angle/)).toBeInTheDocument()

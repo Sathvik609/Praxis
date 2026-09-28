@@ -25,11 +25,21 @@ beforeEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('a fresh day has no check-in, nothing done, and Pendulum next', () => {
+test('a fresh day has no check-in, nothing done, and Arm out to the side next', () => {
   const d = readDay()
   expect(d.date).toBe(todayKey())
   expect(d.checkin).toBeNull()
-  expect(nextExercise(d)).toBe('pendulum')
+  expect(nextExercise(d)).toBe('abduction')
+})
+
+test('a day stored before the 28 Sep lock forgets the hidden exercises it named', () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: null, done: ['pendulum', 'arm'], demosSeen: ['external_rotation', 'cup'], current: 'arm', finished: [{ exercise: 'pendulum', reportId: 'r0' }], stopped: null }))
+  const d = readDay()
+  expect(d.done).toEqual([])
+  expect(d.demosSeen).toEqual(['cup'])
+  expect(d.current).toBeNull()
+  expect(d.finished).toEqual([])
+  expect(nextExercise(d)).toBe('abduction')
 })
 
 test('yesterday is forgotten: a stored day from another date is replaced', () => {
@@ -96,23 +106,20 @@ test('new or worse symptoms stop the day at check-in; pain 7 and up is a rest da
 test('the day chains: finishing a report marks the exercise done and offers the next one', async () => {
   mockApi({ '/api/checkin': { tier: 'full', flagged: false, reasons: [], plan: {} } })
   await saveCheckin({ pain: 1, new_symptoms: false, ...BASE }, 'left')
-  startExercise('pendulum')
-  expect(dayPosition(readDay(), 'pendulum')).toEqual({ index: 1, total: 4 })
-  const d = finishReport('r1', 'arm', false)
-  expect(d?.done).toEqual(['pendulum'])
-  expect(nextExercise(d!)).toBe('arm')
-  // re-rendering the same report does not double count, and an old report is not part of today
-  expect(finishReport('r1', 'arm', false)?.done).toEqual(['pendulum'])
-  expect(finishReport('old', 'cup', false)).toBeNull()
-  startExercise('arm')
-  finishReport('r2', 'arm', false)
   startExercise('abduction')
+  expect(dayPosition(readDay(), 'abduction')).toEqual({ index: 1, total: 2 })
   // the report mode must match what was started
-  expect(finishReport('r3', 'cup', false)).toBeNull()
-  expect(nextExercise(finishReport('r3', 'arm', false)!)).toBe('cup')
+  expect(finishReport('r1', 'cup', false)).toBeNull()
+  const d = finishReport('r1', 'arm', false)
+  expect(d?.done).toEqual(['abduction'])
+  expect(nextExercise(d!)).toBe('cup')
+  // re-rendering the same report does not double count, and an old report is not part of today
+  expect(finishReport('r1', 'arm', false)?.done).toEqual(['abduction'])
+  expect(finishReport('old', 'cup', false)).toBeNull()
   startExercise('cup')
-  const last = finishReport('r4', 'cup', false)
-  expect(last?.done).toEqual(['pendulum', 'arm', 'abduction', 'cup'])
+  expect(dayPosition(readDay(), 'cup')).toEqual({ index: 2, total: 2 })
+  const last = finishReport('r2', 'cup', false)
+  expect(last?.done).toEqual(['abduction', 'cup'])
   expect(nextExercise(last!)).toBeNull()
 })
 
@@ -122,13 +129,13 @@ test('the weekly peg test does not take a day slot', async () => {
   startExercise('nhpt')
   expect(dayPosition(readDay(), 'nhpt')).toBeNull()
   const d = finishReport('n1', 'nhpt', false)
-  expect(nextExercise(d!)).toBe('pendulum')
+  expect(nextExercise(d!)).toBe('abduction')
 })
 
 test('a stop rule inside a session ends the day', async () => {
   mockApi({ '/api/checkin': { tier: 'full', flagged: false, reasons: [], plan: {} } })
   await saveCheckin({ pain: 1, new_symptoms: false, ...BASE }, 'left')
-  startExercise('arm')
+  startExercise('abduction')
   const d = finishReport('r1', 'arm', true)
   expect(d?.stopped).toBe('session')
   expect(nextExercise(d!)).toBeNull()
@@ -143,8 +150,8 @@ test('a shorter day is one exercise', async () => {
 })
 
 test('demos seen today are remembered', () => {
-  markDemoSeen('arm')
-  expect(readDay().demosSeen).toContain('arm')
+  markDemoSeen('abduction')
+  expect(readDay().demosSeen).toContain('abduction')
 })
 
 test("Home's Run the peg test goes through today's check-in and then the peg test's setup", () => {
@@ -152,6 +159,6 @@ test("Home's Run the peg test goes through today's check-in and then the peg tes
 })
 
 test('session urls carry the side; the peg test carries the hand', () => {
-  expect(sessionUrl(exerciseById('arm')!, 'right')).toBe('/session?exercise=arm&side=right')
+  expect(sessionUrl(exerciseById('abduction')!, 'right')).toBe('/session?exercise=abduction&side=right')
   expect(sessionUrl(exerciseById('nhpt')!, 'left')).toBe('/session?exercise=nhpt&hand=left')
 })

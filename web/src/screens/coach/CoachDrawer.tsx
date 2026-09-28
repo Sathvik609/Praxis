@@ -18,9 +18,9 @@ export function CoachPanel() {
   const [log, setLog] = useState<{ q: string; a: string }[]>([])
   const answer = (q: string): string => {
     const cup = rx?.exercises.cup ?? {}
-    const arm = rx?.exercises.arm ?? {}
+    const side = rx?.exercises.abduction ?? {}
     const last = sessions?.[0]
-    if (q.startsWith('What is my program')) return `Today: Waiter – cup (${String(cup.slow_arcs ?? 2)} slow arcs then ${String(cup.fast_arcs ?? 2)} fast arcs) and Arm to the front (${String(arm.sets ?? 2)} sets of ${String(arm.reps ?? 8)}, hold ${String(arm.hold_s ?? 3)} s, no higher than the shoulder). The peg test is weekly.`
+    if (q.startsWith('What is my program')) return `Today: Arm out to the side (${String(side.sets ?? 2)} sets of ${String(side.reps ?? 8)}, hold ${String(side.hold_s ?? 3)} s, no higher than the shoulder), then Waiter – cup (${String(cup.slow_arcs ?? 2)} slow arcs then ${String(cup.fast_arcs ?? 2)} fast arcs). The peg test is weekly.`
     if (q.startsWith('Can I do more')) return `Your program (Hospital GRASP, Level ${rx?.level ?? 2}) allows fast arcs and a shorter hold, and nothing else. Difficulty never goes above Level ${rx?.level ?? 2}; a level change needs ${rx?.clinician?.split(',')[0] ?? 'your therapist'}.`
     if (q.startsWith('Why did the coach')) return 'The coach slows you down when the camera sees trunk lean or shoulder hiking, or when the behavioural exertion index is high. Those are rules written by your therapist, checked before the coach speaks.'
     if (last) return `${last.date}: ${last.title} — ${String(last.summary.camera.verified ?? 0)} verified, ${String(last.summary.camera.unverified ?? 0)} unverified; ${last.summary.coach.notes[0]?.text ?? 'no coach notes'}.`

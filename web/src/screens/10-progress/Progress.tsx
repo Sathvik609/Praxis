@@ -9,18 +9,21 @@ import { Stat } from '../../design/Stat'
 import { Bars } from '../../design/charts/Bars'
 import { Line } from '../../design/charts/Line'
 import { api, useApi, type SessionRecord } from '../../lib/api'
-import { exerciseById, exerciseOfSession } from '../../lib/seed'
+import { EXERCISES, exerciseOfSession, type ExerciseId } from '../../lib/seed'
 
 type Range = '4w' | '12w' | 'all'
-/** One filter per exercise of the locked set that practice sessions can hold (the peg test has
- *  its own card), named from the web registry (`lib/seed.ts`), plus the demo-only rotations. */
-type Task = 'pendulum' | 'arm' | 'abduction' | 'cup' | 'rotations'
-const CHARTED: Exclude<Task, 'rotations'>[] = ['pendulum', 'arm', 'abduction', 'cup']
-const TASK_NAME: Record<Task, string> = {
-  ...(Object.fromEntries(CHARTED.map((id) => [id, exerciseById(id)!.name])) as Record<Exclude<Task, 'rotations'>, string>),
-  rotations: `${exerciseById('external_rotation')!.name} / ${exerciseById('internal_rotation')!.name.replace(/^Rotate /, '')}`,
+/** One filter per visible camera-coached practice exercise (28 Sep: Arm out to the side and
+ *  Waiter – cup; the peg test has its own card), named from the web registry (`lib/seed.ts`),
+ *  plus one card for any visible demo-only exercises (none since 28 Sep). Hidden exercises
+ *  never appear: `EXERCISES` holds only the visible ones. */
+type Task = ExerciseId | 'demos'
+const CHARTED: ExerciseId[] = EXERCISES.filter((e) => e.mode === 'coached' && !e.weekly).map((e) => e.id)
+const DEMOS = EXERCISES.filter((e) => e.mode === 'demo')
+const TASK_NAME: Record<string, string> = {
+  ...Object.fromEntries(EXERCISES.map((e) => [e.id, e.name])),
+  demos: DEMOS.map((e) => e.name).join(' / '),
 }
-const UNIT: Record<Task, string> = { pendulum: 'swings', arm: 'lifts', abduction: 'lifts', cup: 'reaches', rotations: '' }
+const UNIT: Partial<Record<Task, string>> = { pendulum: 'swings', arm: 'lifts', abduction: 'lifts', cup: 'reaches' }
 type Row = { date: string; verified: number; limited: boolean; task: string | undefined; illustrative: boolean }
 type Illustrative = { illustrative?: boolean }
 
@@ -71,7 +74,7 @@ export function Progress() {
   // A trend point is the patient's own only when a real (non-sample) peg-test session backs it.
   const realNhptDates = new Set((sessions ?? []).filter((s) => s.mode === 'nhpt' && !(s as Illustrative).illustrative).map((s) => s.date))
   const sampleTrend = !!sessions && trend.some((t) => !realNhptDates.has(t.date))
-  const rotations = task === 'rotations'
+  const rotations = task === 'demos'
 
   const logAttempt = () =>
     api
@@ -88,7 +91,7 @@ export function Progress() {
         <h1 className="text-4xl">Progress and history</h1>
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: '12w', label: 'Last 12 weeks' }, { value: 'all', label: 'All time' }]} />
-          <Pill ariaLabel="Task" size="sm" value={task} onChange={setTask} options={[...CHARTED.map((id) => ({ value: id, label: TASK_NAME[id] })), { value: 'rotations' as const, label: TASK_NAME.rotations }]} />
+          <Pill ariaLabel="Task" size="sm" value={task} onChange={setTask} options={[...CHARTED.map((id): { value: Task; label: string } => ({ value: id, label: TASK_NAME[id] })), ...(DEMOS.length ? [{ value: 'demos' as const, label: TASK_NAME.demos }] : [])]} />
           <Checkbox label="Compare same setup only" checked={sameSetup} onChange={setSameSetup} />
         </div>
       </div>
@@ -103,16 +106,16 @@ export function Progress() {
           <p className="mt-2 text-base text-muted">{trend.length} assessment{trend.length === 1 ? '' : 's'} · same board and camera setup · run separately from practice.</p>
         </Card>
         {rotations ? (
-          <Card title={TASK_NAME.rotations} action={<Chip tone="neutral">Demo only</Chip>}>
+          <Card title={TASK_NAME.demos} action={<Chip tone="neutral">Demo only</Chip>}>
             <p className="text-lg">Self-ticked, not camera-verified.</p>
-            <p className="mt-2 text-muted">The figure shows these and you tick each set yourself. One webcam cannot measure shoulder rotation honestly, so the camera never scores them and there is nothing to chart.</p>
+            <p className="mt-2 text-muted">The figure shows these and you tick each set yourself. The camera never scores them, so there is nothing to chart.</p>
           </Card>
         ) : (
           <Card title={TASK_NAME[task]} action={<span className="flex flex-wrap justify-end gap-2">{sampleBars && <Chip tone="neutral">Sample</Chip>}<Chip tone="neutral">verified per session</Chip></span>}>
             {perSession.length === 0 ? (
               <p className="text-muted">No {TASK_NAME[task]} sessions in this range.</p>
             ) : (
-              <Bars title={TASK_NAME[task]} unit={UNIT[task]} values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
+              <Bars title={TASK_NAME[task]} unit={UNIT[task] ?? ''} values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
             )}
             <p className="mt-2 text-base text-muted">
               {perSession.length} session{perSession.length === 1 ? '' : 's'} · limited tracking counts as unverified and is never compared.
@@ -157,7 +160,7 @@ export function Progress() {
       <div className="mt-6 grid grid-cols-[2fr_1fr] gap-6">
         <Card title="Session list" action={<Chip tone="neutral">{TASK_NAME[task]}</Chip>}>
           {sError && <p className="text-red-ink">Could not load sessions: {sError}</p>}
-          {sessions && rotations && <p className="text-muted">Rotations are self-ticked, never recorded as camera sessions.</p>}
+          {sessions && rotations && <p className="text-muted">Demo-only exercises are self-ticked, never recorded as camera sessions.</p>}
           {sessions && !rotations && list.length === 0 && <p className="text-muted">No sessions yet for {TASK_NAME[task]} in this range.</p>}
           <ul className="divide-y divide-line">
             {list.map((s) => (

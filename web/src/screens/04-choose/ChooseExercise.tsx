@@ -55,7 +55,7 @@ function Sheet({ open, onOpenChange, title, description, children }: { open: boo
   )
 }
 
-type Time = '5' | '15'
+type Time = '5' | '10'
 type Pain = 'none' | 'some' | 'high'
 type HasKit = 'yes' | 'no'
 
@@ -64,14 +64,15 @@ function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pi
   if (pain === 'high') return { pick: null, why: 'Pain at 7 or more is a rest day in your program. No exercises today. Tell the check-in, so your therapist can be told.' }
   if (!time || !pain || !kit) return { pick: null, why: 'Answer all three and Praxis will suggest one exercise from today’s plan.' }
   const care = pain === 'some' ? ' Pain 4–6 makes it a gentle day: fewer reps, shorter holds, no fast arcs.' : ''
-  if (time === '15') return { pick: 'pendulum', why: `Pendulum, then today’s order: Arm to the front, Arm out to the side, Waiter – cup.${care}` }
-  const pick: ExerciseId = kit === 'yes' ? 'cup' : 'arm'
+  if (time === '10') return { pick: 'abduction', why: `Arm out to the side, then Waiter – cup: today’s order.${care}` }
+  const pick: ExerciseId = kit === 'yes' ? 'cup' : 'abduction'
   const name = EXERCISES.find((e) => e.id === pick)?.name ?? pick
   return { pick, why: `${name}.${care}` }
 }
 
-/** Screen 04 · Choose exercise. The locked set of 23 Sep under three headings — Exercises,
- *  Activities, Demo only. "Today's plan" is the default day in order at the tier the check-in
+/** Screen 04 · Choose exercise. The three exercises of the 28 Sep lock (`EXERCISES` holds only
+ *  the visible ones) under their headings — Exercises, Activities; a Demo only heading appears
+ *  only if a demo-only exercise is ever shown again. "Today's plan" is the default day in order at the tier the check-in
  *  pain gives (0–3 full, 4–6 gentle, ≥ 7 rest). The service enforces the same tier when the
  *  session starts; this screen only shows it. Cards select on tap; the one primary action lives
  *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera.
@@ -250,7 +251,7 @@ export function ChooseExercise() {
         <div className="mt-5 space-y-5">
           <div>
             <div className="mb-2 font-bold">How much time do you have?</div>
-            <Pill ariaLabel="Time" value={time ?? ''} onChange={(v) => setTime(v as Time)} options={[{ value: '5', label: 'About 5 minutes' }, { value: '15', label: 'About 15 minutes' }]} />
+            <Pill ariaLabel="Time" value={time ?? ''} onChange={(v) => setTime(v as Time)} options={[{ value: '5', label: 'About 5 minutes' }, { value: '10', label: 'About 10 minutes' }]} />
           </div>
           <div>
             <div className="mb-2 font-bold">Any pain right now?</div>
