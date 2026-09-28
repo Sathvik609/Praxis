@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { plural } from '../../lib/plural'
 
 type Props = {
   values: (number | null)[]
@@ -8,6 +9,9 @@ type Props = {
   height?: number
   title: string
   target?: number
+  /** Singular count noun ("reach"): the summary then says "1 reach", "3 reaches". `unit`
+   *  stays the axis label. */
+  noun?: string
 }
 
 function ticks(max: number): number[] {
@@ -21,7 +25,7 @@ function ticks(max: number): number[] {
 
 /** Bar chart with a y-axis, value labels and a legend. Unverified bars are amber AND
  *  hatched so colour never carries the meaning alone. */
-export function Bars({ values, unit, labels, verified, height = 160, title, target }: Props) {
+export function Bars({ values, unit, labels, verified, height = 160, title, target, noun }: Props) {
   const id = useId().replace(/:/g, '')
   const nums = values.map((v) => v ?? 0)
   const max = Math.max(target ?? 0, ...nums, 1)
@@ -35,7 +39,7 @@ export function Bars({ values, unit, labels, verified, height = 160, title, targ
   const slot = (w - padL - 8) / n
   const bw = Math.min(28, slot * 0.6)
   const y = (v: number) => 8 + plotH - (v / top) * plotH
-  const summary = `${title}: ${values.map((v, i) => `${labels?.[i] ?? i + 1} ${v == null ? 'missing' : `${v} ${unit}`}${verified && !verified[i] ? ' unverified' : ''}`).join(', ')}`
+  const summary = `${title}: ${values.map((v, i) => `${labels?.[i] ?? i + 1} ${v == null ? 'missing' : `${v} ${noun ? plural(v, noun) : unit}`}${verified && !verified[i] ? ' unverified' : ''}`).join(', ')}`
   const anyUnverified = verified?.some((v) => v === false)
   return (
     <figure className="min-w-0">

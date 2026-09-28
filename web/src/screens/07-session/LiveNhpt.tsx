@@ -160,7 +160,7 @@ export function LiveNhpt() {
               <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
             </div>
           </Card>
-          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="pegs" />
+          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="peg" />
           {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
           <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (

@@ -159,7 +159,7 @@ export function LiveArm() {
               <Stat value={`${lean}°`} label="trunk lean" tone={leaning ? 'amber' : 'default'} extra={leaning ? <span className="font-bold text-amber-ink">(leaning)</span> : undefined} />
             </div>
           </Card>
-          <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swings' : 'lifts'} />
+          <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swing' : 'lift'} />
           {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
           <CoachCard
             watch={leanRecent}
