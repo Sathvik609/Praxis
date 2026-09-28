@@ -162,7 +162,8 @@ function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved
   const [pain, setPain] = useState<number | null>(null)
   const [side, setSide] = useState<Side | null>(() => readSide())
   const [askSide, setAskSide] = useState(() => readSide() === null)
-  const [location, setLocation] = useState<Location>('hand')
+  // No body area is preselected (review 28 Sep): the patient chooses one, or Nowhere.
+  const [location, setLocation] = useState<Location | null>(null)
   const [energy, setEnergy] = useState<Energy>('comfortable')
   const [minutes, setMinutes] = useState<Minutes>('14')
   const [symptoms, setSymptoms] = useState(false)
@@ -197,14 +198,22 @@ function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved
 
   const stopping = symptoms ? 'new_symptoms' : pain != null && stopReason({ pain, new_symptoms: false, tier: tierFor(pain, painMax) }) ? 'rest' : null
   const label = stopping === 'new_symptoms' ? 'Tell my therapist and stop for today' : stopping === 'rest' ? 'Rest today and tell my therapist' : continueLabel
-  // The side is only needed to practise; a day that stops here does not ask for it.
-  const hint = pain === null ? 'Choose a pain number to continue' : side === null && !stopping ? 'Choose the arm you are practising to continue' : null
+  // The side is only needed to practise; a day that stops here does not ask for it. Where it
+  // hurts is asked only when there is pain (pain 0 is saved as nowhere) and never blocks a stop.
+  const hint =
+    pain === null
+      ? 'Choose a pain number to continue'
+      : side === null && !stopping
+        ? 'Choose the arm you are practising to continue'
+        : pain > 0 && location === null && !stopping
+          ? 'Choose where it hurts, or Nowhere, to continue'
+          : null
 
   const go = async () => {
     if (pain === null) return
     setBusy(true)
     try {
-      await saveCheckin({ pain, location, energy, minutes: Number(minutes), new_symptoms: symptoms }, side, painMax)
+      await saveCheckin({ pain, location: location ?? (pain === 0 ? 'nowhere' : 'not said'), energy, minutes: Number(minutes), new_symptoms: symptoms }, side, painMax)
     } finally {
       setBusy(false)
     }
@@ -233,7 +242,7 @@ function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved
             )}
             <div>
               <div className="mb-2 font-bold">Where is it?</div>
-              <Pill ariaLabel="Where is it?" value={location} options={LOCATIONS} onChange={setLocation} />
+              <Pill ariaLabel="Where is it?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
             </div>
             <div>
               <div className="mb-2 font-bold">Energy today</div>
