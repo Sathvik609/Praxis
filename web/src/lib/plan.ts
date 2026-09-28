@@ -1,6 +1,6 @@
 import type { Exercise, ExerciseId } from './seed'
 
-/** Display mirror of `services/session/praxis_session/plan.py` (locked 23 Sep 2026). The
+/** Display mirror of `services/session/praxis_session/plan.py` (tiers 23 Sep, day 28 Sep 2026). The
  *  service is the authority: on check-in it computes the tier itself and tightens the running
  *  session, whatever the client asked for. This file only decides what the exercise list shows.
  *  `tests/test_plan.py::test_web_mirror_matches` keeps the numbers in step. */
@@ -9,9 +9,11 @@ export type Tier = 'full' | 'gentle' | 'rest'
 export const FULL_MAX = 3
 export const GENTLE_MAX = 6
 export const REST_AT = 7
-export const DAY_ORDER: ExerciseId[] = ['pendulum', 'arm', 'abduction', 'cup']
+/** 28 Sep: Arm out to the side → Waiter – cup (~10 min); the peg test weekly. Pendulum, Arm to
+ *  the front and the rotations are hidden (`hidden` in `seed.ts`) and never scheduled. */
+export const DAY_ORDER: ExerciseId[] = ['abduction', 'cup']
 export const WEEKLY: ExerciseId[] = ['nhpt']
-export const DAY_MINUTES = 15
+export const DAY_MINUTES = 10
 
 /** 0–3 full, 4–6 gentle, ≥ 7 rest. `painMax` is the prescription's stop level; it can only make
  *  the rest tier stricter. */

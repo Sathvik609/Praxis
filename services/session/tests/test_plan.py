@@ -1,4 +1,4 @@
-"""Default day order and pain tiers (locked 23 Sep 2026). The tier is a rule in code, never a
+"""Default day order (28 Sep 2026) and pain tiers (23 Sep 2026). The tier is a rule in code, never a
 diagnosis and never the coach's call."""
 
 import pytest
@@ -33,20 +33,31 @@ def test_stricter_picks_the_more_careful_tier():
     assert stricter("gentle", "rest") == "rest" and stricter("full", "full") == "full"
 
 
-def test_default_day_order_is_pendulum_front_side_cup_and_nhpt_is_weekly():
-    assert DAY_ORDER == ("pendulum", "flexion", "abduction", "cup")
+def test_default_day_is_side_lift_then_cup_and_nhpt_is_weekly():
+    """28 Sep lock: Arm out to the side -> Waiter – cup (~10 min); the peg test weekly. The
+    hidden four (Pendulum, Arm to the front, Rotate out/in) are never scheduled."""
+    assert DAY_ORDER == ("abduction", "cup")
     assert WEEKLY == ("nhpt",)
     plan = day_plan(2)
     assert plan["tier"] == "full" and plan["therapist_flag"] is False and plan["rest_advice"] is None
-    assert [i["id"] for i in plan["items"]] == list(DAY_ORDER)
-    assert [i["order"] for i in plan["items"]] == [1, 2, 3, 4]
+    assert [i["id"] for i in plan["items"]] == ["abduction", "cup"]
+    assert [i["order"] for i in plan["items"]] == [1, 2]
     assert [i["id"] for i in plan["weekly"]] == ["nhpt"]
-    assert [i["id"] for i in plan["demo"]] == ["external_rotation", "internal_rotation"]
-    assert all(i["self_ticked"] and not i["camera_verified"] for i in plan["demo"])
-    assert plan["minutes"] == 15
-    flexion = plan["items"][1]
-    assert (flexion["target_deg"], flexion["hold_s"], flexion["reps"]) == (90.0, 3.0, 8)
-    assert "fast" in plan["items"][3]["dose"]
+    assert plan["demo"] == []
+    assert plan["minutes"] == 10
+    side = plan["items"][0]
+    assert (side["target_deg"], side["hold_s"], side["reps"]) == (90.0, 3.0, 8)
+    assert "fast" in plan["items"][1]["dose"]
+
+
+@pytest.mark.parametrize("pain", [0, 2, 4, 5, 6])
+def test_no_tier_ever_schedules_a_hidden_exercise(pain):
+    from praxis_session.perception.exercises import HIDDEN_IDS
+
+    plan = day_plan(pain)
+    ids = [i["id"] for i in plan["items"] + plan["weekly"] + plan["demo"]]
+    assert ids and not set(ids) & set(HIDDEN_IDS)
+    assert all(i["visible"] for i in plan["items"] + plan["weekly"])
 
 
 def test_gentle_tier_reduces_dose_and_range_within_the_prescription():
@@ -54,8 +65,6 @@ def test_gentle_tier_reduces_dose_and_range_within_the_prescription():
     assert plan["tier"] == "gentle" and plan["therapist_flag"] is False
     by_id = {i["id"]: i for i in plan["items"]}
     assert list(by_id) == list(DAY_ORDER)  # same order, softer dose
-    assert by_id["pendulum"]["reps"] == 8
-    assert (by_id["flexion"]["hold_s"], by_id["flexion"]["reps"], by_id["flexion"]["target_deg"]) == (2.0, 6, 90.0)
     assert (by_id["abduction"]["target_deg"], by_id["abduction"]["hold_s"], by_id["abduction"]["reps"]) == (60.0, 2.0, 6)
     assert "fast" not in by_id["cup"]["dose"]
     assert "gentle" in plan["reason"].lower() and "5" in plan["reason"]
@@ -92,7 +101,7 @@ def test_api_plan_returns_the_tiered_day(client):
 
 def test_web_mirror_matches():
     """`web/src/lib/plan.ts` shows the tier in the exercise list; the service enforces it. The
-    thresholds and the day order must be the same numbers in both places (web `arm` = flexion)."""
+    thresholds and the day order must be the same numbers in both places."""
     import re
     from pathlib import Path
 
@@ -102,4 +111,4 @@ def test_web_mirror_matches():
     num = lambda name: int(re.search(rf"export const {name} = (\d+)", ts).group(1))  # noqa: E731
     assert (num("FULL_MAX"), num("GENTLE_MAX"), num("REST_AT"), num("DAY_MINUTES")) == (plan.FULL_MAX, plan.GENTLE_MAX, plan.REST_AT, plan.DAY_MINUTES)
     web_order = re.findall(r"'(\w+)'", re.search(r"export const DAY_ORDER: ExerciseId\[\] = \[([^\]]*)\]", ts).group(1))
-    assert [{"arm": "flexion"}.get(i, i) for i in web_order] == list(plan.DAY_ORDER)
+    assert web_order == list(plan.DAY_ORDER)
