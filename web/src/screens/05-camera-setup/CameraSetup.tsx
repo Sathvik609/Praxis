@@ -1,70 +1,81 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { RotateCcw } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
-import { SESSION_WS_URL } from '../../lib/config'
+import { SESSION_WS_URL, processingPlace } from '../../lib/config'
+import { demoUrl, readDay, sessionUrl, sideOr, startExercise, syncCheckin, therapistLine, type Day, type Side } from '../../lib/day'
+import { EXERCISES, exerciseById, type Exercise } from '../../lib/seed'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
-import { exerciseById } from '../../lib/seed'
+import { DayStrip } from '../04-choose/DayStrip'
 import { Checklist, type Check } from './Checklist'
+import { SETUP_TIPS, SetupDiagram, placementCopy } from './SetupDiagram'
+import { resolveChecks, setupViewFor } from './setupView'
 
 const SHEET: Record<string, string> = { nhpt: 'nhpt_board', cup: 'cup_targets', arm: 'nhpt_board' }
 
 type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 
-/** Overhead-mount guidance for the two sheet tasks (D-CAL-3). The sheet homography ignores
- *  height, so a webcam looking across the table puts pegs and hands tens of mm off; the
- *  service measures the tilt from the ArUco pose and asks for ≤ 25°. Inline SVG: a phone on
- *  a stand about 50 cm above the table, pointing straight down at the sheet. */
-function MountDiagram() {
-  return (
-    <svg
-      role="img"
-      aria-label="A phone on a stand about 50 centimetres above the table, pointing straight down at the printed sheet"
-      viewBox="0 0 240 150"
-      className="h-auto w-full max-w-60 shrink-0"
-    >
-      {/* table */}
-      <line x1="12" y1="128" x2="228" y2="128" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      {/* sheet on the table */}
-      <rect x="70" y="118" width="96" height="10" rx="2" fill="var(--mint)" stroke="currentColor" strokeWidth="1.5" />
-      {/* stand: base, column, arm */}
-      <line x1="176" y1="128" x2="212" y2="128" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <line x1="194" y1="128" x2="194" y2="34" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <line x1="194" y1="34" x2="128" y2="34" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      {/* phone, screen up, camera down */}
-      <rect x="104" y="26" width="40" height="16" rx="4" fill="var(--surface)" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="118" cy="42" r="3" fill="currentColor" />
-      {/* sight line straight down */}
-      <line x1="118" y1="48" x2="118" y2="114" stroke="var(--amber)" strokeWidth="2" strokeDasharray="4 4" />
-      <polygon points="112,110 124,110 118,118" fill="var(--amber)" />
-      {/* height dimension */}
-      <line x1="40" y1="40" x2="40" y2="122" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="34" y1="40" x2="46" y2="40" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="34" y1="122" x2="46" y2="122" stroke="currentColor" strokeWidth="1.5" />
-      <text x="20" y="86" fontSize="13" fill="currentColor" fontFamily="inherit">
-        ~50 cm
-      </text>
-    </svg>
-  )
-}
-
 /** Screen 05 · Camera setup and calibration. Continue stays disabled until every required
- *  check passes. ArUco markers are required for the two board tasks; the arm task needs no
- *  sheet. The feed is a Panel with the live, mirrored and calibration lines in its corners. */
+ *  check passes. The checklist, the placement diagram and the copy follow the exercise's
+ *  camera view (`setupView.ts`): side (Pendulum, Arm to the front), front (Arm out to the side)
+ *  or table (Waiter – cup, NHPT, ArUco markers required). Pose rows the service does not
+ *  measure yet are patient self-checks and say so. The feed is a Panel with the live, mirrored
+ *  and calibration lines in its corners.
+ *
+ *  Day flow: the day strip shows where this exercise sits; a demonstration already watched
+ *  today can be skipped; a day stopped at check-in never opens the camera. */
 export function CameraSetup() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
-  const exercise = sp.get('exercise') ?? 'nhpt'
-  const ex = exerciseById(exercise)
+  const [day, setDay] = useState<Day>(readDay)
+  useEffect(() => {
+    let alive = true
+    void syncCheckin().then(() => alive && setDay(readDay()))
+    return () => {
+      alive = false
+    }
+  }, [])
+  const ex = exerciseById(sp.get('exercise') ?? 'nhpt') ?? EXERCISES.find((e) => e.id === 'nhpt')!
+  const param = sp.get('side')
+  const side: Side = param === 'left' || param === 'right' ? param : (day.checkin?.side ?? sideOr(null))
+  if (day.stopped) {
+    return (
+      <div className="flex min-h-full flex-col">
+        <div className="mx-auto w-full max-w-3xl flex-1 p-6">
+          <Card tone="watch" as="div" className="space-y-3">
+            <h1 className="text-4xl">No exercises today</h1>
+            <p className="text-xl">
+              {day.stopped === 'new_symptoms'
+                ? 'You told us something is new or worse. Rest the arm until your therapist has looked at it.'
+                : day.stopped === 'rest'
+                  ? 'Your pain today is at your stop level. Rest the arm today.'
+                  : "A stop rule ended today's practice. Rest the arm today."}
+              {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
+            </p>
+            <p className="text-lg text-muted">The camera stays off.</p>
+          </Card>
+        </div>
+        <FlowBar step={2} label="Camera setup" right={<Button onClick={() => nav('/details')}>Back to Home</Button>} />
+      </div>
+    )
+  }
+  return <SetupLive ex={ex} side={side} day={day} />
+}
+
+function SetupLive({ ex, side, day }: { ex: Exercise; side: Side; day: Day }) {
+  const nav = useNavigate()
   // Pendulum, Arm to the front and Arm out to the side all run the arm pipeline: no sheet.
-  const kind = ex?.session ?? 'nhpt'
+  const kind = ex.session ?? 'nhpt'
   const isArm = kind === 'arm'
+  const view = setupViewFor(ex)
+  const pendulum = ex.id === 'pendulum'
+  const [ticks, setTicks] = useState<Record<string, boolean>>({})
   const params = useMemo(() => {
     const p: Record<string, string> = { sheet: SHEET[kind] ?? 'nhpt_board' }
     if (kind === 'arm') p.for = 'arm' // no sheet; the service skips marker checks
@@ -85,11 +96,21 @@ export function CameraSetup() {
     [...events].reverse().find((e) => e.type === type) as (T & { type: string }) | undefined
   const cal = last<CalibrationEvent>('calibration') ?? null
   const checks = last<SetupChecksEvent>('setup_checks')
-  const ready = checks?.all_required_pass === true
+  const { rows, ready } = resolveChecks(view, side, pendulum, checks, ticks)
+  const hasSelf = rows.some((r) => r.source === 'self')
   const restart = () => {
     stop()
     void start()
   }
+  const copy = placementCopy(view, side, pendulum)
+  const seenDemo = day.demosSeen.includes(ex.id)
+  const intro = isArm
+    ? view === 'front'
+      ? `No sheet needed. ${ex.name}: face the camera with both shoulders and both hands in view.`
+      : pendulum
+        ? `No sheet needed. ${ex.name}: stand sideways to the camera, your ${side} side toward it.`
+        : `No sheet needed. ${ex.name}: sit sideways to the camera, your ${side} side toward it.`
+    : `Continue unlocks when every required check passes. ${ex.name}.`
 
   return (
     <div className="flex min-h-full flex-col">
@@ -97,7 +118,7 @@ export function CameraSetup() {
         <Panel
           className="self-start"
           topLeft={<LiveIndicator active={camActive} />}
-          topRight={<span>mirrored · processed on this device</span>}
+          topRight={<span>mirrored · {processingPlace()}</span>}
           bottomLeft={
             <span>
               {isArm ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration'}{' '}
@@ -118,31 +139,27 @@ export function CameraSetup() {
 
         <div className="flex flex-col gap-5">
           <div>
+            <DayStrip day={day} active={ex.id} className="mb-2" />
             <h1 className="text-3xl">Set up camera and equipment</h1>
-            <p className="text-muted">
-              {isArm
-                ? ex?.view === 'front'
-                  ? `No sheet needed. ${ex.name}: face the camera with both shoulders and hips in view.`
-                  : `No sheet needed. ${ex?.name ?? 'Arm to the front'}: sit or stand sideways to the camera with your shoulder and hip in view.`
-                : `Continue unlocks when every required check passes. ${ex?.name ?? exercise}.`}
-            </p>
+            <p className="text-muted">{intro}</p>
           </div>
-          {!isArm && (
-            <Card padding="sm" className="flex items-center gap-4">
-              <MountDiagram />
-              <div className="min-w-0">
-                <h2 className="text-xl">Mount the camera above the table</h2>
-                <p className="text-lg text-muted">
-                  Put the phone or webcam on a stand about 50 cm up, pointing straight down at the sheet. Looking across the
-                  table makes pegs and hands land in the wrong place. The check below measures the tilt.
-                </p>
-              </div>
-            </Card>
-          )}
-          <Card padding="none" className="px-5">
-            <Checklist checks={checks?.checks ?? []} />
+          <Card padding="sm" className="flex items-center gap-4">
+            <SetupDiagram view={view} pendulum={pendulum} />
+            <div className="min-w-0">
+              <h2 className="text-xl">{copy.heading}</h2>
+              <p className="text-lg text-muted">{copy.body}</p>
+            </div>
           </Card>
-          <p className="text-lg text-muted">Processed on this device. Video is not stored; only measurements and events are saved.</p>
+          <Card padding="none" className="px-5">
+            <Checklist checks={rows} onTick={(id) => setTicks((t) => ({ ...t, [id]: !t[id] }))} />
+            {hasSelf && (
+              <p className="border-t border-line py-3 text-lg text-muted">
+                Rows marked “You check”: the camera does not check these yet. Look at the picture and tap “Yes, I can see it”.
+              </p>
+            )}
+          </Card>
+          <p className="text-lg text-muted">{SETUP_TIPS}</p>
+          <p className="text-lg text-muted">Video is {processingPlace()}. Only measurements and events are saved.</p>
           <div>
             <Button variant="secondary" icon={<RotateCcw />} onClick={restart}>
               Restart camera
@@ -154,12 +171,26 @@ export function CameraSetup() {
         step={2}
         label="Camera setup"
         left={
-          <Button variant="secondary" onClick={() => nav('/details/choose')}>
-            Change exercise
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => nav('/details/choose')}>
+              Change exercise
+            </Button>
+            {seenDemo && (
+              <Button
+                variant="secondary"
+                disabled={!ready}
+                onClick={() => {
+                  startExercise(ex.id)
+                  nav(sessionUrl(ex, side))
+                }}
+              >
+                Skip demo
+              </Button>
+            )}
+          </>
         }
         right={
-          <Button disabled={!ready} onClick={() => nav(`/details/demo?exercise=${exercise}`)}>
+          <Button disabled={!ready} onClick={() => nav(demoUrl(ex.id, side))}>
             Continue to demonstration
           </Button>
         }

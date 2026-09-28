@@ -8,8 +8,10 @@ import { Checkbox } from '../../design/Checkbox'
 import { Activity, AlertTriangle, Flag } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
 import { api } from '../../lib/api'
+import { markDemoSeen, readDay, sessionUrl as liveUrl, sideOr, startExercise } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor } from '../../lib/plan'
 import { EXERCISES, exerciseById } from '../../lib/seed'
+import { DayStrip } from '../04-choose/DayStrip'
 
 /** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
  *  dark stage (16:10 AvatarPanel capped at 640 px wide, so ~400 px tall inside the 800 px
@@ -18,12 +20,19 @@ import { EXERCISES, exerciseById } from '../../lib/seed'
  *
  *  Demo-only exercises (Rotate out / Rotate in, locked set of 23 Sep) end here: there is no
  *  practice session, the patient ticks each set, and the tick goes to `/api/self_report`, which
- *  traces it as self-reported, never as a camera-verified rep. */
+ *  traces it as self-reported, never as a camera-verified rep.
+ *
+ *  Day flow (`lib/day.ts`): Start practice records the demo as seen today (setup then offers
+ *  "Skip demo") and marks the exercise as the day's current one, so its report can offer the
+ *  next exercise. The side falls back to the patient's saved side, never a silent "left". A day
+ *  stopped at check-in shows the demonstration but nothing can start. */
 export function Demonstration() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const id = sp.get('exercise') ?? 'cup'
-  const side = sp.get('side') ?? 'left'
+  const [day] = useState(readDay)
+  const side = sp.get('side') === 'right' || sp.get('side') === 'left' ? sideOr(sp.get('side')) : (day.checkin?.side ?? sideOr(null))
+  const stopped = day.stopped != null
   const ex = exerciseById(id) ?? EXERCISES.find((e) => e.id === 'cup')!
   const demo = ex.mode === 'demo'
   const [ready, setReady] = useState(false)
@@ -37,7 +46,12 @@ export function Demonstration() {
       .then((r) => (r.ok ? setTicked(r.sets_today ?? ticked + 1) : setTickError(r.error ?? 'not saved')))
       .catch(() => setTickError('the session service is not reachable'))
   }
-  const sessionUrl = `/session?exercise=${ex.id}&${ex.id === 'nhpt' ? `hand=${side}` : `side=${side}`}`
+  const sessionUrl = liveUrl(ex, side)
+  const practise = () => {
+    markDemoSeen(ex.id)
+    startExercise(ex.id)
+    nav(sessionUrl)
+  }
 
   return (
     <div className="flex min-h-full flex-col">
@@ -54,6 +68,7 @@ export function Demonstration() {
         </div>
         <div className="flex flex-col gap-5">
           <div>
+            <DayStrip day={day} active={ex.id} className="mb-2" />
             <h1 className="text-3xl">{ex.name}</h1>
             <p className="text-muted">{ex.category} · {side} side</p>
           </div>
@@ -100,7 +115,11 @@ export function Demonstration() {
               )}
             </dl>
           </Card>
-          {demo ? (
+          {stopped ? (
+            <Card tone="watch" as="div" padding="sm">
+              <p className="text-lg">No exercises today: you can watch, but nothing starts until your next check-in allows it.</p>
+            </Card>
+          ) : demo ? (
             <p role="status" className="text-lg">
               {tickError
                 ? `Could not save the tick: ${tickError}.`
@@ -122,11 +141,20 @@ export function Demonstration() {
             {demo ? (
               <Button variant="secondary" onClick={() => nav('/details/choose')}>Back to exercises</Button>
             ) : (
-              <Button variant="secondary" onClick={() => nav(`${sessionUrl}&rehearse=1`)}>Rehearse without scoring</Button>
+              <Button
+                variant="secondary"
+                disabled={stopped}
+                onClick={() => {
+                  markDemoSeen(ex.id)
+                  nav(`${sessionUrl}&rehearse=1`)
+                }}
+              >
+                Rehearse without scoring
+              </Button>
             )}
           </>
         }
-        right={demo ? <Button onClick={tick}>I did a set</Button> : <Button disabled={!ready} onClick={() => nav(sessionUrl)}>Start practice</Button>}
+        right={demo ? <Button disabled={stopped} onClick={tick}>I did a set</Button> : <Button disabled={!ready || stopped} onClick={practise}>Start practice</Button>}
       />
     </div>
   )

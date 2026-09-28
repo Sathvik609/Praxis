@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
@@ -8,8 +8,10 @@ import { Checkbox } from '../../design/Checkbox'
 import { Chip, type ChipTone } from '../../design/Chip'
 import { X } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
+import { nextExercise, readDay, sideOr, syncCheckin, therapistLine, type Day } from '../../lib/day'
 import { DAY_ORDER, TIER_TEXT, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
 import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, GROUPS, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
+import { DayStrip } from './DayStrip'
 
 /** Badge text always carries the meaning; the tone only repeats it. */
 function badge(e: Exercise): { tone: ChipTone; text: string } {
@@ -28,13 +30,6 @@ function readEquipment(): EquipmentId[] {
     return raw ? (JSON.parse(raw) as EquipmentId[]) : DEFAULT_EQUIPMENT
   } catch {
     return DEFAULT_EQUIPMENT
-  }
-}
-function readSide(): string {
-  try {
-    return JSON.parse(sessionStorage.getItem('praxis.profile') ?? '{}').side ?? 'left'
-  } catch {
-    return 'left'
   }
 }
 
@@ -66,7 +61,7 @@ type HasKit = 'yes' | 'no'
 
 /** Rule-based pick from three answers, inside today's plan. Pain 7 or more is a rest day. */
 function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pick: ExerciseId | null; why: string } {
-  if (pain === 'high') return { pick: null, why: 'Pain at 7 or more is a rest day in your program. No exercises today; your therapist is told at check-in.' }
+  if (pain === 'high') return { pick: null, why: 'Pain at 7 or more is a rest day in your program. No exercises today. Tell the check-in, so your therapist can be told.' }
   if (!time || !pain || !kit) return { pick: null, why: 'Answer all three and Praxis will suggest one exercise from today’s plan.' }
   const care = pain === 'some' ? ' Pain 4–6 makes it a gentle day: fewer reps, shorter holds, no fast arcs.' : ''
   if (time === '15') return { pick: 'pendulum', why: `Pendulum, then today’s order: Arm to the front, Arm out to the side, Waiter – cup.${care}` }
@@ -79,25 +74,37 @@ function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pi
  *  Activities, Demo only. "Today's plan" is the default day in order at the tier the check-in
  *  pain gives (0–3 full, 4–6 gentle, ≥ 7 rest). The service enforces the same tier when the
  *  session starts; this screen only shows it. Cards select on tap; the one primary action lives
- *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera. */
+ *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera.
+ *
+ *  Day flow (`lib/day.ts`): the tier and any stop come from today's check-in as the service
+ *  answered it; the rest card says the therapist was told only when the service flagged it.
+ *  Mid-day the next undone exercise is preselected and the day strip shows progress. */
 export function ChooseExercise() {
   const nav = useNavigate()
-  const pain = readCheckinPain()
-  const tier = tierFor(pain)
+  const [day, setDay] = useState<Day>(readDay)
+  useEffect(() => {
+    let alive = true
+    void syncCheckin().then(() => alive && setDay(readDay()))
+    return () => {
+      alive = false
+    }
+  }, [])
+  const pain = day.checkin?.pain ?? readCheckinPain()
+  const tier = day.checkin?.tier ?? tierFor(pain)
   const [filter, setFilter] = useState<Filter>('today')
-  const [selected, setSelected] = useState<ExerciseId>(DAY_ORDER[0])
+  const [selected, setSelected] = useState<ExerciseId>(() => nextExercise(readDay()) ?? DAY_ORDER[0])
   const [owned, setOwned] = useState<EquipmentId[]>(() => readEquipment())
   const [kitOpen, setKitOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [time, setTime] = useState<Time | null>(null)
   const [painAnswer, setPainAnswer] = useState<Pain | null>(null)
   const [kit, setKit] = useState<HasKit | null>(null)
-  const side = readSide()
+  const side = day.checkin?.side ?? sideOr(null)
 
   const list = filter === 'today' ? DAY_ORDER.map((id) => EXERCISES.find((e) => e.id === id)!) : filter === 'equipment' ? EXERCISES.filter((e) => e.needs.every((n) => owned.includes(n))) : EXERCISES
   const current = EXERCISES.find((e) => e.id === selected) ?? EXERCISES[0]
   const currentVisible = list.some((e) => e.id === selected)
-  const rest = tier === 'rest'
+  const rest = tier === 'rest' || day.stopped != null
 
   const saveOwned = (next: EquipmentId[]) => {
     setOwned(next)
@@ -134,6 +141,7 @@ export function ChooseExercise() {
               <Chip tone={TIER_TONE[tier]}>{TIER_TEXT[tier].chip}</Chip>
               <span>{pain == null ? 'No check-in yet: showing your prescribed dose.' : `Pain ${pain} today: ${TIER_TEXT[tier].line}`}</span>
             </p>
+            <DayStrip day={day} active={rest ? null : selected} className="mt-2" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Pill ariaLabel="Show" value={filter} onChange={setFilter} options={[{ value: 'today', label: "Today's plan" }, { value: 'all', label: 'All' }, { value: 'equipment', label: 'Equipment I have' }]} />
@@ -144,7 +152,14 @@ export function ChooseExercise() {
 
         {rest && (
           <Card tone="watch" as="div" className="mt-5">
-            <p className="text-xl">Rest the arm today. Nothing here will start until your pain is below 7; your therapist has been told.</p>
+            <p className="text-xl">
+              {day.stopped === 'new_symptoms'
+                ? "You told us something is new or worse. No exercises today, until your therapist has looked at it."
+                : day.stopped === 'session'
+                  ? "A stop rule ended today's practice. Rest the arm today."
+                  : 'Rest the arm today. Nothing here will start until your pain is below 7.'}
+              {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
+            </p>
           </Card>
         )}
         {list.length === 0 && (

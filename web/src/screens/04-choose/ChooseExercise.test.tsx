@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { todayKey } from '../../lib/day'
 import { ChooseExercise } from './ChooseExercise'
 
 function Where() {
@@ -118,4 +119,38 @@ test('Help me choose picks within today’s plan; pain 7 or more points to rest'
   fireEvent.click(within(again).getByRole('radio', { name: '7 or more' }))
   expect(within(again).getByText(/rest day/i)).toBeInTheDocument()
   expect(within(again).getByRole('button', { name: 'Use this pick' })).toBeDisabled()
+})
+
+function storeDay(checkin: Record<string, unknown>, extra: Record<string, unknown> = {}) {
+  localStorage.setItem(
+    'praxis.day',
+    JSON.stringify({ date: todayKey(), checkin: { pain: 2, location: 'hand', energy: 'comfortable', minutes: 14, new_symptoms: false, side: 'right', tier: 'full', flagged: false, reasons: [], synced: true, at: '', ...checkin }, done: [], demosSeen: [], current: null, finished: [], stopped: null, ...extra }),
+  )
+}
+
+test('the rest day says the therapist was told only when the service flagged it', () => {
+  storeDay({ pain: 8, tier: 'rest', flagged: false, synced: false }, { stopped: 'rest' })
+  vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('offline'))))
+  renderChoose()
+  expect(screen.queryByText(/your therapist has been told/i)).not.toBeInTheDocument()
+  expect(screen.getByText(/hasn't been told yet/)).toBeInTheDocument()
+  vi.unstubAllGlobals()
+})
+
+test('new or worse symptoms today: nothing to start from the list either', () => {
+  storeDay({ pain: 1, new_symptoms: true, flagged: true }, { stopped: 'new_symptoms' })
+  renderChoose()
+  expect(screen.getByText(/new or worse/)).toBeInTheDocument()
+  expect(screen.getByText(/Your therapist has been told\./)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Begin setup' })).not.toBeInTheDocument()
+})
+
+test('mid-day the next undone exercise is preselected, the day strip shows progress, and the saved side is used', () => {
+  storeDay({}, { done: ['pendulum'] })
+  renderChoose()
+  expect(screen.getByRole('button', { name: 'Select Arm to the front' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('navigation', { name: "Today's plan" })).toHaveTextContent('Pendulum · done')
+  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 4 · Arm to the front')
+  fireEvent.click(screen.getByRole('button', { name: 'Begin setup' }))
+  expect(screen.getByText('AT /details/setup?exercise=arm&side=right')).toBeInTheDocument()
 })

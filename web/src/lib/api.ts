@@ -12,6 +12,11 @@ export type Flag = { id: number; session_id: string; rule: string; detail: strin
 export type Progress = { nhpt_trend: { date: string; total_s: number }[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; illustrative?: boolean }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean }[]; goal_log_count: number }
 export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; illustrative?: boolean }
 
+/** `POST /api/checkin` (service track): the service computes the tier and writes the therapist
+ *  flag (rest day, new or worse symptoms). `flagged` is the only thing that lets the UI say the
+ *  therapist has been told. */
+export type CheckinBody = { patient_id?: string; pain: number; new_symptoms: boolean; rpe?: number; notes?: string }
+export type CheckinResult = { tier: 'full' | 'gentle' | 'rest'; flagged: boolean; reasons: string[]; plan?: unknown }
 export type SelfReport = { ok: boolean; exercise: string; verified?: false; source?: 'self_ticked'; label?: string; sets_today?: number; error?: string }
 
 async function get<T>(path: string): Promise<T> {
@@ -40,6 +45,7 @@ export const api = {
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
   /** A demo-only exercise the patient ticked: logged as self-reported, never as a verified rep. */
   selfReport: (exercise: string, sets = 1) => post<SelfReport>('/api/self_report', { exercise, sets }),
+  checkin: (body: CheckinBody) => post<CheckinResult>('/api/checkin', body),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),
 }
 
