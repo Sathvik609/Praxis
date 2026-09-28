@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -65,6 +65,26 @@ test('reference toggle is a segmented control: Board view by default, Avatar on 
   fireEvent.click(avatar)
   expect(screen.queryByLabelText('board view')).toBeNull()
   expect(screen.getByTestId('scene')).toBeInTheDocument()
+})
+
+test('the reference column shows per-peg splits as they arrive, pending pegs as not yet (review 28 Sep: no dead space)', () => {
+  mockStream([
+    frame,
+    { type: 'nhpt_split', t: 12, id: 2, peg: 1, hole: 3, split_s: 5.12, elapsed_s: 5.12 },
+    { type: 'nhpt_split', t: 16, id: 3, peg: 2, hole: 0, split_s: 4.4, elapsed_s: 9.52 },
+  ])
+  renderAt('/session?hand=left')
+  const splits = screen.getByRole('list', { name: 'Per-peg splits' })
+  const items = within(splits).getAllByRole('listitem')
+  expect(items).toHaveLength(9)
+  expect(items[0]).toHaveTextContent('Peg 1')
+  expect(items[0]).toHaveTextContent('5.1 s')
+  expect(items[1]).toHaveTextContent('4.4 s')
+  expect(items[2]).toHaveTextContent('Peg 3')
+  expect(items[2]).toHaveTextContent('not yet')
+  // the board and the fixed controls stay
+  expect(screen.getByLabelText('board view')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /End session/ })).toBeInTheDocument()
 })
 
 test('tapping a seated hole in the board view sends sample_colour; null next_hole reads "any hole"', () => {
