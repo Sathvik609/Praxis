@@ -14,7 +14,10 @@ function renderSettings() {
   )
 }
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  delete document.documentElement.dataset.text
+})
 
 test('settings switches theme and lists replay clips with a replay entry', async () => {
   mockApi({ '/api/replay/list': { clips: [{ id: 'synthetic_nhpt_01', mode: 'nhpt', sheet: 'nhpt_board', path: 'synthetic_nhpt_01.mp4', synthetic: true }] } })
@@ -23,7 +26,9 @@ test('settings switches theme and lists replay clips with a replay entry', async
   expect(document.documentElement.dataset.theme).toBe('dark')
   expect(await screen.findByText('Nine-Hole Peg Test')).toBeInTheDocument()
   expect(screen.getByText('Synthetic render')).toBeInTheDocument()
-  expect(screen.getByText(/Video is processed in memory/)).toBeInTheDocument()
+  // jsdom runs on localhost, so the edge wording applies; hosted builds say "on the Praxis service"
+  expect(screen.getByText(/Video is processed on this device, never stored\. Only events/)).toBeInTheDocument()
+  expect(screen.queryByText(/Everything runs on this device/)).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Replay Nine-Hole Peg Test' }))
   expect(screen.getByText('SESSION')).toBeInTheDocument()
 })
@@ -31,12 +36,31 @@ test('settings switches theme and lists replay clips with a replay entry', async
 test('guidance checkboxes persist to localStorage and load back', async () => {
   mockApi({ '/api/replay/list': { clips: [] } })
   const { unmount } = renderSettings()
-  expect(screen.getByLabelText(/^Captions/)).toBeChecked()
+  expect(screen.getByLabelText(/^Spoken instructions/)).toBeChecked()
   expect(screen.getByLabelText(/^Larger text/)).not.toBeChecked()
   fireEvent.click(screen.getByLabelText(/^Larger text/))
   expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(true)
+  // larger text is real: the root font scales at once
+  expect(document.documentElement.dataset.text).toBe('large')
   expect(await screen.findByText(/No recordings available yet/)).toBeInTheDocument()
   unmount()
   renderSettings()
   expect(screen.getByLabelText(/^Larger text/)).toBeChecked()
+})
+
+test('replay clips are named from the exercise registry, including arm clips by exercise id', async () => {
+  mockApi({ '/api/replay/list': { clips: [{ id: 'arm_abd_01', mode: 'arm', exercise: 'abduction', sheet: 'none', path: 'a.mp4', synthetic: true }, { id: 'cup_01', mode: 'cup', sheet: 'cup_targets', path: 'c.mp4', synthetic: false }] } })
+  renderSettings()
+  expect(await screen.findByText('Arm out to the side')).toBeInTheDocument()
+  expect(screen.getByText('Waiter – cup')).toBeInTheDocument()
+  expect(screen.queryByText('Arm to the front')).not.toBeInTheDocument()
+})
+
+test('no decorative toggles: captions are stated as always on, and there is no setup-helper toggle', async () => {
+  mockApi({ '/api/replay/list': { clips: [] } })
+  renderSettings()
+  expect(screen.queryByLabelText(/^Captions/)).not.toBeInTheDocument()
+  expect(screen.queryByLabelText(/Helper for setup/)).not.toBeInTheDocument()
+  expect(screen.getByText(/Captions are always on/)).toBeInTheDocument()
+  await screen.findByText(/No recordings available yet/)
 })

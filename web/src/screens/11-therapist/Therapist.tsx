@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
@@ -6,7 +7,7 @@ import { Field } from '../../design/Field'
 import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
 import { api, useApi } from '../../lib/api'
-import { PROGRAM } from '../../lib/seed'
+import { PROGRAM, upcomingVisit } from '../../lib/seed'
 
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
 
@@ -26,6 +27,10 @@ export function Therapist() {
   const flagsRef = useRef<HTMLElement>(null)
 
   const me = patients?.find((p) => p.id === selectedId) ?? patients?.[0]
+  const nextVisit = upcomingVisit(PROGRAM.nextVisit)
+  // Pain before → after from the stored sessions (newest first), never a fixed sentence.
+  const painRows = (sessions ?? []).filter((s) => typeof s.feedback?.pain_after === 'number').slice(0, 4)
+  const painSample = painRows.some((s) => (s as { illustrative?: boolean }).illustrative)
   const shown = (patients ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
   const open = (flags ?? []).filter((f) => !f.reviewed)
   const scrollTo = (ref: { current: HTMLElement | null }) => ref.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
@@ -46,6 +51,12 @@ export function Therapist() {
         <Chip tone="mint">Clinician view</Chip>
         <span className="ml-auto text-muted">{PROGRAM.clinician}</span>
         <Chip tone="neutral">Read-only</Chip>
+        <Link
+          to="/details"
+          className="flex h-14 items-center rounded-[var(--r-control)] border-2 border-teal-ink px-4 text-lg font-bold text-teal-ink hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+        >
+          Back to patient app
+        </Link>
       </header>
 
       <div className="grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">
@@ -86,7 +97,7 @@ export function Therapist() {
             <div className="flex flex-wrap items-start gap-4">
               <div className="min-w-0 flex-1">
                 <h1 className="text-4xl">{me.name}</h1>
-                <p className="text-muted">Hospital GRASP, Level {rx?.level ?? 2} · {rx?.side ?? 'left'} side · program v{rx?.version ?? 3} · next visit {PROGRAM.nextVisit}</p>
+                <p className="text-muted">Hospital GRASP, Level {rx?.level ?? 2} · {rx?.side ?? 'left'} side · program v{rx?.version ?? 3} · next visit {nextVisit ?? 'not booked'}</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="secondary" onClick={() => scrollTo(rxRef)}>Edit prescription</Button>
@@ -129,7 +140,14 @@ export function Therapist() {
                 <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned sessions done" />
                 <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1`} />
               </div>
-              <p className="mt-3 text-muted">Pain before/after: stable at 2, one spike to 5 on 8 Sep.</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
+                {painRows.length ? (
+                  <span>Pain before → after · {painRows.map((s) => `${s.date.slice(5)}: ${String(s.checkin?.pain_before ?? '—')} → ${String(s.feedback.pain_after)}`).join(' · ')}</span>
+                ) : (
+                  <span>{sessions ? 'No pain reports yet.' : 'Loading pain reports…'}</span>
+                )}
+                {painSample && <Chip tone="neutral">Sample</Chip>}
+              </div>
             </Card>
           </div>
           <Card title="Session summaries">

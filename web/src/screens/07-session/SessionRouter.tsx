@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { exerciseById } from '../../lib/seed'
+import { applyGuidance } from '../../session/guidance'
 import { LiveArm } from './LiveArm'
 import { LiveCup } from './LiveCup'
 import { LiveNhpt } from './LiveNhpt'
@@ -10,6 +12,7 @@ import { LiveNhpt } from './LiveNhpt'
  *  ticked. Anything unknown keeps the old default, the peg test. */
 export function SessionRouter() {
   const [sp] = useSearchParams()
+  useEffect(() => applyGuidance(), []) // Settings > Larger text also applies in session
   const ex = exerciseById(sp.get('exercise') ?? 'nhpt')
   if (ex?.mode === 'demo') return <Navigate to={`/details/demo?exercise=${ex.id}&side=${sp.get('side') ?? 'left'}`} replace />
   if (ex?.session === 'cup') return <LiveCup />

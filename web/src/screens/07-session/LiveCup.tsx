@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
-import { ProgressDots } from '../../design/ProgressDots'
-import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
 import { latencyLine, useLatency } from '../../session/latency'
@@ -15,8 +13,10 @@ import { ProgressionPrompt } from './ProgressionPrompt'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { readGuidance } from '../../session/guidance'
+import { useRestBreak } from '../../session/useRestBreak'
+import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
 
@@ -30,9 +30,29 @@ function caption(f: FrameEvent | null, lost: boolean): string {
   if (c.dot == null) return 'Place the cup on dot 1, then rest your hand in your lap.'
   if (c.finished) return 'All four arcs done. Lovely work.'
   if (c.awaiting_phase) return 'Two slow arcs verified. Take a breath while you decide about the fast arcs.'
-  if (c.state === 'placed' || c.state === 'over_dot') return `Onto dot ${(c.dot ?? 0) + 1} — good. Let your hand come back to your lap before the next reach.`
+  if (c.state === 'placed' || c.state === 'over_dot') return `Cup on dot ${c.dot + 1} — good. Let your hand come back to your lap${c.expected_next != null ? `, then reach for dot ${c.expected_next + 1}` : ''}.`
   if (c.expected_next != null) return `Reach and move the cup to dot ${c.expected_next + 1}, one at a time.`
   return 'Nice and steady.'
+}
+
+/** Where the cup is on the five-dot sheet and where it goes next, from the same snapshot that
+ *  draws the ring on the video (one source; a count of dots visited used to disagree with the
+ *  reach count). Numbers inside the dots carry the meaning, not the fill. */
+function CupDots({ dot, next }: { dot: number | null; next: number | null }) {
+  const label = dot == null ? 'Cup not on a dot yet' : `Cup on dot ${dot + 1}${next != null ? `, next dot ${next + 1}` : ''}`
+  return (
+    <div role="img" aria-label={label} className="flex gap-2">
+      {[0, 1, 2, 3, 4].map((k) => (
+        <span
+          key={k}
+          aria-hidden
+          className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-base font-bold ${k === dot ? 'border-teal-fill bg-teal-fill text-white' : k === next ? 'border-amber-ink bg-tint-amber text-amber-ink' : 'border-line bg-surface text-muted'}`}
+        >
+          {k + 1}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 /** Screen 07b · Live session, Waiter – cup (GRASP coordination). Reps are verified from the
@@ -45,7 +65,11 @@ export function LiveCup() {
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  const coach = useCoach(events, { speak: browserSpeak })
+  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
+  const [spoken] = useState(() => readGuidance().spoken)
+  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const rest = useRestBreak(send, coach.clearOverlay)
+  const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
   const [whyOpen, setWhyOpen] = useState(false)
@@ -82,7 +106,6 @@ export function LiveCup() {
 
   const planned = cup?.arcs_planned ?? { slow: 2, fast: 2 }
   const arcLabel = cup ? `arc ${Math.min(cup.arc_index, cup.phase === 'slow' ? planned.slow : planned.slow + planned.fast) - (cup.phase === 'fast' ? planned.slow : 0)} of ${cup.phase === 'slow' ? planned.slow : planned.fast} ${cup.phase}` : 'arc 1 of 2 slow'
-  const dotsDone = cup?.dots_in_arc.length ?? 0
   const unverified = cup?.unverified_total ?? 0
   const reaches = cup?.reaches_total ?? 0
 
@@ -101,14 +124,12 @@ export function LiveCup() {
             frame={frame}
             feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
             tracking={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : undefined}
-            cvLine={`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`}
-            latencyLine={latencyLine(latency)}
             onRetry={() => { stop(); void start() }}
           />
           <Card padding="sm" className="flex items-center gap-4">
-            <ProgressDots total={5} done={dotsDone} current={cup?.expected_next ?? undefined} />
+            <CupDots dot={cup?.dot ?? null} next={cup?.expected_next ?? null} />
             <span className="ml-auto text-lg text-muted">
-              {dotsDone} of 5 dots · {unverified} unverified{unverified ? ' (hand covered cup or markers lost)' : ''}
+              {cup?.dot != null ? `Cup on dot ${cup.dot + 1}` : 'Cup not on a dot yet'}{cup?.expected_next != null ? ` · next: dot ${cup.expected_next + 1}` : ''} · {unverified} unverified{unverified ? ' (hand covered cup or markers lost)' : ''}
             </span>
           </Card>
         </div>
@@ -133,19 +154,22 @@ export function LiveCup() {
               whyOpen={whyOpen}
             />
           )}
+          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
+          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
+            <>
+              <VerifiedTally compact total={reaches} unverified={unverified} noun="reaches" />
+              <div className="min-h-0 flex-1">
+                <TracePanel
+                  events={events}
+                  replay={!!replay}
+                  pipeline={[`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`, latencyLine(latency)]}
+                />
+              </div>
+            </>
           ) : (
             <>
-              <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
-              <Card title="This session">
-                <div className="grid grid-cols-3 gap-3">
-                  <Stat value={reaches} label="reaches" />
-                  <Stat value={reaches - unverified} label="verified" />
-                  <Stat value={unverified} label="unverified" tone={unverified ? 'amber' : 'default'} />
-                </div>
-                <div className="mt-2 text-lg text-muted">{cup?.arcs_done ?? 0} of {planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar</div>
-              </Card>
+              <VerifiedTally total={reaches} unverified={unverified} noun="reaches" note={`${cup?.arcs_done ?? 0} of ${planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar`} />
               <ExertionChip exertion={coach.exertion} />
             </>
           )}
@@ -153,11 +177,12 @@ export function LiveCup() {
       </div>
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
         onPause={() => send({ cmd: 'pause' })}
-        onRest={() => send({ cmd: 'pause' })}
+        onRest={rest.start}
         onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}

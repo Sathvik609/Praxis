@@ -9,14 +9,16 @@ import { AlertTriangle, Check, RotateCcw, Sparkles, ZoomIn, ZoomOut } from '../.
 import { Pill } from '../../design/Pill'
 import { Stat } from '../../design/Stat'
 import { api, useApi } from '../../lib/api'
-import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
-import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK, exerciseById } from '../../lib/seed'
+import { DAY_MINUTES, DAY_ORDER, WEEKLY } from '../../lib/plan'
+import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK, exerciseById, upcomingVisit } from '../../lib/seed'
 import { CoachSheet } from '../coach/CoachDrawer'
 
 const tone: Record<string, ChipTone> = { focus: 'focus', watch: 'amber', stable: 'mint' }
 const word: Record<string, string> = { focus: 'Focus', watch: 'Watch', stable: 'Stable' }
 const GOAL_KEY = 'praxis.goal'
 const ZOOMS = [1, 1.25, 1.5]
+/** Which part of the body each body-map marker stands for, to mark today's exercises there. */
+const AREA: Record<string, 'hand' | 'shoulder' | null> = { lWrist: 'hand', lShoulder: 'shoulder', lElbow: null }
 
 function readGoal(): string | null {
   try {
@@ -48,6 +50,8 @@ export function Home() {
   const goal = savedGoal ?? me?.goal ?? PATIENT.goal
   const attemptCount = attempts ?? me?.goal_attempts ?? PATIENT.goalAttempts
   const camera = view === 'both' ? alt : view
+  const area = AREA[focus] ?? null
+  const nextVisit = upcomingVisit(me?.program?.next_visit ?? PROGRAM.nextVisit)
 
   // "Both" alternates the reference camera every 4 s; the avatar never mirrors the patient.
   useEffect(() => {
@@ -174,7 +178,8 @@ export function Home() {
       </Card>
 
       <div className="flex flex-col gap-4">
-        <Card tone="highlight" title={region.title} action={<Chip tone={tone[region.status]}>{word[region.status]}</Chip>}>
+        {/* Region metrics are seeded sample history until real sessions fill them: say so. */}
+        <Card tone="highlight" title={region.title} action={<span className="flex flex-wrap justify-end gap-2"><Chip tone="neutral">Sample</Chip><Chip tone={tone[region.status]}>{word[region.status]}</Chip></span>}>
           <p className="-mt-3 text-muted">{region.setBy}</p>
           <div className="mt-4 space-y-3">
             {region.metrics.map((m) => (
@@ -192,13 +197,31 @@ export function Home() {
               ))}
             </div>
           )}
+          <div className="mt-4 border-t border-line pt-3">
+            <div className="text-muted">Today, in order</div>
+            <ol className="mt-1">
+              {[...DAY_ORDER, ...WEEKLY].map((id, i) => {
+                const ex = exerciseById(id)
+                if (!ex) return null
+                return (
+                  <li key={id} className="flex items-center justify-between gap-2 py-1">
+                    <span>{ex.weekly ? ex.name : `${i + 1}. ${ex.name}`}</span>
+                    <span className="flex gap-1">
+                      {ex.weekly && <Chip tone="neutral">weekly</Chip>}
+                      {area && ex.region === area && <Chip tone="focus">this area</Chip>}
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
           <Button full variant="secondary" className="mt-4" onClick={() => (region.primary.label === 'Ask the coach' ? setCoachOpen(true) : nav(region.primary.to))}>{region.primary.label}</Button>
         </Card>
         <Card title="Assigned program" action={<Chip tone="neutral">Read-only</Chip>}>
           <p className="-mt-3 text-muted">{me?.program?.short ?? PROGRAM.short}</p>
           <div className="mt-3 border-t border-line pt-3">
             <div className="font-bold">Next visit</div>
-            <div className="text-muted">{me?.program?.next_visit ?? PROGRAM.nextVisit}</div>
+            <div className="text-muted">{nextVisit ?? 'Not booked yet · your therapist sets it'}</div>
           </div>
         </Card>
       </div>

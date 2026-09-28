@@ -15,8 +15,10 @@ import { BoardView } from './BoardView'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { readGuidance } from '../../session/guidance'
+import { useRestBreak } from '../../session/useRestBreak'
+import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { TracePanel } from './TracePanel'
 
@@ -45,7 +47,11 @@ export function LiveNhpt() {
   })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  const coach = useCoach(events, { speak: browserSpeak })
+  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
+  const [spoken] = useState(() => readGuidance().spoken)
+  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const rest = useRestBreak(send, coach.clearOverlay)
+  const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
   const [reference, setReference] = useState<'avatar' | 'board'>('board')
@@ -83,6 +89,9 @@ export function LiveNhpt() {
   }, [complete?.id])
 
   const pegsDone = frame?.nhpt?.pegs_done ?? 0
+  // Occupancy is the peg test's verification; a peg is unverified only when the service says so
+  // (`unverified_total`) or a rep_complete arrives with `verified: false`.
+  const pegsUnverified = Number((frame?.nhpt as { unverified_total?: number } | undefined)?.unverified_total ?? events.filter((e) => e.type === 'rep_complete' && e.verified === false).length)
   const nextHole = frame?.overlay.next_hole ?? null
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
@@ -102,14 +111,6 @@ export function LiveNhpt() {
           frame={frame}
           feedLabel={replay ? `recorded session · ${hand} hand` : `${hand} hand · ${label.feed}`}
           tracking={live ? ['board tracking', handSeen].filter(Boolean).join(' · ') : undefined}
-          cvLine={
-            <>
-              cv2 5.0 · findContours + HoughCircles occupancy{frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}
-              {frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}
-              {frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}
-            </>
-          }
-          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 
@@ -159,23 +160,33 @@ export function LiveNhpt() {
               <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
             </div>
           </Card>
+          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="pegs" />
+          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
+          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
+            <div className="min-h-0 flex-1">
+              <TracePanel
+                events={events}
+                replay={!!replay}
+                pipeline={[
+                  `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`,
+                  latencyLine(latency),
+                ]}
+              />
+            </div>
           ) : (
-            <>
-              <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
-              <ExertionChip exertion={coach.exertion} />
-            </>
+            <ExertionChip exertion={coach.exertion} />
           )}
         </div>
       </div>
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
         onPause={() => send({ cmd: 'pause' })}
-        onRest={() => send({ cmd: 'pause' })}
+        onRest={rest.start}
         onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}

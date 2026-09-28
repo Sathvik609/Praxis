@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
 import * as hook from '../../session/useWebcamStream'
+import * as coachMod from '../../session/useCoach'
 import { LiveNhpt } from './LiveNhpt'
 
 const frame = {
@@ -103,15 +104,20 @@ test('the feed shows the rolling latency line from frame and coach events', () =
     { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Go', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending', latency: { event_to_cue_ms: 3, capture_to_cue_ms: 63 } },
   ])
   renderAt('/session?hand=left')
+  expect(screen.queryByText(/latency p50\/p95/)).toBeNull() // developer line: only with the trace open
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByText('latency p50/p95 · capture→event 40/60 ms · event→cue 3/3 ms · 1 dropped')).toBeInTheDocument()
 })
 
-test('trace toggle swaps the coach column for the trace panel', () => {
+test('trace toggle opens the trace panel and the caption stays on screen', () => {
   mockStream([frame, { type: 'rep_complete', t: 11, id: 2, peg: 1 }])
   renderAt('/session?hand=left')
+  expect(screen.queryByText(/findContours \+ HoughCircles/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
-  expect(screen.queryByText(/Rule-based coach · LLM agent pending\.?$/)).toBeNull()
+  expect(screen.getByText(/findContours \+ HoughCircles/)).toBeInTheDocument()
+  expect(screen.getByText('Coach')).toBeInTheDocument()
+  expect(screen.getByText(/Timer is running/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Hide trace' }))
   expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
 })
@@ -133,4 +139,63 @@ test('feedback acknowledgement navigates to the persisted report', () => {
     </MemoryRouter>,
   )
   expect(screen.getByText('REPORT sid42')).toBeInTheDocument()
+})
+
+test('verified and unverified counts are on the live peg-test screen', () => {
+  mockStream([frame])
+  renderAt('/session?hand=left')
+  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/5 verified · 0 unverified · 5 pegs/)
+})
+
+test('unverified pegs come from the service total when it sends one', () => {
+  mockStream([{ ...frame, nhpt: { ...frame.nhpt, unverified_total: 1 } }])
+  renderAt('/session?hand=left')
+  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/4 verified · 1 unverified/)
+})
+
+test('Take a rest is not Pause: it sends a rest-tagged pause and shows the rest timer', () => {
+  const send = mockStream([frame])
+  renderAt('/session?hand=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
+  expect(send).toHaveBeenCalledWith({ cmd: 'pause', reason: 'rest' })
+  expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Rested — continue' }))
+  expect(send).toHaveBeenCalledWith({ cmd: 'resume' })
+  expect(screen.queryByRole('dialog', { name: 'Resting' })).not.toBeInTheDocument()
+})
+
+test('the service pause event that answers a rest does not stack the pause overlay on top', () => {
+  const send = mockStream([frame])
+  const tree = (
+    <MemoryRouter initialEntries={['/session?hand=left']}>
+      <Routes>
+        <Route path="/session" element={<LiveNhpt />} />
+      </Routes>
+    </MemoryRouter>
+  )
+  const { rerender } = render(tree)
+  fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
+  mockStream([frame, { type: 'pause', t: 11, id: 2, rule: 'patient', text: 'Paused. Take your time.' }], send)
+  rerender(tree)
+  expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Paused' })).not.toBeInTheDocument()
+})
+
+test('Spoken instructions follow Settings: on by default, muted when turned off; the caption stays', () => {
+  const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
+  const speak = vi.spyOn(coachMod, 'browserSpeak').mockImplementation(() => {})
+  try {
+    mockStream([frame, cue])
+    const first = renderAt('/session?hand=left')
+    expect(speak).toHaveBeenCalledWith('Next peg, nice and steady.', 'instruct')
+    first.unmount()
+    speak.mockClear()
+    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: false, larger: false }))
+    renderAt('/session?hand=left')
+    expect(speak).not.toHaveBeenCalled()
+    expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()
+  } finally {
+    localStorage.clear()
+    speak.mockRestore()
+  }
 })

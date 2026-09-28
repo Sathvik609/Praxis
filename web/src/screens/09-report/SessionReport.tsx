@@ -8,6 +8,8 @@ import { Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
 import { api, useApi, type SessionRecord } from '../../lib/api'
+import { processingPlace } from '../../lib/config'
+import { angleTarget, exerciseById, exerciseOfSession, sessionExerciseName } from '../../lib/seed'
 
 const conf = { high: 'mint', medium: 'amber', low: 'neutral' } as const
 
@@ -63,7 +65,7 @@ export function SessionReport() {
     return (
       <div className="mx-auto w-full max-w-2xl p-6">
         <Card tone="watch" title="Could not load this report">
-          <p className="text-lg">The report could not be fetched ({problem}). Reports stay on this device until they are delivered.</p>
+          <p className="text-lg">The report could not be fetched ({problem}). Reports are kept in the Praxis session store until they are delivered.</p>
           <div className="mt-4">
             <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
           </div>
@@ -102,6 +104,13 @@ export function SessionReport() {
   const reachS = cam.reach_ms?.map((v) => Math.round(v / 100) / 10)
   const context = s.summary.mode === 'nhpt' ? 'assessment' : side ? `${side} side` : 'practice'
   const latency = (s.summary as { latency?: LatencyBlock }).latency ?? null
+  // Peak angles belong to an arm exercise: the one this session ran, named from the registry
+  // (or the service's own name); a combined sample session falls back to Arm to the front.
+  const ex = exerciseOfSession(s)
+  const armEx = ex?.session === 'arm' ? ex : exerciseById('arm')!
+  const armName = ex?.session === 'arm' ? sessionExerciseName(s) : armEx.name
+  const swings = armEx.id === 'pendulum'
+  const peakTarget = angleTarget(s.summary as { target_deg?: number | null; ceiling_deg?: number | null }, armEx.id)
 
   return (
     <div className="p-6">
@@ -138,7 +147,7 @@ export function SessionReport() {
             {(reachS || cam.peak_deg || cam.splits_s) && (
               <div className="mt-5 grid grid-cols-2 gap-6">
                 {reachS && <Bars title="Waiter – cup · reach time per reach" unit="s" values={reachS} verified={cam.reach_verified} labels={reachS.map((_, i) => String(i + 1))} />}
-                {cam.peak_deg && <Bars title="Arm to the front · peak angle per lift" unit="°" values={cam.peak_deg.map((v) => Math.round(v))} verified={cam.peak_verified} labels={cam.peak_deg.map((_, i) => String(i + 1))} target={90} />}
+                {cam.peak_deg && <Bars title={`${armName} · ${swings ? 'swing size per swing' : 'peak angle per lift'}`} unit="°" values={cam.peak_deg.map((v) => Math.round(v))} verified={cam.peak_verified} labels={cam.peak_deg.map((_, i) => String(i + 1))} target={peakTarget} />}
                 {cam.splits_s && <Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} />}
               </div>
             )}
@@ -205,7 +214,7 @@ export function SessionReport() {
       <Overlay open={sharing} title="Who sees this report" description="How this report is shared." onClose={() => setSharing(false)} className="w-[min(640px,92vw)]">
         <ul className="mt-4 space-y-3 text-lg">
           <li>It goes to <b>{clinician}'s review queue</b> and nowhere else.</li>
-          <li>It contains measurements, events, coach notes and what you told us — <b>never video</b>. Video is processed on this device and not stored.</li>
+          <li>It contains measurements, events, coach notes and what you told us — <b>never video</b>. Video is {processingPlace()}.</li>
           <li>
             Status right now: <Chip tone="amber">{cap(s.delivery)}</Chip>
           </li>

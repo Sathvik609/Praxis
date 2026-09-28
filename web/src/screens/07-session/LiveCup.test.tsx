@@ -35,9 +35,12 @@ test('shows arc label, dot progress, unverified count and hand-clear caption', (
   mockStream([frame])
   renderAt('/session?exercise=cup&side=left')
   expect(screen.getByText(/arc 2 of 2 slow/)).toBeInTheDocument()
-  expect(screen.getByLabelText('3 of 5')).toBeInTheDocument()
+  // the dot row shows where the cup is, from the same snapshot as the ring on the video
+  expect(screen.getByLabelText('Cup on dot 3, next dot 4')).toBeInTheDocument()
+  expect(screen.queryByLabelText('3 of 5')).toBeNull()
   expect(screen.getAllByText(/1 unverified/).length).toBeGreaterThan(0)
-  expect(screen.getByText(/cup over dot 3 · hand not clear/)).toBeInTheDocument()
+  // developer lines are not on the patient's screen until the trace is open
+  expect(screen.queryByText(/cv2 5.0/)).toBeNull()
   expect(screen.getByText(/hand not in view · cup tracked/)).toBeInTheDocument()
 })
 
@@ -45,6 +48,7 @@ test('"This session" shows reaches, verified and unverified as separate numbers'
   mockStream([frame])
   renderAt('/session?exercise=cup&side=left')
   expect(screen.getByRole('heading', { name: 'This session' })).toBeInTheDocument()
+  expect(screen.getByLabelText('Verified and unverified counts')).toBeInTheDocument()
   const value = (label: string) => screen.getByText(label).parentElement?.parentElement?.firstElementChild
   expect(value('reaches')).toHaveTextContent('10')
   expect(value('verified')).toHaveTextContent('9')
@@ -71,4 +75,21 @@ test('replay query is passed to the stream so no webcam is opened, and the repla
   renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_cup_01' }))
   expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
+})
+
+test('Show trace reveals the OpenCV line and keeps the caption, counts and coach visible', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
+  expect(screen.getByText(/cv2 5.0 · HSV cup on the warped sheet · cup over dot 3 · hand not clear/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
+  expect(screen.getByText('Coach')).toBeInTheDocument()
+  expect(screen.getByText(/Cup on dot 3 — good/)).toBeInTheDocument()
+  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/9 verified · 1 unverified/)
+})
+
+test('caption names the dot the cup is on and the next one, like the ring', () => {
+  mockStream([{ ...frame, cup: { ...frame.cup, state: 'placed' } }])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.getByText(/Cup on dot 3 — good\. Let your hand come back to your lap, then reach for dot 4\./)).toBeInTheDocument()
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '../../design/Button'
 import { Chip } from '../../design/Chip'
 import type { PraxisEvent } from '../../lib/events'
@@ -30,8 +30,10 @@ function Time({ t }: { t: number }) {
 }
 
 /** Judge / developer trace (CLAUDE.md §1 "Show trace"): OpenCV output → decision → tool call
- *  → action with timestamps; stop rules are shown where they fired, before the coach. */
-export function TracePanel({ events, replay = false }: { events: PraxisEvent[]; replay?: boolean }) {
+ *  → action with timestamps; stop rules are shown where they fired, before the coach.
+ *  `pipeline` holds the screen's developer lines (the OpenCV step, rolling latency p50/p95)
+ *  so they stay off the patient's video. */
+export function TracePanel({ events, replay = false, pipeline = [] }: { events: PraxisEvent[]; replay?: boolean; pipeline?: ReactNode[] }) {
   const rows = traceRows(events)
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -59,6 +61,9 @@ export function TracePanel({ events, replay = false }: { events: PraxisEvent[]; 
             <Button variant="inverse" className="ml-auto" onClick={copy}>{copied ? 'Copied' : 'Copy JSON'}</Button>
           </div>
           <div className="mt-1 text-white/60">Rule-based coach · LLM agent pending. Stop rules run before the coach.</div>
+          {pipeline.filter(Boolean).map((line, i) => (
+            <div key={i} className="mt-1 break-words tabular-nums text-white/80">{line}</div>
+          ))}
         </div>
         <div className="px-4 py-3">
           {rows.length === 0 && <div className="text-white/60">— waiting for events —</div>}

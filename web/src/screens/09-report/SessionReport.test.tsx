@@ -58,6 +58,7 @@ test('download builds a JSON blob and sharing explains who sees the report', asy
   const dialog = screen.getByRole('dialog', { name: /Who sees this report/ })
   expect(dialog).toHaveTextContent(/review queue/)
   expect(dialog).toHaveTextContent(/never video/i)
+  expect(dialog).toHaveTextContent(/Video is processed on this device, never stored/)
   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   click.mockRestore()
@@ -103,4 +104,31 @@ test('error state is a card with a way home', async () => {
   expect(await screen.findByText(/Could not load this report/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
   expect(screen.getByText('HOME')).toBeInTheDocument()
+})
+
+const ARM = (exercise: string, extra: Record<string, unknown> = {}) => ({
+  ...SESSION, mode: 'arm', exercise, title: 'arm session',
+  summary: { ...SESSION.summary, mode: 'arm', exercise, ...extra, camera: { reps_total: 3, verified: 3, unverified: 0, peak_deg: [88, 90, 89], peak_verified: [true, true, true] } },
+})
+
+test('peak-angle chart is named after the exercise the session ran, never always "Arm to the front"', async () => {
+  mockApi({ '/api/sessions/abc': ARM('abduction'), '/api/patients/me': ME })
+  renderReport()
+  const chart = await screen.findByRole('img', { name: /peak angle per lift/ })
+  expect(chart.getAttribute('aria-label')).toMatch(/^Arm out to the side · peak angle per lift/)
+  expect(screen.getByText(/dashed = target 90/)).toBeInTheDocument()
+})
+
+test('the service exercise name and target are used when the summary carries them', async () => {
+  mockApi({ '/api/sessions/abc': ARM('abduction', { exercise_id: 'abduction', exercise_name: 'Arm out to the side', target_deg: 60, ceiling_deg: 90 }), '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per lift/ })).toBeInTheDocument()
+  expect(screen.getByText(/dashed = target 60/)).toBeInTheDocument()
+})
+
+test('Pendulum has no target line and counts swings, not lifts', async () => {
+  mockApi({ '/api/sessions/abc': ARM('pendulum', { ceiling_deg: null }), '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByRole('img', { name: /^Pendulum · swing size per swing/ })).toBeInTheDocument()
+  expect(screen.queryByText(/dashed = target/)).not.toBeInTheDocument()
 })

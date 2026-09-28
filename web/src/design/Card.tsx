@@ -16,14 +16,15 @@ type Props = {
   className?: string
   children: ReactNode
   as?: 'section' | 'div' | 'article'
+  'aria-label'?: string
 }
 
 /** The one card. Title row (h2) with an optional action on the right. */
-export function Card({ title, action, tone = 'default', padding = 'md', className = '', children, as = 'section' }: Props) {
+export function Card({ title, action, tone = 'default', padding = 'md', className = '', children, as = 'section', 'aria-label': ariaLabel }: Props) {
   const Tag = as
   const pad = padding === 'md' ? 'p-5' : padding === 'sm' ? 'px-4 py-3' : ''
   return (
-    <Tag className={`rounded-[var(--r-card)] ${tones[tone]} ${pad} ${className}`}>
+    <Tag aria-label={ariaLabel} className={`rounded-[var(--r-card)] ${tones[tone]} ${pad} ${className}`}>
       {(title || action) && (
         <div className="mb-3 flex items-start justify-between gap-3">
           {title && <h2 className="text-2xl">{title}</h2>}

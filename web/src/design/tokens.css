@@ -32,6 +32,11 @@
   --r-control: 10px;
   --r-pill: 999px;
 }
+/* Settings > Larger text (session/guidance.ts): the root font grows, so every rem-sized cue,
+   label and control grows with it. */
+:root[data-text='large'] {
+  font-size: 18px;
+}
 :root[data-theme='dark'] {
   --teal-ink: #7fd1c0;
   --mint-ink: #4ccba1;

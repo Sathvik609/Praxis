@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { Activity } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay } from '../../design/Overlay'
+import { REST_AT } from '../../lib/plan'
 import type { ExertionState, Overlay as OverlayState } from '../../session/useCoach'
 
 const RULE_TITLE: Record<string, string> = {
@@ -40,13 +41,39 @@ export function SessionOverlay({ overlay, onResume, onEnd }: { overlay: OverlayS
   )
 }
 
-/** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. */
+/** "Take a rest" (patient-chosen): a timer counting the rest up, then continue or end. The
+ *  service-imposed rest (exertion rule) keeps using SessionOverlay's "Rest break". */
+export function RestOverlay({ since, onResume, onEnd }: { since: number | null; onResume: () => void; onEnd: () => void }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (since == null) return
+    setNow(Date.now())
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [since])
+  if (since == null) return null
+  const s = Math.max(0, Math.floor((now - since) / 1000))
+  return (
+    <Overlay open title="Resting" description="The session is paused while you rest.">
+      <p className="mt-3 text-2xl">Rest as long as you need. About a minute is usually enough.</p>
+      <p className="mt-4 font-heading text-6xl font-semibold tabular-nums" aria-live="off">{`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`}</p>
+      <p className="mt-1 text-lg text-muted">resting · the camera is not counting</p>
+      <div className="mt-6 flex flex-wrap justify-end gap-3">
+        <Button variant="secondary" onClick={onEnd}>End session</Button>
+        <Button onClick={onResume}>Rested — continue</Button>
+      </div>
+    </Overlay>
+  )
+}
+
+/** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. The copy
+ *  quotes the locked stop level (CLAUDE.md §1: pain ≥ 7), the same number the plan uses. */
 export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmit: (pain: number) => void; onCancel: () => void }) {
   const [pain, setPain] = useState<number | null>(null)
   if (!open) return null
   return (
     <Overlay open title="How is the pain right now?">
-      <p className="mt-2 text-muted">Pain at or above 5 ends the session and flags your therapist. Take your time.</p>
+      <p className="mt-2 text-muted">Pain at or above {REST_AT} ends the session and flags your therapist. Take your time.</p>
       <div className="mt-5"><NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" /></div>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <Button variant="secondary" onClick={onCancel}>Back to session</Button>

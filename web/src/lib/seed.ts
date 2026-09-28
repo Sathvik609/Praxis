@@ -94,6 +94,50 @@ export const GROUPS: { id: ExerciseGroup; title: string; blurb: string }[] = [
 
 export const exerciseById = (id: string | null | undefined): Exercise | undefined => EXERCISES.find((e) => e.id === id || e.serviceId === id)
 
+/** Enough of a stored session (or its summary) to say which exercise it was. The service puts
+ *  `exercise` (registry id) on records and summaries; newer summaries also carry `exercise_id`,
+ *  `exercise_name`, `target_deg` and `ceiling_deg` (null for Pendulum). */
+export type SessionRef = {
+  mode?: string
+  exercise?: string | null
+  summary?: { mode?: string; exercise?: string | null; exercise_id?: string | null; exercise_name?: string | null }
+}
+
+/** The one place a report, the progress page or settings turns a session into an exercise.
+ *  A bare `mode: 'arm'` resolves to Arm to the front: before Sprint E arm mode only ran
+ *  flexion, and the service still defaults to it. */
+export function exerciseOfSession(s: SessionRef): Exercise | undefined {
+  return exerciseById(s.summary?.exercise_id ?? s.summary?.exercise ?? s.exercise) ?? exerciseById(s.summary?.mode ?? s.mode)
+}
+
+export function sessionExerciseName(s: SessionRef): string {
+  return s.summary?.exercise_name || exerciseOfSession(s)?.name || s.summary?.mode || s.mode || 'Session'
+}
+
+/** Target line for a peak-angle chart: none for Pendulum (it counts swings and has no target
+ *  angle) or when the service sends a null ceiling; else the session's own target, else the
+ *  locked 90° ceiling. */
+export function angleTarget(summary: { target_deg?: number | null; ceiling_deg?: number | null }, exerciseId: string | undefined): number | undefined {
+  if (exerciseById(exerciseId)?.id === 'pendulum') return undefined
+  if (summary.ceiling_deg === null) return undefined
+  return summary.target_deg ?? 90
+}
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+/** The next visit as the store gives it ("Thu 18 Sep, 2:30 PM"), or null once that day has
+ *  passed, so a stale seeded date is never shown as upcoming. A month more than six months
+ *  back is read as next year. Text without a day and month is passed through. */
+export function upcomingVisit(text: string | null | undefined, now: Date = new Date()): string | null {
+  if (!text) return null
+  const m = text.match(/(\d{1,2})\s+([A-Za-z]{3})/)
+  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1
+  if (!m || month < 0) return text
+  let day = new Date(now.getFullYear(), month, Number(m[1]), 23, 59, 59)
+  if (now.getTime() - day.getTime() > 182 * 86400e3) day = new Date(now.getFullYear() + 1, month, Number(m[1]), 23, 59, 59)
+  return day >= now ? text : null
+}
+
 export const WEEK = { days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], done: [true, true, false, true], todayIndex: 4, sessions: 3, minutes: 42, lastSession: '8 verified · pain 2→2' }
 
 export const REGIONS: Record<string, { title: string; status: Marker['status']; setBy: string; metrics: { value: string; unit?: string; label: string; delta?: string }[]; program: { name: string; tag: string }[]; primary: { label: string; to: string } }> = {

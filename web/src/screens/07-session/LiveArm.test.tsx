@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -83,6 +83,14 @@ test('Arm out to the side runs the same screen from the front view with its own 
   expect(screen.getByText(/front view · shoulder 72° of 90°/)).toBeInTheDocument()
 })
 
+test('front-view Arm out to the side never tells the patient to turn sideways', () => {
+  const lostEv = { type: 'perception_lost', t: 11, id: 2 }
+  mockStream([{ ...frame, calibrated: false, arm: { ...frame.arm, exercise: 'abduction', view_required: 'front' } }, lostEv])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.getAllByText(/Face the camera/).length).toBeGreaterThan(0)
+  expect(screen.queryByText(/side to the camera/)).toBeNull()
+})
+
 test('Pendulum counts swings: no hold count, no lift/lower labels', () => {
   mockStream([{ ...frame, arm: { ...frame.arm, exercise: 'pendulum', kind: 'oscillation', state: 'moving', hold_s: 0, target_deg: 20, ceiling_deg: 45, reps_per_set: 10, rep: 3 } }])
   renderAt('/session?exercise=pendulum&side=left')
@@ -96,4 +104,23 @@ test('replay query is passed to the stream so no webcam is opened', () => {
   renderAt('/session?exercise=arm&side=left&replay=synthetic_arm_01')
   expect(hook.useWebcamStream).toHaveBeenCalledWith(expect.objectContaining({ replay: 'synthetic_arm_01' }))
   expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
+})
+
+test('verified and unverified counts are on the live arm screen, from the camera totals', () => {
+  mockStream([{ ...frame, arm: { ...frame.arm, reps_total: 4, unverified_total: 1 } }])
+  renderAt('/session?exercise=arm&side=left')
+  const tally = screen.getByLabelText('Verified and unverified counts')
+  expect(tally).toHaveTextContent('3 verified')
+  expect(tally).toHaveTextContent('1 unverified')
+  expect(tally).toHaveTextContent('4 lifts')
+})
+
+test('the pose line is a developer line under Show trace; the caption stays with the trace open', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=arm&side=left')
+  expect(screen.queryByText(/cv2 dnn pose/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
+  expect(screen.getByText(/cv2 dnn pose · shoulder–elbow–hip angle/)).toBeInTheDocument()
+  expect(screen.getByText('Coach')).toBeInTheDocument()
+  expect(screen.getByText(/Hold it there/)).toBeInTheDocument()
 })

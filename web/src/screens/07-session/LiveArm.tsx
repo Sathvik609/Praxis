@@ -16,8 +16,10 @@ import { useWebcamStream } from '../../session/useWebcamStream'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader } from './LiveShell'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { readGuidance } from '../../session/guidance'
+import { useRestBreak } from '../../session/useRestBreak'
+import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
 import { SessionControls } from './SessionControls'
 import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
@@ -30,7 +32,7 @@ type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; h
 export const LEAN_SHOW_DEG = 12
 
 function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side' | 'front', swing: boolean): string {
-  if (lost) return view === 'front' ? 'I cannot see both shoulders. Face the camera with your shoulders and hips in view.' : 'I cannot see your shoulder and hip. Turn your practising side to the camera.'
+  if (lost) return statusLabel('lost', 'arm', view).coach ?? ''
   if (lean) return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
   const a = f?.arm
   if (!a) return 'Getting the camera ready.'
@@ -58,7 +60,11 @@ export function LiveArm() {
   const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  const coach = useCoach(events, { speak: browserSpeak })
+  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
+  const [spoken] = useState(() => readGuidance().spoken)
+  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const rest = useRestBreak(send, coach.clearOverlay)
+  const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
 
@@ -74,7 +80,6 @@ export function LiveArm() {
     return last?.type === 'perception_lost'
   })()
   const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
-  const label = statusLabel(status, 'arm')
   const live = status === 'tracking' || status === 'replay'
   const lastLean = [...events].reverse().find((e) => e.type === 'compensation_lean')
   const leanRecent = !!lastLean && (frame ? frame.t - lastLean.t < 4 : true)
@@ -104,6 +109,7 @@ export function LiveArm() {
   const repsPerSet = a?.reps_per_set ?? 8
   const holdCount = holding ? Math.ceil((a?.hold_s ?? 3) * (a?.hold_progress ?? 0)) : 0
   const view: 'side' | 'front' = a?.view_required ?? ex.view ?? 'side'
+  const label = statusLabel(status, 'arm', view)
   const swing = (a?.kind ?? (ex.id === 'pendulum' ? 'oscillation' : 'hold')) === 'oscillation'
   const turnHint = view === 'front' ? ' · face the camera' : ' · turn your side to the camera'
   const wrongView = !!frame?.arm?.angles && (view === 'front' ? frame.arm.angles.view_ok : !frame.arm.angles.view_ok)
@@ -124,8 +130,6 @@ export function LiveArm() {
           feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
           tracking={live ? `ghost arm shows target${wrongView ? turnHint : ''}` : undefined}
           band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
-          cvLine={`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`}
-          latencyLine={latencyLine(latency)}
           onRetry={() => { stop(); void start() }}
         />
 
@@ -155,28 +159,35 @@ export function LiveArm() {
               <Stat value={`${lean}°`} label="trunk lean" tone={leaning ? 'amber' : 'default'} extra={leaning ? <span className="font-bold text-amber-ink">(leaning)</span> : undefined} />
             </div>
           </Card>
+          <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swings' : 'lifts'} />
+          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
+          <CoachCard
+            watch={leanRecent}
+            text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
+            label={coach.caption?.label ?? COACH_LABEL}
+          />
           {traceOpen ? (
-            <div className="min-h-0 flex-1"><TracePanel events={events} replay={!!replay} /></div>
-          ) : (
-            <>
-              <CoachCard
-                watch={leanRecent}
-                text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
-                label={coach.caption?.label ?? COACH_LABEL}
+            <div className="min-h-0 flex-1">
+              <TracePanel
+                events={events}
+                replay={!!replay}
+                pipeline={[`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`, latencyLine(latency)]}
               />
-              <ExertionChip exertion={coach.exertion} />
-            </>
+            </div>
+          ) : (
+            <ExertionChip exertion={coach.exertion} />
           )}
         </div>
       </div>
 
       <SetCheckIn open={setCheckOpen} setNumber={setDone?.set ?? 1} onSubmit={(r) => { if (r !== null) send({ cmd: 'rpe', rpe: r }); setAskedSets((s) => [...s, setDone?.set ?? 0]) }} />
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls
         onPause={() => send({ cmd: 'pause' })}
-        onRest={() => send({ cmd: 'pause' })}
+        onRest={rest.start}
         onPain={() => setPainOpen(true)}
         onEnd={() => finish(true)}
         traceOpen={traceOpen}
