@@ -61,9 +61,18 @@ class ReplayResult:
         }
 
 
-REPO = Path(__file__).resolve().parents[3]
-DEFAULT_V0_DIR = REPO / "evaluation" / "dataset_v0"
-DEFAULT_REPLAY_DIRS: tuple[Path, ...] = (REPO / "evaluation" / "dataset_v1" / "raw", REPO / "evaluation" / "replay")
+def _evaluation_root() -> Path:
+    """`evaluation/` in the repo, or next to `PRAXIS_EVAL_DIR` in the container image, where the
+    package sits at /app/praxis_session and has no repo root three levels up."""
+    if "PRAXIS_EVAL_DIR" in os.environ:
+        return Path(os.environ["PRAXIS_EVAL_DIR"]).resolve().parent
+    parents = Path(__file__).resolve().parents
+    return (parents[3] if len(parents) > 3 else parents[-1]) / "evaluation"
+
+
+EVAL_ROOT = _evaluation_root()
+DEFAULT_V0_DIR = Path(os.environ["PRAXIS_EVAL_DIR"]) if "PRAXIS_EVAL_DIR" in os.environ else EVAL_ROOT / "dataset_v0"
+DEFAULT_REPLAY_DIRS: tuple[Path, ...] = (EVAL_ROOT / "dataset_v1" / "raw", EVAL_ROOT / "replay")
 SHEET_BY_PIPELINE = {"nhpt": "nhpt_board", "cup": "cup_targets", "arm": "none"}
 
 
