@@ -1,10 +1,12 @@
 import * as THREE from 'three'
-import { type Box, fitFraming, framingPreset } from './framing'
+import { type Frame, type Insets, NO_INSETS, actionFrame, fitPoints, framingPreset, setSafeView, zoomAbout } from './framing'
 import { type GlbAction, advanceGlbClock, boneFor, stepAt, targetAt } from './glbActions'
 import { AvatarInstance, type AvatarAsset } from './glbAsset'
+import { glbPropPoints, isBodyNode, pitchFor } from './glbFraming'
 import { TABLE_Y, type Side } from './layout'
 import { MARKER_STYLE, type Marker } from './markers'
 import type { Clock, Projection, Tick } from './scene'
+import { type Script, advanceScriptClock, scriptAt, scriptCaption, stepAtActionTime } from './script'
 import { AMBER, MINT, makeRenderer, makeStage } from './stage'
 
 export type GlbStageProps = {
@@ -17,10 +19,26 @@ export type GlbStageProps = {
   compact: boolean
   showCues: boolean
   markers: Marker[]
+  /** Demonstration script (step text + time warp) for this action, if it has one. */
+  script?: Script | null
+  /** Stage pixels the figure is kept clear of (view line, caption bar, label gutter). */
+  insets?: Insets
+  /** Home zoom (1 = the whole figure). */
+  zoom?: number
   onTick?: (t: Tick) => void
   onProject?: (p: Projection) => void
   onContextLost?: () => void
 }
+
+type P3 = readonly [number, number, number]
+/** Nodes that place a table task's sheet, board, cup, pegs and target anchors in view. */
+const TABLE_PROP_NODES = [
+  'prop_sheet',
+  'prop_pegboard',
+  'prop_cup',
+  ...[1, 2, 3, 4, 5].map((i) => `anchor_dot_${i}`),
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((i) => [`anchor_hole_${i}`, `prop_peg_${i}`]),
+]
 
 /** Ring radius scale per target kind (the torus is 6 cm; a sheet dot is ~2.5 cm, a hole ~1 cm). */
 const RING_SCALE = { dot: 0.45, hole: 0.3 }
@@ -29,13 +47,15 @@ const GLB_FLOOR_Y = 0
 
 /** Imperative owner of the WebGL scene for the Blender-built avatar: one renderer, one cloned
  *  avatar with one AnimationMixer, one render loop. The panel's clock owns time; each frame the
- *  stage advances it (free-running × speed, or eased toward the patient's rep progress) and sets
- *  the action time. Cues: the amber ring sits on the anchor of the dot / hole being reached
- *  (meta.targets), joint dots and halos follow the marker bones. Nothing here scores anyone. */
+ *  stage advances it (free-running × speed through the action's demonstration script when it has
+ *  one, or eased toward the patient's rep progress) and sets the action time. Cues: the amber ring
+ *  sits on the anchor of the dot / hole being reached (meta.targets), joint dots and halos follow
+ *  the marker bones. The camera frames the space the action uses inside the stage's safe rect
+ *  (clear of the labels and captions). Nothing here scores anyone. */
 export class GlbStage {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
-  private cam = new THREE.PerspectiveCamera(34, 1, 0.1, 20)
+  private cam = new THREE.PerspectiveCamera(34, 1, 0.05, 20)
   private stage
   private inst: AvatarInstance
   private side: Side | null = null
@@ -53,7 +73,9 @@ export class GlbStage {
   private tmp = new THREE.Vector3()
   private hand = new THREE.Vector3()
   private framedFor = ''
-  private box: Box = { min: new THREE.Vector3(-0.5, 0, -0.3), max: new THREE.Vector3(0.5, 1.85, 0.5) }
+  private fittedFor = ''
+  private frame: Frame | null = null
+  private fit = { eye: new THREE.Vector3(0, 1.3, 2.5), look: new THREE.Vector3(0, 1, 0) }
   input: GlbStageProps
 
   constructor(private el: HTMLElement, input: GlbStageProps) {
@@ -96,35 +118,34 @@ export class GlbStage {
     const w = this.el.clientWidth || 300
     const h = this.el.clientHeight || 300
     this.renderer.setSize(w, h, true)
-    this.cam.aspect = w / h
-    this.cam.updateProjectionMatrix()
+    this.fittedFor = '' // re-fit the camera to the new safe rect
   }
 
-  /** The space an action uses: every bone sampled across the action (plus the sheet or pegboard
-   *  for a table task), padded for the body's thickness. The camera frames this box, so each
-   *  exercise fills the panel and the view stays still while it plays. */
-  private sampleBox(meta: { duration: number; props: string[] }, restoreTime: number): Box {
-    const box = new THREE.Box3()
-    const bones: THREE.Object3D[] = []
+  /** What the camera frames for this action (`actionFrame`): the rig's joints and bone tips
+   *  sampled across the whole action, plus a table task's sheet / board, cup, pegs and target
+   *  anchors. Sampled once per action, side and close-up, so the view stays still while it plays. */
+  private sampleFrame(meta: { duration: number; props: string[] }, closeUp: boolean, restoreTime: number): Frame {
+    const nodes: THREE.Object3D[] = []
     this.inst.root.traverse((o) => {
       // joints plus the exported bone tips (`*_leaf`: top of the head, fingertips, toes)
-      if ((o as THREE.Bone).isBone || o.name.endsWith('_leaf')) bones.push(o)
+      if (((o as THREE.Bone).isBone || o.name.endsWith('_leaf')) && isBodyNode(o.name)) nodes.push(o)
     })
     const v = new THREE.Vector3()
+    const frames: Map<string, P3>[] = []
     for (let i = 0; i <= 24; i++) {
       this.inst.setTime((meta.duration * i) / 24)
       this.inst.root.updateMatrixWorld(true)
-      for (const b of bones) box.expandByPoint(b.getWorldPosition(v))
+      frames.push(new Map(nodes.map((b) => (b.getWorldPosition(v), [b.name, [v.x, v.y, v.z] as P3]))))
     }
-    for (const [prop, node] of [['sheet', 'prop_sheet'], ['pegboard', 'prop_pegboard']] as const) {
-      if (!meta.props.includes(prop)) continue
-      this.inst.worldPosition(node, v)
-      box.expandByPoint(v.clone().add(new THREE.Vector3(0.14, 0, 0.1)))
-      box.expandByPoint(v.clone().add(new THREE.Vector3(-0.14, 0, -0.1)))
+    this.inst.setTime(0)
+    const table = meta.props.includes('table')
+    let propPoints: P3[] = []
+    if (table) {
+      const at = new Map(TABLE_PROP_NODES.filter((n) => this.inst.node(n)).map((n) => (this.inst.worldPosition(n, v), [n, [v.x, v.y, v.z] as P3])))
+      propPoints = glbPropPoints(at, meta.props.includes('pegboard') ? 'pegboard' : 'sheet')
     }
     this.inst.setTime(restoreTime)
-    box.expandByScalar(0.07)
-    return { min: box.min, max: box.max }
+    return actionFrame({ frames, propPoints, tableTop: table ? this.tableTop : null, closeUp })
   }
 
   /** Dot + additive halo for a marker joint, created on first use. */
@@ -155,7 +176,8 @@ export class GlbStage {
     }
     const meta = this.inst.setAction(p.action)
     const clock = p.clock.current
-    const { ended } = advanceGlbClock(clock, dt, meta)
+    const script = p.script ?? null
+    const { ended } = script ? advanceScriptClock(clock, dt, script, meta) : advanceGlbClock(clock, dt, meta)
     this.inst.setTime(clock.time)
 
     // cue layer: amber ring on the target being reached; marker dots on their bones
@@ -179,23 +201,35 @@ export class GlbStage {
     }
     for (const [j, d] of this.dots) if (!shown.has(j)) d.dot.visible = false
 
-    // camera: frame the space the action uses (sampled once per action and side); the hand
-    // close-up keeps its preset. Frame-rate independent ease between framings.
+    // camera: fit the space the action uses into the safe rect (clear of the labels and the
+    // caption bar). A table close-up frames its own tighter set; an exercise close-up follows the
+    // hand. Frame-rate independent ease between framings.
     const hasTable = meta.props.includes('table')
-    const key = `${p.action}|${p.side}`
-    if (key !== this.framedFor) {
-      this.framedFor = key
-      this.box = this.sampleBox(meta, clock.time)
-      // Home's body map is about the arm and hand: frame the upper body (hands included), not the feet
-      if (p.compact && p.action === 'idle') this.box.min.y = Math.max(this.box.min.y, 0.62)
+    const w = this.el.clientWidth || 300
+    const h = this.el.clientHeight || 300
+    const ins = p.insets ?? NO_INSETS
+    const tableClose = hasTable && p.closeUp
+    const frameKey = `${p.action}|${p.side}|${tableClose}`
+    if (frameKey !== this.framedFor) {
+      this.framedFor = frameKey
+      this.frame = this.sampleFrame(meta, tableClose, clock.time)
+      this.fittedFor = ''
     }
-    this.inst.worldPosition(boneFor(p.side === 'right' ? 'rHand' : 'lHand', p.side), this.hand)
-    const { eye, look } = p.closeUp
-      ? framingPreset(
-          { camera: p.camera, closeUp: true, compact: p.compact, side: p.side, hasTable, tall: false, yShift: hasTable ? this.tableTop - TABLE_Y : 0 },
-          this.hand,
-        )
-      : fitFraming(this.box, p.camera, p.side, this.cam.aspect, this.cam.fov, hasTable ? 24 : 6)
+    const zoom = p.zoom ?? 1
+    const fitKey = `${frameKey}|${p.camera}|${w}x${h}|${ins.top},${ins.right},${ins.bottom},${ins.left}|${zoom}`
+    if (fitKey !== this.fittedFor) {
+      this.fittedFor = fitKey
+      const aspect = setSafeView(this.cam, w, h, ins)
+      const f = fitPoints(this.frame!, p.camera, p.side, aspect, this.cam.fov, pitchFor(hasTable, tableClose))
+      // zoom grows the figure away from the label gutter (the wider inset), never under it
+      const edge = ins.right > ins.left + 1 ? 1 : ins.left > ins.right + 1 ? -1 : 0
+      this.fit = tableClose ? f : zoomAbout(f, this.frame!.box, zoom, edge)
+    }
+    let { eye, look } = this.fit
+    if (p.closeUp && !hasTable) {
+      this.inst.worldPosition(boneFor(p.side === 'right' ? 'rHand' : 'lHand', p.side), this.hand)
+      ;({ eye, look } = framingPreset({ camera: p.camera, closeUp: true, compact: p.compact, side: p.side, hasTable, tall: false }, this.hand))
+    }
     const k = this.frames === 0 ? 1 : 1 - Math.pow(0.001, dt)
     this.cam.position.lerp(eye, k)
     this.look.lerp(look, k)
@@ -205,8 +239,6 @@ export class GlbStage {
 
     if (p.onProject) {
       const out: Projection = {}
-      const w = this.el.clientWidth || 300
-      const h = this.el.clientHeight || 300
       const project = (name: string, bone: string) => {
         this.inst.worldPosition(bone, this.tmp).project(this.cam)
         out[name] = { x: ((this.tmp.x + 1) / 2) * w, y: ((1 - this.tmp.y) / 2) * h }
@@ -217,8 +249,13 @@ export class GlbStage {
     }
     if (p.onTick && (ended || now - this.lastTick > 100)) {
       this.lastTick = now
-      const s = stepAt(meta.steps, clock.time)
-      p.onTick({ caption: s.caption, step: s.step, ended, t: clock.time, angleDeg: null })
+      if (script) {
+        const step = clock.target != null ? stepAtActionTime(script, clock.time) : scriptAt(script, clock.warp ?? 0).step
+        p.onTick({ caption: scriptCaption(script, step), step, ended, t: clock.time, angleDeg: null })
+      } else {
+        const s = stepAt(meta.steps, clock.time)
+        p.onTick({ caption: s.caption, step: s.step, ended, t: clock.time, angleDeg: null })
+      }
     }
     this.raf = requestAnimationFrame(this.render)
   }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
+import { stepTextsForClip } from '../../avatar/script'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
@@ -54,6 +55,11 @@ function DemonstrationFor() {
       .then((r) => (r.ok ? setTicked(r.sets_today ?? ticked + 1) : setTickError(r.error ?? 'not saved')))
       .catch(() => setTickError('the session service is not reachable'))
   }
+  // Today's dose (pain tier applied) sets the demonstrated hold; the step list and the player's
+  // captions come from one script (`avatar/script.ts`), so their text, count and numbering match.
+  const dose = doseFor(ex, tierFor(readCheckinPain()))
+  const holdS = Number(/hold (\d+(?:\.\d+)?) s/.exec(dose)?.[1]) || undefined
+  const steps = stepTextsForClip(ex.clip, { holdS }) ?? ex.steps
   const sessionUrl = liveUrl(ex, side)
   const practise = () => {
     markDemoSeen(ex.id)
@@ -66,7 +72,7 @@ function DemonstrationFor() {
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div className="mx-auto w-full max-w-[640px]">
           <Panel className="p-3">
-            <AvatarPanel clip={ex.clip} side={side === 'right' ? 'right' : 'left'} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
+            <AvatarPanel clip={ex.clip} side={side === 'right' ? 'right' : 'left'} holdS={holdS} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
           </Panel>
           {demo && (
             <Card tone="watch" as="div" className="mt-4">
@@ -82,7 +88,7 @@ function DemonstrationFor() {
           </div>
           <Card padding="none" as="div">
             <ol className="divide-y divide-line px-5">
-              {ex.steps.map((s, i) => {
+              {steps.map((s, i) => {
                 const current = step === i + 1
                 return (
                   <li key={i} data-testid="step" className="flex min-h-14 items-center gap-4 py-2">
@@ -105,7 +111,7 @@ function DemonstrationFor() {
               <div className="flex items-start gap-3">
                 <Activity aria-hidden className="mt-1 h-5 w-5 shrink-0 text-teal-ink" />
                 <dt className="w-24 shrink-0 font-bold">Assigned</dt>
-                <dd>{doseFor(ex, tierFor(readCheckinPain()))}</dd>
+                <dd>{dose}</dd>
               </div>
               {ex.watchFor && (
                 <div className="flex items-start gap-3">

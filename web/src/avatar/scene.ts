@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { PLINTH_DEPTH } from './body'
 import type { Clip } from './clips'
 import { makeFigure } from './figure'
-import { framingPreset } from './framing'
+import { type Insets, NO_INSETS, framingPreset, setSafeView } from './framing'
 import { MARKER_STYLE, type Marker } from './markers'
 import { makeCeilingLine, makeCup, makeCupSheet, makeDish, makeNhptBoard, makeTable, targetPosition, type Board, type Cup, type CupSheet, type Dish } from './props'
 import { JOINTS, REST, forwardKinematics, type Joint, type Vec3 } from './rig'
@@ -13,7 +13,7 @@ import { AMBER, MINT, makeRenderer, makeStage } from './stage'
 export type Projection = Record<string, { x: number; y: number }>
 
 /** Mutable playback state owned by the panel and advanced by the stage's loop. */
-export type Clock = { time: number; playing: boolean; speed: number; target?: number | null }
+export type Clock = { time: number; playing: boolean; speed: number; target?: number | null; /** display time of a scripted action (`script.ts`) */ warp?: number }
 
 /** Advance the clip clock by `dt` seconds. When `clock.target` is set (a clip time the figure
  *  should be at, derived from the patient's own rep progress) the clock eases toward it instead
@@ -48,6 +48,9 @@ export type StageProps = {
   showCues: boolean
   markers: Marker[]
   figure?: FigureMode
+  /** Stage pixels kept clear of the figure (labels, captions): the preset view is drawn inside
+   *  the rest of the stage. */
+  insets?: Insets
   onTick?: (t: Tick) => void
   onProject?: (p: Projection) => void
   onContextLost?: () => void
@@ -310,7 +313,10 @@ export class AvatarStage {
       }
     }
 
-    // camera: frame-rate independent ease toward the preset
+    // camera: frame-rate independent ease toward the preset, drawn inside the safe rect
+    const w = this.el.clientWidth || 300
+    const h = this.el.clientHeight || 300
+    setSafeView(this.cam, w, h, p.insets ?? NO_INSETS)
     const { eye, look } = cameraPreset(p, hand)
     const k = this.frames === 0 ? 1 : 1 - Math.pow(0.001, dt)
     this.cam.position.lerp(eye, k)
@@ -321,8 +327,6 @@ export class AvatarStage {
 
     if (p.onProject) {
       const out: Projection = {}
-      const w = this.el.clientWidth || 300
-      const h = this.el.clientHeight || 300
       const tmp = new THREE.Vector3()
       const project = (name: string, x: number, y: number, z: number) => {
         tmp.set(x, y, z).project(this.cam)

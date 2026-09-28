@@ -169,11 +169,8 @@ export function Home() {
             <Button variant="inverse" className="w-14 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
             <Button variant="inverse" className="w-14 px-0!" aria-label="Rotate view" icon={<RotateCcw />} onClick={rotate} />
           </div>
-          <div className="overflow-hidden rounded-[var(--r-card)]">
-            <div style={{ transform: `scale(${ZOOMS[zoomIdx]})`, transformOrigin: '50% 30%' }} className="transition-transform duration-300">
-              <AvatarPanel clip="idle" camera={camera} markers={HOME_MARKERS} onMarkerTap={(m) => setFocus(m.joint)} compact showCues={false} />
-            </div>
-          </div>
+          {/* zoom is a camera zoom inside the stage, so the labels stay readable and in view */}
+          <AvatarPanel clip="idle" camera={camera} markers={HOME_MARKERS} onMarkerTap={(m) => setFocus(m.joint)} compact showCues={false} zoom={ZOOMS[zoomIdx]} overlayTop={64} />
         </div>
       </Card>
 

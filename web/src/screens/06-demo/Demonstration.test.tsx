@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
+import { stepTexts } from '../../avatar/script'
 import { readDay, todayKey, writeSide } from '../../lib/day'
 import { mockApi } from '../../test/api-mock'
 import { Demonstration } from './Demonstration'
@@ -37,6 +38,29 @@ test('cup demonstration lists five numbered steps and gates Start practice on re
   expect(start).toBeEnabled()
   fireEvent.click(start)
   expect(screen.getByText('SESSION')).toBeInTheDocument()
+})
+
+test('the step list is the player\'s script: same steps, count and numbering as the captions', () => {
+  renderDemo('/demo?exercise=abduction&side=left')
+  const steps = screen.getAllByTestId('step').map((li) => li.textContent)
+  expect(steps).toEqual(stepTexts('abduction', { holdS: 3 })!.map((t, i) => `${i + 1}${t}`))
+  expect(steps.join(' ')).toMatch(/palm down/)
+  expect(steps.join(' ')).not.toMatch(/palm forward/)
+  expect(steps[2]).toMatch(/Hold for 3 s/)
+})
+
+test('the demonstrated hold follows today\'s dose (gentle tier: hold 2 s)', () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 5 } }))
+  renderDemo('/demo?exercise=abduction&side=left')
+  expect(screen.getAllByTestId('step')[2]).toHaveTextContent(/Hold for 2 s/)
+})
+
+test('cup and peg test lists come from the same scripts as their captions', () => {
+  const a = renderDemo('/demo?exercise=cup&side=left')
+  expect(screen.getAllByTestId('step').map((li) => li.textContent)).toEqual(stepTexts('waiter_cup')!.map((t, i) => `${i + 1}${t}`))
+  a.unmount()
+  renderDemo('/demo?exercise=nhpt&side=left')
+  expect(screen.getAllByTestId('step').map((li) => li.textContent)).toEqual(stepTexts('nhpt')!.map((t, i) => `${i + 1}${t}`))
 })
 
 test('arm demonstration shows assigned, watch-for and stop-if lines and rehearsal', () => {

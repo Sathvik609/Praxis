@@ -92,20 +92,23 @@ test('rotate flips front and side; Both alternates every 4 s', () => {
   vi.useFakeTimers()
   try {
     renderHome()
-    expect(screen.getByText(/side view/)).toBeInTheDocument()
+    expect(screen.getByText(/Side view/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Rotate view' }))
-    expect(screen.getByText(/front view/)).toBeInTheDocument()
+    expect(screen.getByText(/Front view/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Both' }))
     act(() => {
       vi.advanceTimersByTime(4000)
     })
-    expect(screen.getByText(/side view/)).toBeInTheDocument()
+    expect(screen.getByText(/Side view/)).toBeInTheDocument()
     act(() => {
       vi.advanceTimersByTime(4000)
     })
-    expect(screen.getByText(/front view/)).toBeInTheDocument()
+    expect(screen.getByText(/Front view/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument()
+    // zoom is a camera zoom inside the stage: the panel (labels, caption) is never CSS-scaled
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+    expect(document.querySelector('[style*="scale("]')).toBeNull()
   } finally {
     vi.useRealTimers()
   }
