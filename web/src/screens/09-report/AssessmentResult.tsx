@@ -5,6 +5,7 @@ import { Card } from '../../design/Card'
 import { Bars } from '../../design/charts/Bars'
 import { Chip } from '../../design/Chip'
 import { Stat } from '../../design/Stat'
+import { plural } from '../../lib/plural'
 
 type NhptResult = {
   kind: 'nhpt'
@@ -48,10 +49,10 @@ function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
     <Frame title={`${r.name ?? 'Arm out to the side'} · ${r.side} side`} endedEarly={r.ended_early} caveat={`Camera-relative angles, not goniometry. Ceiling ${r.ceiling_deg}° enforced in code.`} onDone={onDone}>
       <Card>
         <div className="grid grid-cols-4 gap-4">
-          <Stat value={r.sets} label="sets" />
-          <Stat value={verified} label="verified lifts" />
+          <Stat value={r.sets} label={plural(r.sets, 'set')} />
+          <Stat value={verified} label={`verified ${plural(verified, 'lift')}`} />
           <Stat value={unverified} label="unverified · missed target or short hold" tone="amber" />
-          <Stat value={r.lean_count} label={`lean events · ${r.hike_count} shoulder-hike events`} tone={r.lean_count > 0 ? 'amber' : 'default'} />
+          <Stat value={r.lean_count} label={`${plural(r.lean_count, 'lean event')} · ${r.hike_count} ${plural(r.hike_count, 'shoulder-hike event')}`} tone={r.lean_count > 0 ? 'amber' : 'default'} />
         </div>
       </Card>
       {r.reps.length > 0 && (
@@ -83,8 +84,8 @@ function CupReport({ r, onDone }: { r: CupResult; onDone: () => void }) {
     <Frame title={`Waiter – cup · ${r.side} side`} endedEarly={r.ended_early} caveat="What the camera measured. Unverified reaches are counted, never scored." onDone={onDone}>
       <Card>
         <div className="grid grid-cols-4 gap-4">
-          <Stat value={r.arcs} label="arcs" />
-          <Stat value={verified} label="verified reaches" />
+          <Stat value={r.arcs} label={plural(r.arcs, 'arc')} />
+          <Stat value={verified} label={`verified ${plural(verified, 'reach')}`} />
           <Stat value={unverified} label="unverified · hand covered cup or markers lost" tone="amber" />
           <Stat value={`${mean('slow')} / ${mean('fast')}`} unit="s" label="mean reach · slow / fast" />
         </div>

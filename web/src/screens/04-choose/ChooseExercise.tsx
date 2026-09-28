@@ -9,14 +9,14 @@ import { Chip, type ChipTone } from '../../design/Chip'
 import { X } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { nextExercise, readDay, sideOr, syncCheckin, therapistLine, type Day } from '../../lib/day'
-import { DAY_ORDER, TIER_TEXT, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
-import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, GROUPS, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
+import { DAY_ORDER, TIER_TEXT, WEEKLY, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
+import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
 import { DayStrip } from './DayStrip'
 
 /** Badge text always carries the meaning; the tone only repeats it. */
 function badge(e: Exercise): { tone: ChipTone; text: string } {
   if (e.mode === 'demo') return { tone: 'neutral', text: 'Demo only · you tick it' }
-  if (e.weekly) return { tone: 'neutral', text: 'Weekly assessment' }
+  if (e.weekly) return { tone: 'neutral', text: 'Assessment' }
   return { tone: 'mint', text: 'Camera coached' }
 }
 const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest: 'red' }
@@ -71,8 +71,9 @@ function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pi
 }
 
 /** Screen 04 · Choose exercise. The three exercises of the 28 Sep lock (`EXERCISES` holds only
- *  the visible ones) under their headings — Exercises, Activities; a Demo only heading appears
- *  only if a demo-only exercise is ever shown again. "Today's plan" is the default day in order at the tier the check-in
+ *  the visible ones) as one row of three cards at 1280 × 800 (review 28 Sep: the Exercises /
+ *  Activities headings left half the screen empty), wrapping to two and one column on narrower
+ *  screens. "Today's plan" is the day in order, then the weekly peg test, at the tier the check-in
  *  pain gives (0–3 full, 4–6 gentle, ≥ 7 rest). The service enforces the same tier when the
  *  session starts; this screen only shows it. Cards select on tap; the one primary action lives
  *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera.
@@ -102,7 +103,8 @@ export function ChooseExercise() {
   const [kit, setKit] = useState<HasKit | null>(null)
   const side = day.checkin?.side ?? sideOr(null)
 
-  const list = filter === 'today' ? DAY_ORDER.map((id) => EXERCISES.find((e) => e.id === id)!) : filter === 'equipment' ? EXERCISES.filter((e) => e.needs.every((n) => owned.includes(n))) : EXERCISES
+  // Today's plan is the day in order, then the weekly assessment (badged Weekly, never Today · n).
+  const list = filter === 'today' ? [...DAY_ORDER, ...WEEKLY].map((id) => EXERCISES.find((e) => e.id === id)!) : filter === 'equipment' ? EXERCISES.filter((e) => e.needs.every((n) => owned.includes(n))) : EXERCISES
   const current = EXERCISES.find((e) => e.id === selected) ?? EXERCISES[0]
   const currentVisible = list.some((e) => e.id === selected)
   const rest = tier === 'rest' || day.stopped != null
@@ -169,53 +171,50 @@ export function ChooseExercise() {
             <Button variant="secondary" className="mt-3" onClick={() => setKitOpen(true)}>What I have</Button>
           </Card>
         )}
-        {GROUPS.map((g) => {
-          const items = list.filter((e) => e.group === g.id)
-          if (!items.length) return null
-          return (
-            <section key={g.id} aria-label={g.title} className="mt-5">
-              <h2 className="text-2xl">{g.title}</h2>
-              <p className="text-muted">{g.blurb}</p>
-              <div className="mt-3 grid auto-rows-fr grid-cols-3 gap-4">
-                {items.map((e) => {
-                  const on = e.id === selected
-                  const order = DAY_ORDER.indexOf(e.id)
-                  const b = badge(e)
-                  const dose = rest ? e.dose : doseFor(e, tier)
-                  return (
-                    <Card key={e.id} as="article" tone={on ? 'highlight' : 'default'} padding="none" className="flex flex-col">
-                      <button
-                        type="button"
-                        aria-pressed={on}
-                        aria-label={`Select ${e.name}`}
-                        aria-describedby={`choose-${e.id}-details`}
-                        onClick={() => setSelected(e.id)}
-                        className="flex min-h-14 flex-1 flex-col rounded-t-[var(--r-card)] p-5 text-left transition-colors hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
-                      >
-                        <div className="flex w-full flex-wrap items-start justify-between gap-2">
-                          <span className="text-base text-muted">{e.category}</span>
-                          <span className="flex flex-wrap gap-2">
-                            {order >= 0 && !rest && <Chip tone="focus">{`Today · ${order + 1}`}</Chip>}
-                            <Chip tone={b.tone}>{b.text}</Chip>
-                          </span>
-                        </div>
-                        <h3 className="mt-2 text-2xl">{e.name}</h3>
-                        <div id={`choose-${e.id}-details`}>
-                          <p className="mt-1">{e.equipment}</p>
-                          <p>{dose}</p>
-                          <p className="mt-1 text-muted">{e.note}</p>
-                        </div>
-                      </button>
-                      <div className="px-5 pb-5">
-                        <span className={`text-base font-bold ${on ? 'text-teal-ink' : 'text-muted'}`}>{on ? 'Selected' : 'Tap to select'}</span>
+        {list.length > 0 && (
+          <section aria-label="Your exercises" className="mt-5">
+            <p className="text-lg text-muted">Camera coached: a rep counts only when the camera verifies it. The peg test is a weekly assessment.</p>
+            {/* One row of three at 1280 × 800 (review 28 Sep); two, then one, as the screen narrows. */}
+            <div data-testid="choose-cards" className="mt-3 grid auto-rows-fr grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
+              {list.map((e) => {
+                const on = e.id === selected
+                const order = DAY_ORDER.indexOf(e.id)
+                const b = badge(e)
+                const dose = rest ? e.dose : doseFor(e, tier)
+                return (
+                  <Card key={e.id} as="article" tone={on ? 'highlight' : 'default'} padding="none" className="flex flex-col">
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      aria-label={`Select ${e.name}`}
+                      aria-describedby={`choose-${e.id}-details`}
+                      onClick={() => setSelected(e.id)}
+                      className="flex min-h-14 flex-1 flex-col rounded-t-[var(--r-card)] p-5 text-left transition-colors hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+                    >
+                      <div className="flex w-full flex-wrap items-start justify-between gap-2">
+                        <span className="text-base text-muted">{e.category}</span>
+                        <span className="flex flex-wrap gap-2">
+                          {order >= 0 && !rest && <Chip tone="focus">{`Today · ${order + 1}`}</Chip>}
+                          {e.weekly && <Chip tone="focus">Weekly</Chip>}
+                          <Chip tone={b.tone}>{b.text}</Chip>
+                        </span>
                       </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            </section>
-          )
-        })}
+                      <h3 className="mt-2 text-2xl">{e.name}</h3>
+                      <div id={`choose-${e.id}-details`}>
+                        <p className="mt-1">{e.equipment}</p>
+                        <p>{dose}</p>
+                        <p className="mt-1 text-muted">{e.note}</p>
+                      </div>
+                    </button>
+                    <div className="px-5 pb-5">
+                      <span className={`text-base font-bold ${on ? 'text-teal-ink' : 'text-muted'}`}>{on ? 'Selected' : 'Tap to select'}</span>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          </section>
+        )}
       </div>
 
       <FlowBar

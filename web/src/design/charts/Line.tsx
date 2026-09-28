@@ -1,8 +1,12 @@
-type Point = { x: string; y: number }
+/** `sample`: an illustrative point (seed history), drawn with a dashed ring and named "sample"
+ *  in the summary so the difference never rests on the stroke alone. */
+type Point = { x: string; y: number; sample?: boolean }
 
 /** Line chart with axis, gridlines, value labels at each point and an optional dashed
- *  target. Strokes come from CSS variables so dark mode works. */
-export function Line({ points, unit, title, target, height = 160, lowerIsBetter = true }: { points: Point[]; unit: string; title: string; target?: number; height?: number; lowerIsBetter?: boolean }) {
+ *  target. Strokes come from CSS variables so dark mode works. `compare={false}` drops the
+ *  "better than the first point" sentence (used when the points are not comparable, e.g. sample
+ *  and real mixed); `note` is then the caption. */
+export function Line({ points, unit, title, target, height = 160, lowerIsBetter = true, compare = true, note }: { points: Point[]; unit: string; title: string; target?: number; height?: number; lowerIsBetter?: boolean; compare?: boolean; note?: string }) {
   const w = 320
   const padL = 40
   const padB = 24
@@ -14,7 +18,7 @@ export function Line({ points, unit, title, target, height = 160, lowerIsBetter 
   const x = (i: number) => padL + (points.length > 1 ? ((w - padL - 12) * i) / (points.length - 1) : (w - padL) / 2)
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p.y)}`).join(' ')
   const tk = [0, max / 2, max].map((v) => Math.round(v * 10) / 10)
-  const summary = `${title}: ${points.map((p) => `${p.x} ${p.y} ${unit}`).join(', ')}${target != null ? `, target ${target} ${unit}` : ''}`
+  const summary = `${title}: ${points.map((p) => `${p.x} ${p.y} ${unit}${p.sample ? ' sample' : ''}`).join(', ')}${target != null ? `, target ${target} ${unit}` : ''}`
   const trend = points.length >= 2 ? points[points.length - 1].y - points[0].y : 0
   return (
     <figure className="min-w-0">
@@ -29,7 +33,7 @@ export function Line({ points, unit, title, target, height = 160, lowerIsBetter 
         <path d={d} fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p, i) => (
           <g key={i}>
-            <circle cx={x(i)} cy={y(p.y)} r="4.5" fill="var(--surface)" stroke="var(--teal)" strokeWidth="2.5" />
+            <circle cx={x(i)} cy={y(p.y)} r="4.5" fill="var(--surface)" stroke={p.sample ? 'var(--muted)' : 'var(--teal)'} strokeWidth="2.5" strokeDasharray={p.sample ? '2 2' : undefined} />
             <text x={x(i)} y={y(p.y) - 9} textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--text)">{p.y}</text>
             <text x={x(i)} y={height - 6} textAnchor="middle" fontSize="11" fill="var(--muted)">{p.x}</text>
           </g>
@@ -37,7 +41,7 @@ export function Line({ points, unit, title, target, height = 160, lowerIsBetter 
         <text x={padL - 6} y={height - 2} textAnchor="end" fontSize="10" fill="var(--muted)">{unit}</text>
       </svg>
       <figcaption className="mt-1 text-base text-muted">
-        {points.length >= 2 ? `${Math.abs(trend).toFixed(1)} ${unit} ${(lowerIsBetter ? trend < 0 : trend > 0) ? 'better' : 'worse'} than the first point` : 'one measurement so far'}
+        {!compare ? (note ?? '') : points.length >= 2 ? `${Math.abs(trend).toFixed(1)} ${unit} ${(lowerIsBetter ? trend < 0 : trend > 0) ? 'better' : 'worse'} than the first point` : 'one measurement so far'}
         {target != null ? ` · dashed = target ${target} ${unit}` : ''}
       </figcaption>
     </figure>

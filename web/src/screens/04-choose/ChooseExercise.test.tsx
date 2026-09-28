@@ -27,16 +27,20 @@ beforeEach(() => {
   sessionStorage.clear()
 })
 
-test('All lists the three exercises of the 28 Sep lock under Exercises and Activities; nothing hidden', () => {
+test('All lists the three exercises of the 28 Sep lock in one row of cards; nothing hidden', () => {
   renderChoose()
   fireEvent.click(screen.getByRole('radio', { name: 'All' }))
+  // review 28 Sep: one row of three cards, not two headed groups with half the screen empty
   const groups = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))
-  expect(groups).toEqual(['Exercises', 'Activities'])
-  const names = (label: string) => within(screen.getByRole('region', { name: label })).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-  expect(names('Exercises')).toEqual(['Arm out to the side'])
-  expect(names('Activities')).toEqual(['Waiter – cup', 'Nine-Hole Peg Test'])
+  expect(groups).toEqual(['Your exercises'])
+  const row = screen.getByTestId('choose-cards')
+  expect(row.className).toMatch(/grid-cols-3/)
+  expect(row.className).toMatch(/max-lg:grid-cols-/) // wraps at narrower widths
+  expect(within(row).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  expect(screen.queryByRole('heading', { level: 2, name: 'Activities' })).not.toBeInTheDocument()
   expect(screen.getAllByText('Camera coached')).toHaveLength(2)
-  expect(screen.getByText('Weekly assessment')).toBeInTheDocument()
+  expect(screen.getByText('Weekly')).toBeInTheDocument()
+  expect(screen.getByText('Assessment')).toBeInTheDocument()
   expect(screen.queryByText('Demo only · you tick it')).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(HIDDEN)
   for (const gone of ['Arm out at an angle', 'Arm to the back', 'Block towers', 'Grip power', 'Wash cloth']) {
@@ -44,14 +48,17 @@ test('All lists the three exercises of the 28 Sep lock under Exercises and Activ
   }
 })
 
-test('Today shows the default day in order with Arm out to the side preselected and one Begin setup', () => {
+test('Today shows the default day in order then the weekly peg test, Arm out to the side preselected and one Begin setup', () => {
   renderChoose()
   expect(screen.getByRole('radio', { name: "Today's plan" })).toHaveAttribute('data-state', 'on')
   expect(screen.getByText('Today · 1')).toBeInTheDocument()
   expect(screen.getByText('Today · 2')).toBeInTheDocument()
   expect(screen.queryByText('Today · 3')).not.toBeInTheDocument()
   const cards = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-  expect(cards).toEqual(['Arm out to the side', 'Waiter – cup'])
+  expect(cards).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  const peg = screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })
+  expect(within(peg).getByText('Weekly')).toBeInTheDocument()
+  expect(within(peg).getByText('Assessment')).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Demo only' })).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(HIDDEN)
   expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')

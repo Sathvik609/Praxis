@@ -5,7 +5,7 @@ import { Therapist } from './Therapist'
 
 const ROUTES = {
   '/api/therapist/patients': { patients: [{ id: 'alex', name: 'Alex M.', program: 'GRASP L2 · left · wk 6', open_flags: 2, adherence_pct: 86, nhpt_last_s: 41.2, nhpt_first_s: 68 }, { id: 'priya', name: 'Priya S.', program: 'GRASP L3 · right · wk 3', open_flags: 0, adherence_pct: 92, nhpt_last_s: null, nhpt_first_s: null, illustrative: true }] },
-  '/api/flags': { flags: [{ id: 1, session_id: 's1', rule: 'pain', detail: 'pain 5/10 during Arm out to the side', t: 380, date: '2026-09-08', reviewed: false }, { id: 2, session_id: 's2', rule: 'lean', detail: 'trunk lean in 2 of 16 lifts', t: 610, date: '2026-09-12', reviewed: false }] },
+  '/api/flags': { flags: [{ id: 1, session_id: 's1', rule: 'pain', detail: 'pain 7/10 reported (stop level 7)', t: 380, date: '2026-09-08', reviewed: false }, { id: 2, session_id: 's2', rule: 'lean', detail: 'trunk lean in 2 of 16 lifts', t: 610, date: '2026-09-12', reviewed: false }] },
   '/api/prescription': PRESCRIPTION,
   '/api/sessions': { sessions: [SESSION] },
   '/api/flags/1/reviewed': { ok: true },
@@ -23,7 +23,7 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   expect(within(header).getByRole('link', { name: 'Back to patient app' })).toHaveAttribute('href', '/details')
   expect(screen.queryByRole('link', { name: 'Exercises' })).not.toBeInTheDocument()
   expect(screen.getByText(/Open flags/)).toBeInTheDocument()
-  expect(screen.getByText(/pain 5\/10 during Arm out to the side/)).toBeInTheDocument()
+  expect(screen.getByText(/Session ended by stop rule: pain 7\/10 reported \(stop level 7\)/)).toBeInTheDocument()
   expect(screen.getByText(/Prescription \(v3\)/)).toBeInTheDocument()
   // 28 Sep: the prescription card lists the three visible exercises only
   const rx = screen.getByRole('region', { name: 'Prescription' })
@@ -64,6 +64,27 @@ test('edit prescription and review flags scroll to their sections; the trace pan
   expect(await screen.findByText(/Decision trace/)).toBeInTheDocument()
   expect(screen.queryByText(/jsonl/)).not.toBeInTheDocument()
   expect(screen.getByText(/No trace rows for this session/)).toBeInTheDocument()
+})
+
+test('a replayed session is badged Replay in the summaries and left out of the pain line (same rule as Progress)', async () => {
+  const replay = { ...SESSION, id: 'rp', source: 'replay', replay: true, date: '2026-09-23', title: 'Waiter – cup', checkin: { pain_before: 9 }, feedback: { pain_after: 9 } }
+  mockApi({ ...ROUTES, '/api/sessions': { sessions: [replay, { ...SESSION, source: 'live' }] } })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  const line = await screen.findByText(/Pain before → after/)
+  expect(line).not.toHaveTextContent('09-23')
+  const [replayRow, liveRow] = screen.getAllByRole('button', { name: 'Open trace' }).map((b) => b.closest('li')!)
+  expect(within(replayRow).getByText('Replay')).toBeInTheDocument()
+  expect(within(liveRow).queryByText('Replay')).not.toBeInTheDocument()
+})
+
+test('NHPT first and last from the sample are labeled sample; one verified is singular', async () => {
+  const pts = { patients: [{ id: 'alex', name: 'Alex M.', program: 'GRASP L2 · left · wk 6', open_flags: 1, adherence_pct: null, nhpt_last_s: 41.2, nhpt_first_s: 68, nhpt_sample: true }] }
+  const one = { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, verified: 1, unverified: 1 } } }
+  mockApi({ ...ROUTES, '/api/therapist/patients': pts, '/api/sessions': { sessions: [one] } })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  expect(screen.getByText(/NHPT · 68 s at wk 1 · sample/)).toBeInTheDocument()
+  expect(await screen.findByText(/^1 verified · 1 unverified/)).toBeInTheDocument()
 })
 
 test('sample sessions in the pain summary are labeled Sample', async () => {

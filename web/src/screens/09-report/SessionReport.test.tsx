@@ -36,6 +36,23 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.queryByText(/left side/)).not.toBeInTheDocument()
 })
 
+test('a replayed session is badged Replay and one verified movement is singular (review 28 Sep)', async () => {
+  const one = { ...SESSION, source: 'replay', replay: true, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, verified: 1, posture_cues: 1 } } }
+  mockApi({ '/api/sessions/abc': one, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('verified movement')).toBeInTheDocument()
+  expect(screen.getByText('posture cue')).toBeInTheDocument()
+  expect(screen.getByText('Replay')).toBeInTheDocument()
+  expect(screen.getByText(/recorded clip, not counted in your progress/)).toBeInTheDocument()
+})
+
+test('a live session carries no Replay badge', async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, source: 'live', replay: false }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText('verified movements')
+  expect(screen.queryByText('Replay')).not.toBeInTheDocument()
+})
+
 test('clinician falls back to "your therapist" when the profile is unavailable', async () => {
   mockApi({ '/api/sessions/abc': SESSION })
   renderReport()

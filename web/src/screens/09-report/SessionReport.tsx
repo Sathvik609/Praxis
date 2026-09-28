@@ -7,7 +7,8 @@ import { Chip } from '../../design/Chip'
 import { Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
-import { api, useApi, type SessionRecord } from '../../lib/api'
+import { plural } from '../../lib/plural'
+import { api, isReplaySession, useApi, type SessionRecord } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
 import { angleTarget, exerciseById, exerciseOfSession, isHiddenSession, sessionExerciseName } from '../../lib/seed'
 import { DayNext, useDayRun } from './DayNext'
@@ -124,6 +125,12 @@ export function SessionReport() {
           <p className="mt-1 flex flex-wrap items-center gap-2 text-muted">
             <span>{s.date} · {s.title} · {context}</span>
             <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.status === 'complete' ? 'Complete' : 'Ended early'}</Chip>
+            {isReplaySession(s) && (
+              <>
+                <Chip tone="amber">Replay</Chip>
+                <span>recorded clip, not counted in your progress</span>
+              </>
+            )}
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-3">
@@ -139,10 +146,10 @@ export function SessionReport() {
           <Card title="What the camera measured">
             <div className="grid grid-cols-5 gap-4">
               <Stat value={active} label="active · rest excluded" />
-              <Stat value={String(cam.verified ?? 0)} label="verified movements" />
+              <Stat value={String(cam.verified ?? 0)} label={`verified ${plural(cam.verified ?? 0, 'movement')}`} />
               <Stat value={String(cam.unverified ?? 0)} label="unverified · hand hid the object or markers lost" tone="amber" />
               <Stat value={String(coverage)} unit="%" label="tracking coverage" />
-              <Stat value={String(cam.posture_cues ?? cam.corrections ?? 0)} label="posture cues" />
+              <Stat value={String(cam.posture_cues ?? cam.corrections ?? 0)} label={plural(cam.posture_cues ?? cam.corrections ?? 0, 'posture cue')} />
             </div>
             {cam.nhpt_total_s != null && (
               <p className="mt-4 text-xl">

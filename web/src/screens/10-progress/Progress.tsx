@@ -8,7 +8,8 @@ import { Pill } from '../../design/Pill'
 import { Stat } from '../../design/Stat'
 import { Bars } from '../../design/charts/Bars'
 import { Line } from '../../design/charts/Line'
-import { api, useApi, type SessionRecord } from '../../lib/api'
+import { api, isReplaySession, useApi, type Progress as ProgressData, type SessionRecord } from '../../lib/api'
+import { countOf, plural } from '../../lib/plural'
 import { EXERCISES, exerciseOfSession, type ExerciseId } from '../../lib/seed'
 
 type Range = '4w' | '12w' | 'all'
@@ -24,16 +25,26 @@ const TASK_NAME: Record<string, string> = {
   demos: DEMOS.map((e) => e.name).join(' / '),
 }
 const UNIT: Partial<Record<Task, string>> = { pendulum: 'swings', arm: 'lifts', abduction: 'lifts', cup: 'reaches' }
+const NOUN: Partial<Record<Task, string>> = { pendulum: 'swing', arm: 'lift', abduction: 'lift', cup: 'reach' }
 type Row = { date: string; verified: number; limited: boolean; task: string | undefined; illustrative: boolean }
-type Illustrative = { illustrative?: boolean }
 
 /** Per-session rows, each tied to its exercise. The session list carries the exercise id, so
- *  it is the source when it loaded; `verified_per_session` (mode only) is the fallback. */
-function rowsOf(sessions: SessionRecord[] | null, perSession: { date: string; verified: number; limited: boolean; mode: string; illustrative?: boolean }[]): Row[] {
+ *  it is the source when it loaded; `verified_per_session` (mode only) is the fallback.
+ *  Replays are never charted (`sessionSource`, the same rule the therapist view uses). */
+function rowsOf(sessions: SessionRecord[] | null, perSession: ProgressData['verified_per_session']): Row[] {
   const rows: Row[] = sessions
-    ? sessions.filter((s) => s.mode !== 'nhpt').map((s) => ({ date: s.date, verified: s.summary.camera.verified ?? 0, limited: s.tracking !== 'usable', task: exerciseOfSession(s)?.id, illustrative: !!(s as Illustrative).illustrative }))
-    : perSession.map((v) => ({ date: v.date, verified: v.verified, limited: v.limited, task: exerciseOfSession({ mode: v.mode, exercise: (v as { exercise?: string }).exercise })?.id, illustrative: !!v.illustrative }))
+    ? sessions.filter((s) => s.mode !== 'nhpt' && !isReplaySession(s)).map((s) => ({ date: s.date, verified: s.summary.camera.verified ?? 0, limited: s.tracking !== 'usable', task: exerciseOfSession(s)?.id, illustrative: !!s.illustrative }))
+    : perSession.filter((v) => v.source !== 'replay').map((v) => ({ date: v.date, verified: v.verified, limited: v.limited, task: exerciseOfSession({ mode: v.mode, exercise: v.exercise })?.id, illustrative: !!v.illustrative }))
   return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+}
+
+/** A "first → last" comparison only within one kind: the patient's own sessions when there are
+ *  two, else an all-sample range; never across sample and real. */
+function comparableRun(rows: Row[]): Row[] {
+  const usable = rows.filter((v) => !v.limited)
+  const own = usable.filter((v) => !v.illustrative)
+  if (own.length >= 2) return own
+  return usable.length >= 2 && usable.every((v) => v.illustrative) ? usable : []
 }
 const WEEKS: Record<Range, number | null> = { '4w': 4, '12w': 12, all: null }
 
@@ -62,18 +73,29 @@ export function Progress() {
   if (!p && !pError) return <p className="p-8 text-xl text-muted" role="status">Loading your progress…</p>
   if (!p) return <p className="p-8 text-xl text-red-ink" role="alert">Could not load progress: {pError}. Is the session service running?</p>
 
-  const allDates = [...p.verified_per_session.map((v) => v.date), ...(sessions ?? []).map((s) => s.date), ...p.nhpt_trend.map((t) => t.date)]
+  const counted = (sessions ?? []).filter((s) => !isReplaySession(s))
+  const allDates = [...p.verified_per_session.map((v) => v.date), ...counted.map((s) => s.date), ...p.nhpt_trend.map((t) => t.date)]
   const from = since(allDates, WEEKS[range])
   const inRange = (date: string) => !from || date >= from
   const perSession = rowsOf(sessions, p.verified_per_session).filter((v) => v.task === task && inRange(v.date) && (!sameSetup || !v.limited))
-  const comparable = perSession.filter((v) => !v.limited)
+  const comparable = comparableRun(perSession)
   const list = (sessions ?? []).filter((s) => s.mode !== 'nhpt' && exerciseOfSession(s)?.id === task && inRange(s.date))
+  const listedReplays = list.some(isReplaySession)
   const sampleBars = perSession.some((v) => v.illustrative)
-  const trend = p.nhpt_trend // the weekly assessment history is always shown whole
-  const last = p.nhpt_trend.at(-1)
-  // A trend point is the patient's own only when a real (non-sample) peg-test session backs it.
-  const realNhptDates = new Set((sessions ?? []).filter((s) => s.mode === 'nhpt' && !(s as Illustrative).illustrative).map((s) => s.date))
-  const sampleTrend = !!sessions && trend.some((t) => !realNhptDates.has(t.date))
+  // The weekly assessment history is always shown whole. Each point is sample or the patient's
+  // own (`kind` from the service; an older service is read from the live peg-test sessions).
+  const ownNhptDates = new Set(counted.filter((s) => s.mode === 'nhpt' && !s.illustrative).map((s) => s.date))
+  const trend = p.nhpt_trend.map((t) => ({ ...t, kind: t.kind ?? (sessions && !ownNhptDates.has(t.date) ? 'sample' : 'live') }))
+  const ownTrend = trend.filter((t) => t.kind === 'live')
+  const sampleTrend = trend.filter((t) => t.kind === 'sample')
+  const mixedTrend = ownTrend.length > 0 && sampleTrend.length > 0
+  const last = ownTrend.at(-1) ?? trend.at(-1)
+  const trendNote = mixedTrend
+    ? `${countOf(ownTrend.length, 'assessment')} of yours · ${sampleTrend.length} sample · same board and camera setup · run separately from practice.`
+    : ownTrend.length
+      ? `${countOf(ownTrend.length, 'assessment')} · same board and camera setup · run separately from practice.`
+      : `${countOf(sampleTrend.length, 'sample assessment')} · illustrative, not yours · run separately from practice.`
+  const painRows = p.pain_effort.filter((x) => x.source !== 'replay') // the service already leaves replays out
   const rotations = task === 'demos'
 
   const logAttempt = () =>
@@ -96,14 +118,20 @@ export function Progress() {
         </div>
       </div>
       <div className="mt-6 grid grid-cols-3 gap-6">
-        <Card title="Nine-Hole Peg Test" action={<span className="flex flex-wrap justify-end gap-2">{sampleTrend && <Chip tone="neutral">Includes sample</Chip>}<Chip tone="neutral">lower is better</Chip></span>}>
-          {last ? <Stat value={last.total_s.toFixed(1)} unit="s" label={`latest · ${last.date.slice(5)}`} /> : <p className="text-muted">No assessments yet.</p>}
+        <Card title="Nine-Hole Peg Test" action={<span className="flex flex-wrap justify-end gap-2">{mixedTrend ? <Chip tone="neutral">Includes sample</Chip> : sampleTrend.length > 0 && <Chip tone="neutral">Sample</Chip>}<Chip tone="neutral">lower is better</Chip></span>}>
+          {last ? <Stat value={last.total_s.toFixed(1)} unit="s" label={`latest · ${last.date.slice(5)}${last.kind === 'sample' ? ' · sample' : ''}`} /> : <p className="text-muted">No assessments yet.</p>}
           {trend.length > 0 && (
             <div className="mt-3">
-              <Line title="Nine-Hole Peg Test" unit="s" points={trend.map((t) => ({ x: t.date.slice(5), y: t.total_s }))} />
+              <Line
+                title="Nine-Hole Peg Test"
+                unit="s"
+                points={trend.map((t) => ({ x: t.date.slice(5), y: t.total_s, sample: t.kind === 'sample' }))}
+                compare={!mixedTrend}
+                note="Includes sample points (dashed rings). No change is computed across sample and your own results."
+              />
             </div>
           )}
-          <p className="mt-2 text-base text-muted">{trend.length} assessment{trend.length === 1 ? '' : 's'} · same board and camera setup · run separately from practice.</p>
+          {trend.length > 0 && <p className="mt-2 text-base text-muted">{trendNote}</p>}
         </Card>
         {rotations ? (
           <Card title={TASK_NAME.demos} action={<Chip tone="neutral">Demo only</Chip>}>
@@ -115,10 +143,10 @@ export function Progress() {
             {perSession.length === 0 ? (
               <p className="text-muted">No {TASK_NAME[task]} sessions in this range.</p>
             ) : (
-              <Bars title={TASK_NAME[task]} unit={UNIT[task] ?? ''} values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
+              <Bars title={TASK_NAME[task]} unit={UNIT[task] ?? ''} noun={NOUN[task]} values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
             )}
             <p className="mt-2 text-base text-muted">
-              {perSession.length} session{perSession.length === 1 ? '' : 's'} · limited tracking counts as unverified and is never compared.
+              {countOf(perSession.length, 'session')} · limited tracking counts as unverified and is never compared.
               {sampleBars ? ' Sample history is illustrative, not yours.' : ''}
             </p>
             {comparable.length >= 2 && <p className="mt-1 text-lg">{comparable[0].verified} → {comparable[comparable.length - 1].verified} verified · same task, side and setup</p>}
@@ -128,7 +156,7 @@ export function Progress() {
           <Card title="Practice">
             <div className="flex flex-wrap gap-8">
               {p.practice.planned == null ? (
-                <Stat value={p.practice.done} label="sessions recorded here" />
+                <Stat value={p.practice.done} label={`${plural(p.practice.done, 'session')} recorded here`} />
               ) : (
                 <Stat value={`${p.practice.done}/${p.practice.planned}`} label="planned sessions done" />
               )}
@@ -145,14 +173,14 @@ export function Progress() {
           <Card title="Pain and effort">
             <p className="-mt-3 text-muted">What you reported, per session</p>
             <ul className="mt-2 text-lg">
-              {p.pain_effort.slice(-6).map((x, i) => (
+              {painRows.slice(-6).map((x, i) => (
                 <li key={i} className={x.ended_early ? 'font-bold text-red-ink' : ''}>
                   {x.date.slice(5)} · pain after {x.pain_after ?? 'not recorded'} · effort {x.effort ?? 'not recorded'}
                   {x.ended_early ? ' · session ended early' : ''}
                   {x.illustrative ? ' · sample' : ''}
                 </li>
               ))}
-              {p.pain_effort.length === 0 && <li className="text-muted">Nothing reported yet.</li>}
+              {painRows.length === 0 && <li className="text-muted">Nothing reported yet.</li>}
             </ul>
           </Card>
         </div>
@@ -167,17 +195,19 @@ export function Progress() {
               <li key={s.id} className="flex flex-wrap items-center gap-3 py-3">
                 <span className="w-16 text-muted">{s.date.slice(5)}</span>
                 <span className="min-w-0 flex-1 text-lg">{s.title}</span>
-                {(s as Illustrative).illustrative && <Chip tone="neutral">Sample</Chip>}
+                {s.illustrative && <Chip tone="neutral">Sample</Chip>}
+                {isReplaySession(s) && <Chip tone="amber">Replay</Chip>}
                 <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.status === 'ended_early' ? `Ended early · pain ${String(s.feedback?.pain_after ?? '')}` : s.mode === 'nhpt' ? 'Assessment' : 'Complete'}</Chip>
                 <Chip tone={s.tracking === 'usable' ? 'mint' : 'amber'}>{s.tracking === 'usable' ? 'Usable tracking' : 'Limited tracking'}</Chip>
                 <Button variant="secondary" aria-label={`Open ${s.title} · ${s.date}`} onClick={() => nav(`/report/${s.id}`)}>Open</Button>
               </li>
             ))}
           </ul>
+          {listedReplays && <p className="mt-2 text-base text-muted">Replays are listed, never counted: a recorded clip is left out of the charts, totals and pain list.</p>}
         </Card>
         <div className="space-y-6">
           <Card title="Everyday goal log">
-            <p className="text-lg">{p.goal_log_count} attempts logged at your everyday goal</p>
+            <p className="text-lg">{countOf(p.goal_log_count, 'attempt')} logged at your everyday goal</p>
             {logNote && <p className="text-base text-muted" role="status">{logNote}</p>}
             <Button variant="secondary" className="mt-3" onClick={logAttempt}>Log an attempt</Button>
           </Card>

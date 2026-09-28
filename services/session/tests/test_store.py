@@ -156,3 +156,126 @@ def test_sessions_of_a_hidden_exercise_are_not_listed(tmp_path):
     assert len(st.sessions()) == n and "s-old-flexion" not in [s["id"] for s in st.sessions()]
     st.save_session(_summary(session_id="s-side", mode="arm", exercise="abduction"), checkin={}, feedback={}, events=[])
     assert "s-side" in [s["id"] for s in st.sessions()]
+
+
+# ---- 28 Sep review: replays are marked end-to-end and kept out of every trend ---------------
+
+
+def _replay(**over):
+    """A replay summary as the service writes it: clip clock, `source: replay`."""
+    return _summary(t_start=0.0, t_end=40.0, clock="clip", source="replay", replay_clip="synthetic_cup_01") | over
+
+
+def test_each_session_row_says_where_it_came_from(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(source="live"), checkin={}, feedback={"pain_after": 2, "effort": 4}, events=[])
+    st.save_session(_replay(session_id="rp1"), checkin={}, feedback={}, events=[])
+    rows = {s["id"]: s for s in st.sessions()}
+    assert rows["real1"]["source"] == "live" and rows["real1"]["replay"] is False
+    assert rows["rp1"]["source"] == "replay" and rows["rp1"]["replay"] is True  # still listed, badged by the UI
+    assert rows["s-0910-cup"]["source"] == "sample" and rows["s-0910-cup"]["replay"] is False
+    assert st.session("rp1")["replay"] is True
+
+
+def test_legacy_replay_rows_without_a_source_are_recognised_by_their_clip_clock(tmp_path):
+    """Rows saved before 28 Sep carry no `source`: a clip-time start (< 1e9) is a replay, whether
+    or not the summary had `clock`. A live session that saw no frame (t_start None) is not."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="old-rp", t_start=0.0, t_end=30.0, clock=None), checkin={}, feedback={}, events=[])
+    st.save_session(_summary(session_id="old-rp2", t_start=0.0, t_end=30.0, clock="clip"), checkin={}, feedback={}, events=[])
+    st.save_session(_summary(session_id="no-frames", t_start=None, t_end=None, clock="clip"), checkin={}, feedback={}, events=[])
+    rows = {s["id"]: s for s in st.sessions()}
+    assert rows["old-rp"]["source"] == "replay" and rows["old-rp2"]["source"] == "replay"
+    assert rows["no-frames"]["source"] == "live"
+
+
+def test_replays_are_left_out_of_trends_practice_pain_and_adherence(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(source="live"), checkin={"pain_before": 2}, feedback={"pain_after": 3, "effort": 4}, events=[])
+    st.save_session(_replay(session_id="rp-cup"), checkin={}, feedback={}, events=[])
+    nhpt_cam = {"reps_total": 9, "verified": 9, "unverified": 0, "corrections": 0, "nhpt_total_s": 17.1, "active_s": 17.0}
+    st.save_session(_replay(session_id="rp-nhpt", mode="nhpt", camera=nhpt_cam), checkin={}, feedback={}, events=[])
+    p = st.progress()
+    assert p["practice"]["done"] == 1  # the live cup session only
+    assert [v for v in p["verified_per_session"] if not v["illustrative"]] == [
+        {"date": st.session("real1")["date"], "verified": 9, "limited": False, "mode": "cup", "exercise": None, "illustrative": False, "source": "live"}
+    ]
+    assert all(x["source"] != "replay" for x in p["pain_effort"])
+    assert [x for x in p["pain_effort"] if not x["illustrative"]][0]["pain_after"] == 3
+    assert 17.1 not in [t["total_s"] for t in p["nhpt_trend"]]
+    assert 17.1 not in [t["total_s"] for t in st.nhpt_trend()]
+    assert "rp-cup" not in [h["id"] for h in st.read_patient_model("alex")["history"]]
+
+
+def test_nhpt_trend_points_say_sample_or_live(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    assert {t["kind"] for t in st.nhpt_trend()} == {"sample"}
+    cam = {"reps_total": 9, "verified": 9, "unverified": 0, "corrections": 0, "nhpt_total_s": 38.5}
+    st.save_session(_summary(session_id="live-nhpt", mode="nhpt", camera=cam, source="live"), checkin={}, feedback={}, events=[])
+    live = [t for t in st.nhpt_trend() if t["kind"] == "live"]
+    assert [t["total_s"] for t in live] == [38.5]
+
+
+def test_therapist_nhpt_numbers_never_span_sample_and_live(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    me = st.therapist_patients()[0]
+    assert (me["nhpt_first_s"], me["nhpt_last_s"], me["nhpt_sample"]) == (68.0, 41.2, True)
+    cam = {"reps_total": 9, "verified": 9, "unverified": 0, "corrections": 0, "nhpt_total_s": 38.5}
+    st.save_session(_summary(session_id="live-nhpt", mode="nhpt", camera=cam, source="live"), checkin={}, feedback={}, events=[])
+    st.save_session(_replay(session_id="rp-nhpt", mode="nhpt", camera=cam | {"nhpt_total_s": 17.2}), checkin={}, feedback={}, events=[])
+    me = st.therapist_patients()[0]
+    assert (me["nhpt_first_s"], me["nhpt_last_s"], me["nhpt_sample"]) == (38.5, 38.5, False)
+
+
+def test_replay_rows_already_in_the_nhpt_trend_are_removed_on_start(tmp_path):
+    """Before 28 Sep a replayed peg test wrote its time into `nhpt_trend` (17.1 s from the
+    synthetic clip). On start those rows go; seed rows and live results stay."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    cam = {"reps_total": 9, "verified": 9, "unverified": 0, "corrections": 0, "nhpt_total_s": 17.1}
+    st.save_session(_summary(session_id="old-rp", mode="nhpt", t_start=0.0, t_end=17.0, camera=cam), checkin={}, feedback={}, events=[])
+    day = st.session("old-rp")["date"]
+    st._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES('alex', ?, 17.1)", (day,))
+    st._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES('alex', '2026-09-20', 39.0)")  # no session behind it
+    st._db.commit()
+    st.save_session(_summary(session_id="live-nhpt", mode="nhpt", camera=cam | {"nhpt_total_s": 38.5}, source="live"), checkin={}, feedback={}, events=[])
+    st.seed_if_empty()
+    trend = st.nhpt_trend()
+    assert [t["total_s"] for t in trend if t["kind"] == "live"] == [38.5]
+    assert [t["total_s"] for t in trend if t["kind"] == "sample"] == [68.0, 61.5, 55.2, 49.0, 44.0, 41.2]
+
+
+# ---- 28 Sep review: the seed story uses the real stop level (7) ------------------------------
+
+
+def test_seed_pain_stop_uses_the_stop_level_seven(tmp_path):
+    import json
+
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    row = st.session("s-0908-arm")
+    blob = json.dumps(row)
+    assert "stop level 5" not in blob and "pain 5/10" not in blob
+    assert row["feedback"]["pain_after"] == 7
+    (flag,) = [f for f in st.flags() if f["session_id"] == "s-0908-arm"]
+    assert flag["detail"] == "pain 7/10 reported (stop level 7)"
+
+
+def test_an_existing_database_gets_the_corrected_seed_flag_and_keeps_its_review_state(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st._db.execute("UPDATE flags SET detail='pain 5/10 reported (stop level 5)', reviewed=1 WHERE session_id='s-0908-arm'")
+    st._db.execute("UPDATE sessions SET feedback_json='{\"pain_after\": 5}' WHERE id='s-0908-arm'")
+    st._db.commit()
+    st.save_session(_summary(session_id="real1", flags=[{"t": 5.0, "rule": "pain", "detail": "pain 5/10 reported (stop level 5)"}], source="live"), checkin={}, feedback={}, events=[])
+    st.seed_if_empty()
+    (seed_flag,) = [f for f in st.flags() if f["session_id"] == "s-0908-arm"]
+    assert seed_flag["detail"] == "pain 7/10 reported (stop level 7)" and seed_flag["reviewed"] is True
+    assert st.session("s-0908-arm")["feedback"]["pain_after"] == 7
+    (real_flag,) = [f for f in st.flags() if f["session_id"] == "real1"]
+    assert real_flag["detail"] == "pain 5/10 reported (stop level 5)"  # never touched

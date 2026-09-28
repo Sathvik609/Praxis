@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { readDay, todayKey, writeSide } from '../../lib/day'
 import { PRESCRIPTION, mockApi } from '../../test/api-mock'
@@ -28,6 +28,8 @@ function storeDay(checkin: Record<string, unknown>, extra: Record<string, unknow
     JSON.stringify({ date: todayKey(), checkin: { pain: 2, location: 'hand', energy: 'comfortable', minutes: 14, new_symptoms: false, side: 'left', tier: 'full', flagged: false, reasons: [], synced: true, at: '', ...checkin }, done: [], demosSeen: [], current: null, finished: [], stopped: null, ...extra }),
   )
 }
+
+afterEach(() => vi.unstubAllGlobals())
 
 beforeEach(() => {
   localStorage.clear()
@@ -67,6 +69,50 @@ test('continue is disabled with a hint until pain and side are chosen; the hint 
   fireEvent.click(screen.getByRole('radio', { name: 'Left arm' }))
   expect(cont).toBeEnabled()
   expect(screen.queryByText(/to continue$/)).not.toBeInTheDocument()
+})
+
+test('no body area is preselected: with pain, the patient chooses where (or Nowhere) before continuing', () => {
+  writeSide('left')
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn()
+  const where = screen.getByLabelText('Where is it?')
+  for (const r of within(where).getAllByRole('radio')) expect(r).not.toBeChecked()
+  fireEvent.click(screen.getByRole('radio', { name: '3' }))
+  const cont = screen.getByRole('button', { name: 'Continue to exercises' })
+  expect(cont).toBeDisabled()
+  expect(cont).toHaveAccessibleDescription('Choose where it hurts, or Nowhere, to continue')
+  fireEvent.click(within(where).getByRole('radio', { name: 'Nowhere' }))
+  expect(cont).toBeEnabled()
+})
+
+test('pain 0 needs no body area and is saved as nowhere, never as a guessed area', async () => {
+  writeSide('left')
+  mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
+  renderCheckIn()
+  fireEvent.click(screen.getByRole('radio', { name: '0' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to exercises' }))
+  expect(await screen.findByText('AT /details/choose')).toBeInTheDocument()
+  expect(JSON.parse(sessionStorage.getItem('praxis.checkin') ?? '{}')).toMatchObject({ pain: 0, location: 'nowhere' })
+})
+
+test('voice still sets the body area (tap fallback unchanged)', () => {
+  writeSide('left')
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  class FakeSR {
+    lang = ''
+    onresult: ((ev: unknown) => void) | null = null
+    onerror: (() => void) | null = null
+    start() {
+      this.onresult?.({ results: { 0: { 0: { transcript: '2 in my shoulder' } } } })
+    }
+  }
+  vi.stubGlobal('SpeechRecognition', FakeSR)
+  renderCheckIn()
+  fireEvent.click(screen.getByRole('button', { name: 'Push to talk' }))
+  expect(screen.getByRole('radio', { name: 'Shoulder' })).toBeChecked()
+  expect(screen.getByRole('radio', { name: '2' })).toBeChecked()
+  expect(screen.getByRole('button', { name: 'Continue to exercises' })).toBeEnabled()
+
 })
 
 test('a side chosen before is not asked again, and can be changed', () => {

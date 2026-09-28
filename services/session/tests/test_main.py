@@ -186,6 +186,31 @@ def test_ws_feedback_persists_session(client):
         assert ack["ok"] is True and ack["summary"]["session_id"] == sid
     one = client.get(f"/api/sessions/{sid}").json()
     assert one["feedback"]["effort"] == 4 and one["mode"] == "cup"
+    assert ack["summary"]["source"] == "live" and one["source"] == "live" and one["replay"] is False
+
+
+def test_ws_replay_session_is_saved_as_a_replay_and_kept_out_of_progress(client):
+    """28 Sep review: a replayed clip is marked `source: replay` from the socket to the store,
+    listed (the UI badges it) but never charted, totalled or put in the pain list."""
+    done_before = client.get("/api/progress").json()["practice"]["done"]
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets&replay=synthetic_cup_01&clear=1") as ws:
+        assert ws.receive_json()["type"] == "replay_start"
+        ws.send_text('{"cmd":"feedback","pain_after":2,"effort":4,"compared":"same"}')
+        ack = None
+        for _ in range(4000):
+            e = ws.receive_json()
+            if e["type"] == "command" and e.get("cmd") == "feedback":
+                ack = e
+                break
+    assert ack is not None
+    assert ack["summary"]["source"] == "replay" and ack["summary"]["replay_clip"] == "synthetic_cup_01"
+    sid = ack["summary"]["session_id"]
+    row = client.get(f"/api/sessions/{sid}").json()
+    assert row["source"] == "replay" and row["replay"] is True
+    assert sid in [s["id"] for s in client.get("/api/sessions").json()["sessions"]]
+    p = client.get("/api/progress").json()
+    assert p["practice"]["done"] == done_before
+    assert all(x["source"] != "replay" for x in p["verified_per_session"] + p["pain_effort"])
 
 
 def test_ws_replay_streams_a_recorded_clip_without_client_frames(client):

@@ -158,7 +158,7 @@ export function LiveCup() {
           <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (
             <>
-              <VerifiedTally compact total={reaches} unverified={unverified} noun="reaches" />
+              <VerifiedTally compact total={reaches} unverified={unverified} noun="reach" />
               <div className="min-h-0 flex-1">
                 <TracePanel
                   events={events}
@@ -169,7 +169,7 @@ export function LiveCup() {
             </>
           ) : (
             <>
-              <VerifiedTally total={reaches} unverified={unverified} noun="reaches" note={`${cup?.arcs_done ?? 0} of ${planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar`} />
+              <VerifiedTally total={reaches} unverified={unverified} noun="reach" note={`${cup?.arcs_done ?? 0} of ${planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar`} />
               <ExertionChip exertion={coach.exertion} />
             </>
           )}

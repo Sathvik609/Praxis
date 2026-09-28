@@ -43,7 +43,7 @@ test('cup variant shows verified and unverified counts and a hatched-unverified 
       { rep: 2, from_dot: 1, to_dot: 2, reach_ms: 900, verified: false, reason: 'cup_occluded', arc: 1, phase: 'slow' },
     ],
   })
-  expect(screen.getByText('verified reaches')).toBeInTheDocument()
+  expect(screen.getByText('verified reach')).toBeInTheDocument() // one verified: singular (review 28 Sep)
   expect(screen.getByText('unverified · hand covered cup or markers lost')).toBeInTheDocument()
   const chart = screen.getByRole('img', { name: /Reach time/ })
   expect(chart.getAttribute('aria-label')).toMatch(/2 0.9 s unverified/)
@@ -57,7 +57,7 @@ test('arm variant shows sets, verified reps, lean events and the ceiling as targ
       { set: 1, rep: 2, peak_deg: 70, hold_s: 0.5, verified: false, reason: 'target_missed', lean: true, hike: false },
     ],
   })
-  expect(screen.getByText('verified lifts')).toBeInTheDocument()
+  expect(screen.getByText('verified lift')).toBeInTheDocument() // one verified: singular
   expect(screen.getByText('unverified · missed target or short hold')).toBeInTheDocument()
   expect(screen.getByText(/lean events · 0 shoulder-hike events/)).toBeInTheDocument()
   const chart = screen.getByRole('img', { name: /Peak angle/ })

@@ -19,8 +19,11 @@ WHY_TEXT = {
 
 
 class CoachSession:
-    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None) -> None:
+    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None, replay_clip: str | None = None) -> None:
         self.mode = mode
+        # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
+        # pain list counts it as the patient's practice.
+        self.replay_clip = replay_clip
         # Sprint E: which registry exercise this arm session ran, and whose session it is.
         self.exercise = exercise
         self.username = (username or "").lower() or None
@@ -234,6 +237,8 @@ class CoachSession:
             "t_end": t_end,
             # Replay feeds clip time (seconds from 0), live sessions wall-clock epoch seconds.
             "clock": "wall" if (self.t_start or 0) >= 1e9 else "clip",
+            "source": "replay" if self.replay_clip else "live",
+            "replay_clip": self.replay_clip,
             "tracking": "limited" if limited else "usable",
             "tracking_lost_events": self.tracking_lost_events,
             "camera": {

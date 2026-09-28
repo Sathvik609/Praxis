@@ -92,6 +92,7 @@ export function LiveNhpt() {
   // Occupancy is the peg test's verification; a peg is unverified only when the service says so
   // (`unverified_total`) or a rep_complete arrives with `verified: false`.
   const pegsUnverified = Number((frame?.nhpt as { unverified_total?: number } | undefined)?.unverified_total ?? events.filter((e) => e.type === 'rep_complete' && e.verified === false).length)
+  const splitOf = new Map(events.filter((e) => e.type === 'nhpt_split').map((e) => [Number(e.peg), Number(e.split_s)] as const))
   const nextHole = frame?.overlay.next_hole ?? null
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
@@ -115,7 +116,7 @@ export function LiveNhpt() {
         />
 
         <Card
-          className="flex min-h-0 flex-col gap-4 overflow-hidden"
+          className="flex min-h-0 flex-col gap-3 overflow-hidden"
           padding="sm"
           title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
           action={
@@ -152,6 +153,25 @@ export function LiveNhpt() {
             </div>
             <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
           </div>
+          {/* Per-peg splits as they arrive (`nhpt_split`), laid out 3 × 3 like the board, so the
+              column carries data instead of empty space (review 28 Sep). */}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <span className="text-lg font-bold">Per-peg split</span>
+              <span className="text-base text-muted">seated to seated</span>
+            </div>
+            <ol aria-label="Per-peg splits" className="grid grid-cols-3 gap-1.5">
+              {Array.from({ length: 9 }, (_, i) => {
+                const v = splitOf.get(i + 1)
+                return (
+                  <li key={i} className={`flex items-baseline justify-between gap-1 rounded-[var(--r-control)] border px-2 py-0.5 text-lg leading-tight tabular-nums ${v != null ? 'border-line bg-surface' : 'border-dashed border-line text-muted'}`}>
+                    <span className="text-muted"><span className="sr-only">Peg </span>{i + 1}</span>
+                    {v != null ? <b>{v.toFixed(1)} s</b> : <span><span aria-hidden>—</span><span className="sr-only">not yet</span></span>}
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
         </Card>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
@@ -160,7 +180,7 @@ export function LiveNhpt() {
               <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
             </div>
           </Card>
-          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="pegs" />
+          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="peg" />
           {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
           <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
           {traceOpen ? (

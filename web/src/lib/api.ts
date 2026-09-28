@@ -3,14 +3,27 @@ import { SESSION_API_URL } from './config'
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string; level: number; version: number } }
 export type Prescription = { program: string; version: number; level: number; side: string; clinician: string; exercises: Record<string, Record<string, unknown>>; allowed_adaptations: Record<string, Record<string, unknown>>; stop_rules: { pain_max: number; lean_deg: number; lean_events: number; failed_reps: number; exertion_high_s: number; new_symptoms: boolean } }
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[] }
-export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[] }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string }
-export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean }
+export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[] }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
+export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean; exercise?: string | null; illustrative?: boolean; source?: SessionSource; replay?: boolean }
+/** Where a stored session came from (service `store.session_source`): the illustrative seed,
+ *  a replayed recorded clip (judge fallback), or the patient at the camera. */
+export type SessionSource = 'sample' | 'replay' | 'live'
+/** The one rule every screen uses: a replay is listed with a Replay badge but never charted,
+ *  totalled or put in a pain list (the service already leaves it out of `/api/progress`). */
+export function sessionSource(s: { source?: SessionSource; replay?: boolean; illustrative?: boolean; summary?: { source?: string } }): SessionSource {
+  if (s.source) return s.source
+  if (s.illustrative) return 'sample'
+  return s.replay || s.summary?.source === 'replay' ? 'replay' : 'live'
+}
+export const isReplaySession = (s: Parameters<typeof sessionSource>[0]): boolean => sessionSource(s) === 'replay'
 export type Flag = { id: number; session_id: string; rule: string; detail: string; t: number; date: string; reviewed: boolean }
-/** `practice` counts real sessions only (`planned` is null until the prescription carries a
+/** One weekly peg-test time; `kind` says whether it is the illustrative sample or the patient's own. */
+export type TrendPoint = { date: string; total_s: number; kind?: 'sample' | 'live' }
+/** `practice` counts live sessions only (`planned` is null until the prescription carries a
  *  schedule, so `adherence_pct` is null too); `sample` is the wireframe's illustrative history
- *  and is never added to the real numbers. */
-export type Progress = { nhpt_trend: { date: string; total_s: number }[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; illustrative?: boolean }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean }[]; goal_log_count: number }
-export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; illustrative?: boolean }
+ *  and is never added to the real numbers. Replays are in none of these lists. */
+export type Progress = { nhpt_trend: TrendPoint[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; exercise?: string | null; illustrative?: boolean; source?: SessionSource }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean; source?: SessionSource }[]; goal_log_count: number }
+export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; nhpt_sample?: boolean; illustrative?: boolean }
 
 /** `POST /api/checkin` (service track): the service computes the tier and writes the therapist
  *  flag (rest day, new or worse symptoms). `flagged` is the only thing that lets the UI say the
