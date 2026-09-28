@@ -36,6 +36,7 @@ import praxis_session.trace as trace_mod
 from praxis_session.perception.exercises import EXERCISES, RUNNABLE_TIERS
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
+from praxis_session.replay import find_replay_clip, list_replay_clips
 from praxis_session.plan import day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
@@ -204,13 +205,9 @@ def api_therapist_patients() -> dict[str, object]:
 
 @app.get("/api/replay/list")
 def api_replay_list() -> dict[str, object]:
-    clips = []
-    manifest = EVAL_DIR / "manifest.json"
-    if manifest.exists():
-        for e in json.loads(manifest.read_text()).get("entries", []):
-            if e.get("video"):
-                clips.append({"id": e["id"], "mode": e["mode"], "sheet": e.get("sheet", "nhpt_board"), "path": e["video"], "synthetic": e.get("synthetic", False)})
-    return {"clips": clips}
+    """Synthetic dataset_v0 renders plus every consented recorded clip with a sidecar
+    (`replay.list_replay_clips`); `mode` is the registry exercise id the web routes on."""
+    return {"clips": [c.to_api() for c in list_replay_clips(EVAL_DIR)]}
 
 
 def decode_jpeg(data: bytes) -> np.ndarray | None:
@@ -247,6 +244,10 @@ async def session_ws(
     pain-tier overrides). `target`/`hold`/`sets`/`reps` still override both when given.
     """
     await ws.accept()
+    clip = find_replay_clip(replay, EVAL_DIR) if replay else None
+    if clip is not None:  # a recorded clip knows its own pipeline, exercise and side
+        mode, sheet, side = clip.pipeline, clip.sheet, clip.side or side
+        exercise = clip.exercise if clip.pipeline == "arm" else exercise
     if mode not in MODES:
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
@@ -497,14 +498,8 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
 
 
 def _find_clip(clip_id: str) -> Path | None:
-    manifest = EVAL_DIR / "manifest.json"
-    if not manifest.exists():
-        return None
-    for e in json.loads(manifest.read_text()).get("entries", []):
-        if e.get("id") == clip_id and e.get("video"):
-            p = EVAL_DIR / e["video"]
-            return p if p.exists() else None
-    return None
+    clip = find_replay_clip(clip_id, EVAL_DIR)
+    return clip.path if clip is not None else None
 
 
 async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, coach: CoachSession, stats: LatencyStats) -> None:
