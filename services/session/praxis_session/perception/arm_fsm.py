@@ -28,6 +28,8 @@ the view the exercise needs, so the FSM freezes (no transitions, no compensation
 angle is still reported for display) while the view is wrong (`gate = "turn_side"` for
 side-view exercises, `"turn_front"` for front-view ones) or the practising-side
 shoulder/elbow/hip visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`).
+Compensation checks run for `kind="hold"` only: the pendulum is done leaning forward on purpose,
+so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
 `compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
 `shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
 therefore gets no lean flags.
@@ -40,6 +42,7 @@ from typing import Any
 
 from praxis_session.events import Event, make_event
 from praxis_session.perception.exercises import Exercise, resolve
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 
 STATES = ("start_pose", "moving", "target_reached", "hold", "return")
 MIN_VISIBILITY = 0.5
@@ -93,13 +96,20 @@ class ArmFSM:
         reps_per_set: int | None = None,
         start_below_deg: float | None = None,
         tolerance_deg: float | None = None,
-        lean_limit_deg: float = 12.0,
-        lean_events_to_flag: int = 3,
+        lean_limit_deg: float | None = None,
+        lean_events_to_flag: int | None = None,
         hike_limit: float = 0.08,
         baseline_frames: int = 10,
         lean_persist_s: float = 0.5,
+        prescription: Prescription | None = None,
     ) -> None:
-        ex = resolve(exercise, tier)
+        # The lean limits are the prescription's stop-rule thresholds (the same numbers the
+        # stop rule and its therapist-flag text use), not constants copied here.
+        rx = SEED_PRESCRIPTION if prescription is None else prescription
+        lean_limit_deg = rx.stop_rules.lean_deg if lean_limit_deg is None else lean_limit_deg
+        if lean_events_to_flag is None:
+            lean_events_to_flag = rx.stop_rules.lean_events
+        ex = resolve(exercise, tier, rx)
         if ex.pipeline != "arm" or ex.metric is None:
             # Demo-only entries (the rotations) and the sheet activities have no pose metric:
             # the arm FSM must never produce a camera-verified rep for them.
@@ -147,6 +157,11 @@ class ArmFSM:
         self._swing_hi = 0.0
 
     # ---- public --------------------------------------------------------------------------
+    def set_hold(self, hold_s: float) -> None:
+        """Change the hold the next check needs (the coach's regress, via the pipeline's
+        `set_hold` command, which clamps it to the prescription first)."""
+        self.hold_s = float(hold_s)
+
     @property
     def swing_band_deg(self) -> float:
         """Hysteresis band for the oscillation counter: a quarter of the peak-to-peak amplitude
@@ -341,7 +356,9 @@ class ArmFSM:
             evs.append(self._go("moving", obs.t))
         self._swing_lo, self._swing_hi = min(self._swing_lo, a), max(self._swing_hi, a)
         self._peak = round(self._swing_hi - self._swing_lo, 1)
-        evs += self._compensation(obs)
+        # No lean or shoulder-hike check here: the pendulum is *done* leaning forward on a table
+        # with the arm hanging (exercises.py steps), so a forward trunk is the instruction, not
+        # a compensation (24 Sep review, P0).
         sign = 1 if a > self.swing_band_deg else (-1 if a < -self.swing_band_deg else 0)
         if sign == 0 or sign == self._swing_sign:
             return evs

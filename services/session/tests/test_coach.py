@@ -47,15 +47,37 @@ def test_progression_is_proposed_only_within_prescription():
     assert all(x.action != "progress" for x in d2)
 
 
-def test_arm_lean_corrects_and_third_flag_regresses_hold_within_range():
+def test_arm_lean_corrects_and_second_lean_regresses_hold_within_range():
+    """24 Sep review: the stop rule pauses on the third lean before the coach sees it, so the
+    regression has to come on the second one or it can never fire."""
     c = RuleCoach()
     e = make_event("compensation_lean", t=10.0, lean_deg=15.0, count=1, flagged=False)
-    d = c.decide(ctx("arm", [e], 10.0))
-    assert d[0].action == "correct" and "Sit tall" in d[0].text
-    e3 = make_event("compensation_lean", t=40.0, lean_deg=16.0, count=3, flagged=True)
-    d3 = c.decide(ctx("arm", [e3], 40.0))
-    reg = [x for x in d3 if x.action == "regress"]
-    assert reg and reg[0].ui["apply"] == {"arm": {"hold_s": 2.0}}
+    d = c.decide(ctx("arm", [e], 10.0, snapshot=arm_snap("flexion", hold_s=3.0)))
+    assert [x.action for x in d] == ["correct"] and "Sit tall" in d[0].text
+    e2 = make_event("compensation_lean", t=40.0, lean_deg=16.0, count=2, flagged=False)
+    d2 = c.decide(ctx("arm", [e2], 40.0, snapshot=arm_snap("flexion", hold_s=3.0)))
+    reg = [x for x in d2 if x.action == "regress"]
+    assert reg and reg[0].ui["apply"] == {"arm": {"hold_s": 2.0}} and reg[0].evidence == [e2.id]
+    assert "2" in reg[0].text and "3" in reg[0].text
+    e3 = make_event("compensation_lean", t=50.0, lean_deg=16.0, count=3, flagged=True)
+    assert not [x for x in c.decide(ctx("arm", [e3], 50.0)) if x.action == "regress"]  # once
+
+
+def test_regress_uses_the_running_exercise_prescription_key():
+    """`rx_key` was hard-coded "arm": abduction's hold lives under `abduction`."""
+    c = RuleCoach()
+    e = make_event("compensation_lean", t=10.0, lean_deg=15.0, count=2, flagged=False)
+    d = c.decide(ctx("arm", [e], 10.0, snapshot=arm_snap("abduction", hold_s=3.0)))
+    reg = [x for x in d if x.action == "regress"]
+    assert reg and reg[0].ui["apply"] == {"abduction": {"hold_s": 2.0}}
+    assert reg[0].tool_calls[0]["result"] == {"abduction.hold_s": [2.0, 3.0]}
+
+
+def test_no_regress_when_the_hold_is_already_at_the_prescribed_floor():
+    c = RuleCoach()
+    e = make_event("compensation_lean", t=10.0, lean_deg=15.0, count=2, flagged=False)
+    d = c.decide(ctx("arm", [e], 10.0, snapshot=arm_snap("flexion", hold_s=2.0, tier="gentle")))
+    assert [x.action for x in d] == ["correct"]
 
 
 def test_in_rep_cues_are_not_dropped_at_one_second_cadence():

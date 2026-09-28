@@ -85,9 +85,10 @@
         "held",
         "partial",
         "self_ticked",
+        "coach",
         null
       ],
-      "description": "calibration: where the homography came from (fresh | partial | held | null). self_report: always 'self_ticked' (the patient's own tick on a demo-only exercise, never a camera-verified rep)."
+      "description": "calibration: where the homography came from (fresh | partial | held | null). self_report: always 'self_ticked' (the patient's own tick on a demo-only exercise, never a camera-verified rep). command: 'coach' when a coach decision (a regress's set_hold) asked for it rather than the client."
     },
     "age_s": {
       "type": "number"

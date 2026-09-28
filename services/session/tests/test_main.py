@@ -541,3 +541,26 @@ def test_self_report_refuses_a_camera_coached_exercise(client):
     for ex in ("flexion", "cup", "nhpt", "scaption"):
         r = client.post("/api/self_report", json={"exercise": ex}).json()
         assert r["ok"] is False and r["error"] in ("not_demo", "unknown_exercise")
+
+
+# ---- 24 Sep review: a coach regress reaches the FSM -----------------------------------------
+def test_coach_set_hold_is_applied_to_the_pipeline_and_traced(tmp_path):
+    import praxis_session.main as main
+    from praxis_session.pipeline import SessionPipeline
+    from praxis_session.prescription import SEED_PRESCRIPTION
+    from praxis_session.schema import validate_event
+    from praxis_session.session import CoachSession
+
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    c = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, exercise="abduction")
+    c.commands.append({"cmd": "set_hold", "hold_s": 1.0, "rx": "abduction", "evidence": [7]})
+    evs = main._apply_coach_commands(p, c)
+    assert len(evs) == 1
+    d = evs[0].to_dict()
+    validate_event(d)
+    assert d["type"] == "command" and d["cmd"] == "set_hold" and d["source"] == "coach"
+    assert d["ok"] is True and d["hold_s"] == 2.0 and d["clamped"] is True  # clamped in code
+    assert p.snapshot()["arm"]["hold_s"] == 2.0
+    row = [r for r in c.trace.tail(5) if r["kind"] == "apply"][0]
+    assert row["cmd"] == "set_hold" and row["hold_s"] == 2.0 and row["evidence"] == [7]
+    assert main._apply_coach_commands(p, c) == []

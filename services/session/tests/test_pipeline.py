@@ -274,6 +274,37 @@ def test_arm_mode_from_landmarks_runs_fsm():
     assert fr["pose"]["present"] and abs(fr["arm"]["angle_now"] - 90) < 3
 
 
+def test_set_hold_changes_the_fsm_hold_clamped_to_the_allowed_adaptation():
+    """24 Sep review: the coach's regress named a hold but nothing applied it. `set_hold` is
+    the pipeline command that does, clamped in code to `allowed_adaptations[rx].hold_s`."""
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    r = p.command({"cmd": "set_hold", "hold_s": 2.0})
+    assert r == {"ok": True, "exercise": "abduction", "rx": "abduction", "hold_s": 2.0, "requested_hold_s": 2.0, "clamped": False}
+    assert p.snapshot()["arm"]["hold_s"] == 2.0
+    assert p.command({"cmd": "set_hold", "hold_s": 0.5})["hold_s"] == 2.0  # floor of [2, 3]
+    r = p.command({"cmd": "set_hold", "hold_s": 9})
+    assert r["hold_s"] == 3.0 and r["clamped"] is True  # never above the prescription
+    assert p.command({"cmd": "set_hold"})["ok"] is False
+
+
+def test_set_hold_is_refused_for_the_pendulum_and_the_sheet_tasks():
+    pend = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="pendulum")
+    assert pend.command({"cmd": "set_hold", "hold_s": 2.0})["ok"] is False
+    cup = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    assert cup.command({"cmd": "set_hold", "hold_s": 2.0})["ok"] is False
+
+
+def test_arm_lean_thresholds_come_from_the_prescription():
+    from praxis_session.prescription import SEED_PRESCRIPTION
+
+    rx = SEED_PRESCRIPTION.model_copy(deep=True)
+    rx.stop_rules.lean_deg, rx.stop_rules.lean_events = 25.0, 2
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, prescription=rx)
+    assert (p._arm.lean_limit_deg, p._arm.lean_events_to_flag) == (25.0, 2)
+    d = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False)
+    assert (d._arm.lean_limit_deg, d._arm.lean_events_to_flag) == (12.0, 3)
+
+
 def test_arm_pose_loss_after_15_frames():
     p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, side="left")
     from praxis_session.perception.pose import PoseResult

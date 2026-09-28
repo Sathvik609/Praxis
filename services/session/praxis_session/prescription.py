@@ -10,7 +10,8 @@ class StopRuleThresholds(BaseModel):
     pain_max: int = 7  # pain at or above this ends the session = the rest tier (plan.py, 23 Sep)
     lean_deg: float = 12.0
     lean_events: int = 3
-    failed_reps: int = 3  # consecutive unverified reps -> pause
+    failed_reps: int = 3  # consecutive reps the camera could not verify -> pause, check setup
+    missed_reps: int = 3  # consecutive performance misses (target/hold/swing) -> gentle rest
     exertion_high_s: float = 60.0
     new_symptoms: bool = True  # new/worse symptoms -> review before practising
 

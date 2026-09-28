@@ -29,6 +29,7 @@ from praxis_session.perception.pose import (
     shoulder_elevation_deg,
 )
 from praxis_session.perception.nhpt import NHPT
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, clamp
 from praxis_session.perception.peg_fsm import Observation
 from praxis_session.perception.quality import (
     MarkerSteadiness,
@@ -72,10 +73,13 @@ class SessionPipeline:
         for_mode: str | None = None,
         exercise: str | None = None,
         tier: str = "full",
+        prescription: Prescription | None = None,
     ) -> None:
         """`exercise` picks the `perception/exercises.py` entry that drives arm mode (default
         `flexion`, i.e. Arm to the front exactly as before) and `tier` applies its gentle
-        overrides; `target_deg`/`hold_s`/`sets`/`reps` still override both when given."""
+        overrides; `target_deg`/`hold_s`/`sets`/`reps` still override both when given.
+        `prescription` (default: the seed) supplies the tier clamps, the lean thresholds and
+        the range `set_hold` is clamped to."""
         if mode not in MODES:
             raise ValueError(f"bad mode {mode}")
         # In calibrate mode, which exercise the setup is for (arm needs no sheet).
@@ -109,7 +113,8 @@ class SessionPipeline:
         self._pose_lost = False
         self._pose_seen = False
         self.tier = tier
-        self._arm_args: dict[str, Any] = {"target_deg": target_deg, "hold_s": hold_s, "sets": sets, "reps_per_set": reps}
+        self.prescription = SEED_PRESCRIPTION if prescription is None else prescription
+        self._arm_args: dict[str, Any] = {"target_deg": target_deg, "hold_s": hold_s, "sets": sets, "reps_per_set": reps, "prescription": self.prescription}
         if mode == "arm":
             self._arm = ArmFSM(exercise, tier, **self._arm_args)
             if use_pose:
@@ -125,7 +130,7 @@ class SessionPipeline:
             )
         elif mode == "cup":
             self._cup_sheet = CupSheetState(self.spec)
-            dose = resolve("cup", tier)  # gentle: slow arcs only, if the prescription allows it
+            dose = resolve("cup", tier, self.prescription)  # gentle: slow arcs only, if allowed
             self._cup = CupFSM(spec=self.spec, clear_frames=clear_frames, slow_arcs=dose.slow_arcs, fast_arcs=dose.fast_arcs)
 
     # ---- public -------------------------------------------------------------------------
@@ -157,7 +162,7 @@ class SessionPipeline:
         if self._cup is not None:
             if self._cup.reaches:
                 return {"tier": self.tier, "changed": False}
-            dose = resolve("cup", tier)
+            dose = resolve("cup", tier, self.prescription)
             self._cup.slow_arcs, self._cup.fast_arcs = dose.slow_arcs, dose.fast_arcs
         self.tier = tier
         return {"tier": tier, "changed": True}
@@ -165,6 +170,8 @@ class SessionPipeline:
     def command(self, cmd: dict[str, Any]) -> dict[str, Any]:
         """Text commands from the client (progression prompt answers etc.)."""
         name = cmd.get("cmd")
+        if name == "set_hold":
+            return self._set_hold(cmd)
         if name == "set_phase" and self._cup is not None:
             try:
                 self._cup.set_phase(str(cmd.get("phase")))
@@ -195,6 +202,26 @@ class SessionPipeline:
                 return {"ok": False, "error": str(e)}
             return {"ok": True, "mode": self.mode, "colour": rng, "at_mm": [xy[0], xy[1]]}
         return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
+
+    def _set_hold(self, cmd: dict[str, Any]) -> dict[str, Any]:
+        """The coach's regress, applied: change the hold the arm FSM needs, clamped **in code**
+        to the prescription's `allowed_adaptations[<rx key>].hold_s` (never above it, never
+        below it). Refused for the pendulum (no hold), the sheet tasks and any exercise whose
+        prescription does not list the hold as adaptable."""
+        if self._arm is None or self._arm.kind != "hold":
+            return {"ok": False, "error": "set_hold needs a hold exercise (Arm to the front / Arm out to the side)"}
+        ex = self._arm.exercise
+        try:
+            wanted = float(cmd["hold_s"])
+        except (KeyError, TypeError, ValueError):
+            return {"ok": False, "error": "set_hold needs a numeric hold_s"}
+        try:
+            hold = clamp(self.prescription, ex.rx, "hold_s", wanted)
+        except KeyError:
+            return {"ok": False, "error": f"{ex.rx}.hold_s is not an allowed adaptation"}
+        self._arm.set_hold(hold)
+        self._arm_args["hold_s"] = hold
+        return {"ok": True, "exercise": ex.id, "rx": ex.rx, "hold_s": hold, "requested_hold_s": wanted, "clamped": hold != wanted}
 
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
         nhpt = None
