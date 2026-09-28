@@ -28,6 +28,22 @@ CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_i
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
 """
+SAMPLE_TREND = {(d, float(v)) for d, v in NHPT_TREND}
+
+
+def session_source(summary: dict[str, Any]) -> str:
+    """Where a session came from: `sample` (illustrative seed history), `replay` (a recorded clip
+    streamed through the pipeline, the judge fallback) or `live` (the patient at the camera).
+    Summaries since 28 Sep say so in `source`; older rows are read from their clock: a replay
+    runs on clip time, which starts near 0 and is never an epoch. A live session that saw no
+    frame has no start at all and stays live."""
+    if summary.get("illustrative"):
+        return "sample"
+    if summary.get("source") in ("live", "replay"):
+        return str(summary["source"])
+    t0 = summary.get("t_start")
+    return "replay" if t0 is not None and float(t0) < 1e9 else "live"
+
 
 def _next_practice(summary: dict[str, Any]) -> dict[str, Any]:
     mode = summary.get("mode")
@@ -74,15 +90,34 @@ class Store:
 
     def _refresh_seed_sessions(self) -> None:
         """The illustrative seed history is code too. Rewrite each seed row (by its seed id) from
-        `seed_data.SESSIONS`, so a database seeded before 28 Sep stops naming Arm to the front.
-        Rows that are not seed ids (real sessions) are never touched."""
+        `seed_data.SESSIONS`, so a database seeded before 28 Sep stops naming Arm to the front
+        or the old stop level 5. A seed session's flags get the seed text but keep whether the
+        therapist reviewed them. Rows that are not seed ids (real sessions) are never touched."""
         for s in SESSIONS:
             if self._db.execute("SELECT 1 FROM sessions WHERE id=?", (s["id"],)).fetchone() is None:
                 continue
             self._db.execute(
-                "UPDATE sessions SET mode=?, title=?, summary_json=?, exercise=? WHERE id=?",
-                (s["mode"], s["title"], json.dumps(s["summary"]), s.get("exercise"), s["id"]),
+                "UPDATE sessions SET mode=?, title=?, status=?, tracking=?, summary_json=?, feedback_json=?, checkin_json=?, exercise=? WHERE id=?",
+                (s["mode"], s["title"], s["status"], s["tracking"], json.dumps(s["summary"]), json.dumps(s["feedback"]), json.dumps(s["checkin"]), s.get("exercise"), s["id"]),
             )
+            for f in s["summary"].get("flags", []):
+                self._db.execute("UPDATE flags SET detail=?, t=? WHERE session_id=? AND rule=?", (f.get("detail"), f.get("t"), s["id"], f.get("rule")))
+        self._db.commit()
+
+    def _purge_replay_trend(self) -> None:
+        """Before 28 Sep a replayed peg test wrote its time into `nhpt_trend` (the synthetic
+        clip's 17 s). Keep the seed points and the points a live peg-test session backs; drop
+        the rest. Sessions themselves are never deleted."""
+        live: set[tuple[str, float]] = set()
+        for r in self._db.execute("SELECT started_at, summary_json FROM sessions WHERE mode='nhpt'"):
+            summary = json.loads(r["summary_json"] or "{}")
+            total = summary.get("camera", {}).get("nhpt_total_s")
+            if total and session_source(summary) == "live":
+                live.add(((r["started_at"] or "")[:10], float(total)))
+        for r in self._db.execute("SELECT date, total_s FROM nhpt_trend").fetchall():
+            key = (r["date"], float(r["total_s"]))
+            if key not in SAMPLE_TREND and key not in live:
+                self._db.execute("DELETE FROM nhpt_trend WHERE date=? AND total_s=?", key)
         self._db.commit()
 
     def seed_if_empty(self) -> None:
@@ -91,6 +126,7 @@ class Store:
         if self._db.execute("SELECT COUNT(*) FROM patients").fetchone()[0]:
             self._refresh_seed_prescription()
             self._refresh_seed_sessions()
+            self._purge_replay_trend()
             return
         self._db.execute("INSERT INTO patients(id, json) VALUES(?, ?)", (PATIENT["id"], json.dumps(PATIENT)))
         self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], SEED_PRESCRIPTION.version, SEED_PRESCRIPTION.model_dump_json()))
@@ -133,6 +169,8 @@ class Store:
         d["next_practice"] = _next_practice(d["summary"])
         d["delivery"] = d["summary"].get("delivery", "queued · not yet delivered")
         d["illustrative"] = bool(d["summary"].get("illustrative"))  # seed history, never real
+        d["source"] = session_source(d["summary"])  # sample | replay | live
+        d["replay"] = d["source"] == "replay"  # listed with a Replay badge, never counted
         if with_events:
             d["events"] = [json.loads(e["json"]) for e in self._db.execute("SELECT json FROM events WHERE session_id=? ORDER BY seq", (r["id"],))]
         return d
@@ -163,12 +201,20 @@ class Store:
         self._db.commit()
 
     def nhpt_trend(self) -> list[dict[str, Any]]:
-        return [{"date": r["date"], "total_s": r["total_s"]} for r in self._db.execute("SELECT date, total_s FROM nhpt_trend ORDER BY date")]
+        """Weekly peg-test times, each point `kind: sample` (the illustrative seed) or `live`.
+        Replays never reach this table (`save_session`), so no delta can mix them in."""
+        rows = self._db.execute("SELECT date, total_s FROM nhpt_trend ORDER BY date")
+        return [{"date": r["date"], "total_s": r["total_s"], "kind": "sample" if (r["date"], float(r["total_s"])) in SAMPLE_TREND else "live"} for r in rows]
+
+    def _counted(self, limit: int) -> list[dict[str, Any]]:
+        """Sessions that count toward trends, totals and pain lists: all but replays (a replay
+        is a recorded clip through the pipeline, not the patient's practice)."""
+        return [s for s in self.sessions(limit) if not s["replay"]]
 
     def _practice(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
-        """Practice numbers from real sessions only. `planned` needs a schedule the
-        prescription does not carry yet, so it (and adherence) is None rather than invented."""
-        real = [s for s in sessions if not s["illustrative"]]
+        """Practice numbers from live sessions only (no sample, no replay). `planned` needs a
+        schedule the prescription does not carry yet, so it (and adherence) is None."""
+        real = [s for s in sessions if s["source"] == "live"]
         hours = sum(float(s["summary"].get("camera", {}).get("active_s") or 0) for s in real) / 3600
         return {"done": len(real), "planned": None, "hours": round(hours, 1)}
 
@@ -178,9 +224,9 @@ class Store:
         return None if not planned else round(100 * practice["done"] / planned)
 
     def progress(self) -> dict[str, Any]:
-        sessions = self.sessions(100)
-        per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"], "illustrative": s["illustrative"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
-        pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early", "illustrative": s["illustrative"]} for s in reversed(sessions)]
+        sessions = self._counted(100)  # replays are listed as sessions but never charted or totalled
+        per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"], "exercise": s["exercise"], "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
+        pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early", "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions)]
         practice = self._practice(sessions)
         return {
             "nhpt_trend": self.nhpt_trend(),
@@ -198,7 +244,8 @@ class Store:
         cam = summary.get("camera", {})
         t_start, t_end = summary.get("t_start"), summary.get("t_end")
         now = time.time()
-        if summary.get("clock") == "clip" or (t_start is not None and t_start < 1e9):
+        replay = session_source(summary) == "replay"
+        if replay or summary.get("clock") == "clip":
             # Replay runs on clip time (seconds from 0), which is not an epoch: date the
             # session by when it was played, keeping its duration.
             duration = max(0.0, float(t_end or 0) - float(t_start or 0))
@@ -219,7 +266,7 @@ class Store:
         if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s"):
             title += f" · {cam['nhpt_total_s']:.1f} s"
         self._insert_session(sid, summary.get("mode", ""), started, ended, status, tracking, title, summary, feedback, checkin, events, started[:10], exercise, username)
-        if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s"):
+        if summary.get("mode") == "nhpt" and cam.get("nhpt_total_s") and not replay:  # a replayed clip is not the patient's time
             self._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES(?,?,?)", (PATIENT["id"], started[:10], float(cam["nhpt_total_s"])))
         self._db.commit()
         return sid
@@ -233,7 +280,7 @@ class Store:
     def read_patient_model(self, patient_id: str) -> dict[str, Any]:
         return {
             "patient_id": patient_id,
-            "history": [{"id": s["id"], "date": s["date"], "mode": s["mode"], "status": s["status"], "tracking": s["tracking"], "camera": s["summary"].get("camera", {}), "feedback": s["feedback"], "illustrative": s["illustrative"]} for s in self.sessions(20)],
+            "history": [{"id": s["id"], "date": s["date"], "mode": s["mode"], "status": s["status"], "tracking": s["tracking"], "camera": s["summary"].get("camera", {}), "feedback": s["feedback"], "illustrative": s["illustrative"]} for s in self._counted(20)],
             "nhpt_trend": self.nhpt_trend(),
             "open_flags": self.flags(reviewed=False),
         }
@@ -245,10 +292,14 @@ class Store:
     def therapist_patients(self) -> list[dict[str, Any]]:
         p = self.patient()
         trend = self.nhpt_trend()
+        # First and last from one kind only: live points when there are any, else the labeled sample.
+        live = [t for t in trend if t["kind"] == "live"]
+        points = live or trend
         return [{
             "id": p["id"], "name": p["name"], "program": f"GRASP L{p['program']['level']} · {p['side']} · wk 6",
-            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self.sessions(100))),
-            "nhpt_last_s": trend[-1]["total_s"] if trend else None, "nhpt_first_s": trend[0]["total_s"] if trend else None,
+            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self._counted(100))),
+            "nhpt_last_s": points[-1]["total_s"] if points else None, "nhpt_first_s": points[0]["total_s"] if points else None,
+            "nhpt_sample": bool(points) and not live,
         }, {"id": "priya", "name": "Priya S.", "program": "GRASP L3 · right · wk 3", "open_flags": 0, "adherence_pct": 92, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},
             {"id": "tom", "name": "Tom K.", "program": "GRASP L1 · left · wk 9", "open_flags": 1, "adherence_pct": 71, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},
             {"id": "june", "name": "June O.", "program": "GRASP L2 · right · wk 1", "open_flags": 0, "adherence_pct": 100, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True}]

@@ -292,6 +292,7 @@ async def session_ws(
             mode=mode,
             prescription=SEED_PRESCRIPTION,
             exercise=exercise if mode == "arm" else None,
+            replay_clip=replay or None,  # saved as `source: replay`, never counted as practice
         )
         sessions[coach.session_id] = coach
         latency_stats[coach.session_id] = stats

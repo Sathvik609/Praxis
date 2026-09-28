@@ -61,10 +61,11 @@ SESSIONS = [
         "id": "s-0908-arm", "mode": "arm", "exercise": "abduction", "started_at": "2026-09-08T10:02:00", "ended_at": "2026-09-08T10:09:00",
         "status": "ended_early", "tracking": "usable", "title": "Arm out to the side",
         "checkin": {"pain_before": 3, "energy": "tired", "minutes": 14, "new_symptoms": False},
-        "feedback": {"pain_after": 5, "effort": 7, "compared": "harder"},
+        # Pain reached the stop level (7, `prescription.py`) mid-set: session ended, therapist flagged.
+        "feedback": {"pain_after": 7, "effort": 7, "compared": "harder"},
         "summary": _summary("arm", {"reps_total": 6, "verified": 5, "unverified": 1, "corrections": 2, "coverage_pct": 91, "posture_cues": 1, "active_s": 380},
-                            [{"text": "stop: pain 5/10 during Arm out to the side, rep 6 of set 2", "confidence": "high", "evidence": [41]}],
-                            exertion="high", flags=[{"t": 380.0, "rule": "pain", "detail": "pain 5/10 reported (stop level 5)"}], stopped=True),
+                            [{"text": "stop: pain 7/10 during Arm out to the side, rep 6 of set 2", "confidence": "high", "evidence": [41]}],
+                            exertion="high", flags=[{"t": 380.0, "rule": "pain", "detail": "pain 7/10 reported (stop level 7)"}], stopped=True),
         "events": [],
     },
     {
