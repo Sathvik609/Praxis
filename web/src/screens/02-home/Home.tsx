@@ -101,14 +101,15 @@ export function Home() {
 
         <Card title="This week" action={<Chip tone="neutral">Sample history</Chip>}>
           <div className="text-muted">{WEEK.sessions} days · {WEEK.minutes} min</div>
-          <div className="mt-3 flex gap-2">
+          {/* Seven equal columns: fixed 40 px tiles overflowed the card at 1280 × 800 (review 28 Sep). */}
+          <div className="mt-3 grid grid-cols-7 gap-1.5">
             {WEEK.days.map((d, i) => {
               const done = WEEK.done[i]
               const today = i === WEEK.todayIndex
               return (
-                <div key={i} className="flex flex-col items-center gap-1">
+                <div key={i} className="flex min-w-0 flex-col items-center gap-1">
                   <span className="text-base text-muted">{d}</span>
-                  <span aria-label={done ? `${d}: done` : today ? `${d}: today` : `${d}: not yet`} className={`flex h-10 w-10 items-center justify-center rounded-[var(--r-control)] font-bold ${done ? 'bg-teal-fill text-white' : today ? 'bg-tint-mint text-teal-ink' : 'bg-bg text-muted'}`}>
+                  <span aria-label={done ? `${d}: done` : today ? `${d}: today` : `${d}: not yet`} className={`flex h-10 w-full max-w-10 items-center justify-center rounded-[var(--r-control)] font-bold ${done ? 'bg-teal-fill text-white' : today ? 'bg-tint-mint text-teal-ink' : 'bg-bg text-muted'}`}>
                     {done ? <Check aria-hidden className="h-5 w-5" strokeWidth={3} /> : today ? 'now' : '·'}
                   </span>
                 </div>

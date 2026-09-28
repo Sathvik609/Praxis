@@ -89,6 +89,15 @@ test('a replayed last session says replay; one goal attempt is singular (review 
   expect(await screen.findByText(/^1 attempt logged this week/)).toBeInTheDocument()
 })
 
+test('the week row is seven equal columns, so it cannot overflow its card at 1280 × 800', () => {
+  renderHome()
+  const tile = screen.getByLabelText('M: done')
+  const row = tile.parentElement!.parentElement!
+  expect(row.className).toMatch(/grid-cols-7/)
+  expect(tile.className).toMatch(/w-full/)
+  expect(tile.className).not.toMatch(/(^|\s)w-10(\s|$)/) // seven fixed 40 px tiles were 328 px in a 306 px card
+})
+
 test('open report falls back to progress without sessions', () => {
   renderHome()
   fireEvent.click(screen.getByRole('button', { name: 'Open report' }))
