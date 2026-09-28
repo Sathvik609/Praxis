@@ -8,7 +8,8 @@ import { Field } from '../../design/Field'
 import { AlertTriangle, Check, RotateCcw, Sparkles, ZoomIn, ZoomOut } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { Stat } from '../../design/Stat'
-import { api, useApi } from '../../lib/api'
+import { api, isReplaySession, useApi } from '../../lib/api'
+import { countOf } from '../../lib/plural'
 import { DAY_MINUTES, DAY_ORDER, WEEKLY } from '../../lib/plan'
 import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK, exerciseById, upcomingVisit } from '../../lib/seed'
 import { CoachSheet } from '../coach/CoachDrawer'
@@ -115,7 +116,7 @@ export function Home() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-            <span className="text-muted">Last session · {sessions?.[0] ? `${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}` : WEEK.lastSession}</span>
+            <span className="text-muted">Last session · {sessions?.[0] ? `${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : WEEK.lastSession}</span>
             <Button variant="secondary" className="shrink-0" onClick={openReport}>Open report</Button>
           </div>
         </Card>
@@ -132,7 +133,7 @@ export function Home() {
           ) : (
             <>
               <p className="text-xl">{goal}</p>
-              <p className="text-muted">{attemptCount} attempts logged this week{goalNote ? ` · ${goalNote}` : ''}</p>
+              <p className="text-muted">{countOf(attemptCount, 'attempt')} logged this week{goalNote ? ` · ${goalNote}` : ''}</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Button variant="secondary" onClick={logAttempt}>Log an attempt</Button>
                 <Button

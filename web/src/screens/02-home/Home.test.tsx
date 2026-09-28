@@ -82,6 +82,13 @@ test('open report goes to the last session report when there is one, else progre
   expect(screen.getByText('REPORT')).toBeInTheDocument()
 })
 
+test('a replayed last session says replay; one goal attempt is singular (review 28 Sep)', async () => {
+  mockApi({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] }, '/api/patients/me': { goal: 'Use a cup on my own.', goal_attempts: 1, program: {} } })
+  renderHome()
+  expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · replay/)).toBeInTheDocument()
+  expect(await screen.findByText(/^1 attempt logged this week/)).toBeInTheDocument()
+})
+
 test('open report falls back to progress without sessions', () => {
   renderHome()
   fireEvent.click(screen.getByRole('button', { name: 'Open report' }))

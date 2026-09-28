@@ -37,7 +37,7 @@ test('progress shows NHPT trend, verified bars with unverified hatched, practice
   const bars = screen.getByRole('img', { name: /Waiter – cup/ })
   expect(bars).toHaveAccessibleName(/09-10 8 reaches unverified/)
   // real practice numbers, and the wireframe's sample history labeled as such next to them
-  expect(screen.getByText('sessions recorded here')).toBeInTheDocument()
+  expect(screen.getByText('session recorded here')).toBeInTheDocument() // practice.done is 1
   expect(screen.getByText('active time · rests excluded')).toBeInTheDocument()
   expect(screen.getByText('Sample')).toBeInTheDocument()
   expect(screen.getByText('19/22')).toBeInTheDocument()
@@ -105,7 +105,7 @@ test('sample history is labeled Sample on the chart, the list and the peg-test t
   mockApi({ '/api/progress': PROGRESS, '/api/sessions': sample })
   renderProgress()
   await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
-  expect(screen.getByText('Includes sample')).toBeInTheDocument() // no real peg-test session backs the trend
+  expect(screen.getAllByText('Sample').length).toBeGreaterThanOrEqual(4) // no real peg-test session backs the trend: it is all sample
   expect(screen.getAllByText('Sample').length).toBeGreaterThanOrEqual(3) // practice card, chart card, list row
   expect(screen.getByText(/Sample history is illustrative, not yours/)).toBeInTheDocument()
 })
@@ -114,4 +114,50 @@ test('without the session list the chart falls back to verified_per_session by m
   mockApi({ '/api/progress': PROGRESS })
   renderProgress()
   expect(await screen.findByRole('img', { name: /Waiter – cup/ })).toHaveAccessibleName(/09-12 17 reaches/)
+})
+
+// ---- 28 Sep review: replays are listed with a badge, never charted; no delta across sample + real
+
+const REPLAY_CUP = { ...SESSION, id: 'rp', source: 'replay', replay: true, title: 'Waiter – cup', date: '2026-09-23', feedback: {}, summary: { ...cam(31), source: 'replay' } }
+
+test('a replayed session is listed with a Replay badge but never charted', async () => {
+  mockApi({ '/api/progress': PROGRESS, '/api/sessions': { sessions: [...SESSIONS.sessions, REPLAY_CUP] } })
+  renderProgress()
+  await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
+  expect(screen.getByRole('img', { name: /Waiter – cup/ })).not.toHaveAccessibleName(/09-23/)
+  const row = screen.getByRole('button', { name: /Open Waiter – cup · 2026-09-23/ }).closest('li')!
+  expect(within(row).getByText('Replay')).toBeInTheDocument()
+  expect(screen.getByText(/Replays are listed, never counted/)).toBeInTheDocument()
+})
+
+test('a trend mixing sample and your own points says so and claims no change across them', async () => {
+  const mixed = { ...PROGRESS, nhpt_trend: [{ date: '2026-08-01', total_s: 68, kind: 'sample' }, { date: '2026-09-12', total_s: 41.2, kind: 'sample' }, { date: '2026-09-25', total_s: 38.5, kind: 'live' }] }
+  mockApi({ '/api/progress': mixed, '/api/sessions': SESSIONS })
+  renderProgress()
+  await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
+  expect(screen.queryByText(/better than the first point/)).not.toBeInTheDocument()
+  expect(screen.getByText('Includes sample')).toBeInTheDocument()
+  expect(screen.getByText(/No change is computed across sample and your own results/)).toBeInTheDocument()
+  expect(screen.getByText(/1 assessment of yours · 2 sample/)).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /08-01 68 s sample.*09-25 38.5 s(?! sample)/ })).toBeInTheDocument()
+  // the headline number is the patient's own latest
+  expect(screen.getByText('latest · 09-25')).toBeInTheDocument()
+})
+
+test('a sample-only trend is labeled Sample and keeps its change inside the sample', async () => {
+  const sample = { ...PROGRESS, nhpt_trend: [{ date: '2026-08-01', total_s: 68, kind: 'sample' }, { date: '2026-09-12', total_s: 41.2, kind: 'sample' }] }
+  mockApi({ '/api/progress': sample, '/api/sessions': SESSIONS })
+  renderProgress()
+  await screen.findByRole('heading', { name: 'Nine-Hole Peg Test' })
+  expect(screen.getByText(/26.8 s better than the first point/)).toBeInTheDocument()
+  expect(screen.getByText(/2 sample assessments · illustrative, not yours/)).toBeInTheDocument()
+})
+
+test('counts are pluralised: one session, one attempt', async () => {
+  const one = { ...PROGRESS, verified_per_session: [{ date: '2026-09-12', verified: 1, limited: false, mode: 'cup' }], goal_log_count: 1 }
+  mockApi({ '/api/progress': one })
+  renderProgress()
+  expect(await screen.findByText(/1 attempt logged/)).toBeInTheDocument()
+  expect(screen.getByText(/^1 session ·/)).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /Waiter – cup/ })).toHaveAccessibleName(/09-12 1 reach$/)
 })

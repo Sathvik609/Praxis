@@ -6,7 +6,7 @@ import { Chip } from '../../design/Chip'
 import { Field } from '../../design/Field'
 import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
-import { api, useApi } from '../../lib/api'
+import { api, isReplaySession, useApi } from '../../lib/api'
 import { PROGRAM, upcomingVisit } from '../../lib/seed'
 
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
@@ -29,8 +29,8 @@ export function Therapist() {
   const me = patients?.find((p) => p.id === selectedId) ?? patients?.[0]
   const nextVisit = upcomingVisit(PROGRAM.nextVisit)
   // Pain before → after from the stored sessions (newest first), never a fixed sentence.
-  const painRows = (sessions ?? []).filter((s) => typeof s.feedback?.pain_after === 'number').slice(0, 4)
-  const painSample = painRows.some((s) => (s as { illustrative?: boolean }).illustrative)
+  const painRows = (sessions ?? []).filter((s) => !isReplaySession(s) && typeof s.feedback?.pain_after === 'number').slice(0, 4) // replays never count (same rule as Progress)
+  const painSample = painRows.some((s) => s.illustrative)
   const shown = (patients ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
   const open = (flags ?? []).filter((f) => !f.reviewed)
   const scrollTo = (ref: { current: HTMLElement | null }) => ref.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
@@ -135,7 +135,7 @@ export function Therapist() {
             <Card title="Adherence and NHPT">
               <div className="flex flex-wrap gap-8">
                 <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned sessions done" />
-                <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1`} />
+                <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1${me?.nhpt_sample ? ' · sample' : ''}`} />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
                 {painRows.length ? (
@@ -155,11 +155,14 @@ export function Therapist() {
                   <span className="w-16 text-muted">{s.date.slice(5)}</span>
                   <span className="min-w-0 flex-1 text-lg">{s.title}</span>
                   <span className="text-muted">{s.summary.camera.verified ?? 0} verified · {s.summary.camera.unverified ?? 0} unverified · {s.summary.camera.coverage_pct ?? '—'}% coverage</span>
+                  {s.illustrative && <Chip tone="neutral">Sample</Chip>}
+                  {isReplaySession(s) && <Chip tone="amber">Replay</Chip>}
                   <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.mode === 'nhpt' ? 'Assessment' : s.tracking === 'limited' ? 'Limited' : s.status === 'complete' ? 'Complete' : 'Ended early'}</Chip>
                   <Button variant="secondary" onClick={() => openTrace(s.id)}>Open trace</Button>
                 </li>
               ))}
             </ul>
+            {(sessions ?? []).some(isReplaySession) && <p className="mt-2 text-base text-muted">Replays are recorded clips run through the same pipeline: listed here, never counted in adherence, NHPT or pain.</p>}
             {traceNote && <p className="mt-2 text-red-ink" role="alert">{traceNote}</p>}
           </Card>
           {trace && (
