@@ -15,6 +15,8 @@ test('nav shows the five hubs, Calendar before Settings, and the program label',
   const hubs = screen.getAllByRole('link').filter((a) => a.closest('nav'))
   expect(hubs.map((a) => a.textContent)).toEqual(['Home', 'Exercises', 'Progress', 'Calendar', 'Settings'])
   expect(screen.getByRole('link', { name: 'Calendar' })).toHaveAttribute('href', '/details/calendar')
+  // five hubs fit 1280 px only because the header may shrink and the program label truncates
+  expect(screen.getByRole('banner').className).toMatch(/\bmin-w-0\b/)
   expect(screen.getByText(/Program: Hospital GRASP/)).toBeInTheDocument()
 })
 

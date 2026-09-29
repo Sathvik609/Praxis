@@ -11,11 +11,13 @@ const hubs: { label: string; to: string; icon: Icon }[] = [
   { label: 'Settings', to: '/details/settings', icon: SettingsIcon },
 ]
 
-/** Hub navigation (the app lives under `/details`; `/` redirects there). The active hub is filled (tint + ink, AA in both themes) and
+/** Hub navigation (the app lives under `/details`; `/` redirects there). `min-w-0` lets the
+ *  program label truncate: without it the header's min-content (five hubs since 28 Sep)
+ *  widened the whole shell past 1280 px. The active hub is filled (tint + ink, AA in both themes) and
  *  bold, and NavLink sets aria-current so the state is not colour-only. */
 export function Nav({ program, initial }: { program: string; initial: string }) {
   return (
-    <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
+    <header className="flex h-16 min-w-0 items-center gap-6 border-b border-line bg-surface px-6">
       <Link
         to="/details"
         aria-label="Praxis · home"
