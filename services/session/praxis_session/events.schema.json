@@ -47,7 +47,8 @@
         "exertion",
         "replay_start",
         "replay_end",
-        "self_report"
+        "self_report",
+        "agent_status"
       ]
     },
     "t": {
@@ -86,9 +87,11 @@
         "partial",
         "self_ticked",
         "coach",
+        "rule",
+        "agent",
         null
       ],
-      "description": "calibration: where the homography came from (fresh | partial | held | null). self_report: always 'self_ticked' (the patient's own tick on a demo-only exercise, never a camera-verified rep). command: 'coach' when a coach decision (a regress's set_hold) asked for it rather than the client."
+      "description": "calibration: where the homography came from (fresh | partial | held | null). self_report: always 'self_ticked' (the patient's own tick on a demo-only exercise, never a camera-verified rep). command: 'coach' when a coach decision (a regress's set_hold) asked for it rather than the client. coach: 'rule' (deterministic rule coach) or 'agent' (Claude agent, 29 Sep). command: 'agent' when the patient accepted an agent prompt (resume, set_target, set_hold, set_reps, set_phase) or the agent ran recalibrate."
     },
     "age_s": {
       "type": "number"
@@ -492,6 +495,17 @@
     "best_deg": {
       "description": "set_complete: best verified angle in the set, camera-relative degrees.",
       "type": "number"
+    },
+    "state": {
+      "type": "string",
+      "description": "agent_status: thinking | idle | offline."
+    },
+    "trigger": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "agent_status: the checkpoint that started the run (checkin, set_complete, arc_complete, pause:failed_reps, pause:perception, nhpt_complete, feedback)."
     }
   }
 }
