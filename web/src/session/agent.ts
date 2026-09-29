@@ -18,7 +18,7 @@ export type AgentMode = 'off' | 'anthropic' | 'bedrock' | 'scripted'
 /** `/health` → `agent`. */
 export type AgentHealth = { mode: AgentMode; model: string; mcp: boolean; ready: boolean; reason?: string }
 
-type WithCoach = { source?: unknown; label?: unknown } | null | undefined
+type WithCoach = { source?: unknown; label?: unknown; [k: string]: unknown } | null | undefined
 
 /** Legacy events (before the agent) carry no `source`: they are the rule coach. */
 export function coachSource(e: WithCoach): CoachSource {
@@ -50,6 +50,9 @@ export function modelName(id: string | undefined | null): string {
   return `${m[1][0].toUpperCase()}${m[1].slice(1).toLowerCase()} ${clean}`
 }
 
+/** The "Why?" option keeps a prompt open and asks the coach for its reason. */
+export const isWhy = (option: string) => /^why\b/i.test(option.trim())
+
 /** The progression prompt predates `kind`; anything else unnamed is an adjustment. */
 export function promptKind(p: Prompt): PromptKind {
   if (p.kind) return p.kind
@@ -70,6 +73,20 @@ export function describeProposal(p: Proposal, ctx: { from?: number | string | nu
   const arrow = ctx.from != null && ctx.from !== '' ? `${withUnit(ctx.from, p.unit)} → ` : '→ '
   const range = ctx.range ? ` (your program allows ${ctx.range[0]}–${withUnit(ctx.range[1], p.unit)})` : ''
   return `${name} ${arrow}${withUnit(p.value, p.unit)}${range}${p.clamped ? ' · adjusted to your program’s limit' : ''}`
+}
+
+type ProgramLike = { exercises?: Record<string, Record<string, unknown>>; allowed_adaptations?: Record<string, Record<string, unknown>> } | null | undefined
+
+/** Where "from" and the allowed range come from: the running value the screen knows (e.g. the
+ *  arm frame's target), else the prescribed value; the range is the prescription's allowed
+ *  adaptation when it is a numeric pair. */
+export function proposalContext(p: Proposal, program: ProgramLike, running: Record<string, number | string | null | undefined> = {}): { from: number | string | null; range: [number, number] | null } {
+  const prescribed = program?.exercises?.[p.exercise]?.[p.field]
+  const run = running[p.field]
+  const from = run != null ? run : typeof prescribed === 'number' || typeof prescribed === 'string' ? prescribed : null
+  const allowed = program?.allowed_adaptations?.[p.exercise]?.[p.field]
+  const range = Array.isArray(allowed) && allowed.length === 2 && allowed.every((v) => typeof v === 'number') ? ([allowed[0], allowed[1]] as [number, number]) : null
+  return { from, range }
 }
 
 /** Settings > Coach. */

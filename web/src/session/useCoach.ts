@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PraxisEvent } from '../lib/events'
-import type { CoachSource, Prompt } from './agent'
+import { coachLabel, coachSource, latestAgentStatus, promptKind, type CoachSource, type Prompt } from './agent'
 
 export type { Prompt } from './agent'
 
@@ -31,6 +31,12 @@ function priorityOf(action: string): SpeechPriority {
   return 'instruct'
 }
 
+/** A resume, however it happened: the service's `resume` event, or an accepted `resume`
+ *  command (the patient's own, or the agent's after the patient tapped Yes). */
+function isResume(e: PraxisEvent): boolean {
+  return e.type === 'resume' || (e.type === 'command' && e.cmd === 'resume' && e.ok !== false)
+}
+
 /** Consumes coach / stop-rule / exertion events: latest caption (spoken once), pending prompt,
  *  overlay state (paused | stopped | rest) and the exertion chip. */
 export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
@@ -51,15 +57,21 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
     }
   }, [coachEvents, opts])
 
-  const promptEvent = [...coachEvents].reverse().find((e) => e.ui?.prompt && !dismissed.has(e.id))
-  const prompt: (Prompt & { eventId: number }) | null = promptEvent ? { ...promptEvent.ui.prompt!, eventId: promptEvent.id } : null
+  // A resume prompt is answered by the session resuming, whichever button did it.
+  const resumedAt = events.reduce((m, e) => (isResume(e) ? Math.max(m, e.id) : m), 0)
+  const promptEvent = [...coachEvents]
+    .reverse()
+    .find((e) => e.ui?.prompt && !dismissed.has(e.id) && !(promptKind(e.ui.prompt) === 'resume' && resumedAt > e.id))
+  const prompt: (Prompt & { eventId: number }) | null = promptEvent
+    ? { ...promptEvent.ui.prompt!, kind: promptKind(promptEvent.ui.prompt!), eventId: promptEvent.id }
+    : null
 
   const overlay: Overlay | null = (() => {
     const stop = [...events].reverse().find((e) => e.type === 'stop')
     if (stop) return { kind: 'stopped', rule: String(stop.rule), text: String(stop.text ?? '') }
-    const last = [...events].reverse().find((e) => e.type === 'pause' || e.type === 'resume' || e.type === 'rest')
+    const last = [...events].reverse().find((e) => e.type === 'pause' || e.type === 'rest' || isResume(e))
     if (!last || last.id <= resumedAfter) return null
-    if (last.type === 'resume') return null
+    if (isResume(last)) return null
     if (last.type === 'rest') return { kind: 'rest', rule: String(last.rule ?? 'exertion'), text: String(last.text ?? '') }
     return { kind: 'paused', rule: String(last.rule ?? 'patient'), text: String(last.text ?? '') }
   })()
@@ -69,8 +81,15 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
     ? { level: exertionEvent.level as ExertionState['level'], reasons: (exertionEvent.reasons as string[]) ?? [], method: String(exertionEvent.method ?? 'behavioural') }
     : null
 
+  const lastRule = [...coachEvents].reverse().find((e) => coachSource(e) === 'rule')
+
   return {
     caption,
+    /** Which coach said the caption (legacy events without `source` are the rule coach). */
+    captionSource: coachSource(caption),
+    /** Label for the screen's own state captions: the rule coach's latest label. */
+    ruleLabel: coachLabel(lastRule),
+    agent: latestAgentStatus(events),
     prompt,
     dismissPrompt: () => promptEvent && setDismissed((s) => new Set(s).add(promptEvent.id)),
     overlay,

@@ -1,5 +1,15 @@
 import type { PraxisEvent } from '../lib/events'
-import { COACH_LABEL, coachLabel, coachSource, describeProposal, healthLines, latestAgentStatus, modelName, promptKind } from './agent'
+import { COACH_LABEL, coachLabel, coachSource, describeProposal, healthLines, latestAgentStatus, modelName, promptKind, proposalContext } from './agent'
+
+test('proposal context: running value first, then the prescription; range from allowed adaptations', () => {
+  const rx = { exercises: { abduction: { target_deg: 90, hold_s: 3, reps: 8 } }, allowed_adaptations: { abduction: { target_deg: [60, 90], reps: [6, 8] }, cup: { fast_arcs: true } } }
+  const p = { exercise: 'abduction', field: 'target_deg', value: 75, requested: 75, clamped: false, unit: '°' }
+  expect(proposalContext(p, rx, { target_deg: 80 })).toEqual({ from: 80, range: [60, 90] })
+  expect(proposalContext(p, rx)).toEqual({ from: 90, range: [60, 90] })
+  expect(proposalContext({ ...p, field: 'hold_s' }, rx)).toEqual({ from: 3, range: null })
+  expect(proposalContext({ ...p, exercise: 'cup', field: 'phase' }, rx, { phase: 'slow' })).toEqual({ from: 'slow', range: null })
+  expect(proposalContext(p, null)).toEqual({ from: null, range: null })
+})
 
 const coach = (id: number, extra: Record<string, unknown> = {}): PraxisEvent => ({ type: 'coach', t: id, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [], ui: {}, ...extra })
 
