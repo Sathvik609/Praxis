@@ -11,7 +11,7 @@ from praxis_session.store import Store
 def test_seed_schedule_is_mon_to_fri_peg_test_sunday_and_the_next_visit():
     s = SEED_PRESCRIPTION.schedule
     assert s.practice_days == [0, 1, 2, 3, 4] and s.nhpt_day == 6
-    assert s.next_visit is not None and s.next_visit.at == "2026-10-02T14:30" and s.next_visit.with_ == "Dr. Anita Rao, OT"
+    assert s.next_visit is not None and s.next_visit.at == "2026-10-01T14:30" and s.next_visit.with_ == "Dr. Anita Rao, OT"
     assert s.minutes_per_day == 10
 
 
@@ -23,7 +23,7 @@ def test_minutes_per_day_matches_the_day_plan():
 
 def test_schedule_round_trips_through_json_with_the_with_key():
     blob = json.loads(SEED_PRESCRIPTION.model_dump_json())
-    assert blob["schedule"]["next_visit"] == {"at": "2026-10-02T14:30", "with": "Dr. Anita Rao, OT"}
+    assert blob["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
     again = Prescription.model_validate(blob)
     assert again.schedule == SEED_PRESCRIPTION.schedule
 
@@ -44,7 +44,7 @@ def test_old_prescription_json_without_a_schedule_parses_with_the_seed_default()
         {"practice_days": [0, -1], "nhpt_day": 6},
         {"practice_days": [0], "nhpt_day": 7},
         {"practice_days": [0], "nhpt_day": 6, "next_visit": {"at": "next thursday", "with": "Dr. Rao"}},
-        {"practice_days": [0], "nhpt_day": 6, "next_visit": {"at": "2026-10-02T14:30", "with": "  "}},
+        {"practice_days": [0], "nhpt_day": 6, "next_visit": {"at": "2026-10-01T14:30", "with": "  "}},
         {"practice_days": [0], "nhpt_day": 6, "minutes_per_day": 0},
     ],
 )
@@ -58,7 +58,7 @@ def test_practice_days_are_stored_sorted():
 
 
 def test_visit_text_reads_like_the_old_patient_label():
-    assert visit_text(SEED_PRESCRIPTION.schedule.next_visit) == "Fri 2 Oct, 2:30 PM"  # 2 Oct 2026 is a Friday
+    assert visit_text(SEED_PRESCRIPTION.schedule.next_visit) == "Thu 1 Oct, 2:30 PM"  # 1 Oct 2026 is a Thursday
     assert visit_text(None) is None
 
 
@@ -69,7 +69,7 @@ def test_store_serves_the_schedule_and_a_patient_next_visit_derived_from_it(tmp_
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()
     assert st.prescription()["schedule"]["practice_days"] == [0, 1, 2, 3, 4]
-    assert st.patient()["program"]["next_visit"] == "Fri 2 Oct, 2:30 PM"  # the old seed said Thu 18 Sep (past on 28 Sep)
+    assert st.patient()["program"]["next_visit"] == "Thu 1 Oct, 2:30 PM"  # the old seed said Thu 18 Sep (past on 28 Sep)
 
 
 def test_an_old_database_without_a_schedule_is_brought_up_to_the_seed(tmp_path):

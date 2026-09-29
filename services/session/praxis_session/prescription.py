@@ -26,7 +26,7 @@ class NextVisit(BaseModel):
     """The next clinic visit the therapist booked: a local date-time and who it is with."""
 
     model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, serialize_by_alias=True)
-    at: str  # ISO local date-time, e.g. "2026-10-02T14:30"
+    at: str  # ISO local date-time, e.g. "2026-10-01T14:30"
     with_: str = Field(alias="with", max_length=80)
 
     @field_validator("at")
@@ -72,13 +72,13 @@ SEED_SCHEDULE = Schedule(
     practice_days=[0, 1, 2, 3, 4],
     nhpt_day=6,
     # The old seed said "Thu 18 Sep, 2:30 PM", which is in the past on 28 Sep.
-    next_visit=NextVisit(at="2026-10-02T14:30", with_="Dr. Anita Rao, OT"),
+    next_visit=NextVisit(at="2026-10-01T14:30", with_="Dr. Anita Rao, OT"),
     minutes_per_day=SCHEDULE_MINUTES,
 )
 
 
 def visit_text(v: NextVisit | None) -> str | None:
-    """The patient-facing label Home and the therapist view show, e.g. "Thu 2 Oct, 2:30 PM"."""
+    """The patient-facing label Home and the therapist view show, e.g. "Thu 1 Oct, 2:30 PM"."""
     if v is None:
         return None
     t = v.when()

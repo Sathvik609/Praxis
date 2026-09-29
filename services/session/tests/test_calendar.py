@@ -7,7 +7,7 @@ from praxis_session.calendar_view import build_calendar, practice_counts, short_
 from praxis_session.prescription import SEED_PRESCRIPTION, NextVisit, Schedule
 
 TODAY = date(2026, 9, 28)  # a Monday
-SCHED = SEED_PRESCRIPTION.schedule  # Mon-Fri practice, peg test Sun, visit Fri 2 Oct 2:30 PM
+SCHED = SEED_PRESCRIPTION.schedule  # Mon-Fri practice, peg test Sun, visit Thu 1 Oct 2:30 PM
 
 
 def _s(sid, day, source="live", mode="cup", exercise=None, active_s=600.0, nhpt=None, title=None):
@@ -45,9 +45,9 @@ def test_statuses_for_a_week_with_done_missed_today_planned_rest_and_the_peg_tes
 def test_the_next_clinic_visit_is_on_its_day():
     cal = build_calendar(SCHED, [], date(2026, 9, 28), date(2026, 10, 4), TODAY)
     d = _days(cal)
-    visit = d["2026-10-02"]["clinic_visit"]
-    assert visit == {"at": "2026-10-02T14:30", "with": "Dr. Anita Rao, OT", "with_short": "Dr. Rao", "time": "2:30 PM"}
-    assert d["2026-10-02"]["status"] == "planned"  # a practice day that also has the visit
+    visit = d["2026-10-01"]["clinic_visit"]
+    assert visit == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT", "with_short": "Dr. Rao", "time": "2:30 PM"}
+    assert d["2026-10-01"]["status"] == "planned"  # a practice day that also has the visit
     assert sum(1 for x in cal["days"] if x["clinic_visit"]) == 1
 
 
@@ -104,7 +104,7 @@ def test_week_view_follows_a_therapist_schedule():
 
 def test_next_visit_block_says_whether_it_is_upcoming():
     cal = build_calendar(SCHED, [], TODAY, TODAY, TODAY, now=datetime(2026, 9, 28, 9, 0))
-    assert cal["next_visit"]["upcoming"] is True and cal["next_visit"]["text"] == "Fri 2 Oct, 2:30 PM"
+    assert cal["next_visit"]["upcoming"] is True and cal["next_visit"]["text"] == "Thu 1 Oct, 2:30 PM"
     past = Schedule(practice_days=[0], nhpt_day=6, next_visit=NextVisit(at="2026-09-18T14:30", with_="Dr. Anita Rao, OT"))
     assert build_calendar(past, [], TODAY, TODAY, TODAY, now=datetime(2026, 9, 28, 9, 0))["next_visit"]["upcoming"] is False
 
@@ -138,7 +138,7 @@ def test_api_calendar_defaults_to_this_week_from_the_clock(client, at_28_sep):
     cal = client.get("/api/calendar").json()
     assert cal["today"] == "2026-09-28" and cal["from"] == "2026-09-28" and cal["to"] == "2026-10-04"
     assert len(cal["days"]) == 7 and cal["schedule"]["practice_days"] == [0, 1, 2, 3, 4]
-    assert cal["schedule"]["next_visit"] == {"at": "2026-10-02T14:30", "with": "Dr. Anita Rao, OT"}
+    assert cal["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
     assert cal["week"]["planned_days"] == 5 and cal["week"]["done_days"] == 0
 
 

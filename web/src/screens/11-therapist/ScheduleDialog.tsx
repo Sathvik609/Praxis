@@ -10,7 +10,7 @@ import { WEEKDAYS } from '../../lib/calendar'
 import { plural } from '../../lib/plural'
 
 /** The seed schedule, for a service that predates 28 Sep (its prescription has no schedule). */
-export const DEFAULT_SCHEDULE: Schedule = { practice_days: [0, 1, 2, 3, 4], nhpt_day: 6, next_visit: { at: '2026-10-02T14:30', with: 'Dr. Anita Rao, OT' }, minutes_per_day: 10 }
+export const DEFAULT_SCHEDULE: Schedule = { practice_days: [0, 1, 2, 3, 4], nhpt_day: 6, next_visit: { at: '2026-10-01T14:30', with: 'Dr. Anita Rao, OT' }, minutes_per_day: 10 }
 
 type Props = { schedule: Schedule; version: number; onClose: () => void; onSaved: (rx: Prescription) => void }
 

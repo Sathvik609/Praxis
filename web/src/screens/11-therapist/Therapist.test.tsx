@@ -103,7 +103,7 @@ async function openSchedule() {
   await screen.findByRole('heading', { name: 'Alex M.' })
   const rx = screen.getByRole('region', { name: 'Prescription' })
   expect(rx).toHaveTextContent('Practice days · Mon–Fri · peg test Sun')
-  expect(rx).toHaveTextContent('Next visit · Fri 2 Oct, 2:30 PM · Dr. Anita Rao, OT')
+  expect(rx).toHaveTextContent('Next visit · Thu 1 Oct, 2:30 PM · Dr. Anita Rao, OT')
   fireEvent.click(screen.getByRole('button', { name: 'Edit practice days' }))
   return { fetchMock, dialog: await screen.findByRole('dialog', { name: 'Edit practice days' }) }
 }
@@ -113,7 +113,7 @@ test('the dialog opens on the current schedule', async () => {
   for (const d of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']) expect(within(dialog).getByRole('button', { name: d })).toHaveAttribute('aria-pressed', 'true')
   for (const d of ['Sat', 'Sun']) expect(within(dialog).getByRole('button', { name: d })).toHaveAttribute('aria-pressed', 'false')
   expect(within(dialog).getByRole('radio', { name: 'Sun' })).toHaveAttribute('aria-checked', 'true')
-  expect(within(dialog).getByLabelText('Visit date')).toHaveValue('2026-10-02')
+  expect(within(dialog).getByLabelText('Visit date')).toHaveValue('2026-10-01')
   expect(within(dialog).getByLabelText('Visit time')).toHaveValue('14:30')
   expect(within(dialog).getByLabelText('With')).toHaveValue('Dr. Anita Rao, OT')
   expect(within(dialog).getByText('5 practice days a week')).toBeInTheDocument()
