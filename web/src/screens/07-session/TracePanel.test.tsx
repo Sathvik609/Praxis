@@ -1,5 +1,82 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { mockApi } from '../../test/api-mock'
 import { TracePanel, traceRows } from './TracePanel'
+
+const AGENT = 'Claude agent · Anthropic API (dev)'
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const agentEvents = [
+  { type: 'command', t: 0.5, id: 39, cmd: 'checkin', ok: true, session_id: 's1' },
+  { type: 'rep_complete', t: 1, id: 40, set: 1, rep: 8 },
+  { type: 'set_complete', t: 2, id: 41, set: 1 },
+  { type: 'agent_status', t: 2.1, id: 42, state: 'thinking', trigger: 'set_complete', label: AGENT },
+  { type: 'coach', t: 4, id: 43, action: 'correct', cue_id: 'agent', reason: 'marker 2 covered', evidence: [41], text: 'Move your sleeve off marker 2.', ui: {}, label: AGENT, source: 'agent' },
+  { type: 'rep_complete', t: 5, id: 44, set: 2, rep: 1 },
+]
+let seq = 0
+const row = (kind: string, f: Record<string, unknown> = {}) => ({ ...f, seq: ++seq, ts: 1000 + seq, session: 's1', kind })
+const agentRows = () => {
+  seq = 0
+  return [
+    row('event', { type: 'rep_complete', id: 40, t: 1 }),
+    row('event', { type: 'set_complete', id: 41, t: 2 }),
+    row('agent_run', { phase: 'start', trigger: 'set_complete', model: 'claude-sonnet-5', transport: 'mcp' }),
+    row('tool', { server: 'perception', name: 'check_setup', args: {}, ok: true, ms: 120, transport: 'mcp', result_summary: 'marker 2 covered; lighting low' }),
+    row('tool', { server: 'coach', name: 'speak', args: {}, ok: false, ms: 2, transport: 'mcp', result_summary: 'rate limited' }),
+    row('decide', { action: 'correct', reason: 'marker 2 covered', evidence: [41, 42], label: AGENT }),
+    row('action', { text: 'Move your sleeve off marker 2.', label: AGENT }),
+    row('agent_run', { phase: 'end', trigger: 'set_complete', model: 'claude-sonnet-5', transport: 'mcp', ms: 2400, input_tokens: 1800, output_tokens: 210, outcome: 'ok' }),
+    row('event', { type: 'rep_complete', id: 44, t: 5 }),
+    row('agent_run', { phase: 'start', trigger: 'rep_complete', model: 'claude-sonnet-5', transport: 'direct' }),
+    row('agent_error', { error_kind: 'timeout', message: 'run exceeded 15 s' }),
+  ]
+}
+
+test('agent runs render under their perception event: run header, tools with ✓ / ✕, decide, action, error', () => {
+  render(<TracePanel events={agentEvents} agentRows={agentRows()} />)
+  const runs = screen.getAllByRole('button', { name: /agent run/ })
+  expect(runs).toHaveLength(2)
+  expect(runs[0]).toHaveTextContent('agent run · trigger set_complete · Sonnet 5 · mcp')
+  expect(runs[0]).toHaveTextContent(/2\.4 s/)
+  expect(runs[0].className).toMatch(/min-h-14/)
+  expect(screen.getByText(/perception\.check_setup/).closest('div')).toHaveTextContent('perception.check_setup ✓ ok 120 ms — marker 2 covered; lighting low')
+  expect(screen.getByText(/coach\.speak/).closest('div')).toHaveTextContent('coach.speak ✕ failed 2 ms — rate limited')
+  expect(screen.getByText(/correct · evidence #41 #42/)).toBeInTheDocument()
+  expect(screen.getByText(/speak “Move your sleeve off marker 2\.”/)).toBeInTheDocument()
+  expect(screen.getByText(/agent error · timeout/)).toBeInTheDocument()
+  // the run group comes right after its trigger event (set_complete #41), before rep #44
+  const text = screen.getByTestId('trace-rows').textContent ?? ''
+  expect(text.indexOf('#41 set_complete')).toBeLessThan(text.indexOf('agent run · trigger set_complete'))
+  expect(text.indexOf('agent run · trigger set_complete')).toBeLessThan(text.indexOf('#44 rep_complete'))
+  // the agent's coach event is shown once, inside its run, not again as a rule-style decide row
+  expect(screen.getAllByText(/Move your sleeve off marker 2/)).toHaveLength(1)
+  // the header names both coaches
+  expect(screen.getByText(new RegExp(`${esc(AGENT)} at checkpoints`))).toBeInTheDocument()
+})
+
+test('each agent run collapses and expands from its header', () => {
+  render(<TracePanel events={agentEvents} agentRows={agentRows()} />)
+  const run = screen.getAllByRole('button', { name: /agent run/ })[0]
+  expect(run).toHaveAttribute('aria-expanded', 'true')
+  const group = document.getElementById(run.getAttribute('aria-controls') ?? '')!
+  expect(within(group).getByText(/perception\.check_setup/)).toBeInTheDocument()
+  fireEvent.click(run)
+  expect(run).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByText(/perception\.check_setup/)).toBeNull()
+})
+
+test('without trace rows an agent coach event still shows, tagged with its label', () => {
+  render(<TracePanel events={agentEvents} agentRows={[]} />)
+  expect(screen.getByText(/Move your sleeve off marker 2/)).toBeInTheDocument()
+  expect(screen.getAllByText(new RegExp(esc(AGENT))).length).toBeGreaterThan(0)
+})
+
+test('the panel polls /api/trace for the socket session when no rows are passed', async () => {
+  const fetchMock = mockApi({ '/api/trace': { session: 's1', rows: agentRows() } })
+  render(<TracePanel events={agentEvents} />)
+  await waitFor(() => expect(screen.getAllByRole('button', { name: /agent run/ })).toHaveLength(2))
+  expect(String(fetchMock.mock.calls[0][0])).toContain('session=s1')
+  vi.unstubAllGlobals()
+})
 
 const events = [
   { type: 'frame', t: 0.1, id: 1 },
