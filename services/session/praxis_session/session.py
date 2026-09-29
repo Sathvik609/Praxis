@@ -93,6 +93,7 @@ class CoachSession:
             # opening instruction can cite it as evidence.
             e = make_event("checkin", t=t, **self.checkin)
             self._ring.append(e)
+            self.trace.log("event", type="checkin", id=e.id, t=t)
             self._checkpoint("checkin", [e.id], t)
         return out
 
@@ -208,6 +209,7 @@ class CoachSession:
         self.epoch += 1
         if self.agent is not None:
             ids = [e.id for e in self.recent_events(last_n=5)]
+            self.trace.log("event", type="feedback", t=t)
             self._checkpoint("feedback", ids, t)
 
     def _checkpoint(self, trigger: str, evidence: list[int], t: float) -> None:
@@ -284,7 +286,9 @@ class CoachSession:
                     self._clock_pause(e.t)  # the patient resumes both with a tap
                 if e.type == "pause":
                     self.paused, self.pause_rule = True, e.payload.get("rule")
-                    if e.payload.get("rule") in CHECKPOINT_PAUSES and not self.stopped:
+                    if e.payload.get("rule") in CHECKPOINT_PAUSES and not self.stopped and self.agent is not None:
+                        # an `event` row the trace panel can pair with agent_run.trigger
+                        self.trace.log("event", type="pause", id=e.id, t=e.t, rule=e.payload.get("rule"))
                         self._checkpoint(f"pause:{e.payload.get('rule')}", [e.id], e.t)
             elif e.type == "therapist_flag":
                 self.trace.log("flag", rule=e.payload.get("rule"), detail=e.payload.get("detail"))
@@ -299,7 +303,8 @@ class CoachSession:
         for call in d.tool_calls:
             self.trace.log("tool", **call)
         spoken = speak(d.text, t, d.cue_id, d.action)
-        self.trace.log("action", kind="speak", text=d.text, ui=d.ui, label=d.label)
+        # `kind` is the row type (Trace.log), so the action verb goes in `tool`.
+        self.trace.log("action", tool="speak", text=d.text, ui=d.ui, label=d.label, source=d.source)
         if d.ui.get("prompt"):
             self.pending_prompt = d.ui["prompt"]
         for rx_key, fields in (d.ui.get("apply") or {}).items():
