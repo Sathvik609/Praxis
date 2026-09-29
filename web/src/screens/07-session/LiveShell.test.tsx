@@ -28,16 +28,16 @@ test('legacy card with no source renders as the rule coach', () => {
 
 test('status chip: nothing when idle or never seen, but the live region is always there', () => {
   const { rerender } = render(<AgentStatusChip status={null} />)
-  const region = screen.getByRole('status')
+  const region = screen.getByTestId('agent-status')
   expect(region).toHaveAttribute('aria-live', 'polite')
   expect(region).toBeEmptyDOMElement()
   rerender(<AgentStatusChip status={{ state: 'idle', label: 'Claude agent · Anthropic API (dev)' }} />)
-  expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  expect(screen.getByTestId('agent-status')).toBeEmptyDOMElement()
 })
 
 test('status chip: "Coach is thinking…" while a run is in progress', () => {
   render(<AgentStatusChip status={{ state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API (dev)' }} />)
-  expect(screen.getByRole('status')).toHaveTextContent('Coach is thinking…')
+  expect(screen.getByTestId('agent-status')).toHaveTextContent('Coach is thinking…')
 })
 
 test('status chip: offline says the rule coach carries on, with the reason as a tooltip and description', () => {

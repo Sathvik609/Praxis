@@ -15,7 +15,8 @@ export type CoachEvent = PraxisEvent & {
   /** Absent on events from before the agent coach: those are the rule coach. */
   source?: CoachSource
 }
-export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string }
+/** `id` is the event that opened the state (so a cue said during a pause can be told apart). */
+export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string; id?: number }
 export type ExertionState = { level: 'low' | 'moderate' | 'high'; reasons: string[]; method: string }
 
 export type SpeechPriority = 'instruct' | 'correct' | 'stop'
@@ -68,12 +69,12 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
 
   const overlay: Overlay | null = (() => {
     const stop = [...events].reverse().find((e) => e.type === 'stop')
-    if (stop) return { kind: 'stopped', rule: String(stop.rule), text: String(stop.text ?? '') }
+    if (stop) return { kind: 'stopped', rule: String(stop.rule), text: String(stop.text ?? ''), id: stop.id }
     const last = [...events].reverse().find((e) => e.type === 'pause' || e.type === 'rest' || isResume(e))
     if (!last || last.id <= resumedAfter) return null
     if (isResume(last)) return null
-    if (last.type === 'rest') return { kind: 'rest', rule: String(last.rule ?? 'exertion'), text: String(last.text ?? '') }
-    return { kind: 'paused', rule: String(last.rule ?? 'patient'), text: String(last.text ?? '') }
+    if (last.type === 'rest') return { kind: 'rest', rule: String(last.rule ?? 'exertion'), text: String(last.text ?? ''), id: last.id }
+    return { kind: 'paused', rule: String(last.rule ?? 'patient'), text: String(last.text ?? ''), id: last.id }
   })()
 
   const exertionEvent = [...events].reverse().find((e) => e.type === 'exertion')

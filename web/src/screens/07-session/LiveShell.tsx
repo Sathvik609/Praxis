@@ -132,7 +132,7 @@ export function AgentStatusChip({ status }: { status: AgentStatus | null }) {
   const id = useId()
   const reason = status?.reason || 'The Claude agent is unavailable. The rule-based coach carries on.'
   return (
-    <span role="status" aria-live="polite" className="inline-flex">
+    <span aria-live="polite" data-testid="agent-status" className="inline-flex">
       {status?.state === 'thinking' && <Chip tone="focus" icon={<LoaderCircle className="motion-safe:animate-spin" />}>Coach is thinking…</Chip>}
       {status?.state === 'offline' && (
         <span title={reason} aria-describedby={id} className="inline-flex">
