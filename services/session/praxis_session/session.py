@@ -43,6 +43,7 @@ class CoachSession:
         # Agent prompts waiting for the patient's tap: id -> {kind, prompt, reason, accept}.
         self.prompts: dict[str, dict[str, Any]] = {}
         self.coach_note: dict[str, Any] | None = None
+        self._clock_t = 0.0
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
         self.replay_clip = replay_clip
@@ -82,8 +83,18 @@ class CoachSession:
         return self.stop_rules.stopped
 
     # ---- inputs ------------------------------------------------------------------------
+    @property
+    def clock(self) -> float:
+        """The latest time this session has seen (wall clock live, clip time in replay)."""
+        return self._clock_t
+
+    def _tick(self, t: float) -> None:
+        if isinstance(t, (int, float)) and t > self._clock_t:
+            self._clock_t = float(t)
+
     def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None) -> list[Event]:
-        self.checkin = {"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
+        self._tick(t)
+        self.checkin ={"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
         self.trace.log("checkin", **self.checkin)
         if rpe is not None:
             self.exertion.update([], rpe=rpe, t=t)
@@ -207,6 +218,7 @@ class CoachSession:
 
     def on_feedback(self, feedback: dict[str, Any], t: float) -> None:
         """Session end: the feedback form. The agent (when on) writes a coach note after it."""
+        self._tick(t)
         self.feedback = feedback
         self.trace.log("feedback", **feedback)
         self.epoch += 1
@@ -222,6 +234,7 @@ class CoachSession:
     def on_events(self, events: list[Event], snapshot: dict[str, Any], t: float) -> list[Event]:
         if not events:
             return []
+        self._tick(t)
         if self.t_start is None:
             self.t_start = t
         self.t_end = t

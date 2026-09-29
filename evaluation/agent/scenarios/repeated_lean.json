@@ -1,0 +1,118 @@
+{
+  "id": "repeated_lean",
+  "title": "Two leaning lifts in a set (one below the lean pause)",
+  "mode": "arm",
+  "steps": [
+    {
+      "events": [
+        {
+          "type": "compensation_lean",
+          "t": 4.0,
+          "lean_deg": 15.0,
+          "count": 1,
+          "flagged": false
+        },
+        {
+          "type": "rep_complete",
+          "t": 5.0,
+          "set": 1,
+          "rep": 1,
+          "peak_deg": 88.0,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": true,
+          "hike": false
+        },
+        {
+          "type": "compensation_lean",
+          "t": 9.0,
+          "lean_deg": 16.0,
+          "count": 2,
+          "flagged": false
+        },
+        {
+          "type": "rep_complete",
+          "t": 10.0,
+          "set": 1,
+          "rep": 2,
+          "peak_deg": 87.0,
+          "hold_s": 3.0,
+          "verified": true,
+          "reason": null,
+          "lean": true,
+          "hike": false
+        },
+        {
+          "type": "set_complete",
+          "t": 10.0,
+          "set": 1,
+          "reps": 2,
+          "verified_reps": 2,
+          "best_deg": 88.0
+        }
+      ]
+    },
+    {
+      "run": {}
+    },
+    {
+      "answer": {
+        "kind": "adjustment",
+        "choice": "decline"
+      }
+    }
+  ],
+  "script": {
+    "set_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "speak",
+        "if": "get_set_summary.lean_count",
+        "args": {
+          "text": "You leaned back on {get_set_summary.lean_count} lifts. Sit tall and lift only as high as you can without leaning.",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "propose_adjustment",
+        "args": {
+          "exercise": "abduction",
+          "field": "target_deg",
+          "value": 75,
+          "reason": "Two lifts needed a lean to reach 90°; 75° lets you lift from the shoulder.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "set_complete"
+    ],
+    "perceive_before": {
+      "speak": [
+        "get_set_summary"
+      ]
+    },
+    "actions": [
+      "correct",
+      "regress"
+    ],
+    "prompt_kinds": [
+      "adjustment"
+    ],
+    "applied_only_after_accept": {
+      "field": "target_deg",
+      "range": [
+        60,
+        90
+      ]
+    },
+    "stopped": false,
+    "errors": []
+  }
+}

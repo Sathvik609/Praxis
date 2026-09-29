@@ -418,9 +418,12 @@ class StrandsPlanner:
     def _mcp_client(self, url: str) -> Any:
         if self._mcp_factory is not None:
             return self._mcp_factory(url)
+        from mcp.client.streamable_http import streamable_http_client
         from strands.tools.mcp import MCPClient
 
-        return MCPClient(url=url, startup_timeout=MCP_STARTUP_TIMEOUT_S)
+        # Our own transport callable: MCPClient(url=...) still builds the deprecated
+        # `streamablehttp_client` (DeprecationWarning with mcp 1.30).
+        return MCPClient(lambda: streamable_http_client(url), startup_timeout=MCP_STARTUP_TIMEOUT_S)
 
     def _start_mcp(self) -> tuple[list[Any], list[Any]]:
         clients: list[Any] = []

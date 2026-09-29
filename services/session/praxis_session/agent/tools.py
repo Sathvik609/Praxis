@@ -128,7 +128,7 @@ class SessionHandle:
     run: RunState | None = None
     runs: int = 0
     tool_calls: int = 0
-    last_speak_mono: float = -1e9
+    last_speak_clock: float = -1e18
     prompt_seq: int = 0
     lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -498,10 +498,11 @@ def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str
         raise ToolRejected("cue must be 'instruct' or 'correct'", "field")
     line = _text(text, "text", SPEAK_MAX_CHARS)
     ids = _action_guard(evidence, count=False)
-    now = time.monotonic()
-    if now - h.last_speak_mono < SPEAK_MIN_GAP_S:
+    # Session clock (wall time live, clip time in replay), the clock the rule coach paces on.
+    now = float(h.session.clock)
+    if now - h.last_speak_clock < SPEAK_MIN_GAP_S:
         raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
-    h.last_speak_mono = now
+    h.last_speak_clock = now
     h.run.acted()  # type: ignore[union-attr]
     h._queue("decision", {"decision": _decision(cue, "agent_speak", line, "", ids, tool="speak")})
     return {"ok": True, "queued": True, "action": cue}

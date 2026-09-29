@@ -1,0 +1,64 @@
+{
+  "id": "mcp_down",
+  "title": "MCP servers unreachable: the same tools run directly",
+  "mode": "cup",
+  "mcp_url": "http://127.0.0.1:9/mcp",
+  "steps": [
+    {
+      "frame": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 1,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 940,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "arc_complete",
+          "t": 1.0,
+          "arc": 1,
+          "reaches": 1,
+          "unverified": 0
+        }
+      ]
+    },
+    {
+      "run": {}
+    }
+  ],
+  "script": {
+    "arc_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "Arc done, all verified.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "arc_complete"
+    ],
+    "transport": "direct",
+    "errors": [
+      "mcp"
+    ],
+    "actions": [
+      "instruct"
+    ],
+    "stopped": false
+  }
+}
