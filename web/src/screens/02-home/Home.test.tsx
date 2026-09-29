@@ -144,10 +144,10 @@ test('region metrics are sample data and say so; the card lists today from the p
 
 test('a next visit in the past is not shown as upcoming', () => {
   vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(2026, 8, 25, 12))
+  vi.setSystemTime(new Date(2026, 9, 5, 12)) // after the seed visit (Fri 2 Oct, since 28 Sep)
   try {
     renderHome()
-    expect(screen.queryByText(/18 Sep/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/2 Oct/)).not.toBeInTheDocument()
     expect(screen.getByText(/Not booked yet/)).toBeInTheDocument()
   } finally {
     vi.useRealTimers()

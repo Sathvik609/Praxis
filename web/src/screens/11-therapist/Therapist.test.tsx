@@ -6,6 +6,7 @@ import { Therapist } from './Therapist'
 const ROUTES = {
   '/api/therapist/patients': { patients: [{ id: 'alex', name: 'Alex M.', program: 'GRASP L2 · left · wk 6', open_flags: 2, adherence_pct: 86, nhpt_last_s: 41.2, nhpt_first_s: 68 }, { id: 'priya', name: 'Priya S.', program: 'GRASP L3 · right · wk 3', open_flags: 0, adherence_pct: 92, nhpt_last_s: null, nhpt_first_s: null, illustrative: true }] },
   '/api/flags': { flags: [{ id: 1, session_id: 's1', rule: 'pain', detail: 'pain 7/10 reported (stop level 7)', t: 380, date: '2026-09-08', reviewed: false }, { id: 2, session_id: 's2', rule: 'lean', detail: 'trunk lean in 2 of 16 lifts', t: 610, date: '2026-09-12', reviewed: false }] },
+  '/api/prescription/schedule': { ...PRESCRIPTION, version: 4, schedule: { ...PRESCRIPTION.schedule, practice_days: [0, 2, 4], nhpt_day: 5 } },
   '/api/prescription': PRESCRIPTION,
   '/api/sessions': { sessions: [SESSION] },
   '/api/flags/1/reviewed': { ok: true },
@@ -51,15 +52,15 @@ test('search filters the patient list and selecting a patient changes the header
   expect(screen.getByRole('heading', { name: 'Priya S.' })).toBeInTheDocument()
 })
 
-test('edit prescription and review flags scroll to their sections; the trace panel has no disk paths', async () => {
+test('review flags scrolls to its section; the trace panel has no disk paths', async () => {
   mockApi(ROUTES)
   const scroll = vi.fn()
   Element.prototype.scrollIntoView = scroll
   render(<MemoryRouter><Therapist /></MemoryRouter>)
   await screen.findByRole('heading', { name: 'Alex M.' })
-  fireEvent.click(screen.getByRole('button', { name: 'Edit prescription' }))
+  expect(screen.queryByRole('button', { name: 'Edit prescription' })).not.toBeInTheDocument() // the dead affordance is gone (28 Sep)
   fireEvent.click(screen.getByRole('button', { name: 'Review flags' }))
-  expect(scroll).toHaveBeenCalledTimes(2)
+  expect(scroll).toHaveBeenCalledTimes(1)
   fireEvent.click(screen.getAllByRole('button', { name: 'Open trace' })[0])
   expect(await screen.findByText(/Decision trace/)).toBeInTheDocument()
   expect(screen.queryByText(/jsonl/)).not.toBeInTheDocument()
@@ -92,4 +93,64 @@ test('sample sessions in the pain summary are labeled Sample', async () => {
   render(<MemoryRouter><Therapist /></MemoryRouter>)
   const line = await screen.findByText(/Pain before → after/)
   expect(line.closest('div')).toHaveTextContent('Sample')
+})
+
+// ---- 28 Sep · Edit practice days (screen 12's schedule lives in the prescription) -----------
+
+async function openSchedule() {
+  const fetchMock = mockApi(ROUTES)
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  const rx = screen.getByRole('region', { name: 'Prescription' })
+  expect(rx).toHaveTextContent('Practice days · Mon–Fri · peg test Sun')
+  expect(rx).toHaveTextContent('Next visit · Fri 2 Oct, 2:30 PM · Dr. Anita Rao, OT')
+  fireEvent.click(screen.getByRole('button', { name: 'Edit practice days' }))
+  return { fetchMock, dialog: await screen.findByRole('dialog', { name: 'Edit practice days' }) }
+}
+
+test('the dialog opens on the current schedule', async () => {
+  const { dialog } = await openSchedule()
+  for (const d of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']) expect(within(dialog).getByRole('button', { name: d })).toHaveAttribute('aria-pressed', 'true')
+  for (const d of ['Sat', 'Sun']) expect(within(dialog).getByRole('button', { name: d })).toHaveAttribute('aria-pressed', 'false')
+  expect(within(dialog).getByRole('radio', { name: 'Sun' })).toHaveAttribute('aria-checked', 'true')
+  expect(within(dialog).getByLabelText('Visit date')).toHaveValue('2026-10-02')
+  expect(within(dialog).getByLabelText('Visit time')).toHaveValue('14:30')
+  expect(within(dialog).getByLabelText('With')).toHaveValue('Dr. Anita Rao, OT')
+  expect(within(dialog).getByText('5 practice days a week')).toBeInTheDocument()
+  for (const b of within(dialog).getAllByRole('button')) expect(b.className).toMatch(/min-h-1[24]|h-14/)
+})
+
+test('saving sends the new schedule and shows the new version', async () => {
+  const { fetchMock, dialog } = await openSchedule()
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Tue' }))
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Thu' }))
+  fireEvent.click(within(dialog).getByRole('radio', { name: 'Sat' }))
+  fireEvent.change(within(dialog).getByLabelText('Visit date'), { target: { value: '2026-10-09' } })
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Save as v4' }))
+  expect(await screen.findByText('Saved as prescription v4 · practice days Mon, Wed, Fri.')).toBeInTheDocument()
+  const put = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/prescription/schedule'))!
+  expect(put[1]?.method).toBe('PUT')
+  expect(JSON.parse(String(put[1]?.body))).toEqual({ practice_days: [0, 2, 4], nhpt_day: 5, next_visit: { at: '2026-10-09T14:30', with: 'Dr. Anita Rao, OT' } })
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('no practice day, or a booked visit without a date, cannot be saved', async () => {
+  const { dialog } = await openSchedule()
+  for (const d of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']) fireEvent.click(within(dialog).getByRole('button', { name: d }))
+  expect(within(dialog).getByText('Choose at least one practice day.')).toBeInTheDocument()
+  expect(within(dialog).getByRole('button', { name: 'Save as v4' })).toBeDisabled()
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Wed' }))
+  fireEvent.change(within(dialog).getByLabelText('Visit date'), { target: { value: '' } })
+  expect(within(dialog).getByRole('button', { name: 'Save as v4' })).toBeDisabled()
+  fireEvent.click(within(dialog).getByLabelText('A clinic visit is booked'))
+  expect(within(dialog).queryByLabelText('Visit date')).not.toBeInTheDocument()
+  expect(within(dialog).getByRole('button', { name: 'Save as v4' })).toBeEnabled()
+})
+
+test('cancel changes nothing', async () => {
+  const { fetchMock, dialog } = await openSchedule()
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Tue' }))
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/prescription/schedule'))).toBe(false)
 })

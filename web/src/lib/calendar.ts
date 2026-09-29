@@ -78,6 +78,14 @@ export function longDate(day: string): string {
 
 export const sameMonth = (a: string, b: string): boolean => a.slice(0, 7) === b.slice(0, 7)
 
+/** "Fri 2 Oct, 2:30 PM" from a local ISO date-time ("2026-10-02T14:30"): the same label the
+ *  service derives for `patient.program.next_visit` (`prescription.visit_text`). */
+export function visitText(at: string): string {
+  const [day, time = '00:00'] = at.split('T')
+  const [h, m] = time.split(':').map(Number)
+  return `${shortDate(day)}, ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
+}
+
 /** "Mon–Fri", "Mon, Wed, Fri", "Every day". */
 export function daysLabel(days: number[]): string {
   const s = [...days].sort((a, b) => a - b)

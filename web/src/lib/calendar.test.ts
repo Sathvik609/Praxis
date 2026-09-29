@@ -1,5 +1,5 @@
 import type { CalendarDay } from './api'
-import { addDays, dayLines, daysLabel, longDate, monthLabel, monthRange, rangeLabel, shift, shortDate, weekRange, weekday } from './calendar'
+import { addDays, dayLines, daysLabel, visitText, longDate, monthLabel, monthRange, rangeLabel, shift, shortDate, weekRange, weekday } from './calendar'
 
 const day = (over: Partial<CalendarDay>): CalendarDay => ({ date: '2026-09-29', weekday: 1, is_today: false, status: 'planned', planned: true, nhpt_due: false, minutes: 10, minutes_done: 0, exercises: [{ id: 'abduction', name: 'Arm out to the side' }, { id: 'cup', name: 'Waiter – cup' }], sessions: [], sample: false, clinic_visit: null, ...over })
 
@@ -37,6 +37,9 @@ test('labels', () => {
   expect(daysLabel([0, 1, 2, 3, 4])).toBe('Mon–Fri')
   expect(daysLabel([4, 0, 2])).toBe('Mon, Wed, Fri')
   expect(daysLabel([0, 1, 2, 3, 4, 5, 6])).toBe('Every day')
+  expect(visitText('2026-10-02T14:30')).toBe('Fri 2 Oct, 2:30 PM')
+  expect(visitText('2026-10-09T10:00')).toBe('Fri 9 Oct, 10:00 AM')
+  expect(visitText('2026-10-05T00:05')).toBe('Mon 5 Oct, 12:05 AM')
 })
 
 test('every status is said in words, never by colour alone', () => {

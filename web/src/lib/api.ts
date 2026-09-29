@@ -1,6 +1,6 @@
 import { SESSION_API_URL } from './config'
 
-export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string; level: number; version: number } }
+export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string | null; level: number; version: number } }
 /** Practice days live in the prescription (screen 12, 28 Sep): weekdays 0 = Mon … 6 = Sun. */
 export type NextVisit = { at: string; with: string }
 export type Schedule = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null; minutes_per_day: number }
