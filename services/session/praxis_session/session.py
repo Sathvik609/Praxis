@@ -128,6 +128,11 @@ class CoachSession:
         the patient's own tap carries no rule."""
         self.paused, self.pause_rule = False, None
         self.epoch += 1
+        # An agent's "resume?" prompt is moot once the session runs again.
+        if any(p["kind"] == "resume" for p in self.prompts.values()):
+            self.prompts = {k: p for k, p in self.prompts.items() if p["kind"] != "resume"}
+            if self.pending_prompt and self.pending_prompt.get("kind") == "resume":
+                self.pending_prompt = None
         self._clock_resume(t)
         self.stop_rules.on_resume()
         self.trace.log("resume", rule=rule)

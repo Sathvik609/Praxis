@@ -7,8 +7,8 @@
   "guardrail_violations": 0,
   "fallback_correct": "2/2",
   "human_approval_respected": "5/5",
-  "first_action_ms_p50": 7.2,
-  "first_action_ms_p95": 35.0,
+  "first_action_ms_p50": 6.6,
+  "first_action_ms_p95": 44.2,
   "tokens_per_session": 0,
   "cost_usd": 0.0,
   "rows": [
@@ -33,9 +33,9 @@
       "runs": 3,
       "tool_calls": 7,
       "first_action_ms": [
-        35.0,
-        4.0,
-        3.2
+        44.2,
+        4.5,
+        3.6
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -72,8 +72,8 @@
       "runs": 2,
       "tool_calls": 7,
       "first_action_ms": [
-        3.9,
-        6.7
+        4.2,
+        6.6
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -108,7 +108,7 @@
       "runs": 1,
       "tool_calls": 5,
       "first_action_ms": [
-        10.5
+        9.7
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -141,7 +141,7 @@
       "runs": 1,
       "tool_calls": 4,
       "first_action_ms": [
-        11.5
+        13.8
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -171,7 +171,7 @@
       "runs": 1,
       "tool_calls": 2,
       "first_action_ms": [
-        19.0
+        27.4
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -261,7 +261,7 @@
       "runs": 1,
       "tool_calls": 3,
       "first_action_ms": [
-        7.2
+        5.3
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -295,7 +295,7 @@
       "runs": 1,
       "tool_calls": 5,
       "first_action_ms": [
-        8.4
+        9.4
       ],
       "tokens": 0,
       "input_tokens": 0,
