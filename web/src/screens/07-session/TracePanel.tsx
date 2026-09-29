@@ -123,7 +123,9 @@ export function TracePanel({ events, replay = false, pipeline = [], agentRows, s
   const rows = traceRows(events).filter((e) => !(runs.length && e.type === 'coach' && coachSource(e) === 'agent'))
   const truncated = events.filter((e) => e.type !== 'frame').length > 40
   const runsBetween = (from: number, to: number) => runs.filter((r) => r.anchorId >= from && r.anchorId < to)
-  const leading = truncated || !rows.length ? [] : runs.filter((r) => r.anchorId < rows[0].id)
+  // Runs anchored before the first row on screen: their trigger event scrolled out of the
+  // 40-event window, but the run still happened, so it stays listed above the rows.
+  const leading = !rows.length ? [] : runs.filter((r) => r.anchorId < rows[0].id)
   const lastAgent = [...events].reverse().find((e) => e.type === 'coach' && coachSource(e) === 'agent')
   const lastRule = [...events].reverse().find((e) => e.type === 'coach' && coachSource(e) === 'rule')
   const agentLabel = lastAgent ? coachLabel(lastAgent) : runs.length ? 'Claude agent' : null
@@ -160,6 +162,7 @@ export function TracePanel({ events, replay = false, pipeline = [], agentRows, s
         </div>
         <div className="px-4 py-3" data-testid="trace-rows">
           {rows.length === 0 && runs.length === 0 && <div className="text-white/60">— waiting for events —</div>}
+          {truncated && leading.length > 0 && <div className="mb-1 text-white/60">Earlier agent runs</div>}
           {(rows.length ? leading : runs).map((r) => <AgentRunRows key={r.key} run={r} />)}
           {rows.map((e, i) => (
             <Fragment key={e.id}>

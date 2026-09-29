@@ -126,3 +126,12 @@ test('Copy JSON copies the shown rows and confirms', async () => {
   expect(copied[0].type).toBe('rep_complete')
   expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
 })
+
+test('agent runs whose trigger event scrolled out of the 40-event window still show, under "Earlier agent runs"', () => {
+  // 60 later events push set_complete #41 (the run's trigger) out of the window
+  const later = Array.from({ length: 60 }, (_, i) => ({ type: 'rep_complete', t: 10 + i, id: 100 + i, set: 2, rep: i + 1 }))
+  render(<TracePanel events={[...agentEvents, ...later]} agentRows={agentRows()} />)
+  expect(screen.getByText('Earlier agent runs')).toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: /agent run/ }).length).toBeGreaterThanOrEqual(1)
+  expect(screen.getAllByRole('button', { name: /agent run/ })[0]).toHaveTextContent('trigger set_complete')
+})
