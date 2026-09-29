@@ -5,6 +5,7 @@ import { ChooseExercise } from '../screens/04-choose/ChooseExercise'
 import { SessionReport } from '../screens/09-report/SessionReport'
 import { Progress } from '../screens/10-progress/Progress'
 import { Therapist } from '../screens/11-therapist/Therapist'
+import { Calendar } from '../screens/12-calendar/Calendar'
 import { CoachDrawer } from '../screens/coach/CoachDrawer'
 import { Settings } from '../screens/settings/Settings'
 import { CameraSetup } from '../screens/05-camera-setup/CameraSetup'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: 'details', element: <Home /> },
       { path: 'details/exercises', element: <ChooseExercise /> },
       { path: 'details/progress', element: <Progress /> },
+      { path: 'details/calendar', element: <Calendar /> },
       { path: 'details/settings', element: <Settings /> },
       { path: 'details/checkin', element: <CheckIn /> },
       { path: 'details/choose', element: <ChooseExercise /> },

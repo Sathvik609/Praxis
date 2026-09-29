@@ -134,7 +134,7 @@ export function Therapist() {
             </Card>
             <Card title="Adherence and NHPT">
               <div className="flex flex-wrap gap-8">
-                <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned sessions done" />
+                <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned days practised" />
                 <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1${me?.nhpt_sample ? ' · sample' : ''}`} />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">

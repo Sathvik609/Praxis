@@ -158,7 +158,8 @@ export function Progress() {
               {p.practice.planned == null ? (
                 <Stat value={p.practice.done} label={`${plural(p.practice.done, 'session')} recorded here`} />
               ) : (
-                <Stat value={`${p.practice.done}/${p.practice.planned}`} label="planned sessions done" />
+                // Planned practice days from the prescription's schedule since the first live session.
+                <Stat value={`${p.practice.days_done ?? p.practice.done}/${p.practice.planned}`} label="planned days practised" />
               )}
               <Stat value={p.practice.hours} unit="h" label="active time · rests excluded" />
             </div>
