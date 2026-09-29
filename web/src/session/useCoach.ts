@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PraxisEvent } from '../lib/events'
+import type { CoachSource, Prompt } from './agent'
+
+export type { Prompt } from './agent'
 
 export type CoachEvent = PraxisEvent & {
   action: string
@@ -9,8 +12,9 @@ export type CoachEvent = PraxisEvent & {
   evidence: number[]
   ui: { prompt?: Prompt; avatar_clip?: string; apply?: Record<string, unknown>; chip?: string }
   label: string
+  /** Absent on events from before the agent coach: those are the rule coach. */
+  source?: CoachSource
 }
-export type Prompt = { id: string; title: string; text: string; options: string[]; within_prescription?: boolean }
 export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string }
 export type ExertionState = { level: 'low' | 'moderate' | 'high'; reasons: string[]; method: string }
 
