@@ -25,7 +25,7 @@ from dataclasses import replace as _replace_event
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 import cv2
 import numpy as np
@@ -117,6 +117,29 @@ def api_prescription() -> dict[str, object]:
     return store.prescription()
 
 
+class ScheduleBody(BaseModel):
+    """Therapist view · Edit practice days. Validated again by `prescription.Schedule`."""
+
+    practice_days: list[int]
+    nhpt_day: int
+    next_visit: dict[str, str] | None = None
+
+
+@app.put("/api/prescription/schedule")
+def api_put_schedule(body: ScheduleBody) -> dict[str, object]:
+    """The therapist changes practice days, the peg-test day or the next clinic visit: stored
+    as prescription v(N+1) (dose, adaptations and stop rules carried over), logged in
+    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid. No
+    auth exists (removed 21 Sep); the UI labels it "Therapist view" and Cognito lands in W6."""
+    before = store.prescription()["version"]
+    try:
+        rx = store.update_schedule(body.model_dump(), by="therapist", now=_clock().timestamp())
+    except ValidationError as e:
+        raise HTTPException(422, [{"loc": err["loc"], "msg": err["msg"]} for err in e.errors()]) from None
+    ring.append(make_event("prescription_changed", what="schedule", by="therapist", from_version=before, to_version=rx["version"], schedule=rx["schedule"]))
+    return rx
+
+
 @app.get("/api/patients/me")
 def api_me() -> dict[str, object]:
     return store.patient()
@@ -158,7 +181,7 @@ def api_goal_log(body: GoalNote) -> dict[str, object]:
 
 @app.get("/api/progress")
 def api_progress() -> dict[str, object]:
-    return store.progress()
+    return store.progress(today=_clock().date())
 
 
 def _clock() -> datetime:
@@ -228,7 +251,7 @@ def api_self_report(body: SelfReport) -> dict[str, object]:
 
 @app.get("/api/therapist/patients")
 def api_therapist_patients() -> dict[str, object]:
-    return {"patients": store.therapist_patients()}
+    return {"patients": store.therapist_patients(today=_clock().date())}
 
 
 @app.get("/api/replay/list")

@@ -153,3 +153,69 @@ def test_api_calendar_range_shows_the_labelled_seed_history(client, at_28_sep):
 @pytest.mark.parametrize("q", ["?from=2026-09-10", "?from=2026-09-30&to=2026-09-01", "?from=2026-01-01&to=2026-12-31", "?from=x&to=y"])
 def test_api_calendar_rejects_a_bad_range(client, q):
     assert client.get(f"/api/calendar{q}").status_code in (400, 422)
+
+
+# ---- therapist edit + adherence --------------------------------------------------------------
+
+
+def test_put_schedule_stores_a_new_version_and_the_calendar_follows(client, at_28_sep):
+    body = {"practice_days": [0, 2, 4], "nhpt_day": 5, "next_visit": {"at": "2026-10-09T10:00", "with": "Dr. Anita Rao, OT"}}
+    r = client.put("/api/prescription/schedule", json=body)
+    assert r.status_code == 200
+    rx = r.json()
+    assert rx["version"] == 4 and rx["schedule"]["practice_days"] == [0, 2, 4] and rx["edited"]["by"] == "therapist"
+    assert client.get("/api/prescription").json()["version"] == 4
+    cal = client.get("/api/calendar").json()
+    assert [x["date"] for x in cal["days"] if x["planned"]] == ["2026-09-28", "2026-09-30", "2026-10-02"]
+    assert cal["days"][4]["clinic_visit"] is None and cal["next_visit"]["text"] == "Fri 9 Oct, 10:00 AM"
+    assert client.get("/api/patients/me").json()["program"]["next_visit"] == "Fri 9 Oct, 10:00 AM"
+    events = client.get("/events?n=5").json()["events"]
+    assert any(e["type"] == "prescription_changed" and e["to_version"] == 4 for e in events)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"practice_days": [], "nhpt_day": 6, "next_visit": None},
+        {"practice_days": [1, 1], "nhpt_day": 6, "next_visit": None},
+        {"practice_days": [8], "nhpt_day": 6, "next_visit": None},
+        {"practice_days": [1], "nhpt_day": 9, "next_visit": None},
+        {"practice_days": [1], "nhpt_day": 6, "next_visit": {"at": "soon", "with": "Dr. Rao"}},
+    ],
+)
+def test_put_schedule_validates_and_changes_nothing_when_invalid(client, body):
+    r = client.put("/api/prescription/schedule", json=body)
+    assert r.status_code == 422
+    assert client.get("/api/prescription").json()["version"] == 3
+
+
+def _live(sid, t_start, mode="cup"):
+    return {"session_id": sid, "mode": mode, "source": "live", "clock": "wall", "t_start": t_start, "t_end": t_start + 600,
+            "camera": {"reps_total": 10, "verified": 9, "unverified": 1, "corrections": 0, "active_s": 600.0},
+            "told_us": {}, "exertion": {"level": "low", "reasons": [], "method": "behavioural"},
+            "coach": {"label": "Rule-based coach · LLM agent pending", "notes": [], "decisions": 1}, "flags": [], "stopped": False}
+
+
+def test_progress_and_therapist_adherence_come_from_the_schedule(tmp_path):
+    from praxis_session.store import Store
+
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    today = date(2026, 9, 28)
+    p = st.progress(today=today)
+    assert p["practice"]["planned"] is None and p["adherence_pct"] is None  # no live session yet
+    for sid, day in (("a", 23), ("b", 25)):
+        st.save_session(_live(sid, datetime(2026, 9, day, 9, 0).timestamp()), checkin={}, feedback={}, events=[])
+    p = st.progress(today=today)
+    assert p["practice"] == {"done": 2, "planned": 3, "days_done": 2, "hours": 0.3}
+    assert p["adherence_pct"] == 67
+    assert st.therapist_patients(today=today)[0]["adherence_pct"] == 67
+
+
+def test_api_progress_reads_today_from_the_clock(client, at_28_sep):
+    import praxis_session.main as main
+
+    main.store.save_session(_live("a", datetime(2026, 9, 25, 9, 0).timestamp()), checkin={}, feedback={}, events=[])
+    p = client.get("/api/progress").json()
+    assert p["practice"]["planned"] == 1 and p["practice"]["days_done"] == 1 and p["adherence_pct"] == 100
+    assert client.get("/api/therapist/patients").json()["patients"][0]["adherence_pct"] == 100

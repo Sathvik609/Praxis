@@ -9,10 +9,11 @@ import json
 import re
 import sqlite3
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from praxis_session.calendar_view import practice_counts
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
@@ -239,23 +240,26 @@ class Store:
         is a recorded clip through the pipeline, not the patient's practice)."""
         return [s for s in self.sessions(limit) if not s["replay"]]
 
-    def _practice(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
-        """Practice numbers from live sessions only (no sample, no replay). `planned` needs a
-        schedule the prescription does not carry yet, so it (and adherence) is None."""
+    def _practice(self, sessions: list[dict[str, Any]], today: date | None = None) -> dict[str, Any]:
+        """Practice numbers from live sessions only (no sample, no replay). `done` counts live
+        sessions; `planned` and `days_done` come from the prescription's practice days since the
+        first live session (`calendar_view.practice_counts`; `planned` is None before one)."""
         real = [s for s in sessions if s["source"] == "live"]
         hours = sum(float(s["summary"].get("camera", {}).get("active_s") or 0) for s in real) / 3600
-        return {"done": len(real), "planned": None, "hours": round(hours, 1)}
+        counts = practice_counts(self.rx().schedule, sessions, today or date.today())
+        return {"done": len(real), "planned": counts["planned"], "days_done": counts["days_done"], "hours": round(hours, 1)}
 
     @staticmethod
     def _adherence(practice: dict[str, Any]) -> int | None:
+        """Planned practice days practised, as a percentage (None until there is a plan to judge)."""
         planned = practice.get("planned")
-        return None if not planned else round(100 * practice["done"] / planned)
+        return None if not planned else round(100 * practice.get("days_done", 0) / planned)
 
-    def progress(self) -> dict[str, Any]:
+    def progress(self, today: date | None = None) -> dict[str, Any]:
         sessions = self._counted(100)  # replays are listed as sessions but never charted or totalled
         per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"], "exercise": s["exercise"], "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
         pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early", "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions)]
-        practice = self._practice(sessions)
+        practice = self._practice(self._counted(10_000), today)
         return {
             "nhpt_trend": self.nhpt_trend(),
             "verified_per_session": per,
@@ -336,7 +340,7 @@ class Store:
         sid = self.save_session(summary, summary.get("told_us"), None, [])
         return {"ok": True, "session_id": sid}
 
-    def therapist_patients(self) -> list[dict[str, Any]]:
+    def therapist_patients(self, today: date | None = None) -> list[dict[str, Any]]:
         p = self.patient()
         trend = self.nhpt_trend()
         # First and last from one kind only: live points when there are any, else the labeled sample.
@@ -344,7 +348,7 @@ class Store:
         points = live or trend
         return [{
             "id": p["id"], "name": p["name"], "program": f"GRASP L{p['program']['level']} · {p['side']} · wk 6",
-            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self._counted(100))),
+            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self._counted(10_000), today)),
             "nhpt_last_s": points[-1]["total_s"] if points else None, "nhpt_first_s": points[0]["total_s"] if points else None,
             "nhpt_sample": bool(points) and not live,
         }, {"id": "priya", "name": "Priya S.", "program": "GRASP L3 · right · wk 3", "open_flags": 0, "adherence_pct": 92, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},
