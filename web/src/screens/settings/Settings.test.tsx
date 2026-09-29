@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { mockApi } from '../../test/api-mock'
 import { Settings } from './Settings'
@@ -71,4 +71,37 @@ test('no decorative toggles: captions are stated as always on, and there is no s
   expect(screen.queryByLabelText(/Helper for setup/)).not.toBeInTheDocument()
   expect(screen.getByText(/Captions are always on/)).toBeInTheDocument()
   await screen.findByText(/No recordings available yet/)
+})
+
+const health = (agent?: Record<string, unknown>) => ({ status: 'ok', service: 'praxis-session', opencv_version: '5.0.0', mode: 'edge', models: {}, ...(agent ? { agent } : {}) })
+
+test('Coach line: Claude Sonnet 5 via the Anthropic API (dev) with MCP tools connected', async () => {
+  mockApi({ '/api/replay/list': { clips: [] }, '/health': health({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true }) })
+  renderSettings()
+  const card = screen.getByRole('heading', { name: 'Coach' }).closest('section')!
+  expect(await within(card).findByText('Claude Sonnet 5 via Anthropic API (dev)')).toBeInTheDocument()
+  expect(within(card).getByText('MCP tools connected')).toBeInTheDocument()
+})
+
+test('Coach line: Bedrock, not ready, says why and that the rule coach runs', async () => {
+  mockApi({ '/api/replay/list': { clips: [] }, '/health': health({ mode: 'bedrock', model: 'us.anthropic.claude-sonnet-5-v1:0', mcp: false, ready: false, reason: 'PRAXIS_CLOUD_ENABLED is 0' }) })
+  renderSettings()
+  expect(await screen.findByText('Claude Sonnet 5 via Amazon Bedrock')).toBeInTheDocument()
+  expect(screen.getByText(/Not ready: PRAXIS_CLOUD_ENABLED is 0 · the rule-based coach runs/)).toBeInTheDocument()
+})
+
+test('Coach line: off (or a service without the agent field) reads as the rule-based coach', async () => {
+  mockApi({ '/api/replay/list': { clips: [] }, '/health': health({ mode: 'off', model: '', mcp: false, ready: false }) })
+  const { unmount } = renderSettings()
+  expect(await screen.findByText('Off — rule-based coach')).toBeInTheDocument()
+  unmount()
+  mockApi({ '/api/replay/list': { clips: [] }, '/health': health() })
+  renderSettings()
+  expect(await screen.findByText('Off — rule-based coach')).toBeInTheDocument()
+})
+
+test('Coach line: an unreachable service says so instead of guessing', async () => {
+  mockApi({ '/api/replay/list': { clips: [] } })
+  renderSettings()
+  expect(await screen.findByText(/Coach status unavailable/)).toBeInTheDocument()
 })
