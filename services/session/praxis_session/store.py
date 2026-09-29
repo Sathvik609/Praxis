@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import threading
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -65,6 +66,7 @@ class Store:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(str(self.path), check_same_thread=False)
+        self._note_lock = threading.Lock()  # the agent's note is written from a tool thread
         self._db.row_factory = sqlite3.Row
         self._db.executescript(SCHEMA)
         self._migrate()
@@ -339,6 +341,19 @@ class Store:
     def write_session_summary(self, summary: dict[str, Any]) -> dict[str, Any]:
         sid = self.save_session(summary, summary.get("told_us"), None, [])
         return {"ok": True, "session_id": sid}
+
+    def set_coach_note(self, sid: str, note: dict[str, Any]) -> bool:
+        """The agent's coach note (≤ 400 chars) written after the session was saved: stored as
+        `summary.coach.note`. False when the session is not stored (yet)."""
+        with self._note_lock:
+            r = self._db.execute("SELECT summary_json FROM sessions WHERE id=?", (sid,)).fetchone()
+            if r is None:
+                return False
+            summary = json.loads(r["summary_json"] or "{}")
+            summary.setdefault("coach", {})["note"] = note
+            self._db.execute("UPDATE sessions SET summary_json=? WHERE id=?", (json.dumps(summary), sid))
+            self._db.commit()
+            return True
 
     def therapist_patients(self, today: date | None = None) -> list[dict[str, Any]]:
         p = self.patient()

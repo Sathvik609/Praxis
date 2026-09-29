@@ -12,10 +12,13 @@ import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { BoardView } from './BoardView'
+import { coachLabel } from '../../session/agent'
 import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { LivePrompt, pausedNote } from './LivePrompt'
 import { readGuidance } from '../../session/guidance'
 import { useRestBreak } from '../../session/useRestBreak'
 import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
@@ -39,7 +42,7 @@ export function LiveNhpt() {
   const hand = sp.get('hand') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({
+  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
@@ -54,6 +57,7 @@ export function LiveNhpt() {
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
+  const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
   const [reference, setReference] = useState<'avatar' | 'board'>('board')
 
   useEffect(() => {
@@ -70,6 +74,8 @@ export function LiveNhpt() {
   const label = statusLabel(status, 'nhpt')
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
+  const overlayShown = rest.since != null && !stopped ? null : coach.overlay
+  const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
   const finish = (endedEarly: boolean) => {
     flow.finish({
@@ -99,7 +105,7 @@ export function LiveNhpt() {
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`Nine-Hole Peg Test · ${hand} hand`} subtitle="Assessment · attempt 1 of 1" status={status} label={label} />
+      <SessionHeader title={`Nine-Hole Peg Test · ${hand} hand`} subtitle="Assessment · attempt 1 of 1" status={status} label={label} agent={coach.agent} />
 
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
         <LiveFeed
@@ -181,12 +187,14 @@ export function LiveNhpt() {
             </div>
           </Card>
           <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="peg" />
+          {cp.prompt && !promptInOverlay && <LivePrompt state={cp} running={{}} />}
           {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
-          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
+          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel} source={coach.captionSource} />
           {traceOpen ? (
             <div className="min-h-0 flex-1">
               <TracePanel
                 events={events}
+                sessionId={sessionId}
                 replay={!!replay}
                 pipeline={[
                   `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`,
@@ -201,7 +209,12 @@ export function LiveNhpt() {
       </div>
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay
+        overlay={overlayShown}
+        note={pausedNote(coach.decisions, overlayShown)}
+        prompt={promptInOverlay ? <LivePrompt state={cp} running={{}} /> : null}
+        resumeByPrompt={promptInOverlay && cp.prompt?.kind === 'resume'}
+        onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls

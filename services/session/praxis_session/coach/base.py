@@ -39,6 +39,8 @@ class Decision:
     ui: dict[str, Any] = field(default_factory=dict)
     label: str = ""
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Who made the decision: the deterministic rule coach or the Claude agent (29 Sep).
+    source: Literal["rule", "agent"] = "rule"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -50,6 +52,7 @@ class Decision:
             "ui": dict(self.ui),
             "label": self.label,
             "tool_calls": list(self.tool_calls),
+            "source": self.source,
         }
 
 

@@ -31,7 +31,11 @@ import cv2
 import numpy as np
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
+from praxis_session.agent import tools as agent_tools
+from praxis_session.agent.model import load_config as load_agent_config, make_planner
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
+from praxis_session.coach.agent import AgentCoach
+from praxis_session.session import RULE_LABEL_WITH_AGENT
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 import praxis_session.trace as trace_mod
@@ -53,6 +57,19 @@ MODES = {"heartbeat", *PIPELINE_MODES}
 COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no coach session or trace
 
 app = FastAPI(title="Praxis session service", version="0.2.0")
+
+# Claude agent coach (29 Sep). PRAXIS_AGENT=off (default) adds nothing: no MCP routes, no agent,
+# the rule coach labelled "LLM agent pending" exactly as before. Otherwise the FastMCP servers
+# are mounted at /mcp/{perception,exertion,coach} and each coach session gets an AgentCoach.
+AGENT_CFG = load_agent_config()
+AGENT_TICK_S = 0.25  # agent outputs reach the browser between frames at least this often
+_mcp_subs: list = []
+if AGENT_CFG.mcp_enabled:
+    from praxis_session.agent import mcp_server
+
+    _mcp_subs = mcp_server.mount(app)
+    app.router.lifespan_context = mcp_server.lifespan_for(_mcp_subs)
+MCP_MOUNTED = bool(_mcp_subs)
 
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
@@ -76,6 +93,7 @@ def health() -> dict[str, object]:
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
         },
+        "agent": AGENT_CFG.health(MCP_MOUNTED),
     }
 
 
@@ -341,8 +359,11 @@ async def session_ws(
             prescription=SEED_PRESCRIPTION,
             exercise=exercise if mode == "arm" else None,
             replay_clip=replay or None,  # saved as `source: replay`, never counted as practice
+            **({"rule_label": RULE_LABEL_WITH_AGENT} if AGENT_CFG.enabled else {}),
         )
         sessions[coach.session_id] = coach
+        if AGENT_CFG.enabled:
+            await _start_agent(ws, coach, pipeline)
         latency_stats[coach.session_id] = stats
         while len(sessions) > 50:
             old = sessions.pop(next(iter(sessions)))
@@ -351,6 +372,32 @@ async def session_ws(
         await _replay_loop(ws, replay, pipeline, coach, stats)
         return
     await _live_loop(ws, pipeline, coach, stats)
+
+
+async def _start_agent(ws: WebSocket, coach: CoachSession, pipeline: SessionPipeline) -> None:
+    """Agent on: register the session's tool handle, attach the AgentCoach when the model is
+    ready, and tell the browser the session id and coach labels straight away (the trace panel
+    polls /api/trace?session=<id> before the first command)."""
+    label = AGENT_CFG.label or "Claude agent"
+    handle = agent_tools.REGISTRY.register(agent_tools.SessionHandle(session=coach, pipeline=pipeline, store=store, label=label))
+    if AGENT_CFG.ready:
+        coach.agent = AgentCoach(make_planner(AGENT_CFG), handle, label=label)
+    first = [make_event("session_start", session_id=coach.session_id, mode=coach.mode, exercise=coach.exercise, label=coach.rule_label, agent=AGENT_CFG.health(MCP_MOUNTED) | {"label": label})]
+    if not AGENT_CFG.ready:
+        first.append(make_event("agent_status", state="offline", reason=f"Coach offline · rule coach ({AGENT_CFG.reason})", label=label))
+    for e in first:
+        ring.append(e)
+        await ws.send_text(e.to_json())
+
+
+async def _deliver_agent(ws: WebSocket, coach: CoachSession | None, now: float) -> None:
+    """Send whatever the agent queued (coach lines, prompts, agent_status, commands). Called
+    after every frame and command, and on a short timer between frames."""
+    if coach is None or coach.agent is None:
+        return
+    for e in coach.agent.handle.drain(now):
+        ring.append(e)
+        await ws.send_text(e.to_json())
 
 
 def _refuse_exercise(mode: str, exercise: str | None, tier: str) -> Event | None:
@@ -398,7 +445,14 @@ async def _live_loop(ws: WebSocket, pipeline: SessionPipeline | None, coach: Coa
     received = 0  # every frame the socket delivered; dropped ones keep their index
     try:
         while True:
-            msg = await q.get()
+            if coach is not None and coach.agent is not None:
+                try:
+                    msg = await asyncio.wait_for(q.get(), AGENT_TICK_S)
+                except asyncio.TimeoutError:
+                    await _deliver_agent(ws, coach, time.time())
+                    continue
+            else:
+                msg = await q.get()
             if _is_disconnect(msg):
                 return
             if msg.get("text") is not None:
@@ -488,6 +542,7 @@ async def _run_frame(
     for e in _apply_coach_commands(pipeline, coach):
         ring.append(e)
         await ws.send_text(e.to_json())
+    await _deliver_agent(ws, coach, t)
 
 
 def _apply_coach_commands(pipeline: SessionPipeline, coach: CoachSession) -> list[Event]:
@@ -510,6 +565,7 @@ async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | Non
     for e in _handle_command(cmd, pipeline, coach, now=now):
         ring.append(e)
         await ws.send_text(e.to_json())
+    await _deliver_agent(ws, coach, time.time() if now is None else now)
 
 
 def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> list:
@@ -544,10 +600,15 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
     if name == "answer":
         pcmd, evs = coach.on_answer(str(cmd.get("prompt", "")), str(cmd.get("choice", "")), now)
         result = pipeline.command(pcmd) if pcmd else {"ok": True}
-        return [make_event("command", cmd=name, session_id=coach.session_id, **result), *evs]
+        out = [make_event("command", cmd=name, session_id=coach.session_id, **result), *evs]
+        if pcmd and pcmd.get("source") == "agent":
+            # The patient accepted an agent proposal: applied (clamped again in the pipeline)
+            # and reported as its own command event, citing the proposal's evidence.
+            coach.trace.log("apply", cmd=pcmd.get("cmd"), requested=pcmd, evidence=pcmd.get("evidence", []), source="agent", **result)
+            out.append(make_event("command", cmd=pcmd.get("cmd"), source="agent", session_id=coach.session_id, prompt=pcmd.get("prompt"), **result))
+        return out
     if name == "feedback":
-        coach.feedback = {k: v for k, v in cmd.items() if k != "cmd"}
-        coach.trace.log("feedback", **coach.feedback)
+        coach.on_feedback({k: v for k, v in cmd.items() if k != "cmd"}, now)
         summary = _summary_with_latency(coach, now)
         store.save_session(summary, coach.checkin, coach.feedback, [r for r in coach.trace.tail(2000) if r.get("kind") == "event"])
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=summary)]
@@ -592,7 +653,14 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
             except asyncio.TimeoutError:
                 pass
         while True:  # keep the socket open for feedback after the clip ends
-            msg = await ws.receive()
+            if coach.agent is not None:
+                try:
+                    msg = await asyncio.wait_for(ws.receive(), AGENT_TICK_S)
+                except asyncio.TimeoutError:
+                    await _deliver_agent(ws, coach, pipeline._last_t)
+                    continue
+            else:
+                msg = await ws.receive()
             if _is_disconnect(msg):
                 return
             if msg.get("text") is not None:

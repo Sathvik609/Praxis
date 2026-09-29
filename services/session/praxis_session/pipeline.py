@@ -3,11 +3,19 @@
 Modes: "calibrate" (Phase 1: calibration + setup checks) and "nhpt" (Phase 2: board state ->
 peg FSM -> NHPT timer). Later phases add "cup" and "arm". One pipeline per WebSocket
 connection or replay; frames are processed and dropped, events go to the ring and the socket.
+
+Agent coach support (29 Sep): `latest_frame` holds a *reference* to the frame being processed,
+overwritten by the next one and never written anywhere, so `check_setup()` can run the setup
+checks (`perception.quality`) and a fresh ArUco detection (`cv2.aruco.ArucoDetector`,
+`cv2.findHomography`, `cv2.solvePnP`) on demand. `recalibrate` resets the calibrator (sheet
+tasks) or the pose gate (arm) on the next frame; `set_target` / `set_reps` are clamped to the
+prescription in code like `set_hold`. Only numbers and short text come back, never pixels.
 """
 
 from __future__ import annotations
 
 import time
+from collections import deque
 from typing import Any, Literal
 
 import numpy as np
@@ -53,6 +61,12 @@ REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
     "default": REQUIRED_CHECKS,
     "arm": ("camera", "lighting"),  # no sheet; side-view/pose gating lands with the pose checks
 }
+
+
+def _row(id_: str, label: str, ok: bool | None, hint: str | None) -> dict[str, Any]:
+    """One setup-check row, the same shape `quality.build_checks` returns."""
+    status = "pending" if ok is None else ("pass" if ok else "check")
+    return {"id": id_, "label": label, "status": status, "hint": None if ok else hint}
 
 
 class SessionPipeline:
@@ -112,6 +126,15 @@ class SessionPipeline:
         self._pose_miss = 0
         self._pose_lost = False
         self._pose_seen = False
+        # Agent tools (29 Sep): the frame being processed, by reference only; the last
+        # calibration / pose summaries (numbers only); recent marker corners for steadiness.
+        self.latest_frame: np.ndarray | None = None
+        self._latest_frame_mono = 0.0
+        self.last_calibration: dict[str, Any] | None = None
+        self.last_pose: dict[str, Any] | None = None
+        self._recent_markers: deque[dict[int, np.ndarray]] = deque(maxlen=10)
+        self._recal_pending = False
+        self.frames_since_recalibrate: int | None = None
         self.tier = tier
         self.prescription = SEED_PRESCRIPTION if prescription is None else prescription
         self._arm_args: dict[str, Any] = {"target_deg": target_deg, "hold_s": hold_s, "sets": sets, "reps_per_set": reps, "prescription": self.prescription}
@@ -135,6 +158,17 @@ class SessionPipeline:
 
     # ---- public -------------------------------------------------------------------------
     def process(self, frame_bgr: np.ndarray, t: float, frame_index: int) -> list[Event]:
+        # A reference, not a copy: the next frame replaces it; nothing is ever written out.
+        self.latest_frame = frame_bgr
+        self._latest_frame_mono = time.monotonic()
+        if self._recal_pending:
+            self._apply_recalibrate()
+        evs = self._process_mode(frame_bgr, t, frame_index)
+        if self.frames_since_recalibrate is not None:
+            self.frames_since_recalibrate += 1  # counted once the frame is fully processed
+        return evs
+
+    def _process_mode(self, frame_bgr: np.ndarray, t: float, frame_index: int) -> list[Event]:
         if self.mode == "calibrate":
             return self._process_calibrate(frame_bgr, t, frame_index)
         if self.mode == "cup":
@@ -172,6 +206,14 @@ class SessionPipeline:
         name = cmd.get("cmd")
         if name == "set_hold":
             return self._set_hold(cmd)
+        if name == "set_target":
+            return self._set_arm_field(cmd, "target_deg")
+        if name == "set_reps":
+            return self._set_arm_field(cmd, "reps")
+        if name == "recalibrate" and self.mode != "calibrate":
+            self._recal_pending = True
+            self.frames_since_recalibrate = 0
+            return {"ok": True, "mode": self.mode, "reset": "pose_gate" if self.mode == "arm" else "calibrator"}
         if name == "set_phase" and self._cup is not None:
             try:
                 self._cup.set_phase(str(cmd.get("phase")))
@@ -223,6 +265,97 @@ class SessionPipeline:
         self._arm_args["hold_s"] = hold
         return {"ok": True, "exercise": ex.id, "rx": ex.rx, "hold_s": hold, "requested_hold_s": wanted, "clamped": hold != wanted}
 
+    def _set_arm_field(self, cmd: dict[str, Any], field: str) -> dict[str, Any]:
+        """`set_target` / `set_reps`: an accepted agent adjustment, clamped **in code** to the
+        prescription's `allowed_adaptations[<rx key>]` (target also to the ceiling)."""
+        key = "target_deg" if field == "target_deg" else "reps"
+        if self._arm is None or self._arm.kind != "hold":
+            return {"ok": False, "error": f"set_{'target' if key == 'target_deg' else 'reps'} needs a hold exercise (Arm out to the side)"}
+        ex = self._arm.exercise
+        try:
+            wanted = float(cmd[key])
+        except (KeyError, TypeError, ValueError):
+            return {"ok": False, "error": f"needs a numeric {key}"}
+        try:
+            value = clamp(self.prescription, ex.rx, key, wanted)
+        except KeyError:
+            return {"ok": False, "error": f"{ex.rx}.{key} is not an allowed adaptation"}
+        if key == "target_deg":
+            self._arm.set_target(value)
+            value = self._arm.target_deg
+            self._arm_args["target_deg"] = value
+        else:
+            value = int(round(value))
+            self._arm.set_reps(value)
+            self._arm_args["reps_per_set"] = value
+        return {"ok": True, "exercise": ex.id, "rx": ex.rx, key: value, f"requested_{key}": wanted, "clamped": value != wanted}
+
+    def _apply_recalibrate(self) -> None:
+        """Reset on the frame thread (never from the tool's thread): sheet tasks get a fresh
+        calibrator (all four markers needed again), arm gets a fresh pose gate."""
+        self._recal_pending = False
+        if self.mode == "arm":
+            self._angle_filter.reset()
+            self._metric_filter.reset()
+            self._pose_miss = 0
+            if self._arm is not None:
+                self._arm.gate = None
+        else:
+            self._cal = Calibrator(self.spec)
+            self._steady = MarkerSteadiness()
+            self._recent_markers.clear()
+
+    def check_setup(self) -> dict[str, Any]:
+        """The setup checks, run now on the latest in-memory frame (agent tool `check_setup`).
+
+        Sheet tasks: a fresh `Calibrator` (no held homography) detects the ArUco markers and
+        fits the homography; task area, camera tilt (solvePnP), lighting/sharpness and marker
+        steadiness come from `perception.quality`. Arm: the last pose summary (person, joint
+        visibility, view gate) plus lighting. Returns rows `{id, label, status, hint}`, the
+        failing ids and the numbers behind them; never pixels."""
+        frame = self.latest_frame
+        if frame is None:
+            return {"ok": False, "error": "no camera frame has arrived yet", "checks": [], "failing": []}
+        age = round(time.monotonic() - self._latest_frame_mono, 2)
+        light = lighting(frame)
+        measures: dict[str, Any] = {"mean_luma": light["mean_luma"], "sharpness": light["sharpness"]}
+        if self.mode == "arm" or self.for_mode == "arm":
+            pose = self.last_pose or {"present": False}
+            present = bool(pose.get("present"))
+            vis = pose.get("visibility")
+            gate = pose.get("gate")
+            view_hint = {"turn_front": "Face the camera with both shoulders in view.", "turn_side": "Turn side-on so your practising shoulder faces the camera."}.get(str(gate))
+            checks = [
+                _row("person", "Person in view", present, "Sit so your upper body is in the picture."),
+                _row("pose", "Shoulder, elbow and hip visible", None if not present else (vis is not None and vis >= 0.5), "Move back a little so your shoulder, elbow and hip are all in view."),
+                _row("view", "Facing the camera the right way", None if not present else gate not in ("turn_front", "turn_side"), view_hint),
+                _row("hips", "Hips in view", None if not present else gate != "hips_out_of_view", "Move the camera back or down so your hips are in view."),
+                _row("lighting", "Lighting", bool(light["ok"]), light.get("hint")),
+            ]
+            measures |= {"pose_present": present, "visibility": vis, "gate": gate}
+        else:
+            cal = Calibrator(self.spec).run(frame, 0.0)
+            steady = MarkerSteadiness()
+            for m in list(self._recent_markers):
+                steady.update(m)
+            steady_d = steady.update(cal.marker_corners_px)
+            area = task_area_in_view(cal, self.spec, frame.shape)
+            rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True)
+            # Root cause first: without the markers, task area and tilt cannot be judged.
+            order = {"markers": 0, "angle": 1, "task_area": 2, "lighting": 3}
+            checks = sorted((r for r in rows if r["id"] not in ("camera", "person")), key=lambda r: order.get(r["id"], 9))
+            angle = camera_angle(cal)
+            measures |= {
+                "markers_found": sorted(int(k) for k in cal.marker_corners_px),
+                "markers_missing": list(cal.missing),
+                "rms_mm": None if cal.rms_mm is None else round(float(cal.rms_mm), 3),
+                "tilt_deg": angle["tilt_deg"],
+                "jitter_px": steady_d["jitter_px"],
+            }
+        failing = [c["id"] for c in checks if c["status"] != "pass"]
+        first_hint = next((c["hint"] for c in checks if c["status"] == "check" and c["hint"]), None)
+        return {"ok": True, "mode": self.mode, "frame_age_s": age, "checks": checks, "failing": failing, "all_pass": not failing, "first_hint": first_hint, "measures": measures}
+
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
         nhpt = None
         reps = 0
@@ -241,6 +374,19 @@ class SessionPipeline:
     _last_t: float = 0.0
     _detect_ms: float = 0.0
     _last_canon: np.ndarray | None = None  # last calibrated canonical view (sample_colour)
+
+    def _note_calibration(self, cal: CalibrationResult) -> None:
+        """Numbers-only summary of this frame's calibration for the agent's tools."""
+        self.last_calibration = {
+            "calibrated": cal.calibrated,
+            "source": cal.source,
+            "missing": list(cal.missing),
+            "markers_found": sorted(int(k) for k in cal.marker_corners_px),
+            "rms_mm": None if cal.rms_mm is None else round(float(cal.rms_mm), 3),
+            "tilt_deg": None if cal.tilt_deg is None else round(float(cal.tilt_deg), 1),
+        }
+        if cal.marker_corners_px:
+            self._recent_markers.append(dict(cal.marker_corners_px))
 
     def _emit(self, out: list[Event], e: Event) -> None:
         if self.ring is not None:
@@ -332,6 +478,7 @@ class SessionPipeline:
         self._last_t = t
         t0 = time.perf_counter()
         cal = self._cal.run(frame_bgr, t)  # t: the 1.5 s hold is measured in clip/stream time
+        self._note_calibration(cal)
         board_d: dict[str, Any] | None = None
         holes_px: list[list[float]] = []
         # The hand runs first so its box can be excluded from the free-peg blobs (D-SEG-1).
@@ -404,6 +551,7 @@ class SessionPipeline:
         self._last_t = t
         t0 = time.perf_counter()
         cal = self._cal.run(frame_bgr, t)  # t: the 1.5 s hold is measured in clip/stream time
+        self._note_calibration(cal)
         cup_mm = None
         dots_px: list[list[float]] = []
         cup_px = None
@@ -513,6 +661,13 @@ class SessionPipeline:
         )
         # The gate for *this* frame goes out with the frame (the snapshot lags one step).
         snap_before = self._arm.snapshot() | {"gate": gate_for(obs, self._arm.view)}
+        self.last_pose = {
+            "present": res is not None,
+            "visibility": None if angles is None else round(float(angles["visibility"]), 2),
+            "hip_visibility": None if angles is None else round(float(angles["hip_visibility"]), 2),
+            "gate": snap_before["gate"] if res is not None else None,
+            "angle_deg": None if angles is None else angles["metric_deg"],
+        }
         self._emit(
             out,
             make_event(

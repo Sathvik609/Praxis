@@ -9,11 +9,14 @@ import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
-import { ProgressionPrompt } from './ProgressionPrompt'
+import { coachLabel, isWhy, type Prompt } from '../../session/agent'
 import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useSessionFlow } from '../../session/useSessionFlow'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { COACH_LABEL, CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
+import { CoachPrompt } from './CoachPrompt'
+import { LivePrompt, pausedNote } from './LivePrompt'
 import { readGuidance } from '../../session/guidance'
 import { useRestBreak } from '../../session/useRestBreak'
 import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
@@ -34,6 +37,11 @@ function caption(f: FrameEvent | null, lost: boolean): string {
   if (c.expected_next != null) return `Reach and move the cup to dot ${c.expected_next + 1}, one at a time.`
   return 'Nice and steady.'
 }
+
+/** The screen's own progression prompt (wireframe 07b) for a service that has not sent one. */
+const LOCAL_PROGRESSION: Prompt = { id: 'progression', kind: 'progression', title: 'Coach suggests: try the fast arcs', text: '', options: ['Yes, go faster', 'Keep pace', 'Why?'], within_prescription: true }
+const LOCAL_WHY =
+  'Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.'
 
 /** Where the cup is on the five-dot sheet and where it goes next, from the same snapshot that
  *  draws the ring on the video (one source; a count of dots visited used to disagree with the
@@ -62,7 +70,7 @@ export function LiveCup() {
   const side = sp.get('side') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
+  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
@@ -72,7 +80,8 @@ export function LiveCup() {
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
-  const [whyOpen, setWhyOpen] = useState(false)
+  const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
+  const [localWhy, setLocalWhy] = useState(false)
   const [declined, setDeclined] = useState(false)
 
   useEffect(() => {
@@ -91,7 +100,11 @@ export function LiveCup() {
   const live = status === 'tracking' || status === 'replay'
   const lastArc = [...events].reverse().find((e) => e.type === 'arc_complete') as ArcComplete | undefined
   const complete = events.find((e) => e.type === 'cup_complete') as CupComplete | undefined
-  const showPrompt = (!!coach.prompt || (!!cup?.awaiting_phase && cup.phase === 'slow')) && !declined
+  // The service's prompt when there is one; otherwise the screen's own progression prompt once
+  // the slow arcs are verified (kept from before the coach sent prompts).
+  const localProgression = !coach.prompt && !!cup?.awaiting_phase && cup.phase === 'slow' && !declined
+  const overlayShown = rest.since != null && !stopped ? null : coach.overlay
+  const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
   const finish = (endedEarly: boolean) => {
     flow.finish({
@@ -111,7 +124,7 @@ export function LiveCup() {
 
   return (
     <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`Waiter – cup · ${side} side`} subtitle={`Coordination · ${arcLabel}`} status={status} label={label} />
+      <SessionHeader title={`Waiter – cup · ${side} side`} subtitle={`Coordination · ${arcLabel}`} status={status} label={label} agent={coach.agent} />
 
       <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
@@ -145,23 +158,41 @@ export function LiveCup() {
         </Card>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          {showPrompt && (
-            <ProgressionPrompt
-              reason={`Two clean slow arcs${lastArc?.mean_reach_ms ? `, mean reach ${(lastArc.mean_reach_ms / 1000).toFixed(1)} s` : ''}${lastArc?.unverified ? `, ${lastArc.unverified} unverified` : ', no unverified reaches'}.`}
-              onAccept={() => { send(coach.prompt ? { cmd: 'answer', prompt: coach.prompt.id, choice: 'Yes, go faster' } : { cmd: 'set_phase', phase: 'fast' }); coach.dismissPrompt() }}
-              onDecline={() => { if (coach.prompt) send({ cmd: 'answer', prompt: coach.prompt.id, choice: 'Keep pace' }); coach.dismissPrompt(); setDeclined(true) }}
-              onWhy={() => setWhyOpen((v) => !v)}
-              whyOpen={whyOpen}
+          {cp.prompt && !promptInOverlay && (
+            <LivePrompt
+              state={cp}
+              running={{ phase: cup?.phase }}
+              onChoose={(c, i) => {
+                // an answered progression never falls back to the screen's own prompt
+                if (!isWhy(c) && cp.prompt?.kind === 'progression') setDeclined(true)
+                cp.choose(c, i)
+              }}
+            />
+          )}
+          {localProgression && (
+            <CoachPrompt
+              prompt={{
+                ...LOCAL_PROGRESSION,
+                text: `Two clean slow arcs${lastArc?.mean_reach_ms ? `, mean reach ${(lastArc.mean_reach_ms / 1000).toFixed(1)} s` : ''}${lastArc?.unverified ? `, ${lastArc.unverified} unverified` : ', no unverified reaches'}.`,
+              }}
+              onChoose={(_c, i) => {
+                if (i === 0) send({ cmd: 'set_phase', phase: 'fast' })
+                else if (i === 1) setDeclined(true)
+                else setLocalWhy((v) => !v)
+              }}
+              whyOpen={localWhy}
+              whyText={LOCAL_WHY}
             />
           )}
           {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
-          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption?.label ?? COACH_LABEL} />
+          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel} source={coach.captionSource} />
           {traceOpen ? (
             <>
               <VerifiedTally compact total={reaches} unverified={unverified} noun="reach" />
               <div className="min-h-0 flex-1">
                 <TracePanel
                   events={events}
+                  sessionId={sessionId}
                   replay={!!replay}
                   pipeline={[`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`, latencyLine(latency)]}
                 />
@@ -177,7 +208,12 @@ export function LiveCup() {
       </div>
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={rest.since != null && !stopped ? null : coach.overlay} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay
+        overlay={overlayShown}
+        note={pausedNote(coach.decisions, overlayShown)}
+        prompt={promptInOverlay ? <LivePrompt state={cp} running={{ phase: cup?.phase }} /> : null}
+        resumeByPrompt={promptInOverlay && cp.prompt?.kind === 'resume'}
+        onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SessionControls

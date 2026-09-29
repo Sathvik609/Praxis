@@ -1,0 +1,115 @@
+{
+  "id": "three_unverified",
+  "title": "Three unverified reaches with a clean setup (hand over the cup)",
+  "mode": "cup",
+  "steps": [
+    {
+      "frame": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 1,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 940,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 2,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 980,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 3,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 1020,
+          "arc": 1,
+          "phase": "slow"
+        }
+      ]
+    },
+    {
+      "run": {
+        "feed": {}
+      }
+    },
+    {
+      "answer": {
+        "kind": "resume",
+        "choice": "accept"
+      }
+    }
+  ],
+  "script": {
+    "pause": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "check_setup"
+      },
+      {
+        "tool": "speak",
+        "if": "check_setup.first_hint",
+        "args": {
+          "text": "{check_setup.first_hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "speak",
+        "if": "check_setup.all_pass",
+        "args": {
+          "text": "The camera looks fine: after placing the cup, lift your hand clear so I can see the base.",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "recalibrate"
+      },
+      {
+        "tool": "request_resume",
+        "args": {
+          "reason": "I re-checked the setup with the camera.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "pause:failed_reps"
+    ],
+    "perceive_before": {
+      "speak": [
+        "check_setup"
+      ]
+    },
+    "speak_mentions": [
+      "hand"
+    ],
+    "prompt_kinds": [
+      "resume"
+    ],
+    "resumed_by_patient": true,
+    "stopped": false,
+    "errors": []
+  }
+}

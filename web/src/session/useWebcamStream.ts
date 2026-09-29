@@ -58,6 +58,9 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
   const [connected, setConnected] = useState(false)
   const [lastEvent, setLastEvent] = useState<PraxisEvent | null>(null)
   const [events, setEvents] = useState<PraxisEvent[]>([])
+  // The session this socket feeds: the event that names it (session_start / replay_start) soon
+  // leaves the 200-event window, so it is kept here for the trace panel.
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const stop = useCallback(() => {
@@ -92,12 +95,15 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
         if (ACK_TYPES.has(e.type)) inflightRef.current.waiting = false
         setLastEvent(e)
         setEvents((xs) => [...xs.slice(-199), e])
+        const sid = (e as { session_id?: unknown }).session_id
+        if (typeof sid === 'string' && sid) setSessionId(sid)
       }
     }
   }, [])
 
   const start = useCallback(async () => {
     setError(null)
+    setSessionId(null)
     const gen = ++genRef.current
     if (replay) {
       // Replay mode: no camera; the service streams the recorded clip through the same pipeline.
@@ -170,5 +176,5 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
   }, [])
 
   useEffect(() => stop, [stop])
-  return { camActive, connected, lastEvent, events, error, start, stop, send, videoRef }
+  return { camActive, connected, lastEvent, events, sessionId, error, start, stop, send, videoRef }
 }

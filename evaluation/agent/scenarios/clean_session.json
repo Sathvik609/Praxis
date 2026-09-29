@@ -1,0 +1,145 @@
+{
+  "id": "clean_session",
+  "title": "Clean Waiter – cup session: check-in, two arcs, feedback note",
+  "mode": "cup",
+  "steps": [
+    {
+      "frame": {}
+    },
+    {
+      "checkin": {
+        "pain": 1
+      }
+    },
+    {
+      "run": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 1,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 940,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 2,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 980,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 3,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 1020,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 4,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 1060,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "arc_complete",
+          "t": 4.0,
+          "arc": 1,
+          "reaches": 4,
+          "unverified": 0,
+          "mean_reach_ms": 1100
+        }
+      ]
+    },
+    {
+      "run": {}
+    },
+    {
+      "feedback": {
+        "pain_after": 1,
+        "effort": 3
+      }
+    },
+    {
+      "run": {}
+    }
+  ],
+  "script": {
+    "checkin": [
+      {
+        "tool": "get_prescription"
+      },
+      {
+        "tool": "read_patient_model"
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "Pain 1 today, so the full program: slow arcs first.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ],
+    "arc_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "Arc {get_set_summary.boundary.arc}: {get_set_summary.verified} of {get_set_summary.reps} verified.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ],
+    "feedback": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "write_session_summary",
+        "args": {
+          "note": "One slow arc, {get_set_summary.session_counts.verified} verified reaches, no setup problems.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "checkin",
+      "arc_complete",
+      "feedback"
+    ],
+    "perceive_before": {
+      "speak": [
+        "get_prescription"
+      ]
+    },
+    "note": true,
+    "prompt_kinds": [],
+    "stopped": false,
+    "errors": []
+  }
+}

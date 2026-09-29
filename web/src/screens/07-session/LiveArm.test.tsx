@@ -16,7 +16,7 @@ const frame = {
 function mockStream(events: Record<string, unknown>[]) {
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive: true, connected: true, lastEvent: (events[events.length - 1] ?? null) as never,
-    events: events as never, error: null, start: vi.fn(async () => {}), stop: vi.fn(), send: vi.fn(), videoRef: { current: null },
+    events: events as never, sessionId: null, error: null, start: vi.fn(async () => {}), stop: vi.fn(), send: vi.fn(), videoRef: { current: null },
   })
 }
 

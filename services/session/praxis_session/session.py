@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from collections import deque
 from pathlib import Path
 from typing import Any
 
@@ -13,14 +14,36 @@ from praxis_session.prescription import Prescription
 from praxis_session.stop_rules import StopRules, is_miss
 from praxis_session.trace import Trace
 
+# The rule coach's label when a Claude agent is configured (PRAXIS_AGENT != off): the rule coach
+# still gives the in-rep cues, the agent takes the checkpoints (29 Sep).
+RULE_LABEL_WITH_AGENT = "Rule-based coach"
+SESSION_RING = 400  # non-frame events kept per session: what an agent's evidence ids may cite
+# Checkpoints (agent coach design §3): event type -> trigger name, and stop-rule pauses.
+CHECKPOINT_EVENTS = {"set_complete": "set_complete", "arc_complete": "arc_complete", "nhpt_complete": "nhpt_complete"}
+CHECKPOINT_PAUSES = ("failed_reps", "perception")
+
 WHY_TEXT = {
     "progression": "Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.",
 }
 
 
 class CoachSession:
-    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None, replay_clip: str | None = None) -> None:
+    def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None, replay_clip: str | None = None, rule_label: str = LABEL) -> None:
         self.mode = mode
+        # "Rule-based coach · LLM agent pending" with PRAXIS_AGENT=off, "Rule-based coach" otherwise.
+        self.rule_label = rule_label
+        # This session's own non-frame events (pipeline + stop rules): agent evidence must be here.
+        self._ring: deque[Event] = deque(maxlen=SESSION_RING)
+        # The Claude agent coach (coach/agent.py) when PRAXIS_AGENT is on; None keeps the
+        # rule-coach-only behaviour of before 29 Sep exactly.
+        self.agent: Any | None = None
+        # Bumped whenever the session moves on (stop, resume, feedback): an agent run that
+        # started under an older epoch is stale and its outputs are dropped.
+        self.epoch = 0
+        # Agent prompts waiting for the patient's tap: id -> {kind, prompt, reason, accept}.
+        self.prompts: dict[str, dict[str, Any]] = {}
+        self.coach_note: dict[str, Any] | None = None
+        self._clock_t = 0.0
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
         self.replay_clip = replay_clip
@@ -53,19 +76,37 @@ class CoachSession:
         self.paused_s = 0.0
         self._paused_at: float | None = None
         self.tracking_lost_events = 0
-        self.trace.log("session", mode=mode, exercise=self.exercise, user=self.username, prescription=f"{prescription.program} L{prescription.level} v{prescription.version}", coach=LABEL)
+        self.trace.log("session", mode=mode, exercise=self.exercise, user=self.username, prescription=f"{prescription.program} L{prescription.level} v{prescription.version}", coach=self.rule_label)
 
     @property
     def stopped(self) -> bool:
         return self.stop_rules.stopped
 
     # ---- inputs ------------------------------------------------------------------------
+    @property
+    def clock(self) -> float:
+        """The latest time this session has seen (wall clock live, clip time in replay)."""
+        return self._clock_t
+
+    def _tick(self, t: float) -> None:
+        if isinstance(t, (int, float)) and t > self._clock_t:
+            self._clock_t = float(t)
+
     def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None) -> list[Event]:
-        self.checkin = {"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
+        self._tick(t)
+        self.checkin ={"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
         self.trace.log("checkin", **self.checkin)
         if rpe is not None:
             self.exertion.update([], rpe=rpe, t=t)
-        return self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t))
+        out = self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t))
+        if self.agent is not None and not self.stopped:
+            # The check-in is the patient's own report, kept (not emitted) so the agent's
+            # opening instruction can cite it as evidence.
+            e = make_event("checkin", t=t, **self.checkin)
+            self._ring.append(e)
+            self.trace.log("event", type="checkin", id=e.id, t=t)
+            self._checkpoint("checkin", [e.id], t)
+        return out
 
     def on_pain(self, pain: int, t: float) -> list[Event]:
         self.trace.log("pain", pain=pain)
@@ -86,6 +127,12 @@ class CoachSession:
         """Clear a pause. `rule` names the rule that cleared itself (perception auto-resume);
         the patient's own tap carries no rule."""
         self.paused, self.pause_rule = False, None
+        self.epoch += 1
+        # An agent's "resume?" prompt is moot once the session runs again.
+        if any(p["kind"] == "resume" for p in self.prompts.values()):
+            self.prompts = {k: p for k, p in self.prompts.items() if p["kind"] != "resume"}
+            if self.pending_prompt and self.pending_prompt.get("kind") == "resume":
+                self.pending_prompt = None
         self._clock_resume(t)
         self.stop_rules.on_resume()
         self.trace.log("resume", rule=rule)
@@ -110,6 +157,8 @@ class CoachSession:
         self.trace.log("answer", prompt=prompt_id, choice=choice)
         evs: list[Event] = []
         cmd: dict[str, Any] | None = None
+        if prompt_id in self.prompts:
+            return self._answer_agent_prompt(prompt_id, choice, t)
         if prompt_id == "progression":
             if choice.lower().startswith("yes"):
                 cmd = {"cmd": "set_phase", "phase": "fast"}
@@ -122,9 +171,75 @@ class CoachSession:
         self.pending_prompt = None
         return cmd, evs
 
+    # ---- agent prompts (29 Sep) ------------------------------------------------------------
+    def add_prompt(self, prompt: dict[str, Any], kind: str, reason: str, accept: dict[str, Any] | None, evidence: list[int], label: str, action: str = "instruct") -> None:
+        """Register an agent prompt (`adjustment` or `resume`). Nothing it proposes happens until
+        the patient taps option 0; option 1 changes nothing; "Why?" repeats the reason."""
+        self.prompts[prompt["id"]] = {"kind": kind, "prompt": prompt, "reason": reason, "accept": accept, "evidence": list(evidence), "label": label, "action": action}
+
+    def _answer_agent_prompt(self, prompt_id: str, choice: str, t: float) -> tuple[dict[str, Any] | None, list[Event]]:
+        rec = self.prompts[prompt_id]
+        options = [str(o) for o in rec["prompt"].get("options", [])]
+        pick = choice.strip().lower()
+        ev, label = rec["evidence"], rec["label"]
+
+        def say(action: str, cue: str, text: str, reason: str) -> Event:
+            return self._coach_event(Decision(action, cue, text, reason, ev, {}, label, source="agent"), t)  # type: ignore[arg-type]
+
+        if pick.startswith("why"):
+            return None, [say("instruct", "agent_why", rec["reason"], f"patient asked why ({prompt_id})")]
+        self.prompts.pop(prompt_id, None)
+        if self.pending_prompt and self.pending_prompt.get("id") == prompt_id:
+            self.pending_prompt = None
+        accepted = bool(options) and pick == options[0].strip().lower()
+        if self.stopped:
+            self.trace.log("agent_drop", reason="session stopped", prompt=prompt_id)
+            return None, []
+        if not accepted:
+            text = "Okay. Tap Resume when you're ready." if rec["kind"] == "resume" else "Keeping it as it is. That's fine."
+            return None, [say("instruct", "agent_declined", text, f"patient declined ({prompt_id})")]
+        if rec["kind"] == "resume":
+            evs: list[Event] = []
+            if self.paused:
+                evs += self.resume(t)
+            evs.append(make_event("command", t=t, cmd="resume", source="agent", ok=True, session_id=self.session_id, prompt=prompt_id))
+            evs.append(say("instruct", "agent_resume", "Thanks. Carrying on from where we stopped.", f"patient accepted resume ({prompt_id})"))
+            return None, evs
+        cmd = dict(rec["accept"] or {}) | {"source": "agent", "prompt": prompt_id, "evidence": list(ev)}
+        proposal = rec["prompt"].get("proposal") or {}
+        names = {"target_deg": "Target", "hold_s": "Hold", "reps": "Reps per set", "phase": "Arc speed"}
+        unit = proposal.get("unit") or ""
+        value = f"{proposal.get('value')}{unit if unit == '°' else (' ' + unit if unit else '')}"
+        text = f"Done. {names.get(str(proposal.get('field')), 'Setting')} is now {value}."
+        return cmd, [say(rec["action"], "agent_adjust_applied", text, f"patient accepted ({prompt_id})")]
+
+    # ---- evidence ring and checkpoints (29 Sep) --------------------------------------------
+    def has_event(self, event_id: int) -> bool:
+        return any(e.id == event_id for e in self._ring)
+
+    def recent_events(self, types: list[str] | None = None, last_n: int = 50) -> list[Event]:
+        evs = [e for e in self._ring if types is None or e.type in types]
+        return evs[-last_n:] if last_n > 0 else []
+
+    def on_feedback(self, feedback: dict[str, Any], t: float) -> None:
+        """Session end: the feedback form. The agent (when on) writes a coach note after it."""
+        self._tick(t)
+        self.feedback = feedback
+        self.trace.log("feedback", **feedback)
+        self.epoch += 1
+        if self.agent is not None:
+            ids = [e.id for e in self.recent_events(last_n=5)]
+            self.trace.log("event", type="feedback", t=t)
+            self._checkpoint("feedback", ids, t)
+
+    def _checkpoint(self, trigger: str, evidence: list[int], t: float) -> None:
+        if self.agent is not None:
+            self.agent.on_checkpoint(trigger, evidence, t)
+
     def on_events(self, events: list[Event], snapshot: dict[str, Any], t: float) -> list[Event]:
         if not events:
             return []
+        self._tick(t)
         if self.t_start is None:
             self.t_start = t
         self.t_end = t
@@ -151,6 +266,7 @@ class CoachSession:
             elif e.type == "perception_lost":
                 self.tracking_lost_events += 1
             if e.type != "frame":
+                self._ring.append(e)
                 self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep")})
         out: list[Event] = []
         state = self.exertion.update(events, t=t)
@@ -163,6 +279,10 @@ class CoachSession:
         # or another rule asked for still need a tap.
         if self.paused and self.pause_rule == "perception" and any(e.type == "perception_regained" for e in events):
             out += self.resume(t, rule="perception", text="Tracking is back. Carry on.")
+        if self.agent is not None and not self.stopped:
+            for e in events:
+                if e.type in CHECKPOINT_EVENTS:
+                    self._checkpoint(CHECKPOINT_EVENTS[e.type], [e.id], t)
         if self.stopped or self.paused:
             return out
         ctx = CoachContext(mode=self.mode, events=[e for e in events if e.type != "frame"], snapshot=snapshot, exertion=state, prescription=self.prescription, t=t, last_speak_t=self._last_speak_t, last_cue_t=self._last_cue_t)
@@ -178,23 +298,34 @@ class CoachSession:
     # ---- internals ---------------------------------------------------------------------
     def _log_stop(self, evs: list[Event]) -> list[Event]:
         for e in evs:
+            self._ring.append(e)
+            if e.type == "stop":
+                self.epoch += 1  # any agent run in flight is now stale
             if e.type in ("stop", "pause", "rest"):
                 self.trace.log("stop_rule", action=e.type, rule=e.payload.get("rule"), text=e.payload.get("text"))
                 if e.type in ("pause", "rest"):
                     self._clock_pause(e.t)  # the patient resumes both with a tap
                 if e.type == "pause":
                     self.paused, self.pause_rule = True, e.payload.get("rule")
+                    if e.payload.get("rule") in CHECKPOINT_PAUSES and not self.stopped and self.agent is not None:
+                        # an `event` row the trace panel can pair with agent_run.trigger
+                        self.trace.log("event", type="pause", id=e.id, t=e.t, rule=e.payload.get("rule"))
+                        self._checkpoint(f"pause:{e.payload.get('rule')}", [e.id], e.t)
             elif e.type == "therapist_flag":
                 self.trace.log("flag", rule=e.payload.get("rule"), detail=e.payload.get("detail"))
         return evs
 
     def _coach_event(self, d: Decision, t: float) -> Event:
-        d.label = d.label or LABEL
-        self.trace.log("decide", action=d.action, cue_id=d.cue_id, reason=d.reason, evidence=d.evidence, label=d.label)
+        if d.source == "rule":
+            d.label = (d.label or LABEL) if self.rule_label == LABEL else self.rule_label
+        else:
+            d.label = d.label or "Claude agent"
+        self.trace.log("decide", action=d.action, cue_id=d.cue_id, reason=d.reason, evidence=d.evidence, label=d.label, source=d.source)
         for call in d.tool_calls:
             self.trace.log("tool", **call)
         spoken = speak(d.text, t, d.cue_id, d.action)
-        self.trace.log("action", kind="speak", text=d.text, ui=d.ui)
+        # `kind` is the row type (Trace.log), so the action verb goes in `tool`.
+        self.trace.log("action", tool="speak", text=d.text, ui=d.ui, label=d.label, source=d.source)
         if d.ui.get("prompt"):
             self.pending_prompt = d.ui["prompt"]
         for rx_key, fields in (d.ui.get("apply") or {}).items():
@@ -206,6 +337,15 @@ class CoachSession:
         self._last_speak_t = t
         self._last_cue_t[d.cue_id] = t
         return make_event("coach", t=t, **d.to_dict(), speak_id=spoken.id)
+
+    def _coach_summary(self, notes: list[dict[str, Any]]) -> dict[str, Any]:
+        out: dict[str, Any] = {"label": self.rule_label, "notes": notes, "decisions": len(self.decisions)}
+        if self.agent is not None:
+            out["agent"] = self.agent.label
+            out["agent_decisions"] = sum(1 for d in self.decisions if d.get("source") == "agent")
+        if self.coach_note is not None:
+            out["note"] = self.coach_note
+        return out
 
     def summary(self, t: float | None = None) -> dict[str, Any]:
         notes = []
@@ -251,7 +391,7 @@ class CoachSession:
             },
             "told_us": {**self.checkin, **self.feedback},
             "exertion": self.exertion.state,
-            "coach": {"label": LABEL, "notes": notes, "decisions": len(self.decisions)},
+            "coach": self._coach_summary(notes),
             "flags": list(self.stop_rules.flags),
             "stopped": self.stopped,
             "delivery": "queued · not yet delivered",

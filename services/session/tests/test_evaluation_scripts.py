@@ -71,3 +71,23 @@ def test_dataset_v0_includes_arm_landmark_entry(tmp_path: Path):
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
     assert res["arm_rep_f1"] == 1.0 and res["arm_peak_mae_deg"] < 3.0
+
+
+def test_agent_eval_scripted_passes_all_scenarios_without_violations(tmp_path: Path):
+    ag = _load("agent_eval")
+    assert ag.main(["--planner", "scripted", "--out", str(tmp_path / "res"), "--traces", str(tmp_path / "tr")]) == 0
+    res = json.loads((tmp_path / "res" / "agent_v0.json").read_text())
+    assert res["scenarios"] == 9 and res["task_success"] == 9 and res["guardrail_violations"] == 0
+    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 9
+    assert "Scripted planner" in (tmp_path / "res" / "agent_v0.md").read_text()
+
+
+def test_agent_eval_real_model_needs_a_key_and_confirmation(tmp_path: Path, monkeypatch, capsys):
+    ag = _load("agent_eval")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert ag.main(["--planner", "anthropic", "--out", str(tmp_path)]) == 2
+    assert "estimated $" in capsys.readouterr().out
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-not-used")
+    assert ag.main(["--planner", "anthropic", "--out", str(tmp_path)]) == 2  # no --yes: nothing is called
+    assert "--yes" in capsys.readouterr().out
+    assert not list(tmp_path.glob("*.md"))

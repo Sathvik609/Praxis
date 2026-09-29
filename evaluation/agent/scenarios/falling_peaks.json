@@ -1,0 +1,188 @@
+{
+  "id": "falling_peaks",
+  "title": "Falling peaks and moderate exertion in set 1 of Arm out to the side",
+  "mode": "arm",
+  "steps": [
+    {
+      "events": [
+        {
+          "type": "rep_complete",
+          "t": 0.0,
+          "set": 1,
+          "rep": 1,
+          "peak_deg": 90,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": -2.5,
+          "t_end": 0.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 3.0,
+          "set": 1,
+          "rep": 2,
+          "peak_deg": 89,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 0.5,
+          "t_end": 3.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 6.0,
+          "set": 1,
+          "rep": 3,
+          "peak_deg": 86,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 3.5,
+          "t_end": 6.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 9.0,
+          "set": 1,
+          "rep": 4,
+          "peak_deg": 84,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 6.5,
+          "t_end": 9.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 12.0,
+          "set": 1,
+          "rep": 5,
+          "peak_deg": 82,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 9.5,
+          "t_end": 12.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 15.0,
+          "set": 1,
+          "rep": 6,
+          "peak_deg": 79,
+          "hold_s": 3.1,
+          "verified": false,
+          "reason": "target_missed",
+          "lean": false,
+          "hike": false,
+          "t_start": 12.5,
+          "t_end": 15.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 18.0,
+          "set": 1,
+          "rep": 7,
+          "peak_deg": 81,
+          "hold_s": 3.1,
+          "verified": false,
+          "reason": "target_missed",
+          "lean": false,
+          "hike": false,
+          "t_start": 15.5,
+          "t_end": 18.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 21.0,
+          "set": 1,
+          "rep": 8,
+          "peak_deg": 78,
+          "hold_s": 3.1,
+          "verified": false,
+          "reason": "target_missed",
+          "lean": false,
+          "hike": false,
+          "t_start": 18.5,
+          "t_end": 21.0
+        },
+        {
+          "type": "set_complete",
+          "t": 21.0,
+          "set": 1,
+          "reps": 8,
+          "verified_reps": 5,
+          "best_deg": 90.0
+        }
+      ]
+    },
+    {
+      "rpe": 6
+    },
+    {
+      "run": {}
+    },
+    {
+      "answer": {
+        "kind": "adjustment",
+        "choice": "accept"
+      }
+    }
+  ],
+  "script": {
+    "set_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "get_exertion_state"
+      },
+      {
+        "tool": "get_prescription"
+      },
+      {
+        "tool": "propose_adjustment",
+        "args": {
+          "exercise": "abduction",
+          "field": "target_deg",
+          "value": 80,
+          "reason": "Your peaks slid from 90° to about 80° over the set; an 80° line keeps set 2 countable.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "set_complete"
+    ],
+    "perceive_before": {
+      "propose_adjustment": [
+        "get_set_summary"
+      ]
+    },
+    "prompt_kinds": [
+      "adjustment"
+    ],
+    "applied_only_after_accept": {
+      "field": "target_deg",
+      "range": [
+        60,
+        90
+      ]
+    },
+    "stopped": false,
+    "errors": []
+  }
+}
