@@ -1,0 +1,98 @@
+{
+  "id": "pain_stop_mid_run",
+  "title": "Pain 8 reported while the agent is mid-run",
+  "mode": "cup",
+  "steps": [
+    {
+      "frame": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 1,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 940,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 2,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 980,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 3,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 1020,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 4,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 1060,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "arc_complete",
+          "t": 4.0,
+          "arc": 1,
+          "reaches": 4,
+          "unverified": 0,
+          "mean_reach_ms": 1000
+        }
+      ]
+    },
+    {
+      "run": {
+        "pain_at_s": 0.05
+      }
+    }
+  ],
+  "script": {
+    "arc_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "sleep": 0.2
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "Nice even arc.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "arc_complete"
+    ],
+    "stopped": true,
+    "no_agent_output_after_stop": true,
+    "outcome": "stale",
+    "errors": []
+  }
+}

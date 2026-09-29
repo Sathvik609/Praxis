@@ -1,0 +1,69 @@
+{
+  "id": "model_timeout",
+  "title": "The model does not answer within the run budget",
+  "mode": "cup",
+  "timeout_s": 0.2,
+  "steps": [
+    {
+      "frame": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 1,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 940,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "arc_complete",
+          "t": 1.0,
+          "arc": 1,
+          "reaches": 1,
+          "unverified": 0
+        }
+      ]
+    },
+    {
+      "run": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 2,
+          "to_dot": 2,
+          "from_dot": 1,
+          "verified": true,
+          "reason": null,
+          "reach_ms": 980,
+          "arc": 2,
+          "phase": "slow"
+        }
+      ]
+    }
+  ],
+  "script": {
+    "arc_complete": [
+      {
+        "sleep": 2.0
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "arc_complete"
+    ],
+    "errors": [
+      "timeout"
+    ],
+    "offline": true,
+    "rule_coach_after_error": true,
+    "stopped": false
+  }
+}

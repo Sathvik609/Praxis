@@ -162,6 +162,18 @@ class ArmFSM:
         `set_hold` command, which clamps it to the prescription first)."""
         self.hold_s = float(hold_s)
 
+    def set_target(self, target_deg: float) -> None:
+        """An accepted agent adjustment (`set_target`, clamped to the prescription by the
+        pipeline first). The in-code ceiling still applies here."""
+        wanted = float(target_deg)
+        self.clamped = wanted > self.ceiling_deg
+        self.target_deg = min(wanted, self.ceiling_deg)
+
+    def set_reps(self, reps: int) -> None:
+        """An accepted agent adjustment (`set_reps`, clamped to the prescription first); a set
+        already past the new count closes on its next rep."""
+        self.reps_per_set = max(1, int(reps))
+
     @property
     def swing_band_deg(self) -> float:
         """Hysteresis band for the oscillation counter: a quarter of the peak-to-peak amplitude
