@@ -88,13 +88,13 @@ export const TRACE_POLL_MS = 2000
 
 /** Polls `/api/trace` for this session while the trace panel is open. No session id yet → no
  *  request (the service's default would be whichever session ran last). */
-export function useAgentTrace(events: PraxisEvent[], enabled = true): TraceRow[] | null {
+export function useAgentTrace(events: PraxisEvent[], enabled = true, sessionId: string | null = null): TraceRow[] | null {
   // The socket window only holds the latest events, so the one that named the session
   // (replay_start / session_start) scrolls out: remember the id once seen.
   const [known, setKnown] = useState<string | null>(null)
   const found = sessionIdOf(events)
   if (found && found !== known) setKnown(found)
-  const sid = found ?? known
+  const sid = sessionId ?? found ?? known
   const [rows, setRows] = useState<TraceRow[] | null>(null)
   useEffect(() => {
     if (!enabled || !sid) return

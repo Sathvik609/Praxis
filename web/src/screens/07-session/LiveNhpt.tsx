@@ -42,7 +42,7 @@ export function LiveNhpt() {
   const hand = sp.get('hand') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({
+  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
@@ -194,6 +194,7 @@ export function LiveNhpt() {
             <div className="min-h-0 flex-1">
               <TracePanel
                 events={events}
+                sessionId={sessionId}
                 replay={!!replay}
                 pipeline={[
                   `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`,

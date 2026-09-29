@@ -23,7 +23,7 @@ function mockStream(events: Record<string, unknown>[], send = vi.fn()) {
     connected: true,
     lastEvent: (events[events.length - 1] ?? null) as never,
     events: events as never,
-    error: null,
+    sessionId: null, error: null,
     start: vi.fn(async () => {}),
     stop: vi.fn(),
     send,

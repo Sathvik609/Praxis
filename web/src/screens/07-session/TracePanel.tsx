@@ -115,8 +115,8 @@ function AgentRunRows({ run }: { run: AgentRun }) {
  *  so they stay off the patient's video. Agent runs (agent spec §7) come from `/api/trace`
  *  for the socket's session, polled while the panel is open (`agentRows` overrides it), and
  *  are listed under the perception event that triggered them. */
-export function TracePanel({ events, replay = false, pipeline = [], agentRows }: { events: PraxisEvent[]; replay?: boolean; pipeline?: ReactNode[]; agentRows?: TraceRow[] | null }) {
-  const polled = useAgentTrace(events, agentRows === undefined)
+export function TracePanel({ events, replay = false, pipeline = [], agentRows, sessionId = null }: { events: PraxisEvent[]; replay?: boolean; pipeline?: ReactNode[]; agentRows?: TraceRow[] | null; sessionId?: string | null }) {
+  const polled = useAgentTrace(events, agentRows === undefined, sessionId)
   const source = agentRows === undefined ? polled : agentRows
   const runs = useMemo(() => agentRuns(source ?? []), [source])
   // with the run groups on screen, an agent cue is shown once, inside its run

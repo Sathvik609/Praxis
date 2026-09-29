@@ -18,3 +18,13 @@ test('keeps polling the session after the event that named it scrolls out of the
     trace.mockRestore()
   }
 })
+
+test('polls the session the socket named even when the panel opens after that event left the window', async () => {
+  const trace = vi.spyOn(api, 'trace').mockResolvedValue({ session: 's-late', rows: [] })
+  try {
+    renderHook(() => useAgentTrace([ev(300), ev(301)], true, 's-late'))
+    await waitFor(() => expect(trace).toHaveBeenCalledWith('s-late'))
+  } finally {
+    trace.mockRestore()
+  }
+})

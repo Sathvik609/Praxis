@@ -60,7 +60,7 @@ export function LiveArm() {
   const exId = ex.session === 'arm' ? ex.serviceId : 'abduction'
   const tier = tierFor(readCheckinPain()) === 'gentle' ? 'gentle' : 'full'
   const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
+  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
@@ -178,6 +178,7 @@ export function LiveArm() {
             <div className="min-h-0 flex-1">
               <TracePanel
                 events={events}
+                sessionId={sessionId}
                 replay={!!replay}
                 pipeline={[`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`, latencyLine(latency)]}
               />

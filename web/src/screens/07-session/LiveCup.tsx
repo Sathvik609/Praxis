@@ -70,7 +70,7 @@ export function LiveCup() {
   const side = sp.get('side') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, connected, events, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
+  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
@@ -192,6 +192,7 @@ export function LiveCup() {
               <div className="min-h-0 flex-1">
                 <TracePanel
                   events={events}
+                  sessionId={sessionId}
                   replay={!!replay}
                   pipeline={[`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`, latencyLine(latency)]}
                 />
