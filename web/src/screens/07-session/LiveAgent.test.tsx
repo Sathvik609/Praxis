@@ -97,6 +97,33 @@ test('peg test: legacy cue without source keeps its pending label; the agent chi
   expect(screen.getByTestId('agent-status')).toHaveTextContent('Coach is thinking…')
 })
 
+test('replay shows the same agent UI: label, chip and the run in Show trace for the replay session', async () => {
+  const fetchMock = mockApi({
+    '/api/prescription': PRESCRIPTION,
+    '/api/trace': { session: 'rp1', rows: [
+      { kind: 'event', seq: 1, type: 'set_complete', id: 2, t: 11 },
+      { kind: 'agent_run', seq: 2, phase: 'start', trigger: 'set_complete', model: 'claude-sonnet-5', transport: 'mcp' },
+      { kind: 'tool', seq: 3, server: 'perception', name: 'get_set_summary', ok: true, ms: 30, transport: 'mcp', result_summary: '8 of 8 verified' },
+    ] },
+  })
+  mockStream([
+    { type: 'replay_start', t: 0, id: 0, clip: 'arm_abd_01', fps: 12, frames: 300, session_id: 'rp1' },
+    armFrame,
+    { type: 'set_complete', t: 11, id: 2, set: 1 },
+    { type: 'agent_status', t: 11, id: 3, state: 'thinking', trigger: 'set_complete', label: AGENT },
+    cue(4, { source: 'agent', label: AGENT, text: 'Good set. Same target for set 2.' }),
+  ])
+  renderAt('/session?exercise=abduction&side=left&replay=arm_abd_01', <LiveArm />)
+  expect(screen.getByText('Replay · processed on the service')).toBeInTheDocument()
+  expect(screen.getByText(AGENT).closest('[data-source]')).toHaveAttribute('data-source', 'agent')
+  expect(screen.getByTestId('agent-status')).toHaveTextContent('Coach is thinking…')
+  // the set check-in (RPE) opens on set_complete; skip it to reach the trace toggle
+  fireEvent.click(screen.getByRole('button', { name: /skip/i }))
+  fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
+  expect(await screen.findByRole('button', { name: /agent run · trigger set_complete · Sonnet 5 · mcp/ })).toBeInTheDocument()
+  expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/trace') && String(u).includes('session=rp1'))).toBe(true)
+})
+
 test('peg test: a resume request after tracking loss is answered from the paused overlay', () => {
   mockStream([
     nhptFrame,
