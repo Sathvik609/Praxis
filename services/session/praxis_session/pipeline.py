@@ -341,7 +341,9 @@ class SessionPipeline:
             steady_d = steady.update(cal.marker_corners_px)
             area = task_area_in_view(cal, self.spec, frame.shape)
             rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True)
-            checks = [r for r in rows if r["id"] not in ("camera", "person")]
+            # Root cause first: without the markers, task area and tilt cannot be judged.
+            order = {"markers": 0, "angle": 1, "task_area": 2, "lighting": 3}
+            checks = sorted((r for r in rows if r["id"] not in ("camera", "person")), key=lambda r: order.get(r["id"], 9))
             angle = camera_angle(cal)
             measures |= {
                 "markers_found": sorted(int(k) for k in cal.marker_corners_px),

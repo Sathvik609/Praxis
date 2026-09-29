@@ -191,7 +191,10 @@ class CoachSession:
             return None, evs
         cmd = dict(rec["accept"] or {}) | {"source": "agent", "prompt": prompt_id, "evidence": list(ev)}
         proposal = rec["prompt"].get("proposal") or {}
-        text = f"Done: {proposal.get('field', 'setting')} is now {proposal.get('value')}{proposal.get('unit') or ''}."
+        names = {"target_deg": "Target", "hold_s": "Hold", "reps": "Reps per set", "phase": "Arc speed"}
+        unit = proposal.get("unit") or ""
+        value = f"{proposal.get('value')}{unit if unit == '°' else (' ' + unit if unit else '')}"
+        text = f"Done. {names.get(str(proposal.get('field')), 'Setting')} is now {value}."
         return cmd, [say(rec["action"], "agent_adjust_applied", text, f"patient accepted ({prompt_id})")]
 
     # ---- evidence ring and checkpoints (29 Sep) --------------------------------------------
