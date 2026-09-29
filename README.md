@@ -53,6 +53,22 @@ uv run python ../../evaluation/scripts/make_dataset_v0.py && uv run python ../..
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
+## Agent coach (Claude + OpenCV tools over MCP, optional)
+
+Off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). With it on, Claude Sonnet 5 (Strands Agents) runs at checkpoints — check-in, end of a set/arc, a stop-rule pause after unverified reps or lost tracking, peg-test end, session end — and calls OpenCV 5 tools served by FastMCP at `/mcp/perception`, `/mcp/exertion`, `/mcp/coach` (streamable HTTP, same port). Every dose change and every resume is a prompt the patient accepts; stop rules still run first. Details and the workflow diagram: `docs/AGENT.md`.
+
+```bash
+cd services/session
+cp .env.example .env              # set ANTHROPIC_API_KEY and PRAXIS_AGENT=anthropic (.env is git-ignored)
+uv run uvicorn praxis_session.main:app --port 8000 --env-file .env
+curl -s localhost:8000/health     # "agent": {"mode": "anthropic", "model": "claude-sonnet-5", "mcp": true, "ready": true}
+PRAXIS_AGENT=scripted uv run uvicorn praxis_session.main:app --port 8000   # no key: canned tool calls, for UI work
+uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # nine scenarios, free (CI)
+uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes   # real model, prints the cost first
+```
+
+Status 29 Sep: built and tested with the scripted planner only (the API key returned 503); no real-model result yet. Keep `PRAXIS_AGENT=off` on the public Railway site until a spend limit exists (`docs/RISKS.md`). Bedrock: `PRAXIS_AGENT=bedrock`, `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION`, and `PRAXIS_CLOUD_ENABLED=1`.
+
 ## One-container deploy (Railway / any Docker host)
 
 The image builds the web app and serves it from the session service, so the browser talks to **one origin** for the page, `/api`, `/health`, `/events` and the WebSocket (`/ws/session`). Build context is the repo root; models are fetched (SHA256-pinned) at build time; the SQLite store lives in `/app/data` (ephemeral unless a volume is mounted). `PORT` is honoured; `railway.json` points Railway at the Dockerfile and the `/health` check.
