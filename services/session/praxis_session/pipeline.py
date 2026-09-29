@@ -351,7 +351,8 @@ class SessionPipeline:
                 "jitter_px": steady_d["jitter_px"],
             }
         failing = [c["id"] for c in checks if c["status"] != "pass"]
-        return {"ok": True, "mode": self.mode, "frame_age_s": age, "checks": checks, "failing": failing, "all_pass": not failing, "measures": measures}
+        first_hint = next((c["hint"] for c in checks if c["status"] == "check" and c["hint"]), None)
+        return {"ok": True, "mode": self.mode, "frame_age_s": age, "checks": checks, "failing": failing, "all_pass": not failing, "first_hint": first_hint, "measures": measures}
 
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
         nhpt = None

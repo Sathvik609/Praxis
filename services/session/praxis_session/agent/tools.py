@@ -107,6 +107,12 @@ class RunState:
     calls: int = 0
     transport: str = "direct"
     actions: int = 0
+    first_action_ms: float | None = None
+
+    def acted(self) -> None:
+        self.actions += 1
+        if self.first_action_ms is None:
+            self.first_action_ms = round((time.monotonic() - self.t0) * 1000.0, 1)
 
 
 @dataclass
@@ -284,7 +290,7 @@ def bind(name: str, transport: str, registry: Registry | None = None) -> Callabl
 
 
 # ---- guardrail helpers ----------------------------------------------------------------------
-def _action_guard(evidence: Any) -> list[int]:
+def _action_guard(evidence: Any, count: bool = True) -> list[int]:
     h = _h()
     s = h.session
     if h.run is None:
@@ -304,7 +310,8 @@ def _action_guard(evidence: Any) -> list[int]:
     bad = [i for i in ids if not s.has_event(i)]
     if bad:
         raise ToolRejected(f"evidence ids {bad} are not events of this session", "evidence")
-    h.run.actions += 1
+    if count:
+        h.run.acted()
     return ids
 
 
@@ -320,7 +327,9 @@ def _text(value: Any, what: str, limit: int) -> str:
 def _decision(action: str, cue_id: str, text: str, reason: str, evidence: list[int], ui: dict[str, Any] | None = None, tool: str = "") -> Decision:
     h = _h()
     trigger = h.run.trigger if h.run else "external"
-    return Decision(action, cue_id, text, reason or f"Claude agent at {trigger}", evidence, ui or {}, h.label, [{"tool": tool, "server": "coach"}], source="agent")  # type: ignore[arg-type]
+    # No `tool_calls` here: `invoke` already wrote the tool's own trace row (with `server`).
+    ui = {**(ui or {}), "agent_tool": tool}
+    return Decision(action, cue_id, text, reason or f"Claude agent at {trigger}", evidence, ui, h.label, [], source="agent")  # type: ignore[arg-type]
 
 
 def _compact(e: Event) -> dict[str, Any]:
@@ -488,11 +497,12 @@ def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str
     if cue not in ("instruct", "correct"):
         raise ToolRejected("cue must be 'instruct' or 'correct'", "field")
     line = _text(text, "text", SPEAK_MAX_CHARS)
-    ids = _action_guard(evidence)
+    ids = _action_guard(evidence, count=False)
     now = time.monotonic()
     if now - h.last_speak_mono < SPEAK_MIN_GAP_S:
         raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
     h.last_speak_mono = now
+    h.run.acted()  # type: ignore[union-attr]
     h._queue("decision", {"decision": _decision(cue, "agent_speak", line, "", ids, tool="speak")})
     return {"ok": True, "queued": True, "action": cue}
 
@@ -633,6 +643,7 @@ def write_session_summary(session_id: str, note: str, evidence: list[int]) -> di
     ids = [int(x) for x in evidence] if isinstance(evidence, (list, tuple)) and evidence else []
     if not ids or any(not s.has_event(i) for i in ids):
         raise ToolRejected("evidence must list event ids of this session", "evidence")
+    h.run.acted()
     s.coach_note = {"text": text, "evidence": ids, "label": h.label}
     s.trace.log("coach_note", text=text, evidence=ids, label=h.label)
     stored = False
