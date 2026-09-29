@@ -1,12 +1,13 @@
-import type { ReactNode, RefObject } from 'react'
+import { useId, type ReactNode, type RefObject } from 'react'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
-import { AlertTriangle, Camera, Check, Pause, Play, X } from '../../design/Icon'
+import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
 import { Stat } from '../../design/Stat'
 import { plural } from '../../lib/plural'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
+import { COACH_LABEL, type AgentStatus, type CoachSource } from '../../session/agent'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 
@@ -25,13 +26,14 @@ const STATUS_ICON: Record<LiveStatus, ReactNode> = {
   ended: <Check />,
 }
 
-export function SessionHeader({ title, subtitle, status, label }: { title: string; subtitle: ReactNode; status: LiveStatus; label: StatusLabel }) {
+export function SessionHeader({ title, subtitle, status, label, agent = null }: { title: string; subtitle: ReactNode; status: LiveStatus; label: StatusLabel; agent?: AgentStatus | null }) {
   return (
     <header className="flex h-16 items-center gap-6 border-b border-line bg-surface px-6">
       <span className="font-heading text-2xl font-semibold text-teal-ink">Praxis</span>
       <span className="whitespace-nowrap text-xl font-bold">{title}</span>
       <span className="min-w-0 truncate text-muted">{subtitle}</span>
       <span className="ml-auto flex items-center gap-3">
+        <AgentStatusChip status={agent} />
         <Chip tone={label.tone} icon={STATUS_ICON[status]}>{label.chip}</Chip>
       </span>
     </header>
@@ -104,19 +106,43 @@ export function LiveFeed({
   )
 }
 
-/** Coach caption card: cue text ≥ 24 px, labeled with the coach implementation; the watch tone
- *  is for posture / correction cues. */
-export function CoachCard({ text, label, watch = false }: { text: string; label: string; watch?: boolean }) {
+/** Coach caption card: cue text ≥ 24 px, labeled with the coach implementation that said it
+ *  (the event's `label`); the watch tone is for posture / correction cues. Agent and rule cues
+ *  differ by label text and icon, never by colour alone. */
+export function CoachCard({ text, label, source = 'rule', watch = false }: { text: string; label: string; source?: CoachSource; watch?: boolean }) {
   return (
     <Card tone={watch ? 'watch' : 'coach'}>
       <div className="text-lg text-muted">Coach{watch ? ' · posture' : ''}</div>
       <p className="text-2xl">{text}</p>
-      <div className="mt-2 text-lg text-muted">{label}</div>
+      <div data-source={source} className="mt-2 flex items-center gap-2 text-lg text-muted">
+        {source === 'agent' ? <Bot aria-hidden className="h-5 w-5 shrink-0" /> : <ListChecks aria-hidden className="h-5 w-5 shrink-0" />}
+        <span>{label}</span>
+      </div>
     </Card>
   )
 }
 
-export const COACH_LABEL = 'Rule-based coach · LLM agent pending'
+export { COACH_LABEL }
+
+/** Agent run state (`agent_status` events) in the session header, so it never moves the
+ *  columns. The polite live region is always mounted and empty while idle, so a new run is
+ *  announced once. Offline means the rule coach carries on; the reason is a tooltip and the
+ *  chip's accessible description. */
+export function AgentStatusChip({ status }: { status: AgentStatus | null }) {
+  const id = useId()
+  const reason = status?.reason || 'The Claude agent is unavailable. The rule-based coach carries on.'
+  return (
+    <span aria-live="polite" data-testid="agent-status" className="inline-flex">
+      {status?.state === 'thinking' && <Chip tone="focus" icon={<LoaderCircle className="motion-safe:animate-spin" />}>Coach is thinking…</Chip>}
+      {status?.state === 'offline' && (
+        <span title={reason} aria-describedby={id} className="inline-flex">
+          <Chip tone="amber" icon={<CloudOff />}>Coach offline · rule coach</Chip>
+          <span id={id} className="sr-only">{reason}</span>
+        </span>
+      )}
+    </span>
+  )
+}
 
 /** Verified vs unverified, the same component on every live screen (CLAUDE.md §1: "verified vs
  *  unverified counts everywhere"). Counts come from the camera totals the service sends, never

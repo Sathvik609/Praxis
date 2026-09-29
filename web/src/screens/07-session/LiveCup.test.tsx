@@ -88,6 +88,53 @@ test('Show trace reveals the OpenCV line and keeps the caption, counts and coach
   expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/9 verified · 1 unverified/)
 })
 
+const cue = (id: number, extra: Record<string, unknown> = {}) => ({ type: 'coach', t: 10, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [], ui: {}, ...extra })
+
+test('the service progression prompt is answered with {cmd: answer} and its Why asks the coach', () => {
+  send.mockClear()
+  const waiting = { ...frame, cup: { ...frame.cup, arcs_done: 2, awaiting_phase: true } }
+  const prompt = { id: 'progression', title: 'Coach suggests: try the fast arcs', text: 'Two clean slow arcs.', options: ['Yes, go faster', 'Keep pace', 'Why?'], within_prescription: true }
+  mockStream([waiting, cue(2, { action: 'progress', label: 'Rule-based coach · LLM agent pending', ui: { prompt } })])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.getAllByText(/Coach suggests: try the fast arcs/)).toHaveLength(1) // no local duplicate
+  fireEvent.click(screen.getByRole('button', { name: 'Why?' }))
+  expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'progression', choice: 'Why?' })
+  expect(screen.getByRole('button', { name: 'Why?' })).toHaveAttribute('aria-expanded', 'true')
+  fireEvent.click(screen.getByRole('button', { name: 'Keep pace' }))
+  expect(send).toHaveBeenLastCalledWith({ cmd: 'answer', prompt: 'progression', choice: 'Keep pace' })
+  // declined: neither the service prompt nor the screen's own fallback comes back
+  expect(screen.queryByText(/Coach suggests: try the fast arcs/)).toBeNull()
+})
+
+test('an agent cue shows its label and the header shows the thinking chip', () => {
+  mockStream([
+    frame,
+    { type: 'agent_status', t: 10, id: 2, state: 'thinking', trigger: 'arc_complete', label: 'Claude agent · Anthropic API (dev)' },
+    cue(3, { source: 'agent', label: 'Claude agent · Anthropic API (dev)', text: 'Slower on the way down to dot 4.' }),
+  ])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.getByText('Slower on the way down to dot 4.')).toBeInTheDocument()
+  expect(screen.getByText('Claude agent · Anthropic API (dev)').closest('[data-source]')).toHaveAttribute('data-source', 'agent')
+  expect(screen.getByText('Coach is thinking…')).toBeInTheDocument()
+})
+
+test('a resume prompt during a setup pause shows inside the paused overlay with the agent instruction', () => {
+  send.mockClear()
+  mockStream([
+    frame,
+    { type: 'pause', t: 10, id: 2, rule: 'failed_reps', text: 'Three reaches in a row were not verified.' },
+    cue(3, { source: 'agent', action: 'correct', label: 'Claude agent · Anthropic API (dev)', text: 'Marker 2 is covered by your sleeve. Move it clear of the sheet.' }),
+    cue(4, { source: 'agent', label: 'Claude agent · Anthropic API (dev)', text: 'Setup looks good — resume?', ui: { prompt: { id: 'r1', kind: 'resume', title: 'Setup looks good — resume?', text: 'All four markers are in view again.', options: ['Yes, resume', 'Not yet'], within_prescription: true } } }),
+  ])
+  renderAt('/session?exercise=cup&side=left')
+  const dialog = screen.getByRole('dialog')
+  expect(dialog).toHaveTextContent(/Marker 2 is covered by your sleeve/)
+  expect(dialog).toHaveTextContent(/All four markers are in view again/)
+  expect(screen.queryByRole('button', { name: 'Resume' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Yes, resume' }))
+  expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'r1', choice: 'Yes, resume' })
+})
+
 test('caption names the dot the cup is on and the next one, like the ring', () => {
   mockStream([{ ...frame, cup: { ...frame.cup, state: 'placed' } }])
   renderAt('/session?exercise=cup&side=left')

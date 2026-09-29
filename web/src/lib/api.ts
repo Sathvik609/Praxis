@@ -1,3 +1,4 @@
+import type { AgentHealth } from '../session/agent'
 import { SESSION_API_URL } from './config'
 
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string | null; level: number; version: number } }
@@ -45,6 +46,9 @@ export type CheckinBody = { patient_id?: string; pain: number; new_symptoms: boo
 export type CheckinResult = { tier: 'full' | 'gentle' | 'rest'; flagged: boolean; reasons: string[]; plan?: unknown }
 export type SelfReport = { ok: boolean; exercise: string; verified?: false; source?: 'self_ticked'; label?: string; sets_today?: number; error?: string }
 
+/** `GET /health`. `agent` is absent on a service from before the agent coach (29 Sep). */
+export type Health = { status: string; service?: string; opencv_version?: string; mode?: string; models?: Record<string, boolean>; agent?: AgentHealth }
+
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`)
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
@@ -60,6 +64,7 @@ async function send<T>(method: 'POST' | 'PUT', path: string, body?: unknown): Pr
 const post = <T,>(path: string, body?: unknown) => send<T>('POST', path, body)
 
 export const api = {
+  health: () => get<Health>('/health'),
   me: () => get<Patient>('/api/patients/me'),
   prescription: () => get<Prescription>('/api/prescription'),
   sessions: () => get<{ sessions: SessionRecord[] }>('/api/sessions').then((r) => r.sessions),

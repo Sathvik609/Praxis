@@ -64,3 +64,34 @@ test('speech queues instead of cancelling; corrections drop queued instructions'
   expect(utterances[1].text).toBe('Sit tall.') // the queued instruction was dropped by the correction
   vi.unstubAllGlobals()
 })
+
+test('an agent resume command (after the patient said yes) clears the paused overlay like a resume event', () => {
+  const pause = { type: 'pause', t: 1, id: 1, rule: 'perception', text: 'lost' } as PraxisEvent
+  const { result, rerender } = renderHook(({ events }) => useCoach(events, { speak: vi.fn() }), { initialProps: { events: [pause] } })
+  expect(result.current.overlay?.kind).toBe('paused')
+  rerender({ events: [pause, { type: 'command', t: 2, id: 2, cmd: 'resume', source: 'agent', ok: true } as PraxisEvent] })
+  expect(result.current.overlay).toBeNull()
+  // a refused command changes nothing
+  rerender({ events: [pause, { type: 'command', t: 2, id: 2, cmd: 'resume', source: 'agent', ok: false } as PraxisEvent] })
+  expect(result.current.overlay?.kind).toBe('paused')
+})
+
+test('caption carries its source; the latest rule label is kept for the screen-state captions', () => {
+  const { result } = renderHook(() =>
+    useCoach([coach(1, { source: 'rule', label: 'Rule-based coach' }), coach(2, { source: 'agent', label: 'Claude agent · Amazon Bedrock' })], { speak: vi.fn() }),
+  )
+  expect(result.current.caption?.label).toBe('Claude agent · Amazon Bedrock')
+  expect(result.current.captionSource).toBe('agent')
+  expect(result.current.ruleLabel).toBe('Rule-based coach')
+})
+
+test('legacy coach events (no source) read as the rule coach with their own label', () => {
+  const { result } = renderHook(() => useCoach([coach(1)], { speak: vi.fn() }))
+  expect(result.current.captionSource).toBe('rule')
+  expect(result.current.ruleLabel).toBe('Rule-based coach · LLM agent pending')
+})
+
+test('agent_status events surface as the agent state', () => {
+  const { result } = renderHook(() => useCoach([{ type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API (dev)' } as PraxisEvent], { speak: vi.fn() }))
+  expect(result.current.agent?.state).toBe('thinking')
+})

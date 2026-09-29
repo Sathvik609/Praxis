@@ -5,11 +5,12 @@ import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
 import { Chip } from '../../design/Chip'
-import { Play } from '../../design/Icon'
+import { Bot, ListChecks, Play } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
-import { api, useApi } from '../../lib/api'
+import { api, useApi, type Health } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
 import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
+import { healthLines } from '../../session/agent'
 import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
 
 /** Every toggle here is read by the code it names (session/guidance.ts). Captions are not a
@@ -26,6 +27,7 @@ export function Settings() {
   const [theme, setTheme] = useState<Theme>(getTheme())
   const [guidance, setGuidance] = useState<Guidance>(() => readGuidance())
   const { data: clips, error } = useApi(() => api.replayList())
+  const { data: health, error: healthError } = useApi(() => api.health())
   const pick = (t: Theme) => {
     applyTheme(t)
     setTheme(t)
@@ -81,10 +83,37 @@ export function Settings() {
             {clips && clips.length === 0 && <p className="text-muted">No recordings available yet.</p>}
           </div>
         </Card>
+        <CoachStatus health={health} error={healthError} />
         <Card title="Cloud">
           <p className="-mt-2 text-muted">Cloud mode (AWS) is off in this build. Video is {processingPlace()}.</p>
         </Card>
       </div>
     </div>
+  )
+}
+
+/** Settings > Coach: which coach runs, from the service's `/health` (agent spec §7). The rule
+ *  coach always runs between agent checkpoints and whenever the agent is off or not ready. */
+function CoachStatus({ health, error }: { health: Health | null; error: string | null }) {
+  const lines = health ? healthLines(health.agent) : null
+  const agentOn = !!health?.agent && health.agent.mode !== 'off'
+  const running = agentOn && !!health?.agent?.ready
+  return (
+    <Card title="Coach">
+      {lines && (
+        <>
+          <p className="-mt-2 flex items-center gap-2 text-lg font-bold">
+            {agentOn ? <Bot aria-hidden className="h-5 w-5 shrink-0" /> : <ListChecks aria-hidden className="h-5 w-5 shrink-0" />}
+            <span>{lines.title}</span>
+          </p>
+          {lines.details.map((d) => (
+            <p key={d} className="mt-1 text-lg text-muted">{d}</p>
+          ))}
+          <p className="mt-2 text-muted">{running ? 'The agent runs at checkpoints (set or arc done, setup trouble, session end); the rule-based coach gives the cues in between. Stop rules run before both.' : 'Deterministic cues from the camera events. Stop rules run first.'}</p>
+        </>
+      )}
+      {!health && !error && <p className="-mt-2 text-muted" role="status">Checking the coach…</p>}
+      {!health && error && <p className="-mt-2 text-muted">Coach status unavailable — the session service is not reachable.</p>}
+    </Card>
   )
 }
