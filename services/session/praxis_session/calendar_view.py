@@ -13,7 +13,8 @@ own: `today` (and `now` for the clinic visit) come from the caller, so tests pin
 
 Replays (a recorded clip through the pipeline) never count and are left out of the days.
 Sample sessions (the illustrative seed history) are listed on their day with `sample: true`
-and never make a day `done` or count in `week`. Future days are never `missed`.
+and never make a day `done` or count in `week` (a sample day keeps its schedule status, e.g.
+`untracked` or `rest`; the web labels it Sample). Future days are never `missed`.
 """
 from __future__ import annotations
 
