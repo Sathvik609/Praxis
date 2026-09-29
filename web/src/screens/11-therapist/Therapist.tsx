@@ -7,27 +7,32 @@ import { Field } from '../../design/Field'
 import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
 import { api, isReplaySession, useApi } from '../../lib/api'
+import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
 import { PROGRAM, upcomingVisit } from '../../lib/seed'
+import { DEFAULT_SCHEDULE, ScheduleDialog } from './ScheduleDialog'
 
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
 
-/** Screen 11 · Therapist dashboard (read-only for the competition build; clinician accounts
- *  arrive with Cognito in W6). Rendered outside the patient Shell with its own clinician
- *  header. Editing scrolls to the prescription card; nothing here changes the prescription. */
+/** Screen 11 · Therapist dashboard. Rendered outside the patient Shell with its own clinician
+ *  header. The dose is read-only for the competition build (clinician accounts arrive with
+ *  Cognito in W6); since 28 Sep the practice days, peg-test day and next clinic visit can be
+ *  edited ("Edit practice days", saved as prescription v(N+1)), which drives screen 12. */
 export function Therapist() {
   const { data: patients, error: pError } = useApi(() => api.therapistPatients())
   const { data: flags, reload } = useApi(() => api.flags())
-  const { data: rx } = useApi(() => api.prescription())
+  const { data: rx, reload: reloadRx } = useApi(() => api.prescription())
+  const [editing, setEditing] = useState(false)
+  const [savedNote, setSavedNote] = useState<string | null>(null)
+  const schedule = rx?.schedule ?? DEFAULT_SCHEDULE
   const { data: sessions } = useApi(() => api.sessions())
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [trace, setTrace] = useState<Trace | null>(null)
   const [traceNote, setTraceNote] = useState<string | null>(null)
-  const rxRef = useRef<HTMLElement>(null)
   const flagsRef = useRef<HTMLElement>(null)
 
   const me = patients?.find((p) => p.id === selectedId) ?? patients?.[0]
-  const nextVisit = upcomingVisit(PROGRAM.nextVisit)
+  const nextVisit = rx ? upcomingVisit(schedule.next_visit ? visitText(schedule.next_visit.at) : null) : upcomingVisit(PROGRAM.nextVisit)
   // Pain before → after from the stored sessions (newest first), never a fixed sentence.
   const painRows = (sessions ?? []).filter((s) => !isReplaySession(s) && typeof s.feedback?.pain_after === 'number').slice(0, 4) // replays never count (same rule as Progress)
   const painSample = painRows.some((s) => s.illustrative)
@@ -50,7 +55,7 @@ export function Therapist() {
         <span className="text-muted">·</span>
         <Chip tone="mint">Clinician view</Chip>
         <span className="ml-auto text-muted">{PROGRAM.clinician}</span>
-        <Chip tone="neutral">Read-only</Chip>
+        <Chip tone="neutral">No clinician sign-in yet</Chip>
         <Link
           to="/details"
           className="flex h-14 items-center rounded-[var(--r-control)] border-2 border-teal-ink px-4 text-lg font-bold text-teal-ink hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
@@ -100,7 +105,7 @@ export function Therapist() {
                 <p className="text-muted">Hospital GRASP, Level {rx?.level ?? 2} · {rx?.side ?? 'left'} side · program v{rx?.version ?? 3} · next visit {nextVisit ?? 'not booked'}</p>
               </div>
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => scrollTo(rxRef)}>Edit prescription</Button>
+                <Button variant="secondary" onClick={() => setEditing(true)}>Edit practice days</Button>
                 <Button onClick={() => scrollTo(flagsRef)}>Review flags</Button>
               </div>
             </div>
@@ -120,21 +125,24 @@ export function Therapist() {
                 </ul>
               </section>
             </Card>
-            <Card title={`Prescription (v${rx?.version ?? 3})`} action={<Chip tone="neutral">Read-only</Chip>}>
-              <section ref={rxRef} aria-label="Prescription" className="scroll-mt-6">
+            <Card title={`Prescription (v${rx?.version ?? 3})`} action={<Chip tone="neutral">Dose read-only</Chip>}>
+              <section aria-label="Prescription">
                 <ul className="divide-y divide-line text-lg">
                   <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">camera</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">camera</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="neutral">weekly</Chip></li>
+                  <li className="py-2">Practice days · {daysLabel(schedule.practice_days)} · peg test {WEEKDAYS[schedule.nhpt_day]}</li>
+                  <li className="py-2">Next visit · {schedule.next_visit ? `${visitText(schedule.next_visit.at)} · ${schedule.next_visit.with}` : 'not booked'}</li>
                 </ul>
+                {savedNote && <p className="mt-2 font-bold text-mint-ink" role="status">{savedNote}</p>}
                 <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
                 <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new symptoms · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
-                <p className="mt-3 text-base text-muted">Prescription edits arrive with clinician accounts. Until then this card is the reference the coach is clamped to.</p>
+                <p className="mt-3 text-base text-muted">Dose edits arrive with clinician accounts; until then this card is the reference the coach is clamped to. Practice days and the next visit can be edited now (Edit practice days).</p>
               </section>
             </Card>
             <Card title="Adherence and NHPT">
               <div className="flex flex-wrap gap-8">
-                <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned sessions done" />
+                <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned days practised" />
                 <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1${me?.nhpt_sample ? ' · sample' : ''}`} />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
@@ -178,9 +186,21 @@ export function Therapist() {
                 </div>
               ))}
             </section>
-          )}
+                    )}
         </div>
       </div>
+      {editing && rx && (
+        <ScheduleDialog
+          schedule={schedule}
+          version={rx.version}
+          onClose={() => setEditing(false)}
+          onSaved={(saved) => {
+            setEditing(false)
+            setSavedNote(`Saved as prescription v${saved.version} · practice days ${daysLabel(saved.schedule?.practice_days ?? [])}.`)
+            reloadRx()
+          }}
+        />
+      )}
     </div>
   )
 }

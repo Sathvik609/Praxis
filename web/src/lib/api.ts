@@ -1,7 +1,19 @@
 import { SESSION_API_URL } from './config'
 
-export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string; level: number; version: number } }
-export type Prescription = { program: string; version: number; level: number; side: string; clinician: string; exercises: Record<string, Record<string, unknown>>; allowed_adaptations: Record<string, Record<string, unknown>>; stop_rules: { pain_max: number; lean_deg: number; lean_events: number; failed_reps: number; exertion_high_s: number; new_symptoms: boolean } }
+export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string | null; level: number; version: number } }
+/** Practice days live in the prescription (screen 12, 28 Sep): weekdays 0 = Mon … 6 = Sun. */
+export type NextVisit = { at: string; with: string }
+export type Schedule = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null; minutes_per_day: number }
+export type Prescription = { program: string; version: number; level: number; side: string; clinician: string; exercises: Record<string, Record<string, unknown>>; allowed_adaptations: Record<string, Record<string, unknown>>; stop_rules: { pain_max: number; lean_deg: number; lean_events: number; failed_reps: number; exertion_high_s: number; new_symptoms: boolean }; schedule?: Schedule; edited?: { by: string; at: string; what: string; from_version: number } | null }
+/** `GET /api/calendar` (service `calendar_view.py`). `done` only from live sessions; replays are
+ *  left out; sample days carry `sample: true` and stay `untracked`; future days are never `missed`. */
+export type CalendarStatus = 'done' | 'today' | 'planned' | 'missed' | 'rest' | 'untracked'
+export type CalendarSession = { id: string; title: string | null; exercise: string | null; name: string | null; mode: string; minutes: number; source: 'live' | 'sample'; verified?: number | null; nhpt_total_s?: number | null }
+export type ClinicVisit = { at: string; with: string; with_short: string; time: string }
+export type CalendarDay = { date: string; weekday: number; is_today: boolean; status: CalendarStatus; planned: boolean; nhpt_due: boolean; minutes: number; minutes_done: number; exercises: { id: string; name: string }[]; sessions: CalendarSession[]; sample: boolean; clinic_visit: ClinicVisit | null }
+export type CalendarWeek = { from: string; to: string; done_days: number; planned_days: number; minutes_done: number; minutes_planned: number; nhpt_done: boolean }
+export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean }) | null; tracking_since: string | null }
+export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null }
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[] }
 export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[] }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
 export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean; exercise?: string | null; illustrative?: boolean; source?: SessionSource; replay?: boolean }
@@ -19,10 +31,11 @@ export const isReplaySession = (s: Parameters<typeof sessionSource>[0]): boolean
 export type Flag = { id: number; session_id: string; rule: string; detail: string; t: number; date: string; reviewed: boolean }
 /** One weekly peg-test time; `kind` says whether it is the illustrative sample or the patient's own. */
 export type TrendPoint = { date: string; total_s: number; kind?: 'sample' | 'live' }
-/** `practice` counts live sessions only (`planned` is null until the prescription carries a
- *  schedule, so `adherence_pct` is null too); `sample` is the wireframe's illustrative history
- *  and is never added to the real numbers. Replays are in none of these lists. */
-export type Progress = { nhpt_trend: TrendPoint[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; exercise?: string | null; illustrative?: boolean; source?: SessionSource }[]; practice: { done: number; planned: number | null; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean; source?: SessionSource }[]; goal_log_count: number }
+/** `practice` counts live sessions only: `done` sessions, and `days_done` of `planned` practice
+ *  days from the prescription's schedule since the first live session (`planned` and
+ *  `adherence_pct` are null before one); `sample` is the wireframe's illustrative history and
+ *  is never added to the real numbers. Replays are in none of these lists. */
+export type Progress = { nhpt_trend: TrendPoint[]; verified_per_session: { date: string; verified: number; limited: boolean; mode: string; exercise?: string | null; illustrative?: boolean; source?: SessionSource }[]; practice: { done: number; planned: number | null; days_done?: number; hours: number }; adherence_pct: number | null; sample: { done: number; planned: number; hours: number; illustrative: true }; pain_effort: { date: string; pain_after: number | null; effort: number | null; ended_early: boolean; illustrative?: boolean; source?: SessionSource }[]; goal_log_count: number }
 export type TherapistPatient = { id: string; name: string; program: string; open_flags: number; adherence_pct: number | null; nhpt_last_s: number | null; nhpt_first_s: number | null; nhpt_sample?: boolean; illustrative?: boolean }
 
 /** `POST /api/checkin` (service track): the service computes the tier and writes the therapist
@@ -39,11 +52,12 @@ async function get<T>(path: string): Promise<T> {
   if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
   return body
 }
-async function post<T>(path: string, body?: unknown): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+async function send<T>(method: 'POST' | 'PUT', path: string, body?: unknown): Promise<T> {
+  const r = await fetch(`${SESSION_API_URL}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   return r.json() as Promise<T>
 }
+const post = <T,>(path: string, body?: unknown) => send<T>('POST', path, body)
 
 export const api = {
   me: () => get<Patient>('/api/patients/me'),
@@ -59,6 +73,10 @@ export const api = {
   /** A demo-only exercise the patient ticked: logged as self-reported, never as a verified rep. */
   selfReport: (exercise: string, sets = 1) => post<SelfReport>('/api/self_report', { exercise, sets }),
   checkin: (body: CheckinBody) => post<CheckinResult>('/api/checkin', body),
+  /** Screen 12. No range: the Mon–Sun week holding the service's today. */
+  calendar: (range?: { from: string; to: string }) => get<Calendar>(`/api/calendar${range ? `?from=${range.from}&to=${range.to}` : ''}`),
+  /** Therapist view · Edit practice days: stored as prescription v(N+1). */
+  putSchedule: (body: ScheduleBody) => send<Prescription>('PUT', '/api/prescription/schedule', body),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),
 }
 

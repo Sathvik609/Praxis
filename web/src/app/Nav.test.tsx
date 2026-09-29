@@ -10,17 +10,19 @@ function renderNav(path = '/') {
   )
 }
 
-test('nav shows the four hubs and the program label', () => {
+test('nav shows the five hubs, Calendar before Settings, and the program label', () => {
   renderNav()
-  for (const t of ['Home', 'Exercises', 'Progress', 'Settings']) {
-    expect(screen.getByRole('link', { name: t })).toBeInTheDocument()
-  }
+  const hubs = screen.getAllByRole('link').filter((a) => a.closest('nav'))
+  expect(hubs.map((a) => a.textContent)).toEqual(['Home', 'Exercises', 'Progress', 'Calendar', 'Settings'])
+  expect(screen.getByRole('link', { name: 'Calendar' })).toHaveAttribute('href', '/details/calendar')
+  // five hubs fit 1280 px only because the header may shrink and the program label truncates
+  expect(screen.getByRole('banner').className).toMatch(/\bmin-w-0\b/)
   expect(screen.getByText(/Program: Hospital GRASP/)).toBeInTheDocument()
 })
 
-test('the read-only therapist dashboard is reachable from the nav, clearly labelled', () => {
+test('the therapist view is reachable from the nav, clearly labelled', () => {
   renderNav()
-  const link = screen.getByRole('link', { name: 'Therapist view (read-only)' })
+  const link = screen.getByRole('link', { name: 'Therapist view' })
   expect(link).toHaveAttribute('href', '/therapist')
   expect(link.className).toMatch(/h-14/)
 })

@@ -1,3 +1,5 @@
+from datetime import date
+
 from praxis_session.store import Store
 
 
@@ -81,16 +83,19 @@ def test_progress_counts_real_sessions_only_and_labels_the_sample(tmp_path):
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()
     p = st.progress()
-    assert p["practice"] == {"done": 0, "planned": None, "hours": 0.0}
+    assert p["practice"] == {"done": 0, "planned": None, "days_done": 0, "hours": 0.0}
     assert p["sample"] == {"done": 19, "planned": 22, "hours": 3.4, "illustrative": True}
     assert p["adherence_pct"] is None
     assert all(s["illustrative"] for s in st.sessions())
+    assert st.therapist_patients()[0]["adherence_pct"] is None  # nothing live yet: no plan to judge by
     st.save_session(_summary(), checkin={}, feedback={"pain_after": 2}, events=[])
-    p = st.progress()
-    assert p["practice"] == {"done": 1, "planned": None, "hours": 0.2}
+    day = date.fromisoformat(st.session("real1")["date"])  # a weekday: a practice day in the seed schedule
+    p = st.progress(today=day)
+    assert p["practice"] == {"done": 1, "planned": 1, "days_done": 1, "hours": 0.2}  # planned from the schedule (28 Sep)
+    assert p["adherence_pct"] == 100
     assert [s for s in st.sessions() if s["id"] == "real1"][0]["illustrative"] is False
-    me = st.therapist_patients()[0]
-    assert me["adherence_pct"] is None and not me.get("illustrative")
+    me = st.therapist_patients(today=day)[0]
+    assert me["adherence_pct"] == 100 and not me.get("illustrative")
     assert all(x["illustrative"] for x in st.therapist_patients()[1:])
 
 

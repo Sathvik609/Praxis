@@ -3,8 +3,10 @@
 export {
   Activity,
   AlertTriangle,
+  CalendarDays,
   Camera,
   Check,
+  ChevronLeft,
   ChevronRight,
   Download,
   Flag,

@@ -52,7 +52,8 @@ export function Home() {
   const attemptCount = attempts ?? me?.goal_attempts ?? PATIENT.goalAttempts
   const camera = view === 'both' ? alt : view
   const area = AREA[focus] ?? null
-  const nextVisit = upcomingVisit(me?.program?.next_visit ?? PROGRAM.nextVisit)
+  // The service derives next_visit from the prescription's schedule (null once cleared); the seed only offline.
+  const nextVisit = upcomingVisit(me ? me.program?.next_visit : PROGRAM.nextVisit)
 
   // "Both" alternates the reference camera every 4 s; the avatar never mirrors the patient.
   useEffect(() => {

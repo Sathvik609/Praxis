@@ -1,9 +1,10 @@
 """Therapist prescription: dose, allowed adaptations and stop rules. Clamps live here, in code."""
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class StopRuleThresholds(BaseModel):
@@ -16,6 +17,75 @@ class StopRuleThresholds(BaseModel):
     new_symptoms: bool = True  # new/worse symptoms -> review before practising
 
 
+WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+SCHEDULE_MINUTES = 10  # = plan.DAY_MINUTES (plan imports this module; tests/test_schedule.py keeps them equal)
+
+
+class NextVisit(BaseModel):
+    """The next clinic visit the therapist booked: a local date-time and who it is with."""
+
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, serialize_by_alias=True)
+    at: str  # ISO local date-time, e.g. "2026-10-02T14:30"
+    with_: str = Field(alias="with", max_length=80)
+
+    @field_validator("at")
+    @classmethod
+    def _iso(cls, v: str) -> str:
+        datetime.fromisoformat(v)  # ValueError -> ValidationError
+        return v
+
+    @field_validator("with_")
+    @classmethod
+    def _named(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("next visit needs a clinician")
+        return v
+
+    def when(self) -> datetime:
+        return datetime.fromisoformat(self.at)
+
+
+class Schedule(BaseModel):
+    """Practice days are part of the prescription (screen 12 · Calendar, 28 Sep 2026): the
+    therapist sets them, the calendar and adherence read them. Weekdays 0 = Mon ... 6 = Sun."""
+
+    practice_days: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])
+    nhpt_day: int = Field(default=6, ge=0, le=6)
+    next_visit: NextVisit | None = None
+    minutes_per_day: int = Field(default=SCHEDULE_MINUTES, ge=1, le=120)
+
+    @field_validator("practice_days")
+    @classmethod
+    def _days(cls, v: list[int]) -> list[int]:
+        if not v:
+            raise ValueError("at least one practice day")
+        if len(set(v)) != len(v):
+            raise ValueError("practice days must be unique")
+        if any(d < 0 or d > 6 for d in v):
+            raise ValueError("practice days are weekdays 0 (Mon) to 6 (Sun)")
+        return sorted(v)
+
+
+SEED_SCHEDULE = Schedule(
+    practice_days=[0, 1, 2, 3, 4],
+    nhpt_day=6,
+    # The old seed said "Thu 18 Sep, 2:30 PM", which is in the past on 28 Sep.
+    next_visit=NextVisit(at="2026-10-02T14:30", with_="Dr. Anita Rao, OT"),
+    minutes_per_day=SCHEDULE_MINUTES,
+)
+
+
+def visit_text(v: NextVisit | None) -> str | None:
+    """The patient-facing label Home and the therapist view show, e.g. "Thu 2 Oct, 2:30 PM"."""
+    if v is None:
+        return None
+    t = v.when()
+    hour = t.hour % 12 or 12
+    return f"{WEEKDAYS[t.weekday()]} {t.day} {MONTHS[t.month - 1]}, {hour}:{t.minute:02d} {'AM' if t.hour < 12 else 'PM'}"
+
+
 class Prescription(BaseModel):
     program: str
     version: int
@@ -25,6 +95,11 @@ class Prescription(BaseModel):
     exercises: dict[str, dict[str, Any]]
     allowed_adaptations: dict[str, dict[str, Any]] = Field(default_factory=dict)
     stop_rules: StopRuleThresholds = Field(default_factory=StopRuleThresholds)
+    # Rows written before 28 Sep carry no schedule: they read as the seed schedule.
+    schedule: Schedule = Field(default_factory=lambda: SEED_SCHEDULE.model_copy(deep=True))
+    # Set on a version a person wrote (the therapist's schedule edit); the seed has none, and
+    # `Store._refresh_seed_prescription` never rewrites a row that has it.
+    edited: dict[str, Any] | None = None
 
 
 SEED_PRESCRIPTION = Prescription(
@@ -51,6 +126,7 @@ SEED_PRESCRIPTION = Prescription(
         "cup": {"fast_arcs": True},
     },
     stop_rules=StopRuleThresholds(),
+    schedule=SEED_SCHEDULE,
 )
 
 

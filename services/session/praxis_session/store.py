@@ -6,14 +6,16 @@ flags, goal_log. Raw video is never stored anywhere.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from praxis_session.calendar_view import practice_counts
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
-from praxis_session.prescription import SEED_PRESCRIPTION
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 
 DEFAULT_PATH = Path(__file__).resolve().parents[1] / "praxis.db"
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, patient_id TEXT, mode T
 CREATE TABLE IF NOT EXISTS events(session_id TEXT, seq INTEGER, json TEXT, PRIMARY KEY(session_id, seq));
 CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, rule TEXT, detail TEXT, t REAL, date TEXT, reviewed INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
+CREATE TABLE IF NOT EXISTS schedule_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, by TEXT, from_version INTEGER, to_version INTEGER, before_json TEXT, after_json TEXT);
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
 """
 SAMPLE_TREND = {(d, float(v)) for d, v in NHPT_TREND}
@@ -79,11 +82,15 @@ class Store:
     def _refresh_seed_prescription(self) -> None:
         """The seed prescription lives in code (`prescription.SEED_PRESCRIPTION`). When the
         newest stored row is that same version but older content (e.g. pain_max 5 and the
-        pre-23-Sep exercise list), rewrite it so the API shows the rules the service enforces.
-        A newer version is left alone."""
+        pre-23-Sep exercise list, or no practice schedule), rewrite it so the API shows the rules
+        the service enforces. A newer version is left alone, and so is any row a person wrote
+        (`edited`, e.g. the therapist's schedule edit), whatever its version number."""
         row = self._db.execute("SELECT id, version, json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
         seed = SEED_PRESCRIPTION.model_dump_json()
-        if row is None or row["version"] != SEED_PRESCRIPTION.version or json.loads(row["json"]) == json.loads(seed):
+        if row is None or row["version"] != SEED_PRESCRIPTION.version:
+            return
+        stored = json.loads(row["json"])
+        if stored.get("edited") or stored == json.loads(seed):
             return
         self._db.execute("UPDATE prescriptions SET json=? WHERE id=?", (seed, row["id"]))
         self._db.commit()
@@ -150,14 +157,36 @@ class Store:
 
     # ---- reads -------------------------------------------------------------------------
     def patient(self) -> dict[str, Any]:
+        """The patient record; `program.next_visit` and `program.version` come from the current
+        prescription, so Home, the therapist view and the calendar name the same visit."""
         row = self._db.execute("SELECT json FROM patients LIMIT 1").fetchone()
         p = json.loads(row["json"])
         p["goal_attempts"] = p.get("goal_attempts", 0) + self._db.execute("SELECT COUNT(*) FROM goal_log").fetchone()[0]
+        rx = self.rx()
+        program = p.setdefault("program", {})
+        program["next_visit"] = visit_text(rx.schedule.next_visit)
+        program["version"] = rx.version
+        if isinstance(program.get("short"), str):
+            program["short"] = re.sub(r"\bv\d+\b", f"v{rx.version}", program["short"])
         return p
 
+    def _latest_rx_row(self) -> sqlite3.Row:
+        return self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
+
     def prescription(self) -> dict[str, Any]:
-        row = self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC LIMIT 1").fetchone()
-        return json.loads(row["json"])
+        """The newest version as stored; a row from before 28 Sep gets the seed schedule."""
+        raw = json.loads(self._latest_rx_row()["json"])
+        if "schedule" not in raw:
+            raw["schedule"] = SEED_PRESCRIPTION.schedule.model_dump(mode="json")
+        return raw
+
+    def rx(self) -> Prescription:
+        """The newest version as a model (schedule defaults filled in)."""
+        return Prescription.model_validate(self.prescription())
+
+    def schedule_log(self) -> list[dict[str, Any]]:
+        rows = self._db.execute("SELECT * FROM schedule_log ORDER BY id")
+        return [{"id": r["id"], "t": r["t"], "by": r["by"], "from_version": r["from_version"], "to_version": r["to_version"], "before": json.loads(r["before_json"]), "after": json.loads(r["after_json"])} for r in rows]
 
     def _row(self, r: sqlite3.Row, with_events: bool = False) -> dict[str, Any]:
         d = {
@@ -211,23 +240,26 @@ class Store:
         is a recorded clip through the pipeline, not the patient's practice)."""
         return [s for s in self.sessions(limit) if not s["replay"]]
 
-    def _practice(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
-        """Practice numbers from live sessions only (no sample, no replay). `planned` needs a
-        schedule the prescription does not carry yet, so it (and adherence) is None."""
+    def _practice(self, sessions: list[dict[str, Any]], today: date | None = None) -> dict[str, Any]:
+        """Practice numbers from live sessions only (no sample, no replay). `done` counts live
+        sessions; `planned` and `days_done` come from the prescription's practice days since the
+        first live session (`calendar_view.practice_counts`; `planned` is None before one)."""
         real = [s for s in sessions if s["source"] == "live"]
         hours = sum(float(s["summary"].get("camera", {}).get("active_s") or 0) for s in real) / 3600
-        return {"done": len(real), "planned": None, "hours": round(hours, 1)}
+        counts = practice_counts(self.rx().schedule, sessions, today or date.today())
+        return {"done": len(real), "planned": counts["planned"], "days_done": counts["days_done"], "hours": round(hours, 1)}
 
     @staticmethod
     def _adherence(practice: dict[str, Any]) -> int | None:
+        """Planned practice days practised, as a percentage (None until there is a plan to judge)."""
         planned = practice.get("planned")
-        return None if not planned else round(100 * practice["done"] / planned)
+        return None if not planned else round(100 * practice.get("days_done", 0) / planned)
 
-    def progress(self) -> dict[str, Any]:
+    def progress(self, today: date | None = None) -> dict[str, Any]:
         sessions = self._counted(100)  # replays are listed as sessions but never charted or totalled
         per = [{"date": s["date"], "verified": s["summary"].get("camera", {}).get("verified", 0), "limited": s["tracking"] != "usable", "mode": s["mode"], "exercise": s["exercise"], "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions) if s["mode"] != "nhpt"]
         pain = [{"date": s["date"], "pain_after": s["feedback"].get("pain_after"), "effort": s["feedback"].get("effort"), "ended_early": s["status"] == "ended_early", "illustrative": s["illustrative"], "source": s["source"]} for s in reversed(sessions)]
-        practice = self._practice(sessions)
+        practice = self._practice(self._counted(10_000), today)
         return {
             "nhpt_trend": self.nhpt_trend(),
             "verified_per_session": per,
@@ -271,6 +303,25 @@ class Store:
         self._db.commit()
         return sid
 
+    def update_schedule(self, body: dict[str, Any], by: str = "therapist", now: float | None = None) -> dict[str, Any]:
+        """The therapist's practice-day edit: validate (`Schedule`), store prescription v(N+1)
+        with everything else carried over, and log before/after in `schedule_log`. Raises
+        `pydantic.ValidationError` and writes nothing when the schedule is not valid."""
+        current = self.prescription()
+        before = Schedule.model_validate(current["schedule"])
+        after = Schedule.model_validate({"minutes_per_day": before.minutes_per_day, **body})
+        t = time.time() if now is None else now
+        version = int(current["version"]) + 1
+        edited = {"by": by, "at": datetime.fromtimestamp(t).isoformat(timespec="seconds"), "what": "schedule", "from_version": int(current["version"])}
+        new = Prescription.model_validate(current | {"version": version, "schedule": after.model_dump(mode="json"), "edited": edited})
+        self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], version, new.model_dump_json()))
+        self._db.execute(
+            "INSERT INTO schedule_log(patient_id, t, by, from_version, to_version, before_json, after_json) VALUES(?,?,?,?,?,?,?)",
+            (PATIENT["id"], t, by, int(current["version"]), version, before.model_dump_json(), after.model_dump_json()),
+        )
+        self._db.commit()
+        return self.prescription()
+
     def log_goal(self, note: str) -> int:
         self._db.execute("INSERT INTO goal_log(patient_id, t, note) VALUES(?,?,?)", (PATIENT["id"], time.time(), note))
         self._db.commit()
@@ -289,7 +340,7 @@ class Store:
         sid = self.save_session(summary, summary.get("told_us"), None, [])
         return {"ok": True, "session_id": sid}
 
-    def therapist_patients(self) -> list[dict[str, Any]]:
+    def therapist_patients(self, today: date | None = None) -> list[dict[str, Any]]:
         p = self.patient()
         trend = self.nhpt_trend()
         # First and last from one kind only: live points when there are any, else the labeled sample.
@@ -297,7 +348,7 @@ class Store:
         points = live or trend
         return [{
             "id": p["id"], "name": p["name"], "program": f"GRASP L{p['program']['level']} · {p['side']} · wk 6",
-            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self._counted(100))),
+            "open_flags": len(self.flags(reviewed=False)), "adherence_pct": self._adherence(self._practice(self._counted(10_000), today)),
             "nhpt_last_s": points[-1]["total_s"] if points else None, "nhpt_first_s": points[0]["total_s"] if points else None,
             "nhpt_sample": bool(points) and not live,
         }, {"id": "priya", "name": "Priya S.", "program": "GRASP L3 · right · wk 3", "open_flags": 0, "adherence_pct": 92, "nhpt_last_s": None, "nhpt_first_s": None, "illustrative": True},

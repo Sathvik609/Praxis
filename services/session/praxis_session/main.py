@@ -22,14 +22,16 @@ import json
 import os
 import time
 from dataclasses import replace as _replace_event
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
+from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 import praxis_session.trace as trace_mod
@@ -115,6 +117,29 @@ def api_prescription() -> dict[str, object]:
     return store.prescription()
 
 
+class ScheduleBody(BaseModel):
+    """Therapist view · Edit practice days. Validated again by `prescription.Schedule`."""
+
+    practice_days: list[int]
+    nhpt_day: int
+    next_visit: dict[str, str] | None = None
+
+
+@app.put("/api/prescription/schedule")
+def api_put_schedule(body: ScheduleBody) -> dict[str, object]:
+    """The therapist changes practice days, the peg-test day or the next clinic visit: stored
+    as prescription v(N+1) (dose, adaptations and stop rules carried over), logged in
+    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid. No
+    auth exists (removed 21 Sep); the UI labels it "Therapist view" and Cognito lands in W6."""
+    before = store.prescription()["version"]
+    try:
+        rx = store.update_schedule(body.model_dump(), by="therapist", now=_clock().timestamp())
+    except ValidationError as e:
+        raise HTTPException(422, [{"loc": err["loc"], "msg": err["msg"]} for err in e.errors()]) from None
+    ring.append(make_event("prescription_changed", what="schedule", by="therapist", from_version=before, to_version=rx["version"], schedule=rx["schedule"]))
+    return rx
+
+
 @app.get("/api/patients/me")
 def api_me() -> dict[str, object]:
     return store.patient()
@@ -156,7 +181,30 @@ def api_goal_log(body: GoalNote) -> dict[str, object]:
 
 @app.get("/api/progress")
 def api_progress() -> dict[str, object]:
-    return store.progress()
+    return store.progress(today=_clock().date())
+
+
+def _clock() -> datetime:
+    """The service's local wall clock. Tests pin it (`monkeypatch.setattr(main, "_clock", ...)`);
+    "today" on the calendar, adherence and the next-visit check all read it."""
+    return datetime.now()
+
+
+@app.get("/api/calendar")
+def api_calendar(start: date | None = Query(None, alias="from"), end: date | None = Query(None, alias="to")) -> dict[str, object]:
+    """Screen 12. Days `from..to` (inclusive, at most 62) from the prescription's practice
+    schedule and the stored sessions; with no range, the Mon-Sun week holding today. `done`
+    only from live sessions: replays never count, sample days are labelled (`calendar_view`)."""
+    now = _clock()
+    today = now.date()
+    if (start is None) != (end is None):
+        raise HTTPException(400, "give both from and to, or neither")
+    if start is None or end is None:
+        start = week_start(today)
+        end = start + timedelta(days=6)
+    if end < start or (end - start).days + 1 > MAX_DAYS:
+        raise HTTPException(400, f"from must not be after to, and the range is at most {MAX_DAYS} days")
+    return build_calendar(store.rx().schedule, store.sessions(10_000), start, end, today, now=now)
 
 
 @app.get("/api/plan")
@@ -203,7 +251,7 @@ def api_self_report(body: SelfReport) -> dict[str, object]:
 
 @app.get("/api/therapist/patients")
 def api_therapist_patients() -> dict[str, object]:
-    return {"patients": store.therapist_patients()}
+    return {"patients": store.therapist_patients(today=_clock().date())}
 
 
 @app.get("/api/replay/list")

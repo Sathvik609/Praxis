@@ -65,6 +65,14 @@ test('filters are real: range, task and compare-same-setup change the bars and t
   expect(screen.getByText(/Ended early · pain 5/)).toBeInTheDocument()
 })
 
+test('with live practice, planned days come from the program schedule (28 Sep)', async () => {
+  mockApi({ '/api/progress': { ...PROGRESS, practice: { done: 4, planned: 5, days_done: 3, hours: 0.7 }, adherence_pct: 60 }, '/api/sessions': SESSIONS })
+  renderProgress()
+  expect(await screen.findByText('3/5')).toBeInTheDocument()
+  expect(screen.getByText('planned days practised')).toBeInTheDocument()
+  expect(screen.queryByText('planned sessions done')).not.toBeInTheDocument()
+})
+
 test('goal log count is not dressed up as this month or as a fixed goal sentence', async () => {
   mockApi({ '/api/progress': PROGRESS, '/api/sessions': SESSIONS })
   renderProgress()
