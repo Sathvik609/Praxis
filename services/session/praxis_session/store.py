@@ -6,6 +6,7 @@ flags, goal_log. Raw video is never stored anywhere.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
 from datetime import datetime
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
-from praxis_session.prescription import SEED_PRESCRIPTION
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 
 DEFAULT_PATH = Path(__file__).resolve().parents[1] / "praxis.db"
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, patient_id TEXT, mode T
 CREATE TABLE IF NOT EXISTS events(session_id TEXT, seq INTEGER, json TEXT, PRIMARY KEY(session_id, seq));
 CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, rule TEXT, detail TEXT, t REAL, date TEXT, reviewed INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
+CREATE TABLE IF NOT EXISTS schedule_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, by TEXT, from_version INTEGER, to_version INTEGER, before_json TEXT, after_json TEXT);
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
 """
 SAMPLE_TREND = {(d, float(v)) for d, v in NHPT_TREND}
@@ -79,11 +81,15 @@ class Store:
     def _refresh_seed_prescription(self) -> None:
         """The seed prescription lives in code (`prescription.SEED_PRESCRIPTION`). When the
         newest stored row is that same version but older content (e.g. pain_max 5 and the
-        pre-23-Sep exercise list), rewrite it so the API shows the rules the service enforces.
-        A newer version is left alone."""
+        pre-23-Sep exercise list, or no practice schedule), rewrite it so the API shows the rules
+        the service enforces. A newer version is left alone, and so is any row a person wrote
+        (`edited`, e.g. the therapist's schedule edit), whatever its version number."""
         row = self._db.execute("SELECT id, version, json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
         seed = SEED_PRESCRIPTION.model_dump_json()
-        if row is None or row["version"] != SEED_PRESCRIPTION.version or json.loads(row["json"]) == json.loads(seed):
+        if row is None or row["version"] != SEED_PRESCRIPTION.version:
+            return
+        stored = json.loads(row["json"])
+        if stored.get("edited") or stored == json.loads(seed):
             return
         self._db.execute("UPDATE prescriptions SET json=? WHERE id=?", (seed, row["id"]))
         self._db.commit()
@@ -150,14 +156,36 @@ class Store:
 
     # ---- reads -------------------------------------------------------------------------
     def patient(self) -> dict[str, Any]:
+        """The patient record; `program.next_visit` and `program.version` come from the current
+        prescription, so Home, the therapist view and the calendar name the same visit."""
         row = self._db.execute("SELECT json FROM patients LIMIT 1").fetchone()
         p = json.loads(row["json"])
         p["goal_attempts"] = p.get("goal_attempts", 0) + self._db.execute("SELECT COUNT(*) FROM goal_log").fetchone()[0]
+        rx = self.rx()
+        program = p.setdefault("program", {})
+        program["next_visit"] = visit_text(rx.schedule.next_visit)
+        program["version"] = rx.version
+        if isinstance(program.get("short"), str):
+            program["short"] = re.sub(r"\bv\d+\b", f"v{rx.version}", program["short"])
         return p
 
+    def _latest_rx_row(self) -> sqlite3.Row:
+        return self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
+
     def prescription(self) -> dict[str, Any]:
-        row = self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC LIMIT 1").fetchone()
-        return json.loads(row["json"])
+        """The newest version as stored; a row from before 28 Sep gets the seed schedule."""
+        raw = json.loads(self._latest_rx_row()["json"])
+        if "schedule" not in raw:
+            raw["schedule"] = SEED_PRESCRIPTION.schedule.model_dump(mode="json")
+        return raw
+
+    def rx(self) -> Prescription:
+        """The newest version as a model (schedule defaults filled in)."""
+        return Prescription.model_validate(self.prescription())
+
+    def schedule_log(self) -> list[dict[str, Any]]:
+        rows = self._db.execute("SELECT * FROM schedule_log ORDER BY id")
+        return [{"id": r["id"], "t": r["t"], "by": r["by"], "from_version": r["from_version"], "to_version": r["to_version"], "before": json.loads(r["before_json"]), "after": json.loads(r["after_json"])} for r in rows]
 
     def _row(self, r: sqlite3.Row, with_events: bool = False) -> dict[str, Any]:
         d = {
@@ -270,6 +298,25 @@ class Store:
             self._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES(?,?,?)", (PATIENT["id"], started[:10], float(cam["nhpt_total_s"])))
         self._db.commit()
         return sid
+
+    def update_schedule(self, body: dict[str, Any], by: str = "therapist", now: float | None = None) -> dict[str, Any]:
+        """The therapist's practice-day edit: validate (`Schedule`), store prescription v(N+1)
+        with everything else carried over, and log before/after in `schedule_log`. Raises
+        `pydantic.ValidationError` and writes nothing when the schedule is not valid."""
+        current = self.prescription()
+        before = Schedule.model_validate(current["schedule"])
+        after = Schedule.model_validate({"minutes_per_day": before.minutes_per_day, **body})
+        t = time.time() if now is None else now
+        version = int(current["version"]) + 1
+        edited = {"by": by, "at": datetime.fromtimestamp(t).isoformat(timespec="seconds"), "what": "schedule", "from_version": int(current["version"])}
+        new = Prescription.model_validate(current | {"version": version, "schedule": after.model_dump(mode="json"), "edited": edited})
+        self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], version, new.model_dump_json()))
+        self._db.execute(
+            "INSERT INTO schedule_log(patient_id, t, by, from_version, to_version, before_json, after_json) VALUES(?,?,?,?,?,?,?)",
+            (PATIENT["id"], t, by, int(current["version"]), version, before.model_dump_json(), after.model_dump_json()),
+        )
+        self._db.commit()
+        return self.prescription()
 
     def log_goal(self, note: str) -> int:
         self._db.execute("INSERT INTO goal_log(patient_id, t, note) VALUES(?,?,?)", (PATIENT["id"], time.time(), note))
