@@ -48,7 +48,8 @@
         "replay_start",
         "replay_end",
         "self_report",
-        "agent_status"
+        "agent_status",
+        "session_start"
       ]
     },
     "t": {
