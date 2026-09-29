@@ -22,14 +22,16 @@ import json
 import os
 import time
 from dataclasses import replace as _replace_event
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from pydantic import BaseModel
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
+from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
 import praxis_session.trace as trace_mod
@@ -157,6 +159,29 @@ def api_goal_log(body: GoalNote) -> dict[str, object]:
 @app.get("/api/progress")
 def api_progress() -> dict[str, object]:
     return store.progress()
+
+
+def _clock() -> datetime:
+    """The service's local wall clock. Tests pin it (`monkeypatch.setattr(main, "_clock", ...)`);
+    "today" on the calendar, adherence and the next-visit check all read it."""
+    return datetime.now()
+
+
+@app.get("/api/calendar")
+def api_calendar(start: date | None = Query(None, alias="from"), end: date | None = Query(None, alias="to")) -> dict[str, object]:
+    """Screen 12. Days `from..to` (inclusive, at most 62) from the prescription's practice
+    schedule and the stored sessions; with no range, the Mon-Sun week holding today. `done`
+    only from live sessions: replays never count, sample days are labelled (`calendar_view`)."""
+    now = _clock()
+    today = now.date()
+    if (start is None) != (end is None):
+        raise HTTPException(400, "give both from and to, or neither")
+    if start is None or end is None:
+        start = week_start(today)
+        end = start + timedelta(days=6)
+    if end < start or (end - start).days + 1 > MAX_DAYS:
+        raise HTTPException(400, f"from must not be after to, and the range is at most {MAX_DAYS} days")
+    return build_calendar(store.rx().schedule, store.sessions(10_000), start, end, today, now=now)
 
 
 @app.get("/api/plan")
