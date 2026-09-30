@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter, createHashRouter, type RouteObject } from 'react-router-dom'
 import { Home } from '../screens/02-home/Home'
 import { CheckIn } from '../screens/03-checkin/CheckIn'
 import { ChooseExercise } from '../screens/04-choose/ChooseExercise'
@@ -20,7 +20,7 @@ import { Shell } from './Shell'
  *  opens straight on Home.
  *
  *  The live session and the clinician dashboard render outside the patient Shell. */
-export const router = createBrowserRouter([
+const routes: RouteObject[] = [
   { path: '/', element: <Navigate to="/details" replace /> },
   { path: '/session', element: <SessionRouter /> },
   { path: '/therapist', element: <Therapist /> },
@@ -45,4 +45,8 @@ export const router = createBrowserRouter([
       { path: '*', element: <Navigate to="/details" replace /> },
     ],
   },
-])
+]
+
+/** The static design preview (`pnpm build:design`) is served under an unknown path prefix, so
+ *  it routes in the URL hash; every other build keeps real paths. */
+export const router = import.meta.env.MODE === 'design' ? createHashRouter(routes) : createBrowserRouter(routes)

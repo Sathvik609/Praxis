@@ -1,0 +1,7378 @@
+{
+ "default": {
+  "from": "2026-09-28",
+  "to": "2026-10-04",
+  "today": "2026-09-29",
+  "days": [
+   {
+    "date": "2026-09-28",
+    "weekday": 0,
+    "is_today": false,
+    "status": "untracked",
+    "planned": true,
+    "nhpt_due": false,
+    "minutes": 10,
+    "minutes_done": 0,
+    "exercises": [
+     {
+      "id": "abduction",
+      "name": "Arm out to the side"
+     },
+     {
+      "id": "cup",
+      "name": "Waiter – cup"
+     }
+    ],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": null
+   },
+   {
+    "date": "2026-09-29",
+    "weekday": 1,
+    "is_today": true,
+    "status": "done",
+    "planned": true,
+    "nhpt_due": false,
+    "minutes": 10,
+    "minutes_done": 3,
+    "exercises": [
+     {
+      "id": "abduction",
+      "name": "Arm out to the side"
+     },
+     {
+      "id": "cup",
+      "name": "Waiter – cup"
+     }
+    ],
+    "sessions": [
+     {
+      "id": "81a046bffddb",
+      "title": "Arm out to the side",
+      "exercise": "abduction",
+      "name": "Arm out to the side",
+      "mode": "arm",
+      "minutes": 3,
+      "source": "live",
+      "verified": 8,
+      "nhpt_total_s": null
+     }
+    ],
+    "sample": false,
+    "clinic_visit": null
+   },
+   {
+    "date": "2026-09-30",
+    "weekday": 2,
+    "is_today": false,
+    "status": "planned",
+    "planned": true,
+    "nhpt_due": false,
+    "minutes": 10,
+    "minutes_done": 0,
+    "exercises": [
+     {
+      "id": "abduction",
+      "name": "Arm out to the side"
+     },
+     {
+      "id": "cup",
+      "name": "Waiter – cup"
+     }
+    ],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": null
+   },
+   {
+    "date": "2026-10-01",
+    "weekday": 3,
+    "is_today": false,
+    "status": "planned",
+    "planned": true,
+    "nhpt_due": false,
+    "minutes": 10,
+    "minutes_done": 0,
+    "exercises": [
+     {
+      "id": "abduction",
+      "name": "Arm out to the side"
+     },
+     {
+      "id": "cup",
+      "name": "Waiter – cup"
+     }
+    ],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": {
+     "at": "2026-10-01T14:30",
+     "with": "Dr. Anita Rao, OT",
+     "with_short": "Dr. Rao",
+     "time": "2:30 PM"
+    }
+   },
+   {
+    "date": "2026-10-02",
+    "weekday": 4,
+    "is_today": false,
+    "status": "planned",
+    "planned": true,
+    "nhpt_due": false,
+    "minutes": 10,
+    "minutes_done": 0,
+    "exercises": [
+     {
+      "id": "abduction",
+      "name": "Arm out to the side"
+     },
+     {
+      "id": "cup",
+      "name": "Waiter – cup"
+     }
+    ],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": null
+   },
+   {
+    "date": "2026-10-03",
+    "weekday": 5,
+    "is_today": false,
+    "status": "rest",
+    "planned": false,
+    "nhpt_due": false,
+    "minutes": 0,
+    "minutes_done": 0,
+    "exercises": [],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": null
+   },
+   {
+    "date": "2026-10-04",
+    "weekday": 6,
+    "is_today": false,
+    "status": "planned",
+    "planned": false,
+    "nhpt_due": true,
+    "minutes": 0,
+    "minutes_done": 0,
+    "exercises": [
+     {
+      "id": "nhpt",
+      "name": "Nine-Hole Peg Test"
+     }
+    ],
+    "sessions": [],
+    "sample": false,
+    "clinic_visit": null
+   }
+  ],
+  "week": {
+   "from": "2026-09-28",
+   "to": "2026-10-04",
+   "done_days": 1,
+   "planned_days": 5,
+   "minutes_done": 3,
+   "minutes_planned": 50,
+   "nhpt_done": false
+  },
+  "schedule": {
+   "practice_days": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "nhpt_day": 6,
+   "next_visit": {
+    "at": "2026-10-01T14:30",
+    "with": "Dr. Anita Rao, OT"
+   },
+   "minutes_per_day": 10
+  },
+  "next_visit": {
+   "at": "2026-10-01T14:30",
+   "with": "Dr. Anita Rao, OT",
+   "with_short": "Dr. Rao",
+   "time": "2:30 PM",
+   "date": "2026-10-01",
+   "text": "Thu 1 Oct, 2:30 PM",
+   "upcoming": true
+  },
+  "tracking_since": "2026-09-29"
+ },
+ "days": {
+  "2026-05-26": {
+   "date": "2026-05-26",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-05-27": {
+   "date": "2026-05-27",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-05-28": {
+   "date": "2026-05-28",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-05-29": {
+   "date": "2026-05-29",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-05-30": {
+   "date": "2026-05-30",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-05-31": {
+   "date": "2026-05-31",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-01": {
+   "date": "2026-06-01",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-02": {
+   "date": "2026-06-02",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-03": {
+   "date": "2026-06-03",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-04": {
+   "date": "2026-06-04",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-05": {
+   "date": "2026-06-05",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-06": {
+   "date": "2026-06-06",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-07": {
+   "date": "2026-06-07",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-08": {
+   "date": "2026-06-08",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-09": {
+   "date": "2026-06-09",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-10": {
+   "date": "2026-06-10",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-11": {
+   "date": "2026-06-11",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-12": {
+   "date": "2026-06-12",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-13": {
+   "date": "2026-06-13",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-14": {
+   "date": "2026-06-14",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-15": {
+   "date": "2026-06-15",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-16": {
+   "date": "2026-06-16",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-17": {
+   "date": "2026-06-17",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-18": {
+   "date": "2026-06-18",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-19": {
+   "date": "2026-06-19",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-20": {
+   "date": "2026-06-20",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-21": {
+   "date": "2026-06-21",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-22": {
+   "date": "2026-06-22",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-23": {
+   "date": "2026-06-23",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-24": {
+   "date": "2026-06-24",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-25": {
+   "date": "2026-06-25",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-26": {
+   "date": "2026-06-26",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-27": {
+   "date": "2026-06-27",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-28": {
+   "date": "2026-06-28",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-29": {
+   "date": "2026-06-29",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-06-30": {
+   "date": "2026-06-30",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-01": {
+   "date": "2026-07-01",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-02": {
+   "date": "2026-07-02",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-03": {
+   "date": "2026-07-03",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-04": {
+   "date": "2026-07-04",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-05": {
+   "date": "2026-07-05",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-06": {
+   "date": "2026-07-06",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-07": {
+   "date": "2026-07-07",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-08": {
+   "date": "2026-07-08",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-09": {
+   "date": "2026-07-09",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-10": {
+   "date": "2026-07-10",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-11": {
+   "date": "2026-07-11",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-12": {
+   "date": "2026-07-12",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-13": {
+   "date": "2026-07-13",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-14": {
+   "date": "2026-07-14",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-15": {
+   "date": "2026-07-15",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-16": {
+   "date": "2026-07-16",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-17": {
+   "date": "2026-07-17",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-18": {
+   "date": "2026-07-18",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-19": {
+   "date": "2026-07-19",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-20": {
+   "date": "2026-07-20",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-21": {
+   "date": "2026-07-21",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-22": {
+   "date": "2026-07-22",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-23": {
+   "date": "2026-07-23",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-24": {
+   "date": "2026-07-24",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-25": {
+   "date": "2026-07-25",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-26": {
+   "date": "2026-07-26",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-27": {
+   "date": "2026-07-27",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-28": {
+   "date": "2026-07-28",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-29": {
+   "date": "2026-07-29",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-30": {
+   "date": "2026-07-30",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-07-31": {
+   "date": "2026-07-31",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-01": {
+   "date": "2026-08-01",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-02": {
+   "date": "2026-08-02",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-03": {
+   "date": "2026-08-03",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-04": {
+   "date": "2026-08-04",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-05": {
+   "date": "2026-08-05",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-06": {
+   "date": "2026-08-06",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-07": {
+   "date": "2026-08-07",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-08": {
+   "date": "2026-08-08",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-09": {
+   "date": "2026-08-09",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-10": {
+   "date": "2026-08-10",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-11": {
+   "date": "2026-08-11",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-12": {
+   "date": "2026-08-12",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-13": {
+   "date": "2026-08-13",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-14": {
+   "date": "2026-08-14",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-15": {
+   "date": "2026-08-15",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-16": {
+   "date": "2026-08-16",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-17": {
+   "date": "2026-08-17",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-18": {
+   "date": "2026-08-18",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-19": {
+   "date": "2026-08-19",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-20": {
+   "date": "2026-08-20",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-21": {
+   "date": "2026-08-21",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-22": {
+   "date": "2026-08-22",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-23": {
+   "date": "2026-08-23",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-24": {
+   "date": "2026-08-24",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-25": {
+   "date": "2026-08-25",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-26": {
+   "date": "2026-08-26",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-27": {
+   "date": "2026-08-27",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-28": {
+   "date": "2026-08-28",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-29": {
+   "date": "2026-08-29",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-30": {
+   "date": "2026-08-30",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-08-31": {
+   "date": "2026-08-31",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-01": {
+   "date": "2026-09-01",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-02": {
+   "date": "2026-09-02",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-03": {
+   "date": "2026-09-03",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-04": {
+   "date": "2026-09-04",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-05": {
+   "date": "2026-09-05",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-06": {
+   "date": "2026-09-06",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-07": {
+   "date": "2026-09-07",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-08": {
+   "date": "2026-09-08",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [
+    {
+     "id": "s-0908-arm",
+     "title": "Arm out to the side",
+     "exercise": "abduction",
+     "name": "Arm out to the side",
+     "mode": "arm",
+     "minutes": 6,
+     "source": "sample",
+     "verified": 5,
+     "nhpt_total_s": null
+    }
+   ],
+   "sample": true,
+   "clinic_visit": null
+  },
+  "2026-09-09": {
+   "date": "2026-09-09",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-10": {
+   "date": "2026-09-10",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [
+    {
+     "id": "s-0910-cup",
+     "title": "Waiter – cup",
+     "exercise": "cup",
+     "name": "Waiter – cup",
+     "mode": "cup",
+     "minutes": 9,
+     "source": "sample",
+     "verified": 8,
+     "nhpt_total_s": null
+    }
+   ],
+   "sample": true,
+   "clinic_visit": null
+  },
+  "2026-09-11": {
+   "date": "2026-09-11",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-12": {
+   "date": "2026-09-12",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [
+    {
+     "id": "s-0912-nhpt",
+     "title": "Nine-Hole Peg Test · 41.2 s",
+     "exercise": "nhpt",
+     "name": "Nine-Hole Peg Test",
+     "mode": "nhpt",
+     "minutes": 1,
+     "source": "sample",
+     "verified": 9,
+     "nhpt_total_s": 41.2
+    },
+    {
+     "id": "s-0912-cuparm",
+     "title": "Waiter – cup + Arm out to the side",
+     "exercise": "cup",
+     "name": "Waiter – cup",
+     "mode": "cup",
+     "minutes": 12,
+     "source": "sample",
+     "verified": 17,
+     "nhpt_total_s": null
+    }
+   ],
+   "sample": true,
+   "clinic_visit": null
+  },
+  "2026-09-13": {
+   "date": "2026-09-13",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-14": {
+   "date": "2026-09-14",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-15": {
+   "date": "2026-09-15",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-16": {
+   "date": "2026-09-16",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-17": {
+   "date": "2026-09-17",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-18": {
+   "date": "2026-09-18",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-19": {
+   "date": "2026-09-19",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-20": {
+   "date": "2026-09-20",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-21": {
+   "date": "2026-09-21",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-22": {
+   "date": "2026-09-22",
+   "weekday": 1,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-23": {
+   "date": "2026-09-23",
+   "weekday": 2,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-24": {
+   "date": "2026-09-24",
+   "weekday": 3,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-25": {
+   "date": "2026-09-25",
+   "weekday": 4,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-26": {
+   "date": "2026-09-26",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-27": {
+   "date": "2026-09-27",
+   "weekday": 6,
+   "is_today": false,
+   "status": "untracked",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-28": {
+   "date": "2026-09-28",
+   "weekday": 0,
+   "is_today": false,
+   "status": "untracked",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-29": {
+   "date": "2026-09-29",
+   "weekday": 1,
+   "is_today": true,
+   "status": "done",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 3,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [
+    {
+     "id": "81a046bffddb",
+     "title": "Arm out to the side",
+     "exercise": "abduction",
+     "name": "Arm out to the side",
+     "mode": "arm",
+     "minutes": 3,
+     "source": "live",
+     "verified": 8,
+     "nhpt_total_s": null
+    }
+   ],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-09-30": {
+   "date": "2026-09-30",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-01": {
+   "date": "2026-10-01",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": {
+    "at": "2026-10-01T14:30",
+    "with": "Dr. Anita Rao, OT",
+    "with_short": "Dr. Rao",
+    "time": "2:30 PM"
+   }
+  },
+  "2026-10-02": {
+   "date": "2026-10-02",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-03": {
+   "date": "2026-10-03",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-04": {
+   "date": "2026-10-04",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-05": {
+   "date": "2026-10-05",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-06": {
+   "date": "2026-10-06",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-07": {
+   "date": "2026-10-07",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-08": {
+   "date": "2026-10-08",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-09": {
+   "date": "2026-10-09",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-10": {
+   "date": "2026-10-10",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-11": {
+   "date": "2026-10-11",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-12": {
+   "date": "2026-10-12",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-13": {
+   "date": "2026-10-13",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-14": {
+   "date": "2026-10-14",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-15": {
+   "date": "2026-10-15",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-16": {
+   "date": "2026-10-16",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-17": {
+   "date": "2026-10-17",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-18": {
+   "date": "2026-10-18",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-19": {
+   "date": "2026-10-19",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-20": {
+   "date": "2026-10-20",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-21": {
+   "date": "2026-10-21",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-22": {
+   "date": "2026-10-22",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-23": {
+   "date": "2026-10-23",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-24": {
+   "date": "2026-10-24",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-25": {
+   "date": "2026-10-25",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-26": {
+   "date": "2026-10-26",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-27": {
+   "date": "2026-10-27",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-28": {
+   "date": "2026-10-28",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-29": {
+   "date": "2026-10-29",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-30": {
+   "date": "2026-10-30",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-10-31": {
+   "date": "2026-10-31",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-01": {
+   "date": "2026-11-01",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-02": {
+   "date": "2026-11-02",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-03": {
+   "date": "2026-11-03",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-04": {
+   "date": "2026-11-04",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-05": {
+   "date": "2026-11-05",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-06": {
+   "date": "2026-11-06",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-07": {
+   "date": "2026-11-07",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-08": {
+   "date": "2026-11-08",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-09": {
+   "date": "2026-11-09",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-10": {
+   "date": "2026-11-10",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-11": {
+   "date": "2026-11-11",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-12": {
+   "date": "2026-11-12",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-13": {
+   "date": "2026-11-13",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-14": {
+   "date": "2026-11-14",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-15": {
+   "date": "2026-11-15",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-16": {
+   "date": "2026-11-16",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-17": {
+   "date": "2026-11-17",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-18": {
+   "date": "2026-11-18",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-19": {
+   "date": "2026-11-19",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-20": {
+   "date": "2026-11-20",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-21": {
+   "date": "2026-11-21",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-22": {
+   "date": "2026-11-22",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-23": {
+   "date": "2026-11-23",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-24": {
+   "date": "2026-11-24",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-25": {
+   "date": "2026-11-25",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-26": {
+   "date": "2026-11-26",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-27": {
+   "date": "2026-11-27",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-28": {
+   "date": "2026-11-28",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-29": {
+   "date": "2026-11-29",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-11-30": {
+   "date": "2026-11-30",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-01": {
+   "date": "2026-12-01",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-02": {
+   "date": "2026-12-02",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-03": {
+   "date": "2026-12-03",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-04": {
+   "date": "2026-12-04",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-05": {
+   "date": "2026-12-05",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-06": {
+   "date": "2026-12-06",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-07": {
+   "date": "2026-12-07",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-08": {
+   "date": "2026-12-08",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-09": {
+   "date": "2026-12-09",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-10": {
+   "date": "2026-12-10",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-11": {
+   "date": "2026-12-11",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-12": {
+   "date": "2026-12-12",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-13": {
+   "date": "2026-12-13",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-14": {
+   "date": "2026-12-14",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-15": {
+   "date": "2026-12-15",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-16": {
+   "date": "2026-12-16",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-17": {
+   "date": "2026-12-17",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-18": {
+   "date": "2026-12-18",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-19": {
+   "date": "2026-12-19",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-20": {
+   "date": "2026-12-20",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-21": {
+   "date": "2026-12-21",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-22": {
+   "date": "2026-12-22",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-23": {
+   "date": "2026-12-23",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-24": {
+   "date": "2026-12-24",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-25": {
+   "date": "2026-12-25",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-26": {
+   "date": "2026-12-26",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-27": {
+   "date": "2026-12-27",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-28": {
+   "date": "2026-12-28",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-29": {
+   "date": "2026-12-29",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-30": {
+   "date": "2026-12-30",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2026-12-31": {
+   "date": "2026-12-31",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-01": {
+   "date": "2027-01-01",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-02": {
+   "date": "2027-01-02",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-03": {
+   "date": "2027-01-03",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-04": {
+   "date": "2027-01-04",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-05": {
+   "date": "2027-01-05",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-06": {
+   "date": "2027-01-06",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-07": {
+   "date": "2027-01-07",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-08": {
+   "date": "2027-01-08",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-09": {
+   "date": "2027-01-09",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-10": {
+   "date": "2027-01-10",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-11": {
+   "date": "2027-01-11",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-12": {
+   "date": "2027-01-12",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-13": {
+   "date": "2027-01-13",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-14": {
+   "date": "2027-01-14",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-15": {
+   "date": "2027-01-15",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-16": {
+   "date": "2027-01-16",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-17": {
+   "date": "2027-01-17",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-18": {
+   "date": "2027-01-18",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-19": {
+   "date": "2027-01-19",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-20": {
+   "date": "2027-01-20",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-21": {
+   "date": "2027-01-21",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-22": {
+   "date": "2027-01-22",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-23": {
+   "date": "2027-01-23",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-24": {
+   "date": "2027-01-24",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-25": {
+   "date": "2027-01-25",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-26": {
+   "date": "2027-01-26",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-27": {
+   "date": "2027-01-27",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-28": {
+   "date": "2027-01-28",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-29": {
+   "date": "2027-01-29",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-30": {
+   "date": "2027-01-30",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-01-31": {
+   "date": "2027-01-31",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-01": {
+   "date": "2027-02-01",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-02": {
+   "date": "2027-02-02",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-03": {
+   "date": "2027-02-03",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-04": {
+   "date": "2027-02-04",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-05": {
+   "date": "2027-02-05",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-06": {
+   "date": "2027-02-06",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-07": {
+   "date": "2027-02-07",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-08": {
+   "date": "2027-02-08",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-09": {
+   "date": "2027-02-09",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-10": {
+   "date": "2027-02-10",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-11": {
+   "date": "2027-02-11",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-12": {
+   "date": "2027-02-12",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-13": {
+   "date": "2027-02-13",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-14": {
+   "date": "2027-02-14",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-15": {
+   "date": "2027-02-15",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-16": {
+   "date": "2027-02-16",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-17": {
+   "date": "2027-02-17",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-18": {
+   "date": "2027-02-18",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-19": {
+   "date": "2027-02-19",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-20": {
+   "date": "2027-02-20",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-21": {
+   "date": "2027-02-21",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-22": {
+   "date": "2027-02-22",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-23": {
+   "date": "2027-02-23",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-24": {
+   "date": "2027-02-24",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-25": {
+   "date": "2027-02-25",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-26": {
+   "date": "2027-02-26",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-27": {
+   "date": "2027-02-27",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-02-28": {
+   "date": "2027-02-28",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-01": {
+   "date": "2027-03-01",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-02": {
+   "date": "2027-03-02",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-03": {
+   "date": "2027-03-03",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-04": {
+   "date": "2027-03-04",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-05": {
+   "date": "2027-03-05",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-06": {
+   "date": "2027-03-06",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-07": {
+   "date": "2027-03-07",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-08": {
+   "date": "2027-03-08",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-09": {
+   "date": "2027-03-09",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-10": {
+   "date": "2027-03-10",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-11": {
+   "date": "2027-03-11",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-12": {
+   "date": "2027-03-12",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-13": {
+   "date": "2027-03-13",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-14": {
+   "date": "2027-03-14",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-15": {
+   "date": "2027-03-15",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-16": {
+   "date": "2027-03-16",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-17": {
+   "date": "2027-03-17",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-18": {
+   "date": "2027-03-18",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-19": {
+   "date": "2027-03-19",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-20": {
+   "date": "2027-03-20",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-21": {
+   "date": "2027-03-21",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-22": {
+   "date": "2027-03-22",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-23": {
+   "date": "2027-03-23",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-24": {
+   "date": "2027-03-24",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-25": {
+   "date": "2027-03-25",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-26": {
+   "date": "2027-03-26",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-27": {
+   "date": "2027-03-27",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-28": {
+   "date": "2027-03-28",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-29": {
+   "date": "2027-03-29",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-30": {
+   "date": "2027-03-30",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-03-31": {
+   "date": "2027-03-31",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-01": {
+   "date": "2027-04-01",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-02": {
+   "date": "2027-04-02",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-03": {
+   "date": "2027-04-03",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-04": {
+   "date": "2027-04-04",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-05": {
+   "date": "2027-04-05",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-06": {
+   "date": "2027-04-06",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-07": {
+   "date": "2027-04-07",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-08": {
+   "date": "2027-04-08",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-09": {
+   "date": "2027-04-09",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-10": {
+   "date": "2027-04-10",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-11": {
+   "date": "2027-04-11",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-12": {
+   "date": "2027-04-12",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-13": {
+   "date": "2027-04-13",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-14": {
+   "date": "2027-04-14",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-15": {
+   "date": "2027-04-15",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-16": {
+   "date": "2027-04-16",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-17": {
+   "date": "2027-04-17",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-18": {
+   "date": "2027-04-18",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-19": {
+   "date": "2027-04-19",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-20": {
+   "date": "2027-04-20",
+   "weekday": 1,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-21": {
+   "date": "2027-04-21",
+   "weekday": 2,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-22": {
+   "date": "2027-04-22",
+   "weekday": 3,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-23": {
+   "date": "2027-04-23",
+   "weekday": 4,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-24": {
+   "date": "2027-04-24",
+   "weekday": 5,
+   "is_today": false,
+   "status": "rest",
+   "planned": false,
+   "nhpt_due": false,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-25": {
+   "date": "2027-04-25",
+   "weekday": 6,
+   "is_today": false,
+   "status": "planned",
+   "planned": false,
+   "nhpt_due": true,
+   "minutes": 0,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "nhpt",
+     "name": "Nine-Hole Peg Test"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  },
+  "2027-04-26": {
+   "date": "2027-04-26",
+   "weekday": 0,
+   "is_today": false,
+   "status": "planned",
+   "planned": true,
+   "nhpt_due": false,
+   "minutes": 10,
+   "minutes_done": 0,
+   "exercises": [
+    {
+     "id": "abduction",
+     "name": "Arm out to the side"
+    },
+    {
+     "id": "cup",
+     "name": "Waiter – cup"
+    }
+   ],
+   "sessions": [],
+   "sample": false,
+   "clinic_visit": null
+  }
+ }
+}

@@ -1,0 +1,4808 @@
+{
+ "/health": {
+  "status": "ok",
+  "service": "praxis-session",
+  "opencv_version": "5.0.0",
+  "mode": "edge",
+  "models": {
+   "hand": true,
+   "pose": true
+  },
+  "agent": {
+   "mode": "off",
+   "model": null,
+   "mcp": false,
+   "ready": false,
+   "reason": "PRAXIS_AGENT=off"
+  }
+ },
+ "/api/patients/me": {
+  "id": "alex",
+  "name": "Alex M.",
+  "initial": "A",
+  "side": "left",
+  "goal": "Use a cup on my own.",
+  "goal_attempts": 2,
+  "program_code": "GR-4471-L2",
+  "program": {
+   "label": "Hospital GRASP, Level 2 · Left side",
+   "short": "Hospital GRASP L2 · v3 · Dr. Rao",
+   "clinician": "Dr. Anita Rao, OT",
+   "next_visit": "Thu 1 Oct, 2:30 PM",
+   "level": 2,
+   "version": 3
+  }
+ },
+ "/api/prescription": {
+  "program": "Hospital GRASP",
+  "version": 3,
+  "level": 2,
+  "side": "left",
+  "clinician": "Dr. Anita Rao, OT",
+  "exercises": {
+   "pendulum": {
+    "sets": 2,
+    "reps": 10
+   },
+   "arm": {
+    "sets": 2,
+    "reps": 8,
+    "hold_s": 3,
+    "target_deg": 90,
+    "ceiling_deg": 90,
+    "weight_lb": 0.5
+   },
+   "abduction": {
+    "sets": 2,
+    "reps": 8,
+    "hold_s": 3,
+    "target_deg": 90,
+    "ceiling_deg": 90
+   },
+   "cup": {
+    "slow_arcs": 2,
+    "fast_arcs": 2
+   },
+   "nhpt": {
+    "frequency": "weekly",
+    "hands": [
+     "left"
+    ]
+   },
+   "external_rotation": {
+    "sets": 2,
+    "reps": 8,
+    "hold_s": 3,
+    "mode": "demo"
+   },
+   "internal_rotation": {
+    "sets": 2,
+    "reps": 8,
+    "hold_s": 3,
+    "mode": "demo"
+   }
+  },
+  "allowed_adaptations": {
+   "pendulum": {
+    "reps": [
+     8,
+     10
+    ]
+   },
+   "arm": {
+    "hold_s": [
+     2,
+     3
+    ],
+    "target_deg": [
+     60,
+     90
+    ],
+    "reps": [
+     6,
+     8
+    ]
+   },
+   "abduction": {
+    "hold_s": [
+     2,
+     3
+    ],
+    "target_deg": [
+     60,
+     90
+    ],
+    "reps": [
+     6,
+     8
+    ]
+   },
+   "cup": {
+    "fast_arcs": true
+   }
+  },
+  "stop_rules": {
+   "pain_max": 7,
+   "lean_deg": 12,
+   "lean_events": 3,
+   "failed_reps": 3,
+   "missed_reps": 3,
+   "exertion_high_s": 60,
+   "new_symptoms": true
+  },
+  "schedule": {
+   "practice_days": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "nhpt_day": 6,
+   "next_visit": {
+    "at": "2026-10-01T14:30",
+    "with": "Dr. Anita Rao, OT"
+   },
+   "minutes_per_day": 10
+  },
+  "edited": null
+ },
+ "/api/sessions": {
+  "sessions": [
+   {
+    "id": "81a046bffddb",
+    "mode": "arm",
+    "exercise": "abduction",
+    "username": null,
+    "started_at": "2026-09-29T19:32:09",
+    "ended_at": "2026-09-29T19:35:30",
+    "status": "complete",
+    "tracking": "usable",
+    "title": "Arm out to the side",
+    "date": "2026-09-29",
+    "summary": {
+     "session_id": "81a046bffddb",
+     "mode": "arm",
+     "exercise": "abduction",
+     "username": null,
+     "t_start": 1790724729.6886408,
+     "t_end": 1790724930.438456,
+     "clock": "wall",
+     "source": "live",
+     "replay_clip": null,
+     "tracking": "usable",
+     "tracking_lost_events": 4,
+     "camera": {
+      "reps_total": 12,
+      "verified": 8,
+      "unverified": 0,
+      "missed": 4,
+      "corrections": 20,
+      "posture_cues": 12,
+      "peak_deg": [
+       98.8,
+       71.8,
+       63.8,
+       136.2,
+       70.5,
+       90.4,
+       81.3,
+       52,
+       107.5,
+       35.4,
+       138.1,
+       131.2
+      ],
+      "peak_verified": [
+       true,
+       true,
+       false,
+       true,
+       true,
+       true,
+       true,
+       false,
+       true,
+       false,
+       true,
+       false
+      ],
+      "coverage_pct": 67,
+      "active_s": 196.8,
+      "paused_s": 3.8,
+      "tracking_lost_events": 4
+     },
+     "told_us": {
+      "pain_before": 4,
+      "energy": "comfortable",
+      "minutes": 14,
+      "new_symptoms": false
+     },
+     "exertion": {
+      "level": "moderate",
+      "score": 0.56,
+      "reasons": [
+       "reps getting slower (9% per rep)"
+      ],
+      "method": "behavioural"
+     },
+     "coach": {
+      "label": "Rule-based coach · LLM agent pending",
+      "notes": [
+       {
+        "text": "correct: shoulder hiking",
+        "confidence": "high",
+        "evidence": [
+         604
+        ]
+       },
+       {
+        "text": "correct: hold too short",
+        "confidence": "high",
+        "evidence": [
+         727
+        ]
+       },
+       {
+        "text": "correct: unverified rep (hold_too_short)",
+        "confidence": "high",
+        "evidence": [
+         882
+        ]
+       },
+       {
+        "text": "correct: target missed",
+        "confidence": "high",
+        "evidence": [
+         1607
+        ]
+       },
+       {
+        "text": "correct: unverified rep (target_missed)",
+        "confidence": "high",
+        "evidence": [
+         1609
+        ]
+       },
+       {
+        "text": "rest: behavioural exertion high: reps getting slower (10% per rep), peak angle falling (28° over the set)",
+        "confidence": "high",
+        "evidence": [
+         1610
+        ]
+       }
+      ],
+      "decisions": 44
+     },
+     "flags": [],
+     "stopped": false,
+     "delivery": "queued · not yet delivered",
+     "latency": {
+      "capture_to_event_p50": 249,
+      "capture_to_event_p95": 989.5,
+      "proc_p50": 23.2,
+      "proc_p95": 32.5,
+      "event_to_cue_p50": 1,
+      "event_to_cue_p95": 1.4,
+      "frames": 1182,
+      "dropped": 1,
+      "cues": 44
+     }
+    },
+    "feedback": {},
+    "checkin": {
+     "pain_before": 4,
+     "energy": "comfortable",
+     "minutes": 14,
+     "new_symptoms": false
+    },
+    "next_practice": {
+     "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+     "proposal": "keep hold at 3 s, watch leaning",
+     "level_change": false
+    },
+    "delivery": "queued · not yet delivered",
+    "illustrative": false,
+    "source": "live",
+    "replay": false
+   },
+   {
+    "id": "s-0912-cuparm",
+    "mode": "cup",
+    "exercise": null,
+    "username": null,
+    "started_at": "2026-09-12T09:05:00",
+    "ended_at": "2026-09-12T09:19:00",
+    "status": "complete",
+    "tracking": "usable",
+    "title": "Waiter – cup + Arm out to the side",
+    "date": "2026-09-12",
+    "summary": {
+     "mode": "cup",
+     "illustrative": true,
+     "camera": {
+      "reps_total": 20,
+      "verified": 17,
+      "unverified": 3,
+      "corrections": 2,
+      "coverage_pct": 86,
+      "posture_cues": 2,
+      "active_s": 702,
+      "reach_ms": [
+       1420,
+       1380,
+       1290,
+       1210,
+       1180,
+       1250,
+       1300,
+       1150,
+       900,
+       980,
+       940,
+       910,
+       870,
+       990,
+       950,
+       900
+      ],
+      "reach_verified": [
+       true,
+       true,
+       true,
+       false,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       true,
+       true,
+       true,
+       false,
+       true,
+       true
+      ],
+      "peak_deg": [
+       88,
+       89,
+       90,
+       87,
+       90,
+       90,
+       89,
+       88,
+       90,
+       90,
+       88,
+       90,
+       90,
+       89,
+       90,
+       90
+      ],
+      "peak_verified": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ]
+     },
+     "told_us": {},
+     "exertion": {
+      "level": "low",
+      "reasons": [],
+      "method": "behavioural"
+     },
+     "coach": {
+      "label": "Rule-based coach · LLM agent pending",
+      "notes": [
+       {
+        "text": "progress: reach time fell across the slow arcs; fast arcs accepted by patient and completed without drops",
+        "confidence": "high",
+        "evidence": [
+         22,
+         31
+        ]
+       },
+       {
+        "text": "correct: trunk lean appeared in 2 of 16 lifts, late in set 2. Hold time kept at 3 s; no change made",
+        "confidence": "medium",
+        "evidence": [
+         58,
+         61
+        ]
+       },
+       {
+        "text": "instruct: no shoulder hiking observed this session (3 events last session)",
+        "confidence": "high",
+        "evidence": [
+         64
+        ]
+       }
+      ],
+      "decisions": 9
+     },
+     "flags": [
+      {
+       "t": 610,
+       "rule": "lean",
+       "detail": "trunk lean > 12° in 2 lifts, late set 2 (below flag threshold; logged)"
+      }
+     ],
+     "stopped": false,
+     "delivery": "queued · not yet delivered"
+    },
+    "feedback": {
+     "pain_after": 2,
+     "effort": 4,
+     "compared": "same"
+    },
+    "checkin": {
+     "pain_before": 2,
+     "energy": "comfortable",
+     "minutes": 14,
+     "new_symptoms": false
+    },
+    "next_practice": {
+     "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
+     "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+     "level_change": false
+    },
+    "delivery": "queued · not yet delivered",
+    "illustrative": true,
+    "source": "sample",
+    "replay": false
+   },
+   {
+    "id": "s-0912-nhpt",
+    "mode": "nhpt",
+    "exercise": null,
+    "username": null,
+    "started_at": "2026-09-12T09:00:00",
+    "ended_at": "2026-09-12T09:02:00",
+    "status": "complete",
+    "tracking": "usable",
+    "title": "Nine-Hole Peg Test · 41.2 s",
+    "date": "2026-09-12",
+    "summary": {
+     "mode": "nhpt",
+     "illustrative": true,
+     "camera": {
+      "reps_total": 9,
+      "verified": 9,
+      "unverified": 0,
+      "corrections": 0,
+      "coverage_pct": 100,
+      "posture_cues": 0,
+      "active_s": 41,
+      "splits_s": [
+       5.1,
+       4.4,
+       4.6,
+       4.9,
+       4.2,
+       4.5,
+       4.8,
+       4.3,
+       4.4
+      ],
+      "nhpt_total_s": 41.2
+     },
+     "told_us": {},
+     "exertion": {
+      "level": "low",
+      "reasons": [],
+      "method": "behavioural"
+     },
+     "coach": {
+      "label": "Rule-based coach · LLM agent pending",
+      "notes": [
+       {
+        "text": "instruct: all nine seated, 2.8 s faster than last week",
+        "confidence": "high",
+        "evidence": [
+         9
+        ]
+       }
+      ],
+      "decisions": 3
+     },
+     "flags": [],
+     "stopped": false,
+     "delivery": "queued · not yet delivered"
+    },
+    "feedback": {
+     "pain_after": 2,
+     "effort": 3,
+     "compared": "easier"
+    },
+    "checkin": {
+     "pain_before": 2,
+     "energy": "comfortable",
+     "minutes": 14,
+     "new_symptoms": false
+    },
+    "next_practice": {
+     "text": "Assessment recorded. Practice continues on the assigned plan.",
+     "proposal": "repeat the peg test weekly, same board and camera setup",
+     "level_change": false
+    },
+    "delivery": "queued · not yet delivered",
+    "illustrative": true,
+    "source": "sample",
+    "replay": false
+   },
+   {
+    "id": "s-0910-cup",
+    "mode": "cup",
+    "exercise": null,
+    "username": null,
+    "started_at": "2026-09-10T09:30:00",
+    "ended_at": "2026-09-10T09:41:00",
+    "status": "complete",
+    "tracking": "limited",
+    "title": "Waiter – cup",
+    "date": "2026-09-10",
+    "summary": {
+     "mode": "cup",
+     "illustrative": true,
+     "camera": {
+      "reps_total": 14,
+      "verified": 8,
+      "unverified": 6,
+      "corrections": 3,
+      "coverage_pct": 62,
+      "posture_cues": 0,
+      "active_s": 540
+     },
+     "told_us": {},
+     "exertion": {
+      "level": "low",
+      "reasons": [],
+      "method": "behavioural"
+     },
+     "coach": {
+      "label": "Rule-based coach · LLM agent pending",
+      "notes": [
+       {
+        "text": "correct: six reaches could not be verified (markers lost); not comparable",
+        "confidence": "medium",
+        "evidence": [
+         12,
+         15
+        ]
+       }
+      ],
+      "decisions": 3
+     },
+     "flags": [],
+     "stopped": false,
+     "delivery": "queued · not yet delivered"
+    },
+    "feedback": {
+     "pain_after": 2,
+     "effort": 4,
+     "compared": "same"
+    },
+    "checkin": {
+     "pain_before": 2,
+     "energy": "comfortable",
+     "minutes": 14,
+     "new_symptoms": false
+    },
+    "next_practice": {
+     "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
+     "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+     "level_change": false
+    },
+    "delivery": "queued · not yet delivered",
+    "illustrative": true,
+    "source": "sample",
+    "replay": false
+   },
+   {
+    "id": "s-0908-arm",
+    "mode": "arm",
+    "exercise": "abduction",
+    "username": null,
+    "started_at": "2026-09-08T10:02:00",
+    "ended_at": "2026-09-08T10:09:00",
+    "status": "ended_early",
+    "tracking": "usable",
+    "title": "Arm out to the side",
+    "date": "2026-09-08",
+    "summary": {
+     "mode": "arm",
+     "illustrative": true,
+     "camera": {
+      "reps_total": 6,
+      "verified": 5,
+      "unverified": 1,
+      "corrections": 2,
+      "coverage_pct": 91,
+      "posture_cues": 1,
+      "active_s": 380
+     },
+     "told_us": {},
+     "exertion": {
+      "level": "high",
+      "reasons": [],
+      "method": "behavioural"
+     },
+     "coach": {
+      "label": "Rule-based coach · LLM agent pending",
+      "notes": [
+       {
+        "text": "stop: pain 7/10 during Arm out to the side, rep 6 of set 2",
+        "confidence": "high",
+        "evidence": [
+         41
+        ]
+       }
+      ],
+      "decisions": 3
+     },
+     "flags": [
+      {
+       "t": 380,
+       "rule": "pain",
+       "detail": "pain 7/10 reported (stop level 7)"
+      }
+     ],
+     "stopped": true,
+     "delivery": "queued · not yet delivered"
+    },
+    "feedback": {
+     "pain_after": 7,
+     "effort": 7,
+     "compared": "harder"
+    },
+    "checkin": {
+     "pain_before": 3,
+     "energy": "tired",
+     "minutes": 14,
+     "new_symptoms": false
+    },
+    "next_practice": {
+     "text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.",
+     "proposal": "review with clinician",
+     "level_change": false
+    },
+    "delivery": "queued · not yet delivered",
+    "illustrative": true,
+    "source": "sample",
+    "replay": false
+   }
+  ]
+ },
+ "/api/flags": {
+  "flags": [
+   {
+    "id": 2,
+    "session_id": "s-0912-cuparm",
+    "rule": "lean",
+    "detail": "trunk lean > 12° in 2 lifts, late set 2 (below flag threshold; logged)",
+    "t": 610,
+    "date": "2026-09-12",
+    "reviewed": false
+   },
+   {
+    "id": 1,
+    "session_id": "s-0908-arm",
+    "rule": "pain",
+    "detail": "pain 7/10 reported (stop level 7)",
+    "t": 380,
+    "date": "2026-09-08",
+    "reviewed": false
+   }
+  ]
+ },
+ "/api/progress": {
+  "nhpt_trend": [
+   {
+    "date": "2026-08-01",
+    "total_s": 68,
+    "kind": "sample"
+   },
+   {
+    "date": "2026-08-10",
+    "total_s": 61.5,
+    "kind": "sample"
+   },
+   {
+    "date": "2026-08-19",
+    "total_s": 55.2,
+    "kind": "sample"
+   },
+   {
+    "date": "2026-08-28",
+    "total_s": 49,
+    "kind": "sample"
+   },
+   {
+    "date": "2026-09-05",
+    "total_s": 44,
+    "kind": "sample"
+   },
+   {
+    "date": "2026-09-12",
+    "total_s": 41.2,
+    "kind": "sample"
+   }
+  ],
+  "verified_per_session": [
+   {
+    "date": "2026-09-08",
+    "verified": 5,
+    "limited": false,
+    "mode": "arm",
+    "exercise": "abduction",
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-10",
+    "verified": 8,
+    "limited": true,
+    "mode": "cup",
+    "exercise": null,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-12",
+    "verified": 17,
+    "limited": false,
+    "mode": "cup",
+    "exercise": null,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-29",
+    "verified": 8,
+    "limited": false,
+    "mode": "arm",
+    "exercise": "abduction",
+    "illustrative": false,
+    "source": "live"
+   }
+  ],
+  "practice": {
+   "done": 1,
+   "planned": 1,
+   "days_done": 1,
+   "hours": 0.1
+  },
+  "adherence_pct": 100,
+  "sample": {
+   "done": 19,
+   "planned": 22,
+   "hours": 3.4,
+   "illustrative": true
+  },
+  "pain_effort": [
+   {
+    "date": "2026-09-08",
+    "pain_after": 7,
+    "effort": 7,
+    "ended_early": true,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-10",
+    "pain_after": 2,
+    "effort": 4,
+    "ended_early": false,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-12",
+    "pain_after": 2,
+    "effort": 3,
+    "ended_early": false,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-12",
+    "pain_after": 2,
+    "effort": 4,
+    "ended_early": false,
+    "illustrative": true,
+    "source": "sample"
+   },
+   {
+    "date": "2026-09-29",
+    "pain_after": null,
+    "effort": null,
+    "ended_early": false,
+    "illustrative": false,
+    "source": "live"
+   }
+  ],
+  "goal_log_count": 0
+ },
+ "/api/therapist/patients": {
+  "patients": [
+   {
+    "id": "alex",
+    "name": "Alex M.",
+    "program": "GRASP L2 · left · wk 6",
+    "open_flags": 2,
+    "adherence_pct": 100,
+    "nhpt_last_s": 41.2,
+    "nhpt_first_s": 68,
+    "nhpt_sample": true
+   },
+   {
+    "id": "priya",
+    "name": "Priya S.",
+    "program": "GRASP L3 · right · wk 3",
+    "open_flags": 0,
+    "adherence_pct": 92,
+    "nhpt_last_s": null,
+    "nhpt_first_s": null,
+    "illustrative": true
+   },
+   {
+    "id": "tom",
+    "name": "Tom K.",
+    "program": "GRASP L1 · left · wk 9",
+    "open_flags": 1,
+    "adherence_pct": 71,
+    "nhpt_last_s": null,
+    "nhpt_first_s": null,
+    "illustrative": true
+   },
+   {
+    "id": "june",
+    "name": "June O.",
+    "program": "GRASP L2 · right · wk 1",
+    "open_flags": 0,
+    "adherence_pct": 100,
+    "nhpt_last_s": null,
+    "nhpt_first_s": null,
+    "illustrative": true
+   }
+  ]
+ },
+ "/api/replay/list": {
+  "clips": [
+   {
+    "id": "synthetic_nhpt_01",
+    "mode": "nhpt",
+    "exercise": "nhpt",
+    "name": "Nine-Hole Peg Test",
+    "pipeline": "nhpt",
+    "sheet": "nhpt_board",
+    "side": null,
+    "view": "sheet",
+    "path": "synthetic_nhpt_01.mp4",
+    "synthetic": true,
+    "source": "manifest"
+   },
+   {
+    "id": "synthetic_cup_01",
+    "mode": "cup",
+    "exercise": "cup",
+    "name": "Waiter – cup",
+    "pipeline": "cup",
+    "sheet": "cup_targets",
+    "side": null,
+    "view": "sheet",
+    "path": "synthetic_cup_01.mp4",
+    "synthetic": true,
+    "source": "manifest"
+   }
+  ]
+ },
+ "/api/trace?n=200": {
+  "session": "81a046bffddb",
+  "rows": [
+   {
+    "mode": "arm",
+    "exercise": "abduction",
+    "user": null,
+    "prescription": "Hospital GRASP L2 v3",
+    "coach": "Rule-based coach · LLM agent pending",
+    "seq": 1,
+    "ts": 1790724729.3259096,
+    "session": "81a046bffddb",
+    "kind": "session"
+   },
+   {
+    "rule": "pain_tier",
+    "pain": 4,
+    "tier": "gentle",
+    "running": "gentle",
+    "changed": false,
+    "reason": "Pain 4 today: a gentle day. Fewer reps, shorter holds, the side lift to 60°, and no fast arcs, all inside what your therapist allows.",
+    "seq": 2,
+    "ts": 1790724729.4540067,
+    "session": "81a046bffddb",
+    "kind": "tier"
+   },
+   {
+    "pain_before": 4,
+    "energy": "comfortable",
+    "minutes": 14,
+    "new_symptoms": false,
+    "seq": 3,
+    "ts": 1790724729.454786,
+    "session": "81a046bffddb",
+    "kind": "checkin"
+   },
+   {
+    "type": "exercise_start",
+    "id": 591,
+    "t": 1790724731.0809073,
+    "seq": 4,
+    "ts": 1790724731.1068332,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_intro",
+    "reason": "Arm out to the side started, 2 × 6 · hold 2 s",
+    "evidence": [
+     591
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 5,
+    "ts": 1790724731.1070452,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 6,
+    "ts": 1790724731.1070917,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 600,
+    "t": 1790724731.7863395,
+    "set": 1,
+    "rep": 1,
+    "seq": 7,
+    "ts": 1790724731.8133292,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     600
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 8,
+    "ts": 1790724731.813503,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift slowly to the line.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 9,
+    "ts": 1790724731.8135347,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 604,
+    "t": 1790724732.0817757,
+    "seq": 10,
+    "ts": 1790724732.103751,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 605,
+    "t": 1790724732.0817757,
+    "set": 1,
+    "rep": 1,
+    "seq": 11,
+    "ts": 1790724732.1039042,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 606,
+    "t": 1790724732.0817757,
+    "set": 1,
+    "rep": 1,
+    "seq": 12,
+    "ts": 1790724732.1039279,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     604
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 13,
+    "ts": 1790724732.1039882,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 14,
+    "ts": 1790724732.104014,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 630,
+    "t": 1790724735.4723408,
+    "set": 1,
+    "rep": 1,
+    "seq": 15,
+    "ts": 1790724735.4975638,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     630
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 16,
+    "ts": 1790724735.497737,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lower for three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 17,
+    "ts": 1790724735.4977875,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 651,
+    "t": 1790724737.7783875,
+    "set": 1,
+    "rep": 1,
+    "peak_deg": 98.8,
+    "verified": true,
+    "reason": null,
+    "seq": 18,
+    "ts": 1790724737.8001306,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 652,
+    "t": 1790724737.7783875,
+    "set": 1,
+    "rep": 2,
+    "seq": 19,
+    "ts": 1790724737.8002813,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_rep",
+    "reason": "verified rep",
+    "evidence": [
+     651
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 20,
+    "ts": 1790724737.800348,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Good, 1 of 6.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 21,
+    "ts": 1790724737.800391,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 656,
+    "t": 1790724737.882089,
+    "set": 1,
+    "rep": 2,
+    "seq": 22,
+    "ts": 1790724737.9050457,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 658,
+    "t": 1790724738.100326,
+    "seq": 23,
+    "ts": 1790724738.1239982,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 659,
+    "t": 1790724738.100326,
+    "set": 1,
+    "rep": 2,
+    "seq": 24,
+    "ts": 1790724738.1241548,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 660,
+    "t": 1790724738.100326,
+    "set": 1,
+    "rep": 2,
+    "seq": 25,
+    "ts": 1790724738.1241844,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     658
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 26,
+    "ts": 1790724738.1242502,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 27,
+    "ts": 1790724738.1242814,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 677,
+    "t": 1790724740.2073462,
+    "set": 1,
+    "rep": 2,
+    "seq": 28,
+    "ts": 1790724740.2338002,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     677
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 29,
+    "ts": 1790724740.234052,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Down slowly, three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 30,
+    "ts": 1790724740.2341082,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 692,
+    "t": 1790724741.7051258,
+    "set": 1,
+    "rep": 2,
+    "peak_deg": 71.8,
+    "verified": true,
+    "reason": null,
+    "seq": 31,
+    "ts": 1790724741.7333891,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 693,
+    "t": 1790724741.7051258,
+    "set": 1,
+    "rep": 3,
+    "seq": 32,
+    "ts": 1790724741.7335196,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_rep",
+    "reason": "verified rep",
+    "evidence": [
+     692
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 33,
+    "ts": 1790724741.7335925,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "2 of 6. Nice.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 34,
+    "ts": 1790724741.7336214,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 715,
+    "t": 1790724744.08424,
+    "set": 1,
+    "rep": 3,
+    "seq": 35,
+    "ts": 1790724744.119325,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     715
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 36,
+    "ts": 1790724744.1195154,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift, no higher than your shoulder.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 37,
+    "ts": 1790724744.1195652,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 720,
+    "t": 1790724744.3800325,
+    "seq": 38,
+    "ts": 1790724744.404572,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 721,
+    "t": 1790724744.3800325,
+    "set": 1,
+    "rep": 3,
+    "seq": 39,
+    "ts": 1790724744.4047022,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 722,
+    "t": 1790724744.3800325,
+    "set": 1,
+    "rep": 3,
+    "seq": 40,
+    "ts": 1790724744.4047236,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     720
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 41,
+    "ts": 1790724744.4047868,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 42,
+    "ts": 1790724744.4048119,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 727,
+    "t": 1790724744.714635,
+    "seq": 43,
+    "ts": 1790724744.7397592,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 728,
+    "t": 1790724744.714635,
+    "set": 1,
+    "rep": 3,
+    "seq": 44,
+    "ts": 1790724744.7400134,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_short_hold",
+    "reason": "hold too short",
+    "evidence": [
+     727
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 45,
+    "ts": 1790724744.7400825,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "A little longer at the top next time — hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 46,
+    "ts": 1790724744.7401068,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 882,
+    "t": 1790724774.7518492,
+    "set": 1,
+    "rep": 3,
+    "peak_deg": 63.8,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 47,
+    "ts": 1790724774.7763057,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 883,
+    "t": 1790724774.7518492,
+    "set": 1,
+    "rep": 4,
+    "seq": 48,
+    "ts": 1790724774.7764547,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_unverified",
+    "reason": "unverified rep (hold_too_short)",
+    "evidence": [
+     882
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 49,
+    "ts": 1790724774.776545,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 50,
+    "ts": 1790724774.7765791,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 888,
+    "t": 1790724774.9939163,
+    "set": 1,
+    "rep": 4,
+    "seq": 51,
+    "ts": 1790724775.0264816,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 893,
+    "t": 1790724775.4732563,
+    "seq": 52,
+    "ts": 1790724775.4984226,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     893
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 53,
+    "ts": 1790724775.4986286,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 54,
+    "ts": 1790724775.49867,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 898,
+    "t": 1790724775.6485643,
+    "set": 1,
+    "rep": 4,
+    "seq": 55,
+    "ts": 1790724775.673024,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 899,
+    "t": 1790724775.6485643,
+    "set": 1,
+    "rep": 4,
+    "seq": 56,
+    "ts": 1790724775.6731746,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 967,
+    "t": 1790724785.3486245,
+    "set": 1,
+    "rep": 4,
+    "seq": 57,
+    "ts": 1790724785.378129,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     967
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 58,
+    "ts": 1790724785.378303,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Down slowly, three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 59,
+    "ts": 1790724785.3783355,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 971,
+    "t": 1790724785.5574014,
+    "set": 1,
+    "rep": 4,
+    "peak_deg": 136.2,
+    "verified": true,
+    "reason": null,
+    "seq": 60,
+    "ts": 1790724785.5854242,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 972,
+    "t": 1790724785.5574014,
+    "set": 1,
+    "rep": 5,
+    "seq": 61,
+    "ts": 1790724785.5856123,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 980,
+    "t": 1790724787.1129797,
+    "set": 1,
+    "rep": 5,
+    "seq": 62,
+    "ts": 1790724787.140358,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     980
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 63,
+    "ts": 1790724787.1406634,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Up to the line, slowly.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 64,
+    "ts": 1790724787.1407163,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 984,
+    "t": 1790724787.4002554,
+    "set": 1,
+    "rep": 5,
+    "seq": 65,
+    "ts": 1790724787.4278884,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 985,
+    "t": 1790724787.4002554,
+    "set": 1,
+    "rep": 5,
+    "seq": 66,
+    "ts": 1790724787.428085,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 997,
+    "t": 1790724789.232128,
+    "seq": 67,
+    "ts": 1790724789.2580514,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     997
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 68,
+    "ts": 1790724789.2582235,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 69,
+    "ts": 1790724789.258258,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1003,
+    "t": 1790724789.9797049,
+    "set": 1,
+    "rep": 5,
+    "seq": 70,
+    "ts": 1790724790.0054612,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     1003
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 71,
+    "ts": 1790724790.0056722,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lower for three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 72,
+    "ts": 1790724790.0057223,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1007,
+    "t": 1790724790.2812696,
+    "set": 1,
+    "rep": 5,
+    "peak_deg": 70.5,
+    "verified": true,
+    "reason": null,
+    "seq": 73,
+    "ts": 1790724790.3101308,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1008,
+    "t": 1790724790.2812696,
+    "set": 1,
+    "rep": 6,
+    "seq": 74,
+    "ts": 1790724790.3102863,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1019,
+    "t": 1790724792.1139941,
+    "set": 1,
+    "rep": 6,
+    "seq": 75,
+    "ts": 1790724792.1418295,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1019
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 76,
+    "ts": 1790724792.142048,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift, no higher than your shoulder.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 77,
+    "ts": 1790724792.1420832,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1025,
+    "t": 1790724792.5386076,
+    "set": 1,
+    "rep": 6,
+    "seq": 78,
+    "ts": 1790724792.5692148,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1026,
+    "t": 1790724792.5386076,
+    "set": 1,
+    "rep": 6,
+    "seq": 79,
+    "ts": 1790724792.569373,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1031,
+    "t": 1790724793.0098479,
+    "seq": 80,
+    "ts": 1790724793.0419238,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1031
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 81,
+    "ts": 1790724793.0420845,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 82,
+    "ts": 1790724793.0421226,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1055,
+    "t": 1790724795.7646449,
+    "set": 1,
+    "rep": 6,
+    "seq": 83,
+    "ts": 1790724795.7886634,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     1055
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 84,
+    "ts": 1790724795.7888598,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Down slowly, three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 85,
+    "ts": 1790724795.7888892,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1061,
+    "t": 1790724796.1370358,
+    "set": 1,
+    "rep": 6,
+    "peak_deg": 90.4,
+    "verified": true,
+    "reason": null,
+    "seq": 86,
+    "ts": 1790724796.1605506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "set_complete",
+    "id": 1062,
+    "t": 1790724796.1370358,
+    "set": 1,
+    "seq": 87,
+    "ts": 1790724796.1607013,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1063,
+    "t": 1790724796.1370358,
+    "set": 2,
+    "rep": 1,
+    "seq": 88,
+    "ts": 1790724796.160723,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1068,
+    "t": 1790724796.489492,
+    "set": 2,
+    "rep": 1,
+    "seq": 89,
+    "ts": 1790724796.5141962,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1068
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 90,
+    "ts": 1790724796.5146286,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift slowly to the line.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 91,
+    "ts": 1790724796.5146863,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1072,
+    "t": 1790724796.7300217,
+    "seq": 92,
+    "ts": 1790724796.7577574,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1073,
+    "t": 1790724796.7300217,
+    "set": 2,
+    "rep": 1,
+    "seq": 93,
+    "ts": 1790724796.7579165,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1074,
+    "t": 1790724796.7300217,
+    "set": 2,
+    "rep": 1,
+    "seq": 94,
+    "ts": 1790724796.7579381,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1072
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 95,
+    "ts": 1790724796.7582924,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 96,
+    "ts": 1790724796.7583385,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1097,
+    "t": 1790724799.4692838,
+    "set": 2,
+    "rep": 1,
+    "seq": 97,
+    "ts": 1790724799.4917045,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     1097
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 98,
+    "ts": 1790724799.4921327,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lower for three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 99,
+    "ts": 1790724799.4921849,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1103,
+    "t": 1790724799.872184,
+    "set": 2,
+    "rep": 1,
+    "peak_deg": 81.3,
+    "verified": true,
+    "reason": null,
+    "seq": 100,
+    "ts": 1790724799.9004798,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1104,
+    "t": 1790724799.872184,
+    "set": 2,
+    "rep": 2,
+    "seq": 101,
+    "ts": 1790724799.9006124,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1114,
+    "t": 1790724801.2124217,
+    "set": 2,
+    "rep": 2,
+    "seq": 102,
+    "ts": 1790724801.2358756,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1114
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 103,
+    "ts": 1790724801.2362945,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Up to the line, slowly.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 104,
+    "ts": 1790724801.236353,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1118,
+    "t": 1790724801.2655897,
+    "seq": 105,
+    "ts": 1790724801.2884483,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1118
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 106,
+    "ts": 1790724801.2888923,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 107,
+    "ts": 1790724801.2889442,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1124,
+    "t": 1790724801.6404464,
+    "set": 2,
+    "rep": 2,
+    "seq": 108,
+    "ts": 1790724801.6640992,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1125,
+    "t": 1790724801.6404464,
+    "set": 2,
+    "rep": 2,
+    "seq": 109,
+    "ts": 1790724801.664229,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 1132,
+    "t": 1790724802.3864543,
+    "seq": 110,
+    "ts": 1790724802.4078667,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1133,
+    "t": 1790724802.3864543,
+    "set": 2,
+    "rep": 2,
+    "seq": 111,
+    "ts": 1790724802.4079921,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_short_hold",
+    "reason": "hold too short",
+    "evidence": [
+     1132
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 112,
+    "ts": 1790724802.4083219,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "A little longer at the top next time — hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 113,
+    "ts": 1790724802.408383,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1183,
+    "t": 1790724809.9419065,
+    "seq": 114,
+    "ts": 1790724809.9733381,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "pause",
+    "rule": "perception",
+    "text": "I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.",
+    "seq": 115,
+    "ts": 1790724809.974008,
+    "session": "81a046bffddb",
+    "kind": "stop_rule"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1187,
+    "t": 1790724810.3676603,
+    "seq": 116,
+    "ts": 1790724810.3913052,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "rule": "perception",
+    "seq": 117,
+    "ts": 1790724810.3917785,
+    "session": "81a046bffddb",
+    "kind": "resume"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1222,
+    "t": 1790724815.122303,
+    "set": 2,
+    "rep": 2,
+    "peak_deg": 52,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 118,
+    "ts": 1790724815.1453674,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1223,
+    "t": 1790724815.122303,
+    "set": 2,
+    "rep": 3,
+    "seq": 119,
+    "ts": 1790724815.145506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_unverified",
+    "reason": "unverified rep (hold_too_short)",
+    "evidence": [
+     1222
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 120,
+    "ts": 1790724815.145854,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 121,
+    "ts": 1790724815.145906,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1230,
+    "t": 1790724815.7566085,
+    "set": 2,
+    "rep": 3,
+    "seq": 122,
+    "ts": 1790724815.7790534,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1230
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 123,
+    "ts": 1790724815.7794776,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift, no higher than your shoulder.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 124,
+    "ts": 1790724815.7795389,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1234,
+    "t": 1790724815.811601,
+    "seq": 125,
+    "ts": 1790724815.8360841,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1234
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 126,
+    "ts": 1790724815.8365119,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 127,
+    "ts": 1790724815.8365755,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1240,
+    "t": 1790724816.224828,
+    "set": 2,
+    "rep": 3,
+    "seq": 128,
+    "ts": 1790724816.2489948,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1241,
+    "t": 1790724816.224828,
+    "set": 2,
+    "rep": 3,
+    "seq": 129,
+    "ts": 1790724816.2491562,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1284,
+    "t": 1790724824.0619578,
+    "set": 2,
+    "rep": 3,
+    "seq": 130,
+    "ts": 1790724824.0874076,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     1284
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 131,
+    "ts": 1790724824.087924,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lower for three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 132,
+    "ts": 1790724824.087987,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1417,
+    "t": 1790724847.1845336,
+    "seq": 133,
+    "ts": 1790724847.2045171,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "pause",
+    "rule": "perception",
+    "text": "I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.",
+    "seq": 134,
+    "ts": 1790724847.205006,
+    "session": "81a046bffddb",
+    "kind": "stop_rule"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1433,
+    "t": 1790724849.596198,
+    "seq": 135,
+    "ts": 1790724849.6199665,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "rule": "perception",
+    "seq": 136,
+    "ts": 1790724849.6203067,
+    "session": "81a046bffddb",
+    "kind": "resume"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1573,
+    "t": 1790724873.0171463,
+    "set": 2,
+    "rep": 3,
+    "peak_deg": 107.5,
+    "verified": true,
+    "reason": null,
+    "seq": 137,
+    "ts": 1790724873.038426,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1574,
+    "t": 1790724873.0171463,
+    "set": 2,
+    "rep": 4,
+    "seq": 138,
+    "ts": 1790724873.0385725,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_rep",
+    "reason": "verified rep",
+    "evidence": [
+     1573
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 139,
+    "ts": 1790724873.0388503,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Good, 3 of 6.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 140,
+    "ts": 1790724873.0388954,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1593,
+    "t": 1790724875.8063767,
+    "set": 2,
+    "rep": 4,
+    "seq": 141,
+    "ts": 1790724875.829769,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1593
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 142,
+    "ts": 1790724875.8301425,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lift slowly to the line.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 143,
+    "ts": 1790724875.830213,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "target_missed",
+    "id": 1607,
+    "t": 1790724877.7848394,
+    "peak_deg": 35.4,
+    "seq": 144,
+    "ts": 1790724877.8091495,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1608,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 4,
+    "seq": 145,
+    "ts": 1790724877.8092787,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1609,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 4,
+    "peak_deg": 35.4,
+    "verified": false,
+    "reason": "target_missed",
+    "seq": 146,
+    "ts": 1790724877.8093095,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1610,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 5,
+    "seq": 147,
+    "ts": 1790724877.8093264,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_missed",
+    "reason": "target missed",
+    "evidence": [
+     1607
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 148,
+    "ts": 1790724877.8097138,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Nearly — a touch higher, up to the line.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 149,
+    "ts": 1790724877.8097613,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_unverified",
+    "reason": "unverified rep (target_missed)",
+    "evidence": [
+     1609
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 150,
+    "ts": 1790724877.8097935,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 151,
+    "ts": 1790724877.8098102,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "action": "rest",
+    "cue_id": "rest_exertion",
+    "reason": "behavioural exertion high: reps getting slower (10% per rep), peak angle falling (28° over the set)",
+    "evidence": [
+     1610
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 152,
+    "ts": 1790724877.8098283,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "get_exertion_state",
+    "result": {
+     "level": "high",
+     "score": 1.63,
+     "reasons": [
+      "reps getting slower (10% per rep)",
+      "peak angle falling (28° over the set)"
+     ],
+     "method": "behavioural"
+    },
+    "seq": 153,
+    "ts": 1790724877.8098443,
+    "session": "81a046bffddb",
+    "kind": "tool"
+   },
+   {
+    "tool": "speak",
+    "text": "You've been working hard. Let's take a short rest before the next one.",
+    "ui": {
+     "chip": "exertion_high"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 154,
+    "ts": 1790724877.8098595,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1629,
+    "t": 1790724879.137716,
+    "set": 2,
+    "rep": 5,
+    "seq": 155,
+    "ts": 1790724879.1624978,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lift",
+    "reason": "lift started",
+    "evidence": [
+     1629
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 156,
+    "ts": 1790724879.1629918,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Up to the line, slowly.",
+    "ui": {
+     "avatar_clip": "abduction"
+    },
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 157,
+    "ts": 1790724879.1631033,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1648,
+    "t": 1790724881.3796296,
+    "seq": 158,
+    "ts": 1790724881.3994226,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "pause",
+    "rule": "perception",
+    "text": "I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.",
+    "seq": 159,
+    "ts": 1790724881.3998685,
+    "session": "81a046bffddb",
+    "kind": "stop_rule"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1656,
+    "t": 1790724882.1605854,
+    "seq": 160,
+    "ts": 1790724882.182432,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "rule": "perception",
+    "seq": 161,
+    "ts": 1790724882.1828957,
+    "session": "81a046bffddb",
+    "kind": "resume"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1670,
+    "t": 1790724884.0871933,
+    "seq": 162,
+    "ts": 1790724884.109588,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1671,
+    "t": 1790724884.0871933,
+    "set": 2,
+    "rep": 5,
+    "seq": 163,
+    "ts": 1790724884.1097238,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1672,
+    "t": 1790724884.0871933,
+    "set": 2,
+    "rep": 5,
+    "seq": 164,
+    "ts": 1790724884.1097474,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1670
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 165,
+    "ts": 1790724884.1100733,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 166,
+    "ts": 1790724884.110117,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "compensation_lean",
+    "id": 1706,
+    "t": 1790724889.0813396,
+    "lean_deg": 17.1,
+    "seq": 167,
+    "ts": 1790724889.1025002,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_lean",
+    "reason": "trunk lean 17.1°",
+    "evidence": [
+     1706
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 168,
+    "ts": 1790724889.102891,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 169,
+    "ts": 1790724889.1029541,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1719,
+    "t": 1790724891.4421117,
+    "set": 2,
+    "rep": 5,
+    "seq": 170,
+    "ts": 1790724891.4636102,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_lower",
+    "reason": "returning",
+    "evidence": [
+     1719
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 171,
+    "ts": 1790724891.4640577,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Lower for three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 172,
+    "ts": 1790724891.46411,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1858,
+    "t": 1790724915.3826356,
+    "set": 2,
+    "rep": 5,
+    "peak_deg": 138.1,
+    "verified": true,
+    "reason": null,
+    "seq": 173,
+    "ts": 1790724915.4056838,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1859,
+    "t": 1790724915.3826356,
+    "set": 2,
+    "rep": 6,
+    "seq": 174,
+    "ts": 1790724915.4058237,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_rep",
+    "reason": "verified rep",
+    "evidence": [
+     1858
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 175,
+    "ts": 1790724915.406169,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "5 of 6. Nice.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 176,
+    "ts": 1790724915.4062166,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "state_change",
+    "id": 1867,
+    "t": 1790724915.7928162,
+    "set": 2,
+    "rep": 6,
+    "seq": 177,
+    "ts": 1790724915.813945,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1871,
+    "t": 1790724916.1334033,
+    "set": 2,
+    "rep": 6,
+    "seq": 178,
+    "ts": 1790724916.1547203,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1872,
+    "t": 1790724916.1334033,
+    "set": 2,
+    "rep": 6,
+    "seq": 179,
+    "ts": 1790724916.1548321,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "instruct",
+    "cue_id": "arm_hold",
+    "reason": "target reached",
+    "evidence": [
+     1872
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 180,
+    "ts": 1790724916.1551707,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Hold… three.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 181,
+    "ts": 1790724916.1552181,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1883,
+    "t": 1790724917.843956,
+    "seq": 182,
+    "ts": 1790724917.8689275,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_hike",
+    "reason": "shoulder hiking",
+    "evidence": [
+     1883
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 183,
+    "ts": 1790724917.8693666,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 184,
+    "ts": 1790724917.8694189,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 1887,
+    "t": 1790724918.067764,
+    "seq": 185,
+    "ts": 1790724918.0882435,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1888,
+    "t": 1790724918.067764,
+    "set": 2,
+    "rep": 6,
+    "seq": 186,
+    "ts": 1790724918.0884457,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_short_hold",
+    "reason": "hold too short",
+    "evidence": [
+     1887
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 187,
+    "ts": 1790724918.088849,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "A little longer at the top next time — hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 188,
+    "ts": 1790724918.0889149,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1928,
+    "t": 1790724926.1727195,
+    "set": 2,
+    "rep": 6,
+    "peak_deg": 131.2,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 189,
+    "ts": 1790724926.1956449,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "set_complete",
+    "id": 1929,
+    "t": 1790724926.1727195,
+    "set": 2,
+    "seq": 190,
+    "ts": 1790724926.1958113,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "arm_complete",
+    "id": 1930,
+    "t": 1790724926.1727195,
+    "seq": 191,
+    "ts": 1790724926.1958406,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "correct",
+    "cue_id": "arm_unverified",
+    "reason": "unverified rep (hold_too_short)",
+    "evidence": [
+     1928
+    ],
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 192,
+    "ts": 1790724926.1962883,
+    "session": "81a046bffddb",
+    "kind": "decide"
+   },
+   {
+    "tool": "speak",
+    "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+    "ui": {},
+    "label": "Rule-based coach · LLM agent pending",
+    "source": "rule",
+    "seq": 193,
+    "ts": 1790724926.1963387,
+    "session": "81a046bffddb",
+    "kind": "action"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1948,
+    "t": 1790724928.760816,
+    "seq": 194,
+    "ts": 1790724928.7836506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "action": "pause",
+    "rule": "perception",
+    "text": "I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.",
+    "seq": 195,
+    "ts": 1790724928.784059,
+    "session": "81a046bffddb",
+    "kind": "stop_rule"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1951,
+    "t": 1790724928.9228895,
+    "seq": 196,
+    "ts": 1790724928.945271,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "rule": "perception",
+    "seq": 197,
+    "ts": 1790724928.9457004,
+    "session": "81a046bffddb",
+    "kind": "resume"
+   },
+   {
+    "seq": 198,
+    "ts": 1790724930.4384687,
+    "session": "81a046bffddb",
+    "kind": "feedback"
+   }
+  ]
+ },
+ "/api/sessions/81a046bffddb": {
+  "id": "81a046bffddb",
+  "mode": "arm",
+  "exercise": "abduction",
+  "username": null,
+  "started_at": "2026-09-29T19:32:09",
+  "ended_at": "2026-09-29T19:35:30",
+  "status": "complete",
+  "tracking": "usable",
+  "title": "Arm out to the side",
+  "date": "2026-09-29",
+  "summary": {
+   "session_id": "81a046bffddb",
+   "mode": "arm",
+   "exercise": "abduction",
+   "username": null,
+   "t_start": 1790724729.6886408,
+   "t_end": 1790724930.438456,
+   "clock": "wall",
+   "source": "live",
+   "replay_clip": null,
+   "tracking": "usable",
+   "tracking_lost_events": 4,
+   "camera": {
+    "reps_total": 12,
+    "verified": 8,
+    "unverified": 0,
+    "missed": 4,
+    "corrections": 20,
+    "posture_cues": 12,
+    "peak_deg": [
+     98.8,
+     71.8,
+     63.8,
+     136.2,
+     70.5,
+     90.4,
+     81.3,
+     52,
+     107.5,
+     35.4,
+     138.1,
+     131.2
+    ],
+    "peak_verified": [
+     true,
+     true,
+     false,
+     true,
+     true,
+     true,
+     true,
+     false,
+     true,
+     false,
+     true,
+     false
+    ],
+    "coverage_pct": 67,
+    "active_s": 196.8,
+    "paused_s": 3.8,
+    "tracking_lost_events": 4
+   },
+   "told_us": {
+    "pain_before": 4,
+    "energy": "comfortable",
+    "minutes": 14,
+    "new_symptoms": false
+   },
+   "exertion": {
+    "level": "moderate",
+    "score": 0.56,
+    "reasons": [
+     "reps getting slower (9% per rep)"
+    ],
+    "method": "behavioural"
+   },
+   "coach": {
+    "label": "Rule-based coach · LLM agent pending",
+    "notes": [
+     {
+      "text": "correct: shoulder hiking",
+      "confidence": "high",
+      "evidence": [
+       604
+      ]
+     },
+     {
+      "text": "correct: hold too short",
+      "confidence": "high",
+      "evidence": [
+       727
+      ]
+     },
+     {
+      "text": "correct: unverified rep (hold_too_short)",
+      "confidence": "high",
+      "evidence": [
+       882
+      ]
+     },
+     {
+      "text": "correct: target missed",
+      "confidence": "high",
+      "evidence": [
+       1607
+      ]
+     },
+     {
+      "text": "correct: unverified rep (target_missed)",
+      "confidence": "high",
+      "evidence": [
+       1609
+      ]
+     },
+     {
+      "text": "rest: behavioural exertion high: reps getting slower (10% per rep), peak angle falling (28° over the set)",
+      "confidence": "high",
+      "evidence": [
+       1610
+      ]
+     }
+    ],
+    "decisions": 44
+   },
+   "flags": [],
+   "stopped": false,
+   "delivery": "queued · not yet delivered",
+   "latency": {
+    "capture_to_event_p50": 249,
+    "capture_to_event_p95": 989.5,
+    "proc_p50": 23.2,
+    "proc_p95": 32.5,
+    "event_to_cue_p50": 1,
+    "event_to_cue_p95": 1.4,
+    "frames": 1182,
+    "dropped": 1,
+    "cues": 44
+   }
+  },
+  "feedback": {},
+  "checkin": {
+   "pain_before": 4,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false
+  },
+  "next_practice": {
+   "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+   "proposal": "keep hold at 3 s, watch leaning",
+   "level_change": false
+  },
+  "delivery": "queued · not yet delivered",
+  "illustrative": false,
+  "source": "live",
+  "replay": false,
+  "events": [
+   {
+    "type": "exercise_start",
+    "id": 591,
+    "t": 1790724731.0809073,
+    "seq": 4,
+    "ts": 1790724731.1068332,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 600,
+    "t": 1790724731.7863395,
+    "set": 1,
+    "rep": 1,
+    "seq": 7,
+    "ts": 1790724731.8133292,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 604,
+    "t": 1790724732.0817757,
+    "seq": 10,
+    "ts": 1790724732.103751,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 605,
+    "t": 1790724732.0817757,
+    "set": 1,
+    "rep": 1,
+    "seq": 11,
+    "ts": 1790724732.1039042,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 606,
+    "t": 1790724732.0817757,
+    "set": 1,
+    "rep": 1,
+    "seq": 12,
+    "ts": 1790724732.1039279,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 630,
+    "t": 1790724735.4723408,
+    "set": 1,
+    "rep": 1,
+    "seq": 15,
+    "ts": 1790724735.4975638,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 651,
+    "t": 1790724737.7783875,
+    "set": 1,
+    "rep": 1,
+    "peak_deg": 98.8,
+    "verified": true,
+    "reason": null,
+    "seq": 18,
+    "ts": 1790724737.8001306,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 652,
+    "t": 1790724737.7783875,
+    "set": 1,
+    "rep": 2,
+    "seq": 19,
+    "ts": 1790724737.8002813,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 656,
+    "t": 1790724737.882089,
+    "set": 1,
+    "rep": 2,
+    "seq": 22,
+    "ts": 1790724737.9050457,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 658,
+    "t": 1790724738.100326,
+    "seq": 23,
+    "ts": 1790724738.1239982,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 659,
+    "t": 1790724738.100326,
+    "set": 1,
+    "rep": 2,
+    "seq": 24,
+    "ts": 1790724738.1241548,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 660,
+    "t": 1790724738.100326,
+    "set": 1,
+    "rep": 2,
+    "seq": 25,
+    "ts": 1790724738.1241844,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 677,
+    "t": 1790724740.2073462,
+    "set": 1,
+    "rep": 2,
+    "seq": 28,
+    "ts": 1790724740.2338002,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 692,
+    "t": 1790724741.7051258,
+    "set": 1,
+    "rep": 2,
+    "peak_deg": 71.8,
+    "verified": true,
+    "reason": null,
+    "seq": 31,
+    "ts": 1790724741.7333891,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 693,
+    "t": 1790724741.7051258,
+    "set": 1,
+    "rep": 3,
+    "seq": 32,
+    "ts": 1790724741.7335196,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 715,
+    "t": 1790724744.08424,
+    "set": 1,
+    "rep": 3,
+    "seq": 35,
+    "ts": 1790724744.119325,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 720,
+    "t": 1790724744.3800325,
+    "seq": 38,
+    "ts": 1790724744.404572,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 721,
+    "t": 1790724744.3800325,
+    "set": 1,
+    "rep": 3,
+    "seq": 39,
+    "ts": 1790724744.4047022,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 722,
+    "t": 1790724744.3800325,
+    "set": 1,
+    "rep": 3,
+    "seq": 40,
+    "ts": 1790724744.4047236,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 727,
+    "t": 1790724744.714635,
+    "seq": 43,
+    "ts": 1790724744.7397592,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 728,
+    "t": 1790724744.714635,
+    "set": 1,
+    "rep": 3,
+    "seq": 44,
+    "ts": 1790724744.7400134,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 882,
+    "t": 1790724774.7518492,
+    "set": 1,
+    "rep": 3,
+    "peak_deg": 63.8,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 47,
+    "ts": 1790724774.7763057,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 883,
+    "t": 1790724774.7518492,
+    "set": 1,
+    "rep": 4,
+    "seq": 48,
+    "ts": 1790724774.7764547,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 888,
+    "t": 1790724774.9939163,
+    "set": 1,
+    "rep": 4,
+    "seq": 51,
+    "ts": 1790724775.0264816,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 893,
+    "t": 1790724775.4732563,
+    "seq": 52,
+    "ts": 1790724775.4984226,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 898,
+    "t": 1790724775.6485643,
+    "set": 1,
+    "rep": 4,
+    "seq": 55,
+    "ts": 1790724775.673024,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 899,
+    "t": 1790724775.6485643,
+    "set": 1,
+    "rep": 4,
+    "seq": 56,
+    "ts": 1790724775.6731746,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 967,
+    "t": 1790724785.3486245,
+    "set": 1,
+    "rep": 4,
+    "seq": 57,
+    "ts": 1790724785.378129,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 971,
+    "t": 1790724785.5574014,
+    "set": 1,
+    "rep": 4,
+    "peak_deg": 136.2,
+    "verified": true,
+    "reason": null,
+    "seq": 60,
+    "ts": 1790724785.5854242,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 972,
+    "t": 1790724785.5574014,
+    "set": 1,
+    "rep": 5,
+    "seq": 61,
+    "ts": 1790724785.5856123,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 980,
+    "t": 1790724787.1129797,
+    "set": 1,
+    "rep": 5,
+    "seq": 62,
+    "ts": 1790724787.140358,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 984,
+    "t": 1790724787.4002554,
+    "set": 1,
+    "rep": 5,
+    "seq": 65,
+    "ts": 1790724787.4278884,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 985,
+    "t": 1790724787.4002554,
+    "set": 1,
+    "rep": 5,
+    "seq": 66,
+    "ts": 1790724787.428085,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 997,
+    "t": 1790724789.232128,
+    "seq": 67,
+    "ts": 1790724789.2580514,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1003,
+    "t": 1790724789.9797049,
+    "set": 1,
+    "rep": 5,
+    "seq": 70,
+    "ts": 1790724790.0054612,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1007,
+    "t": 1790724790.2812696,
+    "set": 1,
+    "rep": 5,
+    "peak_deg": 70.5,
+    "verified": true,
+    "reason": null,
+    "seq": 73,
+    "ts": 1790724790.3101308,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1008,
+    "t": 1790724790.2812696,
+    "set": 1,
+    "rep": 6,
+    "seq": 74,
+    "ts": 1790724790.3102863,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1019,
+    "t": 1790724792.1139941,
+    "set": 1,
+    "rep": 6,
+    "seq": 75,
+    "ts": 1790724792.1418295,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1025,
+    "t": 1790724792.5386076,
+    "set": 1,
+    "rep": 6,
+    "seq": 78,
+    "ts": 1790724792.5692148,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1026,
+    "t": 1790724792.5386076,
+    "set": 1,
+    "rep": 6,
+    "seq": 79,
+    "ts": 1790724792.569373,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1031,
+    "t": 1790724793.0098479,
+    "seq": 80,
+    "ts": 1790724793.0419238,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1055,
+    "t": 1790724795.7646449,
+    "set": 1,
+    "rep": 6,
+    "seq": 83,
+    "ts": 1790724795.7886634,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1061,
+    "t": 1790724796.1370358,
+    "set": 1,
+    "rep": 6,
+    "peak_deg": 90.4,
+    "verified": true,
+    "reason": null,
+    "seq": 86,
+    "ts": 1790724796.1605506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "set_complete",
+    "id": 1062,
+    "t": 1790724796.1370358,
+    "set": 1,
+    "seq": 87,
+    "ts": 1790724796.1607013,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1063,
+    "t": 1790724796.1370358,
+    "set": 2,
+    "rep": 1,
+    "seq": 88,
+    "ts": 1790724796.160723,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1068,
+    "t": 1790724796.489492,
+    "set": 2,
+    "rep": 1,
+    "seq": 89,
+    "ts": 1790724796.5141962,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1072,
+    "t": 1790724796.7300217,
+    "seq": 92,
+    "ts": 1790724796.7577574,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1073,
+    "t": 1790724796.7300217,
+    "set": 2,
+    "rep": 1,
+    "seq": 93,
+    "ts": 1790724796.7579165,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1074,
+    "t": 1790724796.7300217,
+    "set": 2,
+    "rep": 1,
+    "seq": 94,
+    "ts": 1790724796.7579381,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1097,
+    "t": 1790724799.4692838,
+    "set": 2,
+    "rep": 1,
+    "seq": 97,
+    "ts": 1790724799.4917045,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1103,
+    "t": 1790724799.872184,
+    "set": 2,
+    "rep": 1,
+    "peak_deg": 81.3,
+    "verified": true,
+    "reason": null,
+    "seq": 100,
+    "ts": 1790724799.9004798,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1104,
+    "t": 1790724799.872184,
+    "set": 2,
+    "rep": 2,
+    "seq": 101,
+    "ts": 1790724799.9006124,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1114,
+    "t": 1790724801.2124217,
+    "set": 2,
+    "rep": 2,
+    "seq": 102,
+    "ts": 1790724801.2358756,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1118,
+    "t": 1790724801.2655897,
+    "seq": 105,
+    "ts": 1790724801.2884483,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1124,
+    "t": 1790724801.6404464,
+    "set": 2,
+    "rep": 2,
+    "seq": 108,
+    "ts": 1790724801.6640992,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1125,
+    "t": 1790724801.6404464,
+    "set": 2,
+    "rep": 2,
+    "seq": 109,
+    "ts": 1790724801.664229,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 1132,
+    "t": 1790724802.3864543,
+    "seq": 110,
+    "ts": 1790724802.4078667,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1133,
+    "t": 1790724802.3864543,
+    "set": 2,
+    "rep": 2,
+    "seq": 111,
+    "ts": 1790724802.4079921,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1183,
+    "t": 1790724809.9419065,
+    "seq": 114,
+    "ts": 1790724809.9733381,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1187,
+    "t": 1790724810.3676603,
+    "seq": 116,
+    "ts": 1790724810.3913052,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1222,
+    "t": 1790724815.122303,
+    "set": 2,
+    "rep": 2,
+    "peak_deg": 52,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 118,
+    "ts": 1790724815.1453674,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1223,
+    "t": 1790724815.122303,
+    "set": 2,
+    "rep": 3,
+    "seq": 119,
+    "ts": 1790724815.145506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1230,
+    "t": 1790724815.7566085,
+    "set": 2,
+    "rep": 3,
+    "seq": 122,
+    "ts": 1790724815.7790534,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1234,
+    "t": 1790724815.811601,
+    "seq": 125,
+    "ts": 1790724815.8360841,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1240,
+    "t": 1790724816.224828,
+    "set": 2,
+    "rep": 3,
+    "seq": 128,
+    "ts": 1790724816.2489948,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1241,
+    "t": 1790724816.224828,
+    "set": 2,
+    "rep": 3,
+    "seq": 129,
+    "ts": 1790724816.2491562,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1284,
+    "t": 1790724824.0619578,
+    "set": 2,
+    "rep": 3,
+    "seq": 130,
+    "ts": 1790724824.0874076,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1417,
+    "t": 1790724847.1845336,
+    "seq": 133,
+    "ts": 1790724847.2045171,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1433,
+    "t": 1790724849.596198,
+    "seq": 135,
+    "ts": 1790724849.6199665,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1573,
+    "t": 1790724873.0171463,
+    "set": 2,
+    "rep": 3,
+    "peak_deg": 107.5,
+    "verified": true,
+    "reason": null,
+    "seq": 137,
+    "ts": 1790724873.038426,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1574,
+    "t": 1790724873.0171463,
+    "set": 2,
+    "rep": 4,
+    "seq": 138,
+    "ts": 1790724873.0385725,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1593,
+    "t": 1790724875.8063767,
+    "set": 2,
+    "rep": 4,
+    "seq": 141,
+    "ts": 1790724875.829769,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "target_missed",
+    "id": 1607,
+    "t": 1790724877.7848394,
+    "peak_deg": 35.4,
+    "seq": 144,
+    "ts": 1790724877.8091495,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1608,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 4,
+    "seq": 145,
+    "ts": 1790724877.8092787,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1609,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 4,
+    "peak_deg": 35.4,
+    "verified": false,
+    "reason": "target_missed",
+    "seq": 146,
+    "ts": 1790724877.8093095,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1610,
+    "t": 1790724877.7848394,
+    "set": 2,
+    "rep": 5,
+    "seq": 147,
+    "ts": 1790724877.8093264,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1629,
+    "t": 1790724879.137716,
+    "set": 2,
+    "rep": 5,
+    "seq": 155,
+    "ts": 1790724879.1624978,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1648,
+    "t": 1790724881.3796296,
+    "seq": 158,
+    "ts": 1790724881.3994226,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1656,
+    "t": 1790724882.1605854,
+    "seq": 160,
+    "ts": 1790724882.182432,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1670,
+    "t": 1790724884.0871933,
+    "seq": 162,
+    "ts": 1790724884.109588,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1671,
+    "t": 1790724884.0871933,
+    "set": 2,
+    "rep": 5,
+    "seq": 163,
+    "ts": 1790724884.1097238,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1672,
+    "t": 1790724884.0871933,
+    "set": 2,
+    "rep": 5,
+    "seq": 164,
+    "ts": 1790724884.1097474,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "compensation_lean",
+    "id": 1706,
+    "t": 1790724889.0813396,
+    "lean_deg": 17.1,
+    "seq": 167,
+    "ts": 1790724889.1025002,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1719,
+    "t": 1790724891.4421117,
+    "set": 2,
+    "rep": 5,
+    "seq": 170,
+    "ts": 1790724891.4636102,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1858,
+    "t": 1790724915.3826356,
+    "set": 2,
+    "rep": 5,
+    "peak_deg": 138.1,
+    "verified": true,
+    "reason": null,
+    "seq": 173,
+    "ts": 1790724915.4056838,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1859,
+    "t": 1790724915.3826356,
+    "set": 2,
+    "rep": 6,
+    "seq": 174,
+    "ts": 1790724915.4058237,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1867,
+    "t": 1790724915.7928162,
+    "set": 2,
+    "rep": 6,
+    "seq": 177,
+    "ts": 1790724915.813945,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1871,
+    "t": 1790724916.1334033,
+    "set": 2,
+    "rep": 6,
+    "seq": 178,
+    "ts": 1790724916.1547203,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1872,
+    "t": 1790724916.1334033,
+    "set": 2,
+    "rep": 6,
+    "seq": 179,
+    "ts": 1790724916.1548321,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "shoulder_hiking",
+    "id": 1883,
+    "t": 1790724917.843956,
+    "seq": 182,
+    "ts": 1790724917.8689275,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "hold_too_short",
+    "id": 1887,
+    "t": 1790724918.067764,
+    "seq": 185,
+    "ts": 1790724918.0882435,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "state_change",
+    "id": 1888,
+    "t": 1790724918.067764,
+    "set": 2,
+    "rep": 6,
+    "seq": 186,
+    "ts": 1790724918.0884457,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "rep_complete",
+    "id": 1928,
+    "t": 1790724926.1727195,
+    "set": 2,
+    "rep": 6,
+    "peak_deg": 131.2,
+    "verified": false,
+    "reason": "hold_too_short",
+    "seq": 189,
+    "ts": 1790724926.1956449,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "set_complete",
+    "id": 1929,
+    "t": 1790724926.1727195,
+    "set": 2,
+    "seq": 190,
+    "ts": 1790724926.1958113,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "arm_complete",
+    "id": 1930,
+    "t": 1790724926.1727195,
+    "seq": 191,
+    "ts": 1790724926.1958406,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_lost",
+    "id": 1948,
+    "t": 1790724928.760816,
+    "seq": 194,
+    "ts": 1790724928.7836506,
+    "session": "81a046bffddb",
+    "kind": "event"
+   },
+   {
+    "type": "perception_regained",
+    "id": 1951,
+    "t": 1790724928.9228895,
+    "seq": 196,
+    "ts": 1790724928.945271,
+    "session": "81a046bffddb",
+    "kind": "event"
+   }
+  ]
+ },
+ "/api/sessions/s-0912-cuparm": {
+  "id": "s-0912-cuparm",
+  "mode": "cup",
+  "exercise": null,
+  "username": null,
+  "started_at": "2026-09-12T09:05:00",
+  "ended_at": "2026-09-12T09:19:00",
+  "status": "complete",
+  "tracking": "usable",
+  "title": "Waiter – cup + Arm out to the side",
+  "date": "2026-09-12",
+  "summary": {
+   "mode": "cup",
+   "illustrative": true,
+   "camera": {
+    "reps_total": 20,
+    "verified": 17,
+    "unverified": 3,
+    "corrections": 2,
+    "coverage_pct": 86,
+    "posture_cues": 2,
+    "active_s": 702,
+    "reach_ms": [
+     1420,
+     1380,
+     1290,
+     1210,
+     1180,
+     1250,
+     1300,
+     1150,
+     900,
+     980,
+     940,
+     910,
+     870,
+     990,
+     950,
+     900
+    ],
+    "reach_verified": [
+     true,
+     true,
+     true,
+     false,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     true,
+     true,
+     true,
+     false,
+     true,
+     true
+    ],
+    "peak_deg": [
+     88,
+     89,
+     90,
+     87,
+     90,
+     90,
+     89,
+     88,
+     90,
+     90,
+     88,
+     90,
+     90,
+     89,
+     90,
+     90
+    ],
+    "peak_verified": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "told_us": {},
+   "exertion": {
+    "level": "low",
+    "reasons": [],
+    "method": "behavioural"
+   },
+   "coach": {
+    "label": "Rule-based coach · LLM agent pending",
+    "notes": [
+     {
+      "text": "progress: reach time fell across the slow arcs; fast arcs accepted by patient and completed without drops",
+      "confidence": "high",
+      "evidence": [
+       22,
+       31
+      ]
+     },
+     {
+      "text": "correct: trunk lean appeared in 2 of 16 lifts, late in set 2. Hold time kept at 3 s; no change made",
+      "confidence": "medium",
+      "evidence": [
+       58,
+       61
+      ]
+     },
+     {
+      "text": "instruct: no shoulder hiking observed this session (3 events last session)",
+      "confidence": "high",
+      "evidence": [
+       64
+      ]
+     }
+    ],
+    "decisions": 9
+   },
+   "flags": [
+    {
+     "t": 610,
+     "rule": "lean",
+     "detail": "trunk lean > 12° in 2 lifts, late set 2 (below flag threshold; logged)"
+    }
+   ],
+   "stopped": false,
+   "delivery": "queued · not yet delivered"
+  },
+  "feedback": {
+   "pain_after": 2,
+   "effort": 4,
+   "compared": "same"
+  },
+  "checkin": {
+   "pain_before": 2,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false
+  },
+  "next_practice": {
+   "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
+   "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+   "level_change": false
+  },
+  "delivery": "queued · not yet delivered",
+  "illustrative": true,
+  "source": "sample",
+  "replay": false,
+  "events": []
+ },
+ "/api/sessions/s-0912-nhpt": {
+  "id": "s-0912-nhpt",
+  "mode": "nhpt",
+  "exercise": null,
+  "username": null,
+  "started_at": "2026-09-12T09:00:00",
+  "ended_at": "2026-09-12T09:02:00",
+  "status": "complete",
+  "tracking": "usable",
+  "title": "Nine-Hole Peg Test · 41.2 s",
+  "date": "2026-09-12",
+  "summary": {
+   "mode": "nhpt",
+   "illustrative": true,
+   "camera": {
+    "reps_total": 9,
+    "verified": 9,
+    "unverified": 0,
+    "corrections": 0,
+    "coverage_pct": 100,
+    "posture_cues": 0,
+    "active_s": 41,
+    "splits_s": [
+     5.1,
+     4.4,
+     4.6,
+     4.9,
+     4.2,
+     4.5,
+     4.8,
+     4.3,
+     4.4
+    ],
+    "nhpt_total_s": 41.2
+   },
+   "told_us": {},
+   "exertion": {
+    "level": "low",
+    "reasons": [],
+    "method": "behavioural"
+   },
+   "coach": {
+    "label": "Rule-based coach · LLM agent pending",
+    "notes": [
+     {
+      "text": "instruct: all nine seated, 2.8 s faster than last week",
+      "confidence": "high",
+      "evidence": [
+       9
+      ]
+     }
+    ],
+    "decisions": 3
+   },
+   "flags": [],
+   "stopped": false,
+   "delivery": "queued · not yet delivered"
+  },
+  "feedback": {
+   "pain_after": 2,
+   "effort": 3,
+   "compared": "easier"
+  },
+  "checkin": {
+   "pain_before": 2,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false
+  },
+  "next_practice": {
+   "text": "Assessment recorded. Practice continues on the assigned plan.",
+   "proposal": "repeat the peg test weekly, same board and camera setup",
+   "level_change": false
+  },
+  "delivery": "queued · not yet delivered",
+  "illustrative": true,
+  "source": "sample",
+  "replay": false,
+  "events": []
+ },
+ "/api/sessions/s-0910-cup": {
+  "id": "s-0910-cup",
+  "mode": "cup",
+  "exercise": null,
+  "username": null,
+  "started_at": "2026-09-10T09:30:00",
+  "ended_at": "2026-09-10T09:41:00",
+  "status": "complete",
+  "tracking": "limited",
+  "title": "Waiter – cup",
+  "date": "2026-09-10",
+  "summary": {
+   "mode": "cup",
+   "illustrative": true,
+   "camera": {
+    "reps_total": 14,
+    "verified": 8,
+    "unverified": 6,
+    "corrections": 3,
+    "coverage_pct": 62,
+    "posture_cues": 0,
+    "active_s": 540
+   },
+   "told_us": {},
+   "exertion": {
+    "level": "low",
+    "reasons": [],
+    "method": "behavioural"
+   },
+   "coach": {
+    "label": "Rule-based coach · LLM agent pending",
+    "notes": [
+     {
+      "text": "correct: six reaches could not be verified (markers lost); not comparable",
+      "confidence": "medium",
+      "evidence": [
+       12,
+       15
+      ]
+     }
+    ],
+    "decisions": 3
+   },
+   "flags": [],
+   "stopped": false,
+   "delivery": "queued · not yet delivered"
+  },
+  "feedback": {
+   "pain_after": 2,
+   "effort": 4,
+   "compared": "same"
+  },
+  "checkin": {
+   "pain_before": 2,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false
+  },
+  "next_practice": {
+   "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
+   "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+   "level_change": false
+  },
+  "delivery": "queued · not yet delivered",
+  "illustrative": true,
+  "source": "sample",
+  "replay": false,
+  "events": []
+ },
+ "/api/sessions/s-0908-arm": {
+  "id": "s-0908-arm",
+  "mode": "arm",
+  "exercise": "abduction",
+  "username": null,
+  "started_at": "2026-09-08T10:02:00",
+  "ended_at": "2026-09-08T10:09:00",
+  "status": "ended_early",
+  "tracking": "usable",
+  "title": "Arm out to the side",
+  "date": "2026-09-08",
+  "summary": {
+   "mode": "arm",
+   "illustrative": true,
+   "camera": {
+    "reps_total": 6,
+    "verified": 5,
+    "unverified": 1,
+    "corrections": 2,
+    "coverage_pct": 91,
+    "posture_cues": 1,
+    "active_s": 380
+   },
+   "told_us": {},
+   "exertion": {
+    "level": "high",
+    "reasons": [],
+    "method": "behavioural"
+   },
+   "coach": {
+    "label": "Rule-based coach · LLM agent pending",
+    "notes": [
+     {
+      "text": "stop: pain 7/10 during Arm out to the side, rep 6 of set 2",
+      "confidence": "high",
+      "evidence": [
+       41
+      ]
+     }
+    ],
+    "decisions": 3
+   },
+   "flags": [
+    {
+     "t": 380,
+     "rule": "pain",
+     "detail": "pain 7/10 reported (stop level 7)"
+    }
+   ],
+   "stopped": true,
+   "delivery": "queued · not yet delivered"
+  },
+  "feedback": {
+   "pain_after": 7,
+   "effort": 7,
+   "compared": "harder"
+  },
+  "checkin": {
+   "pain_before": 3,
+   "energy": "tired",
+   "minutes": 14,
+   "new_symptoms": false
+  },
+  "next_practice": {
+   "text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.",
+   "proposal": "review with clinician",
+   "level_change": false
+  },
+  "delivery": "queued · not yet delivered",
+  "illustrative": true,
+  "source": "sample",
+  "replay": false,
+  "events": []
+ }
+}
