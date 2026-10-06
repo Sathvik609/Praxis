@@ -10,15 +10,15 @@ export function traceRows(events: PraxisEvent[], limit = 40): PraxisEvent[] {
   return events.filter((e) => e.type !== 'frame').slice(-limit)
 }
 
-// The trace sits on the dark stage in both themes, so its inks are fixed and AA-measured
-// against #050E10: mint 7.9:1, amber 8.0:1, blue 8.6:1, red 6.9:1, time 5.2:1.
+// The trace sits on the session's light (or dark-theme) surface, so its inks are theme tokens
+// (design v2): the row kind is always a word, the colour only echoes it.
 const INK = {
-  event: 'text-[#4CCBA1]',
-  action: 'text-[#4CCBA1]',
-  decide: 'text-[#E9A23B]',
-  tool: 'text-[#8AB8FF]',
-  stop: 'text-[#F08A7C]',
-  time: 'text-white/60',
+  event: 'text-teal-ink',
+  action: 'text-teal-ink',
+  decide: 'text-amber-ink',
+  tool: 'text-teal-ink',
+  stop: 'text-red-ink',
+  time: 'text-muted',
 }
 
 type CoachRow = { action: string; cue_id: string; reason: string; evidence: number[]; text: string; tool_calls?: { tool: string }[] }
@@ -53,7 +53,7 @@ function AgentRunRows({ run }: { run: AgentRun }) {
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-14 w-full items-center gap-2 rounded-[var(--r-control)] px-1 text-left font-bold text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8AB8FF]/60"
+        className="flex min-h-14 w-full items-center gap-2 rounded-[var(--r-control)] px-1 text-left font-bold text-ink hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/60"
       >
         <span aria-hidden className="shrink-0">{open ? '▼' : '▶'}</span>
         <span className="min-w-0 break-words">
@@ -65,7 +65,7 @@ function AgentRunRows({ run }: { run: AgentRun }) {
       </button>
       {open && (
         <div id={id} className="pl-6">
-          {run.steps.length === 0 && <div className="text-white/60">— no tool calls yet —</div>}
+          {run.steps.length === 0 && <div className="text-muted">— no tool calls yet —</div>}
           {run.steps.map(({ kind, row }, i) => {
             if (kind === 'tool') {
               const t = toolLine(row)
@@ -147,22 +147,22 @@ export function TracePanel({ events, replay = false, pipeline = [], agentRows, s
   }
 
   return (
-    <div className="isolate flex h-full flex-col overflow-hidden rounded-[var(--r-card)] bg-[var(--stage-a)] font-mono text-base text-white/85 shadow-[var(--shadow-1)]">
+    <div className="isolate flex h-full flex-col overflow-hidden rounded-[var(--r-card)] bg-surface font-mono text-base text-ink shadow-[var(--shadow-1)]">
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="sticky top-0 z-10 border-b border-white/10 bg-[var(--stage-a)] px-4 pb-3 pt-3">
+        <div className="sticky top-0 z-10 border-b border-line bg-surface px-4 pb-3 pt-3">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-bold text-white">Trace · OpenCV output → decision → action</span>
+            <span className="font-bold text-ink">Trace · OpenCV output → decision → action</span>
             <Chip tone={replay ? 'amber' : 'red'}>{replay ? 'Replay' : 'Live'}</Chip>
             <Button variant="inverse" className="ml-auto" onClick={copy}>{copied ? 'Copied' : 'Copy JSON'}</Button>
           </div>
-          <div className="mt-1 text-white/60">{agentLabel ? `${agentLabel} at checkpoints · ${ruleLabel} between them. Stop rules run before both.` : `${ruleLabel}. Stop rules run before the coach.`}</div>
+          <div className="mt-1 text-muted">{agentLabel ? `${agentLabel} at checkpoints · ${ruleLabel} between them. Stop rules run before both.` : `${ruleLabel}. Stop rules run before the coach.`}</div>
           {pipeline.filter(Boolean).map((line, i) => (
-            <div key={i} className="mt-1 break-words tabular-nums text-white/80">{line}</div>
+            <div key={i} className="mt-1 break-words tabular-nums text-ink">{line}</div>
           ))}
         </div>
         <div className="px-4 py-3" data-testid="trace-rows">
-          {rows.length === 0 && runs.length === 0 && <div className="text-white/60">— waiting for events —</div>}
-          {truncated && leading.length > 0 && <div className="mb-1 text-white/60">Earlier agent runs</div>}
+          {rows.length === 0 && runs.length === 0 && <div className="text-muted">— waiting for events —</div>}
+          {truncated && leading.length > 0 && <div className="mb-1 text-muted">Earlier agent runs</div>}
           {(rows.length ? leading : runs).map((r) => <AgentRunRows key={r.key} run={r} />)}
           {rows.map((e, i) => (
             <Fragment key={e.id}>

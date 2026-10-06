@@ -100,3 +100,12 @@ test('no rest overlay without a rest', () => {
   render(<RestOverlay since={null} onResume={vi.fn()} onEnd={vi.fn()} />)
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
+
+test('compact exertion chip: one line in the artifact classes, word + icon + reasons', () => {
+  const { container } = render(<ExertionChip compact exertion={{ level: 'moderate', reasons: ['reps getting slower'], method: 'behavioural' }} />)
+  const chip = screen.getByText(/Exertion: moderate/)
+  expect(chip).toHaveClass('sx-chip', 'sx-chip-amber')
+  expect(chip.querySelector('svg')).not.toBeNull()
+  expect(screen.getByText('behavioural index · reps getting slower')).toHaveClass('sx-small')
+  expect(container.querySelector('.ui-card, [class*="rounded-[var(--r-card)]"]')).toBeNull()
+})

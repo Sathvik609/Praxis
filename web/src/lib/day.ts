@@ -96,6 +96,12 @@ function update(fn: (d: Day) => Day): Day {
   return next
 }
 
+/** Pain after a session (its feedback, sent by `useSessionFlow`). A form without a pain answer
+ *  keeps the value already recorded today. */
+export function recordPainAfter(pain: number | null | undefined): void {
+  update((d) => ({ ...d, lastPainAfter: pain ?? d.lastPainAfter ?? null }))
+}
+
 /** Keep `sessionStorage['praxis.checkin']` in step so the live session forwards today's pain
  *  and symptoms to the service (`useSessionFlow`), even in a new tab. */
 function mirrorLegacy(c: DayCheckin): void {

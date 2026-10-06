@@ -9,7 +9,8 @@ import { REST_AT } from '../../lib/plan'
 import type { CoachSource } from '../../session/agent'
 import type { ExertionState, Overlay as OverlayState } from '../../session/useCoach'
 
-const RULE_TITLE: Record<string, string> = {
+/** Title of the hold / overlay per stop rule (shared with the session chrome's `sxHold`). */
+export const RULE_TITLE: Record<string, string> = {
   perception: 'Tracking lost',
   lean: 'Paused · posture',
   failed_reps: 'Paused · let’s check the setup',
@@ -115,14 +116,24 @@ export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmi
 }
 
 /** Exertion context chip (CLAUDE.md §1): behavioural index level with its reasons. The word
- *  carries the level; the tone only echoes it. */
-export function ExertionChip({ exertion }: { exertion: ExertionState | null }) {
+ *  carries the level; the tone only echoes it. `compact` is the one-line form for the session
+ *  stats card (`SxStats.extra`, ruling R7), in the artifact's own `sx-chip` / `sx-small` classes. */
+export function ExertionChip({ exertion, compact = false }: { exertion: ExertionState | null; compact?: boolean }) {
   const level = exertion?.level ?? 'low'
   const tone = level === 'high' ? 'red' : level === 'moderate' ? 'amber' : 'mint'
+  const reasons = `behavioural index${exertion?.reasons.length ? ` · ${exertion.reasons.join(' · ')}` : ' · no signs yet'}`
+  if (compact) {
+    return (
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className={`sx-chip sx-chip-${tone}`}><span aria-hidden className="sx-chip-ic"><Activity /></span>Exertion: {level}</span>
+        <span className="sx-small">{reasons}</span>
+      </div>
+    )
+  }
   return (
     <Card padding="sm" className="flex flex-wrap items-center gap-3">
       <Chip tone={tone} icon={<Activity />}>Exertion: {level}</Chip>
-      <span className="text-lg text-muted">behavioural index{exertion?.reasons.length ? ` · ${exertion.reasons.join(' · ')}` : ' · no signs yet'}</span>
+      <span className="text-lg text-muted">{reasons}</span>
     </Card>
   )
 }

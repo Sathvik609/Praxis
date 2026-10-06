@@ -96,7 +96,7 @@ export function LiveArm() {
   const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
   const finish = (endedEarly: boolean) => {
-    flow.finish({
+    flow.finish(endedEarly, undefined, {
         kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
         lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
       })

@@ -78,7 +78,7 @@ export function LiveNhpt() {
   const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
   const finish = (endedEarly: boolean) => {
-    flow.finish({
+    flow.finish(endedEarly, undefined, {
         kind: 'nhpt',
         hand,
         total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,

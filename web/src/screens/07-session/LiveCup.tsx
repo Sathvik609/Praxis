@@ -107,7 +107,7 @@ export function LiveCup() {
   const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
   const finish = (endedEarly: boolean) => {
-    flow.finish({
+    flow.finish(endedEarly, undefined, {
         kind: 'cup', side, arcs: complete?.arcs ?? cup?.arcs_done ?? 0,
         reaches: complete?.reaches ?? [], ended_early: endedEarly,
       })

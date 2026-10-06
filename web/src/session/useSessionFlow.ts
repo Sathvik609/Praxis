@@ -1,15 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { recordPainAfter } from '../lib/day'
 import type { PraxisEvent } from '../lib/events'
 import type { Feedback } from '../screens/08-feedback/FeedbackOverlay'
 
+/** Why a session ended early: the End dialog's reasons (`pain` opens the pain check instead),
+ *  or the hold it was ended from (`rest`, `paused`). */
+export type EndReason = 'pain' | 'tired' | 'blocked' | 'finished' | 'rest' | 'paused'
+
 /** End-of-session flow shared by the live screens: forward the stored check-in when the
  *  socket opens; on End/complete show the feedback overlay; after the service acknowledges
- *  the feedback (session persisted) navigate to the report by id. */
+ *  the feedback (session persisted) navigate to the report by id. How the session ended
+ *  (`ended_early`, `end_reason`) travels in the feedback payload, which the service stores and
+ *  traces verbatim, and in the offline fallback state. */
 export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, unknown>) => void, stop: () => void, connected: boolean) {
   const nav = useNavigate()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [early, setEarly] = useState(false)
   const fallback = useRef<unknown>(null)
+  const ending = useRef<{ ended_early: boolean; end_reason: EndReason | null }>({ ended_early: false, end_reason: null })
   const sentCheckin = useRef(false)
 
   useEffect(() => {
@@ -37,21 +46,27 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
 
   return {
     feedbackOpen,
-    finish: (fallbackState: unknown) => {
-      fallback.current = fallbackState
+    /** The session ended early (the feedback form adds its "What got in the way?" step). */
+    early,
+    /** `fallbackState` is the report's state when the service never answers (offline). */
+    finish: (endedEarly: boolean, reason?: EndReason, fallbackState?: Record<string, unknown>) => {
+      ending.current = { ended_early: endedEarly, end_reason: reason ?? null }
+      fallback.current = { ...fallbackState, ...ending.current }
+      setEarly(endedEarly)
       if (!connected) {
         stop()
-        nav('/report', { state: fallbackState })
+        nav('/report', { state: fallback.current })
         return
       }
       setFeedbackOpen(true)
     },
     save: (f: Feedback) => {
-      send({ cmd: 'feedback', ...f })
+      recordPainAfter(f.pain_after)
+      send({ cmd: 'feedback', ...f, ...ending.current })
       setFeedbackOpen(false)
     },
     skip: () => {
-      send({ cmd: 'feedback' })
+      send({ cmd: 'feedback', ...ending.current })
       setFeedbackOpen(false)
     },
   }

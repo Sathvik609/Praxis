@@ -15,8 +15,9 @@ export type CoachEvent = PraxisEvent & {
   /** Absent on events from before the agent coach: those are the rule coach. */
   source?: CoachSource
 }
-/** `id` is the event that opened the state (so a cue said during a pause can be told apart). */
-export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string; id?: number }
+/** `id` is the event that opened the state (so a cue said during a pause can be told apart);
+ *  `t` its event time, so a hold counter counts from the event, not from when it mounted. */
+export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string; id?: number; t?: number }
 export type ExertionState = { level: 'low' | 'moderate' | 'high'; reasons: string[]; method: string }
 
 export type SpeechPriority = 'instruct' | 'correct' | 'stop'
@@ -69,12 +70,12 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
 
   const overlay: Overlay | null = (() => {
     const stop = [...events].reverse().find((e) => e.type === 'stop')
-    if (stop) return { kind: 'stopped', rule: String(stop.rule), text: String(stop.text ?? ''), id: stop.id }
+    if (stop) return { kind: 'stopped', rule: String(stop.rule), text: String(stop.text ?? ''), id: stop.id, t: stop.t }
     const last = [...events].reverse().find((e) => e.type === 'pause' || e.type === 'rest' || isResume(e))
     if (!last || last.id <= resumedAfter) return null
     if (isResume(last)) return null
-    if (last.type === 'rest') return { kind: 'rest', rule: String(last.rule ?? 'exertion'), text: String(last.text ?? ''), id: last.id }
-    return { kind: 'paused', rule: String(last.rule ?? 'patient'), text: String(last.text ?? ''), id: last.id }
+    if (last.type === 'rest') return { kind: 'rest', rule: String(last.rule ?? 'exertion'), text: String(last.text ?? ''), id: last.id, t: last.t }
+    return { kind: 'paused', rule: String(last.rule ?? 'patient'), text: String(last.text ?? ''), id: last.id, t: last.t }
   })()
 
   const exertionEvent = [...events].reverse().find((e) => e.type === 'exertion')
@@ -105,6 +106,33 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
 const queue: { text: string; priority: SpeechPriority }[] = []
 let speaking = false
 
+/** Coach voice volume 0–1 (the session bar's slider), kept on this browser under
+ *  `praxis.volume`; default 0.8. Every spoken cue uses the current value. */
+export const VOLUME_KEY = 'praxis.volume'
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
+let volume = (() => {
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY)
+    const v = Number(raw)
+    return raw != null && Number.isFinite(v) ? clamp01(v) : 0.8
+  } catch {
+    return 0.8
+  }
+})()
+
+export function coachVolume(): number {
+  return volume
+}
+
+export function setCoachVolume(v: number) {
+  volume = Number.isFinite(v) ? clamp01(v) : volume
+  try {
+    localStorage.setItem(VOLUME_KEY, String(volume))
+  } catch {
+    /* private mode: kept for this page only */
+  }
+}
+
 function pump() {
   if (speaking) return
   const next = queue.shift()
@@ -112,6 +140,7 @@ function pump() {
   speaking = true
   const u = new SpeechSynthesisUtterance(next.text)
   u.rate = 1.0
+  u.volume = volume
   u.onend = u.onerror = () => {
     speaking = false
     pump()

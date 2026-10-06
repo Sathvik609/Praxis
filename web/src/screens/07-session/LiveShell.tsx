@@ -1,30 +1,20 @@
-import { useId, type ReactNode, type RefObject } from 'react'
+import { type ReactNode, type RefObject } from 'react'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
-import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
+import { Bot, ListChecks, Play } from '../../design/Icon'
 import { Panel } from '../../design/Panel'
 import { Stat } from '../../design/Stat'
 import { plural } from '../../lib/plural'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { LiveIndicator } from '../../session/LiveIndicator'
 import { COACH_LABEL, type AgentStatus, type CoachSource } from '../../session/agent'
+import { AgentStatusChip, STATUS_ICON } from './SessionChrome'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
 
-/** Shared pieces of screens 07 / 07b / 07c so the three live screens stay one design. */
-
-const STATUS_ICON: Record<LiveStatus, ReactNode> = {
-  connecting: <Camera />,
-  waiting_for_frames: <Camera />,
-  camera_blocked: <X />,
-  service_unreachable: <X />,
-  calibrating: <AlertTriangle />,
-  lost: <AlertTriangle />,
-  tracking: <Check />,
-  replay: <Play />,
-  paused: <Pause />,
-  ended: <Check />,
-}
+/** Pre-v2 pieces of screens 07 / 07b / 07c. The design v2 chrome lives in `SessionChrome.tsx`;
+ *  `SessionHeader`, `LiveFeed`, `CoachCard` and `VerifiedTally` here stay only until the three
+ *  live screens move onto it (design v2 port, Tasks 13–15), then they are deleted. */
 
 export function SessionHeader({ title, subtitle, status, label, agent = null }: { title: string; subtitle: ReactNode; status: LiveStatus; label: StatusLabel; agent?: AgentStatus | null }) {
   return (
@@ -124,25 +114,7 @@ export function CoachCard({ text, label, source = 'rule', watch = false }: { tex
 
 export { COACH_LABEL }
 
-/** Agent run state (`agent_status` events) in the session header, so it never moves the
- *  columns. The polite live region is always mounted and empty while idle, so a new run is
- *  announced once. Offline means the rule coach carries on; the reason is a tooltip and the
- *  chip's accessible description. */
-export function AgentStatusChip({ status }: { status: AgentStatus | null }) {
-  const id = useId()
-  const reason = status?.reason || 'The Claude agent is unavailable. The rule-based coach carries on.'
-  return (
-    <span aria-live="polite" data-testid="agent-status" className="inline-flex">
-      {status?.state === 'thinking' && <Chip tone="focus" icon={<LoaderCircle className="motion-safe:animate-spin" />}>Coach is thinking…</Chip>}
-      {status?.state === 'offline' && (
-        <span title={reason} aria-describedby={id} className="inline-flex">
-          <Chip tone="amber" icon={<CloudOff />}>Coach offline · rule coach</Chip>
-          <span id={id} className="sr-only">{reason}</span>
-        </span>
-      )}
-    </span>
-  )
-}
+export { AgentStatusChip }
 
 /** Verified vs unverified, the same component on every live screen (CLAUDE.md §1: "verified vs
  *  unverified counts everywhere"). Counts come from the camera totals the service sends, never
