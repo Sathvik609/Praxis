@@ -8,7 +8,8 @@
 export type Guidance = { spoken: boolean; larger: boolean }
 
 export const GUIDANCE_KEY = 'praxis.guidance'
-export const GUIDANCE_DEFAULT: Guidance = { spoken: false, larger: false }
+// Larger text is on by default: the designers' artifact renders at the 18 px root (ruling R10).
+export const GUIDANCE_DEFAULT: Guidance = { spoken: false, larger: true }
 
 export function readGuidance(): Guidance {
   try {
