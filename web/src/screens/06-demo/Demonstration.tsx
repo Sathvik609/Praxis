@@ -1,38 +1,58 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { FlowBar } from '../../app/FlowBar'
-import { AvatarPanel } from '../../avatar/AvatarPanel'
-import { stepTextsForClip } from '../../avatar/script'
+import { AvatarPanel, type AvatarCtl } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
-import { Card } from '../../design/Card'
-import { Checkbox } from '../../design/Checkbox'
-import { Activity, AlertTriangle, Flag } from '../../design/Icon'
-import { Panel } from '../../design/Panel'
-import { api } from '../../lib/api'
-import { markDemoSeen, readDay, sessionUrl as liveUrl, sideOr, startExercise } from '../../lib/day'
-import { doseFor, readCheckinPain, tierFor } from '../../lib/plan'
-import { EXERCISES, exerciseById, isHiddenExercise } from '../../lib/seed'
-import { DayStrip } from '../04-choose/DayStrip'
+import { Activity, AlertTriangle, Flag, RotateCcw, X } from '../../design/Icon'
+import { NumberScale } from '../../design/NumberScale'
+import { Overlay, OverlayActions } from '../../design/Overlay'
+import { api, useApi, type Prescription } from '../../lib/api'
+import { dayPosition, markDemoSeen, readDay, saveCheckin, setupUrl, sideOr, startExercise, therapistLine, type Day, type DayCheckin } from '../../lib/day'
+import { doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
+import { EXERCISES, exerciseById, isHiddenExercise, type ExerciseId } from '../../lib/seed'
 
-/** Screen 06 · Demonstration. The same avatar performs the clinician-reviewed clip on a
- *  dark stage (16:10 AvatarPanel capped at 640 px wide, so ~400 px tall inside the 800 px
- *  budget); the numbered step list follows the clip; the patient confirms readiness before
- *  practice starts. Rehearsal runs the live screen with scoring off.
+/** A check-in older than this asks for the pain number again before setup. */
+const RECHECK_AFTER_MS = 2 * 3600e3
+
+/** Screen 06 · Demonstration, design v2 (6 Oct 2026): the designers' full-screen theater
+ *  (`dth-*`). The reference figure plays the clip mirrored so it faces the patient, with the
+ *  theater dock (step, progress, Play/Pause, Replay, Slower, Audio) and its readouts (AvatarPanel
+ *  `theater`). When the clip ends, "Before you start" lists the target, Watch for and Stop if,
+ *  with Watch again and one primary action.
  *
+ *  The primary action follows the artifact's flow (D-FLOW): no check-in today → check-in with
+ *  `next`; a stale check-in (older than 2 h), a day a stop rule ended, or pain after the last
+ *  session ≥ 4 → a quick pain check; otherwise camera setup. The quick pain check is a real
+ *  check-in (`saveCheckin` → `POST /api/checkin`), so the service sets the tier and writes the
+ *  therapist flag at the stop level; a stopped day shows the rest result, never setup.
+ *
+ *  The figure's limit line is the prescription's, by tier (gentle → the lower bound of
+ *  `allowed_adaptations.abduction.target_deg`, full → `exercises.abduction.target_deg`), never
+ *  parsed from the dose text. Opening the screen records the exercise as the day's current one.
  *  A hidden exercise (28 Sep) is never demonstrated: its deep link goes back to Choose exercise.
- *
- *  Demo-only exercises (none visible since 28 Sep; the path is kept dormant) end here: there is no
- *  practice session, the patient ticks each set, and the tick goes to `/api/self_report`, which
- *  traces it as self-reported, never as a camera-verified rep.
- *
- *  Day flow (`lib/day.ts`): Start practice records the demo as seen today (setup then offers
- *  "Skip demo") and marks the exercise as the day's current one, so its report can offer the
- *  next exercise. The side falls back to the patient's saved side, never a silent "left". A day
- *  stopped at check-in shows the demonstration but nothing can start. */
+ *  Demo-only exercises (none visible since 28 Sep; the path is kept dormant) tick sets through
+ *  `/api/self_report`, traced as self-reported, never as a camera-verified rep. */
 export function Demonstration() {
   const [sp] = useSearchParams()
   if (isHiddenExercise(sp.get('exercise'))) return <Navigate to="/details/choose" replace />
   return <DemonstrationFor />
+}
+
+/** The figure's angle limit for this exercise on this tier, from the prescription; undefined
+ *  (the figure's own ceiling) for exercises without an angle or while it has not loaded. */
+function limitFor(rx: Prescription | null, id: ExerciseId, tier: Tier): number | undefined {
+  if (id !== 'abduction' || !rx) return undefined
+  if (tier === 'gentle') {
+    const range = rx.allowed_adaptations?.abduction?.target_deg
+    if (Array.isArray(range) && typeof range[0] === 'number') return range[0]
+  }
+  const target = rx.exercises?.abduction?.target_deg
+  return typeof target === 'number' ? target : undefined
+}
+
+function needsPainCheck(d: Day): boolean {
+  if (!d.checkin) return false
+  const age = Date.now() - Date.parse(d.checkin.at)
+  return !(age < RECHECK_AFTER_MS) || d.stopped === 'session' || (d.lastPainAfter ?? 0) >= 4
 }
 
 function DemonstrationFor() {
@@ -44,8 +64,12 @@ function DemonstrationFor() {
   const stopped = day.stopped != null
   const ex = exerciseById(id) ?? EXERCISES.find((e) => e.id === 'cup')!
   const demo = ex.mode === 'demo'
-  const [ready, setReady] = useState(false)
-  const [step, setStep] = useState(1)
+  const { data: rx } = useApi(() => api.prescription())
+
+  useEffect(() => {
+    if (!demo) startExercise(ex.id)
+  }, [demo, ex.id])
+
   const [ticked, setTicked] = useState(0)
   const [tickError, setTickError] = useState<string | null>(null)
   const tick = () => {
@@ -55,121 +79,177 @@ function DemonstrationFor() {
       .then((r) => (r.ok ? setTicked(r.sets_today ?? ticked + 1) : setTickError(r.error ?? 'not saved')))
       .catch(() => setTickError('the session service is not reachable'))
   }
-  // Today's dose (pain tier applied) sets the demonstrated hold; the step list and the player's
-  // captions come from one script (`avatar/script.ts`), so their text, count and numbering match.
-  const dose = doseFor(ex, tierFor(readCheckinPain()))
+
+  // Today's dose (pain tier applied) sets the demonstrated hold; the prescription sets the limit.
+  const tier = day.checkin?.tier ?? tierFor(readCheckinPain())
+  const dose = doseFor(ex, tier)
   const holdS = Number(/hold (\d+(?:\.\d+)?) s/.exec(dose)?.[1]) || undefined
-  const steps = stepTextsForClip(ex.clip, { holdS }) ?? ex.steps
-  const sessionUrl = liveUrl(ex, side)
+  const limitDeg = limitFor(rx, ex.id, tier)
+
+  const dayNow = readDay()
+  const ctaLabel = !dayNow.checkin ? 'Continue to check-in' : needsPainCheck(dayNow) ? 'Continue' : 'Continue to setup'
+  const [painRe, setPainRe] = useState(false)
+  const [painVal, setPainVal] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [restResult, setRestResult] = useState<{ checkin: DayCheckin; stop: Day['stopped'] } | null>(null)
   const practise = () => {
     markDemoSeen(ex.id)
-    startExercise(ex.id)
-    nav(sessionUrl)
+    const d = readDay()
+    if (!d.checkin) return nav(`/details/checkin?next=${ex.id}&side=${side}`)
+    if (needsPainCheck(d)) return setPainRe(true)
+    nav(setupUrl(ex.id, side))
+  }
+  // The quick pain check is a check-in: the earlier answers carry over with the new pain number,
+  // and the service decides the tier and the therapist flag.
+  const painDone = async () => {
+    const prev = readDay().checkin
+    if (painVal == null || !prev || saving) return
+    setSaving(true)
+    const c = await saveCheckin({ pain: painVal, location: prev.location, energy: prev.energy, minutes: prev.minutes, new_symptoms: prev.new_symptoms }, prev.side, rx?.stop_rules?.pain_max)
+    setSaving(false)
+    const after = readDay()
+    if (after.stopped) setRestResult({ checkin: c, stop: after.stopped })
+    else nav(setupUrl(ex.id, side))
   }
 
+  const ctl = useRef<AvatarCtl | null>(null)
+  const [complete, setComplete] = useState(false)
+  const onComplete = useCallback(() => setComplete(true), [])
+  const pos = dayPosition(day, ex.id)
+  const sideWord = side === 'right' ? 'Right' : 'Left'
+  const watchAgain = () => {
+    setComplete(false)
+    ctl.current?.replay()
+  }
+  const stopAt = Math.min(7, rx?.stop_rules?.pain_max ?? 7)
+  const restTitle = restResult?.stop === 'rest' ? 'Rest today' : restResult?.stop === 'session' ? 'Stopped for today' : 'No exercises today'
+
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
-        <div className="mx-auto w-full max-w-[640px]">
-          <Panel className="p-3">
-            <AvatarPanel clip={ex.clip} side={side === 'right' ? 'right' : 'left'} holdS={holdS} onStep={setStep} className="[&>p]:text-base [&>p]:text-white/80" />
-          </Panel>
-          {demo && (
-            <Card tone="watch" as="div" className="mt-4">
-              <p className="text-lg"><b>Demo only.</b> Follow the figure and tick each set yourself. The camera does not score this one: one webcam cannot measure a forearm turning toward it honestly.</p>
-            </Card>
-          )}
+    <div className="dth-root" data-testid="demo-theater">
+      <header className="dth-top">
+        <button type="button" className="dth-exit" onClick={() => nav('/details/choose')}>
+          <X aria-hidden size={18} />
+          Exit
+        </button>
+        <div className="dth-titles">
+          <h1 className="dth-title">{ex.name}</h1>
+          <p className="dth-sub">{`Demonstration · ${ex.category} · ${sideWord} arm`}</p>
         </div>
-        <div className="flex flex-col gap-5">
-          <div>
-            <DayStrip day={day} active={ex.id} className="mb-2" />
-            <h1 className="text-3xl">{ex.name}</h1>
-            <p className="text-muted">{ex.category} · {side} side</p>
-          </div>
-          <Card padding="none" as="div">
-            <ol className="divide-y divide-line px-5">
-              {steps.map((s, i) => {
-                const current = step === i + 1
-                return (
-                  <li key={i} data-testid="step" className="flex min-h-14 items-center gap-4 py-2">
-                    <span
-                      aria-current={current ? 'step' : undefined}
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold tabular-nums ${
-                        current ? 'bg-teal-fill text-white' : 'border-2 border-line text-muted'
-                      }`}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className={`text-lg ${current ? 'font-bold' : ''}`}>{s}</span>
-                  </li>
-                )
-              })}
-            </ol>
-          </Card>
-          <Card padding="sm" as="div">
-            <dl className="space-y-2 text-lg">
-              <div className="flex items-start gap-3">
-                <Activity aria-hidden className="mt-1 h-5 w-5 shrink-0 text-teal-ink" />
-                <dt className="w-24 shrink-0 font-bold">Assigned</dt>
+        {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
+      </header>
+      <main className="dth-main" aria-hidden={complete || undefined}>
+        <AvatarPanel
+          theater
+          overlayTop={92}
+          limitDeg={limitDeg}
+          ctlRef={ctl}
+          onComplete={onComplete}
+          clip={ex.clip}
+          side={side === 'right' ? 'left' : 'right'}
+          patientSide={side}
+          holdS={holdS}
+        />
+        {ex.stopIf && (
+          <p className="dth-stopline">
+            <AlertTriangle aria-hidden className="dth-stop-ic" />
+            {`Stop if your ${ex.stopIf}.`}
+          </p>
+        )}
+      </main>
+      {complete && (
+        <div className="dth-scrim">
+          <div role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">
+            <h2 id="dth-modal-title" className="dth-mtitle">Before you start</h2>
+            <p className="dth-msub">{`${ex.name} · ${sideWord} arm`}</p>
+            <dl className="dth-rows">
+              <div className="dth-row">
+                <Activity aria-hidden className="dth-ic dth-ic-teal" />
+                <dt>Your target</dt>
                 <dd>{dose}</dd>
               </div>
               {ex.watchFor && (
-                <div className="flex items-start gap-3">
-                  <AlertTriangle aria-hidden className="mt-1 h-5 w-5 shrink-0 text-amber-ink" />
-                  <dt className="w-24 shrink-0 font-bold">Watch for</dt>
+                <div className="dth-row">
+                  <AlertTriangle aria-hidden className="dth-ic dth-ic-amber" />
+                  <dt>Watch for</dt>
                   <dd>{ex.watchFor}</dd>
                 </div>
               )}
               {ex.stopIf && (
-                <div className="flex items-start gap-3">
-                  <Flag aria-hidden className="mt-1 h-5 w-5 shrink-0 text-red-ink" />
-                  <dt className="w-24 shrink-0 font-bold">Stop if</dt>
+                <div className="dth-row dth-row-stop">
+                  <Flag aria-hidden className="dth-ic dth-ic-red" />
+                  <dt>Stop if</dt>
                   <dd>{ex.stopIf}</dd>
                 </div>
               )}
             </dl>
-          </Card>
-          {stopped ? (
-            <Card tone="watch" as="div" padding="sm">
-              <p className="text-lg">No exercises today: you can watch, but nothing starts until your next check-in allows it.</p>
-            </Card>
-          ) : demo ? (
-            <p role="status" className="text-lg">
-              {tickError
-                ? `Could not save the tick: ${tickError}.`
-                : ticked > 0
-                  ? `${ticked} set${ticked === 1 ? '' : 's'} ticked today · self-reported, not checked by the camera`
-                  : 'No sets ticked yet today.'}
-            </p>
-          ) : (
-            <Checkbox label="I understand the movement and I'm ready" checked={ready} onChange={setReady} />
-          )}
-        </div>
-      </div>
-      <FlowBar
-        step={3}
-        label="Demonstration"
-        left={
-          <>
-            <Button variant="secondary" onClick={() => nav('/details/coach')}>Ask a question</Button>
-            {demo ? (
-              <Button variant="secondary" onClick={() => nav('/details/choose')}>Back to exercises</Button>
+            {stopped ? (
+              <p className="dth-note dth-note-warn">No exercises today: you can watch, but nothing starts until your next check-in allows it.</p>
+            ) : demo ? (
+              <p role="status" className="dth-note">
+                {tickError
+                  ? `Could not save the tick: ${tickError}.`
+                  : ticked > 0
+                    ? `${ticked} set${ticked === 1 ? '' : 's'} ticked today · self-reported, not checked by the camera`
+                    : 'Demo only: follow the figure and tick each set yourself. The camera does not score this one.'}
+              </p>
             ) : (
-              <Button
-                variant="secondary"
-                disabled={stopped}
-                onClick={() => {
-                  markDemoSeen(ex.id)
-                  nav(`${sessionUrl}&rehearse=1`)
-                }}
-              >
-                Rehearse without scoring
-              </Button>
+              <p className="dth-note">The figure is a reference only. Your reps are checked by the camera, not by matching the figure.</p>
             )}
-          </>
-        }
-        right={demo ? <Button disabled={stopped} onClick={tick}>I did a set</Button> : <Button disabled={!ready || stopped} onClick={practise}>Start practice</Button>}
-      />
+            <div className="dth-actions">
+              <button type="button" className="dth-mbtn dth-mbtn-2" onClick={watchAgain}>
+                <RotateCcw aria-hidden size={16} />
+                Watch again
+              </button>
+              {demo ? (
+                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={tick}>I did a set</button>
+              ) : (
+                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
+              )}
+              <Overlay
+                open={painRe && !restResult}
+                title="Quick pain check"
+                description="One question before the camera setup."
+                onClose={saving ? undefined : () => setPainRe(false)}
+                className="w-[min(640px,92vw)]"
+              >
+                <p className="mt-1 text-muted">You checked in earlier today. Before this exercise, just the pain number.</p>
+                <div className="mt-5">
+                  <NumberScale label="Pain right now" value={painVal} onChange={setPainVal} leftAnchor="No pain" rightAnchor="Worst imaginable" />
+                </div>
+                <OverlayActions>
+                  <Button variant="secondary" disabled={saving} onClick={() => setPainRe(false)}>Back</Button>
+                  <Button disabled={painVal == null || saving} onClick={() => void painDone()}>Continue to setup</Button>
+                </OverlayActions>
+              </Overlay>
+              {/* The quick check stopped the day. No frame in the artifact: extends Check-in's
+                  stopped card inside the artifact's own overlay (docs/PLAN.md). */}
+              <Overlay open={!!restResult} title={restTitle} description="Today's practice has stopped." className="w-[min(640px,92vw)]">
+                {restResult && (
+                  <>
+                    <p className="mt-1">
+                      {restResult.stop === 'rest'
+                        ? `Pain ${restResult.checkin.pain} is at or above your stop level of ${stopAt}. Rest the arm today.`
+                        : restResult.stop === 'new_symptoms'
+                          ? "You told us something is new or worse. Rest the arm, and don't practise until your therapist has looked at it."
+                          : "A stop rule ended today's practice. Rest the arm today."}
+                    </p>
+                    {restResult.stop !== 'session' && <p className="mt-2">{therapistLine(restResult.checkin)}</p>}
+                    <p className="mt-2 text-muted">If it feels urgent, call your care team.</p>
+                    <OverlayActions className="justify-end">
+                      <Button onClick={() => nav('/details')}>Back to Home</Button>
+                    </OverlayActions>
+                  </>
+                )}
+              </Overlay>
+            </div>
+            {demo && (
+              <div className="dth-links">
+                <button type="button" onClick={() => nav('/details/choose')}>Back to exercises</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -102,6 +102,10 @@ describe('one source of truth for the step text', () => {
     expect(stepTexts('abduction', { holdS: 2 })![2]).toMatch(/Hold for 2 s/)
   })
 
+  test('the cup step-5 caption is the artifact text, verbatim (ruling R11)', () => {
+    expect(stepTexts('waiter_cup')![4]).toBe("Go across and back once slowly — that's one set. Then once more, quicker")
+  })
+
   test('the cup and peg steps follow the animation: every caption change lines up with the motion', () => {
     const cup = buildScript('waiter_cup', meta.actions.waiter_cup, {})!
     expect(cup.steps).toHaveLength(5)
