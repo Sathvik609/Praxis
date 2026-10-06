@@ -1,13 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { AssessmentResult } from './AssessmentResult'
+
+function Where() {
+  const l = useLocation()
+  return <div>AT {l.pathname + l.search}</div>
+}
 
 function renderWith(state: unknown) {
   return render(
     <MemoryRouter initialEntries={[{ pathname: '/report', state }]}>
       <Routes>
         <Route path="/report" element={<AssessmentResult />} />
-        <Route path="/details/checkin" element={<div>CHECKIN</div>} />
+        <Route path="*" element={<Where />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -28,11 +33,12 @@ test('nhpt that stopped early says how many pegs were seated', () => {
   expect(screen.getByText('Ended early')).toBeInTheDocument()
 })
 
-test('empty state is a card with a primary to run the peg test', () => {
+test('empty state is a card with a primary to run the peg test, through Choose with the peg test preselected', () => {
+  // Choose → Demonstration still forces today's check-in before setup (Demonstration.test.tsx).
   renderWith(null)
   expect(screen.getByText(/No result/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Run the peg test' }))
-  expect(screen.getByText('CHECKIN')).toBeInTheDocument()
+  expect(screen.getByText('AT /details/choose?next=nhpt')).toBeInTheDocument()
 })
 
 test('cup variant shows verified and unverified counts and a hatched-unverified chart', () => {
