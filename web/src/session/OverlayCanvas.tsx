@@ -108,10 +108,10 @@ export const HAND_CONNECTIONS: [number, number][] = [
 ]
 
 // Overlay colours are fixed: they sit on the camera image, not on a themed surface.
-const MINT = '#2FA985'
+const MINT = '#5B95FF'
 const AMBER = '#F2B457'
 const AMBER_SOFT = 'rgba(242, 180, 87, 0.30)'
-const TEAL_GHOST = 'rgba(31, 95, 91, 0.45)'
+const TEAL_GHOST = 'rgba(26, 107, 255, 0.45)'
 const INK = '#0B1A1C'
 const WHITE = '#FFFFFF'
 const WHITE_SOFT = 'rgba(255, 255, 255, 0.75)'

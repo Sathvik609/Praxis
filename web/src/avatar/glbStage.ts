@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { type Frame, type Insets, NO_INSETS, actionFrame, fitPoints, framingPreset, setSafeView, zoomAbout } from './framing'
-import { type GlbAction, advanceGlbClock, boneFor, stepAt, targetAt } from './glbActions'
+import { type GlbAction, type StageJoint, JOINT_BONE, advanceGlbClock, boneFor, stepAt, targetAt } from './glbActions'
 import { AvatarInstance, type AvatarAsset } from './glbAsset'
 import { glbPropPoints, isBodyNode, pitchFor } from './glbFraming'
 import { TABLE_Y, type Side } from './layout'
@@ -28,6 +28,9 @@ export type GlbStageProps = {
   onTick?: (t: Tick) => void
   onProject?: (p: Projection) => void
   onContextLost?: () => void
+  /** Further joints (rig joints, sheet dots `dot1..dot5`, `cup`) to project for the host's
+   *  overlays (hotspots, theater angle readouts, session cup reference). */
+  extraJoints?: readonly string[]
 }
 
 type P3 = readonly [number, number, number]
@@ -148,15 +151,17 @@ export class GlbStage {
     return actionFrame({ frames, propPoints, tableTop: table ? this.tableTop : null, closeUp })
   }
 
-  /** Dot + additive halo for a marker joint, created on first use. */
+  /** Dot + halo for a marker joint, created on first use; drawn over the figure (no depth test). */
   private dotFor(joint: string) {
     let d = this.dots.get(joint)
     if (!d) {
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 12), new THREE.MeshBasicMaterial({ color: MINT }))
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 20, 14), new THREE.MeshBasicMaterial({ color: MINT, depthTest: false }))
+      dot.renderOrder = 10
       const halo = new THREE.Mesh(
-        new THREE.SphereGeometry(0.034, 16, 12),
-        new THREE.MeshBasicMaterial({ color: MINT, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }),
+        new THREE.SphereGeometry(0.05, 20, 14),
+        new THREE.MeshBasicMaterial({ color: MINT, transparent: true, opacity: 0.3, depthTest: false, depthWrite: false }),
       )
+      halo.renderOrder = 9
       dot.add(halo)
       this.cues.add(dot)
       d = { dot, halo }
@@ -244,6 +249,7 @@ export class GlbStage {
         out[name] = { x: ((this.tmp.x + 1) / 2) * w, y: ((1 - this.tmp.y) / 2) * h }
       }
       for (const m of p.markers) project(m.joint, boneFor(m.joint, p.side))
+      for (const j of p.extraJoints ?? []) if (!out[j] && j in JOINT_BONE) project(j, boneFor(j as StageJoint, p.side))
       project('centre', 'chest')
       p.onProject(out)
     }

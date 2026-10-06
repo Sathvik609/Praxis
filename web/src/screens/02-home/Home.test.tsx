@@ -38,18 +38,14 @@ test('home shows next practice, week, goal, body map markers and focus panel', (
   expect(screen.getByText('Sample history')).toBeInTheDocument()
   expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()
   expect(screen.getByText(/Use a cup on my own/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Left hand · Focus/ })).toBeInTheDocument()
+  // design v2 (Task 5): the avatar draws no joint text chips; the default focus area is the hand
   expect(screen.getByRole('heading', { name: 'Left hand' })).toBeInTheDocument()
   expect(screen.getByText('41.2')).toBeInTheDocument()
 })
 
-test('tapping a marker switches the focus panel', () => {
-  renderHome()
-  fireEvent.click(screen.getByRole('button', { name: /Left shoulder · Watch/ }))
-  expect(screen.getByRole('heading', { name: 'Left shoulder' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Practise Arm out to the side' })).toBeInTheDocument()
-  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
-})
+// Design v2 (Task 5) removed the avatar's joint text chips, which were Home's only way to switch
+// the focus area; Task 6 moves Home to the area tabs + AvatarPanel hotspots and restores this case.
+test.todo('tapping a body-map area switches the focus panel (Task 6: area tabs + hotspots)')
 
 test('start session goes to check-in', () => {
   renderHome()

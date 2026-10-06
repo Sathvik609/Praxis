@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { Glb, angleDeg, sub } from '../test/glb'
 import { parseAvatarMeta } from './glbActions'
-import { advanceScriptClock, buildScript, scriptAt, scriptCaption, stepAtActionTime, stepTexts, stepTextsForClip } from './script'
+import { advanceScriptClock, buildScript, paceTimeAt, scriptAt, scriptCaption, stepAtActionTime, stepTexts, stepTextsForClip } from './script'
 
 const DIR = resolve(__dirname, '../../public/avatar')
 const glb = new Glb(resolve(DIR, 'praxis_avatar.glb'))
@@ -136,6 +136,50 @@ describe('one source of truth for the step text', () => {
       let tau = 0
       while (tau < 3 && Math.hypot(...sub(hand(scriptAt(s, tau).time), p0)) < 0.01) tau += 0.05
       expect(tau, action).toBeLessThan(2)
+    }
+  })
+})
+
+describe('a gentle-day limit caps the demonstration (design v2 limitDeg)', () => {
+  test('limitDeg 60 says "up to 60°" and holds at 60°, above 85 keeps "shoulder height"', () => {
+    const t60 = stepTexts('abduction', { holdS: 3, limitDeg: 60 })!
+    expect(t60[1]).toMatch(/up to 60°/)
+    expect(t60[2]).toMatch(/Hold for 3 s at 60°/)
+    const t90 = stepTexts('abduction', { holdS: 3, limitDeg: 90 })!
+    expect(t90[1]).toMatch(/up to shoulder height/)
+    expect(t90[2]).toMatch(/at shoulder height/)
+  })
+
+  test('the hold clip time maps to peak_deg scaled to 60° and the figure stops near 60°', () => {
+    const am = meta.actions.abduction
+    expect(am.pace?.peak_deg).toBeGreaterThan(80)
+    expect(am.pace?.rest_deg).toBeLessThan(20)
+    const s = buildScript('abduction', am, { holdS: 3, limitDeg: 60 })!
+    const hold = s.segments.find((x) => x.step === 3)!
+    const f = (60 - am.pace!.rest_deg!) / (am.pace!.peak_deg! - am.pace!.rest_deg!)
+    expect(hold.from).toBeCloseTo(paceTimeAt(am, 'lift', f))
+    expect(hold.to).toBe(hold.from)
+    const lower = s.segments.find((x) => x.step === 4)!
+    expect(lower.from).toBeCloseTo(paceTimeAt(am, 'lower', f))
+    // the real arm in the GLB is below the full-range top at the hold
+    expect(frac(hold.from)).toBeLessThan(0.85)
+    expect(frac(hold.from)).toBeGreaterThan(0.4)
+    // no limit (or at the ceiling) keeps the full-range hold
+    const full = buildScript('abduction', am, { holdS: 3 })!
+    expect(full.segments.find((x) => x.step === 3)!.from).toBe(am.pace!.hold[0])
+  })
+
+  test('paceTimeAt is monotonic in u (later on the way up, earlier on the way down)', () => {
+    const am = meta.actions.abduction
+    let up = -Infinity
+    let down = Infinity
+    for (let u = 0; u <= 1.0001; u += 0.05) {
+      const a = paceTimeAt(am, 'lift', Math.min(1, u))
+      const b = paceTimeAt(am, 'lower', Math.min(1, u))
+      expect(a).toBeGreaterThanOrEqual(up - 1e-9)
+      expect(b).toBeLessThanOrEqual(down + 1e-9)
+      up = a
+      down = b
     }
   })
 })

@@ -113,3 +113,30 @@ test('loadAvatarAsset caches one load and forgets a failed one so a later mount 
   expect(ok).toHaveBeenCalledTimes(1)
   resetAvatarAssetForTests()
 })
+
+const matNamed = (inst: AvatarInstance, name: string) => {
+  let found: THREE.MeshPhysicalMaterial | THREE.MeshStandardMaterial | null = null
+  inst.root.traverse((o) => {
+    const m = (o as THREE.Mesh).material
+    for (const x of Array.isArray(m) ? m : m ? [m] : []) if (x.name === name) found = x as THREE.MeshStandardMaterial
+  })
+  if (!found) throw new Error(`no material ${name}`)
+  return found as THREE.MeshStandardMaterial
+}
+
+test('design v2 look: the figure is white in the light theme and cool blue-white in the dark theme (runtime override, no rebake)', async () => {
+  const own = await parseAvatarGlb(buffer(), metaJson) // fresh materials, not shared with the other tests
+  delete document.documentElement.dataset.theme
+  const light = new AvatarInstance(own)
+  expect(matNamed(light, 'mannequin_shell').color.getHex()).toBe(new THREE.Color(0xffffff).getHex())
+  expect(matNamed(light, 'mannequin_joint').color.getHex()).toBe(new THREE.Color(0xf6f6f4).getHex())
+  document.documentElement.dataset.theme = 'dark'
+  try {
+    const dark = new AvatarInstance(own)
+    expect(matNamed(dark, 'mannequin_shell').color.getHex()).toBe(new THREE.Color(0xdce6f8).getHex())
+    expect(matNamed(dark, 'mannequin_shell').emissive.getHex()).toBe(new THREE.Color(0x0a1a40).getHex())
+    expect(matNamed(dark, 'mannequin_joint').color.getHex()).toBe(new THREE.Color(0xb9ccf2).getHex())
+  } finally {
+    delete document.documentElement.dataset.theme
+  }
+})

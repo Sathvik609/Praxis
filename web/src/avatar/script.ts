@@ -15,7 +15,12 @@ import { type GlbAction, type GlbActionMeta, type GlbClock, actionFor, advanceGl
 
 export type Segment = { step: number; dur: number; from: number; to: number }
 export type Script = { steps: string[]; segments: Segment[]; total: number }
-export type ScriptOpts = { holdS?: number }
+export type ScriptOpts = {
+  holdS?: number
+  /** Today's upper-arm limit (deg) for Arm out to the side, e.g. 60 on a gentle day. Below 85°
+   *  the step text says "up to {n}°" and the figure stops and holds at that elevation. */
+  limitDeg?: number
+}
 
 export const SCRIPTED: readonly GlbAction[] = ['abduction', 'waiter_cup', 'nhpt']
 /** Arm out to the side: raise and lower durations (prescription: "for a count of three"), and
@@ -25,6 +30,9 @@ export const LOWER_S = 3
 export const REST_S = 1
 
 const holdOf = (o: ScriptOpts) => (o.holdS && o.holdS > 0 ? o.holdS : 3)
+/** The limit below which the step text names the angle instead of "shoulder height". */
+const LIMIT_TEXT_BELOW = 85
+const limited = (o: ScriptOpts) => !!o.limitDeg && o.limitDeg < LIMIT_TEXT_BELOW
 
 /** The step text for an action, or null for an action without a script (it keeps the GLB
  *  sidecar's own captions). */
@@ -33,8 +41,8 @@ export function stepTexts(action: GlbAction, o: ScriptOpts = {}): string[] | nul
     case 'abduction':
       return [
         'Sit tall facing the camera, arm by your side',
-        'Lift the straight arm out to the side, palm down, up to shoulder height',
-        `Hold for ${holdOf(o)} s at shoulder height — shoulder down, no shrugging`,
+        limited(o) ? `Lift the straight arm out to the side, palm down, up to ${o.limitDeg}°` : 'Lift the straight arm out to the side, palm down, up to shoulder height',
+        limited(o) ? `Hold for ${holdOf(o)} s at ${o.limitDeg}° — shoulder down, no shrugging` : `Hold for ${holdOf(o)} s at shoulder height — shoulder down, no shrugging`,
         'Lower slowly back to your side',
       ]
     case 'waiter_cup':
@@ -69,6 +77,36 @@ function identity(bounds: number[]): Segment[] {
   return out
 }
 
+/** Time on a pace curve ([elevation fraction, time] pairs) at elevation fraction f, or null when
+ *  f is outside the curve. */
+function curveTimeAt(list: readonly [number, number][], f: number): number | null {
+  for (let i = 1; i < list.length; i++) {
+    const [f0, t0] = list[i - 1]
+    const [f1, t1] = list[i]
+    if ((f0 <= f && f <= f1) || (f1 <= f && f <= f0)) return t0 + (f1 === f0 ? 0 : ((f - f0) / (f1 - f0)) * (t1 - t0))
+  }
+  return null
+}
+
+/** Action time at which the arm passes elevation fraction u (0 = rest, 1 = the recorded peak) on
+ *  the way up (`lift`) or down (`lower`), from the sidecar's pace curve. Clamped to the curve's
+ *  ends; without a pace curve, a straight line over the rep window. */
+export function paceTimeAt(meta: Pick<GlbActionMeta, 'pace' | 'rep'>, phase: 'lift' | 'lower', u: number): number {
+  const f = Math.max(0, Math.min(1, u))
+  const list = meta.pace?.[phase]
+  if (!list?.length) {
+    const [a, b] = meta.rep
+    const mid = (a + b) / 2
+    return phase === 'lift' ? a + f * (mid - a) : b - f * (b - mid)
+  }
+  const t = curveTimeAt(list, f)
+  if (t != null) return t
+  // outside the curve: the nearer end
+  const lo = list.reduce((m, p) => (p[0] < m[0] ? p : m))
+  const hi = list.reduce((m, p) => (p[0] > m[0] ? p : m))
+  return f <= lo[0] ? lo[1] : hi[1]
+}
+
 /** The script for an action from its sidecar entry, or null (no script, or a sidecar without
  *  what the script needs: then the panel falls back to the sidecar captions at 1×). */
 export function buildScript(action: GlbAction, meta: GlbActionMeta, o: ScriptOpts = {}): Script | null {
@@ -79,13 +117,26 @@ export function buildScript(action: GlbAction, meta: GlbActionMeta, o: ScriptOpt
     const pace = meta.pace
     if (!pace?.lift.length || !pace.lower.length) return null
     const liftFrom = pace.lift[0][1]
-    const [holdFrom, holdTo] = pace.hold
+    let [holdFrom, holdTo] = pace.hold
+    let lowerFrom = holdTo
     const lowerTo = Math.max(...pace.lower.map(([, t]) => t))
+    // a limit below the recorded peak: stop the lift where the arm reaches it, hold there (the
+    // pose is still), and join the way down at the same elevation
+    if (o.limitDeg && pace.peak_deg && pace.rest_deg != null && o.limitDeg < pace.peak_deg - 1) {
+      const f = Math.max(0, (o.limitDeg - pace.rest_deg) / (pace.peak_deg - pace.rest_deg))
+      const tUp = curveTimeAt(pace.lift, f)
+      const tDown = curveTimeAt(pace.lower, f)
+      if (tUp != null && tDown != null) {
+        holdFrom = tUp
+        holdTo = tUp
+        lowerFrom = tDown
+      }
+    }
     segments = [
       { step: 1, dur: REST_S, from: liftFrom, to: liftFrom },
       { step: 2, dur: RAISE_S, from: liftFrom, to: holdFrom },
       { step: 3, dur: holdOf(o), from: holdFrom, to: holdTo },
-      { step: 4, dur: LOWER_S, from: holdTo, to: lowerTo },
+      { step: 4, dur: LOWER_S, from: lowerFrom, to: lowerTo },
       { step: 1, dur: REST_S, from: lowerTo, to: meta.duration },
     ]
   } else {
