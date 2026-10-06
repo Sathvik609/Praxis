@@ -39,6 +39,9 @@ export type Day = {
   /** Reports that belong to today's run (so an old report opened from history is not). */
   finished: { exercise: ExerciseId; reportId: string }[]
   stopped: StopReason | null
+  /** Pain after the last session today (its feedback, written by the session flow). At 4 or more
+   *  the Demonstration asks for a quick pain number again before setup; a check-in clears it. */
+  lastPainAfter?: number | null
 }
 
 const DAY_KEY = 'praxis.day'
@@ -188,7 +191,7 @@ export async function saveCheckin(answers: CheckinAnswers, side: Side | null, pa
   if (side) writeSide(side)
   const local: DayCheckin = { ...answers, side: side ?? readSide() ?? 'left', tier: tierFor(answers.pain, painMax), flagged: false, reasons: [], synced: false, at: new Date().toISOString() }
   const commit = (c: DayCheckin) =>
-    update((d) => ({ ...d, checkin: c, stopped: stopReason(c) ?? (d.stopped === 'session' ? 'session' : null) }))
+    update((d) => ({ ...d, checkin: c, lastPainAfter: null, stopped: stopReason(c) ?? (d.stopped === 'session' ? 'session' : null) }))
   commit(local)
   const c = applyResult(local, await post(answers))
   return commit(c).checkin!
