@@ -9,8 +9,8 @@ const H = 480
 
 function paint(ctx: CanvasRenderingContext2D, frame: number) {
   const g = ctx.createLinearGradient(0, 0, 0, H)
-  g.addColorStop(0, '#050E10')
-  g.addColorStop(1, '#0F262B')
+  g.addColorStop(0, '#EEF0F3')
+  g.addColorStop(1, '#DDE1E7')
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.fillStyle = g
   ctx.fillRect(0, 0, W, H)
@@ -19,16 +19,16 @@ function paint(ctx: CanvasRenderingContext2D, frame: number) {
   // A watermark, not a headline: the overlay drawn on top of it must stay readable.
   ctx.textAlign = 'center'
   ctx.globalAlpha = 0.5
-  ctx.fillStyle = '#E9F1EE'
+  ctx.fillStyle = '#1A1D21'
   ctx.font = '600 28px Mulish, "Segoe UI", system-ui, sans-serif'
   ctx.fillText('Design preview · no camera', W / 2, H / 2 - 22)
   ctx.font = '19px Mulish, "Segoe UI", system-ui, sans-serif'
-  ctx.fillStyle = '#9DB0AC'
+  ctx.fillStyle = '#5F6670'
   ctx.fillText('The overlay and cues play a recorded event stream.', W / 2, H / 2 + 14)
   ctx.fillText('Nothing here is measured from you.', W / 2, H / 2 + 40)
   ctx.globalAlpha = 1
   // a slow pulse so the stream keeps producing frames
-  ctx.fillStyle = frame % 2 ? '#1F5F5B' : '#2FA985'
+  ctx.fillStyle = frame % 2 ? '#1A6BFF' : '#8DB5FF'
   ctx.beginPath()
   ctx.arc(W / 2, H / 2 + 90, 6, 0, Math.PI * 2)
   ctx.fill()

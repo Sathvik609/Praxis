@@ -11,6 +11,7 @@
 import { installFakeCamera } from './fakeCamera'
 import { handle } from './mockApi'
 import { PreviewSessionSocket } from './mockSocket'
+import './preview.css'
 
 const SERVICE_ROUTE = /^\/(api|health|events)(\/|\?|$)/
 const LATENCY_MS = 80 // a short wait so loading states are visible, as over a network
