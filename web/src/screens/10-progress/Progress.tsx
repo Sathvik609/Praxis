@@ -1,52 +1,19 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { Checkbox } from '../../design/Checkbox'
 import { Chip } from '../../design/Chip'
 import { Pill } from '../../design/Pill'
 import { Stat } from '../../design/Stat'
-import { Bars } from '../../design/charts/Bars'
-import { Line } from '../../design/charts/Line'
 import { api, isReplaySession, useApi, type Progress as ProgressData, type SessionRecord } from '../../lib/api'
 import { countOf, plural } from '../../lib/plural'
-import { EXERCISES, exerciseOfSession, type ExerciseId } from '../../lib/seed'
+import { exerciseOfSession, isHiddenSession } from '../../lib/seed'
 
-type Range = '4w' | '12w' | 'all'
-/** One filter per visible camera-coached practice exercise (28 Sep: Arm out to the side and
- *  Waiter – cup; the peg test has its own card), named from the web registry (`lib/seed.ts`),
- *  plus one card for any visible demo-only exercises (none since 28 Sep). Hidden exercises
- *  never appear: `EXERCISES` holds only the visible ones. */
-type Task = ExerciseId | 'demos'
-const CHARTED: ExerciseId[] = EXERCISES.filter((e) => e.mode === 'coached' && !e.weekly).map((e) => e.id)
-const DEMOS = EXERCISES.filter((e) => e.mode === 'demo')
-const TASK_NAME: Record<string, string> = {
-  ...Object.fromEntries(EXERCISES.map((e) => [e.id, e.name])),
-  demos: DEMOS.map((e) => e.name).join(' / '),
-}
-const UNIT: Partial<Record<Task, string>> = { pendulum: 'swings', arm: 'lifts', abduction: 'lifts', cup: 'reaches' }
-const NOUN: Partial<Record<Task, string>> = { pendulum: 'swing', arm: 'lift', abduction: 'lift', cup: 'reach' }
-type Row = { date: string; verified: number; limited: boolean; task: string | undefined; illustrative: boolean }
-
-/** Per-session rows, each tied to its exercise. The session list carries the exercise id, so
- *  it is the source when it loaded; `verified_per_session` (mode only) is the fallback.
- *  Replays are never charted (`sessionSource`, the same rule the therapist view uses). */
-function rowsOf(sessions: SessionRecord[] | null, perSession: ProgressData['verified_per_session']): Row[] {
-  const rows: Row[] = sessions
-    ? sessions.filter((s) => s.mode !== 'nhpt' && !isReplaySession(s)).map((s) => ({ date: s.date, verified: s.summary.camera.verified ?? 0, limited: s.tracking !== 'usable', task: exerciseOfSession(s)?.id, illustrative: !!s.illustrative }))
-    : perSession.filter((v) => v.source !== 'replay').map((v) => ({ date: v.date, verified: v.verified, limited: v.limited, task: exerciseOfSession({ mode: v.mode, exercise: v.exercise })?.id, illustrative: !!v.illustrative }))
-  return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-}
-
-/** A "first → last" comparison only within one kind: the patient's own sessions when there are
- *  two, else an all-sample range; never across sample and real. */
-function comparableRun(rows: Row[]): Row[] {
-  const usable = rows.filter((v) => !v.limited)
-  const own = usable.filter((v) => !v.illustrative)
-  if (own.length >= 2) return own
-  return usable.length >= 2 && usable.every((v) => v.illustrative) ? usable : []
-}
-const WEEKS: Record<Range, number | null> = { '4w': 4, '12w': 12, all: null }
+type Range = '4w' | 'all'
+const WEEKS: Record<Range, number | null> = { '4w': 4, all: null }
+/** One Waiter – cup bar: verified reaches, plus the unverified ones (hatched) when the session
+ *  recorded them (`verified_per_session` does not). */
+type CupRow = { date: string; verified: number; unverified: number | null; limited: boolean; illustrative: boolean }
+type ArmRow = { date: string; deg: number; sample: boolean }
 
 /** Dates on or after `weeks` before the newest date in the data (not today, so a replayed or
  *  older store still shows something). */
@@ -58,45 +25,176 @@ function since(dates: string[], weeks: number | null): string | null {
   return d.toISOString().slice(0, 10)
 }
 
-/** Screen 10 · Progress and history. Limited-tracking sessions are hatched and labeled
- *  unverified; "Compare same setup only" drops them. Pain and effort are patient-reported.
- *  No recovery score; tasks are never combined. */
+/** Waiter – cup rows, oldest first. The session list carries the exercise and the unverified
+ *  count, so it is the source when it loaded; `verified_per_session` is the fallback. Replays
+ *  and hidden exercises are never charted. */
+function cupRowsOf(counted: SessionRecord[] | null, perSession: ProgressData['verified_per_session']): CupRow[] {
+  const rows: CupRow[] = counted
+    ? counted.filter((s) => exerciseOfSession(s)?.id === 'cup').map((s) => ({ date: s.date, verified: s.summary.camera.verified ?? 0, unverified: s.summary.camera.unverified ?? null, limited: s.tracking !== 'usable', illustrative: !!s.illustrative }))
+    : perSession.filter((v) => v.source !== 'replay' && exerciseOfSession({ mode: v.mode, exercise: v.exercise })?.id === 'cup').map((v) => ({ date: v.date, verified: v.verified, unverified: null, limited: v.limited, illustrative: !!v.illustrative }))
+  return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+}
+
+/** A "first → last" comparison only within one kind: the patient's own full-tracking sessions
+ *  when there are two, else an all-sample range; never across sample and real. */
+function comparableRun(rows: CupRow[]): CupRow[] {
+  const usable = rows.filter((v) => !v.limited)
+  const own = usable.filter((v) => !v.illustrative)
+  if (own.length >= 2) return own
+  return usable.length >= 2 && usable.every((v) => v.illustrative) ? usable : []
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const fmtD = (d: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d ?? '')
+  return m ? `${+m[3]} ${MONTHS[+m[2] - 1]}` : d
+}
+/** Upper median, as the designers' build computes it. */
+const med = (a: number[]) => {
+  const b = [...a].sort((x, y) => x - y)
+  return b.length ? b[Math.floor(b.length / 2)] : null
+}
+const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+const utcMs = (iso: string) => new Date(`${iso}T00:00:00Z`).getTime()
+
+const W = 400
+const H = 150
+type Pt = [number, number | null]
+const line = (vals: (number | null)[], lo: number, hi: number, padT = 24, padB = 22): Pt[] =>
+  vals.map((v, i) => [vals.length < 2 ? W / 2 : 18 + (i * (W - 36)) / (vals.length - 1), v == null ? null : padT + (1 - (v - lo) / Math.max(1e-6, hi - lo)) * (H - padT - padB)])
+const path = (pts: Pt[]) =>
+  pts
+    .filter((q) => q[1] != null)
+    .map((q, i) => `${i ? 'L' : 'M'}${q[0].toFixed(1)} ${(q[1] as number).toFixed(1)}`)
+    .join(' ')
+const dot = (q: Pt | undefined, cls: string, k: string | number) => (q && q[1] != null ? <i key={k} className={`pg-dot ${cls}`} style={{ left: `${(q[0] / W) * 100}%`, top: `${(q[1] / H) * 100}%` }} /> : null)
+const plot = (svg: ReactNode, dots: ReactNode[], sm = false) => (
+  <div className={`pg-plot ${sm ? 'pg-plot-sm' : ''}`}>
+    {svg}
+    {dots}
+  </div>
+)
+const tt = (name: string, sub?: string) => (
+  <span className="pg-t">
+    {name}
+    {sub && <small>{sub}</small>}
+  </span>
+)
+const sampleChip = (on: boolean) => (on ? <span className="pg-sample" title="Illustrative history, not yours">Sample</span> : null)
+
+/** Screen 10 · Progress and history (design v2, 6 Oct). Every chart is the patient's own data:
+ *  sample history is drawn hollow/outlined and labelled Sample; replays are listed with a badge
+ *  and never charted; unverified movements are shown next to verified ones; the arm limit is the
+ *  prescription's ceiling; a clinician flag is named only when a flag row exists. Tasks are never
+ *  combined and there is no recovery score. */
 export function Progress() {
   const nav = useNavigate()
   const { data: p, error: pError, reload } = useApi(() => api.progress())
   const { data: sessions, error: sError } = useApi(() => api.sessions())
+  const { data: me } = useApi(() => api.me())
+  const { data: rx } = useApi(() => api.prescription())
+  const { data: flags } = useApi(() => api.flags())
   const [range, setRange] = useState<Range>('4w')
-  const [task, setTask] = useState<Task>('cup')
-  const [sameSetup, setSameSetup] = useState(false)
   const [logNote, setLogNote] = useState<string | null>(null)
 
   if (!p && !pError) return <p className="p-8 text-xl text-muted" role="status">Loading your progress…</p>
   if (!p) return <p className="p-8 text-xl text-red-ink" role="alert">Could not load progress: {pError}. Is the session service running?</p>
 
-  const counted = (sessions ?? []).filter((s) => !isReplaySession(s))
+  const shown = (sessions ?? []).filter((s) => !isHiddenSession(s))
+  const counted = shown.filter((s) => !isReplaySession(s))
   const allDates = [...p.verified_per_session.map((v) => v.date), ...counted.map((s) => s.date), ...p.nhpt_trend.map((t) => t.date)]
   const from = since(allDates, WEEKS[range])
   const inRange = (date: string) => !from || date >= from
-  const perSession = rowsOf(sessions, p.verified_per_session).filter((v) => v.task === task && inRange(v.date) && (!sameSetup || !v.limited))
-  const comparable = comparableRun(perSession)
-  const list = (sessions ?? []).filter((s) => s.mode !== 'nhpt' && exerciseOfSession(s)?.id === task && inRange(s.date))
-  const listedReplays = list.some(isReplaySession)
-  const sampleBars = perSession.some((v) => v.illustrative)
-  // The weekly assessment history is always shown whole. Each point is sample or the patient's
-  // own (`kind` from the service; an older service is read from the live peg-test sessions).
+
+  // Nine-Hole Peg Test: the weekly history is always shown whole; each point is sample or own.
   const ownNhptDates = new Set(counted.filter((s) => s.mode === 'nhpt' && !s.illustrative).map((s) => s.date))
   const trend = p.nhpt_trend.map((t) => ({ ...t, kind: t.kind ?? (sessions && !ownNhptDates.has(t.date) ? 'sample' : 'live') }))
   const ownTrend = trend.filter((t) => t.kind === 'live')
   const sampleTrend = trend.filter((t) => t.kind === 'sample')
-  const mixedTrend = ownTrend.length > 0 && sampleTrend.length > 0
-  const last = ownTrend.at(-1) ?? trend.at(-1)
-  const trendNote = mixedTrend
-    ? `${countOf(ownTrend.length, 'assessment')} of yours · ${sampleTrend.length} sample · same board and camera setup · run separately from practice.`
-    : ownTrend.length
-      ? `${countOf(ownTrend.length, 'assessment')} · same board and camera setup · run separately from practice.`
-      : `${countOf(sampleTrend.length, 'sample assessment')} · illustrative, not yours · run separately from practice.`
-  const painRows = p.pain_effort.filter((x) => x.source !== 'replay') // the service already leaves replays out
-  const rotations = task === 'demos'
+  const trendNote =
+    ownTrend.length && sampleTrend.length
+      ? `${countOf(ownTrend.length, 'assessment')} of yours · ${sampleTrend.length} sample · same board and camera setup · run separately from practice.`
+      : ownTrend.length
+        ? `${countOf(ownTrend.length, 'assessment')} · same board and camera setup · run separately from practice.`
+        : trend.length
+          ? `${countOf(sampleTrend.length, 'sample assessment')} · illustrative, not yours · run separately from practice.`
+          : 'Run weekly, separately from practice.'
+  const nhVals = trend.map((t) => t.total_s)
+  const nhPts = line(nhVals, Math.min(...nhVals) - 4, Math.max(...nhVals) + 4)
+
+  // Waiter – cup
+  const cupRows = cupRowsOf(sessions ? counted : null, p.verified_per_session).filter((r) => inRange(r.date))
+  const run = comparableRun(cupRows)
+  const cupMax = Math.max(10, ...cupRows.map((r) => r.verified + (r.unverified ?? 0)))
+  const cupLabel = (r: CupRow) => `${fmtD(r.date)} ${r.verified} verified${r.unverified != null ? `, ${r.unverified} unverified` : ''}${r.limited ? ' (limited tracking)' : ''}${r.illustrative ? ' · Sample' : ''}`
+
+  // Arm out to the side: median verified peak per session (camera-relative), limit = prescription ceiling
+  const armLimit = num(rx?.exercises?.abduction?.ceiling_deg)
+  const armRows: ArmRow[] = counted
+    .filter((s) => exerciseOfSession(s)?.id === 'abduction' && inRange(s.date))
+    .map((s) => {
+      const peaks = s.summary.camera.peak_deg ?? []
+      const ok = s.summary.camera.peak_verified
+      const m = med(peaks.filter((_, i) => ok?.[i] !== false))
+      return { date: s.date, deg: m == null ? 0 : Math.round(m), sample: !!s.illustrative }
+    })
+    .filter((r) => r.deg > 0)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+  const armLo = Math.min(30, ...armRows.map((r) => r.deg))
+  const armHi = Math.max(armLimit ?? 0, ...armRows.map((r) => r.deg)) + 4
+  const armPts = line(armRows.map((r) => r.deg), armLo, armHi)
+  const limY = armLimit != null ? 24 + (1 - (armLimit - armLo) / Math.max(1e-6, armHi - armLo)) * (H - 46) : null
+  const armOver = armLimit != null ? armRows.filter((r) => r.deg > armLimit).length : 0
+  const armLimitNote = armLimit == null ? '' : armOver ? ` · ${armOver} ${plural(armOver, 'session')} above the therapist's ${armLimit}° limit` : ` · stays within the therapist's ${armLimit}° limit`
+
+  // Session list: every exercise, newest first; replays carry a badge, sample rows a chip.
+  const clinician = me?.program.clinician ?? rx?.clinician ?? 'your therapist'
+  const flagOf = (s: SessionRecord) => {
+    const row = (flags ?? []).find((f) => f.session_id === s.id)
+    if (row) return row.reviewed ? 'reviewed' : 'queued'
+    return s.summary?.flags?.length ? 'queued' : null
+  }
+  const listRows = shown.filter((s) => inRange(s.date)).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  const subOf = (s: SessionRecord) => {
+    const c = s.summary?.camera ?? {}
+    if (s.mode === 'nhpt') {
+      const total = num(c.nhpt_total_s)
+      return total != null && !s.title.includes(' s') ? `${total.toFixed(1)} s · lower is better` : 'Timed assessment · lower is better'
+    }
+    const pain = num(s.feedback?.pain_after)
+    if (s.status === 'ended_early') {
+      const flag = flagOf(s)
+      return `Stopped early${pain != null ? ` · pain ${pain}` : ''}${flag ? ` · flag for ${clinician} · ${flag}` : ''}`
+    }
+    const v = num(c.verified)
+    const u = num(c.unverified)
+    const active = num(c.active_s)
+    return [v != null ? `${v} verified ${plural(v, 'movement')}` : null, u != null ? `${u} unverified` : null, active != null ? `${Math.max(1, Math.round(active / 60))} active min` : null, s.tracking === 'limited' ? 'limited tracking' : null].filter(Boolean).join(' · ')
+  }
+
+  // Practice: the patient's own; the sample is a labelled secondary line. Streak from live sessions only.
+  const pr = p.practice
+  const liveDates = [...new Set(counted.filter((s) => !s.illustrative).map((s) => s.date))].sort()
+  let streak = 0
+  let best = 0
+  let prev: number | null = null
+  for (const d of liveDates) {
+    const t = utcMs(d)
+    streak = prev != null && t - prev === 864e5 ? streak + 1 : 1
+    best = Math.max(best, streak)
+    prev = t
+  }
+
+  // Pain and effort: what the patient reported; sample rows drawn hollow, never in the narrative.
+  const pe = p.pain_effort.filter((x) => x.source !== 'replay' && inRange(x.date))
+  const peOwn = pe.filter((x) => !x.illustrative)
+  const painVals = peOwn.map((x) => x.pain_after).filter((v): v is number => v != null)
+  const painMode = med(painVals)
+  const spikes = painMode == null ? 0 : painVals.filter((v) => v - painMode >= 2).length
+  const effortVals = peOwn.map((x) => x.effort).filter((v): v is number => v != null)
+  const peP = line(pe.map((x) => x.pain_after), 0, 10, 26, 14)
+  const peE = line(pe.map((x) => x.effort), 0, 10, 26, 14)
+  const spike = pe.findIndex((x) => x.ended_early && !x.illustrative)
 
   const logAttempt = () =>
     api
@@ -108,111 +206,169 @@ export function Progress() {
       .catch(() => setLogNote('Could not log — the session service is not reachable.'))
 
   return (
-    <div className="p-8">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="pg">
+      <div className="pg-head">
         <h1 className="text-4xl">Progress and history</h1>
-        <div className="ml-auto flex flex-wrap items-center gap-3">
-          <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: '12w', label: 'Last 12 weeks' }, { value: 'all', label: 'All time' }]} />
-          <Pill ariaLabel="Task" size="sm" value={task} onChange={setTask} options={[...CHARTED.map((id): { value: Task; label: string } => ({ value: id, label: TASK_NAME[id] })), ...(DEMOS.length ? [{ value: 'demos' as const, label: TASK_NAME.demos }] : [])]} />
-          <Checkbox label="Compare same setup only" checked={sameSetup} onChange={setSameSetup} />
-        </div>
+        <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: 'all', label: 'All activities' }]} />
       </div>
-      <div className="mt-6 grid grid-cols-3 gap-6">
-        <Card title="Nine-Hole Peg Test" action={<span className="flex flex-wrap justify-end gap-2">{mixedTrend ? <Chip tone="neutral">Includes sample</Chip> : sampleTrend.length > 0 && <Chip tone="neutral">Sample</Chip>}<Chip tone="neutral">lower is better</Chip></span>}>
-          {last ? <Stat value={last.total_s.toFixed(1)} unit="s" label={`latest · ${last.date.slice(5)}${last.kind === 'sample' ? ' · sample' : ''}`} /> : <p className="text-muted">No assessments yet.</p>}
+      <div className="pg-row1">
+        <Card className="pg-card" title={tt('Nine-Hole Peg Test', `${me?.side ? `${me.side} · ` : ''}lower is better`)} action={sampleChip(sampleTrend.length > 0)}>
+          {trend.length ? (
+            plot(
+              <svg className="pg-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Nine-Hole Peg Test: ${trend.map((t) => `${fmtD(t.date)} ${t.total_s} s${t.kind === 'sample' ? ' sample' : ''}`).join(', ')}`}>
+                <line x1={0} x2={W} y1={H - 22} y2={H - 22} className="pg-axis" />
+                <path d={path(nhPts)} className="pg-line" />
+              </svg>,
+              nhPts.map((q, i) => dot(q, trend[i].kind === 'sample' ? 'pg-dot-s' : '', i)),
+            )
+          ) : (
+            <p className="pg-empty">No assessments yet.</p>
+          )}
           {trend.length > 0 && (
-            <div className="mt-3">
-              <Line
-                title="Nine-Hole Peg Test"
-                unit="s"
-                points={trend.map((t) => ({ x: t.date.slice(5), y: t.total_s, sample: t.kind === 'sample' }))}
-                compare={!mixedTrend}
-                note="Includes sample points (dashed rings). No change is computed across sample and your own results."
-              />
+            <div className="pg-xl">
+              <span>{`${fmtD(trend[0].date)} · ${trend[0].total_s} s`}</span>
+              <span>{`${fmtD(trend[trend.length - 1].date)} · ${trend[trend.length - 1].total_s} s`}</span>
             </div>
           )}
-          {trend.length > 0 && <p className="mt-2 text-base text-muted">{trendNote}</p>}
+          <p className="pg-note">{trendNote}</p>
         </Card>
-        {rotations ? (
-          <Card title={TASK_NAME.demos} action={<Chip tone="neutral">Demo only</Chip>}>
-            <p className="text-lg">Self-ticked, not camera-verified.</p>
-            <p className="mt-2 text-muted">The figure shows these and you tick each set yourself. The camera never scores them, so there is nothing to chart.</p>
+        <Card className="pg-card" title={tt('Waiter – cup', 'verified reaches per session')} action={sampleChip(cupRows.some((r) => r.illustrative))}>
+          {cupRows.length ? (
+            <div className="pg-bars" role="img" aria-label={`Waiter – cup per session: ${cupRows.map(cupLabel).join('; ')}`}>
+              {cupRows.map((r, i) => {
+                const total = r.verified + (r.unverified ?? 0)
+                return (
+                  <i key={i} className={r.limited ? 'pg-bar-l' : r.illustrative ? 'pg-bar-s' : 'pg-bar-live'} style={{ height: `${Math.max(6, (total / cupMax) * 100)}%` }} title={cupLabel(r)}>
+                    {r.unverified ? <b className="pg-bar-u" style={{ height: `${(r.unverified / Math.max(1, total)) * 100}%` }} /> : null}
+                  </i>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="pg-empty">No Waiter – cup sessions in this range.</p>
+          )}
+          {cupRows.length > 0 && (
+            <div className="pg-xl">
+              <span>{countOf(cupRows.length, 'session')}</span>
+              <span>{fmtD(cupRows[cupRows.length - 1].date)}</span>
+            </div>
+          )}
+          <p className="pg-note">
+            {run.length >= 2
+              ? `${run[0].verified} → ${run[run.length - 1].verified} verified · same task, side and setup.${run[0].illustrative ? ' Sample history, not yours.' : ''}${cupRows.some((r) => r.limited) ? ' The pale bar is a session the camera could not see well enough to compare.' : ''}`
+              : 'Verified placements per session; hatched tops are unverified. Limited-tracking sessions show pale and are never compared.'}
+          </p>
+        </Card>
+        <Card className="pg-card" title={tt('Arm out to the side', 'peak angle per session')} action={sampleChip(armRows.some((r) => r.sample))}>
+          {armRows.length ? (
+            plot(
+              <svg className="pg-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Arm out to the side, peak angle: ${armRows.map((r) => `${fmtD(r.date)} ${r.deg}°${r.sample ? ' sample' : ''}`).join(', ')}`}>
+                {limY != null && <line x1={0} x2={W} y1={limY} y2={limY} className="pg-limit" />}
+                <line x1={0} x2={W} y1={H - 22} y2={H - 22} className="pg-axis" />
+                <path d={path(armPts)} className="pg-line" />
+              </svg>,
+              armPts.map((q, i) => dot(q, armRows[i].sample ? 'pg-dot-s' : '', i)),
+            )
+          ) : (
+            <p className="pg-empty">No arm sessions in this range.</p>
+          )}
+          {armRows.length > 0 && (
+            <div className="pg-xl">
+              <span>{`${armRows[0].deg}° · ${fmtD(armRows[0].date)}`}</span>
+              <span className="pg-xl-lim">{`${armLimit != null ? `${armLimit}° limit · ` : ''}axis starts at ${armLo}° · camera estimate`}</span>
+              <span>{`${armRows[armRows.length - 1].deg}° · ${fmtD(armRows[armRows.length - 1].date)}`}</span>
+            </div>
+          )}
+          <p className="pg-note">
+            {armRows.length >= 2 ? `${armRows[0].deg}° → ${armRows[armRows.length - 1].deg}° · median verified peak per session${armLimitNote}` : 'Median verified peak angle per session, estimated by the camera.'}
+          </p>
+        </Card>
+      </div>
+      <div className="pg-row2">
+        <div className="pg-main">
+          <Card className="pg-card pg-list" title="Session list">
+            {sError && <p className="text-red-ink">Could not load sessions: {sError}</p>}
+            <ul className="pg-rows">
+              {listRows.map((s) => (
+                <li key={s.id}>
+                  <span className="pg-date">{fmtD(s.date)}</span>
+                  <span className="pg-what">
+                    <b>{s.title}</b>
+                    <small>{subOf(s)}</small>
+                  </span>
+                  {s.illustrative && sampleChip(true)}
+                  {isReplaySession(s) && <Chip tone="amber">Replay</Chip>}
+                  <Chip tone={s.status === 'ended_early' ? 'amber' : 'mint'}>{s.status === 'ended_early' ? 'Ended early' : s.mode === 'nhpt' ? 'Assessment' : 'Complete'}</Chip>
+                  <button type="button" className="pg-open" aria-label={`Open ${s.title} · ${fmtD(s.date)}`} onClick={() => nav(`/details/report/${s.id}`)}>
+                    Open
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {listRows.length === 0 && sessions && <p className="pg-empty">No sessions in this range.</p>}
           </Card>
-        ) : (
-          <Card title={TASK_NAME[task]} action={<span className="flex flex-wrap justify-end gap-2">{sampleBars && <Chip tone="neutral">Sample</Chip>}<Chip tone="neutral">verified per session</Chip></span>}>
-            {perSession.length === 0 ? (
-              <p className="text-muted">No {TASK_NAME[task]} sessions in this range.</p>
-            ) : (
-              <Bars title={TASK_NAME[task]} unit={UNIT[task] ?? ''} noun={NOUN[task]} values={perSession.map((v) => v.verified)} labels={perSession.map((v) => v.date.slice(5))} verified={perSession.map((v) => !v.limited)} />
-            )}
-            <p className="mt-2 text-base text-muted">
-              {countOf(perSession.length, 'session')} · limited tracking counts as unverified and is never compared.
-              {sampleBars ? ' Sample history is illustrative, not yours.' : ''}
-            </p>
-            {comparable.length >= 2 && <p className="mt-1 text-lg">{comparable[0].verified} → {comparable[comparable.length - 1].verified} verified · same task, side and setup</p>}
+          <Card className="pg-card" title="Everyday goal log">
+            <div className="flex items-center gap-4">
+              <span className="pg-what">
+                <b>{countOf(p.goal_log_count, 'attempt')} logged at your everyday goal</b>
+                {me?.goal && <small>{me.goal}</small>}
+              </span>
+              <button type="button" className="pg-open" onClick={logAttempt}>
+                Log an attempt
+              </button>
+            </div>
+            {logNote && <p className="pg-note" role="status">{logNote}</p>}
           </Card>
-        )}
-        <div className="space-y-6">
-          <Card title="Practice">
-            <div className="flex flex-wrap gap-8">
-              {p.practice.planned == null ? (
-                <Stat value={p.practice.done} label={`${plural(p.practice.done, 'session')} recorded here`} />
+        </div>
+        <div className="pg-side">
+          <Card className="pg-card" title="Practice">
+            <div className="pg-two">
+              {pr.planned == null ? (
+                <Stat value={pr.done} label={`${plural(pr.done, 'session')} recorded`} />
               ) : (
                 // Planned practice days from the prescription's schedule since the first live session.
-                <Stat value={`${p.practice.days_done ?? p.practice.done}/${p.practice.planned}`} label="planned days practised" />
+                <Stat value={`${pr.days_done ?? pr.done}/${pr.planned}`} label="planned days practised" />
               )}
-              <Stat value={p.practice.hours} unit="h" label="active time · rests excluded" />
+              <Stat value={pr.hours} unit="h" label="active time" />
             </div>
+            <p className="pg-note">{best >= 2 ? `Longest run: ${best} practice days in a row` : `${liveDates.filter((d) => inRange(d)).length} practice days in this range · rests excluded`}</p>
             {p.sample && (
-              <p className="mt-3 flex flex-wrap items-center gap-2 text-base text-muted">
-                <Chip tone="neutral">Sample</Chip>
-                <span>{`${p.sample.done}/${p.sample.planned}`}</span>
-                <span>planned · {p.sample.hours} h · illustrative history, not added to yours</span>
+              <p className="pg-note">
+                {sampleChip(true)} <span>{`${p.sample.done}/${p.sample.planned} planned · ${p.sample.hours} h · illustrative, not added to yours`}</span>
               </p>
             )}
           </Card>
-          <Card title="Pain and effort">
-            <p className="-mt-3 text-muted">What you reported, per session</p>
-            <ul className="mt-2 text-lg">
-              {painRows.slice(-6).map((x, i) => (
-                <li key={i} className={x.ended_early ? 'font-bold text-red-ink' : ''}>
-                  {x.date.slice(5)} · pain after {x.pain_after ?? 'not recorded'} · effort {x.effort ?? 'not recorded'}
-                  {x.ended_early ? ' · session ended early' : ''}
-                  {x.illustrative ? ' · sample' : ''}
-                </li>
-              ))}
-              {painRows.length === 0 && <li className="text-muted">Nothing reported yet.</li>}
-            </ul>
+          <Card className="pg-card pg-pe" title={tt('Pain and effort', 'you reported, per session')} action={sampleChip(pe.some((x) => x.illustrative))}>
+            {pe.length ? (
+              plot(
+                <svg className="pg-chart pg-chart-sm" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Pain after and effort per session: ${pe.map((x) => `${fmtD(x.date)} pain ${x.pain_after ?? 'not recorded'}, effort ${x.effort ?? 'not recorded'}${x.illustrative ? ' (sample)' : ''}`).join('; ')}`}>
+                  <line x1={0} x2={W} y1={H - 14} y2={H - 14} className="pg-axis" />
+                  <path d={path(peE)} className="pg-line pg-eff" />
+                  <path d={path(peP)} className="pg-line pg-pain" />
+                </svg>,
+                [...pe.map((x, i) => (x.illustrative ? dot(peP[i], 'pg-dot-s', `s${i}`) : null)), spike >= 0 ? dot(peP[spike], 'pg-dot-spike', 'sp') : null],
+                true,
+              )
+            ) : (
+              <p className="pg-empty">Nothing reported yet.</p>
+            )}
+            {spike >= 0 && <p className="pg-spike-l">{`${fmtD(pe[spike].date)} · pain ${pe[spike].pain_after} · session ended early`}</p>}
+            <div className="pg-legend">
+              <span>
+                <i className="pg-lg-pain" />
+                pain after
+              </span>
+              <span>
+                <i className="pg-lg-eff" />
+                effort
+              </span>
+            </div>
+            <p className="pg-note">
+              {painVals.length
+                ? `Pain steady at ${painMode}${spikes ? ` except ${spikes === 1 ? 'once' : `${spikes} times`}` : ''}.${effortVals.length >= 2 ? ` Effort ${effortVals[effortVals.length - 1] < effortVals[0] ? 'drifting down' : effortVals[effortVals.length - 1] > effortVals[0] ? 'drifting up' : 'steady'}.` : ''}`
+                : 'Pain is asked after each session.'}
+            </p>
           </Card>
-        </div>
-      </div>
-      <div className="mt-6 grid grid-cols-[2fr_1fr] gap-6">
-        <Card title="Session list" action={<Chip tone="neutral">{TASK_NAME[task]}</Chip>}>
-          {sError && <p className="text-red-ink">Could not load sessions: {sError}</p>}
-          {sessions && rotations && <p className="text-muted">Demo-only exercises are self-ticked, never recorded as camera sessions.</p>}
-          {sessions && !rotations && list.length === 0 && <p className="text-muted">No sessions yet for {TASK_NAME[task]} in this range.</p>}
-          <ul className="divide-y divide-line">
-            {list.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center gap-3 py-3">
-                <span className="w-16 text-muted">{s.date.slice(5)}</span>
-                <span className="min-w-0 flex-1 text-lg">{s.title}</span>
-                {s.illustrative && <Chip tone="neutral">Sample</Chip>}
-                {isReplaySession(s) && <Chip tone="amber">Replay</Chip>}
-                <Chip tone={s.status === 'complete' ? 'mint' : 'amber'}>{s.status === 'ended_early' ? `Ended early · pain ${String(s.feedback?.pain_after ?? '')}` : s.mode === 'nhpt' ? 'Assessment' : 'Complete'}</Chip>
-                <Chip tone={s.tracking === 'usable' ? 'mint' : 'amber'}>{s.tracking === 'usable' ? 'Usable tracking' : 'Limited tracking'}</Chip>
-                <Button variant="secondary" aria-label={`Open ${s.title} · ${s.date}`} onClick={() => nav(`/report/${s.id}`)}>Open</Button>
-              </li>
-            ))}
-          </ul>
-          {listedReplays && <p className="mt-2 text-base text-muted">Replays are listed, never counted: a recorded clip is left out of the charts, totals and pain list.</p>}
-        </Card>
-        <div className="space-y-6">
-          <Card title="Everyday goal log">
-            <p className="text-lg">{countOf(p.goal_log_count, 'attempt')} logged at your everyday goal</p>
-            {logNote && <p className="text-base text-muted" role="status">{logNote}</p>}
-            <Button variant="secondary" className="mt-3" onClick={logAttempt}>Log an attempt</Button>
-          </Card>
-          <Card padding="sm"><p className="text-muted">No recovery score is calculated. Different tasks are never combined.</p></Card>
         </div>
       </div>
     </div>
