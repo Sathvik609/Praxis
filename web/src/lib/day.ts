@@ -219,6 +219,23 @@ export function therapistLine(c: DayCheckin | null): string {
   return 'Saved with your practice record.'
 }
 
+/** Settings › Reset today's check-in: forget today's day on this device (check-in, run, demos)
+ *  and the session's copy of the check-in, so the next session starts with a fresh check-in.
+ *  A stopped day stays stopped: stop rules override everything (CLAUDE.md §1), so a patient
+ *  stopped at pain ≥ 7 cannot reset and check in again at a lower pain. What the service
+ *  received (check-in, therapist flag) is never touched. */
+export function resetTodayCheckin(): { ok: true } | { ok: false; reason: 'stopped' } {
+  if (readDay().stopped) return { ok: false, reason: 'stopped' }
+  try {
+    localStorage.removeItem(DAY_KEY)
+    localStorage.removeItem(LEGACY_CHECKIN_KEY)
+    sessionStorage.removeItem(LEGACY_CHECKIN_KEY)
+  } catch {
+    /* private mode: nothing was stored */
+  }
+  return { ok: true }
+}
+
 // ---- the day plan -----------------------------------------------------------------------
 
 const isWeekly = (id: ExerciseId) => WEEKLY.includes(id)
