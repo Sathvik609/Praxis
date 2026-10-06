@@ -37,3 +37,40 @@ test('the standing pendulum copy asks for a low camera beside a table', () => {
   expect(placementCopy('side', 'left', true).heading).toBe('Place the camera low, beside you')
   expect(placementCopy('side', 'left', false).heading).toBe('Place the camera beside you')
 })
+
+const TABLE_PASS = {
+  all_required_pass: true,
+  checks: [
+    { id: 'camera', label: 'Camera permission', status: 'pass' as const, hint: null },
+    { id: 'person', label: 'One person in view', status: 'pass' as const, hint: null },
+    { id: 'task_area', label: 'Hand and task area in view', status: 'pass' as const, hint: null },
+    { id: 'markers', label: 'Sheet found · all four corner markers visible', status: 'pass' as const, hint: null },
+    { id: 'angle', label: 'Camera looks down at the sheet', status: 'pass' as const, hint: null },
+    { id: 'lighting', label: 'Lighting and steady tracking', status: 'pass' as const, hint: null },
+  ],
+}
+
+test('table view: the service rows plus the "Is this your left arm?" self-check right after the person row', () => {
+  const { rows } = resolveChecks('table', 'left', false, TABLE_PASS, {})
+  expect(rows.map((r) => r.id)).toEqual(['camera', 'person', 'side_confirm', 'task_area', 'markers', 'angle', 'lighting'])
+  expect(rows.find((r) => r.id === 'side_confirm')).toMatchObject({ label: 'Is this your left arm?', source: 'self', status: 'pending', yes: 'Yes, my left arm' })
+  expect(rows.find((r) => r.id === 'markers')?.label).toBe('Sheet found · all four corner markers visible')
+})
+
+test('table view: not ready until the side is confirmed, even when the service passes everything', () => {
+  expect(resolveChecks('table', 'right', false, TABLE_PASS, {}).ready).toBe(false)
+  expect(resolveChecks('table', 'right', false, TABLE_PASS, { side_confirm: true }).ready).toBe(true)
+  expect(resolveChecks('table', 'right', false, { ...TABLE_PASS, all_required_pass: false }, { side_confirm: true }).ready).toBe(false)
+})
+
+test('table view before the first service event: six waiting camera rows plus the side self-check', () => {
+  const { rows, ready } = resolveChecks('table', 'left', false, undefined, {})
+  expect(rows).toHaveLength(7)
+  expect(rows.filter((r) => r.source !== 'self').every((r) => r.status === 'pending')).toBe(true)
+  expect(ready).toBe(false)
+})
+
+test('table view keeps the service hint of a failing row', () => {
+  const svc = { all_required_pass: false, checks: [{ id: 'markers', label: 'x', status: 'check' as const, hint: 'Markers missing: 0, 2. Flatten the sheet and keep it in view.' }] }
+  expect(resolveChecks('table', 'left', false, svc, {}).rows.find((r) => r.id === 'markers')?.hint).toMatch(/Markers missing: 0, 2/)
+})

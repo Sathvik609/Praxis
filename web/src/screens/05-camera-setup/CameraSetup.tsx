@@ -1,35 +1,32 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { RotateCcw } from '../../design/Icon'
-import { Panel } from '../../design/Panel'
+import { RotateCcw, X } from '../../design/Icon'
 import { SESSION_WS_URL, processingPlace } from '../../lib/config'
-import { demoUrl, readDay, sessionUrl, sideOr, startExercise, syncCheckin, therapistLine, type Day, type Side } from '../../lib/day'
+import { readDay, sessionUrl, sideOr, startExercise, syncCheckin, therapistLine, type Day, type Side } from '../../lib/day'
 import { EXERCISES, exerciseById, isHiddenExercise, type Exercise } from '../../lib/seed'
-import { CameraBlocked } from '../../session/CameraBlocked'
-import { LiveIndicator } from '../../session/LiveIndicator'
+import { cameraBlockedCopy } from '../../session/CameraBlocked'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
+import { browserSpeak } from '../../session/useCoach'
 import { useWebcamStream } from '../../session/useWebcamStream'
-import { DayStrip } from '../04-choose/DayStrip'
-import { Checklist, type Check } from './Checklist'
 import { SETUP_TIPS, SetupDiagram, placementCopy } from './SetupDiagram'
-import { resolveChecks, setupViewFor } from './setupView'
+import { resolveChecks, setupViewFor, type Check } from './setupView'
 
 const SHEET: Record<string, string> = { nhpt: 'nhpt_board', cup: 'cup_targets', arm: 'nhpt_board' }
 
 type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
+type QualityEvent = { steadiness?: { ok?: boolean } }
 
-/** Screen 05 · Camera setup and calibration. Continue stays disabled until every required
- *  check passes. The checklist, the placement diagram and the copy follow the exercise's
- *  camera view (`setupView.ts`): front (Arm out to the side), side (hidden since 28 Sep, dormant)
- *  or table (Waiter – cup, NHPT, ArUco markers required). Pose rows the service does not
- *  measure yet are patient self-checks and say so. The feed is a Panel with the live, mirrored
- *  and calibration lines in its corners.
+/** Screen 05 · Camera setup and calibration (design v2, 6 Oct: the designers' immersive `cs-*`
+ *  layout, live J65151–65385). The checks come from the service's `setup_checks` events
+ *  (`setupView.ts`); pose rows the service does not measure yet and the table view's
+ *  "Is this your left arm?" are patient self-checks, confirmed in the coach pill. Once every
+ *  required check passes, a still-pose countdown and a 4 s auto-continue run into the session
+ *  (D-FLOW: Demonstration → Check-in → Setup → Session), with a visible Cancel.
  *
- *  Day flow: the day strip shows where this exercise sits; a demonstration already watched
- *  today can be skipped; a day stopped at check-in never opens the camera. */
+ *  A day stopped at check-in never opens the camera. */
 export function CameraSetup() {
   const [sp] = useSearchParams()
   // A hidden exercise (28 Sep) never opens the camera: back to Choose exercise.
@@ -68,14 +65,14 @@ function CameraSetupFor() {
             <p className="text-lg text-muted">The camera stays off.</p>
           </Card>
         </div>
-        <FlowBar step={2} label="Camera setup" right={<Button onClick={() => nav('/details')}>Back to Home</Button>} />
+        <FlowBar step={3} label="Camera setup" right={<Button onClick={() => nav('/details')}>Back to Home</Button>} />
       </div>
     )
   }
-  return <SetupLive ex={ex} side={side} day={day} />
+  return <SetupLive ex={ex} side={side} rehearse={sp.get('rehearse') === '1'} />
 }
 
-function SetupLive({ ex, side, day }: { ex: Exercise; side: Side; day: Day }) {
+function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse: boolean }) {
   const nav = useNavigate()
   // The arm exercises run the arm pipeline: no sheet.
   const kind = ex.session ?? 'nhpt'
@@ -104,104 +101,280 @@ function SetupLive({ ex, side, day }: { ex: Exercise; side: Side; day: Day }) {
   const cal = last<CalibrationEvent>('calibration') ?? null
   const checks = last<SetupChecksEvent>('setup_checks')
   const { rows, ready } = resolveChecks(view, side, pendulum, checks, ticks)
-  const hasSelf = rows.some((r) => r.source === 'self')
   const restart = () => {
     stop()
     void start()
   }
   const copy = placementCopy(view, side, pendulum)
-  const seenDemo = day.demosSeen.includes(ex.id)
-  const intro = isArm
-    ? view === 'front'
-      ? `No sheet needed. ${ex.name}: face the camera with both shoulders and both hands in view.`
-      : pendulum
-        ? `No sheet needed. ${ex.name}: stand sideways to the camera, your ${side} side toward it.`
-        : `No sheet needed. ${ex.name}: sit sideways to the camera, your ${side} side toward it.`
-    : `Continue unlocks when every required check passes. ${ex.name}.`
+  // The still pose resets while the service says the picture is not steady. The service sends
+  // `quality` (with `steadiness`) only on a sheet calibrate; the arm setup has no steadiness
+  // event, so there the still-pose step is time-only.
+  const steady = last<QualityEvent>('quality')?.steadiness?.ok !== false
+  const local = processingPlace().includes('this device')
+  const [audio, setAudio] = useState(false)
+  const [info, setInfo] = useState(false)
+  // Seconds the patient has been ready and still; it drives the still-pose countdown and then
+  // the auto-continue, and drops back to 0 whenever readiness or steadiness is lost.
+  const [stillN, setStillN] = useState(0)
+  // Cancel holds the auto-continue for the rest of this setup; Continue stays with the patient.
+  const [held, setHeld] = useState(false)
+  const sideWord = side === 'right' ? 'Right' : 'Left'
+  const blocked = !!error
+  const camOn = camActive && !blocked
+  const armed = ready && camOn && steady
+
+  useEffect(() => {
+    if (!armed) return
+    const t = window.setInterval(() => setStillN((n) => Math.min(n + 1, CS_STILL_S + CS_GO_S)), 1000)
+    return () => {
+      window.clearInterval(t)
+      setStillN(0)
+    }
+  }, [armed])
+  const stillLeft = armed ? Math.max(0, CS_STILL_S - stillN) : null
+  const goLeft = stillLeft === 0 && !held ? CS_STILL_S + CS_GO_S - stillN : null
+
+  const goSession = useCallback(() => {
+    startExercise(ex.id)
+    nav(`${sessionUrl(ex, side)}${rehearse ? '&rehearse=1' : ''}`)
+  }, [nav, ex, side, rehearse])
+
+  useEffect(() => {
+    if (goLeft === 0) goSession()
+  }, [goLeft, goSession])
+
+  const short = (id: string) => (id === 'markers' ? 'Sheet' : (CS_SHORT[id] ?? id))
+  type Step = Check & { short: string }
+  const steps: Step[] = [
+    ...rows.map((r) => ({ ...r, short: short(r.id) })),
+    { id: 'still', short: 'Still pose', label: 'Hold still in your starting pose', status: stillLeft === 0 ? 'pass' : 'pending', hint: null, source: 'camera' },
+  ]
+  const firstOpen = rows.findIndex((r) => r.status !== 'pass')
+  const currentIdx = !camOn ? 0 : ready ? (stillLeft === 0 ? -1 : steps.length - 1) : Math.max(0, firstOpen)
+  const cur = currentIdx >= 0 ? steps[currentIdx] : null
+  type Coach = { tone: 'amber' | 'mint'; icon?: string; num?: number; text: string; self?: Step | null }
+  const coach: Coach | null = !camOn
+    ? null
+    : !ready
+      ? { tone: 'amber', icon: cur?.id ?? 'camera', text: cur?.hint || cur?.label || 'Getting ready…', self: cur?.source === 'self' ? cur : null }
+      : stillLeft === 0
+        ? { tone: 'mint', icon: 'check', text: 'All set. Starting your session' }
+        : { tone: 'mint', num: stillLeft ?? CS_STILL_S, text: 'Hold still in your starting pose' }
+  const coachText = coach?.text ?? ''
+  useEffect(() => {
+    if (audio && coachText) browserSpeak(coachText, 'instruct')
+  }, [audio, coachText])
+
+  const offCopy = blocked
+    ? cameraBlockedCopy(/unreachable/i.test(error ?? '') ? 'service_unreachable' : 'camera_blocked', error)
+    : { title: 'Camera is off', text: `Praxis needs your camera to check each rep. ${local ? 'Video stays on this device.' : 'Video is processed in memory and never stored.'}` }
+  const telemetry = [
+    isArm ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration',
+    isArm
+      ? connected
+        ? 'Connection ready'
+        : 'Connecting…'
+      : `Calibration ${cal?.calibrated ? 'locked' : 'searching'}${cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}`,
+    local ? 'Processed on this device' : 'Processed in memory · never stored',
+  ]
 
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
-        <Panel
-          className="self-start"
-          topLeft={<LiveIndicator active={camActive} />}
-          topRight={<span>mirrored · {processingPlace()}</span>}
-          bottomLeft={
-            <span>
-              {isArm ? 'OpenCV 5 · pose view' : 'OpenCV 5 · ArUco calibration'}{' '}
-              <b>{isArm ? (connected ? 'ready' : 'connecting…') : cal?.calibrated ? 'locked' : 'searching'}</b>
-              {!isArm && cal?.calibrated && cal.rms_mm != null ? ` · rms ${cal.rms_mm} mm` : ''}
-              {!isArm && !connected ? ' · connecting…' : ''}
-            </span>
-          }
-        >
-          <video ref={videoRef} muted playsInline className="aspect-4/3 w-full -scale-x-100 object-cover" />
-          <OverlayCanvas width={640} height={480} calibration={cal} />
-          {error && (
-            <div className="absolute inset-0 z-20">
-              <CameraBlocked reason={/unreachable/i.test(error) ? 'service_unreachable' : 'camera_blocked'} detail={error} onRetry={restart} />
-            </div>
-          )}
-        </Panel>
-
-        <div className="flex flex-col gap-5">
-          <div>
-            <DayStrip day={day} active={ex.id} className="mb-2" />
-            <h1 className="text-3xl">Set up camera and equipment</h1>
-            <p className="text-muted">{intro}</p>
-          </div>
-          <Card padding="sm" className="flex items-center gap-4">
-            <SetupDiagram view={view} pendulum={pendulum} />
-            <div className="min-w-0">
-              <h2 className="text-xl">{copy.heading}</h2>
-              <p className="text-lg text-muted">{copy.body}</p>
-            </div>
-          </Card>
-          <Card padding="none" className="px-5">
-            <Checklist checks={rows} onTick={(id) => setTicks((t) => ({ ...t, [id]: !t[id] }))} />
-            {hasSelf && (
-              <p className="border-t border-line py-3 text-lg text-muted">
-                Rows marked “You check”: the camera does not check these yet. Look at the picture and tap “Yes, I can see it”.
-              </p>
-            )}
-          </Card>
-          <p className="text-lg text-muted">{SETUP_TIPS}</p>
-          <p className="text-lg text-muted">Video is {processingPlace()}. Only measurements and events are saved.</p>
-          <div>
-            <Button variant="secondary" icon={<RotateCcw />} onClick={restart}>
-              Restart camera
-            </Button>
-          </div>
+    <div className="cs-root" data-testid="camera-setup">
+      <header className="cs-top">
+        <button type="button" className="cs-exit" onClick={() => nav('/details/choose')}>
+          <X aria-hidden size={16} />
+          Exit
+        </button>
+        <div className="cs-titles">
+          <h1 className="cs-title">{ex.name}</h1>
+          <p className="cs-sub">{`Camera setup · ${sideWord} arm`}</p>
         </div>
-      </div>
-      <FlowBar
-        step={2}
-        label="Camera setup"
-        left={
-          <>
-            <Button variant="secondary" onClick={() => nav('/details/choose')}>
-              Change exercise
-            </Button>
-            {seenDemo && (
-              <Button
-                variant="secondary"
-                disabled={!ready}
-                onClick={() => {
-                  startExercise(ex.id)
-                  nav(sessionUrl(ex, side))
-                }}
-              >
-                Skip demo
-              </Button>
+        <button
+          type="button"
+          className={`cs-audio ${audio ? 'cs-audio-on' : ''}`}
+          aria-pressed={audio}
+          onClick={() => {
+            const next = !audio
+            setAudio(next)
+            if (!next) {
+              try {
+                window.speechSynthesis?.cancel()
+              } catch {
+                /* no speech engine */
+              }
+            }
+          }}
+        >
+          {ico(audio ? 'vol' : 'mute', 16)}
+          {audio ? 'Audio on' : 'Audio off'}
+        </button>
+      </header>
+      <main className="cs-stage">
+        <div className="cs-frame">
+          <video ref={videoRef} muted playsInline className="cs-video" />
+          <OverlayCanvas width={640} height={480} calibration={cal} />
+          {camOn && <div aria-hidden className={`cs-guide ${ready ? 'cs-guide-ok' : ''}`} />}
+        </div>
+        {camOn && (
+          <div className="cs-live" role="status">
+            <span className="cs-live-dot" aria-hidden />
+            <b>Live · not recording</b>
+            <span>· Mirrored ·</span>
+            {ico('lock', 13)}
+            <span>{local ? 'Processed on this device' : 'Processed in memory, never stored'}</span>
+          </div>
+        )}
+        <button type="button" className="cs-info-btn" aria-expanded={info} aria-label="Setup guide and camera details" onClick={() => setInfo((v) => !v)}>
+          i
+        </button>
+        {info && (
+          <div className="cs-info" role="dialog" aria-label="Setup guide">
+            <div className="cs-info-head">
+              <h2>{copy.heading}</h2>
+              <button type="button" aria-label="Close" onClick={() => setInfo(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="cs-info-diagram">
+              <SetupDiagram view={view} pendulum={pendulum} />
+            </div>
+            <p>{copy.body}</p>
+            <p className="cs-info-muted">{SETUP_TIPS}</p>
+            <ul className="cs-info-checks">
+              {rows.map((r) => (
+                <li key={r.id}>
+                  <span className={`cs-mini cs-mini-${r.status === 'pass' ? 'ok' : 'todo'}`}>{r.status === 'pass' ? '✓' : ''}</span>
+                  {r.label}
+                </li>
+              ))}
+            </ul>
+            <div className="cs-telemetry">
+              {telemetry.map((t, i) => (
+                <div key={i}>{t}</div>
+              ))}
+            </div>
+            <div className="cs-info-actions">
+              <button type="button" onClick={restart}>
+                <RotateCcw aria-hidden size={14} />
+                Restart camera
+              </button>
+              <button type="button" onClick={() => nav('/details/choose')}>
+                Change exercise
+              </button>
+            </div>
+          </div>
+        )}
+        {!camOn && (
+          <div className="cs-off" role={blocked ? 'alert' : undefined}>
+            <div className="cs-off-icon">{ico('camoff', 40)}</div>
+            <h2>{offCopy.title}</h2>
+            <p>{offCopy.text}</p>
+            <button type="button" className="cs-allow" onClick={restart}>
+              {blocked ? 'Try again' : 'Allow camera'}
+            </button>
+            <button type="button" className="cs-link" onClick={() => nav('/details/settings')}>
+              No camera? Use a recorded session
+            </button>
+          </div>
+        )}
+        {coach && (
+          <div className={`cs-coach cs-coach-${coach.tone}`} role="status" aria-live="polite">
+            <span className="cs-coach-ic" aria-hidden>
+              {coach.num != null ? coach.num : ico(coach.icon ?? 'dot', 18)}
+            </span>
+            <span className="cs-coach-text">{coach.text}</span>
+            {coach.self && (
+              <button type="button" className="cs-coach-yes" onClick={() => setTicks((t) => ({ ...t, [coach.self!.id]: true }))}>
+                {coach.self.yes ?? 'Yes, I can see it'}
+              </button>
             )}
-          </>
-        }
-        right={
-          <Button disabled={!ready} onClick={() => nav(demoUrl(ex.id, side))}>
-            Continue to demonstration
-          </Button>
-        }
-      />
+          </div>
+        )}
+      </main>
+      <footer className="cs-bar">
+        {/* The artifact's Seated/Bedside segment (hidden by its CSS, read by nothing) is not
+            ported; this empty cell keeps the steps centred in the bar's 1fr · auto · 1fr grid. */}
+        <span aria-hidden />
+        <ol className="cs-steps" aria-label="Setup checks">
+          {steps.map((st, i) => {
+            const shownUpTo = ready ? steps.length : Math.max(0, firstOpen)
+            const state = i === currentIdx ? 'now' : st.status === 'pass' && (st.id === 'still' || i < shownUpTo) ? 'ok' : 'todo'
+            return (
+              <li key={st.id} className={`cs-step cs-step-${state}`} aria-current={state === 'now' ? 'step' : undefined} title={st.label}>
+                <span className="cs-step-ic">
+                  {ico(st.id, 18)}
+                  {state !== 'todo' && (
+                    <span className="cs-step-badge" aria-hidden>
+                      {state === 'ok' ? '✓' : '!'}
+                    </span>
+                  )}
+                </span>
+                <span className="cs-step-label">{st.short}</span>
+                <span className="cs-sr">{state === 'ok' ? ' · done' : state === 'now' ? ' · now' : ''}</span>
+              </li>
+            )
+          })}
+        </ol>
+        <div className="cs-go">
+          {goLeft != null && (
+            <button type="button" className="cs-skip" onClick={() => setHeld(true)}>
+              Cancel
+            </button>
+          )}
+          <button type="button" className="cs-continue" disabled={!ready} onClick={goSession}>
+            {goLeft != null ? `Continue · ${goLeft}` : 'Continue'}
+          </button>
+        </div>
+      </footer>
     </div>
   )
+}
+
+function ico(id: string, size = 20) {
+  return (
+    <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      {(CS_ICONS[id] ?? CS_ICONS.dot).map((d, i) => {
+        if (!d.startsWith('c:')) return <path key={i} d={d} />
+        const [, cx, cy, r] = d.split(':')
+        return <circle key={i} cx={+cx} cy={+cy} r={+r} />
+      })}
+    </svg>
+  )
+}
+
+const CS_STILL_S = 2
+const CS_GO_S = 4
+const CS_SHORT: Record<string, string> = {
+  side_confirm: 'Your side',
+  camera: 'Camera',
+  person: 'In frame',
+  task_area: 'Hand area',
+  angle: 'Angle',
+  lighting: 'Lighting',
+  front_view: 'Facing',
+  upper_in_view: 'Both arms',
+  side_view: 'Side on',
+  hip_in_view: 'Hip',
+  arm_in_view: 'Whole arm',
+}
+const CS_ICONS: Record<string, string[]> = {
+  camera: ['M3 8h3.5L8 5.5h8L17.5 8H21v11H3z', 'c:12:13:3.6'],
+  person: ['c:12:7:3.5', 'M5 20.5c0-4 3.1-6.8 7-6.8s7 2.8 7 6.8'],
+  front_view: ['c:12:7:3.5', 'M5 20.5c0-4 3.1-6.8 7-6.8s7 2.8 7 6.8'],
+  side_confirm: ['c:12:6:3', 'M7 21v-6.5a5 5 0 0 1 10 0V21', 'M4 11l3 2'],
+  side_view: ['c:12:6:3', 'M12 9.5v6l-2 5.5M12 12l3.5 2.5', 'M9 21h6'],
+  hip_in_view: ['c:12:5:2.5', 'M12 8v6M8 14h8M9 14l-1 7M15 14l1 7'],
+  task_area: ['M8 13V6a1.5 1.5 0 0 1 3 0v5', 'M11 11V4.5a1.5 1.5 0 0 1 3 0V11', 'M14 11V6a1.5 1.5 0 0 1 3 0v8c0 4-2.5 7-6 7-2.4 0-4-1.2-5.4-3.4L4.2 15a1.5 1.5 0 0 1 2.5-1.6L8 15'],
+  markers: ['M6.5 4.5h9l-1.4 15h-6.2z', 'M15.5 8h1.8a2 2 0 0 1 0 4h-2.2'],
+  angle: ['M4 20h16', 'M4 20 16 7', 'M10 20a6.5 6.5 0 0 0-2-4.6'],
+  upper_in_view: ['c:12:5:2.5', 'M3 10h18M12 10v5M9 21l3-6 3 6'],
+  arm_in_view: ['c:12:5:2.5', 'M3 10h18M12 10v5M9 21l3-6 3 6'],
+  lighting: ['c:12:12:4', 'M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4'],
+  still: ['c:12:13:7.5', 'M12 9.5V13l2.4 2', 'M9.5 2.5h5'],
+  check: ['M5 12.5 9.5 17 19 7.5'],
+  lock: ['M6 11h12v9H6z', 'M8.5 11V8a3.5 3.5 0 0 1 7 0v3'],
+  camoff: ['M3 3l18 18', 'M7.5 7.5H3v11.5h14', 'M10 5h6l1.5 2.5H21v10', 'M9.6 10.6a3.6 3.6 0 0 0 4.9 4.9'],
+  vol: ['M11 5 6 9H2.5v6H6l5 4z', 'M15.5 8.5a5 5 0 0 1 0 7', 'M18.5 5.5a9 9 0 0 1 0 13'],
+  mute: ['M11 5 6 9H2.5v6H6l5 4z', 'M22 9l-6 6M16 9l6 6'],
+  dot: ['c:12:12:4'],
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { readDay, todayKey } from '../../lib/day'
 import * as hook from '../../session/useWebcamStream'
@@ -50,35 +50,61 @@ const ARM_EVENT = {
   ],
 }
 
+const pass = (id: string, label = id) => ({ id, label, status: 'pass', hint: null })
+const TABLE_PASS = {
+  type: 'setup_checks',
+  t: 0,
+  id: 1,
+  all_required_pass: true,
+  checks: [pass('camera'), pass('person'), pass('task_area'), pass('markers'), pass('angle'), pass('lighting')],
+}
+
+const coach = () => document.querySelector('.cs-coach') as HTMLElement
+const tick = (ms: number) => act(() => void vi.advanceTimersByTime(ms))
+
 beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
   vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('offline'))))
 })
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
 
 test('continue is disabled until all required checks pass', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
   renderSetup('/setup?exercise=nhpt')
-  expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
 })
 
-test('continue enables when checks pass; the feed shows live, mirrored, where it is processed, and calibration', () => {
-  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: true, checks: [] })
-  renderSetup('/setup?exercise=nhpt')
-  expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeEnabled()
-  expect(screen.getByText('Live · not recording')).toBeInTheDocument()
+test('the live pill says Live · not recording and where the video is processed while the camera is on', () => {
+  mockStream(TABLE_PASS)
+  renderSetup('/setup?exercise=nhpt&side=left')
+  const pill = document.querySelector('.cs-live') as HTMLElement
+  expect(within(pill).getByText('Live · not recording')).toBeVisible()
   // jsdom runs on localhost: the edge wording
-  expect(screen.getByText('mirrored · processed on this device, never stored')).toBeInTheDocument()
-  expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
+  expect(pill).toHaveTextContent('Processed on this device')
+  expect(screen.getByRole('heading', { name: 'Nine-Hole Peg Test' })).toBeInTheDocument()
+  expect(screen.getByText('Camera setup · Left arm')).toBeInTheDocument()
 })
 
-test('the arm setup (Arm out to the side) asks to face the camera and needs no sheet', () => {
+test('no live pill while the camera is off', () => {
+  mockStream(null, false)
+  renderSetup('/setup?exercise=nhpt')
+  expect(screen.queryByText('Live · not recording')).not.toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Camera is off' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Allow camera' })).toBeInTheDocument()
+})
+
+test('the arm setup (Arm out to the side) runs the arm pipeline with no sheet and lists the front-view steps', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
-  renderSetup('/setup?exercise=abduction')
-  expect(screen.getByText(/No sheet needed/)).toBeInTheDocument()
-  expect(screen.getByText(/Arm out to the side: face the camera/)).toBeInTheDocument()
+  renderSetup('/setup?exercise=abduction&side=right')
   expect(hook.useWebcamStream).toHaveBeenLastCalledWith(expect.objectContaining({ params: { sheet: 'nhpt_board', for: 'arm' } }))
+  const steps = screen.getByRole('list', { name: 'Setup checks' })
+  for (const s of ['Camera', 'In frame', 'Facing', 'Both arms', 'Lighting', 'Still pose']) expect(within(steps).getByText(s)).toBeInTheDocument()
+  expect(within(steps).queryByText('Sheet')).not.toBeInTheDocument()
+  expect(screen.getByText('Camera setup · Right arm')).toBeInTheDocument()
 })
 
 test.each(['pendulum', 'arm', 'flexion', 'external_rotation', 'internal_rotation'])('a deep link to hidden %s goes back to Choose and never opens the camera', (id) => {
@@ -89,105 +115,139 @@ test.each(['pendulum', 'arm', 'flexion', 'external_rotation', 'internal_rotation
   expect(hook.useWebcamStream).not.toHaveBeenCalled()
 })
 
-test('the front view shows pose rows, never the sheet rows, even before the first check arrives', () => {
+test('the setup guide lists the front-view rows and placement, never the sheet rows', () => {
   mockStream(null)
   renderSetup('/setup?exercise=abduction&side=left')
-  expect(screen.queryByText(/Sheet found/)).not.toBeInTheDocument()
-  expect(screen.queryByText('Camera looks down at the sheet')).not.toBeInTheDocument()
-  expect(screen.getByText('You face the camera')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
+  const guide = screen.getByRole('dialog', { name: 'Setup guide' })
+  expect(within(guide).getByText('You face the camera')).toBeInTheDocument()
+  expect(within(guide).getByText('Both shoulders and both hands in view')).toBeInTheDocument()
+  expect(within(guide).queryByText(/Sheet found/)).not.toBeInTheDocument()
+  expect(within(guide).queryByText('Hip in view')).not.toBeInTheDocument()
+  expect(within(guide).getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
+  expect(within(guide).getByRole('img', { name: /chest height, 2 to 2.5 metres/ })).toBeInTheDocument()
+  expect(within(guide).getByText(/Light from the front, no window behind you/)).toBeInTheDocument()
 })
 
-test('pose rows the camera does not check yet are labelled self-checks and must be ticked', () => {
+test('pose rows the camera does not check yet are confirmed by the patient in the coach pill', () => {
   mockStream(ARM_EVENT)
   renderSetup('/setup?exercise=abduction&side=right')
-  expect(screen.getAllByText('You check')).toHaveLength(2)
-  expect(screen.getByText(/the camera does not check these yet/i)).toBeInTheDocument()
-  const cont = screen.getByRole('button', { name: /Continue to demonstration/ })
+  const cont = screen.getByRole('button', { name: 'Continue' })
   expect(cont).toBeDisabled()
-  for (const b of screen.getAllByRole('button', { name: /yes, I can see it/ })) fireEvent.click(b)
-  expect(screen.getAllByText('You checked')).toHaveLength(2)
+  expect(coach()).toHaveTextContent('Turn your chair so you face the camera straight on.')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
+  expect(coach()).toHaveTextContent('Move back until both hands fit with your arms out to the side.')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
   expect(cont).toBeEnabled()
+  expect(coach()).toHaveTextContent('Hold still in your starting pose')
 })
 
-test('once the service decides a pose row, the camera wins over the tick', () => {
+test('once the service decides a pose row, the camera wins and there is no tick for it', () => {
   mockStream({
     ...ARM_EVENT,
     checks: [...ARM_EVENT.checks.filter((c) => c.id !== 'front_view'), { id: 'front_view', label: 'x', status: 'check', hint: null }],
   })
   renderSetup('/setup?exercise=abduction&side=left')
-  expect(screen.getAllByText('You check')).toHaveLength(1)
-  expect(screen.getByText('Check')).toBeInTheDocument()
-  expect(screen.getByText(/Turn your chair so you face the camera straight on/)).toBeInTheDocument()
-  for (const b of screen.getAllByRole('button', { name: /yes, I can see it/ })) fireEvent.click(b)
-  expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
+  expect(coach()).toHaveTextContent('Turn your chair so you face the camera straight on.')
+  expect(within(coach()).queryByRole('button')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
 })
 
-test('the front view asks to face the camera with both shoulders and hands in view, and has no hip row', () => {
-  mockStream(ARM_EVENT)
-  renderSetup('/setup?exercise=abduction')
-  expect(screen.getByText('You face the camera')).toBeInTheDocument()
-  expect(screen.getByText('Both shoulders and both hands in view')).toBeInTheDocument()
-  expect(screen.queryByText('Hip in view')).not.toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /chest height, 2 to 2.5 metres/ })).toBeInTheDocument()
-  expect(screen.getByText(/Light from the front, no window behind you/)).toBeInTheDocument()
+test('the table view asks "Is this your left arm?" and Continue waits for the answer even when the service passes', () => {
+  mockStream(TABLE_PASS)
+  renderSetup('/setup?exercise=cup&side=left')
+  const cont = screen.getByRole('button', { name: 'Continue' })
+  expect(cont).toBeDisabled()
+  expect(coach()).toHaveTextContent('Is this your left arm?')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  expect(cont).toBeEnabled()
 })
 
-test('camera blocked offers a recorded session and the checklist shows six waiting rows', () => {
+test('camera blocked shows why, Try again and a recorded session', () => {
   mockStream(null, false, 'camera: permission denied')
   renderSetup('/setup?exercise=nhpt')
   expect(screen.getByRole('alert')).toHaveTextContent(/Camera permission needed/)
-  expect(screen.getByRole('button', { name: 'Use a recorded session' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
-  expect(screen.getAllByText('Waiting')).toHaveLength(6)
+  fireEvent.click(screen.getByRole('button', { name: 'No camera? Use a recorded session' }))
+  expect(screen.getByText('AT /details/settings')).toBeInTheDocument()
 })
 
-test('sheet tasks show the overhead-mount diagram and copy; the arm task does not', () => {
+test('sheet tasks show the overhead-mount diagram and copy in the guide; the arm task does not', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
   const { unmount } = renderSetup('/setup?exercise=cup')
+  fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
   expect(screen.getByRole('heading', { name: 'Mount the camera above the table' })).toBeInTheDocument()
   expect(screen.getByRole('img', { name: /45 to 60 centimetres above the table/ })).toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /two-thirds of the picture/ })).toBeInTheDocument()
   expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
+  expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
   unmount()
   renderSetup('/setup?exercise=abduction')
+  fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
   expect(screen.queryByRole('heading', { name: 'Mount the camera above the table' })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
 })
 
-test('the angle row shows the service hint when the camera is too steep', () => {
+test('the coach pill shows the service hint when the camera is too steep', () => {
   mockStream({
     type: 'setup_checks',
     t: 0,
     id: 1,
     all_required_pass: false,
-    checks: [{ id: 'angle', label: 'Camera looks down at the sheet', status: 'check', hint: 'Mount the camera above the table, pointing straight down (a phone on a stand works).' }],
+    checks: [pass('camera'), pass('person'), pass('task_area'), pass('markers'), { id: 'angle', label: 'Camera looks down at the sheet', status: 'check', hint: 'Mount the camera above the table, pointing straight down (a phone on a stand works).' }],
   })
-  renderSetup('/setup?exercise=nhpt')
-  expect(screen.getByText('Check')).toBeInTheDocument()
-  expect(screen.getByText(/a phone on a stand works/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Continue to demonstration/ })).toBeDisabled()
+  renderSetup('/setup?exercise=nhpt&side=left')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  expect(coach()).toHaveTextContent(/a phone on a stand works/)
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
 })
 
-test('continue carries the side to the demonstration', () => {
-  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: true, checks: [] })
+test('ready: a still-pose countdown, then a 4 s auto-continue into the session', () => {
+  vi.useFakeTimers()
+  mockStream(TABLE_PASS)
   renderSetup('/setup?exercise=cup&side=right')
-  fireEvent.click(screen.getByRole('button', { name: 'Continue to demonstration' }))
-  expect(screen.getByText('AT /details/demo?exercise=cup&side=right')).toBeInTheDocument()
-})
-
-test('a demo already seen today can be skipped straight to practice', () => {
-  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: null, done: [], demosSeen: ['cup'], current: null, finished: [], stopped: null }))
-  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: true, checks: [] })
-  renderSetup('/setup?exercise=cup&side=left')
-  fireEvent.click(screen.getByRole('button', { name: 'Skip demo' }))
-  expect(screen.getByText('AT /session?exercise=cup&side=left')).toBeInTheDocument()
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my right arm' }))
+  expect(coach()).toHaveTextContent('Hold still in your starting pose')
+  tick(1000)
+  tick(1000)
+  expect(coach()).toHaveTextContent('All set. Starting your session')
+  expect(screen.getByRole('button', { name: 'Continue · 4' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeVisible()
+  for (let i = 0; i < 4; i++) tick(1000)
+  expect(screen.getByText('AT /session?exercise=cup&side=right')).toBeInTheDocument()
   expect(readDay().current).toBe('cup')
 })
 
-test('no Skip demo for a demo not seen today', () => {
-  mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: true, checks: [] })
+test('Cancel stops the auto-continue (artifact link-button style) and leaves Continue to the patient', () => {
+  vi.useFakeTimers()
+  mockStream(TABLE_PASS)
+  renderSetup('/setup?exercise=nhpt&side=left')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  tick(1000)
+  tick(1000)
+  tick(1000)
+  const cancel = screen.getByRole('button', { name: 'Cancel' })
+  expect(cancel).toHaveClass('cs-skip')
+  fireEvent.click(cancel)
+  expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+  for (let i = 0; i < 8; i++) tick(1000)
+  expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+  expect(screen.getByText('AT /session?exercise=nhpt&hand=left')).toBeInTheDocument()
+})
+
+test('Continue carries rehearse=1 into the session', () => {
+  mockStream(TABLE_PASS)
+  renderSetup('/setup?exercise=cup&side=left&rehearse=1')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+  expect(screen.getByText('AT /session?exercise=cup&side=left&rehearse=1')).toBeInTheDocument()
+})
+
+test('Exit goes back to Choose exercise', () => {
+  mockStream(null)
   renderSetup('/setup?exercise=cup&side=left')
-  expect(screen.queryByRole('button', { name: 'Skip demo' })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Exit' }))
+  expect(screen.getByText('AT /details/choose')).toBeInTheDocument()
 })
 
 test('a stopped day never opens the camera', () => {
@@ -198,11 +258,4 @@ test('a stopped day never opens the camera', () => {
   expect(start).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
   expect(screen.getByText('AT /details')).toBeInTheDocument()
-})
-
-test('mid-day the setup shows where this exercise sits in the day', () => {
-  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 2, new_symptoms: false, tier: 'full', flagged: false, synced: true, side: 'left', minutes: 14 }, done: ['abduction'], demosSeen: [], current: null, finished: [], stopped: null }))
-  mockStream(null)
-  renderSetup('/setup?exercise=cup')
-  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 2 · Waiter – cup')
 })
