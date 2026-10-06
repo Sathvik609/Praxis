@@ -37,15 +37,18 @@ test('guidance checkboxes persist to localStorage and load back', async () => {
   mockApi({ '/api/replay/list': { clips: [] } })
   const { unmount } = renderSettings()
   expect(screen.getByLabelText(/^Spoken instructions/)).not.toBeChecked()
-  expect(screen.getByLabelText(/^Larger text/)).not.toBeChecked()
+  // larger text is on by default (the designers' artifact renders at the 18 px root)
+  expect(screen.getByLabelText(/^Larger text/)).toBeChecked()
   fireEvent.click(screen.getByLabelText(/^Larger text/))
-  expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(true)
-  // larger text is real: the root font scales at once
-  expect(document.documentElement.dataset.text).toBe('large')
+  expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(false)
+  // larger text is real: the root font returns to normal at once
+  expect(document.documentElement.dataset.text).toBeUndefined()
   expect(await screen.findByText(/No recordings available yet/)).toBeInTheDocument()
   unmount()
   renderSettings()
-  expect(screen.getByLabelText(/^Larger text/)).toBeChecked()
+  expect(screen.getByLabelText(/^Larger text/)).not.toBeChecked()
+  fireEvent.click(screen.getByLabelText(/^Larger text/))
+  expect(document.documentElement.dataset.text).toBe('large')
 })
 
 test('replay clips are named from the exercise registry, including arm clips by exercise id', async () => {

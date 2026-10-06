@@ -11,3 +11,8 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
 export function processingPlace(hostname: string = location.hostname): string {
   return LOCAL_HOSTS.has(hostname) ? 'processed on this device, never stored' : 'processed on the Praxis service in memory, never stored'
 }
+
+/** `pnpm build:design` only: the static design preview with fixtures in place of the session
+ *  service. A build-time constant, so every other build drops the preview code. Anything
+ *  simulated lives under `src/designPreview/` and is reached only through this flag. */
+export const DESIGN_PREVIEW = import.meta.env.MODE === 'design'
