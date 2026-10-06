@@ -10,8 +10,9 @@ import { STATUS_WORD, areaSummary, type AreaKey } from '../../lib/areaSummary'
 import { WEEKDAYS } from '../../lib/calendar'
 import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
 import { plural } from '../../lib/plural'
-import { REGIONS, exerciseById } from '../../lib/seed'
-import { CoachSheet } from '../coach/CoachDrawer'
+import { REGIONS, exerciseById, type ExerciseId } from '../../lib/seed'
+import { demoUrl, readSide } from '../../lib/day'
+import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
 
@@ -129,8 +130,15 @@ export function Home() {
       <div className="flex flex-col gap-4">
         <AreaDetail k={focus} head={{ name: region.title, word: STATUS_WORD[region.status], headline }} view={view} goal={goal} onGo={nav} />
       </div>
-      {/* Task 7 replaces this with the artifact's CoachChat. */}
-      <CoachSheet open={coachOpen} onOpenChange={setCoachOpen} />
+      <CoachChat
+        open={coachOpen}
+        onOpenChange={setCoachOpen}
+        side={readSide() ?? 'left'}
+        onBegin={(id) => {
+          setCoachOpen(false)
+          nav(demoUrl(id as ExerciseId, readSide() ?? 'left'))
+        }}
+      />
     </div>
   )
 }

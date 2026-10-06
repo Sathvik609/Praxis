@@ -1,29 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import { PRESCRIPTION, SESSION, mockApi } from '../../test/api-mock'
-import { CoachDrawer, CoachSheet } from './CoachDrawer'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { PRESCRIPTION, mockApi } from '../../test/api-mock'
+import { CoachDrawer } from './CoachDrawer'
 
-test('coach drawer answers from the prescription and is labeled rule-based', async () => {
-  mockApi({ '/api/prescription': PRESCRIPTION, '/api/sessions': { sessions: [SESSION] } })
-  render(<MemoryRouter><CoachDrawer /></MemoryRouter>)
-  expect(await screen.findByText(/Rule-based coach · LLM agent pending/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: /What is my program today/ }))
-  expect(await screen.findByText(/2 slow arcs then 2 fast arcs/)).toBeInTheDocument()
-  expect(screen.getByText(/Today: Arm out to the side \(2 sets of 8, hold 3 s/)).toBeInTheDocument()
+const item = (id: string, name: string, order: number) => ({ id, name, dose: 'd', sets: 2, reps: 8, hold_s: 3, target_deg: 90, ceiling_deg: 90, tier: 'full', steps: [], order })
+const PLAN = { pain: 0, tier: 'full', reason: '', minutes: 10, items: [item('abduction', 'Arm out to the side', 1), item('cup', 'Waiter – cup', 2)], weekly: [], rest_advice: null, therapist_flag: false }
+
+beforeEach(() => localStorage.clear())
+
+test('/details/coach is the library coach as a page: labelled rule-based, Begin setup opens the demo', async () => {
+  mockApi({ '/api/plan': PLAN, '/api/calendar': { days: [], schedule: PRESCRIPTION.schedule, today: '2026-10-06' }, '/api/prescription': PRESCRIPTION, '/api/sessions': { sessions: [] } })
+  render(
+    <MemoryRouter initialEntries={['/details/coach']}>
+      <Routes>
+        <Route path="/details/coach" element={<CoachDrawer />} />
+        <Route path="/details/demo" element={<div>DEMO</div>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  expect(await screen.findByRole('dialog', { name: 'Praxis coach' })).toBeInTheDocument()
+  expect(screen.getAllByText('Rule-based coach · LLM agent pending').length).toBeGreaterThan(0)
   expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
-  fireEvent.click(screen.getByRole('button', { name: /Can I do more/ }))
-  expect(await screen.findByText(/never goes above Level 2/)).toBeInTheDocument()
-})
-
-test('coach sheet is a dialog that answers the same questions and closes', async () => {
-  mockApi({ '/api/prescription': PRESCRIPTION, '/api/sessions': { sessions: [SESSION] } })
-  const onOpenChange = vi.fn()
-  render(<MemoryRouter><CoachSheet open onOpenChange={onOpenChange} /></MemoryRouter>)
-  const dialog = await screen.findByRole('dialog', { name: 'Ask the coach' })
-  expect(dialog).toBeInTheDocument()
-  expect(screen.getByText(/Rule-based coach · LLM agent pending/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: /How did my last session go/ }))
-  expect(await screen.findByText(/17 verified, 3 unverified/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-  expect(onOpenChange).toHaveBeenCalledWith(false)
+  fireEvent.click(await screen.findByRole('button', { name: 'Begin setup' }))
+  expect(await screen.findByText('DEMO')).toBeInTheDocument()
 })

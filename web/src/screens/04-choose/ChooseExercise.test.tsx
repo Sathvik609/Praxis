@@ -168,3 +168,16 @@ test('mid-day the next undone exercise is preselected, the day strip shows progr
   fireEvent.click(screen.getByRole('button', { name: 'Begin setup' }))
   expect(screen.getByText('AT /details/setup?exercise=cup&side=right')).toBeInTheDocument()
 })
+
+test('ask the coach opens the library coach from Choose', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }) as Response))
+  try {
+    renderChoose()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask the coach' }))
+    expect(await screen.findByRole('dialog', { name: 'Praxis coach' })).toBeInTheDocument()
+    expect(screen.getAllByText('Rule-based coach · LLM agent pending').length).toBeGreaterThan(0)
+    expect(await screen.findByText(/couldn't reach the service/)).toBeInTheDocument()
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})

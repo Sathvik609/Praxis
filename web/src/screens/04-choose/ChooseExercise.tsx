@@ -8,9 +8,10 @@ import { Checkbox } from '../../design/Checkbox'
 import { Chip, type ChipTone } from '../../design/Chip'
 import { X } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
-import { nextExercise, readDay, sideOr, syncCheckin, therapistLine, type Day } from '../../lib/day'
+import { demoUrl, nextExercise, readDay, sideOr, syncCheckin, therapistLine, type Day } from '../../lib/day'
 import { DAY_ORDER, TIER_TEXT, WEEKLY, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
 import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
+import { CoachChat } from '../coach/CoachChat'
 import { DayStrip } from './DayStrip'
 
 /** Badge text always carries the meaning; the tone only repeats it. */
@@ -98,6 +99,7 @@ export function ChooseExercise() {
   const [owned, setOwned] = useState<EquipmentId[]>(() => readEquipment())
   const [kitOpen, setKitOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [coachOpen, setCoachOpen] = useState(false)
   const [time, setTime] = useState<Time | null>(null)
   const [painAnswer, setPainAnswer] = useState<Pain | null>(null)
   const [kit, setKit] = useState<HasKit | null>(null)
@@ -150,6 +152,7 @@ export function ChooseExercise() {
             <Pill ariaLabel="Show" value={filter} onChange={setFilter} options={[{ value: 'today', label: "Today's plan" }, { value: 'all', label: 'All' }, { value: 'equipment', label: 'Equipment I have' }]} />
             {filter === 'equipment' && <Button variant="secondary" onClick={() => setKitOpen(true)}>What I have</Button>}
             <Button variant="secondary" onClick={() => openHelp(true)}>Help me choose</Button>
+            <Button variant="secondary" className="lib-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           </div>
         </div>
 
@@ -269,6 +272,17 @@ export function ChooseExercise() {
           <Button onClick={usePick} disabled={!advice.pick}>Use this pick</Button>
         </div>
       </Sheet>
+      {/* Library coach (Task 7); Task 8's rewrite of this screen keeps the opener (ruling R1). */}
+      <CoachChat
+        open={coachOpen}
+        onOpenChange={setCoachOpen}
+        side={side}
+        onBegin={(id) => {
+          setCoachOpen(false)
+          setSelected(id as ExerciseId)
+          nav(demoUrl(id as ExerciseId, side))
+        }}
+      />
     </div>
   )
 }

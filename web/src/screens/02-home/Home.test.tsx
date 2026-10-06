@@ -158,10 +158,11 @@ test('zoom starts at 1.25× and is a camera zoom inside the stage, never a CSS s
   expect(document.querySelector('[style*="scale("]')).toBeNull()
 })
 
-test('ask the coach opens the drawer', async () => {
+test('ask the coach opens the library coach, labelled rule-based', async () => {
   await renderHome()
   fireEvent.click(screen.getByRole('button', { name: 'Ask the coach' }))
-  expect(await screen.findByRole('dialog', { name: 'Ask the coach' })).toBeInTheDocument()
+  expect(await screen.findByRole('dialog', { name: 'Praxis coach' })).toBeInTheDocument()
+  expect(screen.getAllByText('Rule-based coach · LLM agent pending').length).toBeGreaterThan(0)
 })
 
 test('open report goes to the last session report when there is one, else progress', async () => {

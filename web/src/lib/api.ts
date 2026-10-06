@@ -44,6 +44,10 @@ export type TherapistPatient = { id: string; name: string; program: string; open
  *  therapist has been told. */
 export type CheckinBody = { patient_id?: string; pain: number; new_symptoms: boolean; rpe?: number; notes?: string }
 export type CheckinResult = { tier: 'full' | 'gentle' | 'rest'; flagged: boolean; reasons: string[]; plan?: unknown }
+/** `GET /api/plan?pain=` (service `plan.day_plan`): today in the default order at the pain
+ *  tier's dose. `items` are the day (with `order`), `weekly` the peg test; both empty on rest. */
+export type PlanItem = { id: string; name: string; dose: string; sets: number; reps: number; hold_s: number; target_deg: number; ceiling_deg: number; tier: 'full' | 'gentle'; order?: number; steps: string[] }
+export type PlanView = { pain: number; tier: 'full' | 'gentle' | 'rest'; reason: string; minutes: number; items: PlanItem[]; weekly: PlanItem[]; rest_advice: string | null; therapist_flag: boolean }
 export type SelfReport = { ok: boolean; exercise: string; verified?: false; source?: 'self_ticked'; label?: string; sets_today?: number; error?: string }
 
 /** `GET /health`. `agent` is absent on a service from before the agent coach (29 Sep). */
@@ -77,6 +81,7 @@ export const api = {
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
   /** A demo-only exercise the patient ticked: logged as self-reported, never as a verified rep. */
   selfReport: (exercise: string, sets = 1) => post<SelfReport>('/api/self_report', { exercise, sets }),
+  plan: (pain: number) => get<PlanView>(`/api/plan?pain=${Math.max(0, Math.min(10, Math.round(pain)))}`),
   checkin: (body: CheckinBody) => post<CheckinResult>('/api/checkin', body),
   /** Screen 12. No range: the Mon–Sun week holding the service's today. */
   calendar: (range?: { from: string; to: string }) => get<Calendar>(`/api/calendar${range ? `?from=${range.from}&to=${range.to}` : ''}`),
