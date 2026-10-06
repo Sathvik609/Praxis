@@ -55,3 +55,6 @@ web/blender/*.blend1
 .env
 .env.*
 !.env.example
+
+# designers artifact snapshots (large built bundles), see docs/design-handoff/
+.design-handoff/
