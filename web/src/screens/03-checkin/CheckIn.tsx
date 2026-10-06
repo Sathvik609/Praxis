@@ -1,17 +1,16 @@
 import { useEffect, useId, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
 import { Chip, type ChipTone } from '../../design/Chip'
-import { Mic } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
-import { readDay, readSide, saveCheckin, setupUrl, stopReason, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
+import { demoUrl, readDay, readSide, saveCheckin, setupUrl, sideOr, stopReason, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
 import { TIER_TEXT, tierFor, type Tier } from '../../lib/plan'
-import { exerciseById } from '../../lib/seed'
+import { exerciseById, type ExerciseId } from '../../lib/seed'
 
 /** Kept for older imports: what screen 03 collects. */
 export type CheckInData = CheckinAnswers
@@ -51,8 +50,10 @@ const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest:
  *  here, before any setup or demonstration. "Your therapist has been told" appears only when
  *  the service says it flagged; offline, the check-in is kept on this device and posted again
  *  on the next load. A second visit the same day reuses today's answers (one tap to go on).
- *  `?next=<exercise>` continues to that exercise's camera setup instead of the list (Home →
- *  "Run the peg test"). */
+ *  `?next=<exercise>` is the demonstration's hand-off (design v2, 6 Oct: Choose → Demonstration
+ *  → Check-in → Camera setup): with a valid check-in today it goes straight to that exercise's
+ *  camera setup without asking again; otherwise the form ends in "Continue to camera setup" and
+ *  Back returns to the demonstration. `&rehearse=1` is passed through to setup. */
 export function CheckIn() {
   const nav = useNavigate()
   const [sp] = useSearchParams()
@@ -70,13 +71,19 @@ export function CheckIn() {
     }
   }, [])
 
-  const continueLabel = nextCoached ? `Continue to ${nextCoached.name}` : 'Continue to exercises'
-  const goOn = (side: Side) => nav(nextCoached ? setupUrl(nextCoached.id, side) : '/details/choose')
+  const rehearse = sp.get('rehearse') === '1'
+  const continueLabel = nextCoached ? 'Continue to camera setup' : 'Continue to exercises'
+  const nextUrl = (id: ExerciseId, side: Side) => `${setupUrl(id, side)}${rehearse ? '&rehearse=1' : ''}`
+  const goOn = (side: Side) => nav(nextCoached ? nextUrl(nextCoached.id, side) : '/details/choose')
   const c = day.checkin
+  const goBack = () => nav(nextCoached ? demoUrl(nextCoached.id, sideOr(sp.get('side') ?? c?.side)) : '/details')
+  const backLabel = nextCoached ? 'Back to demonstration' : 'Back to Home'
 
   if (c && day.stopped && !again) {
     return <Stopped day={day} painMax={rx?.stop_rules?.pain_max} onHome={() => nav('/details')} onAgain={() => setAgain(true)} />
   }
+  // Demo hand-off: today's answers stand, so setup follows without asking again (D-FLOW).
+  if (c && !again && nextCoached) return <Navigate replace to={nextUrl(nextCoached.id, c.side)} />
   if (c && !again) {
     return (
       <div className="flex min-h-full flex-col">
@@ -94,11 +101,11 @@ export function CheckIn() {
           <p className="mt-4 text-lg text-muted">If your pain has changed since, check in again. Today's plan follows your latest answer.</p>
         </div>
         <FlowBar
-          step={0}
-          label="Check-in"
+          step={2}
+          label="Pre-session check-in"
           left={
             <>
-              <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
+              <Button variant="secondary" onClick={goBack}>{backLabel}</Button>
               <Button variant="secondary" onClick={() => setAgain(true)}>Check in again</Button>
             </>
           }
@@ -110,10 +117,11 @@ export function CheckIn() {
   return (
     <CheckInForm
       painMax={rx?.stop_rules?.pain_max}
-      level={rx?.level}
       clinician={rx?.clinician?.split(',')[0] ?? 'your therapist'}
       continueLabel={continueLabel}
-      onBack={() => nav('/details')}
+      readyLabel={nextCoached ? 'Ready for camera setup' : 'Ready to choose an exercise'}
+      onBack={goBack}
+      backLabel={backLabel}
       onSaved={(side) => {
         const d = readDay()
         setDay(d)
@@ -148,8 +156,8 @@ function Stopped({ day, painMax, onHome, onAgain }: { day: Day; painMax?: number
         {stop === 'rest' && <p className="mt-4 text-lg text-muted">Pain can settle. If it has, you can check in again later today.</p>}
       </div>
       <FlowBar
-        step={0}
-        label="Check-in"
+        step={2}
+        label="Pre-session check-in"
         left={stop === 'rest' ? <Button variant="secondary" onClick={onAgain}>Check in again</Button> : undefined}
         right={<Button onClick={onHome}>Back to Home</Button>}
       />
@@ -157,7 +165,7 @@ function Stopped({ day, painMax, onHome, onAgain }: { day: Day; painMax?: number
   )
 }
 
-function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved }: { painMax?: number; level?: number; clinician: string; continueLabel: string; onBack: () => void; onSaved: (side: Side | null) => void }) {
+function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, backLabel, onSaved }: { painMax?: number; clinician: string; continueLabel: string; readyLabel: string; onBack: () => void; backLabel: string; onSaved: (side: Side | null) => void }) {
   const hintId = useId()
   const [pain, setPain] = useState<number | null>(null)
   const [side, setSide] = useState<Side | null>(() => readSide())
@@ -220,8 +228,11 @@ function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved
     onSaved(side)
   }
 
+  const stopAt = Math.min(7, painMax ?? 7)
+  const gentle = stopAt - 1 > 4 ? `4–${stopAt - 1}` : '4'
+
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="ci-form flex min-h-full flex-col">
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div>
           <h1 className="text-4xl">Before you start</h1>
@@ -256,41 +267,27 @@ function CheckInForm({ painMax, level, clinician, continueLabel, onBack, onSaved
           </Card>
         </div>
         <div className="flex flex-col gap-5">
-          <Card title="How this is used">
-            <p className="text-muted">Your answers go into today's report for {clinician} and set the coach's pace. Feeling is what you tell us, never read from your face.</p>
-          </Card>
-          <Card title="Stop rules set by your therapist">
-            <ul className="divide-y divide-line text-lg">
-              <li className="py-2">Pain 0–3 → full dose · 4–6 → gentle day (fewer reps, shorter holds, smaller range)</li>
-              <li className="py-2">Pain at or above {Math.min(7, painMax ?? 7)} → rest today, session ends, therapist flagged</li>
-              <li className="py-2">New or worse symptoms → review before practising</li>
-              <li className="py-2">Difficulty never goes above Level {level ?? 2} dose</li>
-            </ul>
-          </Card>
-          <Card padding="sm">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-lg">Microphone</span>
-              <Button variant="secondary" icon={<Mic />} onClick={listen}>Push to talk</Button>
+          <Card className="ci-note">
+            <p className="text-muted">
+              Your answers set today's pace and go into your report for {clinician}. Pain of {gentle} means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs. Pain of {stopAt} or more, or something new or worse, means rest today and your therapist is told. Feeling is what you tell us, never read from your face.
+            </p>
+            <div className="ci-mic-row">
+              <span>Prefer to answer out loud?</span>
+              <button type="button" className="ci-mic-btn" onClick={listen}>Push to talk</button>
             </div>
-            {heard && <p role="status" className="mt-2 text-lg text-muted">{heard}</p>}
+            {heard && <p role="status" className="mt-2 text-muted">{heard}</p>}
           </Card>
         </div>
       </div>
       <FlowBar
-        step={0}
-        label="Check-in"
-        left={<Button variant="secondary" onClick={onBack}>Back to Home</Button>}
+        step={2}
+        label={hint ?? readyLabel}
+        labelId={hintId}
+        left={<Button variant="secondary" onClick={onBack}>{backLabel}</Button>}
         right={
-          <div className="flex flex-col items-end">
-            <Button disabled={hint !== null || busy} aria-describedby={hint ? hintId : undefined} onClick={() => void go()}>
-              {busy ? 'Saving…' : label}
-            </Button>
-            {hint && (
-              <span id={hintId} className="text-lg leading-tight text-muted">
-                {hint}
-              </span>
-            )}
-          </div>
+          <Button disabled={hint !== null || busy} aria-describedby={hint ? hintId : undefined} onClick={() => void go()}>
+            {busy ? 'Saving…' : label}
+          </Button>
         }
       />
     </div>

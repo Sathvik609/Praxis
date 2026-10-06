@@ -39,9 +39,15 @@ beforeEach(() => {
 test('check-in collects pain, side, location, energy, time and symptoms, shows stop rules, posts, then continues', async () => {
   const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
   renderCheckIn()
-  expect(await screen.findByText(/Pain at or above 7/)).toBeInTheDocument()
-  expect(screen.getByText(/4–6 → gentle day/)).toBeInTheDocument()
-  expect(screen.getByText(/Feeling is what you tell us, never read from your face/)).toBeInTheDocument()
+  // v2 (6 Oct artifact): one ci-note card carries how answers are used, the tiers and the privacy line
+  await screen.findByText(/Pain of 7 or more, or something new or worse, means rest today/)
+  const note = document.querySelector('.ci-note') as HTMLElement
+  expect(note).toHaveTextContent('Pain of 7 or more, or something new or worse, means rest today and your therapist is told.')
+  expect(note).toHaveTextContent('Pain of 4–6 means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs.')
+  expect(note).toHaveTextContent('Feeling is what you tell us, never read from your face.')
+  expect(note).toHaveTextContent('Prefer to answer out loud?')
+  expect(within(note).getByRole('button', { name: 'Push to talk' })).toHaveClass('ci-mic-btn')
+  expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Right arm' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Hand' }))
@@ -174,21 +180,47 @@ test("today's check-in is reused: one tap continues; checking in again is offere
   expect(screen.getByRole('button', { name: 'Continue to exercises' })).toBeInTheDocument()
 })
 
-test('reused check-in continues to the exercise the caller asked for (Home → peg test)', () => {
+test('demo hand-off with a valid check-in today goes straight to camera setup without asking again', () => {
   storeDay({})
   mockApi({ '/api/prescription': PRESCRIPTION })
-  renderCheckIn('/checkin?next=nhpt')
-  fireEvent.click(screen.getByRole('button', { name: 'Continue to Nine-Hole Peg Test' }))
-  expect(screen.getByText('AT /details/setup?exercise=nhpt&side=left')).toBeInTheDocument()
+  renderCheckIn('/checkin?next=cup&side=left')
+  expect(screen.getByText('AT /details/setup?exercise=cup&side=left')).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Before you start' })).not.toBeInTheDocument()
 })
 
-test('a fresh check-in for the peg test goes straight to its camera setup', async () => {
+test('the hand-off passes rehearse=1 through to camera setup', () => {
+  storeDay({ side: 'right' })
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn('/checkin?next=nhpt&side=right&rehearse=1')
+  expect(screen.getByText('AT /details/setup?exercise=nhpt&side=right&rehearse=1')).toBeInTheDocument()
+})
+
+test('a stopped day never hands off to setup, even with next', () => {
+  storeDay({ pain: 8, tier: 'rest' }, { stopped: 'rest' })
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn('/checkin?next=cup')
+  expect(screen.getByRole('heading', { name: 'Rest today' })).toBeInTheDocument()
+  expect(screen.queryByText(/AT \/details\/setup/)).not.toBeInTheDocument()
+})
+
+test('with next and no check-in: the form, "Continue to camera setup", back goes to the demonstration', async () => {
   writeSide('right')
   mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
-  renderCheckIn('/checkin?next=nhpt')
+  renderCheckIn('/checkin?next=nhpt&side=right')
+  expect(screen.getByRole('heading', { name: 'Before you start' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Back to demonstration' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('radio', { name: '0' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Continue to Nine-Hole Peg Test' }))
+  expect(screen.getByText('Ready for camera setup')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to camera setup' }))
   expect(await screen.findByText('AT /details/setup?exercise=nhpt&side=right')).toBeInTheDocument()
+})
+
+test('back to demonstration keeps the exercise and side', () => {
+  writeSide('left')
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn('/checkin?next=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Back to demonstration' }))
+  expect(screen.getByText('AT /details/demo?exercise=cup&side=left')).toBeInTheDocument()
 })
 
 test('a stopped day shows the stop, not the form; an unsent check-in is posted again on load', async () => {
