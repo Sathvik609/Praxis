@@ -11,3 +11,8 @@ test.each(['praxis-production.up.railway.app', 'praxis.example.org', '192.168.1.
 test('defaults to the page host', () => {
   expect(processingPlace()).toBe(processingPlace(location.hostname))
 })
+
+test('DESIGN_PREVIEW is off outside the design build', async () => {
+  const { DESIGN_PREVIEW } = await import('./config')
+  expect(DESIGN_PREVIEW).toBe(false)
+})
