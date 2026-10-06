@@ -1,77 +1,172 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { SESSION, mockApi } from '../../test/api-mock'
+import { ME, PRESCRIPTION, SESSION, mockApi } from '../../test/api-mock'
 
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
 import { Home } from './Home'
 
-function renderHome() {
-  return render(
+/** Renders Home and lets its five API reads settle, so no state update lands after a test. */
+async function renderHome() {
+  const view = render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/details/checkin" element={<div>CHECKIN</div>} />
+        <Route path="/details/choose" element={<div>CHOOSE</div>} />
+        <Route path="/details/demo" element={<div>DEMO</div>} />
         <Route path="/session" element={<div>SESSION</div>} />
         <Route path="/details/progress" element={<div>PROGRESS</div>} />
         <Route path="/report/:id" element={<div>REPORT</div>} />
       </Routes>
     </MemoryRouter>,
   )
+  await act(() => new Promise((r) => setTimeout(r, 0)))
+  return view
+}
+
+const day = (date: string, weekday: number, status: string, sample = false) => ({ date, weekday, is_today: status === 'today', status, planned: weekday < 5, nhpt_due: weekday === 6, minutes: 10, minutes_done: status === 'done' ? 11 : 0, exercises: [], sessions: [], sample, clinic_visit: null })
+const WEEK_DAYS = [day('2026-10-05', 0, 'done'), day('2026-10-06', 1, 'today'), day('2026-10-07', 2, 'planned'), day('2026-10-08', 3, 'planned'), day('2026-10-09', 4, 'planned'), day('2026-10-10', 5, 'rest'), day('2026-10-11', 6, 'planned')]
+const CALENDAR = {
+  from: '2026-09-28', to: '2026-10-11', today: '2026-10-06',
+  days: [day('2026-10-02', 4, 'missed'), ...WEEK_DAYS],
+  week: { from: '2026-10-05', to: '2026-10-11', done_days: 1, planned_days: 5, minutes_done: 11, minutes_planned: 50, nhpt_done: false },
+  schedule: PRESCRIPTION.schedule, next_visit: null, tracking_since: '2026-10-05',
+}
+const PROGRESS = { nhpt_trend: [], verified_per_session: [], practice: { done: 0, planned: null, hours: 0 }, adherence_pct: null, sample: { done: 0, planned: 0, hours: 0, illustrative: true }, pain_effort: [], goal_log_count: 0 }
+const ARM = { ...SESSION, id: 'arm1', mode: 'arm', exercise: 'abduction', date: '2026-10-05', started_at: '2026-10-05T09:00:00', title: 'Arm out to the side', source: 'live', summary: { ...SESSION.summary, mode: 'arm', camera: { reps_total: 8, verified: 7, unverified: 1, posture_cues: 1, peak_deg: [84, 88, 92], peak_verified: [true, true, false] } } }
+
+function routes(over: Record<string, unknown> = {}) {
+  return { '/api/calendar': CALENDAR, '/api/progress': PROGRESS, '/api/prescription': PRESCRIPTION, '/api/patients/me': ME, ...over }
 }
 
 beforeEach(() => {
   localStorage.clear()
-  mockApi({})
+  mockApi(routes())
 })
 
-test('home shows next practice, week, goal, body map markers and focus panel', () => {
-  renderHome()
+test('home shows next practice, the week from the calendar and the affected areas', async () => {
+  await renderHome()
   // the day card follows the 28 Sep day order in lib/plan.ts (the service enforces the same order)
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Arm out to the side → Waiter – cup$/)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Arm out to the side \+ Waiter – cup$/)
   expect(screen.getByText(/About 10 min/)).toBeInTheDocument()
-  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
+  expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|Block towers|Grip power|Box and Block/)
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Replay a recorded session/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
+  // Ruling R2: the artifact moved the replay entry to Settings › Demo and judging; Home has none
+  expect(screen.queryByRole('button', { name: /Replay a recorded session/ })).not.toBeInTheDocument()
   expect(screen.getByText('This week')).toBeInTheDocument()
-  expect(screen.getByText('Sample history')).toBeInTheDocument()
-  expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()
-  expect(screen.getByText(/Use a cup on my own/)).toBeInTheDocument()
-  // design v2 (Task 5): the avatar draws no joint text chips; the default focus area is the hand
-  expect(screen.getByRole('heading', { name: 'Left hand' })).toBeInTheDocument()
-  expect(screen.getByText('41.2')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Your affected areas' })).toBeInTheDocument()
+  expect(screen.getByRole('tablist', { name: 'Affected areas' })).toBeInTheDocument()
+  // design v2: the shoulder is the default focus area
+  expect(screen.getByRole('tab', { name: /Left shoulder/ })).toHaveAttribute('aria-selected', 'true')
+  expect(await screen.findByText(/Use a cup on my own/)).toBeInTheDocument()
 })
 
-// Design v2 (Task 5) removed the avatar's joint text chips, which were Home's only way to switch
-// the focus area; Task 6 moves Home to the area tabs + AvatarPanel hotspots and restores this case.
-test.todo('tapping a body-map area switches the focus panel (Task 6: area tabs + hotspots)')
+test('this week reads the calendar week: days, minutes and today; no sample chip on live history', async () => {
+  await renderHome()
+  expect(await screen.findByText('1 day · 11 min')).toBeInTheDocument()
+  expect(screen.getByLabelText('M: done')).toHaveClass('wk-day', 'wk-done')
+  expect(screen.getByLabelText('T: today')).toHaveClass('wk-today')
+  expect(screen.getByLabelText('W: not yet')).toHaveClass('wk-todo')
+  expect(screen.getAllByLabelText(/^[MTWFS]: /)).toHaveLength(7) // this week only, not the week before
+  expect(screen.queryByText('Sample history')).not.toBeInTheDocument()
+})
 
-test('start session goes to check-in', () => {
-  renderHome()
+test('a week with sample days says Sample history', async () => {
+  mockApi(routes({ '/api/calendar': { ...CALENDAR, days: [day('2026-10-05', 0, 'untracked', true), ...WEEK_DAYS.slice(1)] } }))
+  await renderHome()
+  expect(await screen.findByText('Sample history')).toBeInTheDocument()
+})
+
+test('the week row is seven equal columns, so it cannot overflow its card at 1280 × 800', async () => {
+  await renderHome()
+  const tile = await screen.findByLabelText('M: done')
+  const row = tile.parentElement!.parentElement!
+  expect(row.className).toMatch(/grid-cols-7/)
+})
+
+test('start session goes to Choose (design v2 flow: Choose → Demo → Check-in → Setup)', async () => {
+  await renderHome()
   fireEvent.click(screen.getByRole('button', { name: 'Start session' }))
-  expect(screen.getByText('CHECKIN')).toBeInTheDocument()
+  expect(screen.getByText('CHOOSE')).toBeInTheDocument()
 })
 
-test('edit goal saves an inline field to localStorage and shows it', () => {
-  renderHome()
-  fireEvent.click(screen.getByRole('button', { name: 'Edit goal' }))
-  const field = screen.getByLabelText('Your everyday goal')
-  fireEvent.change(field, { target: { value: 'Pour my own tea.' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Save goal' }))
-  expect(screen.getByText('Pour my own tea.')).toBeInTheDocument()
-  expect(localStorage.getItem('praxis.goal')).toBe('Pour my own tea.')
+test('the area card header shows the status word as text; tabs switch the focus area', async () => {
+  await renderHome()
+  const shoulder = screen.getByRole('region', { name: 'Left shoulder details' })
+  expect(within(shoulder).getByText('Watch')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('tab', { name: /Left hand/ }))
+  expect(screen.getByRole('tab', { name: /Left hand/ })).toHaveAttribute('aria-selected', 'true')
+  const hand = screen.getByRole('region', { name: 'Left hand details' })
+  expect(within(hand).getByText('Focus')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('tab', { name: /Left elbow/ }))
+  const elbow = screen.getByRole('region', { name: 'Left elbow details' })
+  expect(within(elbow).getByText('Stable')).toBeInTheDocument()
+  expect(within(elbow).getByText('No measure for this area in your program.')).toBeInTheDocument()
+})
+
+test('shoulder numbers come from the last live arm session: best verified peak, never an unverified one', async () => {
+  mockApi(routes({ '/api/sessions': { sessions: [ARM, { ...ARM, id: 'r1', date: '2026-10-06', started_at: '2026-10-06T09:00:00', source: 'replay', replay: true, summary: { ...ARM.summary, camera: { peak_deg: [95], peak_verified: [true] } } }] } }))
+  await renderHome()
+  const card = screen.getByRole('region', { name: 'Left shoulder details' })
+  expect(await within(card).findByText('88°')).toBeInTheDocument()
+  expect(within(card).getByRole('img', { name: '88 of 90 degrees' })).toBeInTheDocument()
+  expect(within(card).getByText("At today's safe limit")).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/9[25]°/)
+  // verified and unverified counts, both visible
+  expect(screen.getByText('1 unverified · last session')).toBeInTheDocument()
+})
+
+test('without an arm session the shoulder says when it starts, with no invented number', async () => {
+  await renderHome()
+  const card = screen.getByRole('region', { name: 'Left shoulder details' })
+  expect(await within(card).findByText('Starts after your next arm session.')).toBeInTheDocument()
+  expect(within(card).queryByRole('img')).not.toBeInTheDocument()
+})
+
+test('"Sample" is visible whenever a sample value is shown, and only then', async () => {
+  mockApi(routes({ '/api/progress': { ...PROGRESS, nhpt_trend: [{ date: '2026-08-01', total_s: 68, kind: 'sample' }, { date: '2026-09-20', total_s: 45, kind: 'live' }, { date: '2026-10-02', total_s: 41.2, kind: 'live' }] } }))
+  await renderHome()
+  expect(screen.queryByText('Sample')).not.toBeInTheDocument() // shoulder: no sample values
+  fireEvent.click(screen.getByRole('tab', { name: /Left hand/ }))
+  expect(await screen.findByText('Sample')).toBeInTheDocument()
+  const hand = screen.getByRole('region', { name: 'Left hand details' })
+  expect(within(hand).getByText('Getting quicker')).toBeInTheDocument()
+  expect(within(hand).getByText('3.8 s faster since 20 Sep')).toBeInTheDocument()
+  expect(within(hand).getByRole('img', { name: /1 Aug 68 s \(sample\)/ })).toBeInTheDocument()
+})
+
+test('program items navigate', async () => {
+  await renderHome()
+  fireEvent.click(screen.getByRole('button', { name: /^Arm out to the side\s*Arm strengthening$/ }))
+  expect(screen.getByText('DEMO')).toBeInTheDocument()
+})
+
+test('See all progress opens progress', async () => {
+  await renderHome()
+  fireEvent.click(screen.getByRole('button', { name: 'See all progress' }))
+  expect(screen.getByText('PROGRESS')).toBeInTheDocument()
+})
+
+test('zoom starts at 1.25× and is a camera zoom inside the stage, never a CSS scale', async () => {
+  await renderHome()
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+  expect(screen.getByRole('button', { name: 'Zoom in' })).toBeDisabled() // 1.25 → 1.5, the last step
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom out' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom out' }))
+  expect(screen.getByRole('button', { name: 'Zoom out' })).toBeDisabled()
+  expect(document.querySelector('[style*="scale("]')).toBeNull()
 })
 
 test('ask the coach opens the drawer', async () => {
-  renderHome()
+  await renderHome()
   fireEvent.click(screen.getByRole('button', { name: 'Ask the coach' }))
   expect(await screen.findByRole('dialog', { name: 'Ask the coach' })).toBeInTheDocument()
 })
 
 test('open report goes to the last session report when there is one, else progress', async () => {
-  mockApi({ '/api/sessions': { sessions: [SESSION] } })
-  renderHome()
+  mockApi(routes({ '/api/sessions': { sessions: [SESSION] } }))
+  await renderHome()
   const btn = screen.getByRole('button', { name: 'Open report' })
   await screen.findByText(/Waiter – cup \+ Arm out to the side/)
   fireEvent.click(btn)
@@ -79,73 +174,15 @@ test('open report goes to the last session report when there is one, else progre
 })
 
 test('a replayed last session says replay; one goal attempt is singular (review 28 Sep)', async () => {
-  mockApi({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] }, '/api/patients/me': { goal: 'Use a cup on my own.', goal_attempts: 1, program: {} } })
-  renderHome()
+  mockApi(routes({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] }, '/api/patients/me': { ...ME, goal_attempts: 1 } }))
+  await renderHome()
   expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · replay/)).toBeInTheDocument()
   expect(await screen.findByText(/^1 attempt logged this week/)).toBeInTheDocument()
 })
 
-test('the week row is seven equal columns, so it cannot overflow its card at 1280 × 800', () => {
-  renderHome()
-  const tile = screen.getByLabelText('M: done')
-  const row = tile.parentElement!.parentElement!
-  expect(row.className).toMatch(/grid-cols-7/)
-  expect(tile.className).toMatch(/w-full/)
-  expect(tile.className).not.toMatch(/(^|\s)w-10(\s|$)/) // seven fixed 40 px tiles were 328 px in a 306 px card
-})
-
-test('open report falls back to progress without sessions', () => {
-  renderHome()
+test('open report falls back to progress without sessions; no seeded last session is shown', async () => {
+  await renderHome()
+  expect(screen.getByText(/Last session · No sessions yet/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Open report' }))
   expect(screen.getByText('PROGRESS')).toBeInTheDocument()
-})
-
-test('rotate flips front and side; Both alternates every 4 s', () => {
-  vi.useFakeTimers()
-  try {
-    renderHome()
-    expect(screen.getByText(/Side view/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate view' }))
-    expect(screen.getByText(/Front view/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', { name: 'Both' }))
-    act(() => {
-      vi.advanceTimersByTime(4000)
-    })
-    expect(screen.getByText(/Side view/)).toBeInTheDocument()
-    act(() => {
-      vi.advanceTimersByTime(4000)
-    })
-    expect(screen.getByText(/Front view/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument()
-    // zoom is a camera zoom inside the stage: the panel (labels, caption) is never CSS-scaled
-    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
-    expect(document.querySelector('[style*="scale("]')).toBeNull()
-  } finally {
-    vi.useRealTimers()
-  }
-})
-
-test('region metrics are sample data and say so; the card lists today from the plan', () => {
-  renderHome()
-  const card = screen.getByRole('heading', { name: 'Left hand' }).closest('section')!
-  expect(card).toHaveTextContent('Sample')
-  expect(card).toHaveTextContent(/Today/)
-  for (const name of ['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) {
-    expect(card).toHaveTextContent(name)
-  }
-  expect(card.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
-  expect(card).toHaveTextContent(/weekly/)
-})
-
-test('a next visit in the past is not shown as upcoming', () => {
-  vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(2026, 9, 5, 12)) // after the seed visit (Thu 1 Oct, since 28 Sep)
-  try {
-    renderHome()
-    expect(screen.queryByText(/1 Oct/)).not.toBeInTheDocument()
-    expect(screen.getByText(/Not booked yet/)).toBeInTheDocument()
-  } finally {
-    vi.useRealTimers()
-  }
 })

@@ -14,6 +14,9 @@ test('the Home body map names no hidden exercise', () => {
   const names = Object.values(REGIONS).flatMap((r) => [...r.program.map((p) => p.name), r.primary.label, r.primary.to])
   expect(names.join(' ')).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|exercise=(arm|pendulum)\b/)
   expect(REGIONS.lShoulder.primary.to).toBe('/details/demo?exercise=abduction&side=left')
+  // design v2 (6 Oct): the artifact's dropped / non-registry tasks are never ported
+  expect(names.join(' ')).not.toMatch(/Block towers|Grip power|Box and Block/)
+  expect(Object.values(REGIONS).flatMap((r) => r.program.map((p) => p.id)).every((id) => ['abduction', 'cup', 'nhpt'].includes(id))).toBe(true)
 })
 
 test('a stored session resolves to its registry exercise from the service id, the summary or the mode', () => {

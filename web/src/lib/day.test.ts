@@ -154,8 +154,8 @@ test('demos seen today are remembered', () => {
   expect(readDay().demosSeen).toContain('abduction')
 })
 
-test("Home's Run the peg test goes through today's check-in and then the peg test's setup", () => {
-  expect(REGIONS.lWrist.primary.to).toBe('/details/checkin?next=nhpt')
+test("Home's Run the peg test goes to Choose with the peg test picked (design v2 flow: Choose → Demo → Check-in)", () => {
+  expect(REGIONS.lWrist.primary.to).toBe('/details/choose?next=nhpt')
 })
 
 test('session urls carry the side; the peg test carries the hand', () => {
