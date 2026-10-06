@@ -284,3 +284,66 @@ def test_an_existing_database_gets_the_corrected_seed_flag_and_keeps_its_review_
     assert st.session("s-0908-arm")["feedback"]["pain_after"] == 7
     (real_flag,) = [f for f in st.flags() if f["session_id"] == "real1"]
     assert real_flag["detail"] == "pain 5/10 reported (stop level 5)"  # never touched
+
+
+# ---- 6 Oct design v2 (Task 17): honest report data -----------------------------------------
+
+
+def _with_clinician(st, name):
+    import json
+
+    p = st.prescription()
+    newer = p | {"version": p["version"] + 1, "clinician": name}
+    st._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES('alex', ?, ?)", (newer["version"], json.dumps(newer)))
+    st._db.commit()
+
+
+def test_next_practice_names_the_prescriptions_clinician(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="c1", mode="cup"), {}, {}, [])
+    st.save_session(_summary(session_id="a1", mode="arm"), {}, {}, [])
+    assert "Dr. Rao" in st.session("c1")["next_practice"]["text"]  # the seed: Dr. Anita Rao, OT
+    _with_clinician(st, "Dr. Maya Chen, PT")
+    for sid in ("c1", "a1"):
+        text = st.session(sid)["next_practice"]["text"]
+        assert "Dr. Chen" in text and "Rao" not in text
+    assert all("Rao" not in s["next_practice"]["text"] for s in st.sessions() if s["mode"] in ("cup", "arm"))
+
+
+def test_update_feedback_merges_told_us_and_flags_high_pain_once(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="fb1", told_us={"pain_before": 2, "pain_after": 2}), {"pain_before": 2}, {"pain_after": 2, "effort": 4}, [])
+    out = st.update_feedback("fb1", {"pain_after": 7, "again_tomorrow": "not_sure"}, t=1.7e9 + 900)
+    assert out is not None
+    rep, added = out
+    assert rep["feedback"] == {"pain_after": 7, "effort": 4, "again_tomorrow": "not_sure"}
+    assert rep["summary"]["told_us"] == {"pain_before": 2, "pain_after": 7, "effort": 4, "again_tomorrow": "not_sure"}
+    assert added == {"t": 1.7e9 + 900, "rule": "pain_after", "detail": "pain 7/10 after the session (stop level 7)"}
+    assert [f["rule"] for f in rep["summary"]["flags"]] == ["pain_after"]
+    assert rep["summary"]["stopped"] is False and rep["status"] == "complete"
+    stored = [f for f in st.flags() if f["session_id"] == "fb1"]
+    assert [(f["rule"], f["date"]) for f in stored] == [("pain_after", rep["date"])]
+    # edited again (still high, or lowered): the flag is not duplicated and not withdrawn
+    for pain in (9, 3):
+        rep, added = st.update_feedback("fb1", {"pain_after": pain}, t=1.7e9 + 950)
+        assert added is None and [f["rule"] for f in rep["summary"]["flags"]] == ["pain_after"]
+    assert len([f for f in st.flags() if f["session_id"] == "fb1"]) == 1
+
+
+def test_update_feedback_below_stop_level_adds_no_flag_and_unknown_is_none(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="fb2"), {}, {"pain_after": 1}, [])
+    rep, added = st.update_feedback("fb2", {"pain_after": 6}, t=1.0)
+    assert added is None and rep["summary"]["flags"] == [] and rep["feedback"]["pain_after"] == 6
+    assert st.update_feedback("nope", {"pain_after": 9}, t=1.0) is None
+
+
+def test_save_session_after_a_feedback_flag_keeps_it(tmp_path):
+    """The end-of-session path: on_feedback's flag is in summary.flags, so save_session stores it."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="fb3", flags=[{"t": 5.0, "rule": "pain_after", "detail": "pain 8/10 after the session (stop level 7)"}]), {}, {"pain_after": 8}, [])
+    assert [f["rule"] for f in st.flags() if f["session_id"] == "fb3"] == ["pain_after"]

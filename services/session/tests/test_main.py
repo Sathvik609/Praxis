@@ -621,3 +621,52 @@ def test_coach_set_hold_is_applied_to_the_pipeline_and_traced(tmp_path):
     row = [r for r in c.trace.tail(5) if r["kind"] == "apply"][0]
     assert row["cmd"] == "set_hold" and row["hold_s"] == 2.0 and row["evidence"] == [7]
     assert main._apply_coach_commands(p, c) == []
+
+
+# ---- 6 Oct design v2 (Task 17): Edit feedback (ruling R4) ----------------------------------
+
+
+def test_patch_feedback_updates_the_stored_session_traces_and_flags(client):
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets") as ws:
+        ws.send_text('{"cmd":"checkin","pain":2,"energy":"comfortable","minutes":14,"new_symptoms":false}')
+        sid = ws.receive_json()["session_id"]
+        ws.send_text('{"cmd":"feedback","pain_after":2,"difficulty":"just_right","effort":4,"ended_early":false}')
+        ack = ws.receive_json()
+        assert not any(f["rule"] == "pain_after" for f in ack["summary"]["flags"])
+    r = client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": 8, "again_tomorrow": "not_sure"})
+    assert r.status_code == 200
+    row = r.json()
+    assert row["id"] == sid and row["feedback"] == {"pain_after": 8, "difficulty": "just_right", "effort": 4, "ended_early": False, "again_tomorrow": "not_sure"}
+    assert row["summary"]["told_us"]["pain_after"] == 8 and row["summary"]["told_us"]["pain_before"] == 2
+    assert [f["rule"] for f in row["summary"]["flags"]] == ["pain_after"] and row["summary"]["stopped"] is False
+    assert client.get(f"/api/sessions/{sid}").json()["feedback"]["pain_after"] == 8
+    assert [f["rule"] for f in client.get("/api/flags").json()["flags"] if f["session_id"] == sid] == ["pain_after"]
+    rows = client.get(f"/api/trace?session={sid}&n=50").json()["rows"]
+    edit = [x for x in rows if x["kind"] == "feedback_edit"]
+    assert len(edit) == 1 and edit[0]["changed"] == {"pain_after": 8, "again_tomorrow": "not_sure"}
+    assert ("flag", "pain_after") in [(x["kind"], x.get("rule")) for x in rows]
+    # a second edit at high pain: no second flag
+    client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": 9})
+    assert len([f for f in client.get("/api/flags").json()["flags"] if f["session_id"] == sid]) == 1
+
+
+def test_patch_feedback_on_a_stored_session_with_no_live_coach_writes_a_trace_file(client, monkeypatch, tmp_path):
+    import praxis_session.main as main
+    import praxis_session.trace as trace_mod
+
+    monkeypatch.setattr(trace_mod, "DEFAULT_DIR", tmp_path / "traces")
+    summary = {"session_id": "old1", "mode": "cup", "t_start": 1.7e9, "t_end": 1.7e9 + 600, "clock": "wall", "camera": {"reps_total": 4, "verified": 4, "unverified": 0}, "told_us": {"pain_before": 1, "pain_after": 1}, "flags": [], "stopped": False}
+    main.store.save_session(summary, {"pain_before": 1}, {"pain_after": 1}, [])
+    r = client.patch("/api/sessions/old1/feedback", json={"pain_after": 7})
+    assert r.status_code == 200 and [f["rule"] for f in r.json()["summary"]["flags"]] == ["pain_after"]
+    lines = [json.loads(x) for x in (tmp_path / "traces" / "old1.jsonl").read_text().splitlines()]
+    assert [x["kind"] for x in lines] == ["feedback_edit", "flag"]
+
+
+def test_patch_feedback_unknown_session_is_404_and_non_object_is_422(client):
+    assert client.patch("/api/sessions/nope/feedback", json={"pain_after": 3}).status_code == 404
+    sid = client.get("/api/sessions").json()["sessions"][0]["id"]
+    assert client.patch(f"/api/sessions/{sid}/feedback", json=[1, 2]).status_code == 422
+    assert client.patch(f"/api/sessions/{sid}/feedback", json="pain").status_code == 422
+    assert client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": 11}).status_code == 422
+    assert client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": "high"}).status_code == 422

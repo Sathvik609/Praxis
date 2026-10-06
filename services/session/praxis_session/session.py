@@ -1,6 +1,7 @@
 """CoachSession: stop rules -> coach -> trace, per live session. The pipeline stays pure."""
 from __future__ import annotations
 
+import re
 import uuid
 from collections import deque
 from pathlib import Path
@@ -25,6 +26,23 @@ CHECKPOINT_PAUSES = ("failed_reps", "perception")
 WHY_TEXT = {
     "progression": "Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.",
 }
+
+
+def note_category(d: dict[str, Any]) -> str:
+    """A report coach note's category (6 Oct design): rest/stop -> Safety; a correction for
+    trunk lean or shoulder hiking -> Posture; a correction for a rep the camera could not
+    verify -> Data quality; everything else (progress, regress, other corrections) ->
+    Performance."""
+    action = d.get("action")
+    cue, reason = str(d.get("cue_id") or ""), str(d.get("reason") or "").lower()
+    if action in ("rest", "stop"):
+        return "Safety"
+    if action == "correct":
+        if cue in ("arm_lean", "arm_hike") or re.search(r"\b(lean|leaning|hiking)\b", reason):
+            return "Posture"
+        if cue.endswith("_unverified") or "unverified" in reason:
+            return "Data quality"
+    return "Performance"
 
 
 class CoachSession:
@@ -65,7 +83,8 @@ class CoachSession:
         # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
         # main after each frame and applied through `SessionPipeline.command`, which clamps.
         self.commands: list[dict[str, Any]] = []
-        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "missed": 0, "corrections": 0, "posture_cues": 0}
+        # posture_cues = lean_cues + hiking_cues; wrong_dot counts the cup FSM's `wrong_dot` events.
+        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "missed": 0, "corrections": 0, "posture_cues": 0, "lean_cues": 0, "hiking_cues": 0, "wrong_dot": 0}
         self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
         self._last_cue_t: dict[str, float] = {}
@@ -222,10 +241,13 @@ class CoachSession:
         return evs[-last_n:] if last_n > 0 else []
 
     def on_feedback(self, feedback: dict[str, Any], t: float) -> None:
-        """Session end: the feedback form. The agent (when on) writes a coach note after it."""
+        """Session end: the feedback form. The agent (when on) writes a coach note after it.
+        Pain at or above the stop level writes a `pain_after` therapist flag (no stop: the
+        session is already over)."""
         self._tick(t)
         self.feedback = feedback
         self.trace.log("feedback", **feedback)
+        self._log_stop(self.stop_rules.on_pain_after(feedback.get("pain_after"), t))
         self.epoch += 1
         if self.agent is not None:
             ids = [e.id for e in self.recent_events(last_n=5)]
@@ -263,6 +285,9 @@ class CoachSession:
                 self.measures["splits_s"] = list(e.payload.get("splits_s") or [])
             elif e.type in ("compensation_lean", "shoulder_hiking"):
                 self.counts["posture_cues"] += 1
+                self.counts["lean_cues" if e.type == "compensation_lean" else "hiking_cues"] += 1
+            elif e.type == "wrong_dot":
+                self.counts["wrong_dot"] += 1
             elif e.type == "perception_lost":
                 self.tracking_lost_events += 1
             if e.type != "frame":
@@ -352,7 +377,7 @@ class CoachSession:
         for d in self.decisions:
             if d["action"] in ("progress", "regress", "rest", "correct"):
                 conf = "high" if d["evidence"] else "medium"
-                notes.append({"text": f"{d['action']}: {d['reason']}", "confidence": conf, "evidence": d["evidence"]})
+                notes.append({"text": f"{d['action']}: {d['reason']}", "confidence": conf, "evidence": d["evidence"], "cat": note_category(d)})
         seen = set()
         notes = [n for n in notes if not (n["text"] in seen or seen.add(n["text"]))][:6]
         t_end = t if t is not None else self.t_end
