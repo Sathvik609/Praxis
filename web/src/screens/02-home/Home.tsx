@@ -1,26 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AvatarPanel } from '../../avatar/AvatarPanel'
+import { AvatarPanel, type Hotspot } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { Chip, type ChipTone } from '../../design/Chip'
-import { Field } from '../../design/Field'
-import { AlertTriangle, Check, RotateCcw, Sparkles, ZoomIn, ZoomOut } from '../../design/Icon'
-import { Pill } from '../../design/Pill'
-import { Stat } from '../../design/Stat'
+import { Chip } from '../../design/Chip'
+import { Check, ZoomIn, ZoomOut } from '../../design/Icon'
 import { api, isReplaySession, useApi } from '../../lib/api'
-import { countOf } from '../../lib/plural'
-import { DAY_MINUTES, DAY_ORDER, WEEKLY } from '../../lib/plan'
-import { HOME_MARKERS, PATIENT, PROGRAM, REGIONS, WEEK, exerciseById, upcomingVisit } from '../../lib/seed'
+import { STATUS_WORD, areaSummary, type AreaKey } from '../../lib/areaSummary'
+import { WEEKDAYS } from '../../lib/calendar'
+import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
+import { plural } from '../../lib/plural'
+import { REGIONS, exerciseById } from '../../lib/seed'
 import { CoachSheet } from '../coach/CoachDrawer'
+import { AreaDetail } from './AreaDetail'
+import { StageMinis } from './StageMinis'
 
-const tone: Record<string, ChipTone> = { focus: 'focus', watch: 'amber', stable: 'mint' }
-const word: Record<string, string> = { focus: 'Focus', watch: 'Watch', stable: 'Stable' }
 const GOAL_KEY = 'praxis.goal'
 const ZOOMS = [1, 1.25, 1.5]
-/** Which part of the body each body-map marker stands for, to mark today's exercises there. */
-const AREA: Record<string, 'hand' | 'shoulder' | null> = { lWrist: 'hand', lShoulder: 'shoulder', lElbow: null }
+const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
 
+/** A goal the patient saved on this device before design v2 hid the goal editor. */
 function readGoal(): string | null {
   try {
     return localStorage.getItem(GOAL_KEY)
@@ -29,88 +28,55 @@ function readGoal(): string | null {
   }
 }
 
-/** Screen 02 · Home. The avatar body map sets the hierarchy; markers come from the
- *  prescription and camera metrics. No diagnosis, no composite score. The week strip and
- *  body-map markers are sample history (chip on the card) until real sessions accumulate;
- *  goal, sessions and reports come from the local store. */
+/** Screen 02 · Home (design v2, designers' 6 Oct artifact). Next practice, this week from
+ *  `/api/calendar`, and the affected-areas card: tabs + body-map hotspots pick an area; the
+ *  stage tiles and the area card are derived from stored sessions, progress, the prescription
+ *  and the calendar (`lib/areaSummary.ts`). Nothing is a composite score; sample values carry
+ *  a visible "Sample" chip; an area nothing measures says so. */
 export function Home() {
   const nav = useNavigate()
-  const [view, setView] = useState<'front' | 'side' | 'both'>('side')
-  const [alt, setAlt] = useState<'front' | 'side'>('side')
-  const [zoomIdx, setZoomIdx] = useState(0)
-  const [focus, setFocus] = useState<string>('lWrist')
+  const [zoomIdx, setZoomIdx] = useState(1)
+  const [focus, setFocus] = useState<AreaKey>('lShoulder')
   const [coachOpen, setCoachOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [savedGoal, setSavedGoal] = useState<string | null>(() => readGoal())
-  const [draft, setDraft] = useState('')
-  const [attempts, setAttempts] = useState<number | null>(null)
-  const [goalNote, setGoalNote] = useState<string | null>(null)
   const region = REGIONS[focus]
   const { data: me } = useApi(() => api.me())
   const { data: sessions } = useApi(() => api.sessions())
-  const goal = savedGoal ?? me?.goal ?? PATIENT.goal
-  const attemptCount = attempts ?? me?.goal_attempts ?? PATIENT.goalAttempts
-  const camera = view === 'both' ? alt : view
-  const area = AREA[focus] ?? null
-  // The service derives next_visit from the prescription's schedule (null once cleared); the seed only offline.
-  const nextVisit = upcomingVisit(me ? me.program?.next_visit : PROGRAM.nextVisit)
-
-  // "Both" alternates the reference camera every 4 s; the avatar never mirrors the patient.
-  useEffect(() => {
-    if (view !== 'both') return
-    const id = setInterval(() => setAlt((c) => (c === 'front' ? 'side' : 'front')), 4000)
-    return () => clearInterval(id)
-  }, [view])
-
-  const pickView = (v: 'front' | 'side' | 'both') => {
-    if (v === 'both') setAlt(camera)
-    setView(v)
-  }
-  const rotate = () => setView(camera === 'front' ? 'side' : 'front')
-  const saveGoal = () => {
-    const g = draft.trim()
-    if (!g) return
-    try {
-      localStorage.setItem(GOAL_KEY, g)
-    } catch {
-      /* private mode: kept for this page only */
-    }
-    setSavedGoal(g)
-    setEditing(false)
-  }
-  const logAttempt = () =>
-    api
-      .logGoal('attempt')
-      .then((r) => {
-        setAttempts(r.goal_attempts)
-        setGoalNote('Logged.')
-      })
-      .catch(() => setGoalNote('Could not log — the session service is not reachable.'))
+  const { data: progress } = useApi(() => api.progress())
+  const { data: rx } = useApi(() => api.prescription())
+  const { data: calendar } = useApi(() => api.calendar())
+  const view = areaSummary(focus, { sessions, progress, rx, calendar, me })
+  const area = 'name' in view ? view : null
+  const goal = { text: readGoal() ?? me?.goal ?? null, attempts: me?.goal_attempts ?? 0 }
+  const headline = area?.headline ?? 'Nothing measured here'
+  const hotspots: Hotspot[] = AR_ORDER.map((k) => ({ key: k, joint: k, status: REGIONS[k].status, label: REGIONS[k].title, word: STATUS_WORD[REGIONS[k].status] }))
+  const week = calendar ? calendar.days.filter((d) => d.date >= calendar.week.from && d.date <= calendar.week.to) : []
   const openReport = () => nav(sessions?.[0] ? `/report/${sessions[0].id}` : '/details/progress')
+  const pickArea = (k: string) => {
+    if (k === 'lShoulder' || k === 'lElbow' || k === 'lWrist') setFocus(k)
+  }
 
   return (
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.1fr)] gap-5 p-5">
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
           <div className="text-white/80">Next practice · today</div>
-          <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' → ')}</h1>
+          <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
           <p className="mt-1 text-white/80">About {DAY_MINUTES} min · cup + target sheet</p>
-          <Button full variant="inverse" className="mt-5" onClick={() => nav('/details/checkin')}>Start session</Button>
-          <Button full variant="secondary" className="mt-3 whitespace-normal! border-white/70! bg-transparent! text-white! hover:bg-white/10!" onClick={() => nav('/details/settings')}>Replay a recorded session · no webcam</Button>
-          <Button full variant="link" className="mt-2 text-white/90! hover:bg-white/10!" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
+          <Button full variant="inverse" className="mt-5" onClick={() => nav('/details/choose')}>Start session</Button>
+          <Button full variant="secondary" className="mt-3 hero-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
         </Card>
 
-        <Card title="This week" action={<Chip tone="neutral">Sample history</Chip>}>
-          <div className="text-muted">{WEEK.sessions} days · {WEEK.minutes} min</div>
-          {/* Seven equal columns: fixed 40 px tiles overflowed the card at 1280 × 800 (review 28 Sep). */}
+        <Card className="wk-card" title="This week" action={week.some((d) => d.sample) ? <Chip tone="neutral">Sample history</Chip> : undefined}>
+          <div className="text-muted">{calendar ? `${calendar.week.done_days} ${plural(calendar.week.done_days, 'day')} · ${calendar.week.minutes_done} min` : '—'}</div>
           <div className="mt-3 grid grid-cols-7 gap-1.5">
-            {WEEK.days.map((d, i) => {
-              const done = WEEK.done[i]
-              const today = i === WEEK.todayIndex
+            {week.map((d) => {
+              const done = d.status === 'done'
+              const today = d.is_today
+              const letter = WEEKDAYS[d.weekday][0]
               return (
-                <div key={i} className="flex min-w-0 flex-col items-center gap-1">
-                  <span className="text-base text-muted">{d}</span>
-                  <span aria-label={done ? `${d}: done` : today ? `${d}: today` : `${d}: not yet`} className={`flex h-10 w-full max-w-10 items-center justify-center rounded-[var(--r-control)] font-bold ${done ? 'bg-teal-fill text-white' : today ? 'bg-tint-mint text-teal-ink' : 'bg-bg text-muted'}`}>
+                <div key={d.date} className="flex min-w-0 flex-col items-center gap-1">
+                  <span className="text-base text-muted">{letter}</span>
+                  <span aria-label={done ? `${letter}: done` : today ? `${letter}: today` : `${letter}: not yet`} className={`wk-day ${done ? 'wk-done' : today ? 'wk-today' : 'wk-todo'}`}>
                     {done ? <Check aria-hidden className="h-5 w-5" strokeWidth={3} /> : today ? 'now' : '·'}
                   </span>
                 </div>
@@ -118,113 +84,52 @@ export function Home() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-            <span className="text-muted">Last session · {sessions?.[0] ? `${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : WEEK.lastSession}</span>
+            <span className="text-muted">Last session · {sessions?.[0] ? `${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : 'No sessions yet'}</span>
             <Button variant="secondary" className="shrink-0" onClick={openReport}>Open report</Button>
           </div>
         </Card>
-
-        <Card title="Your everyday goal">
-          {editing ? (
-            <>
-              <Field label="Your everyday goal" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveGoal()} />
-              <div className="mt-3 flex gap-3">
-                <Button onClick={saveGoal}>Save goal</Button>
-                <Button variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-xl">{goal}</p>
-              <p className="text-muted">{countOf(attemptCount, 'attempt')} logged this week{goalNote ? ` · ${goalNote}` : ''}</p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Button variant="secondary" onClick={logAttempt}>Log an attempt</Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setDraft(goal)
-                    setEditing(true)
-                  }}
-                >
-                  Edit goal
-                </Button>
-              </div>
-            </>
-          )}
-        </Card>
       </div>
 
-      <Card>
-        <div className="flex flex-wrap items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-2xl">Your arm and hand</h2>
-            <p className="text-muted">Tap a marker for what your program covers there.</p>
-            <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-base">
-              <li className="inline-flex items-center gap-1 text-focus"><Sparkles aria-hidden className="h-4 w-4" /> Focus</li>
-              <li className="inline-flex items-center gap-1 text-amber-ink"><AlertTriangle aria-hidden className="h-4 w-4" /> Watch</li>
-              <li className="inline-flex items-center gap-1 text-mint-ink"><Check aria-hidden className="h-4 w-4" /> Stable</li>
-            </ul>
+      <Card className="hp-card">
+        <div className="hp-head">
+          <div className="min-w-0">
+            <h2 className="text-2xl">Your affected areas</h2>
+            <p className="text-muted">Where your program is working, and how each area is changing.</p>
           </div>
-          <Pill ariaLabel="Avatar view" size="sm" className="ml-auto shrink-0" value={view} onChange={pickView} options={[{ value: 'front', label: 'Front' }, { value: 'side', label: 'Left side' }, { value: 'both', label: 'Both' }]} />
+          {/* Visible to patients, not only in Judge view: a sample value is never shown unlabelled. */}
+          {area?.sample && <span className="hp-sample">Sample</span>}
+          <div className="hp-zoom flex shrink-0 gap-2">
+            <Button variant="inverse" className="w-12 px-0!" aria-label="Zoom in" disabled={zoomIdx === ZOOMS.length - 1} icon={<ZoomIn />} onClick={() => setZoomIdx((i) => Math.min(ZOOMS.length - 1, i + 1))} />
+            <Button variant="inverse" className="w-12 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
+          </div>
         </div>
-        <div className="relative mx-auto mt-3 w-full max-w-[420px]">
-          <div className="absolute right-2 top-2 z-10 flex gap-1">
-            <Button variant="inverse" className="w-14 px-0!" aria-label="Zoom in" disabled={zoomIdx === ZOOMS.length - 1} icon={<ZoomIn />} onClick={() => setZoomIdx((i) => Math.min(ZOOMS.length - 1, i + 1))} />
-            <Button variant="inverse" className="w-14 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
-            <Button variant="inverse" className="w-14 px-0!" aria-label="Rotate view" icon={<RotateCcw />} onClick={rotate} />
-          </div>
-          {/* zoom is a camera zoom inside the stage, so the labels stay readable and in view */}
-          <AvatarPanel clip="idle" camera={camera} markers={HOME_MARKERS} onMarkerTap={(m) => setFocus(m.joint)} compact showCues={false} zoom={ZOOMS[zoomIdx]} overlayTop={64} />
+        <div className="hp-tabs" role="tablist" aria-label="Affected areas">
+          {AR_ORDER.map((k) => {
+            const r = REGIONS[k]
+            const on = k === focus
+            return (
+              <button key={k} type="button" role="tab" aria-selected={on} className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
+                <span className={`hp-dot hp-dot-${r.status}`} aria-hidden />
+                <span>{r.title}</span>
+                <span className={`hp-st hp-st-${r.status}`}>{STATUS_WORD[r.status]}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="hp-stage relative">
+          <AvatarPanel clip="idle" camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
+          <StageMinis k={focus} name={region.title} view={view} />
+        </div>
+        <div className="hp-actions">
+          <button type="button" className="lib-cta lib-cta-2" onClick={() => nav('/details/progress')}>See all progress</button>
+          <button type="button" className="lib-cta lib-cta-1" onClick={() => nav(region.primary.to)}>{region.primary.label}</button>
         </div>
       </Card>
 
       <div className="flex flex-col gap-4">
-        {/* Region metrics are seeded sample history until real sessions fill them: say so. */}
-        <Card tone="highlight" title={region.title} action={<span className="flex flex-wrap justify-end gap-2"><Chip tone="neutral">Sample</Chip><Chip tone={tone[region.status]}>{word[region.status]}</Chip></span>}>
-          <p className="-mt-3 text-muted">{region.setBy}</p>
-          <div className="mt-4 space-y-3">
-            {region.metrics.map((m) => (
-              <Stat key={m.label} value={m.value} unit={m.unit} label={m.label} extra={m.delta ? <Chip tone="mint">{m.delta}</Chip> : undefined} />
-            ))}
-          </div>
-          {region.program.length > 0 && (
-            <div className="mt-4 border-t border-line pt-3">
-              <div className="text-muted">In your program for this area</div>
-              {region.program.map((p) => (
-                <div key={p.name} className="flex items-center justify-between gap-2 py-2">
-                  <span>{p.name}</span>
-                  <Chip tone={p.tag === 'camera' ? 'mint' : 'neutral'}>{p.tag}</Chip>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="mt-4 border-t border-line pt-3">
-            <div className="text-muted">Today, in order</div>
-            <ol className="mt-1">
-              {[...DAY_ORDER, ...WEEKLY].map((id, i) => {
-                const ex = exerciseById(id)
-                if (!ex) return null
-                return (
-                  <li key={id} className="flex items-center justify-between gap-2 py-1">
-                    <span>{ex.weekly ? ex.name : `${i + 1}. ${ex.name}`}</span>
-                    <span className="flex gap-1">
-                      {ex.weekly && <Chip tone="neutral">weekly</Chip>}
-                      {area && ex.region === area && <Chip tone="focus">this area</Chip>}
-                    </span>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-          <Button full variant="secondary" className="mt-4" onClick={() => (region.primary.label === 'Ask the coach' ? setCoachOpen(true) : nav(region.primary.to))}>{region.primary.label}</Button>
-        </Card>
-        <Card title="Assigned program" action={<Chip tone="neutral">Read-only</Chip>}>
-          <p className="-mt-3 text-muted">{me?.program?.short ?? PROGRAM.short}</p>
-          <div className="mt-3 border-t border-line pt-3">
-            <div className="font-bold">Next visit</div>
-            <div className="text-muted">{nextVisit ?? 'Not booked yet · your therapist sets it'}</div>
-          </div>
-        </Card>
+        <AreaDetail k={focus} head={{ name: region.title, word: STATUS_WORD[region.status], headline }} view={view} goal={goal} onGo={nav} />
       </div>
+      {/* Task 7 replaces this with the artifact's CoachChat. */}
       <CoachSheet open={coachOpen} onOpenChange={setCoachOpen} />
     </div>
   )

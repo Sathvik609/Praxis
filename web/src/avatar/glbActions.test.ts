@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   GLB_ACTIONS,
+  JOINT_BONE,
   actionFor,
   advanceGlbClock,
   boneFor,
@@ -12,6 +13,7 @@ import {
   propVisible,
   sourceLabel,
   stepAt,
+  swapLR,
   targetAt,
 } from './glbActions'
 
@@ -206,4 +208,15 @@ test('sourceLabel says when the recorded rep was scaled down to the ceiling', ()
   for (const a of ['flexion', 'abduction']) {
     if (m.actions[a].ceiling_deg !== undefined) expect(sourceLabel(m.actions[a].source, m.actions[a]), a).toMatch(/scaled to 90°/)
   }
+})
+
+test('the cup sheet anchors and the cup are joints the stage can project (session CupRef)', () => {
+  expect(JOINT_BONE.dot1).toBe('anchor_dot_1')
+  expect(JOINT_BONE.dot3).toBe('anchor_dot_3')
+  expect(JOINT_BONE.dot5).toBe('anchor_dot_5')
+  expect(JOINT_BONE.cup).toBe('prop_cup')
+  // not sided: the right side mirrors the whole model, the anchor keeps its name
+  expect(boneFor('dot3', 'right')).toBe('anchor_dot_3')
+  expect(swapLR(undefined)).toBeUndefined()
+  expect(swapLR('hand_L')).toBe('hand_R')
 })

@@ -1,6 +1,5 @@
 /** Illustrative local data matching the wireframes (Alex M., Dr. Rao, Hospital GRASP L2 v3).
  *  Phase 8 replaces this with the session service's store; all values are labeled illustrative. */
-import type { Marker } from '../avatar/markers'
 
 /** Web ids. `arm` is Arm to the front (hidden since 28 Sep); every other id is the service
  *  registry id (`perception/exercises.py`). */
@@ -164,23 +163,18 @@ export function upcomingVisit(text: string | null | undefined, now: Date = new D
 
 export const WEEK = { days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], done: [true, true, false, true], todayIndex: 4, sessions: 3, minutes: 42, lastSession: '8 verified · pain 2→2' }
 
-export const REGIONS: Record<string, { title: string; status: Marker['status']; setBy: string; metrics: { value: string; unit?: string; label: string; delta?: string }[]; program: { name: string; tag: string }[]; primary: { label: string; to: string } }> = {
-  lWrist: { title: 'Left hand', status: 'focus', setBy: 'Set by your program · updated today',
-    metrics: [{ value: '41.2', unit: 's', label: 'Nine-Hole Peg Test · 12 Sep', delta: '−2.8 s' }, { value: '38', unit: 'mm', label: 'pinch opening' }, { value: '17', label: 'verified reaches, last' }],
-    program: [{ name: 'Nine-Hole Peg Test', tag: 'weekly' }, { name: 'Waiter – cup', tag: 'camera' }],
-    primary: { label: 'Run the peg test', to: '/details/checkin?next=nhpt' } },
+/** Home's affected areas (design v2, 6 Oct). Status is set by the program (no endpoint sets it
+ *  yet); every number on the area card is derived from stored sessions in `lib/areaSummary.ts`.
+ *  Programs list only the three visible exercises (28 Sep lock); the elbow has none. */
+export type RegionProgram = { id: ExerciseId; name: string; tag: string; to: string }
+export const REGIONS: Record<'lShoulder' | 'lElbow' | 'lWrist', { title: string; status: 'focus' | 'watch' | 'stable'; setBy: string; program: RegionProgram[]; primary: { label: string; to: string } }> = {
+  lWrist: { title: 'Left hand', status: 'focus', setBy: 'Set by your program',
+    program: [{ id: 'nhpt', name: 'Nine-Hole Peg Test', tag: 'Assessment', to: '/details/choose?next=nhpt' }, { id: 'cup', name: 'Waiter – cup', tag: 'Coordination', to: '/details/demo?exercise=cup&side=left' }],
+    primary: { label: 'Run the peg test', to: '/details/choose?next=nhpt' } },
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
-    metrics: [{ value: '88°', label: 'best lift, last set' }, { value: '2', unit: 'of 16', label: 'lifts with trunk lean' }, { value: '0', label: 'shoulder-hike events' }],
-    program: [{ name: 'Arm out to the side', tag: 'camera' }],
+    program: [{ id: 'abduction', name: 'Arm out to the side', tag: 'Arm strengthening', to: '/details/demo?exercise=abduction&side=left' }, { id: 'cup', name: 'Waiter – cup', tag: 'Coordination', to: '/details/demo?exercise=cup&side=left' }],
     primary: { label: 'Practise Arm out to the side', to: '/details/demo?exercise=abduction&side=left' } },
   lElbow: { title: 'Left elbow', status: 'stable', setBy: 'No exercise assigned here',
-    metrics: [{ value: '170°', label: 'elbow extension during lifts' }],
     program: [],
-    primary: { label: 'Ask the coach', to: '/details/coach' } },
+    primary: { label: 'Practise Waiter – cup', to: '/details/demo?exercise=cup&side=left' } },
 }
-
-export const HOME_MARKERS: Marker[] = [
-  { joint: 'lWrist', status: 'focus', label: 'Left hand' },
-  { joint: 'lShoulder', status: 'watch', label: 'Left shoulder' },
-  { joint: 'lElbow', status: 'stable', label: 'Left elbow' },
-]

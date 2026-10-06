@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { GLB_ACTIONS, type AvatarMeta, type GlbAction, type GlbActionMeta, isPropNode, parseAvatarMeta, propVisible } from './glbActions'
 import type { Side } from './layout'
+import { isDarkTheme } from './stage'
 
 /** Loading and instancing the Blender-built avatar. The GLB (mannequin rig + props + eight
  *  actions) and its sidecar are fetched once per page and cached; each panel gets its own
@@ -75,6 +76,49 @@ export function resetAvatarAssetForTests() {
   ready = null
 }
 
+type Look = { color: number; roughness?: number; clearcoat?: number; emissive?: number }
+/** Design v2 look (6 Oct): a white figure and cool grey furniture, applied at runtime by material
+ *  name so the committed Blender GLB is not rebaked. The dark theme has its own table. */
+export const DS_LOOK: Record<string, Look> = {
+  mannequin_shell: { color: 0xffffff, roughness: 0.55, clearcoat: 0.15 },
+  mannequin_joint: { color: 0xf6f6f4, roughness: 0.4, clearcoat: 0.25 },
+  furniture: { color: 0x6b7380, roughness: 0.7 },
+  table_top: { color: 0x858d99, roughness: 0.75 },
+  wood: { color: 0x6b7380, roughness: 0.8 },
+  peg: { color: 0x3d62e3, roughness: 0.4 },
+  paper: { color: 0xffffff, roughness: 0.9 },
+}
+export const DS_LOOK_DARK: Record<string, Look> = {
+  mannequin_shell: { color: 0xdce6f8, roughness: 0.45, clearcoat: 0.3, emissive: 0x0a1a40 },
+  mannequin_joint: { color: 0xb9ccf2, roughness: 0.35, clearcoat: 0.35, emissive: 0x10306e },
+  furniture: { color: 0x2a3448, roughness: 0.7 },
+  table_top: { color: 0x323d54, roughness: 0.75 },
+  wood: { color: 0x2a3448, roughness: 0.8 },
+  peg: { color: 0x3a84ff, roughness: 0.4, emissive: 0x0b2a80 },
+  paper: { color: 0xd8e0ee, roughness: 0.9 },
+}
+
+/** Re-colour the GLB's (shared) materials for the current theme, once per theme change. */
+function applyDsLook(material: THREE.Material | THREE.Material[]) {
+  const theme = isDarkTheme() ? 'd' : 'l'
+  for (const mat of Array.isArray(material) ? material : [material]) {
+    if (!mat || mat.userData.dsLook === theme) continue
+    mat.userData.dsLook = theme
+    const look = (theme === 'd' ? DS_LOOK_DARK[mat.name] : null) ?? DS_LOOK[mat.name]
+    if (!look) continue
+    const m = mat as THREE.MeshPhysicalMaterial
+    m.color?.set(look.color)
+    if (look.roughness != null && 'roughness' in m) m.roughness = look.roughness
+    if ('clearcoat' in m) m.clearcoat = look.clearcoat ?? 0.15
+    if ('sheen' in m) {
+      m.sheen = 0.3
+      m.sheenColor?.set(0xffffff)
+    }
+    m.emissive?.set(look.emissive ?? 0x000000)
+    m.needsUpdate = true
+  }
+}
+
 /** One panel's copy of the avatar: a wrapper group (mirrored in x for the right side), the cloned
  *  rig and props, one mixer and at most one running action. */
 export class AvatarInstance {
@@ -102,6 +146,7 @@ export class AvatarInstance {
         mesh.receiveShadow = true
         // skinned bounds are the bind pose; an arm raised overhead must not be culled
         if ((o as THREE.SkinnedMesh).isSkinnedMesh) mesh.frustumCulled = false
+        applyDsLook(mesh.material)
       }
     })
     this.mixer = new THREE.AnimationMixer(this.model)

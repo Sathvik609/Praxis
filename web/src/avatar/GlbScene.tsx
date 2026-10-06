@@ -29,14 +29,18 @@ type Props = {
   onProject?: (p: Projection) => void
   /** WebGL unavailable or lost: the panel falls back to the procedural figure. */
   onContextLost?: () => void
+  /** Further joints to project (hotspots, theater readouts, cup sheet dots). */
+  extraJoints?: readonly string[]
 }
 
-/** The Blender-built avatar (GLB) on the dark stage. React mounts one `GlbStage` and pushes the
+const NONE: readonly string[] = []
+
+/** The Blender-built avatar (GLB) on the stage. React mounts one `GlbStage` and pushes the
  *  latest props into it; the stage owns the loop and disposes everything on unmount. */
-export function GlbScene({ asset, action, side, clock, camera, closeUp, compact, showCues, markers = [], script = null, insets, zoom = 1, onTick, onProject, onContextLost }: Props) {
+export function GlbScene({ asset, action, side, clock, camera, closeUp, compact, showCues, markers = [], script = null, insets, zoom = 1, onTick, onProject, onContextLost, extraJoints = NONE }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const stageRef = useRef<GlbStage | null>(null)
-  const props = { asset, action, side, clock, camera, closeUp, compact, showCues, markers, script, insets, zoom, onTick, onProject, onContextLost }
+  const props = { asset, action, side, clock, camera, closeUp, compact, showCues, markers, script, insets, zoom, onTick, onProject, onContextLost, extraJoints }
   const latest = useRef(props)
   useEffect(() => {
     latest.current = props

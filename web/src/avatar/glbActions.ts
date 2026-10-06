@@ -16,7 +16,15 @@ export type GlbTarget = { t: number; kind: 'dot' | 'hole'; index: number; landed
 /** Pace curve of a lift / hold / lower exercise (from `web/blender/animate.py`): for the way up
  *  and the way down, [fraction of the peak elevation, time] pairs (fraction ascending), and the
  *  hold window at the top. */
-export type GlbPace = { lift: [number, number][]; hold: [number, number]; lower: [number, number][] }
+export type GlbPace = {
+  lift: [number, number][]
+  hold: [number, number]
+  lower: [number, number][]
+  /** Upper-arm elevation (deg) at the top of the rep and at rest, so a lower limit (gentle day)
+   *  can be turned into an elevation fraction on the lift / lower curves. */
+  peak_deg?: number
+  rest_deg?: number
+}
 export type GlbActionMeta = {
   duration: number
   loop: boolean
@@ -122,8 +130,14 @@ export function targetAt(targets: readonly GlbTarget[], t: number): { kind: 'dot
   return cur && !cur.landed ? { kind: cur.kind, index: cur.index } : null
 }
 
-/** Rig joint → the GLB bone whose head sits at that joint (hand = the middle knuckle). */
-const JOINT_BONE: Record<Joint, string> = {
+/** Points the stage can project besides the rig joints: the five dots of the Waiter – cup sheet
+ *  and the cup itself (the session's cup reference reads them). */
+export type AnchorJoint = 'dot1' | 'dot2' | 'dot3' | 'dot4' | 'dot5' | 'cup'
+export type StageJoint = Joint | AnchorJoint
+
+/** Rig joint → the GLB bone whose head sits at that joint (hand = the middle knuckle), plus the
+ *  sheet anchors and the cup prop. */
+export const JOINT_BONE: Record<StageJoint, string> = {
   hips: 'hips',
   spine: 'chest',
   neck: 'neck',
@@ -136,12 +150,21 @@ const JOINT_BONE: Record<Joint, string> = {
   rElbow: 'forearm_R',
   rWrist: 'hand_R',
   rHand: 'middle_R',
+  dot1: 'anchor_dot_1',
+  dot2: 'anchor_dot_2',
+  dot3: 'anchor_dot_3',
+  dot4: 'anchor_dot_4',
+  dot5: 'anchor_dot_5',
+  cup: 'prop_cup',
 }
-const swapLR = (bone: string) => bone.replace(/_([LR])$/, (_, s: string) => (s === 'L' ? '_R' : '_L'))
+/** Left ↔ right bone name; null-safe (a joint without a bone passes through). */
+export function swapLR<T extends string | null | undefined>(bone: T): T {
+  return (bone ? bone.replace(/_([LR])$/, (_, s: string) => (s === 'L' ? '_R' : '_L')) : bone) as T
+}
 
 /** Bone a joint label follows. The right side is drawn by mirroring the whole model in x, so the
  *  practising right arm is the (mirrored) left bone chain. */
-export function boneFor(joint: Joint, side: Side): string {
+export function boneFor(joint: StageJoint, side: Side): string {
   const b = JOINT_BONE[joint]
   return side === 'right' ? swapLR(b) : b
 }

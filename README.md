@@ -20,7 +20,7 @@ cd services/session && uv sync && uv run python tools/fetch_models.py && uv run 
 
 # 2. Web app (pnpm). No sign-in: the app opens straight on Home (`/` redirects to `/details`).
 cd web && pnpm install && pnpm dev
-#    → http://localhost:5173/details  Home (body map) → Start session → check-in (Phase 8) · /demo?exercise=cup&side=left shows the demonstration
+#    → http://localhost:5173/details  Home (affected areas) → Start session → Choose → Demonstration → check-in · /demo?exercise=cup&side=left shows the demonstration
 #    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
 #    Click Allow on the camera prompt, hold the printed NHPT sheet in view:
 #    the checklist turns Pass and "Continue to demonstration" unlocks.
@@ -39,7 +39,7 @@ cd web && pnpm install && pnpm dev
 #    ws://localhost:8000/ws/session?mode=arm&exercise=abduction&tier=gentle&side=left
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline
-#    In the app: Settings → "Replay synthetic_nhpt_01" (or Home → "Replay a recorded session").
+#    In the app: Settings → "Replay synthetic_nhpt_01".
 #    A replayed session is saved as `source: replay`: listed with a Replay badge (Progress,
 #    therapist view, report, Home), never counted in trends, practice totals, pain lists,
 #    adherence or the NHPT trend.
@@ -106,6 +106,10 @@ Built and tested on synthetic renders: session service (`/health`, `/events`, We
 **28 Sep, Calendar (screen 12):** `/details/calendar` shows last week and this week (or a month) from the practice days in the prescription: done only when the camera saw a live session, "Planned · not done" only for past practice days after the first live session, rest days, the weekly peg test and the next clinic visit, each in words with a legend. Replays never count; the seed history is labelled Sample. The therapist view's "Edit practice days" changes practice days, the peg-test day and the next visit (`PUT /api/prescription/schedule`, a new prescription version that survives restarts); `GET /api/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD` serves the days. Reminders, moving a day and logging practice without the camera are out of scope.
 
 **6 Oct, design v2 (in progress, branch `feat/design-v2`):** the app takes the designers' 6 Oct look from the design-preview artifact exactly: primary blue `#3D62E3`, amber `#A15C00`, red `#C0362C` on `#F2F5FA`, a "midnight instrument" dark theme, Mulish throughout (self-hosted, `@fontsource/mulish` 5.3.0), and their stylesheet (`web/src/design/designer.css`) imported last in cascade order. The red "Live · not recording" marker and "Sample" labels are never hidden; three colour pairs miss WCAG AA by decision and are listed in `docs/RISKS.md`. Screens are being re-ported one by one (`docs/superpowers/plans/2026-10-06-design-v2-port.md`); the shared controls, the 96 px icon rail (bottom tabs below 900 px, the Praxis mark as logo) and the glass main frame are in.
+
+**6 Oct, design v2 avatar (Task 5):** the figure is white on a light sky stage (navy in the dark theme), done at runtime by material name so the Blender GLB is unchanged; blue cue dots. As the designers' artifact, the stage no longer draws joint text labels or leader lines. New `AvatarPanel` modes: `theater` (Demonstration dock with step, hold countdown, progress, Play/Pause, Replay, Slower, Audio, plus the limit line and the reference figure's own shoulder-angle and trunk-lean tags), `bare` (session reference), Home `hotspots`, `onJoints` for host overlays (cup sheet dots), `ctlRef`, and `limitDeg` (on a gentle day the demonstration says "up to 60°" and holds there). It still never scores anyone; every number on it is the figure's.
+
+**6 Oct, design v2 Home (Task 6):** Home is the designers' layout — Start session goes to Choose; This week reads `/api/calendar`; the "Your affected areas" card has shoulder / elbow / hand tabs, the figure's hotspots, stage tiles and an area card. Every number is derived (`web/src/lib/areaSummary.ts`): the shoulder's best camera-verified lift of the last live arm session against the prescription's limit and its per-session trend, this week's posture cues, verified and unverified counts; the hand's peg-test trend (sample points labelled and never compared with live ones) and last Waiter – cup reaches; the elbow says nothing in the program measures it. Replays never count; "Sample" shows whenever a value is sample history. The replay entry is in Settings.
 
 **6 Oct, design v2 service data (Task 17):** the report's numbers come from the service, not the design preview. `summary.camera` adds `wrong_dot` (cup placed on a dot that was not next), `lean_cues` and `hiking_cues` (`posture_cues` stays their sum); each coach note carries `cat` (Performance · Posture · Safety · Data quality); post-session pain at or above the stop level (7) writes a `pain_after` therapist flag (a flag only, never a stop); the next-practice line names the prescription's clinician. **Edit feedback:** `PATCH /api/sessions/{id}/feedback` merges a JSON object into the stored feedback and `told_us`, writes a `feedback_edit` trace line and re-applies the pain flag (once per session; 404 unknown session, 422 for a non-object body or a pain outside 0–10). New feedback keys (`difficulty`, `again_tomorrow`, `barriers`, `ended_early`, `end_reason`) are documented in `events.schema.json`.
 
