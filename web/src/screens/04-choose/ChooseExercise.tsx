@@ -1,29 +1,20 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
-import { Chip, type ChipTone } from '../../design/Chip'
 import { X } from '../../design/Icon'
-import { Pill } from '../../design/Pill'
 import { demoUrl, nextExercise, readDay, sideOr, syncCheckin, therapistLine, type Day } from '../../lib/day'
-import { DAY_ORDER, TIER_TEXT, WEEKLY, doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
-import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, type EquipmentId, type Exercise, type ExerciseId } from '../../lib/seed'
+import { DAY_ORDER, WEEKLY, doseFor, readCheckinPain, tierFor } from '../../lib/plan'
+import { DEFAULT_EQUIPMENT, EQUIPMENT, EXERCISES, exerciseById, libTags, type EquipmentId, type ExerciseId } from '../../lib/seed'
 import { CoachChat } from '../coach/CoachChat'
-import { DayStrip } from './DayStrip'
-
-/** Badge text always carries the meaning; the tone only repeats it. */
-function badge(e: Exercise): { tone: ChipTone; text: string } {
-  if (e.mode === 'demo') return { tone: 'neutral', text: 'Demo only · you tick it' }
-  if (e.weekly) return { tone: 'neutral', text: 'Assessment' }
-  return { tone: 'mint', text: 'Camera coached' }
-}
-const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest: 'red' }
 
 type Filter = 'today' | 'all' | 'equipment'
 const EQUIPMENT_KEY = 'praxis.equipment'
+/** The artifact's labels. "All GRASP L2" stays verbatim (ruling R5: the seeded program is GRASP Level 2). */
+const FILTERS: [Filter, string][] = [['today', 'Assigned'], ['all', 'All GRASP L2'], ['equipment', 'Equipment I have']]
 
 function readEquipment(): EquipmentId[] {
   try {
@@ -56,34 +47,20 @@ function Sheet({ open, onOpenChange, title, description, children }: { open: boo
   )
 }
 
-type Time = '5' | '10'
-type Pain = 'none' | 'some' | 'high'
-type HasKit = 'yes' | 'no'
-
-/** Rule-based pick from three answers, inside today's plan. Pain 7 or more is a rest day. */
-function suggest(time: Time | null, pain: Pain | null, kit: HasKit | null): { pick: ExerciseId | null; why: string } {
-  if (pain === 'high') return { pick: null, why: 'Pain at 7 or more is a rest day in your program. No exercises today. Tell the check-in, so your therapist can be told.' }
-  if (!time || !pain || !kit) return { pick: null, why: 'Answer all three and Praxis will suggest one exercise from today’s plan.' }
-  const care = pain === 'some' ? ' Pain 4–6 makes it a gentle day: fewer reps, shorter holds, no fast arcs.' : ''
-  if (time === '10') return { pick: 'abduction', why: `Arm out to the side, then Waiter – cup: today’s order.${care}` }
-  const pick: ExerciseId = kit === 'yes' ? 'cup' : 'abduction'
-  const name = EXERCISES.find((e) => e.id === pick)?.name ?? pick
-  return { pick, why: `${name}.${care}` }
-}
-
-/** Screen 04 · Choose exercise. The three exercises of the 28 Sep lock (`EXERCISES` holds only
- *  the visible ones) as one row of three cards at 1280 × 800 (review 28 Sep: the Exercises /
- *  Activities headings left half the screen empty), wrapping to two and one column on narrower
- *  screens. "Today's plan" is the day in order, then the weekly peg test, at the tier the check-in
- *  pain gives (0–3 full, 4–6 gentle, ≥ 7 rest). The service enforces the same tier when the
- *  session starts; this screen only shows it. Cards select on tap; the one primary action lives
- *  in the flow bar. Demo-only cards open the demonstration to watch and tick, never the camera.
+/** Screen 04 · Exercise library (design v2, 6 Oct; artifact `ChooseExercise`). The three
+ *  exercises of the 28 Sep lock as one row of cards, each with the artifact's eyebrow + tag and its
+ *  own "Start session", which opens the demonstration first (D-FLOW: Choose → Demonstration →
+ *  Check-in → Camera setup). The artifact's instructions-only cards (Block towers, Grip power,
+ *  Box and Block Test) are dropped tasks and are not ported, nor is its unreachable "Help me choose".
  *
- *  Day flow (`lib/day.ts`): the tier and any stop come from today's check-in as the service
- *  answered it; the rest card says the therapist was told only when the service flagged it.
- *  Mid-day the next undone exercise is preselected and the day strip shows progress. */
+ *  The dose on each card is today's tier (check-in pain: 0–3 full, 4–6 gentle, ≥ 7 rest); the
+ *  service enforces the same tier when the session starts. On a rest or stopped day every card
+ *  says "Resting today" and the rest card says the therapist was told only when the service
+ *  flagged it. `?next=<id>` (Home's "Run the peg test") preselects that card; otherwise the day's
+ *  next undone exercise is selected. */
 export function ChooseExercise() {
   const nav = useNavigate()
+  const [sp] = useSearchParams()
   const [day, setDay] = useState<Day>(readDay)
   useEffect(() => {
     let alive = true
@@ -95,20 +72,14 @@ export function ChooseExercise() {
   const pain = day.checkin?.pain ?? readCheckinPain()
   const tier = day.checkin?.tier ?? tierFor(pain)
   const [filter, setFilter] = useState<Filter>('today')
-  const [selected, setSelected] = useState<ExerciseId>(() => nextExercise(readDay()) ?? DAY_ORDER[0])
+  const [selected, setSelected] = useState<ExerciseId>(() => exerciseById(sp.get('next'))?.id ?? nextExercise(readDay()) ?? DAY_ORDER[0])
   const [owned, setOwned] = useState<EquipmentId[]>(() => readEquipment())
   const [kitOpen, setKitOpen] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
   const [coachOpen, setCoachOpen] = useState(false)
-  const [time, setTime] = useState<Time | null>(null)
-  const [painAnswer, setPainAnswer] = useState<Pain | null>(null)
-  const [kit, setKit] = useState<HasKit | null>(null)
   const side = day.checkin?.side ?? sideOr(null)
 
-  // Today's plan is the day in order, then the weekly assessment (badged Weekly, never Today · n).
+  // Assigned is the day in order, then the weekly assessment.
   const list = filter === 'today' ? [...DAY_ORDER, ...WEEKLY].map((id) => EXERCISES.find((e) => e.id === id)!) : filter === 'equipment' ? EXERCISES.filter((e) => e.needs.every((n) => owned.includes(n))) : EXERCISES
-  const current = EXERCISES.find((e) => e.id === selected) ?? EXERCISES[0]
-  const currentVisible = list.some((e) => e.id === selected)
   const rest = tier === 'rest' || day.stopped != null
 
   const saveOwned = (next: EquipmentId[]) => {
@@ -119,21 +90,9 @@ export function ChooseExercise() {
       /* private mode */
     }
   }
-  const begin = () => nav(current.mode === 'demo' ? `/details/demo?exercise=${current.id}&side=${side}` : `/details/setup?exercise=${current.id}&side=${side}`)
-  const advice = suggest(time, painAnswer, kit)
-  const usePick = () => {
-    if (!advice.pick) return
-    setSelected(advice.pick)
-    if (!list.some((e) => e.id === advice.pick)) setFilter('all')
-    setHelpOpen(false)
-  }
-  const openHelp = (o: boolean) => {
-    setHelpOpen(o)
-    if (o) {
-      setTime(null)
-      setPainAnswer(null)
-      setKit(null)
-    }
+  const start = (id: ExerciseId) => {
+    setSelected(id)
+    nav(demoUrl(id, side))
   }
 
   return (
@@ -142,16 +101,18 @@ export function ChooseExercise() {
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0 flex-1">
             <h1 className="text-4xl">Choose your exercise</h1>
-            <p className="flex flex-wrap items-center gap-2 text-muted">
-              <Chip tone={TIER_TONE[tier]}>{TIER_TEXT[tier].chip}</Chip>
-              <span>{pain == null ? 'No check-in yet: showing your prescribed dose.' : `Pain ${pain} today: ${TIER_TEXT[tier].line}`}</span>
-            </p>
-            <DayStrip day={day} active={rest ? null : selected} className="mt-2" />
+            {/* The artifact's second clause ("the rest open reviewed instructions") named the
+                instructions-only cards, which are not ported. */}
+            <p className="lib-sub text-muted">Assigned exercises first. Tasks the camera can verify open a coached session.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill ariaLabel="Show" value={filter} onChange={setFilter} options={[{ value: 'today', label: "Today's plan" }, { value: 'all', label: 'All' }, { value: 'equipment', label: 'Equipment I have' }]} />
-            {filter === 'equipment' && <Button variant="secondary" onClick={() => setKitOpen(true)}>What I have</Button>}
-            <Button variant="secondary" onClick={() => openHelp(true)}>Help me choose</Button>
+          <div className="lib-head-right">
+            <div role="radiogroup" aria-label="Show exercises" className="lib-filters">
+              {FILTERS.map(([v, t]) => (
+                <button key={v} type="button" role="radio" aria-checked={filter === v} className="lib-filter" onClick={() => setFilter(v)}>
+                  {t}
+                </button>
+              ))}
+            </div>
             <Button variant="secondary" className="lib-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           </div>
         </div>
@@ -160,11 +121,21 @@ export function ChooseExercise() {
           <Card tone="watch" as="div" className="mt-5">
             <p className="text-xl">
               {day.stopped === 'new_symptoms'
-                ? "You told us something is new or worse. No exercises today, until your therapist has looked at it."
+                ? 'You told us something is new or worse. No exercises today, until your therapist has looked at it.'
                 : day.stopped === 'session'
                   ? "A stop rule ended today's practice. Rest the arm today."
                   : 'Rest the arm today. Nothing here will start until your pain is below 7.'}
               {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
+              <span className="lib-rest-more"> You can still watch the demos.</span>
+              {day.stopped !== 'session' && (
+                <>
+                  <span className="lib-rest-more">{day.stopped === 'new_symptoms' ? ' Ticked that by mistake? ' : ' If your pain has eased, '}</span>
+                  <button type="button" className="lib-rest-link" onClick={() => nav('/details/checkin')}>
+                    {day.stopped === 'new_symptoms' ? 'Check in again' : 'check in again'}
+                  </button>
+                  .
+                </>
+              )}
             </p>
           </Card>
         )}
@@ -176,13 +147,11 @@ export function ChooseExercise() {
         )}
         {list.length > 0 && (
           <section aria-label="Your exercises" className="mt-5">
-            <p className="text-lg text-muted">Camera coached: a rep counts only when the camera verifies it. The peg test is a weekly assessment.</p>
             {/* One row of three at 1280 × 800 (review 28 Sep); two, then one, as the screen narrows. */}
             <div data-testid="choose-cards" className="mt-3 grid auto-rows-fr grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
               {list.map((e) => {
                 const on = e.id === selected
-                const order = DAY_ORDER.indexOf(e.id)
-                const b = badge(e)
+                const [eyebrow, tag] = libTags(e)
                 const dose = rest ? e.dose : doseFor(e, tier)
                 return (
                   <Card key={e.id} as="article" tone={on ? 'highlight' : 'default'} padding="none" className="flex flex-col">
@@ -194,13 +163,10 @@ export function ChooseExercise() {
                       onClick={() => setSelected(e.id)}
                       className="flex min-h-14 flex-1 flex-col rounded-t-[var(--r-card)] p-5 text-left transition-colors hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
                     >
-                      <div className="flex w-full flex-wrap items-start justify-between gap-2">
-                        <span className="text-base text-muted">{e.category}</span>
-                        <span className="flex flex-wrap gap-2">
-                          {order >= 0 && !rest && <Chip tone="focus">{`Today · ${order + 1}`}</Chip>}
-                          {e.weekly && <Chip tone="focus">Weekly</Chip>}
-                          <Chip tone={b.tone}>{b.text}</Chip>
-                        </span>
+                      {/* No wrap (as the artifact's lib-body cards): the tag stays top-right without the fit engine's zoom. */}
+                      <div className="flex w-full items-start justify-between gap-2">
+                        <span className="lib-eyebrow">{eyebrow}</span>
+                        <span className="lib-tag">{tag}</span>
                       </div>
                       <h3 className="mt-2 text-2xl">{e.name}</h3>
                       <div id={`choose-${e.id}-details`}>
@@ -209,8 +175,14 @@ export function ChooseExercise() {
                         <p className="mt-1 text-muted">{e.note}</p>
                       </div>
                     </button>
-                    <div className="px-5 pb-5">
-                      <span className={`text-base font-bold ${on ? 'text-teal-ink' : 'text-muted'}`}>{on ? 'Selected' : 'Tap to select'}</span>
+                    <div className="lib-ctas">
+                      {rest ? (
+                        <span className="lib-rest">Resting today</span>
+                      ) : (
+                        <button type="button" className="lib-cta lib-cta-1" aria-label={`Start session: ${e.name}`} onClick={() => start(e.id)}>
+                          Start session
+                        </button>
+                      )}
                     </div>
                   </Card>
                 )
@@ -221,23 +193,10 @@ export function ChooseExercise() {
       </div>
 
       <FlowBar
-        step={1}
-        label="Choose"
-        left={
-          <>
-            <span className="hidden self-center text-muted lg:inline">Level changes need your clinician.</span>
-            <Button variant="secondary" onClick={() => nav('/details/checkin')}>Back</Button>
-          </>
-        }
-        right={
-          rest ? (
-            <Button onClick={() => nav('/details')}>Back to Home</Button>
-          ) : current.mode === 'demo' ? (
-            <Button onClick={begin} disabled={!currentVisible}>Watch the demo</Button>
-          ) : (
-            <Button onClick={begin} disabled={!currentVisible}>Begin setup</Button>
-          )
-        }
+        step={0}
+        label="Exercise library"
+        left={<span className="hidden self-center text-muted lg:inline">Level changes need your clinician.</span>}
+        right={rest ? <Button onClick={() => nav('/details')}>Back to Home</Button> : null}
       />
 
       <Sheet open={kitOpen} onOpenChange={setKitOpen} title="What I have" description="Tick what is within reach today. The list is kept on this device and drives the Equipment I have filter.">
@@ -248,39 +207,14 @@ export function ChooseExercise() {
         </div>
         <div className="mt-6 flex justify-end"><Button onClick={() => setKitOpen(false)}>Done</Button></div>
       </Sheet>
-
-      <Sheet open={helpOpen} onOpenChange={openHelp} title="Help me choose" description="Three quick questions. The suggestion is rule-based and stays inside your assigned program.">
-        <div className="mt-5 space-y-5">
-          <div>
-            <div className="mb-2 font-bold">How much time do you have?</div>
-            <Pill ariaLabel="Time" value={time ?? ''} onChange={(v) => setTime(v as Time)} options={[{ value: '5', label: 'About 5 minutes' }, { value: '10', label: 'About 10 minutes' }]} />
-          </div>
-          <div>
-            <div className="mb-2 font-bold">Any pain right now?</div>
-            <Pill ariaLabel="Pain" value={painAnswer ?? ''} onChange={(v) => setPainAnswer(v as Pain)} options={[{ value: 'none', label: 'None (0–3)' }, { value: 'some', label: 'Some (4–6)' }, { value: 'high', label: '7 or more' }]} />
-          </div>
-          <div>
-            <div className="mb-2 font-bold">Is the cup and the printed target sheet within reach?</div>
-            <Pill ariaLabel="Equipment" value={kit ?? ''} onChange={(v) => setKit(v as HasKit)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
-          </div>
-          <Card as="div" tone={advice.pick ? 'coach' : painAnswer === 'high' ? 'watch' : 'default'} padding="sm">
-            <p className="text-xl">{advice.why}</p>
-          </Card>
-        </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => openHelp(false)}>Cancel</Button>
-          <Button onClick={usePick} disabled={!advice.pick}>Use this pick</Button>
-        </div>
-      </Sheet>
-      {/* Library coach (Task 7); Task 8's rewrite of this screen keeps the opener (ruling R1). */}
+      {/* Library coach (Task 7); kept by the v2 rewrite (ruling R1). */}
       <CoachChat
         open={coachOpen}
         onOpenChange={setCoachOpen}
         side={side}
         onBegin={(id) => {
           setCoachOpen(false)
-          setSelected(id as ExerciseId)
-          nav(demoUrl(id as ExerciseId, side))
+          start(id as ExerciseId)
         }}
       />
     </div>

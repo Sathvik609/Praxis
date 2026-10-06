@@ -8,9 +8,9 @@ function Where() {
   return <div>AT {loc.pathname + loc.search}</div>
 }
 
-function renderChoose() {
+function renderChoose(url = '/choose') {
   return render(
-    <MemoryRouter initialEntries={['/choose']}>
+    <MemoryRouter initialEntries={[url]}>
       <Routes>
         <Route path="/choose" element={<ChooseExercise />} />
         <Route path="*" element={<Where />} />
@@ -20,119 +20,133 @@ function renderChoose() {
 }
 
 const HIDDEN = /Pendulum|Arm to the front|Rotate (in|out)/
+// design v2 (6 Oct): the artifact's instructions-only cards are dropped tasks / not in the registry
+const DROPPED = /Block towers|Grip power|Box and Block|View instructions/
 const checkin = (pain: number) => sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain }))
+const filters = () => within(screen.getByRole('radiogroup', { name: 'Show exercises' })).getAllByRole('radio')
 
 beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
 })
 
-test('All lists the three exercises of the 28 Sep lock in one row of cards; nothing hidden', () => {
+test('library v2: the artifact header, filters Assigned / All GRASP L2 / Equipment I have, one row of three cards', () => {
   renderChoose()
-  fireEvent.click(screen.getByRole('radio', { name: 'All' }))
-  // review 28 Sep: one row of three cards, not two headed groups with half the screen empty
+  expect(screen.getByRole('heading', { level: 1, name: 'Choose your exercise' })).toBeInTheDocument()
+  expect(filters().map((r) => r.textContent)).toEqual(['Assigned', 'All GRASP L2', 'Equipment I have'])
+  expect(screen.getByRole('radio', { name: 'Assigned' })).toHaveAttribute('aria-checked', 'true')
+  fireEvent.click(screen.getByRole('radio', { name: 'All GRASP L2' }))
+  expect(screen.getByRole('radio', { name: 'All GRASP L2' })).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByRole('radio', { name: 'Assigned' })).toHaveAttribute('aria-checked', 'false')
   const groups = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))
   expect(groups).toEqual(['Your exercises'])
   const row = screen.getByTestId('choose-cards')
   expect(row.className).toMatch(/grid-cols-3/)
-  expect(row.className).toMatch(/max-lg:grid-cols-/) // wraps at narrower widths
+  expect(row.className).toMatch(/max-lg:grid-cols-/)
   expect(within(row).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
-  expect(screen.queryByRole('heading', { level: 2, name: 'Activities' })).not.toBeInTheDocument()
-  expect(screen.getAllByText('Camera coached')).toHaveLength(2)
-  expect(screen.getByText('Weekly')).toBeInTheDocument()
-  expect(screen.getByText('Assessment')).toBeInTheDocument()
-  expect(screen.queryByText('Demo only · you tick it')).not.toBeInTheDocument()
-  expect(document.body.textContent).not.toMatch(HIDDEN)
-  for (const gone of ['Arm out at an angle', 'Arm to the back', 'Block towers', 'Grip power', 'Wash cloth']) {
-    expect(screen.queryByText(gone)).not.toBeInTheDocument()
-  }
-})
-
-test('Today shows the default day in order then the weekly peg test, Arm out to the side preselected and one Begin setup', () => {
-  renderChoose()
-  expect(screen.getByRole('radio', { name: "Today's plan" })).toHaveAttribute('data-state', 'on')
-  expect(screen.getByText('Today · 1')).toBeInTheDocument()
-  expect(screen.getByText('Today · 2')).toBeInTheDocument()
-  expect(screen.queryByText('Today · 3')).not.toBeInTheDocument()
-  const cards = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-  expect(cards).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  // eyebrow + tag replace the Today · n / Weekly / Camera coached chips
   const peg = screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })
-  expect(within(peg).getByText('Weekly')).toBeInTheDocument()
+  expect(within(peg).getByText('Dexterity · timed')).toBeInTheDocument()
   expect(within(peg).getByText('Assessment')).toBeInTheDocument()
-  expect(screen.queryByRole('region', { name: 'Demo only' })).not.toBeInTheDocument()
+  expect(within(screen.getByRole('button', { name: 'Select Waiter – cup' })).getByText('Coordination')).toBeInTheDocument()
+  expect(screen.queryByText('Today · 1')).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(HIDDEN)
-  expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.getAllByRole('button', { name: 'Begin setup' })).toHaveLength(1)
-  expect(screen.getByText('Full dose')).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(DROPPED)
+  expect(screen.getByText('Exercise library')).toBeInTheDocument()
 })
 
-test('pain 4–6 at check-in shows the gentle doses and says why', () => {
+test('Assigned shows the default day in order then the weekly peg test, Arm out to the side preselected, one Start session per card', () => {
+  renderChoose()
+  expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getAllByRole('button', { name: /^Start session: / }).map((b) => b.textContent)).toEqual(['Start session', 'Start session', 'Start session'])
+  expect(screen.queryByRole('button', { name: 'Begin setup' })).not.toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(DROPPED)
+})
+
+test('each card’s Start session opens that exercise’s demonstration (D-FLOW), never camera setup', () => {
+  renderChoose()
+  fireEvent.click(screen.getByRole('button', { name: 'Start session: Waiter – cup' }))
+  expect(screen.getByText('AT /details/demo?exercise=cup&side=left')).toBeInTheDocument()
+})
+
+test('?next=nhpt (Home "Run the peg test") preselects and highlights the peg test', () => {
+  renderChoose('/choose?next=nhpt')
+  expect(screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(screen.getByRole('button', { name: 'Start session: Nine-Hole Peg Test' }))
+  expect(screen.getByText('AT /details/demo?exercise=nhpt&side=left')).toBeInTheDocument()
+})
+
+test('?next= naming a hidden or unknown exercise falls back to the day’s next exercise', () => {
+  renderChoose('/choose?next=pendulum')
+  expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')
+  expect(document.body.textContent).not.toMatch(HIDDEN)
+})
+
+test('pain 4–6 at check-in shows the gentle doses on the cards', () => {
   checkin(5)
   renderChoose()
-  expect(screen.getByText('Gentle day')).toBeInTheDocument()
-  expect(screen.getByText(/Pain 5 today: a gentle day/)).toBeInTheDocument()
   expect(screen.getByText('2 × 6 · hold 2 s · up to 60°')).toBeInTheDocument()
+  expect(screen.getByText(/60°/)).toBeInTheDocument()
   expect(screen.getByText('2 slow arcs only')).toBeInTheDocument()
 })
 
-test('pain 7 or more is a rest day: nothing to start, one way back home', () => {
+test('full dose keeps the locked cup wording', () => {
+  renderChoose()
+  expect(screen.getByText('2 slow arcs, then 2 fast')).toBeInTheDocument()
+})
+
+test('pain 7 or more is a rest day: every card says Resting today, nothing starts, one way back home', () => {
   checkin(8)
   renderChoose()
-  expect(screen.getByText('Rest day')).toBeInTheDocument()
-  expect(screen.getByText(/Pain 8 today: a rest day/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Begin setup' })).not.toBeInTheDocument()
+  expect(screen.getByText(/Rest the arm today\. Nothing here will start until your pain is below 7\./)).toBeInTheDocument()
+  expect(screen.getByText(/You can still watch the demos\./)).toBeInTheDocument()
+  expect(screen.getAllByText('Resting today')).toHaveLength(3)
+  expect(screen.queryByRole('button', { name: /^Start session/ })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
   expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
-test('no filter ever offers a hidden exercise, even with every piece of equipment ticked', () => {
+test('rest day: "check in again" goes to the check-in', () => {
+  checkin(8)
+  renderChoose()
+  expect(screen.getByText(/If your pain has eased,/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'check in again' }))
+  expect(screen.getByText('AT /details/checkin')).toBeInTheDocument()
+})
+
+test('no filter ever offers a hidden exercise or a dropped task, even with every piece of equipment ticked', () => {
   localStorage.setItem('praxis.equipment', JSON.stringify(['sheets', 'pegboard', 'cup', 'weight', 'table', 'chair']))
   renderChoose()
-  for (const f of ["Today's plan", 'All', 'Equipment I have']) {
+  for (const f of ['Assigned', 'All GRASP L2', 'Equipment I have']) {
     fireEvent.click(screen.getByRole('radio', { name: f }))
     expect(document.body.textContent).not.toMatch(HIDDEN)
+    expect(document.body.textContent).not.toMatch(DROPPED)
     expect(screen.queryByRole('button', { name: /Select (Pendulum|Arm to the front|Rotate)/ })).not.toBeInTheDocument()
   }
 })
 
-test('Begin setup carries the selected exercise to camera setup', () => {
-  renderChoose()
-  fireEvent.click(screen.getByRole('button', { name: 'Select Arm out to the side' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Begin setup' }))
-  expect(screen.getByText('AT /details/setup?exercise=abduction&side=left')).toBeInTheDocument()
-})
-
-test('Equipment I have filters by the saved list and What I have edits it', () => {
+test('Equipment I have filters by the saved list', () => {
   renderChoose()
   fireEvent.click(screen.getByRole('radio', { name: 'Equipment I have' }))
   expect(screen.getByRole('heading', { name: 'Waiter – cup' })).toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Nine-Hole Peg Test' })).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'What I have' }))
-  const dialog = screen.getByRole('dialog', { name: 'What I have' })
-  fireEvent.click(within(dialog).getByLabelText(/Pegboard/))
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }))
-  expect(screen.getByRole('heading', { name: 'Nine-Hole Peg Test' })).toBeInTheDocument()
-  expect(JSON.parse(localStorage.getItem('praxis.equipment') ?? '[]')).toContain('pegboard')
 })
 
-test('Help me choose picks within today’s plan; pain 7 or more points to rest', () => {
+test('Equipment I have with nothing ticked offers What I have, and ticking brings cards back', () => {
+  localStorage.setItem('praxis.equipment', '[]')
   renderChoose()
-  fireEvent.click(screen.getByRole('button', { name: 'Help me choose' }))
-  const dialog = screen.getByRole('dialog', { name: 'Help me choose' })
-  fireEvent.click(within(dialog).getByRole('radio', { name: 'About 5 minutes' }))
-  fireEvent.click(within(dialog).getByRole('radio', { name: 'None (0–3)' }))
-  fireEvent.click(within(dialog).getByRole('radio', { name: 'No' }))
-  expect(within(dialog).getByText(/Arm out to the side/)).toBeInTheDocument()
-  fireEvent.click(within(dialog).getByRole('radio', { name: 'About 10 minutes' }))
-  expect(within(dialog).getByText(/Arm out to the side, then Waiter – cup/)).toBeInTheDocument()
-  expect(dialog.textContent).not.toMatch(HIDDEN)
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Use this pick' }))
-  expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')
-  fireEvent.click(screen.getByRole('button', { name: 'Help me choose' }))
-  const again = screen.getByRole('dialog', { name: 'Help me choose' })
-  fireEvent.click(within(again).getByRole('radio', { name: '7 or more' }))
-  expect(within(again).getByText(/rest day/i)).toBeInTheDocument()
-  expect(within(again).getByRole('button', { name: 'Use this pick' })).toBeDisabled()
+  fireEvent.click(screen.getByRole('radio', { name: 'Equipment I have' }))
+  expect(screen.getByText('Nothing matches the equipment you have yet.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'What I have' }))
+  const dialog = screen.getByRole('dialog', { name: 'What I have' })
+  expect(dialog.textContent).not.toMatch(/Building blocks|Hand gripper|Box and Block/)
+  fireEvent.click(within(dialog).getByLabelText(/Pegboard/))
+  fireEvent.click(within(dialog).getByLabelText(/Printed sheets/))
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }))
+  expect(screen.getByRole('heading', { name: 'Nine-Hole Peg Test' })).toBeInTheDocument()
+  expect(JSON.parse(localStorage.getItem('praxis.equipment') ?? '[]')).toEqual(['pegboard', 'sheets'])
 })
 
 function storeDay(checkin: Record<string, unknown>, extra: Record<string, unknown> = {}) {
@@ -151,25 +165,33 @@ test('the rest day says the therapist was told only when the service flagged it'
   vi.unstubAllGlobals()
 })
 
-test('new or worse symptoms today: nothing to start from the list either', () => {
+test('new or worse symptoms today: nothing to start from the list either; Check in again is offered', () => {
   storeDay({ pain: 1, new_symptoms: true, flagged: true }, { stopped: 'new_symptoms' })
   renderChoose()
   expect(screen.getByText(/new or worse/)).toBeInTheDocument()
   expect(screen.getByText(/Your therapist has been told\./)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Begin setup' })).not.toBeInTheDocument()
+  expect(screen.getByText(/Ticked that by mistake\?/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Check in again' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /^Start session/ })).not.toBeInTheDocument()
 })
 
-test('mid-day the next undone exercise is preselected, the day strip shows progress, and the saved side is used', () => {
+test('a stop rule that ended today’s practice offers no check-in again', () => {
+  storeDay({}, { stopped: 'session' })
+  renderChoose()
+  expect(screen.getByText(/A stop rule ended today's practice/)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /check in again/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /^Start session/ })).not.toBeInTheDocument()
+})
+
+test('mid-day the next undone exercise is preselected and the saved side is used', () => {
   storeDay({}, { done: ['abduction'] })
   renderChoose()
   expect(screen.getByRole('button', { name: 'Select Waiter – cup' })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.getByRole('navigation', { name: "Today's plan" })).toHaveTextContent('Arm out to the side · done')
-  expect(screen.getByTestId('day-title')).toHaveTextContent('Today · 2 of 2 · Waiter – cup')
-  fireEvent.click(screen.getByRole('button', { name: 'Begin setup' }))
-  expect(screen.getByText('AT /details/setup?exercise=cup&side=right')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Start session: Waiter – cup' }))
+  expect(screen.getByText('AT /details/demo?exercise=cup&side=right')).toBeInTheDocument()
 })
 
-test('ask the coach opens the library coach from Choose', async () => {
+test('ask the coach opens the library coach from Choose (ruling R1)', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }) as Response))
   try {
     renderChoose()

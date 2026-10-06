@@ -1,4 +1,4 @@
-import { ALL_EXERCISES, EXERCISES, REGIONS, angleTarget, exerciseById, exerciseOfSession, isHiddenExercise, isHiddenSession, sessionExerciseName, upcomingVisit } from './seed'
+import { ALL_EXERCISES, EQUIPMENT, EXERCISES, REGIONS, libTags, angleTarget, exerciseById, exerciseOfSession, isHiddenExercise, isHiddenSession, sessionExerciseName, upcomingVisit } from './seed'
 
 test('28 Sep lock: only Arm out to the side, Waiter – cup and the peg test are visible; the other four stay dormant', () => {
   expect(EXERCISES.map((e) => e.name)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
@@ -56,4 +56,27 @@ test('a visit date in the past is not shown as the next visit', () => {
   expect(upcomingVisit('Tue 12 Jan', new Date(2026, 11, 20))).toBe('Tue 12 Jan') // early next year
   expect(upcomingVisit('', now)).toBeNull()
   expect(upcomingVisit(undefined, now)).toBeNull()
+})
+
+test('design v2 library: the artifact\'s dropped / non-registry tasks and their equipment are never ported', () => {
+  const DROPPED = /Block towers|Grip power|Box and Block/
+  expect(ALL_EXERCISES.map((e) => `${e.id} ${e.name} ${e.category}`).join(' ')).not.toMatch(DROPPED)
+  expect(EQUIPMENT.map((k) => `${k.id} ${k.label}`).join(' ')).not.toMatch(/Building blocks|Hand gripper|Box and Block/)
+  for (const id of ['blocks', 'gripper', 'grip', 'bbt']) {
+    expect(ALL_EXERCISES.some((e) => e.id === id || e.serviceId === id)).toBe(false)
+    expect(EQUIPMENT.some((k) => k.id === id)).toBe(false)
+    expect(Object.values(REGIONS).some((r) => r.program.some((p) => p.id === (id as never)))).toBe(false)
+  }
+  expect(JSON.stringify(REGIONS)).not.toMatch(DROPPED)
+})
+
+test('design v2 library: each visible exercise carries the artifact\'s eyebrow and tag', () => {
+  expect(EXERCISES.map((e) => libTags(e))).toEqual([
+    ['Shoulder · range of motion', 'Arm strengthening'],
+    ['Reach and place', 'Coordination'],
+    ['Dexterity · timed', 'Assessment'],
+  ])
+  // the cup keeps the locked dose wording; gentle abduction keeps the 60° the service enforces
+  expect(EXERCISES.find((e) => e.id === 'cup')?.dose).toBe('2 slow arcs, then 2 fast')
+  expect(EXERCISES.find((e) => e.id === 'abduction')?.gentleDose).toMatch(/up to 60°/)
 })

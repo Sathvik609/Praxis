@@ -12,6 +12,10 @@ export type Exercise = {
   serviceId: string
   name: string
   category: string
+  /** Library card eyebrow and tag (design v2, the artifact's `LIB_TAGS`). Without them the card
+   *  falls back to the category's parts, as the artifact does. */
+  eyebrow?: string
+  tag?: string
   group: ExerciseGroup
   /** `coached`: verified from OpenCV events only. `demo`: the avatar performs it and the patient
    *  ticks it; the camera never scores it. */
@@ -63,19 +67,19 @@ export const ALL_EXERCISES: Exercise[] = [
     equipment: 'A sturdy table', dose: '2 × 10 swings', gentleDose: '2 × 8 swings', note: 'Camera counts the swings from the side.', clip: 'pendulum', region: 'shoulder', needs: ['table'],
     steps: ['Stand and lean forward, resting your good hand on a table', 'Let the practising arm hang straight down, loose and heavy', "Swing it gently forward and back — let the weight do the work, don't lift", 'Stop if anything sharpens. This one should feel easy'],
     watchFor: 'lifting the arm instead of letting it swing', stopIf: STOP_IF },
-  { id: 'arm', serviceId: 'flexion', name: 'Arm to the front', category: 'Arm strengthening · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'side', hidden: true,
+  { id: 'arm', serviceId: 'flexion', name: 'Arm to the front', category: 'Arm strengthening · shoulder', eyebrow: 'Shoulder · range of motion', tag: 'Arm strengthening', group: 'exercise', mode: 'coached', session: 'arm', view: 'side', hidden: true,
     equipment: 'Chair · wrist weight 0.5–1 lb if prescribed', dose: '2 × 8 · hold 3 s · no higher than shoulder', gentleDose: '2 × 6 · hold 2 s · no higher than shoulder', note: 'Camera measures arm angle from the side and watches for leaning.', clip: 'armFront', region: 'shoulder', needs: ['chair'],
     steps: ['Sit tall, practising side toward the camera, arm by your side', 'Lift the straight arm to the front for a count of three', 'Hold at shoulder height for three — never higher', 'Lower for a count of three', 'Eight lifts, rest, then eight more'],
     watchFor: 'leaning back to lift, shoulder hiking', stopIf: STOP_IF },
-  { id: 'abduction', serviceId: 'abduction', name: 'Arm out to the side', category: 'Arm strengthening · shoulder', group: 'exercise', mode: 'coached', session: 'arm', view: 'front',
+  { id: 'abduction', serviceId: 'abduction', name: 'Arm out to the side', category: 'Arm strengthening · shoulder', eyebrow: 'Shoulder · range of motion', tag: 'Arm strengthening', group: 'exercise', mode: 'coached', session: 'arm', view: 'front',
     equipment: 'Chair', dose: '2 × 8 · hold 3 s · no higher than shoulder', gentleDose: '2 × 6 · hold 2 s · up to 60°', note: 'Camera measures arm angle from the front.', clip: 'abduction', region: 'shoulder', needs: ['chair'],
     steps: ['Sit tall facing the camera, arm by your side', 'Lift the arm out to the side, palm down, up to shoulder height', 'Hold, then lower slowly', "Keep the shoulder down — don't shrug it up toward your ear"],
     watchFor: 'shrugging the shoulder, leaning away', stopIf: STOP_IF },
-  { id: 'cup', serviceId: 'cup', name: 'Waiter – cup', category: 'Coordination · reach and place', group: 'activity', mode: 'coached', session: 'cup',
+  { id: 'cup', serviceId: 'cup', name: 'Waiter – cup', category: 'Coordination · reach and place', eyebrow: 'Reach and place', tag: 'Coordination', group: 'activity', mode: 'coached', session: 'cup',
     equipment: 'Cup + printed target sheet', dose: '2 slow arcs, then 2 fast', gentleDose: '2 slow arcs only', note: 'Camera verifies the cup on each of the five dots.', clip: 'cup', region: 'hand', needs: ['cup', 'sheets'],
     steps: ['Cup in your weaker hand, sheet in front of you', 'Place the cup on dot 1, then rest your hand in your lap', 'Reach and move the cup to the next dot, one at a time', 'After dot 5, go back the way you came', 'Repeat twice, then twice as fast as you can'],
     watchFor: 'shoulder creeping up, leaning to reach', stopIf: STOP_IF },
-  { id: 'nhpt', serviceId: 'nhpt', name: 'Nine-Hole Peg Test', category: 'Standardized assessment · dexterity', group: 'activity', mode: 'coached', session: 'nhpt', weekly: true,
+  { id: 'nhpt', serviceId: 'nhpt', name: 'Nine-Hole Peg Test', category: 'Standardized assessment · dexterity', eyebrow: 'Dexterity · timed', tag: 'Assessment', group: 'activity', mode: 'coached', session: 'nhpt', weekly: true,
     equipment: 'Pegboard + 9 pegs · printed marker sheet', dose: 'Timed, one attempt each hand · weekly', note: 'Timer starts at first peg lift, stops at ninth seated peg.', clip: 'nhpt', region: 'hand', needs: ['pegboard', 'sheets'],
     steps: ['Pegs in the dish on the marked side, board on the printed sheet', 'When ready, pick up the first peg — the timer starts on your first lift', 'Place pegs in any hole, one at a time, as quickly as you comfortably can', 'The timer stops when the ninth peg is seated'],
     watchFor: 'dropping pegs off the sheet', stopIf: STOP_IF },
@@ -92,6 +96,12 @@ export const ALL_EXERCISES: Exercise[] = [
 /** The three exercises of the 28 Sep lock: Arm out to the side, Waiter – cup, Nine-Hole Peg
  *  Test. Everything the patient sees is drawn from this list. */
 export const EXERCISES: Exercise[] = ALL_EXERCISES.filter((e) => !e.hidden)
+
+/** Library card [eyebrow, tag]; falls back to the category's parts like the artifact. */
+export function libTags(e: Exercise): [string, string] {
+  const parts = e.category.split(' · ')
+  return [e.eyebrow ?? parts.slice(1).join(' · '), e.tag ?? parts[0]]
+}
 
 /** True when an id (web or service) names a hidden exercise: a deep link to it is redirected. */
 export const isHiddenExercise = (id: string | null | undefined): boolean => ALL_EXERCISES.some((e) => e.hidden && (e.id === id || e.serviceId === id))
