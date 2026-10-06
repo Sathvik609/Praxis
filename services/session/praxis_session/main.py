@@ -24,12 +24,13 @@ import time
 from dataclasses import replace as _replace_event
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.model import load_config as load_agent_config, make_planner
@@ -175,6 +176,33 @@ def api_session(session_id: str) -> dict[str, object]:
         live = sessions.get(session_id)
         return {"error": "unknown session"} if live is None else {"id": session_id, "live": True, "summary": _summary_with_latency(live)}
     return s
+
+
+@app.patch("/api/sessions/{session_id}/feedback")
+def api_patch_feedback(session_id: str, body: dict[str, Any] = Body(...)) -> dict[str, object]:
+    """Report · Edit feedback (6 Oct, ruling R4). Merges the body into the stored session's
+    feedback and `summary.told_us` exactly as the end-of-session path does, writes a
+    `feedback_edit` trace line, and re-applies the post-session pain rule: `pain_after` at or
+    above the stop level adds one `pain_after` therapist flag (never a stop; the session is
+    over). 404 for an unknown session, 422 for a non-object body or a pain that is not 0-10."""
+    patch = {k: v for k, v in body.items() if k != "cmd"}
+    pain = patch.get("pain_after")
+    if pain is not None and (isinstance(pain, bool) or not isinstance(pain, int) or not 0 <= pain <= 10):
+        raise HTTPException(422, [{"loc": ["body", "pain_after"], "msg": "pain_after must be an integer 0-10"}])
+    out = store.update_feedback(session_id, patch, t=_clock().timestamp())
+    if out is None:
+        raise HTTPException(404, "unknown session")
+    row, added = out
+    live = sessions.get(session_id)
+    if live is not None:  # keep the in-memory session (live summary, trace panel) in step
+        live.feedback = dict(row["feedback"])
+        if added is not None and not any(f["rule"] == "pain_after" for f in live.stop_rules.flags):
+            live.stop_rules.flags.append(dict(added))
+    tr = live.trace if live is not None else Trace(session_id)
+    tr.log("feedback_edit", changed=patch, feedback=row["feedback"])
+    if added is not None:
+        tr.log("flag", rule=added["rule"], detail=added["detail"])
+    return row
 
 
 @app.get("/api/flags")

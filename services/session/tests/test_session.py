@@ -249,3 +249,72 @@ def test_second_lean_regresses_and_queues_a_clamped_set_hold(tmp_path):
     cmds = s.take_commands()
     assert cmds == [{"cmd": "set_hold", "hold_s": 2.0, "rx": "abduction", "evidence": [lean2.id]}]
     assert s.take_commands() == []
+
+
+# ---- 6 Oct design v2 (Task 17): honest report data -----------------------------------------
+
+
+def test_feedback_pain_at_stop_level_flags_therapist(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    pain_max = SEED_PRESCRIPTION.stop_rules.pain_max
+    s.on_feedback({"pain_after": pain_max, "ended_early": False}, t=5.0)
+    flags = [f for f in s.summary(5.0)["flags"] if f["rule"] == "pain_after"]
+    assert len(flags) == 1 and flags[0]["detail"] == f"pain {pain_max}/10 after the session (stop level {pain_max})"
+    # the session is already over: a flag only, never a stop
+    assert s.summary(5.0)["stopped"] is False and not s.stopped
+    assert ("flag", "pain_after") in [(r["kind"], r.get("rule")) for r in s.trace.tail(10)]
+    s.on_feedback({"pain_after": pain_max + 1}, t=6.0)  # sent again: still one flag
+    assert sum(f["rule"] == "pain_after" for f in s.summary(6.0)["flags"]) == 1
+
+
+def test_feedback_pain_below_stop_level_no_flag(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.on_feedback({"pain_after": SEED_PRESCRIPTION.stop_rules.pain_max - 1}, t=5.0)
+    assert not any(f["rule"] == "pain_after" for f in s.summary(5.0)["flags"])
+    s.on_feedback({"ended_early": False}, t=6.0)  # skipped pain question
+    s.on_feedback({"pain_after": True}, t=7.0)  # not a pain score
+    assert not any(f["rule"] == "pain_after" for f in s.summary(7.0)["flags"])
+
+
+def test_feedback_keeps_the_new_keys_in_told_us(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.on_checkin(pain=2, energy="comfortable", minutes=10, new_symptoms=False, t=1.0)
+    fb = {"pain_after": 3, "difficulty": "just_right", "effort": 4, "again_tomorrow": "yes_probably", "ended_early": True, "barriers": ["tired", "camera"]}
+    s.on_feedback(fb, t=5.0)
+    assert s.summary(5.0)["told_us"] == {"pain_before": 2, "energy": "comfortable", "minutes": 10, "new_symptoms": False, **fb}
+
+
+def test_wrong_dot_counted(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    assert s.summary(0.0)["camera"]["wrong_dot"] == 0
+    s.on_events([make_event("wrong_dot", t=1.0, dot=4, expected=3)], snapshot={}, t=1.0)
+    assert s.summary(1.0)["camera"]["wrong_dot"] == 1
+
+
+def test_posture_split(tmp_path):
+    s = make(mode="arm", tmp_path=tmp_path)
+    s.on_events([make_event("compensation_lean", t=1.0, lean_deg=12), make_event("shoulder_hiking", t=2.0)], snapshot={}, t=2.0)
+    c = s.summary(2.0)["camera"]
+    assert (c["lean_cues"], c["hiking_cues"], c["posture_cues"]) == (1, 1, 2)
+
+
+def test_coach_notes_have_categories(tmp_path):
+    s = make(mode="arm", tmp_path=tmp_path)
+    s.decisions.append({"action": "correct", "cue_id": "arm_lean", "reason": "trunk lean 14°", "evidence": [1], "source": "rule"})
+    s.decisions.append({"action": "correct", "cue_id": "arm_hike", "reason": "shoulder hiking", "evidence": [2], "source": "rule"})
+    s.decisions.append({"action": "correct", "cue_id": "arm_unverified", "reason": "unverified rep (pose_lost)", "evidence": [3], "source": "rule"})
+    s.decisions.append({"action": "correct", "cue_id": "cup_wrong_dot", "reason": "wrong dot", "evidence": [4], "source": "rule"})
+    s.decisions.append({"action": "progress", "cue_id": "cup_fast", "reason": "slow arcs verified", "evidence": [5], "source": "rule"})
+    s.decisions.append({"action": "regress", "cue_id": "arm_regress", "reason": "second lean", "evidence": [6], "source": "rule"})
+    cats = [n["cat"] for n in s.summary(1.0)["coach"]["notes"]]
+    assert cats == ["Posture", "Posture", "Data quality", "Performance", "Performance", "Performance"]
+    rest = make(mode="cup", tmp_path=tmp_path)
+    rest.decisions.append({"action": "rest", "cue_id": "rest", "reason": "exertion high", "evidence": [7], "source": "rule"})
+    assert [n["cat"] for n in rest.summary(1.0)["coach"]["notes"]] == ["Safety"]
+
+
+def test_coach_note_categories_from_the_real_rule_coach(tmp_path):
+    s = make(mode="arm", tmp_path=tmp_path)
+    s.on_events([make_event("compensation_lean", t=1.0, lean_deg=14, count=1)], snapshot={}, t=1.0)
+    notes = s.summary(1.0)["coach"]["notes"]
+    assert notes and notes[0]["cat"] == "Posture"

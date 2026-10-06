@@ -14,10 +14,11 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from praxis_session.calendar_view import practice_counts
+from praxis_session.calendar_view import practice_counts, short_name
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
+from praxis_session.stop_rules import pain_after_detail
 
 DEFAULT_PATH = Path(__file__).resolve().parents[1] / "praxis.db"
 SCHEMA = """
@@ -49,15 +50,17 @@ def session_source(summary: dict[str, Any]) -> str:
     return "replay" if t0 is not None and float(t0) < 1e9 else "live"
 
 
-def _next_practice(summary: dict[str, Any]) -> dict[str, Any]:
+def _next_practice(summary: dict[str, Any], clinician: str) -> dict[str, Any]:
+    """`clinician` is the current prescription's clinician, shortened ("Dr. Anita Rao, OT" ->
+    "Dr. Rao"): the report names whoever prescribes, never a fixed name (6 Oct)."""
     mode = summary.get("mode")
     cam = summary.get("camera", {})
     if summary.get("stopped"):
         return {"text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.", "proposal": "review with clinician", "level_change": False}
     if mode == "cup":
-        return {"text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.", "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement", "level_change": False}
+        return {"text": f"Continue your assigned plan. Fast arcs stay on. No level change — that needs {clinician}.", "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement", "level_change": False}
     if mode == "arm":
-        return {"text": "Continue your assigned plan. No level change — that needs Dr. Rao.", "proposal": "keep hold at 3 s, watch leaning" if cam.get("posture_cues") else "keep hold at 3 s", "level_change": False}
+        return {"text": f"Continue your assigned plan. No level change — that needs {clinician}.", "proposal": "keep hold at 3 s, watch leaning" if cam.get("posture_cues") else "keep hold at 3 s", "level_change": False}
     return {"text": "Assessment recorded. Practice continues on the assigned plan.", "proposal": "repeat the peg test weekly, same board and camera setup", "level_change": False}
 
 
@@ -190,14 +193,17 @@ class Store:
         rows = self._db.execute("SELECT * FROM schedule_log ORDER BY id")
         return [{"id": r["id"], "t": r["t"], "by": r["by"], "from_version": r["from_version"], "to_version": r["to_version"], "before": json.loads(r["before_json"]), "after": json.loads(r["after_json"])} for r in rows]
 
-    def _row(self, r: sqlite3.Row, with_events: bool = False) -> dict[str, Any]:
+    def _clinician(self) -> str:
+        return short_name(self.rx().clinician)
+
+    def _row(self, r: sqlite3.Row, with_events: bool = False, clinician: str | None = None) -> dict[str, Any]:
         d = {
             "id": r["id"], "mode": r["mode"], "exercise": r["exercise"], "username": r["username"],
             "started_at": r["started_at"], "ended_at": r["ended_at"], "status": r["status"],
             "tracking": r["tracking"], "title": r["title"], "date": (r["started_at"] or "")[:10],
             "summary": json.loads(r["summary_json"] or "{}"), "feedback": json.loads(r["feedback_json"] or "{}"), "checkin": json.loads(r["checkin_json"] or "{}"),
         }
-        d["next_practice"] = _next_practice(d["summary"])
+        d["next_practice"] = _next_practice(d["summary"], clinician or self._clinician())
         d["delivery"] = d["summary"].get("delivery", "queued · not yet delivered")
         d["illustrative"] = bool(d["summary"].get("illustrative"))  # seed history, never real
         d["source"] = session_source(d["summary"])  # sample | replay | live
@@ -215,7 +221,8 @@ class Store:
             rows = self._db.execute(f"SELECT * FROM sessions WHERE {visible} ORDER BY started_at DESC LIMIT ?", (*HIDDEN_IDS, limit)).fetchall()
         else:
             rows = self._db.execute(f"SELECT * FROM sessions WHERE username=? AND {visible} ORDER BY started_at DESC LIMIT ?", (username.lower(), *HIDDEN_IDS, limit)).fetchall()
-        return [self._row(r) for r in rows]
+        clinician = self._clinician()  # once per list, not per row
+        return [self._row(r, clinician=clinician) for r in rows]
 
     def session(self, sid: str) -> dict[str, Any] | None:
         r = self._db.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone()
@@ -304,6 +311,30 @@ class Store:
             self._db.execute("INSERT OR REPLACE INTO nhpt_trend(patient_id, date, total_s) VALUES(?,?,?)", (PATIENT["id"], started[:10], float(cam["nhpt_total_s"])))
         self._db.commit()
         return sid
+
+    def update_feedback(self, sid: str, patch: dict[str, Any], t: float) -> tuple[dict[str, Any], dict[str, Any] | None] | None:
+        """Report · Edit feedback (6 Oct, ruling R4): merge `patch` into the stored feedback and
+        rebuild `summary.told_us` as the end of a session does (check-in, then feedback). Pain at
+        or above the current stop level adds one `pain_after` therapist flag (summary and flags
+        table) unless the session already has one; a lowered pain never withdraws a flag, and
+        the session's status is untouched (it is over). Returns (session, added flag or None),
+        or None when the session is unknown or hidden."""
+        r = self._db.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone()
+        if r is None or r["exercise"] in HIDDEN_IDS:
+            return None
+        feedback = json.loads(r["feedback_json"] or "{}") | patch
+        summary = json.loads(r["summary_json"] or "{}")
+        summary["told_us"] = {**json.loads(r["checkin_json"] or "{}"), **feedback}
+        added: dict[str, Any] | None = None
+        detail = pain_after_detail(feedback.get("pain_after"), self.rx().stop_rules.pain_max)
+        flags = summary.setdefault("flags", [])
+        if detail is not None and not any(f.get("rule") == "pain_after" for f in flags):
+            added = {"t": t, "rule": "pain_after", "detail": detail}
+            flags.append(added)
+            self._db.execute("INSERT INTO flags(session_id, rule, detail, t, date) VALUES(?,?,?,?,?)", (sid, "pain_after", detail, t, (r["started_at"] or "")[:10]))
+        self._db.execute("UPDATE sessions SET feedback_json=?, summary_json=? WHERE id=?", (json.dumps(feedback), json.dumps(summary), sid))
+        self._db.commit()
+        return self._row(self._db.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone(), with_events=True), added
 
     def update_schedule(self, body: dict[str, Any], by: str = "therapist", now: float | None = None) -> dict[str, Any]:
         """The therapist's practice-day edit: validate (`Schedule`), store prescription v(N+1)

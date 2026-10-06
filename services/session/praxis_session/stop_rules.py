@@ -4,6 +4,7 @@ stop  -> session ends, partial report saved, therapist flagged
 pause -> session paused until the patient resumes (or the condition clears)
 rest  -> forced rest break
 Every stop/pause/rest that a clinician should see also emits `therapist_flag`.
+flag  -> post-session pain at or above the stop level (`pain_after`, 6 Oct): a flag only.
 
 Unverified is not failed (24 Sep review). A rep with `verified: false` is either
 - **unverified**: the camera could not check it (`cup_occluded`, `marker_lost`,
@@ -28,6 +29,16 @@ def is_miss(payload: dict[str, Any]) -> bool:
     return payload.get("verified") is False and payload.get("reason") in MISS_REASONS
 
 
+def pain_after_detail(pain: Any, pain_max: int) -> str | None:
+    """The therapist-flag text for post-session pain at or above the stop level, or None.
+    Only a 0-10 integer counts (a skipped question or a bool is not a pain score). Shared by
+    the end-of-session feedback (`CoachSession.on_feedback`) and Edit feedback
+    (`Store.update_feedback`), so both write the same flag."""
+    if isinstance(pain, bool) or not isinstance(pain, int) or pain < pain_max:
+        return None
+    return f"pain {pain}/10 after the session (stop level {pain_max})"
+
+
 class StopRules:
     def __init__(self, prescription: Prescription) -> None:
         self.p = prescription
@@ -49,6 +60,15 @@ class StopRules:
     def _flag(self, t: float, rule: str, detail: str) -> Event:
         self.flags.append({"t": t, "rule": rule, "detail": detail})
         return make_event("therapist_flag", t=t, rule=rule, detail=detail)
+
+    def on_pain_after(self, pain: Any, t: float) -> list[Event]:
+        """Pain reported on the feedback form at or above the stop level: a therapist flag only.
+        The session is already over, so nothing stops or pauses and `stopped` is untouched.
+        One `pain_after` flag per session, however often the form is sent."""
+        detail = pain_after_detail(pain, self.th.pain_max)
+        if detail is None or any(f["rule"] == "pain_after" for f in self.flags):
+            return []
+        return [self._flag(t, "pain_after", detail)]
 
     def on_checkin(self, pain: int, new_symptoms: bool, t: float) -> list[Event]:
         if self.th.new_symptoms and new_symptoms:

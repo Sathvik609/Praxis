@@ -411,7 +411,155 @@
       "type": "integer"
     },
     "summary": {
-      "type": "object"
+      "description": "command (cmd feedback) ack: CoachSession.summary(), also stored as the session's summary_json (GET /api/sessions/{id}). Only the fields below are constrained; the rest are free.",
+      "type": "object",
+      "properties": {
+        "camera": {
+          "description": "OpenCV counts and measures for the session.",
+          "type": "object",
+          "properties": {
+            "posture_cues": {
+              "description": "lean_cues + hiking_cues.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "lean_cues": {
+              "description": "compensation_lean events seen (6 Oct).",
+              "type": "integer",
+              "minimum": 0
+            },
+            "hiking_cues": {
+              "description": "shoulder_hiking events seen (6 Oct).",
+              "type": "integer",
+              "minimum": 0
+            },
+            "wrong_dot": {
+              "description": "Waiter - cup: wrong_dot events from the cup FSM (cup placed on a dot that was not next) (6 Oct).",
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "told_us": {
+          "description": "What the patient told us: the check-in (pain_before, energy, minutes, new_symptoms) then the feedback form, merged; Edit feedback (PATCH /api/sessions/{id}/feedback) merges again. Every feedback key is optional (the form can be skipped).",
+          "type": "object",
+          "properties": {
+            "pain_before": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "pain_after": {
+              "description": "Pain right after the session, 0-10. At or above the prescription's stop level (pain_max) it writes a pain_after therapist flag (no stop).",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "effort": {
+              "description": "Effort 0-10; the 6 Oct form maps difficulty to it (too_easy 2, just_right 4, hard 7, couldnt_finish 9).",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "difficulty": {
+              "description": "How hard was that? too_easy | just_right | hard | couldnt_finish (6 Oct form).",
+              "type": "string"
+            },
+            "again_tomorrow": {
+              "description": "Could you do this again tomorrow? yes_easily | yes_probably | not_sure | no (6 Oct form).",
+              "type": "string"
+            },
+            "barriers": {
+              "description": "What got in the way (only when the session ended early): tired, pain, weak, unsteady, camera, time, interrupted, equipment.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ended_early": {
+              "description": "The session ended before the planned dose (the form shows the barriers step).",
+              "type": "boolean"
+            },
+            "end_reason": {
+              "description": "Why the session ended early, when the client knows (free text or a stop rule id).",
+              "type": "string"
+            },
+            "compared": {
+              "description": "Pre-6-Oct form: compared with last time.",
+              "type": "string"
+            },
+            "detail": {
+              "description": "Pre-6-Oct form: the patient's free-text note.",
+              "type": "string"
+            }
+          }
+        },
+        "coach": {
+          "type": "object",
+          "properties": {
+            "notes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "cat": {
+                    "description": "Report category (6 Oct): rest/stop -> Safety; a correction for trunk lean or shoulder hiking -> Posture; a correction for an unverified rep -> Data quality; progress, regress and other corrections -> Performance.",
+                    "enum": [
+                      "Performance",
+                      "Posture",
+                      "Safety",
+                      "Data quality"
+                    ]
+                  },
+                  "confidence": {
+                    "enum": [
+                      "high",
+                      "medium"
+                    ]
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "text",
+                  "confidence",
+                  "evidence",
+                  "cat"
+                ]
+              }
+            }
+          }
+        },
+        "flags": {
+          "description": "Therapist flags written this session (stop rules, plus pain_after from the feedback form).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "t",
+              "rule",
+              "detail"
+            ],
+            "properties": {
+              "rule": {
+                "description": "pain | symptoms | lean | failed_reps | missed_reps | exertion | pain_after (post-session pain at or above the stop level; a flag only, never a stop).",
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              },
+              "t": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
     },
     "cmd": {
       "type": [
