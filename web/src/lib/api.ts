@@ -15,8 +15,9 @@ export type CalendarDay = { date: string; weekday: number; is_today: boolean; st
 export type CalendarWeek = { from: string; to: string; done_days: number; planned_days: number; minutes_done: number; minutes_planned: number; nhpt_done: boolean }
 export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean }) | null; tracking_since: string | null }
 export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null }
-export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[] }
-export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[] }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
+/** `cat` (6 Oct, Task 17) is the report's note eyebrow; older stored notes have none. */
+export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }
+export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[]; side?: string; wrong_dot?: number; lean_cues?: number; hiking_cues?: number }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
 export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean; exercise?: string | null; illustrative?: boolean; source?: SessionSource; replay?: boolean }
 /** Where a stored session came from (service `store.session_source`): the illustrative seed,
  *  a replayed recorded clip (judge fallback), or the patient at the camera. */
@@ -60,7 +61,7 @@ async function get<T>(path: string): Promise<T> {
   if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
   return body
 }
-async function send<T>(method: 'POST' | 'PUT', path: string, body?: unknown): Promise<T> {
+async function send<T>(method: 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
   if (!r.ok) throw new Error(`${path}: ${r.status}`)
   return r.json() as Promise<T>
@@ -87,6 +88,9 @@ export const api = {
   calendar: (range?: { from: string; to: string }) => get<Calendar>(`/api/calendar${range ? `?from=${range.from}&to=${range.to}` : ''}`),
   /** Therapist view · Edit practice days: stored as prescription v(N+1). */
   putSchedule: (body: ScheduleBody) => send<Prescription>('PUT', '/api/prescription/schedule', body),
+  /** Report · Edit feedback (ruling R4): merges into the stored feedback, may add a `pain_after`
+   *  flag, and answers with the whole session record (same shape as `session`). */
+  updateFeedback: (id: string, f: Record<string, unknown>) => send<SessionRecord>('PATCH', `/api/sessions/${id}/feedback`, f),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),
 }
 

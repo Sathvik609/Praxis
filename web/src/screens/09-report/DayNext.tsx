@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { finishReport, nextExercise, setupUrl, type Day } from '../../lib/day'
+import { demoUrl, finishReport, nextExercise, type Day } from '../../lib/day'
 import { exerciseById } from '../../lib/seed'
 import { DayStrip } from '../04-choose/DayStrip'
 
@@ -15,10 +15,10 @@ export function useDayRun(reportId: string | undefined, mode: string | undefined
   return useMemo(() => (reportId ? finishReport(reportId, mode, !!stopped) : null), [reportId, mode, stopped])
 }
 
-/** The report's day block: progress strip and the one full-width primary — "Next: <exercise>"
- *  straight to that exercise's camera setup (no repeat check-in), or "Done for today". A stop
- *  rule in the session ends the day here. Extends screen 09 (no frame in wireframes v1.1;
- *  docs/PLAN.md). */
+/** Day block: progress strip and the one full-width primary — "Next: <exercise>" to that
+ *  exercise's demonstration (today's check-in carries over), or "Done for today". A stop rule in
+ *  the session ends the day here. The design v2 report (6 Oct) no longer renders it: its own
+ *  `rp-day` card and Next practice "Start session" replace it (SessionReport.tsx). */
 export function DayNext({ day }: { day: Day }) {
   const nav = useNavigate()
   const side = day.checkin?.side ?? 'left'
@@ -32,13 +32,13 @@ export function DayNext({ day }: { day: Day }) {
         ) : (
           <>
             <DayStrip day={day} />
-            <p className="mt-1 text-lg text-muted">{next ? 'Straight to camera setup. No new check-in.' : "That's everything for today."}</p>
+            <p className="mt-1 text-lg text-muted">{next ? "Demonstration next, then camera setup. Today's check-in carries over." : "That's everything for today."}</p>
           </>
         )}
       </div>
       <div className="w-full max-w-md">
         {next && nextName ? (
-          <Button full onClick={() => nav(setupUrl(next, side))}>Next: {nextName}</Button>
+          <Button full onClick={() => nav(demoUrl(next, side))}>Next: {nextName}</Button>
         ) : (
           <Button full onClick={() => nav('/details')}>Done for today</Button>
         )}

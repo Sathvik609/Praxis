@@ -22,35 +22,74 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.getByText('17')).toBeInTheDocument()
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getByText('verified movements')).toBeInTheDocument()
-  expect(screen.getByText(/unverified · hand hid the object/)).toBeInTheDocument()
+  expect(screen.getByText('unverified (hand hid cup)')).toBeInTheDocument()
   expect(await screen.findByText(/Coach notes for Dr. Anita Rao/)).toBeInTheDocument()
+  expect(screen.getByText("From this session's camera events and your answers.")).toBeInTheDocument()
   expect(screen.getByText('High')).toBeInTheDocument()
   expect(screen.getByText('Medium')).toBeInTheDocument()
-  expect(screen.getByText(/Queued · not yet delivered/)).toBeInTheDocument()
-  expect(screen.getByText('Proposal')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Done/ })).toBeInTheDocument()
+  // P0 items the artifact dropped are kept small (ruling R7)
+  expect(screen.getByText('Report to Dr. Anita Rao')).toBeInTheDocument()
+  expect(screen.getByText('Queued · not yet delivered')).toBeInTheDocument()
+  expect(screen.getByText(/Nothing here is combined into a score\./)).toBeInTheDocument()
+  expect(screen.getByText(/^Exertion/)).toHaveTextContent(/Exertion\s*Low\s*· behavioural index/)
+  // coach chip is the service's own label, never "agent-generated"
+  expect(screen.getByText('Rule-based coach · LLM agent pending')).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/agent-generated/)
+  expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Back to Home' })).toBeInTheDocument()
   // per-rep values are a real chart with a text summary; unverified reps are named as such
   const chart = screen.getByRole('img', { name: /reach time/i })
   expect(chart.getAttribute('aria-label')).toMatch(/unverified/)
   // no hard-coded side when the summary carries none
   expect(screen.queryByText(/left side/)).not.toBeInTheDocument()
+  // what the patient told us: difficulty / again-tomorrow, or the older "compared" answer
+  expect(screen.getByText('2 → 2')).toBeInTheDocument()
+  expect(screen.getByText('Felt about the same as last time.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Edit feedback' })).toBeInTheDocument()
 })
 
-test('a replayed session is badged Replay and one verified movement is singular (review 28 Sep)', async () => {
+test('the meta line reads date · title and the status chip says Complete', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Sat 12 Sep · Waiter – cup + Arm out to the side')).toBeInTheDocument()
+  expect(screen.getByText('Complete')).toBeInTheDocument()
+})
+
+test('coach note eyebrows come from the note category, and a note without one has none', async () => {
+  const notes = [
+    { text: 'correct: trunk lean in 2 of 16 lifts', confidence: 'medium', evidence: [58], cat: 'Posture' },
+    { text: 'progress: reach time fell', confidence: 'high', evidence: [22] },
+  ]
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: { ...SESSION.summary.coach, notes } } }, '/api/patients/me': ME })
+  renderReport()
+  const lean = (await screen.findByText(/trunk lean in 2 of 16/)).closest('li')!
+  expect(lean.querySelector('small')).toHaveTextContent('Posture')
+  const reach = screen.getByText(/reach time fell/).closest('li')!
+  expect(reach.querySelector('small')).toBeNull()
+})
+
+test('the authority line names the clinician from data and guesses no pronoun', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  const line = await screen.findByText(/Nothing in your plan changes until Dr\. Rao approves it\./)
+  expect(line.textContent).not.toMatch(/\b(hers|his|her|him|she|he)\b/i)
+  expect(screen.getByText(/Continue your assigned plan/)).toBeInTheDocument()
+})
+
+test('a replayed session is badged "Replay · not counted" and one verified movement is singular (review 28 Sep)', async () => {
   const one = { ...SESSION, source: 'replay', replay: true, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, verified: 1, posture_cues: 1 } } }
   mockApi({ '/api/sessions/abc': one, '/api/patients/me': ME })
   renderReport()
   expect(await screen.findByText('verified movement')).toBeInTheDocument()
   expect(screen.getByText('posture cue')).toBeInTheDocument()
-  expect(screen.getByText('Replay')).toBeInTheDocument()
-  expect(screen.getByText(/recorded clip, not counted in your progress/)).toBeInTheDocument()
+  expect(screen.getByText('Replay · not counted')).toBeInTheDocument()
 })
 
 test('a live session carries no Replay badge', async () => {
   mockApi({ '/api/sessions/abc': { ...SESSION, source: 'live', replay: false }, '/api/patients/me': ME })
   renderReport()
   await screen.findByText('verified movements')
-  expect(screen.queryByText('Replay')).not.toBeInTheDocument()
+  expect(screen.queryByText(/Replay/)).not.toBeInTheDocument()
 })
 
 test('clinician falls back to "your therapist" when the profile is unavailable', async () => {
@@ -66,7 +105,7 @@ test('download builds a JSON blob and sharing explains who sees the report', asy
   vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }))
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   renderReport()
-  fireEvent.click(await screen.findByRole('button', { name: 'Download JSON' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Download' }))
   expect(createObjectURL).toHaveBeenCalledTimes(1)
   expect(createObjectURL.mock.calls[0][0]).toBeInstanceOf(Blob)
   expect(click).toHaveBeenCalled()
@@ -106,6 +145,32 @@ test('side is read from the summary when present', async () => {
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, side: 'right' } } }, '/api/patients/me': ME })
   renderReport()
   expect(await screen.findByText(/right side/)).toBeInTheDocument()
+})
+
+test('side comes from the camera summary only, never the check-in, feedback or the stored profile side', async () => {
+  localStorage.setItem('praxis.side', 'right')
+  mockApi({ '/api/sessions/abc': { ...SESSION, checkin: { pain_before: 2, side: 'right' }, summary: { ...SESSION.summary, told_us: { side: 'right' } } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByRole('heading', { name: 'What the camera measured' })
+  expect(screen.queryByText(/right side/)).not.toBeInTheDocument()
+  localStorage.clear()
+})
+
+test('a cup session counts wrong-dot placements from the service', async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, wrong_dot: 2 } } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('wrong dot')).toBeInTheDocument()
+  expect(screen.getByText('wrong dot').closest('div')!.parentElement).toHaveTextContent('2')
+})
+
+test('the report loads only its own session and the profile (no simulated cup run)', async () => {
+  const fetchMock = mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  localStorage.setItem('praxis.cupRun', JSON.stringify({ reaches: [1, 2, 3] }))
+  renderReport()
+  await screen.findByRole('heading', { name: 'What the camera measured' })
+  const urls = fetchMock.mock.calls.map((c) => String(c[0]))
+  expect(urls.every((u) => u.includes('/api/sessions/abc') || u.includes('/api/patients/me'))).toBe(true)
+  localStorage.clear()
 })
 
 test('an unknown session (200 with an error body) shows the error card instead of crashing', async () => {

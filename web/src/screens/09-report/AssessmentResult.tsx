@@ -147,7 +147,7 @@ export function AssessmentResult() {
       <h1 className="text-4xl">Assessment result</h1>
       <Card className="mt-5">
         <p className="text-lg">No result to show yet. The peg test takes about a minute with the printed sheet and a pegboard.</p>
-        <Button full className="mt-5" onClick={() => nav('/details/checkin')}>Run the peg test</Button>
+        <Button full className="mt-5" onClick={() => nav('/details/choose?next=nhpt')}>Run the peg test</Button>
         <Button variant="link" className="mt-2" onClick={done}>Back to Home</Button>
       </Card>
     </div>
