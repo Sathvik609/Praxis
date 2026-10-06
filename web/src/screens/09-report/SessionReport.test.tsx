@@ -196,16 +196,16 @@ const ARM = (exercise: string, extra: Record<string, unknown> = {}) => ({
 test('peak-angle chart is named after the exercise the session ran, never always "Arm to the front"', async () => {
   mockApi({ '/api/sessions/abc': ARM('abduction'), '/api/patients/me': ME })
   renderReport()
-  const chart = await screen.findByRole('img', { name: /peak angle per lift/ })
-  expect(chart.getAttribute('aria-label')).toMatch(/^Arm out to the side · peak angle per lift/)
-  expect(screen.getByText(/dashed = target 90/)).toBeInTheDocument()
+  const chart = await screen.findByRole('img', { name: /^Arm out to the side · peak angle per rep: 1: 88°/ })
+  expect(chart).toHaveClass('rp-bars')
+  expect(screen.getByText(/Peak angle per rep · target 90°/)).toBeInTheDocument()
 })
 
 test('the service exercise name and target are used when the summary carries them', async () => {
   mockApi({ '/api/sessions/abc': ARM('abduction', { exercise_id: 'abduction', exercise_name: 'Arm out to the side', target_deg: 60, ceiling_deg: 90 }), '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per lift/ })).toBeInTheDocument()
-  expect(screen.getByText(/dashed = target 60/)).toBeInTheDocument()
+  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per rep: 1: 88°/ })).toBeInTheDocument()
+  expect(screen.getByText(/Peak angle per rep · target 60°/)).toBeInTheDocument()
 })
 
 test.each(['pendulum', 'flexion'])('a stored session of hidden %s is never shown, even from a direct link', async (id) => {
@@ -219,5 +219,20 @@ test.each(['pendulum', 'flexion'])('a stored session of hidden %s is never shown
 test('a bare arm session (no exercise id) is reported as Arm out to the side', async () => {
   mockApi({ '/api/sessions/abc': { ...ARM('abduction'), exercise: undefined, summary: { ...ARM('abduction').summary, exercise: undefined } }, '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per lift/ })).toBeInTheDocument()
+  expect(await screen.findByRole('img', { name: /^Arm out to the side · peak angle per rep: 1: 88°/ })).toBeInTheDocument()
+})
+
+test('a report opened from history uses the per-exercise columns, each with its own counts and no "Not done yet"', async () => {
+  const camera = { reps_total: 5, verified: 3, unverified: 2, reach_ms: [1400, 1200, 900], reach_verified: [true, false, true], peak_deg: [88, 90], peak_verified: [true, false] }
+  mockApi({ '/api/sessions/abc': { ...SESSION, mode: 'cup', title: 'Waiter – cup + Arm out to the side', summary: { ...SESSION.summary, mode: 'cup', camera } }, '/api/patients/me': ME })
+  renderReport()
+  const cup = await screen.findByRole('img', { name: /^Waiter – cup · reach time per dot: 1: 1400 ms, 2: 1200 ms unverified/ })
+  const arm = screen.getByRole('img', { name: /^Arm out to the side · peak angle per rep: 1: 88°, 2: 90° unverified/ })
+  const cols = document.querySelectorAll('.rp-exs > .rp-ex')
+  expect(cols).toHaveLength(2)
+  expect(cols[0]).toContainElement(cup)
+  expect(cols[0].textContent).toMatch(/2 verified · 1 unverified/)
+  expect(cols[1]).toContainElement(arm)
+  expect(cols[1].textContent).toMatch(/1 verified · 1 unverified/)
+  expect(document.body.textContent).not.toMatch(/Not done yet/)
 })

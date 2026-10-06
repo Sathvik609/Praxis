@@ -45,7 +45,7 @@ test('mid-day the report shows each exercise on its own and offers the next one,
   expect(screen.getByText('Not done yet')).toBeInTheDocument()
   expect(screen.getByText('Results show here once you practise it today.')).toBeInTheDocument()
   expect(screen.getByText('3 verified · 0 unverified')).toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /^Arm out to the side: 1: 88°, 2: 90°, 3: 89°$/ })).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /^Arm out to the side · peak angle per rep: 1: 88°, 2: 90°, 3: 89°$/ })).toBeInTheDocument()
   // Next practice: the pending exercise with today's dose, needs and watch-for
   expect(screen.getByText('Still to do today')).toBeInTheDocument()
   const nx = screen.getByText('Still to do today').closest('.rp-nx') as HTMLElement

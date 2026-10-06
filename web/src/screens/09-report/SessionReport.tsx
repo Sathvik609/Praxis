@@ -154,7 +154,6 @@ export function SessionReport() {
     ]
       .filter(Boolean)
       .join(' ') || 'Nothing else recorded.'
-  const reachS = cam.reach_ms?.map((v) => Math.round(v / 100) / 10)
   const latency = (s.summary as { latency?: LatencyBlock }).latency ?? null
   // Peak angles belong to an arm exercise: the one this session ran, named from the registry
   // (or the service's own name); a combined sample session falls back to Arm out to the side.
@@ -212,22 +211,26 @@ export function SessionReport() {
         </div>
       )
     }
-    const { c, isCup, vals, ver, tgt } = src
+    const rep = x !== thisId ? reportOf(x) : undefined
+    return barsCol(x, { name: e?.name ?? armName, dose: e?.dose, c: src.c, counts: [src.c.verified ?? 0, src.c.unverified ?? 0], isCup: src.isCup, vals: src.vals, ver: src.ver, tgt: src.tgt, link: rep ? `/details/report/${rep.reportId}` : undefined })
+  }
+  /** One exercise column (artifact `rp-ex`): its own verified · unverified counts and per-rep bars. */
+  const barsCol = (key: string, o: { name: string; dose?: string; c: Camera; counts: [number, number]; isCup: boolean; vals: number[]; ver?: boolean[] | null; tgt?: number | null; link?: string }) => {
+    const { c, isCup, vals, ver, tgt } = o
     const max = Math.max(tgt ?? 0, ...vals, 1) * 1.08
     const posture = postureOf(c)
     const extras = [`${coverageOf(c)}% tracking coverage`, `${posture} ${plural(posture, 'posture cue')}`, ...(isCup && c.wrong_dot != null ? [`${c.wrong_dot} wrong dot`] : [])].join(' · ')
-    const rep = x !== thisId ? reportOf(x) : undefined
     return (
-      <div className="rp-ex" key={x}>
+      <div className="rp-ex" key={key}>
         <div className="rp-ex-h">
-          <b>{e?.name ?? armName}</b>
-          {rep && <Button variant="link" onClick={() => nav(`/details/report/${rep.reportId}`)}>Its report</Button>}
+          <b>{o.name}</b>
+          {o.link && <Button variant="link" onClick={() => nav(o.link!)}>Its report</Button>}
         </div>
-        <p className="rp-ex-sub">{e?.dose}</p>
-        <p className="rp-ex-sub"><span>{`${c.verified ?? 0} verified · ${c.unverified ?? 0} unverified`}</span>{` · ${extras}`}</p>
+        {o.dose && <p className="rp-ex-sub">{o.dose}</p>}
+        <p className="rp-ex-sub"><span>{`${o.counts[0]} verified · ${o.counts[1]} unverified`}</span>{` · ${extras}`}</p>
         <p className="rp-ex-sub">{isCup ? 'Reach time per dot, ms · amber = unverified' : `${swings ? 'Swing size' : 'Peak angle'} per rep${tgt ? ` · target ${tgt}°` : ''} · amber = unverified`}</p>
         {vals.length ? (
-          <div className="rp-bars" role="img" aria-label={`${e?.name ?? armName}: ${vals.map((val, i) => `${i + 1}: ${val}${isCup ? ' ms' : '°'}${ver && ver[i] === false ? ' unverified' : ''}`).join(', ')}`}>
+          <div className="rp-bars" role="img" aria-label={`${o.name} · ${isCup ? 'reach time per dot' : swings ? 'swing size per rep' : 'peak angle per rep'}: ${vals.map((val, i) => `${i + 1}: ${val}${isCup ? ' ms' : '°'}${ver && ver[i] === false ? ' unverified' : ''}`).join(', ')}`}>
             {tgt ? <div className="rp-ceil" style={{ bottom: `${(tgt / max) * 100}%` }} /> : null}
             {vals.map((val, i) => (
               <i key={i} className={ver && ver[i] === false ? 'rp-bar-u' : ''} style={{ height: `${Math.max(4, (val / max) * 100)}%` }} />
@@ -238,6 +241,20 @@ export function SessionReport() {
         )}
       </div>
     )
+  }
+  // A report opened from history: one column per exercise this session measured. A combined
+  // (sample) session shares one camera block, so each column counts its own per-rep flags.
+  const histCols = () => {
+    const both = !!cam.reach_ms?.length && !!cam.peak_deg?.length
+    const own = (ver: boolean[] | null | undefined, n: number): [number, number] => {
+      if (!both || !ver) return [cam.verified ?? 0, cam.unverified ?? 0]
+      const v = ver.slice(0, n).filter(Boolean).length
+      return [v, ver.slice(0, n).length - v]
+    }
+    return [
+      cam.reach_ms?.length ? barsCol('cup', { name: exerciseById('cup')?.name ?? 'Waiter – cup', c: cam, counts: own(cam.reach_verified, cam.reach_ms.length), isCup: true, vals: cam.reach_ms, ver: cam.reach_verified }) : null,
+      cam.peak_deg?.length ? barsCol('arm', { name: armName, c: cam, counts: own(cam.peak_verified, cam.peak_deg.length), isCup: false, vals: cam.peak_deg.map((v) => Math.round(v)), ver: cam.peak_verified, tgt: peakTarget }) : null,
+    ].filter(Boolean)
   }
   const pendCol = (x: ExerciseId) => {
     const e = exerciseById(x)
@@ -333,13 +350,10 @@ export function SessionReport() {
         {inDay ? (
           <div className="rp-exs">{DAY_ORDER.map((x) => (pendingIds.includes(x) ? pendCol(x) : perfCol(x)))}</div>
         ) : (
-          (reachS || cam.peak_deg || cam.splits_s) && (
-            <div className="mt-5 grid grid-cols-2 gap-6">
-              {reachS && <Bars title="Waiter – cup · reach time per reach" unit="s" values={reachS} verified={cam.reach_verified} labels={reachS.map((_, i) => String(i + 1))} />}
-              {cam.peak_deg && <Bars title={`${armName} · ${swings ? 'swing size per swing' : 'peak angle per lift'}`} unit="°" values={cam.peak_deg.map((v) => Math.round(v))} verified={cam.peak_verified} labels={cam.peak_deg.map((_, i) => String(i + 1))} target={peakTarget} />}
-              {cam.splits_s && <Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} />}
-            </div>
-          )
+          <>
+            {(cam.reach_ms?.length || cam.peak_deg?.length) ? <div className="rp-exs">{histCols()}</div> : null}
+            {cam.splits_s && <div className="mt-5"><Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} /></div>}
+          </>
         )}
         {/* Kept small (ruling R7): exertion chip, the no-score statement and the latency line. */}
         <p className="rp-meta mt-3">
