@@ -36,3 +36,26 @@ test('the active hub is marked for assistive tech and the account circle links t
   expect(account).toHaveTextContent('A')
 })
 
+test('design v2 rail: logo is the Praxis mark named "Praxis · home", hubs keep visible labels', () => {
+  renderNav()
+  const header = screen.getByRole('banner')
+  expect(header).toHaveClass('ui-nav')
+  const logo = screen.getByRole('link', { name: 'Praxis · home' })
+  expect(logo).toHaveClass('ui-logo')
+  expect(logo).toHaveAttribute('href', '/details')
+  expect(logo.querySelector('svg.ui-logo-mark')).not.toBeNull()
+  const nav = screen.getByRole('navigation', { name: 'Hubs' })
+  expect(nav).toHaveClass('ui-hubs')
+  for (const name of ['Home', 'Exercises', 'Progress', 'Calendar', 'Settings']) {
+    const hub = screen.getByRole('link', { name })
+    expect(hub).toHaveClass('ui-hub')
+    expect(hub).toHaveAttribute('title', name)
+    // CSS hides the label visually on the desktop rail; the text stays in the DOM as the accessible name.
+    expect(hub.querySelector('.ui-hub-label')).toHaveTextContent(name)
+  }
+  expect(screen.getByText(/Program: Hospital GRASP/)).toHaveClass('ui-program')
+  const ther = screen.getByRole('link', { name: 'Therapist view' })
+  expect(ther).toHaveClass('ui-ther')
+  expect(ther.querySelector('.ui-ther-label')).toHaveTextContent('Therapist view')
+  expect(screen.getByRole('link', { name: /Account and settings/ })).toHaveClass('ui-avatar')
+})

@@ -26,14 +26,14 @@ export function Pill<T extends string>({
       value={value}
       onValueChange={(v) => v && onChange(v as T)}
       aria-label={ariaLabel}
-      className={`inline-flex gap-1 rounded-[var(--r-pill)] border border-line bg-surface p-1 ${className}`}
+      className={`ui-seg inline-flex gap-1 rounded-[var(--r-pill)] border border-line bg-surface p-1 ${className}`}
     >
       {options.map((o) => (
         <ToggleGroup.Item
           key={o.value}
           value={o.value}
           disabled={o.disabled}
-          className={`${h} whitespace-nowrap rounded-[var(--r-pill)] px-4 text-lg font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 disabled:opacity-40 data-[state=on]:bg-teal-fill data-[state=on]:text-white data-[state=off]:text-ink data-[state=off]:hover:bg-tint-mint`}
+          className={`ui-seg-btn ${h} whitespace-nowrap rounded-[var(--r-pill)] px-4 text-lg font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 disabled:opacity-40 data-[state=on]:bg-teal-fill data-[state=on]:text-white data-[state=off]:text-ink data-[state=off]:hover:bg-tint-mint`}
         >
           {o.label}
         </ToggleGroup.Item>

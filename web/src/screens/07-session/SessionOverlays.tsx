@@ -87,7 +87,7 @@ export function RestOverlay({ since, onResume, onEnd }: { since: number | null; 
   return (
     <Overlay open title="Resting" description="The session is paused while you rest.">
       <p className="mt-3 text-2xl">Rest as long as you need. About a minute is usually enough.</p>
-      <p className="mt-4 font-heading text-6xl font-semibold tabular-nums" aria-live="off">{`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`}</p>
+      <p className="ui-stat-num mt-4 font-heading text-6xl font-semibold tabular-nums" aria-live="off">{`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`}</p>
       <p className="mt-1 text-lg text-muted">resting · the camera is not counting</p>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <Button variant="secondary" onClick={onEnd}>End session</Button>

@@ -47,7 +47,7 @@ export function NumberScale({ label, value, onChange, min = 0, max = 10, leftAnc
             tabIndex={i === focusIdx ? 0 : -1}
             onClick={() => onChange(n)}
             onKeyDown={(e) => onKeyDown(e, i)}
-            className={`min-h-14 min-w-0 flex-1 rounded-[var(--r-control)] border-2 px-0 text-lg font-bold tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 active:translate-y-px ${
+            className={`ui-scale-btn min-h-14 min-w-0 flex-1 rounded-[var(--r-control)] border-2 px-0 text-lg font-bold tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 active:translate-y-px ${
               value === n ? 'border-teal-fill bg-teal-fill text-white' : 'border-line bg-surface text-ink hover:bg-tint-mint'
             }`}
           >

@@ -81,6 +81,8 @@ test('rest overlay counts the rest up, offers continue and end, and is not the p
     render(<RestOverlay since={since} onResume={onResume} onEnd={onEnd} />)
     expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
     expect(screen.getByText('0:00')).toBeInTheDocument()
+    // the designers' big-number look (designer.css .ui-stat-num), same as Stat
+    expect(screen.getByText('0:00')).toHaveClass('ui-stat-num')
     act(() => {
       vi.advanceTimersByTime(65_000)
     })

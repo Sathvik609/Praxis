@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Activity, CalendarDays, Home as HomeIcon, Settings as SettingsIcon, Stethoscope, TrendingUp } from '../design/Icon'
+import { PraxisMark } from '../design/PraxisMark'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 const hubs: { label: string; to: string; icon: Icon }[] = [
@@ -14,47 +15,52 @@ const hubs: { label: string; to: string; icon: Icon }[] = [
 /** Hub navigation (the app lives under `/details`; `/` redirects there). `min-w-0` lets the
  *  program label truncate: without it the header's min-content (five hubs since 28 Sep)
  *  widened the whole shell past 1280 px. The active hub is filled (tint + ink, AA in both themes) and
- *  bold, and NavLink sets aria-current so the state is not colour-only. */
+ *  bold, and NavLink sets aria-current so the state is not colour-only. The `ui-*` classes are the
+ *  designer.css hooks: ≥ 900 px it is a 96 px icon rail (hub labels and "Therapist view" hidden
+ *  visually, kept as accessible names, plus a `title` tooltip), < 900 px a top bar with bottom tabs.
+ *  The logo is the Praxis mark; its accessible name comes from aria-label. */
 export function Nav({ program, initial }: { program: string; initial: string }) {
   return (
-    <header className="flex h-16 min-w-0 items-center gap-6 border-b border-line bg-surface px-6">
+    <header className="ui-nav flex h-16 min-w-0 items-center gap-6 border-b border-line bg-surface px-6">
       <Link
         to="/details"
         aria-label="Praxis · home"
-        className="rounded-[var(--r-control)] px-1 font-heading text-2xl font-semibold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+        className="ui-logo rounded-[var(--r-control)] px-1 font-heading text-2xl font-semibold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
+        <PraxisMark className="ui-logo-mark" />
         Praxis
       </Link>
-      <nav aria-label="Hubs" className="flex gap-1">
+      <nav aria-label="Hubs" className="ui-hubs flex gap-1">
         {hubs.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/details'}
+            title={label}
             className={({ isActive }) =>
-              `flex h-14 items-center gap-2 rounded-[var(--r-control)] px-4 text-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 ${isActive ? 'bg-tint-mint font-bold text-teal-ink' : 'text-ink hover:bg-tint-mint'}`
+              `ui-hub flex h-14 items-center gap-2 rounded-[var(--r-control)] px-4 text-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40 ${isActive ? 'bg-tint-mint font-bold text-teal-ink' : 'text-ink hover:bg-tint-mint'}`
             }
           >
             <Icon aria-hidden className="h-5 w-5" />
-            {label}
+            <span className="ui-hub-label">{label}</span>
           </NavLink>
         ))}
       </nav>
-      <span className="ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
+      <span className="ui-program ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
       {/* Screen 11 lives outside the patient shell; this is its only way in (no clinician
           accounts until Cognito in W6). Since 28 Sep it edits practice days, so it is no
           longer labelled read-only. */}
       <Link
         to="/therapist"
-        className="flex h-14 shrink-0 items-center gap-2 rounded-[var(--r-control)] border-2 border-teal-ink px-3 text-lg font-bold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+        className="ui-ther flex h-14 shrink-0 items-center gap-2 rounded-[var(--r-control)] border-2 border-teal-ink px-3 text-lg font-bold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
         <Stethoscope aria-hidden className="h-5 w-5" />
-        Therapist view
+        <span className="ui-ther-label">Therapist view</span>
       </Link>
       <NavLink
         to="/details/settings"
         aria-label="Account and settings"
-        className="flex h-14 shrink-0 items-center gap-2 rounded-full bg-tint-mint pl-1 pr-4 text-lg font-bold text-teal-ink transition-[filter] hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
+        className="ui-avatar flex h-14 shrink-0 items-center gap-2 rounded-full bg-tint-mint pl-1 pr-4 text-lg font-bold text-teal-ink transition-[filter] hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
         <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-fill text-xl text-white">{initial}</span>
       </NavLink>

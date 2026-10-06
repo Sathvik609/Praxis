@@ -8,7 +8,12 @@
    gate on `.judge-only` Sample labels and the preview badge. Show trace, .sx-mono and .cs-telemetry
    stay behind Judge view as designed (D-JUDGE).
    Token values here and in design/tokens.css are the same final values; tokens.css is what
-   design/contrast.test.ts measures. */
+   design/contrast.test.ts measures.
+   Primitives (6 Oct, Task 2): selectors that found components through Tailwind utilities, an aria-label
+   or Radix internals now use the classes the components emit (ui-btn--<variant>, ui-seg / ui-seg-btn,
+   ui-scale-btn, ui-check-box, ui-chip, ui-stat-num, ui-flowbar, ui-main, ui-logo, ui-dialog / ui-scrim).
+   Declarations and rule order are unchanged; a computed-style comparison against the artifact on the
+   same markup shows no difference except the logo, now the inline PraxisMark instead of a data URI. */
 /* ---- Demonstration theater (immersive demo flow) ---- */
 .dth-root{position:fixed;inset:0;z-index:45;overflow:hidden;color:#ECEFF3;background:#0B0E12;font-family:var(--font-body)}
 .dth-top{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:flex-start;gap:20px;padding:18px 28px 0;pointer-events:none}.dth-top>*{pointer-events:auto}
@@ -280,11 +285,11 @@
 .lib-cta:disabled{opacity:.45;cursor:default}
 .lib-cta:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 /* ---- Pre-session check-in ---- */
-.ci-form [role=radiogroup]:has(>button[data-state]),.ci-form [role=group]{border:0;padding:0;background:none;gap:10px;flex-wrap:wrap}
-.ci-form [role=radiogroup]>button[data-state],.ci-form [role=group]>button{min-height:46px;padding:0 20px;border:1.5px solid var(--line);font-weight:500;font-size:1.05rem}
+.ci-form [role=radiogroup].ui-seg,.ci-form [role=group]{border:0;padding:0;background:none;gap:10px;flex-wrap:wrap}
+.ci-form [role=radiogroup]>button.ui-seg-btn,.ci-form [role=group]>button{min-height:46px;padding:0 20px;border:1.5px solid var(--line);font-weight:500;font-size:1.05rem}
 .ci-form [role=radiogroup]>button[data-state=on],.ci-form [role=group]>button[data-state=on]{border-color:var(--teal-fill);font-weight:700}
 .ci-form [role=radiogroup]{gap:10px}
-.ci-form [role=radiogroup]>button:not([data-state]){flex:1 1 0;max-width:58px;min-height:58px;border-width:1.5px;font-weight:500;font-size:1.05rem}
+.ci-form [role=radiogroup]>button.ui-scale-btn{flex:1 1 0;max-width:58px;min-height:58px;border-width:1.5px;font-weight:500;font-size:1.05rem}
 .ci-form [role=radiogroup]>button[aria-checked=true]{font-weight:700}
 .ci-form [role=radiogroup]+div{max-width:calc(11 * 58px + 100px)}
 .ci-form .ci-mic{background:var(--tint-mint);border-color:transparent;box-shadow:none}
@@ -292,7 +297,7 @@
 .ci-mic-btn:hover{filter:brightness(.97)}
 .ci-mic-btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .ci-form footer .ml-auto{align-items:center}
-@media (max-width:1280px){footer.sticky{height:auto;min-height:5rem;flex-wrap:wrap;row-gap:10px;padding-top:12px;padding-bottom:12px}footer.sticky .ml-auto{flex-wrap:wrap;justify-content:flex-end}footer.sticky button{white-space:nowrap}}
+@media (max-width:1280px){footer.ui-flowbar{height:auto;min-height:5rem;flex-wrap:wrap;row-gap:10px;padding-top:12px;padding-bottom:12px}footer.ui-flowbar .ml-auto{flex-wrap:wrap;justify-content:flex-end}footer.ui-flowbar button{white-space:nowrap}}
 .lib-cta{white-space:nowrap}
 .lib-rest{flex:1 1 120px;display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:999px;background:var(--tint-amber);color:var(--amber-ink);font-weight:700;font-size:.95rem}
 .lib-rest-link{border:0;background:none;padding:0;color:var(--teal-ink);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
@@ -304,7 +309,7 @@
 .ui-ther{height:44px;font-size:1rem}
 .ui-avatar{height:44px;padding:0}
 .ui-avatar>span{width:44px;height:44px;font-size:1.1rem}
-[role=radiogroup]>button[data-state]{min-height:44px;font-size:1rem}
+[role=radiogroup]>button.ui-seg-btn{min-height:44px;font-size:1rem}
 .lib-cta,.sx-btn,.cs-continue,.dth-mbtn{min-height:48px}
 main h1.text-4xl{font-size:2rem;line-height:1.2}
 main h1.text-3xl{font-size:1.75rem;line-height:1.2}
@@ -353,10 +358,11 @@ main h1.text-3xl{font-size:1.75rem;line-height:1.2}
 @media (max-width:599px){
   main h1.text-4xl{font-size:1.6rem}
   main h1.text-3xl{font-size:1.45rem}
-  [role=radiogroup]:not(:has(>button[data-state])){gap:4px!important}
-  [role=radiogroup]:not(:has(>button[data-state]))>button{min-height:44px;font-size:.95rem}
+  [role=radiogroup]:not(.ui-seg){gap:4px!important}
+  [role=radiogroup]:not(.ui-seg)>button{min-height:44px;font-size:.95rem}
 }
-/* Clinician view */
+/* Clinician view. Task 11: in the artifact this hack also matches the patient .ui-nav (h-16 px-6, logo links to
+   /details) and gives it its < 900 px top-bar height and padding; keep that when converting it to th-head. */
 [class~="h-16"][class~="px-6"]:has(>a[href$="/details"]){flex-wrap:wrap}
 @media (max-width:1099px){[class~="grid-cols-[minmax(280px,1fr)_3fr]"]{grid-template-columns:minmax(0,1fr)!important}}
 @media (max-width:899px){
@@ -409,13 +415,13 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 
 /* Buttons: soft secondary, glowing primary */
 .ui-btn{font-size:.9375rem;font-weight:700;border-radius:12px}
-.ui-btn.border-teal-ink:hover{background:var(--sunken)!important}
-.ui-btn.border-teal-ink svg{color:var(--teal)}
+.ui-btn.ui-btn--secondary:hover{background:var(--sunken)!important}
+.ui-btn.ui-btn--secondary svg{color:var(--teal)}
 /* Segmented toggles */
 [role=group] [data-state=off]{color:var(--muted)!important}
 [role=group] [data-state=on]{box-shadow:0 4px 12px rgba(61,98,227,.25)}
 /* Number scale */
-[role=radiogroup]>button:not([data-state]){border-width:1px!important;background:var(--surface);box-shadow:0 1px 2px rgba(20,24,31,.05)}
+[role=radiogroup]>button:not(.ui-seg-btn){border-width:1px!important;background:var(--surface);box-shadow:0 1px 2px rgba(20,24,31,.05)}
 [role=radiogroup]>button[aria-checked=true]{box-shadow:0 6px 16px rgba(61,98,227,.28)}
 
 /* Light 3D stage everywhere the figure appears */
@@ -425,8 +431,8 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 @media (min-width:900px){
   .ui-shell{grid-template-rows:minmax(0,1fr)!important;padding-left:96px}
   .ui-nav{position:fixed;left:0;top:0;bottom:0;z-index:20;width:96px;height:auto!important;flex-direction:column;align-items:center;gap:16px;padding:24px 0!important;border:0!important;background:transparent!important}
-  .ui-nav>a[aria-label="Praxis · home"]{display:flex;align-items:center;justify-content:center;width:52px;height:52px;padding:0;border-radius:50%;background:var(--surface);box-shadow:var(--shadow-1);font-size:0}
-  .ui-nav>a[aria-label="Praxis · home"]::before{content:"P";font:800 22px/1 var(--font-heading);color:var(--teal)}
+  .ui-nav>a.ui-logo{display:flex;align-items:center;justify-content:center;width:52px;height:52px;padding:0;border-radius:50%;background:var(--surface);box-shadow:var(--shadow-1);font-size:0}
+  .ui-nav>a.ui-logo::before{content:"P";font:800 22px/1 var(--font-heading);color:var(--teal)}
   .ui-hubs{flex-direction:column;gap:14px;margin-top:32px}
   .ui-hub{width:48px;height:48px!important;padding:0!important;justify-content:center;border-radius:50%!important;background:var(--surface)!important;border:1px solid var(--edge);color:var(--muted)!important;box-shadow:0 1px 2px rgba(20,24,31,.06),0 4px 12px rgba(20,24,31,.05)}
   .ui-hub:hover{color:var(--teal)!important}
@@ -480,9 +486,10 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 :root[data-theme="dark"] [data-stage],:root[data-theme="dark"] .sx-ref{background:linear-gradient(180deg,#1E232A,#12161B)!important}
 /* Hero cards: soft surface with the blue action, as in the reference */
 .ui-card--brand{background:var(--surface-soft)!important;color:var(--text)!important;border:1px solid var(--edge)}
+/* Task 6: the [class*="text-white"] rules re-ink the Home hero's children; drop them once Home stops emitting text-white. */
 .ui-card--brand [class*="text-white"]{color:var(--text)!important}
 .ui-card--brand p[class*="text-white/"],.ui-card--brand [class*="text-white/8"],.ui-card--brand [class*="text-white/7"]{color:var(--muted)!important}
-.ui-card--brand .ui-btn.bg-white{background:var(--teal-fill)!important;color:#fff!important;box-shadow:0 6px 16px rgba(61,98,227,.28)}
+.ui-card--brand .ui-btn.ui-btn--inverse{background:var(--teal-fill)!important;color:#fff!important;box-shadow:0 6px 16px rgba(61,98,227,.28)}
 .ui-card--brand h2,.ui-card--brand h1,.ui-card--brand [class*="font-heading"]{color:var(--text)!important}
 .ui-hero-links button{color:var(--teal-ink)!important}
 /* ==== Remove dark islands: camera, setup, board, trace, overlays ==== */
@@ -516,7 +523,8 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 /* Loading / lost / blocked overlays */
 [class*="bg-[radial-gradient(circle_at_50%_40%"]{background:linear-gradient(180deg,#F8F9FB,#E4E7EC)!important;color:var(--muted)!important}
 [role=alert][class*="bg-[var(--stage-a)]"]{background:rgba(236,237,240,.96)!important}
-/* Camera Panel component (setup preview, legacy views) */
+/* Camera Panel component (setup preview, legacy views). design/Panel.tsx now paints var(--cam) + ink itself; this
+   still re-colours the therapist Decision trace section (Task 11). */
 [class*="rounded-[var(--r-card)]"][class*="bg-[var(--stage-a)]"]:not(.sx-trace *){background:var(--cam)!important;color:var(--text)!important}
 
 /* Camera setup: light shell */
@@ -575,24 +583,24 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 
 /* Frosted panels */
 .ui-card,.ui-card--default,.ui-card--brand,.sx-card,.sx-head,.sx-bar,.dth-caption,
-footer.sticky,.ui-nav,.sx-modal,.dth-modal,.sx-hold,[role=dialog][data-state=open]{
+footer.ui-flowbar,.ui-nav,.sx-modal,.dth-modal,.sx-hold,:is(.ui-dialog,.lc-panel,.fb-dialog)[data-state=open]{
   background:var(--glass)!important;
   -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:1px solid var(--glass-edge)!important;
   box-shadow:var(--glass-hi),var(--glass-shadow)!important;
 }
 .ui-card--highlight{background:var(--glass)!important;border:1.5px solid rgba(61,98,227,.55)!important}
-.sx-modal,.dth-modal,.sx-hold,[role=dialog][data-state=open]{background:var(--glass-strong)!important}
-.sx-head,.sx-bar,footer.sticky{border-width:0!important;border-radius:0}
+.sx-modal,.dth-modal,.sx-hold,:is(.ui-dialog,.lc-panel,.fb-dialog)[data-state=open]{background:var(--glass-strong)!important}
+.sx-head,.sx-bar,footer.ui-flowbar{border-width:0!important;border-radius:0}
 .sx-head{border-bottom:1px solid var(--glass-edge)!important}
-.sx-bar,footer.sticky{border-top:1px solid var(--glass-edge)!important}
+.sx-bar,footer.ui-flowbar{border-top:1px solid var(--glass-edge)!important}
 @media (min-width:900px){.ui-nav{background:transparent!important;box-shadow:none!important;border:0!important;-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* Frosted controls: pills, secondary buttons, rail buttons */
-.ui-btn.border-teal-ink,.lib-cta-2,.sx-btn-secondary,.dth-btn,.dth-exit,.cs-exit,.cs-audio,.ui-hub,.ui-ther,
-.ui-nav>a[aria-label="Praxis · home"],.cs-coach,.cs-live,.sx-tag,.dth-ang-tag,.dth-ang-ltag,.cs-info-btn,
+.ui-btn.ui-btn--secondary,.lib-cta-2,.sx-btn-secondary,.dth-btn,.dth-exit,.cs-exit,.cs-audio,.ui-hub,.ui-ther,
+.ui-nav>a.ui-logo,.cs-coach,.cs-live,.sx-tag,.dth-ang-tag,.dth-ang-ltag,.cs-info-btn,
 [data-stage] button,[aria-label^="Left"],[aria-label^="Right"],
-[role=group][class*="rounded-[var(--r-pill)]"],[role=radiogroup]>button:not([aria-checked=true]):not([data-state=on]){
+[role=group].ui-seg,[role=radiogroup]>button:not([aria-checked=true]):not([data-state=on]){
   background:var(--glass)!important;
   -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:1px solid var(--glass-edge)!important;
@@ -600,8 +608,8 @@ footer.sticky,.ui-nav,.sx-modal,.dth-modal,.sx-hold,[role=dialog][data-state=ope
 }
 .ui-hub[aria-current=page],.dth-btn.dth-on,.cs-audio-on,.cs-info-btn[aria-expanded=true]{background:var(--teal-fill)!important;border-color:rgba(255,255,255,.35)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 20px rgba(61,98,227,.35)!important}
 /* Primary: glossy blue */
-.ui-btn.bg-teal-fill,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.sx-pill-on,
-.ui-card--brand .ui-btn.bg-white{background:linear-gradient(180deg,#5277F0,#3D62E3)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 20px rgba(61,98,227,.3)!important;border-color:transparent!important}
+.ui-btn.ui-btn--primary,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.sx-pill-on,
+.ui-card--brand .ui-btn.ui-btn--inverse{background:linear-gradient(180deg,#5277F0,#3D62E3)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 20px rgba(61,98,227,.3)!important;border-color:transparent!important}
 /* Inner wells read as clear glass inside frosted cards */
 .ui-card [class*="bg-line/"],.ui-card .bg-bg,.sx-card .sx-metric{background-color:rgba(255,255,255,.35)}
 /* Stage: glass window over the sky */
@@ -637,34 +645,34 @@ html,body,.ui-shell,.sx-root,.cs-root{background:transparent!important}
 .ui-card,.ui-card--default,.ui-card--brand,.sx-card,.dth-caption{
   background:var(--glass)!important;border:1.5px solid var(--glass-edge)!important;border-radius:24px!important;
   box-shadow:var(--glass-hi),0 10px 30px rgba(70,90,120,.07)!important}
-.sx-head,.sx-bar,footer.sticky{background:rgba(255,255,255,.35)!important}
+.sx-head,.sx-bar,footer.ui-flowbar{background:rgba(255,255,255,.35)!important}
 .sx-feed,.sx-ref,.cs-stage,[data-stage]{border-radius:28px!important;border:1.5px solid rgba(255,255,255,.85)}
 
 /* Pills and tabs: grey glass, black active (reference "Roadmap" pill) */
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup]){background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;gap:8px}
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button{border-radius:999px!important;background:rgba(255,255,255,.5)!important;border:1px solid rgba(255,255,255,.9)!important;color:#5F6670!important;font-weight:500!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)}
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button[data-state=on]{background:#111418!important;color:#fff!important;border-color:#111418!important;box-shadow:0 6px 14px rgba(17,20,24,.25)!important}
-:root[data-theme="dark"] [class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button[data-state=on]{background:#F3F5F8!important;color:#111418!important}
+.ui-seg:is([role=group],[role=radiogroup]){background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;gap:8px}
+.ui-seg:is([role=group],[role=radiogroup])>button{border-radius:999px!important;background:rgba(255,255,255,.5)!important;border:1px solid rgba(255,255,255,.9)!important;color:#5F6670!important;font-weight:500!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)}
+.ui-seg:is([role=group],[role=radiogroup])>button[data-state=on]{background:#111418!important;color:#fff!important;border-color:#111418!important;box-shadow:0 6px 14px rgba(17,20,24,.25)!important}
+:root[data-theme="dark"] .ui-seg:is([role=group],[role=radiogroup])>button[data-state=on]{background:#F3F5F8!important;color:#111418!important}
 
 /* Round glass icon buttons with thin icons */
-.ui-hub,.ui-ther,.ui-nav>a[aria-label="Praxis · home"],.cs-info-btn{border:1.5px solid rgba(255,255,255,.9)!important;background:rgba(255,255,255,.55)!important}
+.ui-hub,.ui-ther,.ui-nav>a.ui-logo,.cs-info-btn{border:1.5px solid rgba(255,255,255,.9)!important;background:rgba(255,255,255,.55)!important}
 .ui-hub svg,.ui-ther svg,.ui-btn svg{stroke-width:1.6}
-.ui-nav>a[aria-label="Praxis · home"]{background:#111418!important;border-color:#111418!important}
-.ui-nav>a[aria-label="Praxis · home"]::before{color:#fff!important;font-weight:700!important}
+.ui-nav>a.ui-logo{background:#111418!important;border-color:#111418!important}
+.ui-nav>a.ui-logo::before{color:#fff!important;font-weight:700!important}
 
 /* Typography: light display numbers, medium headings, italic accent word */
 h1,h2,h3{font-weight:500!important;letter-spacing:-.02em}
 .ui-card-title{font-weight:500!important}
-.font-heading.tabular-nums,[class*="font-heading"][class*="tabular-nums"],.sx-big,.dth-title{font-weight:300!important;letter-spacing:-.02em}
+.ui-stat-num,.sx-big,.dth-title{font-weight:300!important;letter-spacing:-.02em}
 .sx-big{font-size:2.75rem}
 main h1.text-4xl::first-line{font-style:normal}
 .ui-card-title::before{width:5px;height:5px}
 
 /* Secondary buttons as clear glass capsules */
-.ui-btn.border-teal-ink,.lib-cta-2,.sx-btn-secondary,.dth-btn,.dth-exit,.cs-exit,.cs-audio{
+.ui-btn.ui-btn--secondary,.lib-cta-2,.sx-btn-secondary,.dth-btn,.dth-exit,.cs-exit,.cs-audio{
   background:rgba(255,255,255,.55)!important;border:1px solid rgba(255,255,255,.95)!important;border-radius:999px!important;font-weight:600}
-.ui-btn.bg-teal-fill,.lib-cta-1,.dth-mbtn-1,.cs-continue,.sx-btn-danger,.sx-pill,.cs-allow{border-radius:999px!important}
-@media (min-width:900px){.ui-shell>main footer.sticky{border-radius:0 0 30px 30px}}
+.ui-btn.ui-btn--primary,.lib-cta-1,.dth-mbtn-1,.cs-continue,.sx-btn-danger,.sx-pill,.cs-allow{border-radius:999px!important}
+@media (min-width:900px){.ui-shell>main footer.ui-flowbar{border-radius:0 0 30px 30px}}
 /* Home: affected areas and progress */
 .hp-card{display:flex;flex-direction:column;gap:16px}
 .hp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
@@ -700,17 +708,17 @@ main h1.text-4xl::first-line{font-style:normal}
 .hp-meter{margin-bottom:16px}
 /* ==== Glass interactions ==== */
 :root{--ease:cubic-bezier(.2,.8,.2,1)}
-.ui-card,.sx-card,.hp-callout,.lib-cta,.ui-btn,.hp-tab,.ui-hub,.dth-btn,.sx-btn,.cs-exit,.cs-audio,[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button{position:relative;isolation:isolate;overflow:hidden}
+.ui-card,.sx-card,.hp-callout,.lib-cta,.ui-btn,.hp-tab,.ui-hub,.dth-btn,.sx-btn,.cs-exit,.cs-audio,.ui-seg:is([role=group],[role=radiogroup])>button{position:relative;isolation:isolate;overflow:hidden}
 /* Top-edge light catch on every glass card */
 .ui-card::before,.sx-card::before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);opacity:.9}
 /* Lift on hover, press on click */
-.ui-card,.sx-card,.lib-cta,.ui-btn,.hp-tab,.ui-hub,.dth-btn,.sx-btn,.cs-exit,.cs-audio,.cs-continue,.cs-coach-yes,[role=radiogroup]>button,[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button{
+.ui-card,.sx-card,.lib-cta,.ui-btn,.hp-tab,.ui-hub,.dth-btn,.sx-btn,.cs-exit,.cs-audio,.cs-continue,.cs-coach-yes,[role=radiogroup]>button,.ui-seg:is([role=group],[role=radiogroup])>button{
   transition:transform .28s var(--ease),box-shadow .28s var(--ease),background-color .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease)}
 .choose-card,.ui-card:has(.lib-ctas){will-change:transform}
 .ui-card:has(.lib-ctas):hover,.hp-card:hover{transform:translateY(-3px);box-shadow:inset 0 1px 0 #fff,0 22px 44px rgba(70,90,120,.14)!important}
-.lib-cta:hover:not(:disabled),.ui-btn:hover:not(:disabled),.hp-tab:hover,.dth-btn:hover:not(:disabled),.sx-btn:hover,.cs-continue:hover:not(:disabled),[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button:hover{transform:translateY(-1px)}
+.lib-cta:hover:not(:disabled),.ui-btn:hover:not(:disabled),.hp-tab:hover,.dth-btn:hover:not(:disabled),.sx-btn:hover,.cs-continue:hover:not(:disabled),.ui-seg:is([role=group],[role=radiogroup])>button:hover{transform:translateY(-1px)}
 .ui-hub:hover{transform:scale(1.06)}
-.lib-cta:active:not(:disabled),.ui-btn:active:not(:disabled),.hp-tab:active,.dth-btn:active,.sx-btn:active,.ui-hub:active,.cs-continue:active,[role=radiogroup]>button:active,[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button:active{transform:translateY(0) scale(.97);transition-duration:.08s}
+.lib-cta:active:not(:disabled),.ui-btn:active:not(:disabled),.hp-tab:active,.dth-btn:active,.sx-btn:active,.ui-hub:active,.cs-continue:active,[role=radiogroup]>button:active,.ui-seg:is([role=group],[role=radiogroup])>button:active{transform:translateY(0) scale(.97);transition-duration:.08s}
 /* Primary: glossy highlight band */
 /* Focus: soft glass ring instead of a hard outline */
 .ui-card :focus-visible,.lib-cta:focus-visible,.ui-btn:focus-visible,.hp-tab:focus-visible,.ui-hub:focus-visible,[role=radiogroup]>button:focus-visible,[role=group]>button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(255,255,255,.95),0 0 0 6px rgba(61,98,227,.55)!important}
@@ -723,9 +731,9 @@ main .grid>*:nth-child(3) .ui-card,main .grid>.ui-card:nth-child(3){animation-de
 /* Selected states glide */
 .hp-tab-on,[data-state=on],[aria-checked=true],.ui-hub[aria-current=page]{transition:background-color .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease)}
 /* Modals: frosted scrim */
-.sx-scrim,.dth-scrim,[data-state=open][class*="fixed inset-0"]{-webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);background:rgba(200,214,236,.35)!important}
+.sx-scrim,.dth-scrim,:is(.ui-scrim,.fb-scrim)[data-state=open]{-webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);background:rgba(200,214,236,.35)!important}
 @keyframes gl-modal{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
-.sx-modal,.dth-modal,[role=dialog][data-state=open]{animation:gl-modal .4s var(--ease) both}
+.sx-modal,.dth-modal,:is(.ui-dialog,.lc-panel,.fb-dialog)[data-state=open]{animation:gl-modal .4s var(--ease) both}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
   .ui-card:hover,.lib-cta:hover,.ui-btn:hover,.hp-tab:hover,.ui-hub:hover{transform:none!important}
@@ -733,28 +741,30 @@ main .grid>*:nth-child(3) .ui-card,main .grid>.ui-card:nth-child(3){animation-de
 .ui-card:has(.lib-ctas):hover,.hp-card:hover{border-color:rgba(255,255,255,1)!important;background:rgba(248,250,255,.6)!important}
 .ui-card:has(.lib-ctas):hover,.hp-card:hover{background:var(--glass)!important}
 /* No cursor glow on solid blue buttons; faint on glass buttons */
-.ui-btn.bg-teal-fill::after,.ui-btn.bg-white::after,.lib-cta-1::after,.dth-mbtn-1::after,.sx-btn-danger::after,.ui-hub[aria-current=page]::after,.hp-tab-on::after,[data-state=on]::after,[aria-checked=true]::after{display:none!important}
+.ui-btn.ui-btn--primary::after,.ui-btn.ui-btn--inverse::after,.lib-cta-1::after,.dth-mbtn-1::after,.sx-btn-danger::after,.ui-hub[aria-current=page]::after,.hp-tab-on::after,[data-state=on]::after,[aria-checked=true]::after{display:none!important}
 /* Selected number on the pain/effort scale */
-[role=radiogroup]>button[aria-checked=true]:not([data-state]){background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,0) 52%),linear-gradient(180deg,#5277F0,#3D62E3)!important;color:#fff!important;border-color:transparent!important;font-weight:700!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px rgba(61,98,227,.32)!important}
+[role=radiogroup]>button[aria-checked=true]:not(.ui-seg-btn){background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,0) 52%),linear-gradient(180deg,#5277F0,#3D62E3)!important;color:#fff!important;border-color:transparent!important;font-weight:700!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px rgba(61,98,227,.32)!important}
 /* ==== Design system: one accent for every selected state ==== */
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button[data-state=on],
+.ui-seg:is([role=group],[role=radiogroup])>button[data-state=on],
 .hp-tab-on{background:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important;font-weight:700!important}
-:root[data-theme="dark"] [class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button[data-state=on]{background:var(--sel-bg)!important;color:#fff!important}
+:root[data-theme="dark"] .ui-seg:is([role=group],[role=radiogroup])>button[data-state=on]{background:var(--sel-bg)!important;color:#fff!important}
 .hp-tab-on .hp-st{background:rgba(255,255,255,.9)}
 /* Unselected choices: same glass, same text weight as the scale */
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button[data-state=off]{color:var(--text)!important;font-weight:500!important}
-[role=radiogroup]>button:not([data-state]){font-weight:500!important;color:var(--text)}
+.ui-seg:is([role=group],[role=radiogroup])>button[data-state=off]{color:var(--text)!important;font-weight:500!important}
+[role=radiogroup]>button:not(.ui-seg-btn){font-weight:500!important;color:var(--text)}
 /* Shared control height and radius inside forms */
-.ci-form [class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button{min-height:48px!important}
+.ci-form .ui-seg:is([role=group],[role=radiogroup])>button{min-height:48px!important}
 /* Checkbox in the system's style */
-label>input[type=checkbox].peer+span{width:28px!important;height:28px!important;border-radius:8px!important;border:1.5px solid rgba(61,98,227,.55)!important;background:rgba(255,255,255,.6)!important;box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(38,72,140,.08)}
-label>input[type=checkbox].peer:checked+span{background:var(--sel-bg)!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
-label>input[type=checkbox].peer:focus-visible+span{box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(61,98,227,.55)!important}
+.ui-check>.peer+.ui-check-box{width:28px!important;height:28px!important;border-radius:8px!important;border:1.5px solid rgba(61,98,227,.55)!important;background:rgba(255,255,255,.6)!important;box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(38,72,140,.08)}
+.ui-check>.peer:checked+.ui-check-box{background:var(--sel-bg)!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
+.ui-check>.peer:focus-visible+.ui-check-box{box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(61,98,227,.55)!important}
 /* Logo mark in primary blue, as in the system */
-.ui-nav>a[aria-label="Praxis · home"]{background:var(--sel-bg)!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
+.ui-nav>a.ui-logo{background:var(--sel-bg)!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
 /* Praxis mark */
-.ui-nav>a[aria-label="Praxis · home"]{background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTI3N0YwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzQ1OEQ2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTgiIGZpbGw9InVybCgjZykiLz4KPGNpcmNsZSBjeD0iMjciIGN5PSIxNiIgcj0iNS41IiBmaWxsPSIjZmZmIi8+CjxwYXRoIGQ9Ik0yNyAyN1Y0OSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8cGF0aCBkPSJNMjcgMjhDMzUgMjggNDIgMjUgNDYgMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHBhdGggZD0iTTI3IDI4QzIwIDMwIDE4IDM0IDE4IDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiM5RkQzRjAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjQ2IiBjeT0iMTgiIHI9IjMuNCIgZmlsbD0iIzlGRDNGMCIvPgo8L3N2Zz4K") center/100% 100% no-repeat!important;border:0!important;border-radius:16px!important;box-shadow:0 8px 18px rgba(61,98,227,.3)!important}
-.ui-nav>a[aria-label="Praxis · home"]::before{content:none!important}
+.ui-nav>a.ui-logo{background:transparent!important;border:0!important;border-radius:16px!important;box-shadow:0 8px 18px rgba(61,98,227,.3)!important}
+.ui-nav>a.ui-logo::before{content:none!important}
+.ui-logo{position:relative;overflow:hidden;isolation:isolate}
+.ui-logo-mark{position:absolute;inset:0;z-index:-1;width:100%;height:100%}
 .sx-brand{display:inline-flex;align-items:center;gap:8px;color:#1A1D21!important;font-weight:800!important;font-family:var(--font-body)!important;letter-spacing:-.02em}
 .sx-brand::before{content:"";width:28px;height:28px;border-radius:8px;background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTI3N0YwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzQ1OEQ2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTgiIGZpbGw9InVybCgjZykiLz4KPGNpcmNsZSBjeD0iMjciIGN5PSIxNiIgcj0iNS41IiBmaWxsPSIjZmZmIi8+CjxwYXRoIGQ9Ik0yNyAyN1Y0OSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8cGF0aCBkPSJNMjcgMjhDMzUgMjggNDIgMjUgNDYgMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHBhdGggZD0iTTI3IDI4QzIwIDMwIDE4IDM0IDE4IDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiM5RkQzRjAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjQ2IiBjeT0iMTgiIHI9IjMuNCIgZmlsbD0iIzlGRDNGMCIvPgo8L3N2Zz4K") center/100% 100% no-repeat}
 .hp-tab-on{background:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important}
@@ -782,9 +792,9 @@ label>input[type=checkbox].peer:focus-visible+span{box-shadow:0 0 0 3px #fff,0 0
 /* Typography: bold navy headings, navy-blue numbers */
 main h1,main h2,.ui-card-title,.hp-head h2{color:#0E1433!important;font-weight:700!important}
 .ui-card-title::before{background:#3D62E3}
-.font-heading.tabular-nums,[class*="font-heading"][class*="tabular-nums"],.sx-big,.hp-num,.hp-callout-v{color:#1F5FA8!important;font-weight:400!important}
+.ui-stat-num,.sx-big,.hp-num,.hp-callout-v{color:#1F5FA8!important;font-weight:400!important}
 /* Secondary buttons and chips */
-.ui-btn.border-teal-ink,.lib-cta-2,.sx-btn-secondary,.dth-btn,.cs-exit,.cs-audio{background:rgba(255,255,255,.55)!important;color:#0E1433!important}
+.ui-btn.ui-btn--secondary,.lib-cta-2,.sx-btn-secondary,.dth-btn,.cs-exit,.cs-audio{background:rgba(255,255,255,.55)!important;color:#0E1433!important}
 [class~="bg-tint-mint"],[class~="bg-tint-focus"]{background-color:rgba(227,234,251,.75)!important}
 [class*="text-mint-ink"],[class*="text-teal-ink"],[class*="text-focus"]{color:#1A2F8F!important}
 /* Avatar stage: periwinkle-to-aqua glass so the white figure reads */
@@ -888,8 +898,8 @@ main .ui-card.hp-card{position:relative}
 @media (min-width:1024px){.hp-facts{width:170px}.hp-facts dt{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}}
 /* Softer primary: lighter blue, lower-contrast sheen and shadow */
 :root{--sel-bg:linear-gradient(180deg,#6A88EE,#4A6BE2)!important;--sel-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(61,98,227,.16)!important}
-.ui-btn.bg-teal-fill,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow{background-image:linear-gradient(180deg,#6A88EE,#4A6BE2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(61,98,227,.16)!important;font-weight:600!important}
-[role=radiogroup]>button[aria-checked=true]:not([data-state]){background:linear-gradient(180deg,#6A88EE,#4A6BE2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(61,98,227,.16)!important}
+.ui-btn.ui-btn--primary,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow{background-image:linear-gradient(180deg,#6A88EE,#4A6BE2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(61,98,227,.16)!important;font-weight:600!important}
+[role=radiogroup]>button[aria-checked=true]:not(.ui-seg-btn){background:linear-gradient(180deg,#6A88EE,#4A6BE2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(61,98,227,.16)!important}
 /* Nav discs: white glass + royal-blue accent (no mint) */
 .ui-hub,.ui-ther{background:rgba(255,255,255,.62)!important;border:1px solid rgba(255,255,255,.95)!important;color:#4A5578!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 #fff,0 4px 12px rgba(61,98,227,.08)!important}
 .ui-hub:hover,.ui-ther:hover{color:#3D62E3!important;background:rgba(255,255,255,.85)!important}
@@ -905,8 +915,8 @@ main .ui-card.hp-card{position:relative}
 .hp-hot:focus-visible{outline:none}.hp-hot:focus-visible .hp-hot-dot{outline:3px solid #fff;outline-offset:4px}
 @media (prefers-reduced-motion:reduce){.hp-hot-on .hp-hot-dot::after{animation:none}}
 /* Primary buttons share the selected-state fill (e.g. the "Light" toggle) */
-.ui-btn.bg-teal-fill,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.ui-card--brand .ui-btn.bg-white,.hp-card .lib-cta-1{background:var(--sel-bg)!important;background-image:var(--sel-bg)!important;color:#fff!important;border:1px solid transparent!important;box-shadow:var(--sel-shadow)!important;font-weight:700!important}
-.ui-btn.bg-teal-fill:hover,.lib-cta-1:hover,.dth-mbtn-1:hover,.ui-card--brand .ui-btn.bg-white:hover,.hp-card .lib-cta-1:hover{background:var(--sel-bg)!important;filter:brightness(1.05);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 6px 14px rgba(61,98,227,.2)!important}
+.ui-btn.ui-btn--primary,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.ui-card--brand .ui-btn.ui-btn--inverse,.hp-card .lib-cta-1{background:var(--sel-bg)!important;background-image:var(--sel-bg)!important;color:#fff!important;border:1px solid transparent!important;box-shadow:var(--sel-shadow)!important;font-weight:700!important}
+.ui-btn.ui-btn--primary:hover,.lib-cta-1:hover,.dth-mbtn-1:hover,.ui-card--brand .ui-btn.ui-btn--inverse:hover,.hp-card .lib-cta-1:hover{background:var(--sel-bg)!important;filter:brightness(1.05);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 6px 14px rgba(61,98,227,.2)!important}
 /* Hotspots v2: small plain dots at rest; only the selected one grows (animated) with halo + pulse */
 .hp-hot .hp-hot-dot{width:12px!important;height:12px!important;border-width:2px!important;box-shadow:0 1px 4px rgba(14,20,51,.25)!important;transform:scale(1);transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s ease!important}
 .hp-hot:hover .hp-hot-dot{transform:scale(1.2)}
@@ -926,13 +936,13 @@ main .ui-card.hp-card{position:relative}
 :root[data-theme="dark"] .hp-hot:not(.hp-hot-on) .hp-hot-dot{box-shadow:0 0 0 4px color-mix(in srgb,var(--hc) 28%,transparent),0 0 10px color-mix(in srgb,var(--hc) 70%,transparent)!important}
 /* Radius scale: shell 20 · card 16 · tile/stage 14 · control 12 · inner segment 10 · tag 6. Dots, avatar and hotspots stay round. */
 :root{--r-card:16px!important;--r-control:12px!important;--r-pill:12px!important}
-main.flex.min-h-0{border-radius:20px!important}
+main.ui-main{border-radius:20px!important}
 .ui-card,section.ui-card,article.ui-card,.sx-card,.cs-stage,.dth-stage,.dth-caption,main .ui-card.hp-card{border-radius:16px!important}
 .hp-callout,.hp-facts>div,.cs-guide,li.flex.min-w-0.flex-col,[data-stage],.sx-ref{border-radius:14px!important}
 .ui-btn,.lib-cta,.dth-btn,.dth-exit,.cs-exit,.cs-audio,.cs-continue,.cs-allow,.cs-coach,.hp-tab,.sx-btn,label.flex.min-h-14,button.min-h-14,button.min-h-12,.ui-ther,.ui-hub{border-radius:12px!important}
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup]),div.inline-flex.gap-1,.dth-seg{border-radius:14px!important}
-[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button,.dth-seg>*{border-radius:10px!important}
-.hp-st,.hp-delta,.hp-sample,.cs-live,[class*="ui-chip"],span.flex.min-h-14.items-center{border-radius:6px!important}
+.ui-seg:is([role=group],[role=radiogroup]),div.ui-seg,.dth-seg{border-radius:14px!important}
+.ui-seg:is([role=group],[role=radiogroup])>button,.dth-seg>*{border-radius:10px!important}
+.hp-st,.hp-delta,.hp-sample,.cs-live,span.flex.min-h-14.items-center{border-radius:6px!important}
 .ui-hub::after,.ui-btn::after,.lib-cta::after,.hp-tab::after{border-radius:inherit!important}
 .ui-btn.ui-btn.ui-btn.ui-btn,.lib-cta.lib-cta.lib-cta.lib-cta{border-radius:12px!important}
 /* Spacing scale (8-pt, 4-pt for fine detail): page 32 · section gap 24 · card padding 24 · in-card groups 16 · control groups 12 · tight 8 */
@@ -996,7 +1006,7 @@ main h3.text-2xl{font-size:20px!important;line-height:28px!important}
 .cs-coach-text,.dth-caption span{font-size:18px!important;line-height:26px!important}
 main [class*="dth-caption"] span:not([class]){font-size:20px!important;line-height:28px!important}
 /* Secondary 14 */
-main span.inline-flex.items-center.gap-1\.5,main .text-base.text-muted:is(span,figcaption),main span.block.text-base.text-muted,main p.mt-2.text-base.text-muted,
+main span.ui-chip,main .text-base.text-muted:is(span,figcaption),main span.block.text-base.text-muted,main p.mt-2.text-base.text-muted,
 main li.flex.items-center.gap-2,main .cal-key li,main span.inline-flex.items-center.gap-1,.hp-stage [data-stage]>.absolute.left-3,
 .cs-sub,.dth-sub,.dth-count,.ci-mic-btn,.cs-audio,.cal-line,.ci-scale span,small{font-size:14px!important;line-height:20px!important}
 main .ci-form .flex.justify-between span,main p.mt-3.text-base.text-muted{font-size:14px!important;line-height:20px!important}
@@ -1004,7 +1014,8 @@ main .ci-form .flex.justify-between span,main p.mt-3.text-base.text-muted{font-s
 .hp-callout-k,.hp-callout-l,.hp-facts dt,.hp-st,.hp-delta,.hp-sample,.dth-steplabel,.dth-ang-ltag,.dth-ang-tag span,.cs-step-label,.cs-live,.cs-live b,.cal-line-clinic,.hp-meter span{font-size:12px!important;line-height:16px!important}
 main figure svg text,main .ui-card svg text{font-size:12px!important}
 /* Numbers */
-main .whitespace-nowrap.font-heading.font-semibold{font-size:32px!important;line-height:40px!important}
+/* doubled class: stays above .pg-two [class*="text-3xl"] (28 px), as the utility selector did in the artifact */
+main .ui-stat-num.ui-stat-num{font-size:32px!important;line-height:40px!important}
 .dth-ang-tag b{font-size:16px!important;line-height:20px!important}
 .cal-day>span:first-child,main [class*="cal-"] .text-2xl{font-size:20px!important;line-height:28px!important}
 .ui-avatar span,.ui-nav span.flex.h-12.w-12{font-size:16px!important}
@@ -1032,7 +1043,7 @@ main .whitespace-nowrap.font-heading.font-semibold{font-size:32px!important;line
 :root[data-theme="dark"] .ui-card::after,:root[data-theme="dark"] .ui-card::before{display:none!important}
 :root[data-theme="dark"] .ui-card .ui-card,:root[data-theme="dark"] .ui-card.px-4.py-3{background:rgba(255,255,255,.025)!important;box-shadow:none!important}
 :root[data-theme="dark"] main .ui-card--highlight{border-color:var(--d-edge-hi)!important;box-shadow:0 0 0 1px rgba(58,132,255,.25),0 12px 32px rgba(0,0,0,.45)!important}
-:root[data-theme="dark"] :is(footer.sticky,.sx-head,.sx-bar,.cs-top,.cs-bar){background:rgba(8,12,22,.85)!important;border-color:var(--d-edge)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+:root[data-theme="dark"] :is(footer.ui-flowbar,.sx-head,.sx-bar,.cs-top,.cs-bar){background:rgba(8,12,22,.85)!important;border-color:var(--d-edge)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 
 /* Type */
 :root[data-theme="dark"] :is(main h1,main h2,main h3,.ui-card-title,.hp-head h2,.dth-title,.cs-title,.sx-brand,.sx-title){color:var(--d-text)!important}
@@ -1041,20 +1052,20 @@ main .whitespace-nowrap.font-heading.font-semibold{font-size:32px!important;line
 :root[data-theme="dark"] main :is(p,li,dd,label,figcaption,span:not([class]),.text-ink,.text-body){color:var(--d-body)}
 :root[data-theme="dark"] :is(.text-muted,.hp-head p,.dth-sub,.dth-count,.cs-sub,.hp-callout-l,.hp-facts dt,.ui-hub-label,.ui-ther-label,.dth-steplabel,.cs-step-label,.cal-line,[class*="text-white/7"],[class*="text-white/8"]){color:var(--d-muted)!important}
 :root[data-theme="dark"] :is(.hp-callout-k,.hp-stage [data-stage]>.absolute.left-3){color:var(--d-body)!important}
-:root[data-theme="dark"] :is(.hp-callout-v,.hp-num,.sx-big,main .whitespace-nowrap.font-heading.font-semibold,.font-heading.tabular-nums){color:#FFFFFF!important;font-weight:300!important}
+:root[data-theme="dark"] :is(.hp-callout-v,.hp-num,.sx-big,main .ui-stat-num,.ui-stat-num){color:#FFFFFF!important;font-weight:300!important}
 :root[data-theme="dark"] :is(.hp-callout-v small,.hp-facts dd small,.text-xl.font-normal){color:var(--d-acc-hi)!important}
 :root[data-theme="dark"] main a:not(.ui-hub):not(.ui-ther):not(.ui-avatar),:root[data-theme="dark"] main button.underline,:root[data-theme="dark"] .text-teal-ink{color:var(--d-acc-hi)!important}
 :root[data-theme="dark"] .text-red-ink,:root[data-theme="dark"] li.text-red-ink{color:#FF7A7A!important}
 
 /* Controls: secondary */
-:root[data-theme="dark"] :is(.ui-btn:not(.bg-teal-fill),.lib-cta-2,.dth-btn,.dth-exit,.cs-exit,.cs-audio,.sx-btn-secondary,.hp-tab,.cs-info-btn,[role=radiogroup]>button,[role=group]>button,label.flex.min-h-14,.ci-mic-btn,span.flex.min-h-14.items-center){background:var(--d-ctl)!important;border:1px solid rgba(110,150,255,.2)!important;color:#DCE5F5!important;box-shadow:none!important}
-:root[data-theme="dark"] :is(.ui-btn:not(.bg-teal-fill),.lib-cta-2,.dth-btn,.hp-tab,[role=radiogroup]>button,[role=group]>button,.cs-exit,.cs-audio):hover{background:var(--d-ctl-hi)!important;border-color:rgba(110,150,255,.36)!important}
-:root:root:root[data-theme="dark"] .ui-card--brand .ui-btn.bg-white{background:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
+:root[data-theme="dark"] :is(.ui-btn:not(.ui-btn--primary),.lib-cta-2,.dth-btn,.dth-exit,.cs-exit,.cs-audio,.sx-btn-secondary,.hp-tab,.cs-info-btn,[role=radiogroup]>button,[role=group]>button,label.flex.min-h-14,.ci-mic-btn,span.flex.min-h-14.items-center){background:var(--d-ctl)!important;border:1px solid rgba(110,150,255,.2)!important;color:#DCE5F5!important;box-shadow:none!important}
+:root[data-theme="dark"] :is(.ui-btn:not(.ui-btn--primary),.lib-cta-2,.dth-btn,.hp-tab,[role=radiogroup]>button,[role=group]>button,.cs-exit,.cs-audio):hover{background:var(--d-ctl-hi)!important;border-color:rgba(110,150,255,.36)!important}
+:root:root:root[data-theme="dark"] .ui-card--brand .ui-btn.ui-btn--inverse{background:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
 /* Primary + selected share the glowing accent */
-:root:root:root[data-theme="dark"] :is(.ui-btn.bg-teal-fill,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.hp-card .lib-cta-1,.hp-tab-on,[aria-checked=true],[data-state=on],.ui-hub[aria-current=page],[role=radiogroup]>button[aria-checked=true],[role=group]>button[aria-pressed=true]){background:var(--sel-bg)!important;background-image:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
+:root:root:root[data-theme="dark"] :is(.ui-btn.ui-btn--primary,.lib-cta-1,.dth-mbtn-1,.cs-continue:not(:disabled),.cs-allow,.hp-card .lib-cta-1,.hp-tab-on,[aria-checked=true],[data-state=on],.ui-hub[aria-current=page],[role=radiogroup]>button[aria-checked=true],[role=group]>button[aria-pressed=true]){background:var(--sel-bg)!important;background-image:var(--sel-bg)!important;color:#fff!important;border-color:transparent!important;box-shadow:var(--sel-shadow)!important}
 :root[data-theme="dark"] :is(button,.ui-btn):disabled{opacity:.45!important}
 :root[data-theme="dark"] .cs-continue:disabled{background:rgba(58,132,255,.18)!important;color:rgba(234,240,250,.5)!important;border-color:transparent!important}
-:root[data-theme="dark"] span.flex.h-7.w-7.shrink-0{background:rgba(255,255,255,.04)!important;border-color:rgba(110,150,255,.35)!important}
+:root:root[data-theme="dark"] label.ui-check>.peer+.ui-check-box{background:rgba(255,255,255,.04)!important;border-color:rgba(110,150,255,.35)!important}
 
 /* Navigation rail */
 :root[data-theme="dark"] :is(.ui-hub,.ui-ther){background:rgba(255,255,255,.03)!important;border:1px solid rgba(92,140,255,.14)!important;color:var(--d-muted)!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -1064,7 +1075,7 @@ main .whitespace-nowrap.font-heading.font-semibold{font-size:32px!important;line
 :root[data-theme="dark"] .ui-avatar>span,:root[data-theme="dark"] .ui-nav span.flex.h-12.w-12{background:var(--sel-bg)!important;color:#fff!important}
 
 /* Tags and status */
-:root[data-theme="dark"] main span.inline-flex.items-center.gap-1\.5,:root[data-theme="dark"] .sx-tag,:root[data-theme="dark"] .hp-sample{background:rgba(58,132,255,.12)!important;color:#8DB6FF!important;border:1px solid rgba(77,141,255,.22)!important}
+:root[data-theme="dark"] main span.ui-chip,:root[data-theme="dark"] .sx-tag,:root[data-theme="dark"] .hp-sample{background:rgba(58,132,255,.12)!important;color:#8DB6FF!important;border:1px solid rgba(77,141,255,.22)!important}
 :root[data-theme="dark"] .sx-tag-quiet{background:rgba(255,255,255,.05)!important;color:var(--d-body)!important}
 :root[data-theme="dark"] .hp-st{background:rgba(255,255,255,.06)!important}
 :root[data-theme="dark"] .hp-st-focus{color:#8DB6FF!important}.hp-st-x{}
@@ -1121,14 +1132,14 @@ main .whitespace-nowrap.font-heading.font-semibold{font-size:32px!important;line
 :root[data-theme="dark"] .dth-root::before{background:linear-gradient(#060A14,rgba(6,10,20,0))!important}
 :root[data-theme="dark"] .dth-root::after{background:linear-gradient(rgba(6,10,20,0),#060A14 55%)!important}
 /* Chips everywhere (incl. clinician view) */
-:root[data-theme="dark"] span.inline-flex.items-center.gap-1\.5.whitespace-nowrap{background:rgba(58,132,255,.12)!important;color:#8DB6FF!important;border:1px solid rgba(77,141,255,.22)!important}
-:root[data-theme="dark"] span.inline-flex.items-center.gap-1\.5.whitespace-nowrap[class*="bg-line"]{background:rgba(255,255,255,.05)!important;color:var(--d-muted)!important;border-color:rgba(255,255,255,.08)!important}
+:root[data-theme="dark"] span.ui-chip{background:rgba(58,132,255,.12)!important;color:#8DB6FF!important;border:1px solid rgba(77,141,255,.22)!important}
+:root[data-theme="dark"] span.ui-chip.ui-chip--neutral{background:rgba(255,255,255,.05)!important;color:var(--d-muted)!important;border-color:rgba(255,255,255,.08)!important}
 :root[data-theme="dark"] button.flex.min-h-14.w-full[class*="bg-tint"],:root[data-theme="dark"] button.flex.min-h-14.w-full[aria-current]{background:rgba(58,132,255,.14)!important;border:1px solid rgba(58,132,255,.35)!important;color:var(--d-text)!important}
 :root[data-theme="dark"] button.flex.min-h-14.w-full *{color:inherit}
 :root[data-theme="dark"] button.flex.min-h-14.w-full .text-muted{color:var(--d-muted)!important}
 :root[data-theme="dark"] li.cal-day.cal-rest span{color:var(--d-muted)!important}
 /* No cursor-following glow on any surface or control (both themes) */
-.ui-card::after,.sx-card::after,.hp-callout::after,.lib-cta::after,.ui-btn::after,.hp-tab::after,.ui-hub::after,.dth-btn::after,.sx-btn::after,.cs-coach::after,.sx-panel::after,[class*="rounded-[var(--r-pill)]"]:is([role=group],[role=radiogroup])>button::after{display:none!important;background:none!important}
+.ui-card::after,.sx-card::after,.hp-callout::after,.lib-cta::after,.ui-btn::after,.hp-tab::after,.ui-hub::after,.dth-btn::after,.sx-btn::after,.cs-coach::after,.sx-panel::after,.ui-seg:is([role=group],[role=radiogroup])>button::after{display:none!important;background:none!important}
 /* Exercise library v2 */
 .lib-head-right{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-left:auto}
 .lib-filters{display:flex;gap:8px;padding:0;background:none!important;border:0!important}
@@ -1572,7 +1583,8 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 .rp-ex-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
 .rp-ex-h b{font-size:16px;line-height:24px;font-weight:700;color:var(--text)}
 .rp-ex-h>span:not([class]){font-size:14px;line-height:20px;color:var(--muted)}
-.rp-ex-h .ui-chip,.rp-ex-h [class*=chip]{margin-left:auto}
+/* Task 19: the designers' `.rp-ex-h .ui-chip{margin-left:auto}` never matched in the artifact (Chip had no ui-chip
+   class); removed so adding ui-chip does not move report chips. Restore only if the designers want them right-aligned. */
 .rp-ex-sub{margin-top:2px;font-size:14px;line-height:20px;color:var(--muted)}
 .rp-bars{position:relative;height:96px;margin-top:16px;display:flex;align-items:flex-end;gap:4px}
 .rp-bars i{flex:1;min-width:3px;border-radius:3px 3px 0 0;background:#3D62E3}

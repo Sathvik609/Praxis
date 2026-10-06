@@ -1,9 +1,15 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { FlowBar } from '../app/FlowBar'
 import { Button } from './Button'
+import { Card } from './Card'
+import { Checkbox } from './Checkbox'
 import { Chip } from './Chip'
 import { NumberScale } from './NumberScale'
+import { Overlay } from './Overlay'
+import { Pill } from './Pill'
 import { PraxisMark } from './PraxisMark'
 import { ProgressDots } from './ProgressDots'
+import { Stat } from './Stat'
 
 test('button has 56px min height class and full width option', () => {
   render(
@@ -44,8 +50,84 @@ test('progress dots expose count as text', () => {
   expect(screen.getByLabelText('5 of 9')).toBeInTheDocument()
 })
 
-// Task 2 (design v2) gives Button the designers' `ui-btn ui-btn--<variant>` classes.
-it.todo('button renders the ui-btn class')
+// Design v2: the designers' stylesheet (designer.css) targets these component classes.
+test('button renders the ui-btn class and its variant class', () => {
+  render(
+    <>
+      <Button>Start</Button>
+      <Button variant="secondary">Back</Button>
+    </>,
+  )
+  expect(screen.getByRole('button', { name: 'Start' })).toHaveClass('ui-btn', 'ui-btn--primary')
+  expect(screen.getByRole('button', { name: 'Back' })).toHaveClass('ui-btn', 'ui-btn--secondary')
+  expect(screen.getByRole('button', { name: 'Back' })).not.toHaveClass('ui-btn--primary')
+})
+
+test('card renders .ui-card with its tone class and an h2.ui-card-title', () => {
+  render(
+    <Card title="This week" tone="brand">
+      <p>body</p>
+    </Card>,
+  )
+  const title = screen.getByRole('heading', { level: 2, name: 'This week' })
+  expect(title).toHaveClass('ui-card-title')
+  const card = title.closest('.ui-card')!
+  expect(card).toHaveClass('ui-card--brand', 'p-6')
+})
+
+test('chip carries ui-chip classes and a Sample label is never judge-only (always visible)', () => {
+  render(<Chip>Sample history</Chip>)
+  const chip = screen.getByText('Sample history')
+  expect(chip).toHaveClass('ui-chip', 'ui-chip--neutral')
+  expect(chip).not.toHaveClass('judge-only')
+})
+
+test('checkbox label is .ui-check and its drawn box is .ui-check-box', () => {
+  render(<Checkbox label="Cup" checked={false} onChange={() => {}} />)
+  const input = screen.getByRole('checkbox', { name: 'Cup' })
+  const label = input.closest('label')!
+  expect(label).toHaveClass('ui-check')
+  expect(input.nextElementSibling).toHaveClass('ui-check-box')
+})
+
+test('pill is a .ui-seg group of .ui-seg-btn items', () => {
+  render(<Pill ariaLabel="Side" value="left" onChange={() => {}} options={[{ value: 'left', label: 'Left' }, { value: 'right', label: 'Right' }]} />)
+  const group = screen.getByRole('radiogroup', { name: 'Side' })
+  expect(group).toHaveClass('ui-seg')
+  for (const b of screen.getAllByRole('radio')) expect(b).toHaveClass('ui-seg-btn')
+})
+
+test('number scale buttons are .ui-scale-btn', () => {
+  render(<NumberScale label="Pain" value={null} onChange={() => {}} leftAnchor="none" rightAnchor="worst" />)
+  const radios = screen.getAllByRole('radio')
+  expect(radios).toHaveLength(11)
+  for (const b of radios) expect(b).toHaveClass('ui-scale-btn')
+})
+
+test('overlay content is .ui-dialog over a .ui-scrim', () => {
+  render(
+    <Overlay open title="Replay">
+      <p>body</p>
+    </Overlay>,
+  )
+  expect(screen.getByRole('dialog', { name: 'Replay' })).toHaveClass('ui-dialog')
+  expect(document.querySelector('.ui-scrim')).not.toBeNull()
+})
+
+test('stat number is .ui-stat-num', () => {
+  render(<Stat value={42} unit="s" label="Best time" />)
+  expect(screen.getByText('42').closest('.ui-stat-num')).not.toBeNull()
+})
+
+test('flow bar is .ui-flowbar; labelId makes its step label a polite live region', () => {
+  const { container, rerender } = render(<FlowBar step={1} label="Step 2 of 6" labelId="x" right={<button type="button">Next</button>} />)
+  expect(container.querySelector('footer')).toHaveClass('ui-flowbar')
+  const label = container.querySelector('span#x')!
+  expect(label).toHaveTextContent('Step 2 of 6')
+  expect(label).toHaveAttribute('aria-live', 'polite')
+  rerender(<FlowBar step={1} label="Step 2 of 6" right={<button type="button">Next</button>} />)
+  expect(screen.getByText('Step 2 of 6')).not.toHaveAttribute('aria-live')
+})
 
 test('Praxis mark is the favicon artwork, decorative, 32 px by default', () => {
   const { container, rerender } = render(<PraxisMark className="ui-logo" />)

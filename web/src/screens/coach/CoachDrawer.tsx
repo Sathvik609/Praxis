@@ -66,8 +66,8 @@ export function CoachSheet({ open, onOpenChange }: { open: boolean; onOpenChange
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-[min(560px,92vw)] flex-col overflow-auto bg-bg p-8 text-ink shadow-[var(--shadow-2)]">
+        <Dialog.Overlay className="ui-scrim fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
+        <Dialog.Content className="ui-dialog fixed inset-y-0 right-0 z-50 flex w-[min(560px,92vw)] flex-col overflow-auto bg-bg p-8 text-ink shadow-[var(--shadow-2)]">
           <div className="flex items-start gap-3">
             <div>
               <Dialog.Title className="text-3xl">Ask the coach</Dialog.Title>

@@ -6,7 +6,7 @@ export function Stat({ value, unit, label, size = 'md', tone = 'default', extra 
   const t = tone === 'amber' ? 'text-amber-ink' : tone === 'red' ? 'text-red-ink' : ''
   return (
     <div className="min-w-0">
-      <div className={`whitespace-nowrap font-heading font-semibold tabular-nums ${v} ${t}`}>
+      <div className={`ui-stat-num whitespace-nowrap font-heading font-semibold tabular-nums ${v} ${t}`}>
         {value}
         {unit && <span className="ml-1 text-xl font-normal text-muted">{unit}</span>}
       </div>
