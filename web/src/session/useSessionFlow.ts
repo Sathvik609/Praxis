@@ -60,7 +60,8 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
       }
       setFeedbackOpen(true)
     },
-    save: (f: Feedback) => {
+    /** `ended_early` / `end_reason` come from `finish()` and override the form's. */
+    save: (f: Partial<Feedback>) => {
       recordPainAfter(f.pain_after)
       send({ cmd: 'feedback', ...f, ...ending.current })
       setFeedbackOpen(false)

@@ -67,7 +67,7 @@ test('progression prompt appears on top when awaiting phase and sends the comman
 test('completion opens the feedback overlay', () => {
   mockStream([frame, { type: 'cup_complete', t: 12, id: 3, arcs: 4, reaches: [] }])
   renderAt('/session?exercise=cup&side=left')
-  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
 test('replay query is passed to the stream so no webcam is opened, and the replay badge shows', () => {

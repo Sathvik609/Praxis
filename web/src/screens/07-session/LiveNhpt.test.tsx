@@ -145,7 +145,7 @@ test('trace toggle opens the trace panel and the caption stays on screen', () =>
 test('navigates to the report when the test completes', () => {
   mockStream([frame, { type: 'nhpt_complete', t: 12, id: 3, total_s: 41.2, splits_s: [4, 5], pegs: [] }])
   renderAt('/session?hand=left')
-  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
 test('feedback acknowledgement navigates to the persisted report', () => {

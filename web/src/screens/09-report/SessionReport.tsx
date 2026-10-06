@@ -433,9 +433,9 @@ export function SessionReport() {
         </div>
       </div>
 
-      {/* TODO(Task 18): pass `early={s.status !== 'complete'}` once FeedbackOverlay takes it. */}
       <FeedbackOverlay
         open={editFb}
+        early={s.status !== 'complete'}
         onSave={(f) => {
           setEditFb(false)
           api

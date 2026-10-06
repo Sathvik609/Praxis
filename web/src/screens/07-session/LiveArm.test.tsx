@@ -64,7 +64,7 @@ test('posture cue appears after a compensation_lean event in the watch tone', ()
 test('completion opens the feedback overlay', () => {
   mockStream([frame, { type: 'arm_complete', t: 12, id: 3, sets: 2, reps: 16 }])
   renderAt('/session?exercise=abduction&side=left')
-  expect(screen.getByRole('heading', { name: 'How was your practice?' })).toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
 test('Arm out to the side sends the abduction registry id and the tier from the check-in', () => {

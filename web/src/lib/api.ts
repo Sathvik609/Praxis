@@ -19,6 +19,19 @@ export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_vis
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }
 export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[]; side?: string; wrong_dot?: number; lean_cues?: number; hiking_cues?: number }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: { label: string; notes: CoachNote[]; decisions: number }; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
 export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean; exercise?: string | null; illustrative?: boolean; source?: SessionSource; replay?: boolean }
+/** Screen 08's post-session answers, sent with `{cmd:'feedback'}` and stored as the session's
+ *  `feedback` (design v2, 6 Oct). `effort` is derived from the `difficulty` choice (2 / 4 / 7 / 9),
+ *  never a number the patient typed. A missing key means not answered, never zero. */
+export type Feedback = {
+  ended_early: boolean
+  pain_after?: number
+  difficulty?: 'too_easy' | 'just_right' | 'hard' | 'couldnt_finish'
+  effort?: number
+  again_tomorrow?: 'yes_easily' | 'yes_probably' | 'not_sure' | 'no'
+  barriers?: string[]
+  end_reason?: string
+  detail?: string
+}
 /** Where a stored session came from (service `store.session_source`): the illustrative seed,
  *  a replayed recorded clip (judge fallback), or the patient at the camera. */
 export type SessionSource = 'sample' | 'replay' | 'live'
