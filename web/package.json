@@ -13,8 +13,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@fontsource/carlito": "5.3.0",
-    "@fontsource/lora": "5.3.0",
+    "@fontsource/mulish": "5.3.0",
     "@radix-ui/react-dialog": "1.1.15",
     "@radix-ui/react-toggle-group": "1.1.19",
     "@radix-ui/react-tooltip": "1.2.8",

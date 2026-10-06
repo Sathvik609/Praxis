@@ -1,7 +1,11 @@
 @import 'tailwindcss';
-@import '@fontsource/lora/600.css';
-@import '@fontsource/carlito/400.css';
-@import '@fontsource/carlito/700.css';
+@import '@fontsource/mulish/300.css';
+@import '@fontsource/mulish/400.css';
+@import '@fontsource/mulish/500.css';
+@import '@fontsource/mulish/600.css';
+@import '@fontsource/mulish/700.css';
+@import '@fontsource/mulish/800.css';
+@import '@fontsource/mulish/400-italic.css';
 @import './design/tokens.css';
 
 @theme {
@@ -50,8 +54,9 @@ html {
   color: var(--text);
 }
 body {
-  font-size: 1.125rem; /* 18 px minimum for patient-facing text */
-  line-height: 1.45;
+  /* Type scale is the designers' (D-SIZE): body 16/24; design/designer.css sets the rest. */
+  font-size: 16px;
+  line-height: 24px;
 }
 h1,
 h2,
@@ -59,3 +64,7 @@ h3 {
   font-family: var(--font-heading);
   font-weight: 600;
 }
+
+/* The designers' stylesheet, last and unlayered so it overrides the Tailwind layers exactly as in
+   the design-preview artifact (cascade order preserved). */
+@import './design/designer.css';

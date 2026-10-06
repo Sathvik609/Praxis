@@ -20,9 +20,9 @@ function paint(ctx: CanvasRenderingContext2D, frame: number) {
   ctx.textAlign = 'center'
   ctx.globalAlpha = 0.5
   ctx.fillStyle = '#E9F1EE'
-  ctx.font = '600 28px Lora, Georgia, serif'
+  ctx.font = '600 28px Mulish, "Segoe UI", system-ui, sans-serif'
   ctx.fillText('Design preview · no camera', W / 2, H / 2 - 22)
-  ctx.font = '19px Carlito, Calibri, system-ui, sans-serif'
+  ctx.font = '19px Mulish, "Segoe UI", system-ui, sans-serif'
   ctx.fillStyle = '#9DB0AC'
   ctx.fillText('The overlay and cues play a recorded event stream.', W / 2, H / 2 + 14)
   ctx.fillText('Nothing here is measured from you.', W / 2, H / 2 + 40)

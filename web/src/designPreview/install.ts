@@ -65,7 +65,7 @@ function showBadge() {
   s.background = '#14201E'
   s.color = '#FFFFFF'
   s.borderBottom = '2px solid #C97F14'
-  s.font = '700 13px/1.3 Carlito, Calibri, system-ui, sans-serif'
+  s.font = '700 13px/1.3 Mulish, "Segoe UI", system-ui, sans-serif'
   s.letterSpacing = '0.02em'
   s.whiteSpace = 'nowrap'
   s.boxShadow = '0 2px 6px rgb(0 0 0 / 0.2)'

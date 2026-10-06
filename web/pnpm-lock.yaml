@@ -8,10 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@fontsource/carlito':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource/lora':
+      '@fontsource/mulish':
         specifier: 5.3.0
         version: 5.3.0
       '@radix-ui/react-dialog':
@@ -399,11 +396,8 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@fontsource/carlito@5.3.0':
-    resolution: {integrity: sha512-oPqvLGK/dtVzC4KjdDcV/YzQq37sZdMXxD58ADvguPo3dm6yzbBKs40ADmevJF0wLvyvJY7/fPl5YkCQ1njWUw==}
-
-  '@fontsource/lora@5.3.0':
-    resolution: {integrity: sha512-OK1g1z01rHVPqO5aw/FOIoDqc46KKYZdgL3NOLkxLWDk6QhDHhdr/h2BV1cke6gTvR1tzpDfdKyUkGsC+sQLeQ==}
+  '@fontsource/mulish@5.3.0':
+    resolution: {integrity: sha512-Fru/fmJwg4ZlKUU4jELz6/guZhba6Lz1vraAROqooYnUbtj1iMi7BXFkQU7AkB6QP5swpvwRnO5chUp6mNh5mA==}
 
   '@isaacs/fs-minipass@4.0.1':
     resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
@@ -2287,9 +2281,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@fontsource/carlito@5.3.0': {}
-
-  '@fontsource/lora@5.3.0': {}
+  '@fontsource/mulish@5.3.0': {}
 
   '@isaacs/fs-minipass@4.0.1':
     dependencies:

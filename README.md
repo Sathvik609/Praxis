@@ -105,6 +105,8 @@ Built and tested on synthetic renders: session service (`/health`, `/events`, We
 
 **28 Sep, Calendar (screen 12):** `/details/calendar` shows last week and this week (or a month) from the practice days in the prescription: done only when the camera saw a live session, "Planned · not done" only for past practice days after the first live session, rest days, the weekly peg test and the next clinic visit, each in words with a legend. Replays never count; the seed history is labelled Sample. The therapist view's "Edit practice days" changes practice days, the peg-test day and the next visit (`PUT /api/prescription/schedule`, a new prescription version that survives restarts); `GET /api/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD` serves the days. Reminders, moving a day and logging practice without the camera are out of scope.
 
+**6 Oct, design v2 (in progress, branch `feat/design-v2`):** the app takes the designers' 6 Oct look from the design-preview artifact exactly: primary blue `#3D62E3`, amber `#A15C00`, red `#C0362C` on `#F2F5FA`, a "midnight instrument" dark theme, Mulish throughout (self-hosted, `@fontsource/mulish` 5.3.0), and their stylesheet (`web/src/design/designer.css`) imported last in cascade order. The red "Live · not recording" marker and "Sample" labels are never hidden; three colour pairs miss WCAG AA by decision and are listed in `docs/RISKS.md`. Screens are being re-ported one by one (`docs/superpowers/plans/2026-10-06-design-v2-port.md`).
+
 Not started: real recordings and dataset v1 (Phase 9, needs participants). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout

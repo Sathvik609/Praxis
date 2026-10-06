@@ -145,7 +145,7 @@ type DrawOpts = { mirrored?: boolean }
 /** A label that reads correctly even when the canvas is CSS-mirrored to match the video. */
 function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, colour: string, size: number, mirrored: boolean) {
   ctx.save()
-  ctx.font = `700 ${size}px Carlito, Calibri, system-ui, sans-serif`
+  ctx.font = `700 ${size}px Mulish, "Segoe UI", system-ui, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillStyle = colour

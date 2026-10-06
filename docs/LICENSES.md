@@ -11,8 +11,7 @@ Rule (CLAUDE.md §1): every model license is recorded here **before** it is inte
 | reportlab 4.4.3 | https://www.reportlab.com | BSD-3-Clause | Generating `docs/sheets/*.pdf` (not runtime) | 2026-09-16 |
 | jsonschema 4.25.1 | https://github.com/python-jsonschema/jsonschema | MIT | Event contract validation | 2026-09-16 |
 | Three.js 0.186.0 | https://threejs.org | MIT | Procedural avatar in the browser | 2026-09-16 |
-| Lora (via `@fontsource/lora` 5.3.0) | Cyreal | SIL OFL 1.1 | Headings | 2026-09-16 |
-| Carlito (via `@fontsource/carlito` 5.3.0) | Google / tyPoland Lukasz Dziedzic | SIL OFL 1.1 | Body text | 2026-09-16 |
+| Mulish (via `@fontsource/mulish` 5.3.0) | Vernon Adams / Cyreal (The Mulish Project Authors), https://github.com/googlefonts/mulish | SIL OFL 1.1 | Headings and body (design v2; replaces Lora and Carlito) | 2026-10-06 |
 | Radix UI, Tailwind CSS, React, Vite | respective projects | MIT | Web app | 2026-09-16 |
 | Palm detection ONNX `palm_detection_mediapipe_2023feb.onnx` | OpenCV Zoo `models/palm_detection_mediapipe` (MediaPipe palm detector converted by OpenCV), https://github.com/opencv/opencv_zoo | Apache-2.0 (LICENSE in the model folder) | Hand localisation stage 1 via `cv2.dnn`; pre/post-processing ported from `mp_palmdet.py` (Apache-2.0) | 2026-09-16, before download; SHA256 pinned in `services/session/tools/fetch_models.py` |
 | Hand landmark ONNX `handpose_estimation_mediapipe_2023feb.onnx` | OpenCV Zoo `models/handpose_estimation_mediapipe` (MediaPipe hand landmarker converted by OpenCV) | Apache-2.0 | 21 hand landmarks via `cv2.dnn`; pre/post-processing ported from `mp_handpose.py` (Apache-2.0) | 2026-09-16, before download; SHA256 pinned |
