@@ -39,7 +39,7 @@ cd web && pnpm install && pnpm dev
 #    ws://localhost:8000/ws/session?mode=arm&exercise=abduction&tier=gentle&side=left
 
 # 3. Replay mode (no webcam) — the judge fallback, identical pipeline
-#    In the app: Settings → "Replay synthetic_nhpt_01".
+#    In the app: Settings → Demo and judging → "Replay a recorded session" → pick a clip.
 #    A replayed session is saved as `source: replay`: listed with a Replay badge (Progress,
 #    therapist view, report, Home), never counted in trends, practice totals, pain lists,
 #    adherence or the NHPT trend.

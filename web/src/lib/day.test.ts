@@ -5,6 +5,7 @@ import {
   markDemoSeen,
   nextExercise,
   readDay,
+  resetTodayCheckin,
   readSide,
   saveCheckin,
   sessionUrl,
@@ -12,7 +13,9 @@ import {
   stopReason,
   syncCheckin,
   todayKey,
+  writeDay,
   writeSide,
+  type DayCheckin,
 } from './day'
 import { readCheckinPain } from './plan'
 import { REGIONS, exerciseById } from './seed'
@@ -161,4 +164,22 @@ test("Home's Run the peg test goes to Choose with the peg test picked (design v2
 test('session urls carry the side; the peg test carries the hand', () => {
   expect(sessionUrl(exerciseById('abduction')!, 'right')).toBe('/session?exercise=abduction&side=right')
   expect(sessionUrl(exerciseById('nhpt')!, 'left')).toBe('/session?exercise=nhpt&hand=left')
+})
+
+const CHECKIN = (pain: number, tier: DayCheckin['tier']): DayCheckin => ({ pain, ...BASE, new_symptoms: false, side: 'left', tier, flagged: false, reasons: [], synced: true, at: '2026-10-06T09:00:00Z' })
+
+test('reset keeps a stopped day stopped', () => {
+  writeDay({ ...readDay(), checkin: CHECKIN(8, 'rest'), stopped: 'rest' })
+  expect(resetTodayCheckin()).toEqual({ ok: false, reason: 'stopped' })
+  expect(readDay().stopped).toBe('rest')
+  expect(readDay().checkin?.pain).toBe(8)
+  expect(sessionStorage.getItem('praxis.checkin')).not.toBeNull()
+})
+
+test('reset clears an ordinary check-in, here and in the session key', () => {
+  writeDay({ ...readDay(), checkin: CHECKIN(2, 'full') })
+  expect(sessionStorage.getItem('praxis.checkin')).not.toBeNull()
+  expect(resetTodayCheckin()).toEqual({ ok: true })
+  expect(readDay().checkin).toBeNull()
+  expect(sessionStorage.getItem('praxis.checkin')).toBeNull()
 })

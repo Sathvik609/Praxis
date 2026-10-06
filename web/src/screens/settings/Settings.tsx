@@ -3,31 +3,44 @@ import { useNavigate } from 'react-router-dom'
 import { applyTheme, getTheme, type Theme } from '../../app/theme'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { Checkbox } from '../../design/Checkbox'
-import { Chip } from '../../design/Chip'
-import { Bot, ListChecks, Play } from '../../design/Icon'
-import { Pill } from '../../design/Pill'
-import { api, useApi, type Health } from '../../lib/api'
+import { Overlay, OverlayActions } from '../../design/Overlay'
+import { Switch } from '../../design/Switch'
+import { api, useApi, type Health, type Patient } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
+import { readDay, readSide, resetTodayCheckin, setupUrl, todayKey, type Day } from '../../lib/day'
+import { readPrefs, writePrefs, type Prefs } from '../../lib/prefs'
 import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
 import { healthLines } from '../../session/agent'
 import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
+import { SettingsRow } from './SettingsRow'
 
-/** Every toggle here is read by the code it names (session/guidance.ts). Captions are not a
- *  toggle: they are always on. The old "Helper for setup" toggle was never read and is gone. */
-const GUIDANCE_ITEMS: { key: keyof Guidance; label: string; description: string }[] = [
-  { key: 'spoken', label: 'Spoken instructions', description: 'Coach cues read aloud by this browser' },
-  { key: 'larger', label: 'Larger text', description: 'Everything in the app about an eighth bigger' },
+const THEMES: [Theme, string][] = [
+  ['light', 'Light'],
+  ['dark', 'Dark'],
+  ['auto', 'Auto'],
 ]
 
-/** Settings: theme (light default), guidance (kept in this browser), privacy statement, and
- *  the replay entry (judge fallback: a recorded clip through the identical pipeline, no webcam). */
+/** Settings (the designers' `.st` three-column layout, live J64234–64318), wired to real data:
+ *  the profile from `GET /api/patients/me` (no seeded name), display and guidance preferences
+ *  that the app reads (`lib/prefs.ts`, `session/guidance.ts`, `app/theme.ts`), the replay entry
+ *  (judge fallback: a recorded clip through the identical pipeline), the coach in use from
+ *  `/health`, and a reset of today's check-in that never lifts a stop. The artifact's
+ *  decorative toggles and invented facts (reminders, push to talk, setup helper, clip consent,
+ *  delete account, clinician hours, support address) have no feature behind them and are not
+ *  shown. */
 export function Settings() {
   const nav = useNavigate()
   const [theme, setTheme] = useState<Theme>(getTheme())
   const [guidance, setGuidance] = useState<Guidance>(() => readGuidance())
-  const { data: clips, error } = useApi(() => api.replayList())
+  const [prefs, setPrefs] = useState<Prefs>(() => readPrefs())
+  const [day, setDay] = useState<Day>(() => readDay())
+  const [replayOpen, setReplayOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const { data: me, error: meError } = useApi(() => api.me())
+  const { data: clips, error: clipsError } = useApi(() => api.replayList())
   const { data: health, error: healthError } = useApi(() => api.health())
+
+  const side = readSide() ?? (me?.side === 'right' ? 'right' : 'left')
   const pick = (t: Theme) => {
     applyTheme(t)
     setTheme(t)
@@ -37,83 +50,206 @@ export function Settings() {
     setGuidance(next)
     writeGuidance(next)
   }
+  const setP = (key: keyof Prefs, v: boolean) => {
+    const next = { ...prefs, [key]: v }
+    setPrefs(next)
+    writePrefs(next)
+  }
+  const resetToday = () => {
+    if (resetTodayCheckin().ok) setNote("Today's check-in was cleared on this device.")
+    setDay(readDay())
+  }
+  const place = processingPlace().replace(/^processed /, '')
+
   return (
-    <div className="grid grid-cols-2 gap-6 p-8">
-      <div className="space-y-6">
-        <Card>
-          <h1 className="text-3xl">Settings</h1>
-          <h2 className="mt-4 text-2xl">Theme</h2>
-          <Pill ariaLabel="Theme" className="mt-2" value={theme} onChange={pick} options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />
-          <p className="mt-2 text-muted">Light is the default. The avatar stage stays dark in both.</p>
-        </Card>
-        <Card title="Guidance">
-          <div className="grid grid-cols-2 gap-x-6">
-            {GUIDANCE_ITEMS.map((g) => (
-              <Checkbox key={g.key} label={g.label} description={g.description} checked={guidance[g.key]} onChange={(v) => setG(g.key, v)} />
-            ))}
-          </div>
-          <p className="mt-2 text-lg text-muted">Captions are always on: every spoken cue is also shown as text.</p>
-        </Card>
-        <Card title="Privacy">
-          <p className="text-lg">Video is {processingPlace()}. Only events, measurements and logs are kept. Feeling is what you tell us, never read from your face. Clips are recorded only with your explicit consent and deleted after 30 days.</p>
-        </Card>
+    <div className="st">
+      <div className="st-head">
+        <h1 className="text-4xl">Settings</h1>
+        {note && (
+          <p className="st-note" role="status">
+            {note}
+          </p>
+        )}
       </div>
-      <div className="space-y-6">
-        <Card title="Replay a recorded session" action={<Chip tone="amber">Replay</Chip>}>
-          <p className="-mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live.</p>
-          <div className="mt-4 space-y-3">
-            {/* The service never lists a hidden exercise's clip (28 Sep); filtered here too. */}
-            {(clips ?? []).filter((c) => !isHiddenExercise((c as { exercise?: string }).exercise ?? c.mode)).map((c) => {
+      <div className="st-grid">
+        <div className="st-col">
+          <Card title="Profile and plan">
+            <ul className="st-list">
+              <ProfileRows me={me} error={meError} side={side} onOpen={() => nav(`/details/checkin?side=${side}`)} />
+            </ul>
+          </Card>
+          <Card title="Appearance">
+            <ul className="st-list">
+              <SettingsRow
+                title="Theme"
+                sub={theme === 'auto' ? 'Follows your device' : theme === 'dark' ? 'Low-glare navy for evenings' : 'Light is the default'}
+                control={
+                  <div role="radiogroup" aria-label="Theme" className="st-seg">
+                    {THEMES.map(([v, l]) => (
+                      <button key={v} type="button" role="radio" aria-checked={theme === v} onClick={() => pick(v)}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                }
+              />
+              <SettingsRow title="Larger text" sub="Everything about an eighth bigger" control={<Switch label="Larger text" checked={guidance.larger} onChange={(v) => setG('larger', v)} />} />
+              <SettingsRow title="High contrast" sub="Stronger borders and text" control={<Switch label="High contrast" checked={prefs.contrast} onChange={(v) => setP('contrast', v)} />} />
+              <SettingsRow title="Reduced motion" sub="No animated cues; the figure shows key frames" control={<Switch label="Reduced motion" checked={prefs.motion} onChange={(v) => setP('motion', v)} />} />
+            </ul>
+          </Card>
+        </div>
+
+        <div className="st-col">
+          <Card title="Guidance">
+            <ul className="st-list">
+              <SettingsRow title="Spoken instructions" sub="Coach cues read aloud by this browser" control={<Switch label="Spoken instructions" checked={guidance.spoken} onChange={(v) => setG('spoken', v)} />} />
+              {/* Captions for all speech: while the coach speaks the panel stays on. */}
+              <SettingsRow
+                title="Caption panel"
+                sub="Captions are always shown when the coach speaks."
+                control={<Switch label="Caption panel" checked={guidance.spoken || prefs.captionsPanel} disabled={guidance.spoken} onChange={(v) => setP('captionsPanel', v)} />}
+              />
+              <SettingsRow title="Language" sub="English (US)" control={<span className="st-val">Only option</span>} />
+            </ul>
+          </Card>
+          <Card title="Demo and judging">
+            <ul className="st-list">
+              <SettingsRow title="Show technical details" sub="OpenCV status, decision trace, telemetry" control={<Switch label="Show technical details" checked={prefs.judge} onChange={(v) => setP('judge', v)} />} />
+              <SettingsRow title="Replay a recorded session" sub="Same OpenCV pipeline, no webcam needed" onClick={() => setReplayOpen(true)} />
+              <SettingsRow
+                title="Reset today's check-in"
+                sub={day.stopped ? "Today is stopped, so it can't be reset" : day.checkin ? `Checked in today · pain ${day.checkin.pain}` : 'No check-in yet today'}
+                onClick={resetToday}
+                disabled={!!day.stopped || !day.checkin}
+              />
+              <CoachRow health={health} error={healthError} />
+              <SettingsRow title="Cloud mode (AWS) is off" sub={`In this build. Video is ${processingPlace()}.`} />
+            </ul>
+          </Card>
+        </div>
+
+        <div className="st-col">
+          <Card title="Privacy and data">
+            <ul className="st-list">
+              <SettingsRow title="Video processing" sub={place.replace(/^./, (c) => c.toUpperCase())} control={<span className="st-tag st-tag-ok">Default</span>} />
+              <SettingsRow title="Who receives reports" sub={me ? me.program.clinician : meError ? 'Unavailable — the session service is not reachable' : 'Loading…'} />
+              <SettingsRow title="Export my data" sub="Sessions, reports and check-ins (JSON)" onClick={() => void exportData()} />
+            </ul>
+          </Card>
+          <Card title="Help">
+            <ul className="st-list">
+              <SettingsRow title="Camera and microphone setup" sub="Step-by-step with pictures" to={setupUrl('abduction', side)} />
+              <SettingsRow title="Equipment and substitutes" sub="What to use if something is missing" to="/details/choose" />
+            </ul>
+          </Card>
+        </div>
+      </div>
+
+      <Overlay open={replayOpen} title="Replay a recorded session" description="Recorded clips run through the same pipeline." onClose={() => setReplayOpen(false)} className="w-[min(620px,92vw)]">
+        <p className="mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live.</p>
+        <ul className="st-list mt-4">
+          {/* The service never lists a hidden exercise's clip (28 Sep); filtered here too. */}
+          {(clips ?? [])
+            .filter((c) => !isHiddenExercise((c as { exercise?: string }).exercise ?? c.mode))
+            .map((c) => {
               // Named from the one exercise registry (a clip may carry its arm exercise id).
               const ex = exerciseOfSession({ mode: c.mode, exercise: (c as { exercise?: string }).exercise })
               const name = ex?.name ?? c.mode
               return (
-              <Card key={c.id} as="div" padding="sm" className="flex flex-wrap items-center gap-3">
-                <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-bold">{name}</span>
-                  <span className="block text-base text-muted">Left side · {c.synthetic ? 'rendered test clip' : 'recorded with consent'}</span>
-                </span>
-                {c.synthetic && <Chip tone="neutral">Synthetic render</Chip>}
-                <Button variant="secondary" icon={<Play />} aria-label={`Replay ${name}`} onClick={() => nav(`/session?exercise=${ex?.id ?? c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`)}>Replay</Button>
-              </Card>
+                <SettingsRow
+                  key={c.id}
+                  title={name}
+                  sub={`Left side · ${c.synthetic ? 'rendered test clip' : 'recorded with consent'}`}
+                  control={c.synthetic ? <span className="st-tag">Synthetic render</span> : undefined}
+                  ariaLabel={`Replay ${name}`}
+                  to={`/session?exercise=${ex?.id ?? c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`}
+                />
               )
             })}
-            {!clips && !error && <p className="text-muted" role="status">Loading recordings…</p>}
-            {error && <p className="text-red-ink" role="alert">Could not list recordings — the session service is not reachable.</p>}
-            {clips && clips.length === 0 && <p className="text-muted">No recordings available yet.</p>}
-          </div>
-        </Card>
-        <CoachStatus health={health} error={healthError} />
-        <Card title="Cloud">
-          <p className="-mt-2 text-muted">Cloud mode (AWS) is off in this build. Video is {processingPlace()}.</p>
-        </Card>
-      </div>
+          {!clips && !clipsError && <li className="text-muted">Loading recordings…</li>}
+          {clipsError && <li className="text-red-ink">Could not list recordings — the session service is not reachable.</li>}
+          {clips && clips.length === 0 && <li className="text-muted">No recordings available yet.</li>}
+        </ul>
+        <OverlayActions className="justify-end">
+          <Button variant="secondary" onClick={() => setReplayOpen(false)}>
+            Close
+          </Button>
+        </OverlayActions>
+      </Overlay>
     </div>
   )
 }
 
-/** Settings > Coach: which coach runs, from the service's `/health` (agent spec §7). The rule
- *  coach always runs between agent checkpoints and whenever the agent is off or not ready. */
-function CoachStatus({ health, error }: { health: Health | null; error: string | null }) {
-  const lines = health ? healthLines(health.agent) : null
-  const agentOn = !!health?.agent && health.agent.mode !== 'off'
-  const running = agentOn && !!health?.agent?.ready
+/** Name, side and goal (row → today's check-in), the assigned program and the clinician, all
+ *  from the service. Nothing is filled in from the seed when the service is not reachable. */
+function ProfileRows({ me, error, side, onOpen }: { me: Patient | null; error: string | null; side: 'left' | 'right'; onOpen: () => void }) {
+  if (!me) {
+    const sub = error ? 'Profile unavailable — the session service is not reachable.' : 'Loading…'
+    return <SettingsRow title="Your profile" sub={sub} />
+  }
+  const goal = me.goal.replace(/\.$/, '').toLowerCase()
   return (
-    <Card title="Coach">
-      {lines && (
-        <>
-          <p className="-mt-2 flex items-center gap-2 text-lg font-bold">
-            {agentOn ? <Bot aria-hidden className="h-5 w-5 shrink-0" /> : <ListChecks aria-hidden className="h-5 w-5 shrink-0" />}
-            <span>{lines.title}</span>
-          </p>
-          {lines.details.map((d) => (
-            <p key={d} className="mt-1 text-lg text-muted">{d}</p>
-          ))}
-          <p className="mt-2 text-muted">{running ? 'The agent runs at checkpoints (set or arc done, setup trouble, session end); the rule-based coach gives the cues in between. Stop rules run before both.' : 'Deterministic cues from the camera events. Stop rules run first.'}</p>
-        </>
-      )}
-      {!health && !error && <p className="-mt-2 text-muted" role="status">Checking the coach…</p>}
-      {!health && error && <p className="-mt-2 text-muted">Coach status unavailable — the session service is not reachable.</p>}
-    </Card>
+    <>
+      <SettingsRow title={me.name} sub={`Practising side: ${side === 'right' ? 'Right' : 'Left'}${goal ? ` · goal: ${goal}` : ''}`} onClick={onOpen} />
+      <SettingsRow title="Assigned program" sub={me.program.short} control={<span className="st-tag">Read-only</span>} />
+      <SettingsRow title="Clinician contact" sub={me.program.clinician} />
+    </>
   )
+}
+
+/** Which coach runs, from the service's `/health` (agent spec §7). The rule coach always runs
+ *  between agent checkpoints and whenever the agent is off or not ready. */
+function CoachRow({ health, error }: { health: Health | null; error: string | null }) {
+  if (!health) return <SettingsRow title="Coach" sub={error ? 'Coach status unavailable — the session service is not reachable.' : 'Checking the coach…'} />
+  const lines = healthLines(health.agent)
+  const running = !!health.agent && health.agent.mode !== 'off' && !!health.agent.ready
+  const how = running
+    ? 'The agent runs at checkpoints; the rule-based coach gives the cues in between. Stop rules run before both.'
+    : 'Deterministic cues from the camera events. Stop rules run first.'
+  return (
+    <SettingsRow
+      title={lines.title}
+      sub={
+        <>
+          {lines.details.map((d) => (
+            <span key={d} className="block">
+              {d}
+            </span>
+          ))}
+          <span className="block">{how}</span>
+        </>
+      }
+    />
+  )
+}
+
+/** Export my data: what the service holds about the patient (profile, prescription, sessions
+ *  with their reports, progress) plus what this browser keeps (`praxis.*`: today's check-in,
+ *  preferences). A part the service cannot give is recorded as unavailable, never invented. */
+async function exportData() {
+  const parts = await Promise.allSettled([api.me(), api.prescription(), api.sessions(), api.progress()])
+  const [profile, prescription, sessions, progress] = parts.map((p) => (p.status === 'fulfilled' ? p.value : { unavailable: String(p.reason) }))
+  const device: Record<string, unknown> = {}
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (!k?.startsWith('praxis.')) continue
+      const v = localStorage.getItem(k)
+      try {
+        device[k] = JSON.parse(v ?? 'null')
+      } catch {
+        device[k] = v
+      }
+    }
+  } catch {
+    /* private mode: nothing on this device */
+  }
+  const out = { exported_at: new Date().toISOString(), service: { profile, prescription, sessions, progress }, this_device: device }
+  const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `praxis-my-data-${todayKey()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
 }
