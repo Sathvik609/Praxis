@@ -61,7 +61,7 @@ test('arm: an agent dose adjustment reads in plain words and the patient answers
   expect(screen.getByText('Within your prescription')).toBeInTheDocument()
   // not modal: the session is not paused, the rep card is still there
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByText(/Rep 1 of 8/)).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent(/Rep\s*1\s*of 8/)
   fireEvent.click(screen.getByRole('button', { name: 'Yes, lower it' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'a1', choice: 'Yes, lower it' })
   expect(screen.queryByText(/Coach suggests: a lower target/)).toBeNull()

@@ -1,5 +1,5 @@
-/** The reference figure on 07c is paced by the service's `rep_progress` (so "Figure paces with
- *  you" is true) and mirrors to the practising side. */
+/** The reference figure on 07c is the designers' metronome (`RefAvatar`): the bare figure,
+ *  mirrored to face the patient, never paced by the patient's own rep progress. */
 import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -42,12 +42,13 @@ function renderWith(events: Record<string, unknown>[], path: string) {
   return h.props[h.props.length - 1]
 }
 
-test('rep progress from the service paces the figure, on the practising side', () => {
+test('the reference is the bare abduction figure facing the patient (their right arm is its left)', () => {
   const p = renderWith([frame(arm)], '/session?exercise=abduction&side=right')
-  expect(p).toMatchObject({ clip: 'abduction', paced: 0.6, side: 'right', camera: 'front' })
+  expect(p).toMatchObject({ bare: true, clip: 'abduction', side: 'left', camera: 'front' })
+  expect(renderWith([frame(arm)], '/session?exercise=abduction&side=left')).toMatchObject({ side: 'right' })
 })
 
-test('free-running before the first frame and once both sets are done', () => {
-  expect(renderWith([], '/session?exercise=arm&side=left')).toMatchObject({ paced: null, side: 'left' })
-  expect(renderWith([frame({ ...arm, finished: true })], '/session?exercise=arm&side=left')).toMatchObject({ paced: null })
+test('never paced by the patient: no rep progress reaches the figure', () => {
+  expect(renderWith([frame(arm)], '/session?exercise=abduction&side=left').paced).toBeUndefined()
+  expect(renderWith([], '/session?exercise=arm&side=left').paced).toBeUndefined()
 })
