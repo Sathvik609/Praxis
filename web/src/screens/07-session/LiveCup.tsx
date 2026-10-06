@@ -1,30 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AvatarPanel } from '../../avatar/AvatarPanel'
-import { Card } from '../../design/Card'
-import { Chip } from '../../design/Chip'
+import { CupRef, type CupRefMode } from '../../avatar/CupRef'
 import { SESSION_WS_URL } from '../../lib/config'
+import { demoUrl, nextExercise, readDay } from '../../lib/day'
 import type { PraxisEvent } from '../../lib/events'
+import { readCheckinPain, tierFor } from '../../lib/plan'
+import { plural } from '../../lib/plural'
+import { exerciseById } from '../../lib/seed'
+import { coachLabel, isWhy, promptKind, type Prompt } from '../../session/agent'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
-import { useWebcamStream } from '../../session/useWebcamStream'
-import { coachLabel, isWhy, type Prompt } from '../../session/agent'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
-import { useSessionFlow } from '../../session/useSessionFlow'
-import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
-import { CoachPrompt } from './CoachPrompt'
-import { LivePrompt, pausedNote } from './LivePrompt'
-import { readGuidance } from '../../session/guidance'
 import { useRestBreak } from '../../session/useRestBreak'
-import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
-import { SessionControls } from './SessionControls'
+import { useSessionFlow, type EndReason, type Then } from '../../session/useSessionFlow'
+import { useWebcamStream } from '../../session/useWebcamStream'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts } from './cupView'
+import { LivePrompt } from './LivePrompt'
+import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession, type DotState } from './SessionChrome'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { TracePanel } from './TracePanel'
 
-type ArcComplete = PraxisEvent & { arc: number; phase: string; mean_reach_ms: number | null; unverified: number; awaiting_phase: boolean }
-type CupComplete = PraxisEvent & { arcs: number; reaches: unknown[] }
+type CupComplete = PraxisEvent & { arcs: number; reaches: { verified?: boolean }[] }
 
 function caption(f: FrameEvent | null, lost: boolean): string {
   if (lost) return 'I lost the sheet. Keep all four corner markers in view.'
@@ -38,44 +37,68 @@ function caption(f: FrameEvent | null, lost: boolean): string {
   return 'Nice and steady.'
 }
 
-/** The screen's own progression prompt (wireframe 07b) for a service that has not sent one. */
+/** The screen's own progression prompt for a service that has not sent one. */
 const LOCAL_PROGRESSION: Prompt = { id: 'progression', kind: 'progression', title: 'Coach suggests: try the fast arcs', text: '', options: ['Yes, go faster', 'Keep pace', 'Why?'], within_prescription: true }
-const LOCAL_WHY =
-  'Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.'
+/** Seconds a coach correction keeps the coach card amber and the figure dimmed. */
+const CUE_S = 4
 
-/** Where the cup is on the five-dot sheet and where it goes next, from the same snapshot that
- *  draws the ring on the video (one source; a count of dots visited used to disagree with the
- *  reach count). Numbers inside the dots carry the meaning, not the fill. */
-function CupDots({ dot, next }: { dot: number | null; next: number | null }) {
-  const label = dot == null ? 'Cup not on a dot yet' : `Cup on dot ${dot + 1}${next != null ? `, next dot ${next + 1}` : ''}`
+/** "Ready to go faster?" in the artifact's cup modal (`cup-modal`). It says what the camera saw
+ *  (verified slow reaches, how much faster the second slow arc was, the check-in pain) and the
+ *  real rule the coach follows (`coach/rules.py` `cup_progress`). The fast arcs start only on
+ *  yes; the session is not blocked meanwhile (`awaiting_phase` does not stop counting), so the
+ *  artifact's "won't start until you answer" line is not shown. */
+function ProgressionModal({ prompt, basis, whyOpen, whyText, onChoose }: { prompt: Prompt; basis: string; whyOpen: boolean; whyText: string | null; onChoose: (choice: string, index: number) => void }) {
+  const id = useId()
   return (
-    <div role="img" aria-label={label} className="flex gap-2">
-      {[0, 1, 2, 3, 4].map((k) => (
-        <span
-          key={k}
-          aria-hidden
-          className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-base font-bold ${k === dot ? 'border-teal-fill bg-teal-fill text-white' : k === next ? 'border-amber-ink bg-tint-amber text-amber-ink' : 'border-line bg-surface text-muted'}`}
-        >
-          {k + 1}
-        </span>
-      ))}
+    <div className="sx-scrim cup-scrim">
+      <div className="sx-modal cup-modal" role="dialog" aria-modal aria-labelledby={`${id}-t`}>
+        <div className="cup-modal-h">
+          <h2 id={`${id}-t`}>Ready to go faster?</h2>
+          <span className="cup-tag">Inside your program</span>
+        </div>
+        <p className="cup-modal-p">Two slow arcs done. The fast arcs are the next step your therapist planned at this level.</p>
+        <p className="cup-basis">{basis}</p>
+        {whyOpen && (
+          <ul className="cup-why">
+            {whyText ? (
+              <li>{whyText}</li>
+            ) : (
+              <>
+                <li>Both slow arcs are done, with at most one unverified reach in the last one</li>
+                <li>Your prescription allows the fast arcs (Hospital GRASP L2 · Waiter – cup)</li>
+                <li>Nothing goes above the prescribed level; you can keep the slow pace</li>
+              </>
+            )}
+          </ul>
+        )}
+        <div className="cup-modal-actions">
+          {prompt.options.map((o, i) => (
+            <button key={o} type="button" className={`sx-btn ${i === 0 ? 'sx-btn-primary' : 'sx-btn-secondary'}`} aria-expanded={isWhy(o) ? whyOpen : undefined} onClick={() => onChoose(o, i)}>
+              {o}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
-/** Screen 07b · Live session, Waiter – cup (GRASP coordination). Reps are verified from the
- *  camera; the avatar is a pacing reference only. */
+/** Screen 07b · Live session, Waiter – cup (GRASP coordination), in the designers' 6 Oct cup
+ *  look (`sx-*` + `cup-*`) on the real cup FSM: camera with the placement band, the cup
+ *  reference figure pointing at the next dot, coach card (correction tone), progress card, the
+ *  progression modal from the coach's prompt (or the screen's fallback) and the done modal.
+ *  Placements are verified from the camera only; the figure never scores. */
 export function LiveCup() {
   const [sp] = useSearchParams()
-  const side = sp.get('side') ?? 'left'
+  const side = sp.get('side') === 'right' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
   const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
-  const [spoken] = useState(() => readGuidance().spoken)
-  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const ui = useSxSession()
+  // Spoken cues follow Settings > Spoken instructions; captions stay on while the coach speaks.
+  const coach = useCoach(events, { speak: browserSpeak, voice: ui.spoken })
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
@@ -83,6 +106,7 @@ export function LiveCup() {
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
   const [localWhy, setLocalWhy] = useState(false)
   const [declined, setDeclined] = useState(false)
+  const [doneClosed, setDoneClosed] = useState(false)
 
   useEffect(() => {
     void start()
@@ -91,6 +115,7 @@ export function LiveCup() {
 
   const frame = ([...events].reverse().find((e) => e.type === 'frame') as FrameEvent | undefined) ?? null
   const cup = frame?.cup
+  const lastT = events.length ? events[events.length - 1].t : null
   const lost = (() => {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
@@ -98,131 +123,209 @@ export function LiveCup() {
   const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
   const label = statusLabel(status, 'cup')
   const live = status === 'tracking' || status === 'replay'
-  const lastArc = [...events].reverse().find((e) => e.type === 'arc_complete') as ArcComplete | undefined
   const complete = events.find((e) => e.type === 'cup_complete') as CupComplete | undefined
-  // The service's prompt when there is one; otherwise the screen's own progression prompt once
-  // the slow arcs are verified (kept from before the coach sent prompts).
-  const localProgression = !coach.prompt && !!cup?.awaiting_phase && cup.phase === 'slow' && !declined
-  const overlayShown = rest.since != null && !stopped ? null : coach.overlay
-  const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
-  const finish = (endedEarly: boolean) => {
-    flow.finish(endedEarly, undefined, {
-        kind: 'cup', side, arcs: complete?.arcs ?? cup?.arcs_done ?? 0,
-        reaches: complete?.reaches ?? [], ended_early: endedEarly,
-      })
+  const finish = (endedEarly: boolean, reason?: EndReason, next?: Then) => {
+    flow.finish(endedEarly, reason, { kind: 'cup', side, arcs: complete?.arcs ?? cup?.arcs_done ?? 0, reaches: complete?.reaches ?? [], ended_early: endedEarly }, next)
   }
-  useEffect(() => {
-    if (complete) finish(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [complete?.id])
+  const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
+  const holdSeconds = useHoldSeconds(hold, lastT)
 
-  const planned = cup?.arcs_planned ?? { slow: 2, fast: 2 }
-  const arcLabel = cup ? `arc ${Math.min(cup.arc_index, cup.phase === 'slow' ? planned.slow : planned.slow + planned.fast) - (cup.phase === 'fast' ? planned.slow : 0)} of ${cup.phase === 'slow' ? planned.slow : planned.fast} ${cup.phase}` : 'arc 1 of 2 slow'
+  const arc = cupArc(events, frame)
+  const dots = cupDots(events, frame)
+  const band = cupBand(events, frame)
   const unverified = cup?.unverified_total ?? 0
   const reaches = cup?.reaches_total ?? 0
+  const verifiedReaches = Math.max(0, reaches - unverified)
+  const dotNow = cup?.dot ?? null
+  const dotNext = cup?.expected_next ?? null
+  const marked = dots.filter((d) => d.state === 'done' || d.state === 'amber').length
+  const activeS = cupActiveS(events, frame)
+  const lastReach = [...events].reverse().find((e) => e.type === 'reach_complete')
+  const lastCorrect = [...events].reverse().find((e) => e.type === 'coach' && e.action === 'correct')
+  const correcting = !!lastCorrect && lastT != null && lastT - lastCorrect.t < CUE_S
+  const lastWrong = [...events].reverse().find((e) => e.type === 'wrong_dot')
+  const wrongRecent = !!lastWrong && lastT != null && lastT - lastWrong.t < CUE_S
+  const pipe = `cv2 5.0 · HSV cup on the warped sheet${!live ? '' : dotNow != null ? ` · cup over dot ${dotNow + 1} · hand ${cup?.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`
+
+  // coach card: a correction is amber, a verified placement in the last 2 s mint, else neutral
+  const coachTone = correcting ? 'amber' : lastReach?.verified && lastT != null && lastT - lastReach.t < 2 ? 'mint' : 'neutral'
+  const eyebrow = correcting ? 'Coach · Correction' : 'Coach'
+
+  const refMode: CupRefMode = hold.open || !!complete || !cup ? 'idle' : lost || wrongRecent || correcting ? 'dim' : 'point'
+  const refLabel = refMode === 'idle' ? 'idle' : lost ? 'waiting for you' : refMode === 'dim' ? 'listen to the coach' : dotNext != null ? `dot ${dotNext + 1} is next` : 'idle'
+
+  const pain = readCheckinPain()
+  const facts = cupProgressFacts(events, frame)
+  const basis = `Based on: ${facts.verified} of ${facts.total} verified${facts.fasterPct != null ? ` · reach time ${Math.abs(facts.fasterPct)}% ${facts.fasterPct >= 0 ? 'faster' : 'slower'} than arc 1` : ''}${pain != null ? ` · pain ${pain} before you started` : ''}`
+  const serviceProgression = !!cp.prompt && promptKind(cp.prompt) === 'progression' && !hold.prompt
+  // the screen's own progression prompt once the slow arcs are verified, when the service sent none
+  const localProgression = !coach.prompt && !!cup?.awaiting_phase && cup.phase === 'slow' && !declined
+  const showModal = !flow.feedbackOpen && !hold.open && !complete && (serviceProgression || localProgression)
+
+  const nextId = complete ? nextExercise(readDay()) : null
+  const nextEx = nextId && nextId !== 'cup' ? exerciseById(nextId) : null
+  const nextDose = nextEx ? (tierFor(pain) === 'gentle' ? (nextEx.gentleDose ?? nextEx.dose) : nextEx.dose).split(' · ')[0] : ''
+  const doneVerified = complete ? complete.reaches.filter((r) => r.verified).length : verifiedReaches
+  const doneUnverified = complete ? complete.reaches.length - doneVerified : unverified
+  const doneOpen = !!complete && !doneClosed && !flow.feedbackOpen
+
+  const stats = (() => {
+    if (complete) return { metricLabel: 'Active time', metric: sxClock(activeS ?? frame?.t), metricSub: 'this exercise', head: 'All arcs complete', dots: { label: 'complete', items: dots.map((): DotState => 'done') } }
+    const items = dots.map((d): DotState => (d.state === 'next' ? 'now' : d.state))
+    const head = `${marked} of 5 dots · ${arc.dir}`
+    if (activeS == null) return { metricLabel: 'Arc', metric: String(arc.arc), unit: `of ${arc.of}`, metricSub: `${arc.phase} pace`, head, sub: 'The clock starts on your first lift', dots: { label: head, items } }
+    const sub = lastReach ? `Reach time ${(Number(lastReach.reach_ms) / 1000).toFixed(2)} s` : undefined
+    if (arc.phase === 'fast') return { metricLabel: `Arc ${arc.arc} of ${arc.of}`, metric: 'Fast', metricSub: `pace · ${sxClock(activeS)} active`, head, sub, dots: { label: head, items } }
+    return { metricLabel: 'Active time', metric: sxClock(activeS), metricSub: 'from your first lift', head, sub, dots: { label: head, items } }
+  })()
+
+  const coachCard = (
+    <SxCoach
+      captions={ui.captions}
+      eyebrow={eyebrow}
+      tone={coachTone}
+      caption={coach.caption?.text ?? label.coach ?? caption(frame, lost)}
+      label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
+      source={coach.captionSource}
+    />
+  )
+  // an agent prompt that is not the progression (e.g. a dose adjustment) sits in the coach slot
+  const otherPrompt = !!cp.prompt && !hold.prompt && !serviceProgression
 
   return (
-    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`Waiter – cup · ${side} side`} subtitle={`Coordination · ${arcLabel}`} status={status} label={label} agent={coach.agent} />
-
-      <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <LiveFeed
+    <div className="sx-root cup-root">
+      <SessionHeader
+        title={`Waiter – cup · ${side} side`}
+        sub={`Coordination · ${hold.open ? 'paused' : complete ? 'exercise complete' : `arc ${arc.arc} of ${arc.of} ${arc.phase} · ${arc.dir}`}`}
+        status={status}
+        label={label}
+        live={camActive && !replay}
+        replay={!!replay}
+        agent={coach.agent}
+      />
+      <main className="sx-grid">
+        <SxFeed
           errorDetail={error}
-            replay={!!replay}
-            camActive={camActive}
-            status={status}
-            videoRef={videoRef}
-            frame={frame}
-            feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
-            tracking={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : undefined}
-            onRetry={() => { stop(); void start() }}
-          />
-          <Card padding="sm" className="flex items-center gap-4">
-            <CupDots dot={cup?.dot ?? null} next={cup?.expected_next ?? null} />
-            <span className="ml-auto text-lg text-muted">
-              {cup?.dot != null ? `Cup on dot ${cup.dot + 1}` : 'Cup not on a dot yet'}{cup?.expected_next != null ? ` · next: dot ${cup.expected_next + 1}` : ''} · {unverified} unverified{unverified ? ' (hand covered cup or markers lost)' : ''}
-            </span>
-          </Card>
-        </div>
-
-        <Card
-          className="flex min-h-0 flex-col gap-4 overflow-hidden"
-          padding="sm"
-          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
-          action={<Chip tone="neutral">Pacing only</Chip>}
+          replay={!!replay}
+          camActive={camActive}
+          status={status}
+          videoRef={videoRef}
+          frame={frame}
+          note={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : label.feed}
+          band={live && band ? band.text : null}
+          bandTone={band?.tone}
+          mono={pipe}
+          onRetry={() => { stop(); void start() }}
         >
-          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="cup" compact /></div>
-          <p className="text-center text-lg text-muted">ideal path · dot {cup?.dot != null ? cup.dot + 1 : 1} → {cup?.expected_next != null ? cup.expected_next + 1 : 2}</p>
-        </Card>
+          <SxHold
+            open={hold.open}
+            kind={hold.kind}
+            title={hold.title}
+            text={hold.text}
+            seconds={holdSeconds}
+            primary={hold.primary}
+            onEnd={hold.onEnd}
+            note={hold.note}
+            prompt={hold.prompt ? <LivePrompt state={cp} running={{ phase: cup?.phase }} /> : null}
+            resumeByPrompt={hold.resumeByPrompt}
+          />
+        </SxFeed>
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          {cp.prompt && !promptInOverlay && (
-            <LivePrompt
-              state={cp}
-              running={{ phase: cup?.phase }}
-              onChoose={(c, i) => {
-                // an answered progression never falls back to the screen's own prompt
-                if (!isWhy(c) && cp.prompt?.kind === 'progression') setDeclined(true)
-                cp.choose(c, i)
-              }}
-            />
-          )}
-          {localProgression && (
-            <CoachPrompt
-              prompt={{
-                ...LOCAL_PROGRESSION,
-                text: `Two clean slow arcs${lastArc?.mean_reach_ms ? `, mean reach ${(lastArc.mean_reach_ms / 1000).toFixed(1)} s` : ''}${lastArc?.unverified ? `, ${lastArc.unverified} unverified` : ', no unverified reaches'}.`,
-              }}
-              onChoose={(_c, i) => {
-                if (i === 0) send({ cmd: 'set_phase', phase: 'fast' })
-                else if (i === 1) setDeclined(true)
-                else setLocalWhy((v) => !v)
-              }}
-              whyOpen={localWhy}
-              whyText={LOCAL_WHY}
-            />
-          )}
-          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
-          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel} source={coach.captionSource} />
-          {traceOpen ? (
-            <>
-              <VerifiedTally compact total={reaches} unverified={unverified} noun="reach" />
-              <div className="min-h-0 flex-1">
-                <TracePanel
-                  events={events}
-                  sessionId={sessionId}
-                  replay={!!replay}
-                  pipeline={[`cv2 5.0 · HSV cup on the warped sheet${!live ? '' : cup?.dot != null ? ` · cup over dot ${cup.dot + 1} · hand ${cup.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`, latencyLine(latency)]}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <VerifiedTally total={reaches} unverified={unverified} noun="reach" note={`${cup?.arcs_done ?? 0} of ${planned.slow + planned.fast} arcs done · counts come from the camera, never the avatar`} />
-              <ExertionChip exertion={coach.exertion} />
-            </>
-          )}
+        {traceOpen ? (
+          <div className="sx-panel sx-trace">
+            <TracePanel events={events} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
+          </div>
+        ) : (
+          <CupRef side={side} target={dotNext != null ? { k: dotNext, dir: arc.dir } : null} dots={dots.map((d) => d.state)} mode={refMode} label={refLabel} pace={arc.phase} />
+        )}
+
+        {otherPrompt ? (
+          <div className="flex min-h-0 flex-col gap-3">
+            <LivePrompt state={cp} running={{ phase: cup?.phase }} />
+            {coachCard}
+          </div>
+        ) : (
+          coachCard
+        )}
+
+        <SxStats {...stats} extra={<ExertionChip exertion={coach.exertion} compact />} verified={verifiedReaches} unverified={unverified} />
+      </main>
+
+      {showModal && (
+        <ProgressionModal
+          prompt={serviceProgression && cp.prompt ? cp.prompt : LOCAL_PROGRESSION}
+          basis={basis}
+          whyOpen={serviceProgression ? cp.whyOpen : localWhy}
+          whyText={serviceProgression ? cp.whyText : null}
+          onChoose={(c, i) => {
+            if (serviceProgression) {
+              // an answered progression never falls back to the screen's own prompt
+              if (!isWhy(c)) setDeclined(true)
+              cp.choose(c, i)
+              return
+            }
+            if (isWhy(c)) setLocalWhy((v) => !v)
+            else if (i === 0) send({ cmd: 'set_phase', phase: 'fast' })
+            else setDeclined(true)
+          }}
+        />
+      )}
+
+      {doneOpen && (
+        <div className="sx-scrim cup-scrim">
+          <div className="sx-modal cup-modal cup-done" role="dialog" aria-modal aria-labelledby="cup-done-t">
+            <div className="cup-modal-h">
+              <h2 id="cup-done-t">Waiter – cup, done</h2>
+              <span className="cup-tag cup-tag-mint">{`All ${complete.arcs} arcs complete`}</span>
+            </div>
+            <div className="cup-nums">
+              <div><b>{doneVerified}</b><span>verified placements</span></div>
+              <div><b>{doneUnverified}</b><span>unverified</span></div>
+              <div><b>{sxClock(activeS ?? frame?.t)}</b><span>active time</span></div>
+              <div><b>{complete.arcs}</b><span>{plural(complete.arcs, 'arc')}</span></div>
+            </div>
+            <p className="cup-modal-p">
+              {nextEx ? (
+                <>Next in today&apos;s plan: <b>{nextEx.name}</b>, {nextDose}. You can also stop here and come back to it.</>
+              ) : (
+                "That's everything in today's plan."
+              )}
+            </p>
+            <div className="cup-modal-actions">
+              {nextEx && (
+                <button type="button" className="sx-btn sx-btn-primary" onClick={() => { setDoneClosed(true); finish(false, undefined, { url: demoUrl(nextEx.id, side), mode: 'cup' }) }}>Next exercise</button>
+              )}
+              <button type="button" className={`sx-btn ${nextEx ? 'sx-btn-secondary' : 'sx-btn-primary sx-btn-wide'}`} onClick={() => { setDoneClosed(true); finish(false) }}>Finish for today</button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay
-        overlay={overlayShown}
-        note={pausedNote(coach.decisions, overlayShown)}
-        prompt={promptInOverlay ? <LivePrompt state={cp} running={{ phase: cup?.phase }} /> : null}
-        resumeByPrompt={promptInOverlay && cp.prompt?.kind === 'resume'}
-        onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
-      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
+      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
-      <SessionControls
+      <SxBar
         onPause={() => send({ cmd: 'pause' })}
         onRest={rest.start}
         onPain={() => setPainOpen(true)}
-        onEnd={() => finish(true)}
+        onEnd={ui.openEnd}
         traceOpen={traceOpen}
-        onToggleTrace={() => setTraceOpen((v) => !v)}
+        onTrace={() => setTraceOpen((v) => !v)}
+        captions={ui.captions}
+        captionsLocked={ui.captionsLocked}
+        onCaptions={ui.toggleCaptions}
+        volume={ui.volume}
+        onVolume={ui.setVolume}
+        resting={rest.since != null || !!coach.overlay}
+      />
+      <SxEndDialog
+        open={ui.endOpen}
+        done={verifiedReaches}
+        noun="reach"
+        onClose={ui.closeEnd}
+        onPain={() => { ui.closeEnd(); setPainOpen(true) }}
+        onEnd={(reason) => { ui.closeEnd(); finish(true, reason) }}
       />
     </div>
   )

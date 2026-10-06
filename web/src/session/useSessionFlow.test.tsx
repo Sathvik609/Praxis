@@ -47,3 +47,19 @@ test('offline: the fallback state carries how it ended to the report', () => {
   expect(result.current.loc.pathname).toBe('/report')
   expect(result.current.loc.state).toEqual({ kind: 'nhpt', ended_early: true, end_reason: 'finished' })
 })
+
+test('"Next exercise" still asks for feedback, then binds the report to today and opens the next demonstration', () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: { pain: 2, location: '', energy: 'ok', minutes: 20, new_symptoms: false, tier: 'full', at: new Date().toISOString() }, current: 'cup' }))
+  const send = vi.fn()
+  const ack = { type: 'command', t: 9, id: 9, cmd: 'feedback', ok: true, summary: { session_id: 's7' } }
+  let events: Record<string, unknown>[] = []
+  const { result, rerender } = renderHook(() => ({ flow: useSessionFlow(events as never, send, vi.fn(), true), loc: useLocation() }), { wrapper })
+  act(() => result.current.flow.finish(false, undefined, { kind: 'cup' }, { url: '/details/demo?exercise=abduction&side=left', mode: 'cup' }))
+  expect(result.current.flow.feedbackOpen).toBe(true)
+  act(() => result.current.flow.save({ pain_after: 2 }))
+  events = [ack]
+  rerender()
+  expect(result.current.loc.pathname + result.current.loc.search).toBe('/details/demo?exercise=abduction&side=left')
+  expect(readDay().done).toContain('cup')
+  expect(readDay().finished).toEqual([{ exercise: 'cup', reportId: 's7' }])
+})

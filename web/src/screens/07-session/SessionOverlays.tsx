@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
@@ -69,31 +69,6 @@ export function SessionOverlay({
           </div>
         </>
       )}
-    </Overlay>
-  )
-}
-
-/** "Take a rest" (patient-chosen): a timer counting the rest up, then continue or end. The
- *  service-imposed rest (exertion rule) keeps using SessionOverlay's "Rest break". */
-export function RestOverlay({ since, onResume, onEnd }: { since: number | null; onResume: () => void; onEnd: () => void }) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (since == null) return
-    setNow(Date.now())
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [since])
-  if (since == null) return null
-  const s = Math.max(0, Math.floor((now - since) / 1000))
-  return (
-    <Overlay open title="Resting" description="The session is paused while you rest.">
-      <p className="mt-3 text-2xl">Rest as long as you need. About a minute is usually enough.</p>
-      <p className="ui-stat-num mt-4 font-heading text-6xl font-semibold tabular-nums" aria-live="off">{`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`}</p>
-      <p className="mt-1 text-lg text-muted">resting · the camera is not counting</p>
-      <div className="mt-6 flex flex-wrap justify-end gap-3">
-        <Button variant="secondary" onClick={onEnd}>End session</Button>
-        <Button onClick={onResume}>Rested — continue</Button>
-      </div>
     </Overlay>
   )
 }
