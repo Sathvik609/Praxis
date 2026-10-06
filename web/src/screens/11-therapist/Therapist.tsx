@@ -50,7 +50,7 @@ export function Therapist() {
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
-      <header className="flex h-16 items-center gap-3 border-b border-line bg-surface px-6">
+      <header className="th-head flex h-16 items-center gap-3 border-b border-line bg-surface px-6">
         <span className="font-heading text-2xl font-semibold text-teal-ink">Praxis</span>
         <span className="text-muted">·</span>
         <Chip tone="mint">Clinician view</Chip>
@@ -64,7 +64,7 @@ export function Therapist() {
         </Link>
       </header>
 
-      <div className="grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">
+      <div className="th-grid grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">
         <Card as="div" padding="sm" className="self-start">
           <h2 className="mb-2 text-2xl">Patients</h2>
           <Field label="Search patients" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Name" className="mb-2" />
@@ -128,9 +128,9 @@ export function Therapist() {
             <Card title={`Prescription (v${rx?.version ?? 3})`} action={<Chip tone="neutral">Dose read-only</Chip>}>
               <section aria-label="Prescription">
                 <ul className="divide-y divide-line text-lg">
-                  <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">camera</Chip></li>
-                  <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">camera</Chip></li>
-                  <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="neutral">weekly</Chip></li>
+                  <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">Arm strengthening</Chip></li>
+                  <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">Coordination</Chip></li>
+                  <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="mint">Assessment</Chip></li>
                   <li className="py-2">Practice days · {daysLabel(schedule.practice_days)} · peg test {WEEKDAYS[schedule.nhpt_day]}</li>
                   <li className="py-2">Next visit · {schedule.next_visit ? `${visitText(schedule.next_visit.at)} · ${schedule.next_visit.with}` : 'not booked'}</li>
                 </ul>
@@ -186,7 +186,7 @@ export function Therapist() {
                 </div>
               ))}
             </section>
-                    )}
+          )}
         </div>
       </div>
       {editing && rx && (

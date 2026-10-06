@@ -315,7 +315,7 @@ main h1.text-4xl{font-size:2rem;line-height:1.2}
 main h1.text-3xl{font-size:1.75rem;line-height:1.2}
 
 /* Calendar day cells: never split words */
-[class~="grid-cols-[repeat(7,minmax(0,1fr))]"] *{word-break:normal;overflow-wrap:normal;hyphens:auto}
+.cal-week *{word-break:normal;overflow-wrap:normal;hyphens:auto}
 
 /* Settings: checkbox rows align to their first line */
 [class~="gap-x-6"]>label{align-items:flex-start}
@@ -332,7 +332,7 @@ main h1.text-3xl{font-size:1.75rem;line-height:1.2}
 @media (max-width:1099px){
   .ui-hub{padding-inline:10px}
   main .grid.grid-cols-3:not([role]){grid-template-columns:repeat(2,minmax(0,1fr))}
-  [class~="grid-cols-[minmax(0,1fr)_minmax(300px,360px)]"]{grid-template-columns:minmax(0,1fr)!important}
+  .cal-layout{grid-template-columns:minmax(0,1fr)!important}
 }
 /* ---- Tablet portrait and phone ---- */
 @media (max-width:899px){
@@ -352,8 +352,8 @@ main h1.text-3xl{font-size:1.75rem;line-height:1.2}
   main .p-6,main .p-8{padding:16px}
   main .gap-6{gap:16px}
   /* Week grid scrolls sideways instead of crushing seven columns */
-  div:has(>[class~="grid-cols-[repeat(7,minmax(0,1fr))]"]){overflow-x:auto}
-  [class~="grid-cols-[repeat(7,minmax(0,1fr))]"]{min-width:600px}
+  div:has(>.cal-week){overflow-x:auto}
+  .cal-week{min-width:600px}
 }
 @media (max-width:599px){
   main h1.text-4xl{font-size:1.6rem}
@@ -361,14 +361,15 @@ main h1.text-3xl{font-size:1.75rem;line-height:1.2}
   [role=radiogroup]:not(.ui-seg){gap:4px!important}
   [role=radiogroup]:not(.ui-seg)>button{min-height:44px;font-size:.95rem}
 }
-/* Clinician view. Task 11: in the artifact this hack also matches the patient .ui-nav (h-16 px-6, logo links to
-   /details) and gives it its < 900 px top-bar height and padding; keep that when converting it to th-head. */
-[class~="h-16"][class~="px-6"]:has(>a[href$="/details"]){flex-wrap:wrap}
-@media (max-width:1099px){[class~="grid-cols-[minmax(280px,1fr)_3fr]"]{grid-template-columns:minmax(0,1fr)!important}}
+/* Clinician view (th-head = clinician header, th-grid = patients | board). The artifact's hack
+   ([class~=h-16][class~=px-6]:has(>a[href$="/details"])) also matched the patient .ui-nav; that
+   effect is kept explicitly on .ui-nav so both headers look exactly as in the artifact. */
+.th-head,.ui-nav{flex-wrap:wrap}
+@media (max-width:1099px){.th-grid{grid-template-columns:minmax(0,1fr)!important}}
 @media (max-width:899px){
-  [class~="h-16"][class~="px-6"]:has(>a[href$="/details"]){height:auto;min-height:56px;padding:8px 16px;row-gap:6px}
-  [class~="h-16"][class~="px-6"]:has(>a[href$="/details"])>a[href$="/details"]{height:44px;font-size:1rem}
-  [class~="grid-cols-[minmax(280px,1fr)_3fr]"]{padding:16px;gap:16px}
+  .th-head,.ui-nav{height:auto;min-height:56px;padding:8px 16px;row-gap:6px}
+  .th-head>a[href$="/details"],.ui-nav>a.ui-logo{height:44px;font-size:1rem}
+  .th-grid{padding:16px;gap:16px}
 }
 /* Preview-mode badge: bottom-left, clear of navigation and primary actions */
 /* ==== Praxis Design System (v1) — token mapping onto the app ==== */
@@ -1459,9 +1460,9 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 .dth-mbtn.dth-mbtn.dth-mbtn{border-radius:var(--r-control,12px)!important}
 /* Layout compaction so dense pages fit the screen before any scaling */
 @media (min-width:900px) and (max-width:1099.98px){
-  #root [class*="minmax(280px"]{grid-template-columns:220px minmax(0,1fr)!important;gap:16px!important;padding:16px!important}
-  #root [class*="minmax(280px"] .space-y-6>.grid.grid-cols-3{grid-template-columns:1fr 1.5fr 1fr!important;gap:16px!important}
-  #root [class*="minmax(280px"] .space-y-6>*+*{margin-top:16px!important}
+  #root .th-grid{grid-template-columns:220px minmax(0,1fr)!important;gap:16px!important;padding:16px!important}
+  #root .th-grid .space-y-6>.grid.grid-cols-3{grid-template-columns:1fr 1.5fr 1fr!important;gap:16px!important}
+  #root .th-grid .space-y-6>*+*{margin-top:16px!important}
 }
 /* Short screens: tighten vertical rhythm in the check-in form */
 @media (max-height:860px) and (min-width:900px){
@@ -1473,7 +1474,7 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 }
 /* Clinician view: give the prescription room so the board is shorter */
 @media (min-width:1100px){
-  #root [class*="minmax(280px"] .space-y-6>.grid.grid-cols-3{grid-template-columns:1fr 1.6fr 1fr!important}
+  #root .th-grid .space-y-6>.grid.grid-cols-3{grid-template-columns:1fr 1.6fr 1fr!important}
 }
 /* Dense list rows (clinician summaries, progress session list): compact row height, 40px actions */
 @media (min-width:900px){
@@ -1563,9 +1564,9 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] .fb-dialog .fb-num[aria-checked=false],:root[data-theme="dark"] .fb-dialog .fb-chip[aria-checked=false],:root[data-theme="dark"] .fb-dialog .fb-choice:is([aria-checked=false],[aria-pressed=false]){background:rgba(255,255,255,.04)!important;color:#EAF0FA!important}
 :root[data-theme="dark"] .fb-dialog .fb-num[aria-checked=false]:hover,:root[data-theme="dark"] .fb-dialog .fb-chip[aria-checked=false]:hover,:root[data-theme="dark"] .fb-dialog .fb-choice:is([aria-checked=false],[aria-pressed=false]):hover{background:rgba(92,140,255,.10)!important}
 /* Calendar: full-width grid, side cards in a row below */
-:root [data-testid=calendar-layout]{grid-template-columns:minmax(0,1fr)!important}
-:root [data-testid=calendar-layout]>aside{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:stretch;gap:16px}
-:root [data-testid=calendar-layout]>aside>*{margin:0!important;height:100%}
+:root .cal-layout{grid-template-columns:minmax(0,1fr)!important}
+:root .cal-layout>aside{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:stretch;gap:16px}
+:root .cal-layout>aside>*{margin:0!important;height:100%}
 .fb-choice{position:relative;padding-right:84px!important}
 .fb-eff{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-style:normal;font-size:14px;line-height:20px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 .fb-choice[aria-checked=true] .fb-eff{color:rgba(255,255,255,.9)}

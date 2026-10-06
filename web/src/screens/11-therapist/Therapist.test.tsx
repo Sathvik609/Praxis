@@ -31,6 +31,12 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   for (const name of ['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test']) expect(rx).toHaveTextContent(name)
   expect(rx.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|swings/)
   expect(screen.getByText(/Stop rules: pain ≥7/)).toBeInTheDocument()
+  // v2: chips name the exercise kind; the gentle tier stays at the 60° the service enforces
+  for (const chip of ['Arm strengthening', 'Coordination', 'Assessment']) expect(within(rx).getByText(chip)).toHaveClass('ui-chip')
+  expect(rx).toHaveTextContent(/4–6 gentle \(side lift 2×6 hold 2 s ≤60°/)
+  expect(rx.textContent).not.toMatch(/≤90°, no fast/)
+  expect(header).toHaveClass('th-head')
+  expect(document.querySelector('.th-grid')).not.toBeNull()
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getAllByText('Sample').length).toBeGreaterThan(0)
   expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()

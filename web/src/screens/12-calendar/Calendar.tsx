@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
-import { ChevronLeft, ChevronRight } from '../../design/Icon'
+import { Check, ChevronLeft, ChevronRight } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, type Calendar as CalendarData, type CalendarDay } from '../../lib/api'
 import { WEEKDAYS, dayLines, longDate, mondayOf, monthLabel, rangeFor, rangeLabel, sameMonth, shift, shortDate, type View } from '../../lib/calendar'
@@ -12,27 +11,29 @@ import { exerciseById } from '../../lib/seed'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-/** Card look per status. The words on the card (`dayLines`) and the legend carry the meaning;
- *  the colour repeats it (WCAG 1.4.1). Ink stays AA on every tint in both themes. */
+/** Card look per status (design v2, `cal-*` in designer.css). The words on the card (`dayLines`),
+ *  the tick plus "done" on done days and the legend carry the meaning; the colour repeats it
+ *  (WCAG 1.4.1). */
 function tone(day: CalendarDay): string {
-  if (day.is_today && day.status !== 'done') return 'border-2 border-teal-fill bg-teal-fill text-white'
-  if (day.status === 'done') return 'border-2 border-mint bg-tint-mint'
-  if (day.clinic_visit) return 'border-2 border-amber bg-tint-amber'
-  if (day.sample) return 'border-2 border-dashed border-mint bg-surface'
-  if (day.status === 'missed') return 'border-2 border-red/70 bg-tint-red'
-  if (day.status === 'planned') return 'border-2 border-teal-ink bg-surface'
-  if (day.status === 'untracked') return 'border-2 border-dashed border-line text-muted'
-  return 'border-2 border-line bg-line/40 text-muted' // rest
+  if (day.is_today && day.status !== 'done') return 'cal-day cal-today'
+  if (day.status === 'done') return `cal-day cal-done${day.is_today ? ' cal-is-today' : ''}`
+  if (day.clinic_visit) return 'cal-day cal-clinic'
+  if (day.sample) return 'cal-day cal-sample'
+  if (day.status === 'missed') return 'cal-day cal-missed'
+  if (day.status === 'planned') return 'cal-day cal-planned'
+  if (day.status === 'untracked') return 'cal-day cal-untracked'
+  return 'cal-day cal-rest'
 }
 
 const LEGEND: { label: string; box: string }[] = [
-  { label: 'Done', box: 'border-2 border-mint bg-tint-mint' },
-  { label: 'Planned', box: 'border-2 border-teal-ink bg-surface' },
-  { label: 'Planned, not done', box: 'border-2 border-red/70 bg-tint-red' },
-  { label: 'Clinic visit', box: 'border-2 border-amber bg-tint-amber' },
-  { label: 'Rest', box: 'border-2 border-line bg-line/40' },
-  { label: 'Sample (not yours)', box: 'border-2 border-dashed border-mint bg-surface' },
-  { label: 'Not tracked yet', box: 'border-2 border-dashed border-line' },
+  { label: 'Done', box: 'cal-key cal-done' },
+  { label: 'Today', box: 'cal-key cal-today' },
+  { label: 'Planned', box: 'cal-key cal-planned' },
+  { label: 'Planned, not done', box: 'cal-key cal-missed' },
+  { label: 'Clinic visit', box: 'cal-key cal-clinic' },
+  { label: 'Rest', box: 'cal-key cal-rest' },
+  { label: 'Sample (not yours)', box: 'cal-key cal-sample' },
+  { label: 'Not tracked yet', box: 'cal-key cal-untracked' },
 ]
 
 function dateLabel(day: CalendarDay, view: View, anchor: string): string {
@@ -48,17 +49,25 @@ function DayCard({ day, view, anchor }: { day: CalendarDay; view: View; anchor: 
     <li
       data-testid={`day-${day.date}`}
       aria-current={day.is_today ? 'date' : undefined}
-      className={`flex min-w-0 flex-col gap-0.5 rounded-[var(--r-control)] p-2.5 ${compact ? 'min-h-24' : 'min-h-36'} ${tone(day)}`}
+      className={`flex min-w-0 flex-col gap-1 ${compact ? 'min-h-24' : 'min-h-36'} ${tone(day)}`}
     >
-      <span className="font-heading text-xl font-semibold tabular-nums">
+      <span className="cal-num">
         <span aria-hidden>{dateLabel(day, view, anchor)}</span>
+        {day.status === 'done' && (
+          <>
+            <span className="cal-tick" aria-hidden>
+              <Check strokeWidth={3} />
+            </span>
+            <span className="sr-only">done</span>
+          </>
+        )}
         <span className="sr-only">{longDate(day.date)}</span>
       </span>
       {lines.map((l, i) =>
         l === 'Sample' ? (
           <Chip key={i} tone="neutral" className="self-start">Sample</Chip>
         ) : (
-          <span key={i} className="break-words text-lg leading-snug">{l}</span>
+          <span key={i} className={`cal-line ${/^Clinic/.test(l) ? 'cal-line-clinic' : ''}`}>{l}</span>
         ),
       )}
     </li>
@@ -69,9 +78,10 @@ function DayCard({ day, view, anchor }: { day: CalendarDay; view: View; anchor: 
  *  prescription (the therapist sets them); a day is done only when a live camera session
  *  happened. Replays never count; sample history is labelled Sample. "Today" is the service's
  *  clock, never the browser's. Out of scope by decision: reminders, moving a day, logging
- *  practice without the camera. */
+ *  practice without the camera. Design v2 (6 Oct): one-column grid with the side cards in a row
+ *  below (`cal-layout`), no week card, and no "Start session" on the today card (the flow starts
+ *  from Choose → Demonstration, D-FLOW). */
 export function Calendar() {
-  const nav = useNavigate()
   const [view, setView] = useState<View>('week')
   const [today, setToday] = useState<string | null>(null)
   const [anchor, setAnchor] = useState<string | null>(null)
@@ -137,18 +147,18 @@ export function Calendar() {
         </div>
       </div>
 
-      <div data-testid="calendar-layout" className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(300px,360px)] items-start gap-6">
+      <div data-testid="calendar-layout" className="cal-layout mt-6 grid grid-cols-[minmax(0,1fr)_minmax(300px,360px)] items-start gap-6">
         <section aria-label="Practice days" className="min-w-0">
-          <div aria-hidden className="grid grid-cols-[repeat(7,minmax(0,1fr))] gap-2 pb-2 text-center text-lg text-muted">
+          <div aria-hidden className="cal-week grid grid-cols-[repeat(7,minmax(0,1fr))] gap-2 pb-2 text-center text-lg text-muted">
             {WEEKDAYS.map((d) => <span key={d}>{d}</span>)}
           </div>
-          <ol aria-label="Days" aria-busy={busy} className="grid grid-cols-[repeat(7,minmax(0,1fr))] gap-2">
+          <ol aria-label="Days" aria-busy={busy} className="cal-week grid grid-cols-[repeat(7,minmax(0,1fr))] gap-2">
             {data.days.map((d) => <DayCard key={d.date} day={d} view={loaded.view} anchor={loaded.anchor} />)}
           </ol>
           <ul aria-label="Legend" className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-base text-muted">
             {LEGEND.map((l) => (
               <li key={l.label} className="flex items-center gap-2">
-                <span aria-hidden className={`inline-block h-4 w-4 rounded ${l.box}`} />
+                <span aria-hidden className={l.box} />
                 {l.label}
               </li>
             ))}
@@ -160,8 +170,7 @@ export function Calendar() {
         </section>
 
         <aside className="flex min-w-0 flex-col gap-4">
-          <TodayCard day={data.days.find((d) => d.is_today) ?? null} today={today} onStart={(to) => nav(to)} />
-          <WeekCard data={data} />
+          <TodayCard day={data.days.find((d) => d.is_today) ?? null} today={today} />
           <VisitCard data={data} />
         </aside>
       </div>
@@ -169,7 +178,7 @@ export function Calendar() {
   )
 }
 
-function TodayCard({ day, today, onStart }: { day: CalendarDay | null; today: string; onStart: (to: string) => void }) {
+function TodayCard({ day, today }: { day: CalendarDay | null; today: string }) {
   const plan = day?.exercises.filter((e) => e.id !== 'nhpt') ?? []
   const peg = !!day?.nhpt_due
   const title = plan.length ? plan.map((e) => e.name).join(' + ') : peg ? 'Nine-Hole Peg Test' : 'Rest day'
@@ -184,34 +193,6 @@ function TodayCard({ day, today, onStart }: { day: CalendarDay | null; today: st
       </p>
       {plan.length > 0 && peg && <p className="text-white/85">Peg test (weekly) today too.</p>}
       {done.length > 0 && <p className="mt-2 font-bold text-white">Done today ✓ · {day?.minutes_done ?? 0} min with the camera</p>}
-      <Button full variant="inverse" className="mt-5" onClick={() => onStart(!plan.length && peg ? '/details/checkin?next=nhpt' : '/details/checkin')}>Start session</Button>
-    </Card>
-  )
-}
-
-function WeekCard({ data }: { data: CalendarData }) {
-  const w = data.week
-  const pct = w.planned_days ? Math.min(100, Math.round((100 * w.done_days) / w.planned_days)) : 0
-  const pegDay = WEEKDAYS[data.schedule.nhpt_day]
-  return (
-    <Card as="section" aria-label="This week" padding="sm" className="py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="text-2xl">This week</h2>
-        <span className="text-lg text-muted">{w.done_days} of {w.planned_days} days · {w.minutes_done} of ~{w.minutes_planned} min</span>
-      </div>
-      <div
-        role="progressbar"
-        aria-label="Practice days this week"
-        aria-valuemin={0}
-        aria-valuemax={w.planned_days}
-        aria-valuenow={w.done_days}
-        aria-valuetext={`${w.done_days} of ${w.planned_days} days`}
-        className="mt-3 h-3 overflow-hidden rounded-full bg-line"
-      >
-        <div className="h-full rounded-full bg-mint" style={{ width: `${pct}%` }} />
-      </div>
-      <p className="mt-3 text-lg">Peg test this week: {w.nhpt_done ? 'done ✓' : `not yet · ${pegDay}`}</p>
-      <p className="mt-1 text-base text-muted">Goal comes from your program, not from the app.</p>
     </Card>
   )
 }
