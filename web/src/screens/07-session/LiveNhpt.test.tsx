@@ -46,8 +46,11 @@ function renderAt(path: string) {
 test('shows elapsed time, seated count, next hole and tracking badge', () => {
   mockStream([frame])
   renderAt('/session?hand=left')
-  expect(screen.getByText('24.8')).toBeInTheDocument()
-  expect(screen.getByLabelText('5 of 9')).toBeInTheDocument()
+  const stats = screen.getByRole('region', { name: 'Progress' })
+  expect(within(stats).getByText('24.8')).toBeInTheDocument()
+  expect(stats).toHaveTextContent('from first peg lift')
+  expect(within(stats).getByText('5 of 9 seated')).toBeInTheDocument()
+  expect(within(stats).getByRole('img', { name: '5 of 9 pegs seated' })).toBeInTheDocument()
   expect(screen.getByText(/next: hole 6/)).toBeInTheDocument()
   expect(screen.getByText('Tracking')).toBeInTheDocument()
   expect(screen.getByText('Nine-Hole Peg Test · left hand')).toBeInTheDocument()
@@ -55,36 +58,33 @@ test('shows elapsed time, seated count, next hole and tracking badge', () => {
   expect(screen.getByText(/Rule-based coach · LLM agent pending/)).toBeInTheDocument()
 })
 
-test('reference toggle is a segmented control: Board view by default, Avatar on demand', () => {
+test('the reference panel holds the figure with the board inset; no reference toggle', () => {
   mockStream([frame])
   renderAt('/session?hand=left')
-  const board = screen.getByRole('radio', { name: 'Board view' })
-  const avatar = screen.getByRole('radio', { name: 'Avatar' })
-  expect(board).toHaveAttribute('aria-checked', 'true')
-  expect(screen.getByLabelText('board view')).toBeInTheDocument()
-  fireEvent.click(avatar)
-  expect(screen.queryByLabelText('board view')).toBeNull()
-  expect(screen.getByTestId('scene')).toBeInTheDocument()
+  const ref = screen.getByRole('region', { name: 'Reference figure' })
+  expect(within(ref).getByTestId('scene')).toBeInTheDocument()
+  expect(within(ref).getByLabelText('board view')).toBeInTheDocument()
+  expect(screen.queryByRole('radio', { name: 'Avatar' })).toBeNull()
+  expect(within(ref).getByTestId('hole-5')).toHaveClass('bv-next')
 })
 
-test('the reference column shows per-peg splits as they arrive, pending pegs as not yet (review 28 Sep: no dead space)', () => {
+test('the last peg split comes from the newest nhpt_split event', () => {
   mockStream([
     frame,
     { type: 'nhpt_split', t: 12, id: 2, peg: 1, hole: 3, split_s: 5.12, elapsed_s: 5.12 },
     { type: 'nhpt_split', t: 16, id: 3, peg: 2, hole: 0, split_s: 4.4, elapsed_s: 9.52 },
   ])
   renderAt('/session?hand=left')
-  const splits = screen.getByRole('list', { name: 'Per-peg splits' })
-  const items = within(splits).getAllByRole('listitem')
-  expect(items).toHaveLength(9)
-  expect(items[0]).toHaveTextContent('Peg 1')
-  expect(items[0]).toHaveTextContent('5.1 s')
-  expect(items[1]).toHaveTextContent('4.4 s')
-  expect(items[2]).toHaveTextContent('Peg 3')
-  expect(items[2]).toHaveTextContent('not yet')
-  // the board and the fixed controls stay
-  expect(screen.getByLabelText('board view')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent('last peg 4.4 s')
   expect(screen.getByRole('button', { name: /End session/ })).toBeInTheDocument()
+})
+
+test('exertion is its own labelled chip in the progress card', () => {
+  mockStream([frame, { type: 'exertion', t: 11, id: 2, level: 'moderate', reasons: ['slower pegs'], method: 'behavioural' }])
+  renderAt('/session?hand=left')
+  const stats = screen.getByRole('region', { name: 'Progress' })
+  expect(stats).toHaveTextContent('Exertion: moderate')
+  expect(stats).toHaveTextContent('behavioural index · slower pegs')
 })
 
 test('tapping a seated hole in the board view sends sample_colour; null next_hole reads "any hole"', () => {
@@ -105,7 +105,7 @@ test('replay has no tap-to-sample buttons', () => {
 test('tracking lost badge after perception_lost', () => {
   mockStream([frame, { type: 'perception_lost', t: 11, id: 2, missing: [1] }])
   renderAt('/session?hand=left')
-  expect(screen.getByText('Tracking lost')).toBeInTheDocument()
+  expect(within(screen.getByRole('banner')).getByRole('status')).toHaveTextContent('Tracking lost')
 })
 
 test('replay shows the corner badge instead of the old placeholder sentence and no red live text', () => {
@@ -132,10 +132,10 @@ test('the feed shows the rolling latency line from frame and coach events', () =
 test('trace toggle opens the trace panel and the caption stays on screen', () => {
   mockStream([frame, { type: 'rep_complete', t: 11, id: 2, peg: 1 }])
   renderAt('/session?hand=left')
-  expect(screen.queryByText(/findContours \+ HoughCircles/)).toBeNull()
+  expect(screen.getByText(/findContours \+ HoughCircles/)).toHaveClass('sx-mono') // developer line, Judge view only
   fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
   expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
-  expect(screen.getByText(/findContours \+ HoughCircles/)).toBeInTheDocument()
+  expect(screen.getAllByText(/findContours \+ HoughCircles/)).toHaveLength(2)
   expect(screen.getByText('Coach')).toBeInTheDocument()
   expect(screen.getByText(/Timer is running/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Hide trace' }))
@@ -164,24 +164,25 @@ test('feedback acknowledgement navigates to the persisted report', () => {
 test('verified and unverified counts are on the live peg-test screen', () => {
   mockStream([frame])
   renderAt('/session?hand=left')
-  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/5 verified · 0 unverified · 5 pegs/)
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent('5 verified · 0 unverified')
 })
 
 test('unverified pegs come from the service total when it sends one', () => {
   mockStream([{ ...frame, nhpt: { ...frame.nhpt, unverified_total: 1 } }])
   renderAt('/session?hand=left')
-  expect(screen.getByLabelText('Verified and unverified counts')).toHaveTextContent(/4 verified · 1 unverified/)
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent('4 verified · 1 unverified')
 })
 
-test('Take a rest is not Pause: it sends a rest-tagged pause and shows the rest timer', () => {
+test('Take a rest is not Pause: it sends a rest-tagged pause and shows the rest hold over the camera', () => {
   const send = mockStream([frame])
   renderAt('/session?hand=left')
   fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'pause', reason: 'rest' })
-  expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Your camera' })).toContainElement(screen.getByRole('alertdialog', { name: 'Resting' }))
+  expect(screen.getByText(/Assessment · paused/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Rested — continue' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'resume' })
-  expect(screen.queryByRole('dialog', { name: 'Resting' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('alertdialog', { name: 'Resting' })).not.toBeInTheDocument()
 })
 
 test('the service pause event that answers a rest does not stack the pause overlay on top', () => {
@@ -197,8 +198,8 @@ test('the service pause event that answers a rest does not stack the pause overl
   fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
   mockStream([frame, { type: 'pause', t: 11, id: 2, rule: 'patient', text: 'Paused. Take your time.' }], send)
   rerender(tree)
-  expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
-  expect(screen.queryByRole('dialog', { name: 'Paused' })).not.toBeInTheDocument()
+  expect(screen.getByRole('alertdialog', { name: 'Resting' })).toBeInTheDocument()
+  expect(screen.queryByRole('alertdialog', { name: 'Paused' })).not.toBeInTheDocument()
 })
 
 test('Spoken instructions follow Settings: off by default for now, voiced when turned on; the caption stays', () => {

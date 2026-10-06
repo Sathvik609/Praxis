@@ -9,6 +9,10 @@ test('board view renders nine holes with occupancy and next target', () => {
   expect(board).toBeInTheDocument()
   expect(screen.getAllByTestId('hole')).toHaveLength(9)
   expect(screen.getByTestId('hole-5')).toHaveAttribute('data-state', 'next')
+  // the next hole: amber token class plus its state word, never colour alone
+  expect(screen.getByTestId('hole-5')).toHaveClass('bv-next', 'border-amber', 'text-amber-ink')
+  expect(screen.getByTestId('hole-5')).toHaveAccessibleName('hole 6 next')
+  expect(board.innerHTML).not.toMatch(/F2B457/)
   expect(screen.getByTestId('hole-0')).toHaveAttribute('data-state', 'occupied')
   expect(screen.getByTestId('hole-8')).toHaveAttribute('data-state', 'empty')
   expect(screen.queryByRole('button')).toBeNull() // no sampling without a handler (replay)

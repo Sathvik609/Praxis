@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -134,5 +134,5 @@ test('peg test: a resume request after tracking loss is answered from the paused
   fireEvent.click(screen.getByRole('button', { name: 'Not yet' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'r2', choice: 'Not yet' })
   // declined: the overlay's own Resume is back for when the patient is ready
-  expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument()
+  expect(within(screen.getByRole('alertdialog', { name: 'Tracking lost' })).getByRole('button', { name: 'Resume when ready' })).toBeInTheDocument()
 })

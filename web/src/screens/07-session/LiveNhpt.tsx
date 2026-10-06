@@ -1,28 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
-import { Card } from '../../design/Card'
-import { Pill } from '../../design/Pill'
-import { ProgressDots } from '../../design/ProgressDots'
-import { Stat } from '../../design/Stat'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
+import { coachLabel } from '../../session/agent'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
-import { useWebcamStream } from '../../session/useWebcamStream'
-import { BoardView } from './BoardView'
-import { coachLabel } from '../../session/agent'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
-import { useSessionFlow } from '../../session/useSessionFlow'
-import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
-import { LivePrompt, pausedNote } from './LivePrompt'
-import { readGuidance } from '../../session/guidance'
 import { useRestBreak } from '../../session/useRestBreak'
-import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
-import { SessionControls } from './SessionControls'
+import { useSessionFlow, type EndReason } from '../../session/useSessionFlow'
+import { useWebcamStream } from '../../session/useWebcamStream'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { BoardView } from './BoardView'
+import { LivePrompt } from './LivePrompt'
+import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxRef, SxStats, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { TracePanel } from './TracePanel'
 
 type NhptComplete = PraxisEvent & { total_s: number; splits_s: number[]; pegs: unknown[] }
@@ -35,8 +29,11 @@ function caption(f: FrameEvent | null, lost: boolean): string {
   return 'Nice and steady. Timer is running — no need to rush.'
 }
 
-/** Screen 07 · Live session, Nine-Hole Peg Test (assessment mode). Timer starts at the first
- *  peg lift and stops at the ninth seated peg; reps are verified from OpenCV events only. */
+/** Screen 07 · Live session, Nine-Hole Peg Test (assessment mode), in the designers' 6 Oct
+ *  session layout (`sx-*`): camera | reference figure with the board inset (tap a seated hole to
+ *  sample its peg colour), coach | progress (elapsed, seated, next hole, verified · unverified,
+ *  last peg split, exertion chip), fixed control bar. Timer starts at the first peg lift and
+ *  stops at the ninth seated peg; pegs are verified from OpenCV events only. */
 export function LiveNhpt() {
   const [sp] = useSearchParams()
   const hand = sp.get('hand') ?? 'left'
@@ -50,15 +47,14 @@ export function LiveNhpt() {
   })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
-  const [spoken] = useState(() => readGuidance().spoken)
-  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const ui = useSxSession()
+  // Spoken cues follow Settings > Spoken instructions; captions stay on while the coach speaks.
+  const coach = useCoach(events, { speak: browserSpeak, voice: ui.spoken })
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(events)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
-  const [reference, setReference] = useState<'avatar' | 'board'>('board')
 
   useEffect(() => {
     void start()
@@ -66,6 +62,7 @@ export function LiveNhpt() {
   }, [start, stop])
 
   const frame = ([...events].reverse().find((e) => e.type === 'frame') as FrameEvent | undefined) ?? null
+  const lastT = events.length ? events[events.length - 1].t : null
   const lost = (() => {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
@@ -74,19 +71,17 @@ export function LiveNhpt() {
   const label = statusLabel(status, 'nhpt')
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
-  const overlayShown = rest.since != null && !stopped ? null : coach.overlay
-  const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
-  const finish = (endedEarly: boolean) => {
-    flow.finish(endedEarly, undefined, {
-        kind: 'nhpt',
-        hand,
-        total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,
-        splits_s: complete?.splits_s ?? [],
-        pegs: complete?.pegs ?? [],
-        pegs_done: frame?.nhpt?.pegs_done ?? 0,
-        ended_early: endedEarly,
-      })
+  const finish = (endedEarly: boolean, reason?: EndReason) => {
+    flow.finish(endedEarly, reason, {
+      kind: 'nhpt',
+      hand,
+      total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,
+      splits_s: complete?.splits_s ?? [],
+      pegs: complete?.pegs ?? [],
+      pegs_done: frame?.nhpt?.pegs_done ?? 0,
+      ended_early: endedEarly,
+    })
   }
 
   useEffect(() => {
@@ -98,132 +93,134 @@ export function LiveNhpt() {
   // Occupancy is the peg test's verification; a peg is unverified only when the service says so
   // (`unverified_total`) or a rep_complete arrives with `verified: false`.
   const pegsUnverified = Number((frame?.nhpt as { unverified_total?: number } | undefined)?.unverified_total ?? events.filter((e) => e.type === 'rep_complete' && e.verified === false).length)
-  const splitOf = new Map(events.filter((e) => e.type === 'nhpt_split').map((e) => [Number(e.peg), Number(e.split_s)] as const))
+  const unv = Math.min(pegsDone, pegsUnverified)
+  const lastSplitEv = [...events].reverse().find((e) => e.type === 'nhpt_split')
+  const lastSplit = lastSplitEv ? Number(lastSplitEv.split_s) : null
   const nextHole = frame?.overlay.next_hole ?? null
   const elapsed = frame?.nhpt?.elapsed_s ?? 0
+  const started = !!frame?.nhpt?.started
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
+  const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
+  const holdSeconds = useHoldSeconds(hold, lastT)
+  const pipe = `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`
+
+  const coachCard = (
+    <SxCoach
+      captions={ui.captions}
+      caption={coach.caption?.text ?? label.coach ?? caption(frame, lost)}
+      label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
+      source={coach.captionSource}
+    />
+  )
 
   return (
-    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`Nine-Hole Peg Test · ${hand} hand`} subtitle="Assessment · attempt 1 of 1" status={status} label={label} agent={coach.agent} />
-
-      <div className="grid min-h-0 grid-cols-[5fr_3fr_3fr] gap-4 p-4">
-        <LiveFeed
+    <div className="sx-root">
+      <SessionHeader
+        title={`Nine-Hole Peg Test · ${hand} hand`}
+        sub={`Assessment · ${hold.open ? 'paused' : 'attempt 1 of 1'}`}
+        status={status}
+        label={label}
+        live={camActive && !replay}
+        replay={!!replay}
+        agent={coach.agent}
+      />
+      <main className="sx-grid">
+        <SxFeed
           errorDetail={error}
-          className="min-h-0 self-start"
           replay={!!replay}
           camActive={camActive}
           status={status}
           videoRef={videoRef}
           frame={frame}
-          feedLabel={replay ? `recorded session · ${hand} hand` : `${hand} hand · ${label.feed}`}
-          tracking={live ? ['board tracking', handSeen].filter(Boolean).join(' · ') : undefined}
+          note={live ? [`${hand} hand`, 'board tracking', handSeen].filter(Boolean).join(' · ') : label.feed}
+          mono={pipe}
           onRetry={() => { stop(); void start() }}
-        />
-
-        <Card
-          className="flex min-h-0 flex-col gap-3 overflow-hidden"
-          padding="sm"
-          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
-          action={
-            <Pill
-              size="sm"
-              ariaLabel="Reference view"
-              value={reference}
-              onChange={setReference}
-              options={[
-                { value: 'avatar', label: 'Avatar' },
-                { value: 'board', label: 'Board view' },
-              ]}
-            />
-          }
         >
-          {reference === 'avatar' ? (
-            <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip="nhpt" compact /></div>
-          ) : (
-            <BoardView
-              occupancy={frame?.board?.occupancy ?? {}}
-              nextHole={nextHole}
-              onSampleHole={replay ? undefined : (k) => send({ cmd: 'sample_colour', hole: k })}
-              sampled={!!frame?.board?.colour}
-            />
-          )}
-          <div>
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-              <span className="text-xl">
-                <b>{pegsDone} of 9</b> seated
-              </span>
-              <span className="text-lg text-muted">
-                {nextHole != null ? `next: hole ${nextHole + 1}` : !frame?.calibrated ? 'sheet not in view' : pegsDone >= 9 ? 'board full' : 'any hole'}
-              </span>
-            </div>
-            <ProgressDots total={9} done={pegsDone} current={nextHole ?? undefined} />
-          </div>
-          {/* Per-peg splits as they arrive (`nhpt_split`), laid out 3 × 3 like the board, so the
-              column carries data instead of empty space (review 28 Sep). */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="text-lg font-bold">Per-peg split</span>
-              <span className="text-base text-muted">seated to seated</span>
-            </div>
-            <ol aria-label="Per-peg splits" className="grid grid-cols-3 gap-1.5">
-              {Array.from({ length: 9 }, (_, i) => {
-                const v = splitOf.get(i + 1)
-                return (
-                  <li key={i} className={`flex items-baseline justify-between gap-1 rounded-[var(--r-control)] border px-2 py-0.5 text-lg leading-tight tabular-nums ${v != null ? 'border-line bg-surface' : 'border-dashed border-line text-muted'}`}>
-                    <span className="text-muted"><span className="sr-only">Peg </span>{i + 1}</span>
-                    {v != null ? <b>{v.toFixed(1)} s</b> : <span><span aria-hidden>—</span><span className="sr-only">not yet</span></span>}
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-        </Card>
+          <SxHold
+            open={hold.open}
+            kind={hold.kind}
+            title={hold.title}
+            text={hold.text}
+            seconds={holdSeconds}
+            primary={hold.primary}
+            onEnd={hold.onEnd}
+            note={hold.note}
+            prompt={hold.prompt ? <LivePrompt state={cp} running={{}} /> : null}
+            resumeByPrompt={hold.resumeByPrompt}
+          />
+        </SxFeed>
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <Card>
-            <div className="flex flex-col items-center">
-              <Stat size="xl" value={elapsed.toFixed(1)} unit="s" label={frame?.nhpt?.started ? 'started at first peg lift' : 'waiting for first peg lift'} />
-            </div>
-          </Card>
-          <VerifiedTally compact total={pegsDone} unverified={Math.min(pegsDone, pegsUnverified)} noun="peg" />
-          {cp.prompt && !promptInOverlay && <LivePrompt state={cp} running={{}} />}
-          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
-          <CoachCard text={coach.caption?.text ?? label.coach ?? caption(frame, lost)} label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel} source={coach.captionSource} />
-          {traceOpen ? (
-            <div className="min-h-0 flex-1">
-              <TracePanel
-                events={events}
-                sessionId={sessionId}
-                replay={!!replay}
-                pipeline={[
-                  `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`,
-                  latencyLine(latency),
-                ]}
-              />
-            </div>
-          ) : (
-            <ExertionChip exertion={coach.exertion} />
-          )}
-        </div>
-      </div>
+        {traceOpen ? (
+          <div className="sx-panel sx-trace">
+            <TracePanel events={events} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
+          </div>
+        ) : (
+          <SxRef
+            dim={hold.open}
+            tag={hold.open ? 'Reference · paused' : 'Reference'}
+            footer={
+              <div className="sx-board-inset">
+                <BoardView
+                  occupancy={frame?.board?.occupancy ?? {}}
+                  nextHole={nextHole}
+                  onSampleHole={replay ? undefined : (k) => send({ cmd: 'sample_colour', hole: k })}
+                  sampled={!!frame?.board?.colour}
+                />
+              </div>
+            }
+          >
+            <AvatarPanel bare overlayTop={40} clip="nhpt" />
+          </SxRef>
+        )}
+
+        {cp.prompt && !hold.prompt ? (
+          <div className="flex min-h-0 flex-col gap-3">
+            <LivePrompt state={cp} running={{}} />
+            {coachCard}
+          </div>
+        ) : (
+          coachCard
+        )}
+
+        <SxStats
+          metricLabel="Elapsed"
+          metric={elapsed.toFixed(1)}
+          unit="s"
+          metricSub={started ? 'from first peg lift' : 'waits for first peg lift'}
+          head={`${pegsDone} of 9 seated`}
+          headRight={nextHole != null ? `next: hole ${nextHole + 1}` : !frame?.calibrated ? 'sheet not in view' : pegsDone >= 9 ? 'board full' : 'any hole'}
+          dots={{ label: `${pegsDone} of 9 pegs seated`, items: Array.from({ length: 9 }, (_, i) => (i < pegsDone ? 'done' : i === pegsDone && started ? 'now' : 'todo')) }}
+          extra={<ExertionChip exertion={coach.exertion} compact />}
+          verified={pegsDone - unv}
+          unverified={unv}
+          sub={lastSplit != null ? `last peg ${lastSplit.toFixed(1)} s` : undefined}
+        />
+      </main>
 
       <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay
-        overlay={overlayShown}
-        note={pausedNote(coach.decisions, overlayShown)}
-        prompt={promptInOverlay ? <LivePrompt state={cp} running={{}} /> : null}
-        resumeByPrompt={promptInOverlay && cp.prompt?.kind === 'resume'}
-        onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
-      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
+      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
-      <SessionControls
+      <SxBar
         onPause={() => send({ cmd: 'pause' })}
         onRest={rest.start}
         onPain={() => setPainOpen(true)}
-        onEnd={() => finish(true)}
+        onEnd={ui.openEnd}
         traceOpen={traceOpen}
-        onToggleTrace={() => setTraceOpen((v) => !v)}
+        onTrace={() => setTraceOpen((v) => !v)}
+        captions={ui.captions}
+        captionsLocked={ui.captionsLocked}
+        onCaptions={ui.toggleCaptions}
+        volume={ui.volume}
+        onVolume={ui.setVolume}
+        resting={rest.since != null || !!coach.overlay}
+      />
+      <SxEndDialog
+        open={ui.endOpen}
+        done={pegsDone - unv}
+        noun="peg"
+        onClose={ui.closeEnd}
+        onPain={() => { ui.closeEnd(); setPainOpen(true) }}
+        onEnd={(reason) => { ui.closeEnd(); finish(true, reason) }}
       />
     </div>
   )
