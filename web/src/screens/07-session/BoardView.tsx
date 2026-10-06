@@ -22,19 +22,21 @@ export function BoardView({
     const state: HoleState = occ ? 'occupied' : k === nextHole ? 'next' : 'empty'
     return { k, state }
   })
+  // Theme tokens with the artifact's final values (designer.css `[aria-label="board view"]`):
+  // seated = teal fill, next = amber ring with its 4 px glow (`bv-next`), empty = sunken.
   const style = {
-    occupied: 'border-mint bg-mint text-[#0B1A1C]',
-    next: 'border-[#F2B457] bg-transparent text-[#F2B457] shadow-[0_0_0_4px_rgba(242,180,87,0.25)]',
-    empty: 'border-white/30 bg-white/5 text-white/70',
+    occupied: 'border-teal-fill bg-teal-fill text-white',
+    next: 'bv-next border-amber bg-transparent text-amber-ink shadow-[0_0_0_4px_rgba(242,180,87,0.25)]',
+    empty: 'border-line bg-[var(--sunken)] text-muted',
   } as const
   const word = { occupied: 'seated', next: 'next', empty: 'empty' } as const
   const corners = ['left-3 top-3 rounded-tl-lg border-l-4 border-t-4', 'right-3 top-3 rounded-tr-lg border-r-4 border-t-4', 'bottom-3 left-3 rounded-bl-lg border-b-4 border-l-4', 'bottom-3 right-3 rounded-br-lg border-b-4 border-r-4']
   const cellClass = (state: HoleState) =>
     `flex h-14 w-14 items-center justify-center rounded-full border-4 text-xl font-bold ${style[state]}`
   return (
-    <div aria-label="board view" className="relative rounded-[var(--r-card)] bg-[linear-gradient(180deg,var(--stage-b),var(--stage-a))] p-8">
+    <div aria-label="board view" className="relative rounded-[var(--r-card)] bg-surface p-8">
       {corners.map((pos) => (
-        <span key={pos} aria-hidden className={`absolute ${pos} h-6 w-6 border-mint`} />
+        <span key={pos} aria-hidden className={`absolute ${pos} h-6 w-6 border-teal`} />
       ))}
       <div className="mx-auto grid w-fit grid-cols-3 gap-3">
         {cells.map(({ k, state }) =>
@@ -58,7 +60,7 @@ export function BoardView({
         )}
       </div>
       {onSampleHole ? (
-        <p className="mt-4 text-center text-base text-white/70" role="status">
+        <p className="mt-4 text-center text-base text-muted" role="status">
           {sampled ? 'Peg colour sampled · tap another seated peg to resample' : 'Pegs not showing? Seat one and tap that hole to sample its colour.'}
         </p>
       ) : null}

@@ -1,5 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
-import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 
 test('paused overlay explains why and offers resume', () => {
   const onResume = vi.fn()
@@ -36,12 +36,6 @@ test('stopped overlay names the rule and says the therapist is flagged', () => {
   expect(screen.getByRole('button', { name: /Save and continue/ })).toBeInTheDocument()
 })
 
-test('rest overlay offers "Rested — continue"', () => {
-  render(<SessionOverlay overlay={{ kind: 'rest', rule: 'exertion', text: 'Take a minute.' }} onResume={vi.fn()} onEnd={vi.fn()} />)
-  expect(screen.getByText('Rest break')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Rested — continue' })).toBeInTheDocument()
-})
-
 test('pain check states the real stop level (7, from the plan), never 5', () => {
   render(<PainCheck open onSubmit={vi.fn()} onCancel={vi.fn()} />)
   expect(screen.getByText(/Pain at or above 7 ends the session/)).toBeInTheDocument()
@@ -70,35 +64,6 @@ test('exertion chip with no data reads low · no signs yet', () => {
   render(<ExertionChip exertion={null} />)
   expect(screen.getByText(/Exertion: low/)).toBeInTheDocument()
   expect(screen.getByText(/no signs yet/)).toBeInTheDocument()
-})
-
-test('rest overlay counts the rest up, offers continue and end, and is not the pause overlay', () => {
-  vi.useFakeTimers()
-  try {
-    const onResume = vi.fn()
-    const onEnd = vi.fn()
-    const since = Date.now()
-    render(<RestOverlay since={since} onResume={onResume} onEnd={onEnd} />)
-    expect(screen.getByRole('dialog', { name: 'Resting' })).toBeInTheDocument()
-    expect(screen.getByText('0:00')).toBeInTheDocument()
-    // the designers' big-number look (designer.css .ui-stat-num), same as Stat
-    expect(screen.getByText('0:00')).toHaveClass('ui-stat-num')
-    act(() => {
-      vi.advanceTimersByTime(65_000)
-    })
-    expect(screen.getByText('1:05')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Rested — continue' }))
-    expect(onResume).toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'End session' }))
-    expect(onEnd).toHaveBeenCalled()
-  } finally {
-    vi.useRealTimers()
-  }
-})
-
-test('no rest overlay without a rest', () => {
-  render(<RestOverlay since={null} onResume={vi.fn()} onEnd={vi.fn()} />)
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
 test('compact exertion chip: one line in the artifact classes, word + icon + reasons', () => {

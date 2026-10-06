@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -61,7 +61,7 @@ test('arm: an agent dose adjustment reads in plain words and the patient answers
   expect(screen.getByText('Within your prescription')).toBeInTheDocument()
   // not modal: the session is not paused, the rep card is still there
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByText(/Rep 1 of 8/)).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent(/Rep\s*1\s*of 8/)
   fireEvent.click(screen.getByRole('button', { name: 'Yes, lower it' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'a1', choice: 'Yes, lower it' })
   expect(screen.queryByText(/Coach suggests: a lower target/)).toBeNull()
@@ -134,5 +134,5 @@ test('peg test: a resume request after tracking loss is answered from the paused
   fireEvent.click(screen.getByRole('button', { name: 'Not yet' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'r2', choice: 'Not yet' })
   // declined: the overlay's own Resume is back for when the patient is ready
-  expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument()
+  expect(within(screen.getByRole('alertdialog', { name: 'Tracking lost' })).getByRole('button', { name: 'Resume when ready' })).toBeInTheDocument()
 })

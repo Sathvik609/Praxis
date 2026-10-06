@@ -1,36 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AvatarPanel } from '../../avatar/AvatarPanel'
-import { Card } from '../../design/Card'
-import { Chip } from '../../design/Chip'
-import { ProgressDots } from '../../design/ProgressDots'
-import { Stat } from '../../design/Stat'
+import { RefAvatar, demoRequested, refMode } from '../../avatar/RefAvatar'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
 import { readCheckinPain, tierFor } from '../../lib/plan'
+import { plural } from '../../lib/plural'
 import { exerciseById } from '../../lib/seed'
+import { coachLabel } from '../../session/agent'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
-import { useWebcamStream } from '../../session/useWebcamStream'
-import { coachLabel } from '../../session/agent'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
-import { useSessionFlow } from '../../session/useSessionFlow'
-import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { CoachCard, LiveFeed, SessionHeader, VerifiedTally } from './LiveShell'
-import { LivePrompt, pausedNote } from './LivePrompt'
-import { readGuidance } from '../../session/guidance'
 import { useRestBreak } from '../../session/useRestBreak'
-import { ExertionChip, PainCheck, RestOverlay, SessionOverlay } from './SessionOverlays'
-import { SessionControls } from './SessionControls'
+import { useSessionFlow, type EndReason } from '../../session/useSessionFlow'
+import { useWebcamStream } from '../../session/useWebcamStream'
+import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
+import { LivePrompt } from './LivePrompt'
+import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxRef, SxStats, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
+import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
 
 type ArmComplete = PraxisEvent & { sets: number; reps: number }
 type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
 
-/** Trunk lean above this many degrees is shown as "(leaning)" in amber; the stop rule's own
+/** Trunk lean above this many degrees is shown as "leaning" in amber; the stop rule's own
  *  threshold lives in the service. */
 export const LEAN_SHOW_DEG = 12
 
@@ -48,10 +44,13 @@ function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side
 }
 
 /** Screen 07c · Live session for the camera-coached arm exercise of the 28 Sep lock, Arm out to
- *  the side (front view). The swing and side-view branches below serve the hidden, dormant
- *  entries and never run while those stay hidden. The registry entry on the service decides the metric, view gate and dose; the pain
+ *  the side (front view), in the designers' 6 Oct session layout (`sx-*`): camera with the
+ *  shoulder band | reference figure (or the trace), coach | progress, fixed control bar. The
+ *  swing and side-view branches serve the hidden, dormant entries and never run while those stay
+ *  hidden. The registry entry on the service decides the metric, view gate and dose; the pain
  *  tier from the check-in is sent as `tier` (the service applies the check-in's tier itself and
- *  never loosens it). Ghost arm shows the target; angles are camera-relative progress. */
+ *  never loosens it). Angles are camera-relative progress. The reference figure is a metronome
+ *  whose mode and demonstration come from events (`refMode`, `demoRequested`); it never scores. */
 export function LiveArm() {
   const [sp] = useSearchParams()
   const side = sp.get('side') ?? 'left'
@@ -63,9 +62,9 @@ export function LiveArm() {
   const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
-  // Spoken cues follow Settings > Spoken instructions; captions are always on screen.
-  const [spoken] = useState(() => readGuidance().spoken)
-  const coach = useCoach(events, { speak: browserSpeak, voice: spoken })
+  const ui = useSxSession()
+  // Spoken cues follow Settings > Spoken instructions; captions stay on while the coach speaks.
+  const coach = useCoach(events, { speak: browserSpeak, voice: ui.spoken })
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
@@ -79,6 +78,7 @@ export function LiveArm() {
 
   const frame = ([...events].reverse().find((e) => e.type === 'frame') as FrameEvent | undefined) ?? null
   const a = frame?.arm
+  const lastT = events.length ? events[events.length - 1].t : null
   const lost = (() => {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
@@ -92,14 +92,12 @@ export function LiveArm() {
   const setDone = [...events].reverse().find((e) => e.type === 'set_complete' && !askedSets.includes(Number(e.set))) as (PraxisEvent & { set: number }) | undefined
   const setCheckOpen = !!setDone && !complete
   const reps = events.filter((e) => e.type === 'rep_complete') as RepComplete[]
-  const overlayShown = rest.since != null && !stopped ? null : coach.overlay
-  const promptInOverlay = !!cp.prompt && !!overlayShown && overlayShown.kind !== 'stopped'
 
-  const finish = (endedEarly: boolean) => {
-    flow.finish(endedEarly, undefined, {
-        kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
-        lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
-      })
+  const finish = (endedEarly: boolean, reason?: EndReason) => {
+    flow.finish(endedEarly, reason, {
+      kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
+      lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
+    })
   }
   useEffect(() => {
     if (complete) finish(false)
@@ -119,93 +117,144 @@ export function LiveArm() {
   const swing = (a?.kind ?? (ex.id === 'pendulum' ? 'oscillation' : 'hold')) === 'oscillation'
   const turnHint = view === 'front' ? ' · face the camera' : ' · turn your side to the camera'
   const wrongView = !!frame?.arm?.angles && (view === 'front' ? frame.arm.angles.view_ok : !frame.arm.angles.view_ok)
+  const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
+  const holdSeconds = useHoldSeconds(hold, lastT)
+  const verifiedLifts = Math.max(0, (a?.reps_total ?? 0) - (a?.unverified_total ?? 0))
+  const repNow = a?.rep ?? 0
+  const noun = swing ? 'swing' : 'lift'
+  const running = { target_deg: a?.target_deg, hold_s: a?.hold_s, reps: a?.reps_per_set }
+  const poseTail = `trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`
+  const pipeline = `cv2 dnn pose · shoulder–elbow–hip angle · ${poseTail}`
+  const lastRep = reps[reps.length - 1]
+  const tone = lost ? 'neutral' : lastRep && frame && frame.t - lastRep.t < 2 && lastRep.verified !== false ? 'mint' : undefined
+
+  const coachCard = (
+    <SxCoach
+      captions={ui.captions}
+      watch={leanRecent}
+      tone={tone}
+      caption={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
+      label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
+      source={coach.captionSource}
+    />
+  )
 
   return (
-    <div className="grid h-screen grid-rows-[4rem_minmax(0,1fr)_5rem] overflow-hidden bg-bg text-ink">
-      <SessionHeader title={`${ex.name} · ${side} side`} subtitle={`${ex.category} · set ${a?.set ?? 1} of ${a?.sets ?? 2}`} status={status} label={label} agent={coach.agent} />
-
-      <div className="grid min-h-0 grid-cols-[5fr_2fr_2fr] gap-4 p-4">
-        <LiveFeed
+    <div className="sx-root">
+      <SessionHeader
+        title={`${ex.name} · ${side} side`}
+        sub={`${ex.category} · ${hold.open ? 'paused' : `set ${a?.set ?? 1} of ${a?.sets ?? 2}`}`}
+        status={status}
+        label={label}
+        live={camActive && !replay}
+        replay={!!replay}
+        agent={coach.agent}
+      />
+      <main className="sx-grid">
+        <SxFeed
           errorDetail={error}
-          className="min-h-0 self-start"
           replay={!!replay}
           camActive={camActive}
           status={status}
           videoRef={videoRef}
           frame={frame}
-          feedLabel={replay ? `recorded session · ${side} side` : `${side} side · ${label.feed}`}
-          tracking={live ? `ghost arm shows target${wrongView ? turnHint : ''}` : undefined}
-          band={<>Shoulder {now != null ? `${Math.round(now)}°` : '—'} · target {target}° · ceiling {ceiling}°</>}
+          note={live ? `ghost arm shows target${wrongView ? turnHint : ''}` : label.feed}
+          band={live && now != null ? `Shoulder ${Math.round(now)}° · target ${target}°` : null}
+          bandTone={holding ? 'mint' : 'amber'}
+          mono={`cv2 dnn pose · shoulder–elbow–hip · ${poseTail} · ceiling ${ceiling}°`}
           onRetry={() => { stop(); void start() }}
-        />
-
-        <Card
-          className="flex min-h-0 flex-col gap-3 overflow-hidden"
-          padding="sm"
-          title={<span className="text-lg font-body font-normal text-muted">Reference</span>}
-          action={<Chip tone={holding ? 'mint' : 'neutral'}>{swing ? 'Swing' : holding ? 'At target' : 'Lift'}</Chip>}
         >
-          <div className="mx-auto w-full max-w-[288px]"><AvatarPanel clip={ex.clip} camera={view} side={side === 'right' ? 'right' : 'left'} paced={a && !a.finished ? (a.rep_progress ?? null) : null} compact /></div>
-          <p className="text-center text-lg text-muted">{view} view · shoulder {now != null ? Math.round(now) : '—'}° of {target}°</p>
-          <div className="flex justify-between text-lg text-muted">{swing ? <><span>Swing forward</span><span>Swing back</span></> : <><span>Lift for 3</span><span>Lower for 3</span></>}</div>
-          <div className="h-3 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="hold progress" aria-valuenow={Math.round((a?.hold_progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
-            <div className="h-full bg-teal-fill transition-[width]" style={{ width: `${Math.round((a?.hold_progress ?? 0) * 100)}%` }} />
-          </div>
-          <p className="text-center text-lg text-muted">Figure paces with you. It never scores you.</p>
-        </Card>
-
-        <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-          <Card title={swing ? `Swing ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet}` : `Rep ${Math.min((a?.rep ?? 0) + 1, repsPerSet)} of ${repsPerSet} · hold ${a?.hold_s ?? 3} s`} action={swing ? undefined : <span className="whitespace-nowrap text-lg text-muted tabular-nums">count: {holdCount}</span>}>
-            <ProgressDots total={repsPerSet} done={a?.rep ?? 0} current={holding ? a?.rep : undefined} />
-          </Card>
-          <Card>
-            <div className="grid grid-cols-3 gap-3">
-              <Stat value={now != null ? `${Math.round(now)}°` : '—'} label="now" />
-              <Stat value={`${Math.round(a?.best_this_set ?? 0)}°`} label="best this set" />
-              <Stat value={`${lean}°`} label="trunk lean" tone={leaning ? 'amber' : 'default'} extra={leaning ? <span className="font-bold text-amber-ink">(leaning)</span> : undefined} />
-            </div>
-          </Card>
-          <VerifiedTally compact total={a?.reps_total ?? 0} unverified={a?.unverified_total ?? 0} noun={swing ? 'swing' : 'lift'} />
-          {cp.prompt && !promptInOverlay && <LivePrompt state={cp} running={{ target_deg: a?.target_deg, hold_s: a?.hold_s, reps: a?.reps_per_set }} />}
-          {/* Captions for all speech (CLAUDE.md §1): the coach card stays with the trace open. */}
-          <CoachCard
-            watch={leanRecent}
-            text={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
-            label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
-            source={coach.captionSource}
+          <SxHold
+            open={hold.open}
+            kind={hold.kind}
+            title={hold.title}
+            text={hold.text}
+            seconds={holdSeconds}
+            primary={hold.primary}
+            onEnd={hold.onEnd}
+            note={hold.note}
+            prompt={hold.prompt ? <LivePrompt state={cp} running={running} /> : null}
+            resumeByPrompt={hold.resumeByPrompt}
           />
-          {traceOpen ? (
-            <div className="min-h-0 flex-1">
-              <TracePanel
-                events={events}
-                sessionId={sessionId}
-                replay={!!replay}
-                pipeline={[`cv2 dnn pose · shoulder–elbow–hip angle · trunk lean ${lean}°${frame?.pose?.present ? ` · ${frame.pose.ms ?? 0} ms` : ' · no pose'}`, latencyLine(latency)]}
-              />
-            </div>
-          ) : (
-            <ExertionChip exertion={coach.exertion} />
-          )}
-        </div>
-      </div>
+        </SxFeed>
+
+        {traceOpen ? (
+          <div className="sx-panel sx-trace">
+            <TracePanel events={events} sessionId={sessionId} replay={!!replay} pipeline={[pipeline, latencyLine(latency)]} />
+          </div>
+        ) : !swing ? (
+          <RefAvatar
+            clip={ex.clip}
+            side={side}
+            mode={refMode(events, frame, hold, frame?.t ?? lastT ?? 0)}
+            demoAt={demoRequested(events)}
+            holdS={a?.hold_s ?? 3}
+            repsPerSet={repsPerSet}
+            setKey={a?.set ?? 1}
+          />
+        ) : (
+          <SxRef dim={hold.open} tag={hold.open ? 'Reference · paused' : 'Reference · swing'}>
+            <AvatarPanel bare overlayTop={40} clip={ex.clip} camera={view} side={side === 'right' ? 'right' : 'left'} paced={a && !a.finished && !hold.open ? (a.rep_progress ?? null) : null} />
+          </SxRef>
+        )}
+
+        {/* The agent's dose prompt sits in the coach slot, never over the camera, so reps keep counting. */}
+        {cp.prompt && !hold.prompt ? (
+          <div className="flex min-h-0 flex-col gap-3">
+            <LivePrompt state={cp} running={running} />
+            {coachCard}
+          </div>
+        ) : (
+          coachCard
+        )}
+
+        <SxStats
+          metricLabel={swing ? 'Swing' : 'Rep'}
+          metric={Math.min(repNow + 1, repsPerSet)}
+          unit={`of ${repsPerSet}`}
+          metricSub={`set ${a?.set ?? 1} of ${a?.sets ?? 2}${swing ? '' : ` · hold ${a?.hold_s ?? 3} s`}`}
+          head={holding ? `Holding · ${holdCount} of ${a?.hold_s ?? 3}` : `${verifiedLifts} ${plural(verifiedLifts, noun)} verified`}
+          headRight={`${a?.unverified_total ?? 0} unverified`}
+          dots={{ label: `${repNow} of ${repsPerSet} done this set`, items: Array.from({ length: repsPerSet }, (_, i) => (i < repNow ? 'done' : i === repNow && holding ? 'now' : 'todo')) }}
+          extra={
+            <>
+              <div className="sx-minis">
+                <div><b>{`${Math.round(a?.best_this_set ?? 0)}°`}</b><span>best this set</span></div>
+                <div className={leaning ? 'sx-warn' : ''}><b>{`${lean}°`}</b><span>{leaning ? 'trunk lean · leaning' : 'trunk lean'}</span></div>
+              </div>
+              <ExertionChip exertion={coach.exertion} compact />
+            </>
+          }
+          verified={verifiedLifts}
+          unverified={a?.unverified_total ?? 0}
+        />
+      </main>
 
       <SetCheckIn open={setCheckOpen} setNumber={setDone?.set ?? 1} onSubmit={(r) => { if (r !== null) send({ cmd: 'rpe', rpe: r }); setAskedSets((s) => [...s, setDone?.set ?? 0]) }} />
-      <FeedbackOverlay open={flow.feedbackOpen} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay
-        overlay={overlayShown}
-        note={pausedNote(coach.decisions, overlayShown)}
-        prompt={promptInOverlay ? <LivePrompt state={cp} running={{ target_deg: a?.target_deg, hold_s: a?.hold_s, reps: a?.reps_per_set }} /> : null}
-        resumeByPrompt={promptInOverlay && cp.prompt?.kind === 'resume'}
-        onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
-      <RestOverlay since={stopped || flow.feedbackOpen ? null : rest.since} onResume={rest.end} onEnd={() => { rest.cancel(); finish(true) }} />
+      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} onSave={flow.save} onSkip={flow.skip} />
+      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
-      <SessionControls
+      <SxBar
         onPause={() => send({ cmd: 'pause' })}
         onRest={rest.start}
         onPain={() => setPainOpen(true)}
-        onEnd={() => finish(true)}
+        onEnd={ui.openEnd}
         traceOpen={traceOpen}
-        onToggleTrace={() => setTraceOpen((v) => !v)}
+        onTrace={() => setTraceOpen((v) => !v)}
+        captions={ui.captions}
+        captionsLocked={ui.captionsLocked}
+        onCaptions={ui.toggleCaptions}
+        volume={ui.volume}
+        onVolume={ui.setVolume}
+        resting={rest.since != null || !!coach.overlay}
+      />
+      <SxEndDialog
+        open={ui.endOpen}
+        done={verifiedLifts}
+        noun={noun}
+        onClose={ui.closeEnd}
+        onPain={() => { ui.closeEnd(); setPainOpen(true) }}
+        onEnd={(reason) => { ui.closeEnd(); finish(true, reason) }}
       />
     </div>
   )
