@@ -4,11 +4,11 @@ import { readDay, todayKey } from '../../lib/day'
 import * as hook from '../../session/useWebcamStream'
 import { CameraSetup } from './CameraSetup'
 
-function mockStream(lastEvent: Record<string, unknown> | null, camActive = true, error: string | null = null) {
+function mockStream(lastEvent: Record<string, unknown> | null, camActive = true, error: string | null = null, connected = true) {
   const start = vi.fn(async () => {})
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive,
-    connected: true,
+    connected,
     lastEvent: lastEvent as never,
     events: lastEvent ? [lastEvent as never] : [],
     sessionId: null,
@@ -258,4 +258,50 @@ test('a stopped day never opens the camera', () => {
   expect(start).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
   expect(screen.getByText('AT /details')).toBeInTheDocument()
+})
+
+test('passing checks left over with the camera off never continue: Continue disabled, no countdown', () => {
+  vi.useFakeTimers()
+  mockStream(TABLE_PASS)
+  const view = renderSetup('/setup?exercise=cup&side=right')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my right arm' }))
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
+  // the camera goes off; the last setup_checks event is still the newest the screen holds
+  mockStream(TABLE_PASS, false)
+  view.rerender(
+    <MemoryRouter initialEntries={['/setup?exercise=cup&side=right']}>
+      <Routes>
+        <Route path="/setup" element={<CameraSetup />} />
+        <Route path="*" element={<Where />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  for (let i = 0; i < 8; i++) tick(1000)
+  expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
+})
+
+test('passing checks with the socket not connected never continue', () => {
+  vi.useFakeTimers()
+  mockStream(TABLE_PASS, true, null, false)
+  renderSetup('/setup?exercise=cup&side=right')
+  const yes = within(coach() ?? document.body).queryByRole('button', { name: 'Yes, my right arm' })
+  if (yes) fireEvent.click(yes)
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  for (let i = 0; i < 8; i++) tick(1000)
+  expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
+})
+
+test('checks from before a camera restart are not read as the new run\'s', () => {
+  vi.useFakeTimers()
+  mockStream(TABLE_PASS)
+  renderSetup('/setup?exercise=cup&side=right')
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my right arm' }))
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
+  fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
+  fireEvent.click(screen.getByRole('button', { name: /Restart camera/ }))
+  // the same (old) setup_checks event is still the newest one the screen holds
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  for (let i = 0; i < 8; i++) tick(1000)
+  expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
 })

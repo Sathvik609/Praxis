@@ -99,9 +99,16 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
   const last = <T,>(type: string) =>
     [...events].reverse().find((e) => e.type === type) as (T & { type: string }) | undefined
   const cal = last<CalibrationEvent>('calibration') ?? null
-  const checks = last<SetupChecksEvent>('setup_checks')
+  const blocked = !!error
+  const camOn = camActive && !blocked
+  // The checks count only while this run's camera and socket are up, and never the event that
+  // was newest when the camera was restarted (it describes the previous run).
+  const latestChecks = last<SetupChecksEvent>('setup_checks')
+  const [staleChecks, setStaleChecks] = useState<unknown>(null)
+  const checks = camOn && connected && latestChecks !== staleChecks ? latestChecks : undefined
   const { rows, ready } = resolveChecks(view, side, pendulum, checks, ticks)
   const restart = () => {
+    setStaleChecks(latestChecks ?? null)
     stop()
     void start()
   }
@@ -119,9 +126,7 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
   // Cancel holds the auto-continue for the rest of this setup; Continue stays with the patient.
   const [held, setHeld] = useState(false)
   const sideWord = side === 'right' ? 'Right' : 'Left'
-  const blocked = !!error
-  const camOn = camActive && !blocked
-  const armed = ready && camOn && steady
+  const armed = ready && camOn && connected && steady
 
   useEffect(() => {
     if (!armed) return
