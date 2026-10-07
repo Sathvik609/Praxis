@@ -32,15 +32,19 @@ function mockStream(events: Record<string, unknown>[], send = vi.fn()) {
   return send
 }
 
-function renderAt(path: string) {
-  return render(
+function tree(path: string) {
+  return (
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/session" element={<LiveNhpt />} />
         <Route path="/report" element={<div>REPORT PAGE</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+}
+
+function renderAt(path: string) {
+  return render(tree(path))
 }
 
 test('shows elapsed time, seated count, next hole and tracking badge', () => {
@@ -218,4 +222,17 @@ test('Spoken instructions follow Settings: off by default for now, voiced when t
     localStorage.clear()
     speak.mockRestore()
   }
+})
+
+test('tracking lost and the last split hold after their events leave the 200-event window', () => {
+  const all: Record<string, unknown>[] = [frame, { type: 'nhpt_split', t: 12, id: 2, peg: 1, hole: 3, split_s: 5.12, elapsed_s: 5.12 }, { type: 'perception_lost', t: 13, id: 3, missing: [1] }]
+  mockStream([...all])
+  const view = renderAt('/session?hand=left')
+  for (let i = 0; i < 230; i++) {
+    all.push({ ...frame, calibrated: false, t: 13 + i * 0.08, id: 100 + i })
+    mockStream(all.slice(-200))
+    view.rerender(tree('/session?hand=left'))
+  }
+  expect(within(screen.getByRole('banner')).getByRole('status')).toHaveTextContent('Tracking lost')
+  expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent('last peg 5.1 s')
 })

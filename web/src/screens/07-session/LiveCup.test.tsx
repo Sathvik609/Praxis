@@ -20,16 +20,20 @@ function mockStream(events: Record<string, unknown>[]) {
   })
 }
 
-function renderAt(path: string) {
-  return render(
+function tree(path: string) {
+  return (
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/session" element={<LiveCup />} />
         <Route path="/report" element={<div>REPORT PAGE</div>} />
         <Route path="/details/demo" element={<div>DEMO PAGE</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+}
+
+function renderAt(path: string) {
+  return render(tree(path))
 }
 
 
@@ -192,4 +196,52 @@ test('none of the preview-only cup features: no trunk lean, start mark, watch-on
   expect(document.body.textContent).not.toMatch(/trunk lean|start mark|Watch once|Your turn in|I'm ready|sped up|Preview controls/i)
   expect(setItem.mock.calls.some(([k]) => k === 'praxis.cupRun')).toBe(false)
   setItem.mockRestore()
+})
+
+test('completion, first lift and slow-arc facts hold after the one-off events leave the 200-event window', () => {
+  sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 2 }))
+  const T0 = 1_790_000_000 // live frames carry epoch seconds
+  const first = { ...reach(T0 + 5, 1, true), t_lift: T0 + 2 }
+  const done = { type: 'cup_complete', t: T0 + 95, id: 900, arcs: 4, reaches: [{ verified: true }, { verified: true }, { verified: false }] }
+  const fin = (t: number, id: number) => ({ ...frame, t, id, cup: { ...frame.cup, finished: true, arcs_done: 4, phase: 'fast', expected_next: null } })
+  const all: Record<string, unknown>[] = [first, reach(T0 + 9, 2, false, 'cup_occluded'), done, fin(T0 + 95, 901)]
+  mockStream([...all])
+  const view = renderAt('/session?exercise=cup&side=left')
+  expect(screen.getByRole('dialog', { name: 'Waiter – cup, done' })).toHaveTextContent('1:33')
+  // ~20 s of frames after completion: the window now holds frames only
+  for (let i = 0; i < 250; i++) {
+    all.push(fin(T0 + 95 + (i + 1) * 0.08, 1000 + i))
+    mockStream(all.slice(-200))
+    view.rerender(tree('/session?exercise=cup&side=left'))
+  }
+  const dlg = screen.getByRole('dialog', { name: 'Waiter – cup, done' })
+  expect(within(dlg).getByText('verified placements').previousSibling).toHaveTextContent('2')
+  expect(within(dlg).getByText('unverified').previousSibling).toHaveTextContent('1')
+  // active time runs from the first lift to the completion, never the epoch clock
+  expect(within(dlg).getByText('active time').previousSibling).toHaveTextContent('1:33')
+  // so End is never offered over a finished exercise as "ended early"
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Finish for today' }))
+  expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
+})
+
+test('the arc direction and the dots of the current arc survive the window', () => {
+  const T0 = 1_790_000_000
+  const all: Record<string, unknown>[] = [
+    { type: 'arc_complete', t: T0, id: 1, arc: 1, phase: 'slow', mean_reach_ms: 1500, unverified: 0, reaches: 8, awaiting_phase: false },
+    ...[1, 2, 3].map((k, i) => ({ ...reach(T0 + 5 + i * 3, k, k !== 2, k === 2 ? 'cup_occluded' : null), id: 10 + i })),
+    { ...reach(T0 + 20, 4, true), id: 20 },
+  ]
+  const fr = (t: number, id: number) => ({ ...frame, t, id, cup: { ...frame.cup, state: 'at_dot', dot: 4, expected_next: 3, dots_in_arc: [0, 1, 2, 3, 4] } })
+  all.push(fr(T0 + 21, 30))
+  mockStream([...all])
+  const view = renderAt('/session?exercise=cup&side=left')
+  expect(screen.getByText(/arc 2 of 2 slow · back/)).toBeInTheDocument()
+  for (let i = 0; i < 230; i++) {
+    all.push(fr(T0 + 21 + i * 0.08, 100 + i))
+    mockStream(all.slice(-200))
+    view.rerender(tree('/session?exercise=cup&side=left'))
+  }
+  expect(screen.getByText(/arc 2 of 2 slow · back/)).toBeInTheDocument()
+  // dot 3 (index 2) was an occluded placement: still amber, not done
+  expect(screen.getByRole('region', { name: 'Progress' }).querySelectorAll('.sx-d-amber').length).toBe(1)
 })

@@ -2,7 +2,8 @@ import type { PraxisEvent } from '../../lib/events'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 
 /** Pure views of the Waiter – cup session for the designers' 6 Oct cup look, derived only from
- *  the service's cup events and frame snapshot (`perception/cup.py`): one arc runs dot
+ *  the service's cup events (the session history from `useEventHistory`, never the socket's
+ *  200-event window, which frames fill in ~16 s) and frame snapshot (`perception/cup.py`): one arc runs dot
  *  1→5→1 (`ARC = [0,1,2,3,4,3,2,1,0]`, 8 reaches), 2 slow then 2 fast arcs. The artifact's
  *  start mark, sets and between-set rest do not exist in the FSM and are not drawn. */
 
@@ -89,12 +90,15 @@ export function cupArc(events: Ev[], frame: FrameEvent | null): { arc: number; o
   return { arc, of: phase === 'slow' ? planned.slow : planned.fast, phase, dir: reaches < REACHES_ACROSS ? 'across' : 'back' }
 }
 
-/** Seconds since the first lift of the session (the cup's active clock), or null before it.
- *  Pauses are not taken out here; the session summary's `active_s` does that at the end. */
+/** Seconds from the first lift of the session to now, or to the completion once the cup is
+ *  done (the cup's active clock), or null before it. `events` is the session history
+ *  (`useEventHistory`), not the socket window. Pauses are not taken out here; the session
+ *  summary's `active_s` does that at the end. */
 export function cupActiveS(events: Ev[], frame: FrameEvent | null): number | null {
   const first = events.find((e) => e.type === 'reach_complete')
   if (!first || !frame) return null
-  return Math.max(0, Math.floor(frame.t - Number(first.t_lift ?? first.t)))
+  const done = events.find((e) => e.type === 'cup_complete')
+  return Math.max(0, Math.floor((done?.t ?? frame.t) - Number(first.t_lift ?? first.t)))
 }
 
 /** What the progression prompt is based on: slow-arc reaches verified by the camera, and how

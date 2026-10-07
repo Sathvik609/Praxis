@@ -20,15 +20,19 @@ function mockStream(events: Record<string, unknown>[]) {
   })
 }
 
-function renderAt(path: string) {
-  return render(
+function tree(path: string) {
+  return (
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/session" element={<LiveArm />} />
         <Route path="/report" element={<div>REPORT PAGE</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+}
+
+function renderAt(path: string) {
+  return render(tree(path))
 }
 
 test('shows set, rep, best and lean minis and the shoulder band in the feed', () => {
@@ -201,4 +205,28 @@ test('a session ended early asks what got in the way (4 feedback steps)', () => 
   const end = screen.getAllByRole('button', { name: 'End session' })
   fireEvent.click(end[end.length - 1])
   expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toHaveTextContent('1 of 4')
+})
+
+test('the set check-in, a stop and the exertion chip hold after their events leave the 200-event window', () => {
+  const all: Record<string, unknown>[] = [
+    { type: 'exertion', t: 9, id: 2, level: 'moderate', reasons: ['rep time rising'], method: 'behavioural' },
+    { type: 'set_complete', t: 10, id: 3, set: 1 },
+  ]
+  for (let i = 0; i < 250; i++) all.push({ ...frame, t: 10 + i * 0.08, id: 100 + i })
+  mockStream(all.slice(0, 3))
+  const view = renderAt('/session?exercise=abduction&side=left')
+  for (let n = 4; n <= all.length; n += 7) {
+    mockStream(all.slice(0, n).slice(-200))
+    view.rerender(tree('/session?exercise=abduction&side=left'))
+  }
+  expect(screen.getByRole('dialog', { name: 'Set 1 done · how hard was that?' })).toBeInTheDocument()
+  expect(screen.getByText(/moderate/i)).toBeInTheDocument()
+  // a stop rule stays on screen however many frames follow it
+  all.push({ type: 'stop', t: 31, id: 900, rule: 'pain', text: 'Pain of 8 reported. Stopping for today.' })
+  for (let i = 0; i < 230; i++) {
+    all.push({ ...frame, t: 31 + i * 0.08, id: 1000 + i })
+    mockStream(all.slice(-200))
+    view.rerender(tree('/session?exercise=abduction&side=left'))
+  }
+  expect(screen.getByText(/Pain of 8 reported/)).toBeInTheDocument()
 })

@@ -104,6 +104,10 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
   const start = useCallback(async () => {
     setError(null)
     setSessionId(null)
+    // A new run starts from an empty window: nothing the previous run sent (a completion, setup
+    // checks) may be read as this run's (`useEventHistory` clears on the empty window too).
+    setEvents([])
+    setLastEvent(null)
     const gen = ++genRef.current
     if (replay) {
       // Replay mode: no camera; the service streams the recorded clip through the same pipeline.

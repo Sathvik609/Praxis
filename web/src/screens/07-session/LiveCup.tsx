@@ -11,6 +11,7 @@ import { coachLabel, isWhy, promptKind, type Prompt } from '../../session/agent'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
+import { useEventHistory } from '../../session/eventHistory'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useRestBreak } from '../../session/useRestBreak'
@@ -93,7 +94,9 @@ export function LiveCup() {
   const side = sp.get('side') === 'right' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
+  const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
+  // One-off events (reaches, completion, stops) outlive the socket's 200-event window here.
+  const events = useEventHistory(recent)
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const ui = useSxSession()
@@ -102,7 +105,7 @@ export function LiveCup() {
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
-  const latency = useLatency(events)
+  const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
   const [localWhy, setLocalWhy] = useState(false)
   const [declined, setDeclined] = useState(false)
@@ -171,7 +174,7 @@ export function LiveCup() {
   const doneOpen = !!complete && !doneClosed && !flow.feedbackOpen
 
   const stats = (() => {
-    if (complete) return { metricLabel: 'Active time', metric: sxClock(activeS ?? frame?.t), metricSub: 'this exercise', head: 'All arcs complete', dots: { label: 'complete', items: dots.map((): DotState => 'done') } }
+    if (complete) return { metricLabel: 'Active time', metric: sxClock(activeS), metricSub: 'this exercise', head: 'All arcs complete', dots: { label: 'complete', items: dots.map((): DotState => 'done') } }
     const items = dots.map((d): DotState => (d.state === 'next' ? 'now' : d.state))
     const head = `${marked} of 5 dots · ${arc.dir}`
     if (activeS == null) return { metricLabel: 'Arc', metric: String(arc.arc), unit: `of ${arc.of}`, metricSub: `${arc.phase} pace`, head, sub: 'The clock starts on your first lift', dots: { label: head, items } }
@@ -234,7 +237,7 @@ export function LiveCup() {
 
         {traceOpen ? (
           <div className="sx-panel sx-trace">
-            <TracePanel events={events} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
+            <TracePanel events={recent} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
           </div>
         ) : (
           <CupRef side={side} target={dotNext != null ? { k: dotNext, dir: arc.dir } : null} dots={dots.map((d) => d.state)} mode={refMode} label={refLabel} pace={arc.phase} />
@@ -282,7 +285,7 @@ export function LiveCup() {
             <div className="cup-nums">
               <div><b>{doneVerified}</b><span>verified placements</span></div>
               <div><b>{doneUnverified}</b><span>unverified</span></div>
-              <div><b>{sxClock(activeS ?? frame?.t)}</b><span>active time</span></div>
+              <div><b>{sxClock(activeS)}</b><span>active time</span></div>
               <div><b>{complete.arcs}</b><span>{plural(complete.arcs, 'arc')}</span></div>
             </div>
             <p className="cup-modal-p">

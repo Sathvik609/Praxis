@@ -115,3 +115,21 @@ test('setup_checks acks a calibrate-mode frame (that mode never emits a frame ev
   expect(ws.sent).toHaveLength(2)
   act(() => result.current.stop())
 })
+
+test('a new start() empties the event window, so a restarted run never reads the previous run', async () => {
+  const video = document.createElement('video')
+  const { result } = renderHook(() => useWebcamStream({ wsUrl: 'ws://test/session', mode: 'cup', fps: 100 }))
+  result.current.videoRef.current = video
+  await act(async () => {
+    await result.current.start()
+  })
+  act(() => FakeSocket.instances[0].deliver({ type: 'cup_complete', t: 1, id: 1, arcs: 4 }))
+  expect(result.current.events).toHaveLength(1)
+  act(() => result.current.stop())
+  await act(async () => {
+    await result.current.start()
+  })
+  expect(result.current.events).toEqual([])
+  expect(result.current.lastEvent).toBeNull()
+  act(() => result.current.stop())
+})

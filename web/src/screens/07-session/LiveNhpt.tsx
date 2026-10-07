@@ -7,6 +7,7 @@ import { coachLabel } from '../../session/agent'
 import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
+import { useEventHistory } from '../../session/eventHistory'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useRestBreak } from '../../session/useRestBreak'
@@ -39,12 +40,14 @@ export function LiveNhpt() {
   const hand = sp.get('hand') ?? 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, connected, events, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
+  const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
     replay,
   })
+  // One-off events (splits, completion, stops) outlive the socket's 200-event window here.
+  const events = useEventHistory(recent)
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const ui = useSxSession()
@@ -53,7 +56,7 @@ export function LiveNhpt() {
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
-  const latency = useLatency(events)
+  const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
 
   useEffect(() => {
@@ -152,7 +155,7 @@ export function LiveNhpt() {
 
         {traceOpen ? (
           <div className="sx-panel sx-trace">
-            <TracePanel events={events} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
+            <TracePanel events={recent} sessionId={sessionId} replay={!!replay} pipeline={[pipe, latencyLine(latency)]} />
           </div>
         ) : (
           <SxRef
