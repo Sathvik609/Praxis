@@ -52,3 +52,9 @@ test('never paced by the patient: no rep progress reaches the figure', () => {
   expect(renderWith([frame(arm)], '/session?exercise=abduction&side=left').paced).toBeUndefined()
   expect(renderWith([], '/session?exercise=arm&side=left').paced).toBeUndefined()
 })
+
+test('a gentle day (target 60°): the reference line is drawn and labelled at 60°, like the band', () => {
+  renderWith([frame({ ...arm, target_deg: 60 })], '/session?exercise=abduction&side=left')
+  expect(document.querySelector('.av-tick-t')).toHaveTextContent('60°')
+  expect(document.body.textContent).toMatch(/target 60°/)
+})

@@ -8,7 +8,7 @@ vi.mock('./AvatarPanel', () => ({
   },
 }))
 
-import { RefAvatar, demoRequested, refMode } from './RefAvatar'
+import { RefAvatar, demoRequested, refActionTime, refMode } from './RefAvatar'
 
 const ev = (type: string, t: number, extra: Record<string, unknown> = {}) => ({ type, t, id: Math.round(t * 10), ...extra })
 const frame = () => ({ type: 'frame', t: 10, id: 1, arm: { state: 'start_pose' } }) as never
@@ -76,4 +76,22 @@ test('the stage is the bare figure, mirrored to face the patient, never paced by
   expect(p).toMatchObject({ bare: true, clip: 'abduction', camera: 'front', side: 'left' })
   expect(p.paced).toBeUndefined()
   expect(p.jointList).toEqual(['lShoulder', 'lElbow', 'lWrist', 'rShoulder', 'rElbow', 'rWrist'])
+})
+
+const am = { rep: [0, 8] as [number, number], pace: { lift: [[0, 0], [0.5, 1], [1, 2]] as [number, number][], hold: [2, 5] as [number, number], lower: [[0, 8], [1, 5]] as [number, number][], peak_deg: 90, rest_deg: 0 } }
+
+test('the figure tops out at the prescribed target: 60° on a gentle day, the recorded peak otherwise', () => {
+  expect(refActionTime(am, 1, false)).toBe(2) // top of the recorded lift (90°)
+  expect(refActionTime(am, 1, false, 90)).toBe(2)
+  expect(refActionTime(am, 1, false, 60)).toBeCloseTo(1 + 1 / 3) // 60 / 90 of the way up
+  expect(refActionTime(am, 0, false, 60)).toBe(0)
+  // lowering from the 60° top joins the way down at the same elevation
+  expect(refActionTime(am, 1, true, 60)).toBeCloseTo(8 - 3 * (2 / 3))
+})
+
+test('the target line is labelled with the target it is drawn at, never a fixed 90°', () => {
+  const { container, rerender } = render(<RefAvatar clip="abduction" mode="run" demoAt={null} holdS={3} side="left" limitDeg={60} />)
+  expect(container.querySelector('.av-tick-t')).toHaveTextContent('60°')
+  rerender(<RefAvatar clip="abduction" mode="run" demoAt={null} holdS={3} side="left" />)
+  expect(container.querySelector('.av-tick-t')).toHaveTextContent('90°')
 })

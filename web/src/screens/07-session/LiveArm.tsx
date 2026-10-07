@@ -192,6 +192,7 @@ export function LiveArm() {
             mode={refMode(events, frame, hold, frame?.t ?? lastT ?? 0)}
             demoAt={demoRequested(events)}
             holdS={a?.hold_s ?? 3}
+            limitDeg={target}
             repsPerSet={repsPerSet}
             setKey={a?.set ?? 1}
           />

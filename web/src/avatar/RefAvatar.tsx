@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PraxisEvent } from '../lib/events'
 import { prefersReducedMotion } from '../lib/motion'
 import { AvatarPanel, type AvatarCtl, type ClipName } from './AvatarPanel'
-import { pacedActionTime } from './glbActions'
+import { pacedActionTime, type GlbPace } from './glbActions'
 import type { Projection } from './scene'
 
 /** Reference figure of the live Arm out to the side screen (07c), as the designers' 6 Oct artifact
@@ -51,6 +51,16 @@ export function refMode(events: PraxisEvent[], _frame: FrameLike, hold: { open: 
 
 /** Time (s) of the newest coach event that asks for avatar playback (`ui.avatar_clip`: the rule
  *  coach's `arm_intro` at exercise start and `arm_lift` when a lift starts), or null. */
+/** The GLB action time for the figure's height `h` (0 = arm down, 1 = top of its lift). The top
+ *  is the recorded peak, or `limitDeg` when that is lower (a gentle day's 60°): the height is
+ *  turned into an elevation fraction on the action's lift / lower curves (as `buildScript`). */
+export function refActionTime(am: { rep: [number, number]; pace?: GlbPace }, h: number, lowering: boolean, limitDeg?: number): number {
+  const pace = am.pace
+  const f = limitDeg != null && pace?.peak_deg && pace.rest_deg != null && limitDeg < pace.peak_deg - 1 ? Math.max(0, (limitDeg - pace.rest_deg) / (pace.peak_deg - pace.rest_deg)) : 1
+  const e = h * f
+  return pacedActionTime(am, lowering ? 0.8 + 0.2 * (1 - e) : 0.4 * e)
+}
+
 export function demoRequested(events: PraxisEvent[]): number | null {
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i]
@@ -76,6 +86,7 @@ export function RefAvatar({
   side,
   repsPerSet = 8,
   setKey = 1,
+  limitDeg = 90,
   onJoints: onJointsOut,
 }: {
   clip?: ClipName
@@ -85,6 +96,9 @@ export function RefAvatar({
   side: string
   repsPerSet?: number
   setKey?: number | string
+  /** The prescribed target (deg, the frame's `target_deg`): the figure lifts to it and the
+   *  line and label are drawn there (60° on a gentle day). */
+  limitDeg?: number
   onJoints?: (pts: Projection) => void
 }) {
   const ctl = useRef<AvatarCtl | null>(null)
@@ -141,13 +155,20 @@ export function RefAvatar({
     const len = Math.hypot(E.x - S.x, E.y - S.y) + Math.hypot(W.x - E.x, W.y - E.y)
     if (s.h < 0.05 || !s.R) s.R = Math.max(s.R * 0.9, len)
     const R = s.R
-    g.arc.setAttribute('d', `M ${S.x} ${S.y + R} A ${R} ${R} 0 0 ${dir > 0 ? 0 : 1} ${S.x + dir * R} ${S.y}`)
-    g.tick.setAttribute('x1', String(S.x + dir * (R - 12)))
-    g.tick.setAttribute('y1', String(S.y))
-    g.tick.setAttribute('x2', String(S.x + dir * (R + 12)))
-    g.tick.setAttribute('y2', String(S.y))
-    g.tickT.setAttribute('x', String(S.x + dir * (R + 16)))
-    g.tickT.setAttribute('y', String(S.y + 4))
+    // the arc runs from the arm hanging down to the target; at 90° this is the horizontal tick
+    const L = (Math.min(90, Math.max(0, limitDeg)) * Math.PI) / 180
+    const at = (r: number) => [S.x + dir * r * Math.sin(L), S.y + r * Math.cos(L)]
+    const [ax, ay] = at(R)
+    const [t1x, t1y] = at(R - 12)
+    const [t2x, t2y] = at(R + 12)
+    const [lx, ly] = at(R + 16)
+    g.arc.setAttribute('d', `M ${S.x} ${S.y + R} A ${R} ${R} 0 0 ${dir > 0 ? 0 : 1} ${ax} ${ay}`)
+    g.tick.setAttribute('x1', String(t1x))
+    g.tick.setAttribute('y1', String(t1y))
+    g.tick.setAttribute('x2', String(t2x))
+    g.tick.setAttribute('y2', String(t2y))
+    g.tickT.setAttribute('x', String(lx))
+    g.tickT.setAttribute('y', String(ly + 4))
     g.tickT.setAttribute('text-anchor', dir > 0 ? 'start' : 'end')
     g.cue.setAttribute('points', `${S.x},${S.y} ${E.x},${E.y} ${W.x},${W.y}`)
     g.cue.style.opacity = s.cue && s.phase !== 'dim' ? '1' : '0'
@@ -226,8 +247,7 @@ export function RefAvatar({
           break
         }
       }
-      const q = lowering ? 0.8 + 0.2 * (1 - s.h) : 0.4 * s.h
-      const t = pacedActionTime(c.am, q)
+      const t = refActionTime(c.am, s.h, lowering, limitDeg)
       c.clock.current.target = t
       c.clock.current.time = t
       s.cue = cue
@@ -236,7 +256,7 @@ export function RefAvatar({
     raf = requestAnimationFrame(step)
     return () => cancelAnimationFrame(raf)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tempo.lift, tempo.hold, tempo.lower, reduced, repsPerSet, avSide])
+  }, [tempo.lift, tempo.hold, tempo.lower, reduced, repsPerSet, avSide, limitDeg])
 
   const onJoints = (proj: Projection) => {
     drawOv(proj)
@@ -260,7 +280,7 @@ export function RefAvatar({
         <svg className="av-ov" aria-hidden ref={(el) => { svg.current.root = el }}>
           <path className="av-arc" ref={(el) => { svg.current.arc = el }} />
           <line className="av-tick" ref={(el) => { svg.current.tick = el }} />
-          <text className="av-tick-t" ref={(el) => { svg.current.tickT = el }}>90°</text>
+          <text className="av-tick-t" ref={(el) => { svg.current.tickT = el }}>{`${Math.round(limitDeg)}°`}</text>
           <polyline className="av-cue" ref={(el) => { svg.current.cue = el }} />
           <circle className="av-ring-bg" r={16} ref={(el) => { svg.current.ringBg = el }} />
           <circle className="av-ring" r={16} ref={(el) => { svg.current.ring = el }} />
