@@ -26,28 +26,28 @@ import { TracePanel } from './TracePanel'
 
 type CupComplete = PraxisEvent & { arcs: number; reaches: { verified?: boolean }[] }
 
-function caption(f: FrameEvent | null, lost: boolean): string {
+function caption(f: FrameEvent | null, lost: boolean, asking: boolean): string {
   if (lost) return 'I lost the sheet. Keep all four corner markers in view.'
   if (!f?.cup) return 'Getting the camera ready.'
   const c = f.cup
   if (c.dot == null) return 'Place the cup on dot 1, then rest your hand in your lap.'
   if (c.finished) return 'All four arcs done. Lovely work.'
-  if (c.awaiting_phase) return 'Two slow arcs verified. Take a breath while you decide about the fast arcs.'
+  if (c.awaiting_phase && asking) return 'Two slow arcs verified. Take a breath while you decide about the fast arcs.'
   if (c.state === 'placed' || c.state === 'over_dot') return `Cup on dot ${c.dot + 1} — good. Let your hand come back to your lap${c.expected_next != null ? `, then reach for dot ${c.expected_next + 1}` : ''}.`
   if (c.expected_next != null) return `Reach and move the cup to dot ${c.expected_next + 1}, one at a time.`
   return 'Nice and steady.'
 }
 
-/** The screen's own progression prompt for a service that has not sent one. */
-const LOCAL_PROGRESSION: Prompt = { id: 'progression', kind: 'progression', title: 'Coach suggests: try the fast arcs', text: '', options: ['Yes, go faster', 'Keep pace', 'Why?'], within_prescription: true }
 /** Seconds a coach correction keeps the coach card amber and the figure dimmed. */
 const CUE_S = 4
 
-/** "Ready to go faster?" in the artifact's cup modal (`cup-modal`). It says what the camera saw
- *  (verified slow reaches, how much faster the second slow arc was, the check-in pain) and the
- *  real rule the coach follows (`coach/rules.py` `cup_progress`). The fast arcs start only on
- *  yes; the session is not blocked meanwhile (`awaiting_phase` does not stop counting), so the
- *  artifact's "won't start until you answer" line is not shown. */
+/** "Ready to go faster?" in the artifact's cup modal (`cup-modal`), shown only for the coach's
+ *  own progression prompt (`coach/rules.py` `cup_progress`, which checks the prescription and
+ *  the unverified count; when it declines there is no modal). It says what the camera saw
+ *  (verified slow reaches, how much faster the second slow arc was, the check-in pain); "Why?"
+ *  shows the coach's own answer. The fast arcs start only on yes, through the service; the
+ *  session is not blocked meanwhile (`awaiting_phase` does not stop counting), so the artifact's
+ *  "won't start until you answer" line is not shown. */
 function ProgressionModal({ prompt, basis, whyOpen, whyText, onChoose }: { prompt: Prompt; basis: string; whyOpen: boolean; whyText: string | null; onChoose: (choice: string, index: number) => void }) {
   const id = useId()
   return (
@@ -61,15 +61,7 @@ function ProgressionModal({ prompt, basis, whyOpen, whyText, onChoose }: { promp
         <p className="cup-basis">{basis}</p>
         {whyOpen && (
           <ul className="cup-why">
-            {whyText ? (
-              <li>{whyText}</li>
-            ) : (
-              <>
-                <li>Both slow arcs are done, with at most one unverified reach in the last one</li>
-                <li>Your prescription allows the fast arcs (Hospital GRASP L2 · Waiter – cup)</li>
-                <li>Nothing goes above the prescribed level; you can keep the slow pace</li>
-              </>
-            )}
+            {whyText ? <li>{whyText}</li> : <li role="status">Asking the coach why…</li>}
           </ul>
         )}
         <div className="cup-modal-actions">
@@ -87,7 +79,7 @@ function ProgressionModal({ prompt, basis, whyOpen, whyText, onChoose }: { promp
 /** Screen 07b · Live session, Waiter – cup (GRASP coordination), in the designers' 6 Oct cup
  *  look (`sx-*` + `cup-*`) on the real cup FSM: camera with the placement band, the cup
  *  reference figure pointing at the next dot, coach card (correction tone), progress card, the
- *  progression modal from the coach's prompt (or the screen's fallback) and the done modal.
+ *  progression modal from the coach's prompt (never the screen's own) and the done modal.
  *  Placements are verified from the camera only; the figure never scores. */
 export function LiveCup() {
   const [sp] = useSearchParams()
@@ -107,8 +99,6 @@ export function LiveCup() {
   const flow = useSessionFlow(events, send, stop, connected)
   const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
-  const [localWhy, setLocalWhy] = useState(false)
-  const [declined, setDeclined] = useState(false)
   const [doneClosed, setDoneClosed] = useState(false)
 
   useEffect(() => {
@@ -161,10 +151,9 @@ export function LiveCup() {
   const pain = readCheckinPain()
   const facts = cupProgressFacts(events, frame)
   const basis = `Based on: ${facts.verified} of ${facts.total} verified${facts.fasterPct != null ? ` · reach time ${Math.abs(facts.fasterPct)}% ${facts.fasterPct >= 0 ? 'faster' : 'slower'} than arc 1` : ''}${pain != null ? ` · pain ${pain} before you started` : ''}`
+  // only the coach's own progression prompt opens the modal; the screen never proposes one
   const serviceProgression = !!cp.prompt && promptKind(cp.prompt) === 'progression' && !hold.prompt
-  // the screen's own progression prompt once the slow arcs are verified, when the service sent none
-  const localProgression = !coach.prompt && !!cup?.awaiting_phase && cup.phase === 'slow' && !declined
-  const showModal = !flow.feedbackOpen && !hold.open && !complete && (serviceProgression || localProgression)
+  const showModal = !flow.feedbackOpen && !hold.open && !complete && serviceProgression
 
   const nextId = complete ? nextExercise(readDay()) : null
   const nextEx = nextId && nextId !== 'cup' ? exerciseById(nextId) : null
@@ -188,7 +177,7 @@ export function LiveCup() {
       captions={ui.captions}
       eyebrow={eyebrow}
       tone={coachTone}
-      caption={coach.caption?.text ?? label.coach ?? caption(frame, lost)}
+      caption={coach.caption?.text ?? label.coach ?? caption(frame, lost, serviceProgression)}
       label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
       source={coach.captionSource}
     />
@@ -255,25 +244,7 @@ export function LiveCup() {
         <SxStats {...stats} extra={<ExertionChip exertion={coach.exertion} compact />} verified={verifiedReaches} unverified={unverified} />
       </main>
 
-      {showModal && (
-        <ProgressionModal
-          prompt={serviceProgression && cp.prompt ? cp.prompt : LOCAL_PROGRESSION}
-          basis={basis}
-          whyOpen={serviceProgression ? cp.whyOpen : localWhy}
-          whyText={serviceProgression ? cp.whyText : null}
-          onChoose={(c, i) => {
-            if (serviceProgression) {
-              // an answered progression never falls back to the screen's own prompt
-              if (!isWhy(c)) setDeclined(true)
-              cp.choose(c, i)
-              return
-            }
-            if (isWhy(c)) setLocalWhy((v) => !v)
-            else if (i === 0) send({ cmd: 'set_phase', phase: 'fast' })
-            else setDeclined(true)
-          }}
-        />
-      )}
+      {showModal && cp.prompt && <ProgressionModal prompt={cp.prompt} basis={basis} whyOpen={cp.whyOpen} whyText={cp.whyText} onChoose={cp.choose} />}
 
       {doneOpen && (
         <div className="sx-scrim cup-scrim">

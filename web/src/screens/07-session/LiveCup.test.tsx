@@ -84,19 +84,16 @@ test('the reference points at the next dot from the frame', () => {
   expect(screen.getByText('Reference · dot 4 is next')).toBeInTheDocument()
 })
 
-test('the screen\'s own progression modal (no service prompt) says what it is based on, from the camera', () => {
+test('without a service progression prompt (the rule coach declined) no modal opens and nothing asks for the fast arcs', () => {
   sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 3 }))
-  const waiting = { ...frame, cup: { ...frame.cup, arcs_done: 2, awaiting_phase: true, arc_means_ms: [1500, 1200] } }
-  mockStream([reach(5, 1, true), reach(6, 2, true), reach(7, 3, false, 'cup_occluded'), waiting, { type: 'arc_complete', t: 11, id: 2, arc: 2, phase: 'slow', mean_reach_ms: 1200, unverified: 0, awaiting_phase: true }])
+  const waiting = { ...frame, cup: { ...frame.cup, arcs_done: 2, awaiting_phase: true, arc_means_ms: [1500, 1200], expected_next: 1, dot: 0, state: 'at_dot' } }
+  mockStream([reach(5, 1, false, 'cup_occluded'), reach(6, 2, false, 'cup_occluded'), waiting, { type: 'arc_complete', t: 11, id: 2, arc: 2, phase: 'slow', mean_reach_ms: 1200, unverified: 2, reaches: 8, awaiting_phase: true }])
   renderAt('/session?exercise=cup&side=left')
-  const dlg = screen.getByRole('dialog', { name: 'Ready to go faster?' })
-  expect(dlg).toHaveTextContent('Inside your program')
-  expect(dlg).toHaveTextContent('Based on: 2 of 3 verified · reach time 20% faster than arc 1')
-  expect(dlg.textContent).not.toMatch(/won.t start until you answer|posture/)
-  fireEvent.click(within(dlg).getByRole('button', { name: 'Why?' }))
-  expect(dlg).toHaveTextContent(/at most one unverified reach/)
-  fireEvent.click(within(dlg).getByRole('button', { name: 'Yes, go faster' }))
-  expect(send).toHaveBeenCalledWith({ cmd: 'set_phase', phase: 'fast' })
+  expect(screen.queryByRole('dialog', { name: 'Ready to go faster?' })).toBeNull()
+  expect(document.body.textContent).not.toMatch(/at most one unverified reach|prescription allows the fast arcs|decide about the fast arcs/)
+  expect(send).not.toHaveBeenCalledWith({ cmd: 'set_phase', phase: 'fast' })
+  // the caption goes on with the next dot instead of waiting on a question nobody asked
+  expect(screen.getByText(/Reach and move the cup to dot 2/)).toBeInTheDocument()
 })
 
 const cue = (id: number, extra: Record<string, unknown> = {}) => ({ type: 'coach', t: 10, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [], ui: {}, ...extra })
@@ -110,6 +107,11 @@ test('the service progression prompt opens the same modal, is answered with {cmd
   fireEvent.click(screen.getByRole('button', { name: 'Why?' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'progression', choice: 'Why?' })
   expect(screen.getByRole('button', { name: 'Why?' })).toHaveAttribute('aria-expanded', 'true')
+  // until the coach answers, the modal claims nothing of its own
+  const dlg = screen.getByRole('dialog', { name: 'Ready to go faster?' })
+  expect(dlg).toHaveTextContent('Asking the coach why…')
+  expect(dlg.textContent).not.toMatch(/at most one unverified reach|prescription allows/)
+  expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'set_phase' }))
   fireEvent.click(screen.getByRole('button', { name: 'Keep pace' }))
   expect(send).toHaveBeenLastCalledWith({ cmd: 'answer', prompt: 'progression', choice: 'Keep pace' })
   // declined: neither the service prompt nor the screen's own fallback comes back
