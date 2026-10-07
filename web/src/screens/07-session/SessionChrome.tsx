@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type ChangeEvent, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
 import { Chip } from '../../design/Chip'
-import { REST_AT } from '../../lib/plan'
+import { usePainStopLevel } from '../../lib/api'
 import { plural } from '../../lib/plural'
 import { readPrefs } from '../../lib/prefs'
 import type { AgentStatus, CoachSource } from '../../session/agent'
@@ -480,6 +480,8 @@ const END_REASONS: [Exclude<EndReason, 'pain' | 'rest' | 'paused'>, string][] = 
 export function SxEndDialog({ open, done, noun, onPain, onEnd, onClose }: { open: boolean; done: number; noun: string; onPain: () => void; onEnd: (reason: Exclude<EndReason, 'pain' | 'rest' | 'paused'>) => void; onClose: () => void }) {
   const id = useId()
   const [pick, setPick] = useState<Exclude<EndReason, 'rest' | 'paused'> | null>(null)
+  // the prescription's stop level, the one the service's pain stop rule uses
+  const painMax = usePainStopLevel(open)
   const [wasOpen, setWasOpen] = useState(open)
   if (wasOpen !== open) {
     setWasOpen(open)
@@ -506,7 +508,7 @@ export function SxEndDialog({ open, done, noun, onPain, onEnd, onClose }: { open
           ))}
         </div>
         <div className="sx-modal-foot">
-          <p>{`Pain of ${REST_AT} or more ends practice for today and flags your therapist.`}</p>
+          <p>{painMax != null ? `Pain of ${painMax} or more ends practice for today and flags your therapist.` : 'Pain at your stop level ends practice for today and flags your therapist.'}</p>
           <div className="sx-end-actions">
             <button type="button" className="sx-btn sx-btn-secondary" autoFocus onClick={onClose}>Go back</button>
             <button type="button" className="sx-btn sx-btn-primary" disabled={!pick} onClick={() => (pick === 'pain' ? onPain() : pick && onEnd(pick))}>End session</button>

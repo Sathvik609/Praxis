@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { mockApi, PRESCRIPTION } from '../../test/api-mock'
 import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
 
 test('paused overlay explains why and offers resume', () => {
@@ -36,10 +37,19 @@ test('stopped overlay names the rule and says the therapist is flagged', () => {
   expect(screen.getByRole('button', { name: /Save and continue/ })).toBeInTheDocument()
 })
 
-test('pain check states the real stop level (7, from the plan), never 5', () => {
+test('pain check states the prescription\'s stop level (stop_rules.pain_max), the one the service applies', async () => {
+  mockApi({ '/api/prescription': { ...PRESCRIPTION, stop_rules: { ...PRESCRIPTION.stop_rules, pain_max: 6 } } })
   render(<PainCheck open onSubmit={vi.fn()} onCancel={vi.fn()} />)
-  expect(screen.getByText(/Pain at or above 7 ends the session/)).toBeInTheDocument()
-  expect(screen.queryByText(/above 5/)).not.toBeInTheDocument()
+  expect(await screen.findByText(/Pain at or above 6 ends the session/)).toBeInTheDocument()
+  expect(screen.queryByText(/above 7|above 5/)).not.toBeInTheDocument()
+  vi.unstubAllGlobals()
+})
+
+test('pain check without the prescription names the stop level, never a number it does not know', async () => {
+  mockApi({})
+  render(<PainCheck open onSubmit={vi.fn()} onCancel={vi.fn()} />)
+  expect(await screen.findByText(/Pain at or above your stop level ends the session/)).toBeInTheDocument()
+  vi.unstubAllGlobals()
 })
 
 test('pain check sends the chosen level', () => {

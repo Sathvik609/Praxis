@@ -4,6 +4,7 @@ import { statusLabel } from '../../session/liveStatus'
 import { browserSpeak, coachVolume, resetSpeech, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
 import { TracePanel } from './TracePanel'
+import { mockApi, PRESCRIPTION } from '../../test/api-mock'
 
 const barProps = () => ({
   onPause: vi.fn(),
@@ -320,13 +321,17 @@ describe('SxHold', () => {
 })
 
 describe('SxEndDialog', () => {
-  it('end dialog pain option opens the pain check, others end with a reason', () => {
+  it('end dialog pain option opens the pain check, others end with a reason', async () => {
+    mockApi({ '/api/prescription': { ...PRESCRIPTION, stop_rules: { ...PRESCRIPTION.stop_rules, pain_max: 6 } } })
     const onPain = vi.fn()
     const onEnd = vi.fn()
     const { rerender } = render(<SxEndDialog open done={3} noun="lift" onPain={onPain} onEnd={onEnd} onClose={vi.fn()} />)
     expect(screen.getByRole('dialog', { name: 'Ending the session' })).toBeInTheDocument()
     expect(screen.getByText(/The 3 lifts the camera verified so far are saved either way/)).toBeInTheDocument()
-    expect(screen.getByText(/Pain of 7 or more ends practice for today/)).toBeInTheDocument()
+    // the prescription's stop level (stop_rules.pain_max), the one the service's stop rule uses
+    expect(await screen.findByText(/Pain of 6 or more ends practice for today/)).toBeInTheDocument()
+    expect(screen.queryByText(/Pain of 7/)).toBeNull()
+    vi.unstubAllGlobals()
     const end = screen.getByRole('button', { name: 'End session' })
     expect(end).toBeDisabled()
     fireEvent.click(screen.getByRole('radio', { name: 'I have pain or feel unwell' }))

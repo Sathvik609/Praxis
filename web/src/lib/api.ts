@@ -124,3 +124,11 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const reload = useCallback(() => setTick((t) => t + 1), [])
   return { data, error, reload }
 }
+
+/** The prescription's pain stop level (`stop_rules.pain_max`, the level the service's stop rule
+ *  uses), read only while `open`; null until it loads or when the service is unreachable. */
+export function usePainStopLevel(open: boolean): number | null {
+  const { data } = useApi(() => (open ? api.prescription() : Promise.resolve(null)), [open])
+  const v = data?.stop_rules?.pain_max
+  return typeof v === 'number' ? v : null
+}
