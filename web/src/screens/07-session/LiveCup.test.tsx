@@ -247,3 +247,11 @@ test('the arc direction and the dots of the current arc survive the window', () 
   // dot 3 (index 2) was an occluded placement: still amber, not done
   expect(screen.getByRole('region', { name: 'Progress' }).querySelectorAll('.sx-d-amber').length).toBe(1)
 })
+
+test('ending from a stop rule records the stop rule as the end reason, never null', () => {
+  mockStream([frame, { type: 'stop', t: 12, id: 50, rule: 'exertion', text: 'Sustained high exertion. Session ended and saved.' }])
+  renderAt('/session?exercise=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
+})

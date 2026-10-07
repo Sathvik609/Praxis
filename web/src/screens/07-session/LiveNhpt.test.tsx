@@ -236,3 +236,11 @@ test('tracking lost and the last split hold after their events leave the 200-eve
   expect(within(screen.getByRole('banner')).getByRole('status')).toHaveTextContent('Tracking lost')
   expect(screen.getByRole('region', { name: 'Progress' })).toHaveTextContent('last peg 5.1 s')
 })
+
+test('ending from a stop rule records the stop rule as the end reason, never null', () => {
+  const send = mockStream([frame, { type: 'stop', t: 12, id: 50, rule: 'exertion', text: 'Sustained high exertion. Session ended and saved.' }])
+  renderAt('/session?hand=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
+})

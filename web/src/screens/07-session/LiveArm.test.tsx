@@ -13,10 +13,11 @@ const frame = {
   hand: { present: false }, models: { hand: false, pose: true }, proc_ms: 20,
 }
 
+const armSend = vi.fn()
 function mockStream(events: Record<string, unknown>[]) {
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive: true, connected: true, lastEvent: (events[events.length - 1] ?? null) as never,
-    events: events as never, sessionId: null, error: null, start: vi.fn(async () => {}), stop: vi.fn(), send: vi.fn(), videoRef: { current: null },
+    events: events as never, sessionId: null, error: null, start: vi.fn(async () => {}), stop: vi.fn(), send: armSend, videoRef: { current: null },
   })
 }
 
@@ -229,4 +230,12 @@ test('the set check-in, a stop and the exertion chip hold after their events lea
     view.rerender(tree('/session?exercise=abduction&side=left'))
   }
   expect(screen.getByText(/Pain of 8 reported/)).toBeInTheDocument()
+})
+
+test('ending from a stop rule records the stop rule as the end reason, never null', () => {
+  mockStream([frame, { type: 'stop', t: 12, id: 50, rule: 'exertion', text: 'Sustained high exertion. Session ended and saved.' }])
+  renderAt('/session?exercise=abduction&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  expect(armSend).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
 })

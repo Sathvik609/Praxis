@@ -15,12 +15,12 @@ import { useEventHistory } from '../../session/eventHistory'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useRestBreak } from '../../session/useRestBreak'
-import { useSessionFlow, type EndReason } from '../../session/useSessionFlow'
+import { useSessionFlow, type EndReason, type StopEnd } from '../../session/useSessionFlow'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { LivePrompt } from './LivePrompt'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxRef, SxStats, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { ExertionChip, PainCheck, SessionOverlay, overlayEndReason } from './SessionOverlays'
 import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
 
@@ -96,7 +96,7 @@ export function LiveArm() {
   const setCheckOpen = !!setDone && !complete
   const reps = events.filter((e) => e.type === 'rep_complete') as RepComplete[]
 
-  const finish = (endedEarly: boolean, reason?: EndReason) => {
+  const finish = (endedEarly: boolean, reason?: EndReason | StopEnd) => {
     flow.finish(endedEarly, reason, {
       kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
       lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
@@ -236,7 +236,7 @@ export function LiveArm() {
 
       <SetCheckIn open={setCheckOpen} setNumber={setDone?.set ?? 1} onSubmit={(r) => { if (r !== null) send({ cmd: 'rpe', rpe: r }); setAskedSets((s) => [...s, setDone?.set ?? 0]) }} />
       <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar
         onPause={() => send({ cmd: 'pause' })}

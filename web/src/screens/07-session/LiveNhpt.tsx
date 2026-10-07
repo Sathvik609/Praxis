@@ -11,13 +11,13 @@ import { useEventHistory } from '../../session/eventHistory'
 import { browserSpeak, useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useRestBreak } from '../../session/useRestBreak'
-import { useSessionFlow, type EndReason } from '../../session/useSessionFlow'
+import { useSessionFlow, type EndReason, type StopEnd } from '../../session/useSessionFlow'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
 import { BoardView } from './BoardView'
 import { LivePrompt } from './LivePrompt'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxRef, SxStats, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
-import { ExertionChip, PainCheck, SessionOverlay } from './SessionOverlays'
+import { ExertionChip, PainCheck, SessionOverlay, overlayEndReason } from './SessionOverlays'
 import { TracePanel } from './TracePanel'
 
 type NhptComplete = PraxisEvent & { total_s: number; splits_s: number[]; pegs: unknown[] }
@@ -75,7 +75,7 @@ export function LiveNhpt() {
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
 
-  const finish = (endedEarly: boolean, reason?: EndReason) => {
+  const finish = (endedEarly: boolean, reason?: EndReason | StopEnd) => {
     flow.finish(endedEarly, reason, {
       kind: 'nhpt',
       hand,
@@ -201,7 +201,7 @@ export function LiveNhpt() {
       </main>
 
       <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} onSave={flow.save} onSkip={flow.skip} />
-      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true)} />
+      <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar
         onPause={() => send({ cmd: 'pause' })}

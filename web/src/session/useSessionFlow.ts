@@ -7,6 +7,9 @@ import type { Feedback } from '../screens/08-feedback/FeedbackOverlay'
 /** Why a session ended early: the End dialog's reasons (`pain` opens the pain check instead),
  *  or the hold it was ended from (`rest`, `paused`). */
 export type EndReason = 'pain' | 'tired' | 'blocked' | 'finished' | 'rest' | 'paused'
+/** A stop rule ended the session (`stop:<rule id>`, e.g. `stop:exertion`); events.schema.json
+ *  documents `end_reason` as free text or a stop rule id. */
+export type StopEnd = `stop:${string}`
 
 /** End-of-session flow shared by the live screens: forward the stored check-in when the
  *  socket opens; on End/complete show the feedback overlay; after the service acknowledges
@@ -22,7 +25,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
   const [early, setEarly] = useState(false)
   const fallback = useRef<unknown>(null)
   const then = useRef<Then | null>(null)
-  const ending = useRef<{ ended_early: boolean; end_reason: EndReason | null }>({ ended_early: false, end_reason: null })
+  const ending = useRef<{ ended_early: boolean; end_reason: EndReason | StopEnd | null }>({ ended_early: false, end_reason: null })
   const sentCheckin = useRef(false)
 
   useEffect(() => {
@@ -62,7 +65,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     /** `fallbackState` is the report's state when the service never answers (offline).
      *  `next` ("Next exercise"): after the feedback is stored, bind the report to today's run
      *  and open `next.url` instead of the report (offline still goes to the report). */
-    finish: (endedEarly: boolean, reason?: EndReason, fallbackState?: Record<string, unknown>, next?: Then) => {
+    finish: (endedEarly: boolean, reason?: EndReason | StopEnd, fallbackState?: Record<string, unknown>, next?: Then) => {
       then.current = next ?? null
       ending.current = { ended_early: endedEarly, end_reason: reason ?? null }
       fallback.current = { ...fallbackState, ...ending.current }

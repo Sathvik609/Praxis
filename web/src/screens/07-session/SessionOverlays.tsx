@@ -8,6 +8,7 @@ import { Overlay } from '../../design/Overlay'
 import { usePainStopLevel } from '../../lib/api'
 import type { CoachSource } from '../../session/agent'
 import type { ExertionState, Overlay as OverlayState } from '../../session/useCoach'
+import type { EndReason, StopEnd } from '../../session/useSessionFlow'
 
 /** Title of the hold / overlay per stop rule (shared with the session chrome's `sxHold`). */
 export const RULE_TITLE: Record<string, string> = {
@@ -71,6 +72,14 @@ export function SessionOverlay({
       )}
     </Overlay>
   )
+}
+
+/** The end reason for ending from an overlay: the stop rule that ended the session
+ *  (`stop:<rule>`), or the rest / pause it was ended from. */
+export function overlayEndReason(o: OverlayState | null): EndReason | StopEnd {
+  if (o?.kind === 'rest') return 'rest'
+  if (o?.kind === 'paused') return 'paused'
+  return `stop:${o?.rule || 'unknown'}`
 }
 
 /** "I'm in pain": 0–10 pain check; the stop rule runs in the service, never here. The copy
