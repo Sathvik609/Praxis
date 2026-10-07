@@ -25,3 +25,10 @@ test('no rule hides the red "Live · not recording" marker (.sx-rec)', () => {
 test('no rule hides Sample labels (judge-only gate, hp-sample, pg-sample)', () => {
   expect(hidingRules(/\.judge-only(?![\w-])|\.hp-sample(?![\w-])|\.pg-sample(?![\w-])/)).toEqual([])
 })
+
+test('-webkit-backdrop-filter comes before its unprefixed twin (the build keeps both)', () => {
+  // Tailwind's lightningcss pass keeps only the -webkit- line when the unprefixed one comes first,
+  // so Chrome kept the glass blur an override switches off (the Home avatar went blurry on Railway).
+  const unprefixedFirst = rules.filter((r) => /(?<![-\w])backdrop-filter\s*:[^;}]+;\s*-webkit-backdrop-filter/.test(r.body))
+  expect(unprefixedFirst.map((r) => r.selector)).toEqual([])
+})
