@@ -178,17 +178,47 @@ def api_session(session_id: str) -> dict[str, object]:
     return s
 
 
+def _is_int_0_10(v: Any) -> bool:
+    return not isinstance(v, bool) and isinstance(v, int) and 0 <= v <= 10
+
+
+def _is_barriers(v: Any) -> bool:
+    return isinstance(v, list) and len(v) <= 16 and all(isinstance(x, str) and 0 < len(x) <= 40 for x in v)
+
+
+# The answers screen 08 collects, which the report may edit afterwards, and their checks.
+# `pain_after` may be cleared (None); the others are left out when unanswered.
+FEEDBACK_EDITABLE: dict[str, tuple[Any, str]] = {
+    "pain_after": (lambda v: v is None or _is_int_0_10(v), "pain_after must be an integer 0-10"),
+    "difficulty": (lambda v: v in ("too_easy", "just_right", "hard", "couldnt_finish"), "difficulty must be too_easy, just_right, hard or couldnt_finish"),
+    "effort": (_is_int_0_10, "effort must be an integer 0-10"),
+    "again_tomorrow": (lambda v: v in ("yes_easily", "yes_probably", "not_sure", "no"), "again_tomorrow must be yes_easily, yes_probably, not_sure or no"),
+    "barriers": (_is_barriers, "barriers must be a list of at most 16 short strings"),
+    "detail": (lambda v: isinstance(v, str) and len(v) <= 2000, "detail must be text of at most 2000 characters"),
+}
+# How the session ended is fixed when it ends; the edit form sends these back and they are dropped.
+FEEDBACK_FIXED = ("cmd", "ended_early", "end_reason")
+
+
 @app.patch("/api/sessions/{session_id}/feedback")
 def api_patch_feedback(session_id: str, body: dict[str, Any] = Body(...)) -> dict[str, object]:
     """Report · Edit feedback (6 Oct, ruling R4). Merges the body into the stored session's
     feedback and `summary.told_us` exactly as the end-of-session path does, writes a
     `feedback_edit` trace line, and re-applies the post-session pain rule: `pain_after` at or
     above the stop level adds one `pain_after` therapist flag (never a stop; the session is
-    over). 404 for an unknown session, 422 for a non-object body or a pain that is not 0-10."""
-    patch = {k: v for k, v in body.items() if k != "cmd"}
-    pain = patch.get("pain_after")
-    if pain is not None and (isinstance(pain, bool) or not isinstance(pain, int) or not 0 <= pain <= 10):
-        raise HTTPException(422, [{"loc": ["body", "pain_after"], "msg": "pain_after must be an integer 0-10"}])
+    over). Only the screen-08 answers (`FEEDBACK_EDITABLE`) are merged, each type- and
+    length-checked; `ended_early` / `end_reason` (how the session ended) are dropped, never
+    merged. 404 for an unknown session, 422 for a non-object body, any other key or a bad value."""
+    patch = {k: v for k, v in body.items() if k not in FEEDBACK_FIXED}
+    errors = []
+    for k, v in patch.items():
+        rule = FEEDBACK_EDITABLE.get(k)
+        if rule is None:
+            errors.append({"loc": ["body", k], "msg": f"{k} is not an editable feedback answer"})
+        elif not rule[0](v):
+            errors.append({"loc": ["body", k], "msg": rule[1]})
+    if errors:
+        raise HTTPException(422, errors)
     out = store.update_feedback(session_id, patch, t=_clock().timestamp())
     if out is None:
         raise HTTPException(404, "unknown session")

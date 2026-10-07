@@ -670,3 +670,43 @@ def test_patch_feedback_unknown_session_is_404_and_non_object_is_422(client):
     assert client.patch(f"/api/sessions/{sid}/feedback", json="pain").status_code == 422
     assert client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": 11}).status_code == 422
     assert client.patch(f"/api/sessions/{sid}/feedback", json={"pain_after": "high"}).status_code == 422
+
+
+def test_patch_feedback_accepts_only_the_editable_answers_and_never_how_the_session_ended(client):
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets") as ws:
+        ws.send_text('{"cmd":"checkin","pain":2,"energy":"comfortable","minutes":14,"new_symptoms":false}')
+        sid = ws.receive_json()["session_id"]
+        ws.send_text('{"cmd":"feedback","pain_after":2,"difficulty":"hard","ended_early":true,"end_reason":"tired"}')
+        ws.receive_json()
+    ok = {"pain_after": 3, "difficulty": "just_right", "effort": 4, "again_tomorrow": "yes_probably", "barriers": ["tired", "time"], "detail": "Shoulder felt fine."}
+    r = client.patch(f"/api/sessions/{sid}/feedback", json=ok)
+    assert r.status_code == 200
+    fb = r.json()["feedback"]
+    assert {k: fb[k] for k in ok} == ok
+    # how the session ended is fixed at the end: the edit form's ended_early / end_reason are
+    # dropped, never merged
+    r = client.patch(f"/api/sessions/{sid}/feedback", json={"ended_early": False, "end_reason": None, "cmd": "feedback", "effort": 7})
+    assert r.status_code == 200
+    fb = r.json()["feedback"]
+    assert fb["ended_early"] is True and fb["end_reason"] == "tired" and fb["effort"] == 7
+    rows = client.get(f"/api/trace?session={sid}&n=50").json()["rows"]
+    assert [x["changed"] for x in rows if x["kind"] == "feedback_edit"][-1] == {"effort": 7}
+    bad = [
+        {"summary": {"stopped": False}},
+        {"flags": []},
+        {"difficulty": "impossible"},
+        {"difficulty": 3},
+        {"effort": "high"},
+        {"effort": 11},
+        {"effort": True},
+        {"again_tomorrow": "maybe"},
+        {"barriers": "tired"},
+        {"barriers": [1, 2]},
+        {"barriers": ["x" * 41]},
+        {"barriers": ["tired"] * 17},
+        {"detail": 5},
+        {"detail": "x" * 2001},
+    ]
+    for body in bad:
+        assert client.patch(f"/api/sessions/{sid}/feedback", json=body).status_code == 422, body
+    assert client.get(f"/api/sessions/{sid}").json()["feedback"]["effort"] == 7
