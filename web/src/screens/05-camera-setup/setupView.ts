@@ -1,8 +1,11 @@
 /** Screen 05's checklist per camera view (locked set, 23 Sep 2026; design v2 6 Oct).
  *
  *  - `side`  (hidden since 28 Sep, dormant): practising side square to the camera.
- *  - `front` (Arm out to the side): facing the camera.
- *  - `table` (Waiter – cup, NHPT): the printed sheet under an overhead camera. The rows are the
+ *  - `front` (Arm out to the side): facing the laptop, which stands on a table at about chest
+ *    height, 2–2.5 m away.
+ *  - `table` (Waiter – cup, NHPT): the printed sheet flat 25–35 cm in front of the laptop, its
+ *    screen tilted forward so the built-in camera looks down at the sheet (up to 50° from
+ *    straight down passes; laptop camera only since 10 Oct 2026). The rows are the
  *    service's (`quality.build_checks`: camera, person, task_area, markers, angle, lighting),
  *    with the client-only `side_confirm` self-check ("Is this your left arm?") after `person`;
  *    nothing on the service checks which arm is in the picture.
