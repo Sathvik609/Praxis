@@ -57,18 +57,20 @@ def main(argv=None) -> int:
             "notes": "OpenCV-rendered cup target sheet, blue cup base, 2 slow + 2 fast arcs, mp4v",
         }
     )
-    arm = write_arm_landmarks(out / "synthetic_arm_01.jsonl", sets=2, reps=8, hold_s=3.2, fps=15, seed=1)
+    # Arm out to the side (abduction, front view): the visible arm exercise since 28 Sep
+    arm = write_arm_landmarks(out / "synthetic_arm_01.jsonl", sets=2, reps=8, hold_s=3.2, fps=15, seed=1, frontal=True)
     (out / "synthetic_arm_01.labels.json").write_text(json.dumps(arm, indent=1))
     entries.append(
         {
             "id": "synthetic_arm_01",
             "mode": "arm",
+            "exercise": "abduction",
             "landmarks": "synthetic_arm_01.jsonl",
             "labels": "synthetic_arm_01.labels.json",
             "synthetic": True,
             "participant": "render",
             "side": "left",
-            "notes": "Synthetic 33-point landmark stream (the pose DNN cannot see a drawn figure); exercises ArmFSM only",
+            "notes": "Synthetic front-view 33-point landmark stream for Arm out to the side (the pose DNN cannot see a drawn figure); exercises ArmFSM only",
         }
     )
     manifest_path = out / "manifest.json"

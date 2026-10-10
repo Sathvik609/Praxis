@@ -2,14 +2,14 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://praxis.local/evaluation/labels.schema.json",
  "title": "Praxis ground-truth labels for one recorded clip (praxis.labels/1)",
- "description": "One file per clip, next to it: raw/<participant>/<exercise>/<timestamp>.labels.json. Written by services/session/tools/label_clip.py; validated by tools/dataset_v1.py:validate_labels. Times are seconds from the first frame of the clip (frame_index / fps). Indices are 0-based and match the pipeline's events: NHPT `hole` 0..8, cup `to_dot` 0..4 (printed dot number minus 1).",
+ "description": "One file per clip, next to it: raw/<participant>/<exercise>/<timestamp>.labels.json. Written by services/session/tools/label_clip.py; validated by tools/dataset_v1.py:validate_labels. Times are seconds from the first frame of the clip (frame_index / fps). Indices are 0-based and match the pipeline's events: NHPT `hole` 0..8, cup `to_dot` 0..4 (printed dot number minus 1). Only the three exercises of the 28 Sep lock are labelled (abduction = Arm out to the side, cup = Waiter – cup, nhpt = Nine-Hole Peg Test).",
  "type": "object",
  "required": ["schema", "clip_id", "exercise", "labeller", "reps"],
  "additionalProperties": false,
  "properties": {
   "schema": {"const": "praxis.labels/1"},
   "clip_id": {"type": "string", "minLength": 1},
-  "exercise": {"enum": ["pendulum", "flexion", "abduction", "cup", "nhpt"]},
+  "exercise": {"enum": ["abduction", "cup", "nhpt"]},
   "labeller": {"type": "string", "minLength": 1, "description": "Initials of the person who labelled (not the participant)."},
   "labelled_at": {"type": "string"},
   "fps": {"type": "number", "exclusiveMinimum": 0},
@@ -37,13 +37,13 @@
    "properties": {
     "rep": {"type": "integer", "minimum": 1},
     "t_start": {"type": "number", "minimum": 0, "description": "Arm: arm starts to move. Cup: cup lifted off its dot. NHPT: peg lifted from the dish."},
-    "t_end": {"type": "number", "minimum": 0, "description": "Arm: arm back at the start position (pendulum: one full to-and-fro swing done). Cup: cup set down on the next dot. NHPT: peg seated in the hole."},
+    "t_end": {"type": "number", "minimum": 0, "description": "Arm: arm back at the start position. Cup: cup set down on the next dot. NHPT: peg seated in the hole. eval.py matches the pipeline's rep to this time."},
     "expected": {"enum": ["verified", "unverified"], "description": "What the product SHOULD say: verified = a correct rep, fully visible; unverified = the camera could not or should not verify it (occluded, marker lost, swing too small, hold too short, target missed)."},
-    "reason": {"type": ["string", "null"], "description": "Why the rep should be unverified (occluded, marker_lost, swing_too_small, hold_too_short, target_missed, other)."},
-    "deliberate_error": {"enum": [null, "lean", "hike", "small_swing", "occluded_cup", "dropped_peg", "short_hold", "other"], "description": "Set when the participant performed a scripted error rep (PROTOCOL.md)."},
+    "reason": {"type": ["string", "null"], "description": "Why the rep should be unverified (occluded, marker_lost, hold_too_short, target_missed, other)."},
+    "deliberate_error": {"enum": [null, "lean", "hike", "past_ceiling", "low_lift", "short_hold", "occluded_cup", "covered_marker", "dim_light", "dropped_peg", "other"], "description": "Set when the participant performed a scripted error rep (evaluation/PROTOCOL.md §5)."},
     "hole": {"type": "integer", "minimum": 0, "maximum": 8},
     "to_dot": {"type": "integer", "minimum": 0, "maximum": 4},
-    "peak_deg_goniometer": {"type": ["number", "null"], "minimum": 0, "maximum": 180, "description": "Arm lifts: shoulder angle read from the goniometer app at the top of the rep (PROTOCOL.md). null when not measured."},
+    "peak_deg_goniometer": {"type": ["number", "null"], "minimum": 0, "maximum": 180, "description": "Arm out to the side: shoulder abduction angle read from the phone goniometer app at the top of the rep (evaluation/PROTOCOL.md §6). eval.py reports the camera's peak-angle error against it. null when not measured."},
     "compensation": {
      "type": "object",
      "required": ["lean", "hike"],
@@ -66,7 +66,7 @@
    "then": {"properties": {"reps": {"items": {"required": ["to_dot"]}}}}
   },
   {
-   "if": {"properties": {"exercise": {"enum": ["pendulum", "flexion", "abduction"]}}},
+   "if": {"properties": {"exercise": {"const": "abduction"}}},
    "then": {"properties": {"reps": {"items": {"required": ["compensation"]}}}}
   }
  ]

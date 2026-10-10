@@ -25,8 +25,9 @@ def test_make_and_eval_dataset_v0_on_synthetic_clip(tmp_path: Path):
     out = tmp_path / "res"
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
-    assert res["rep_f1"] == 1.0 and res["nhpt_mae_s"] < 0.5
-    assert res["n_synthetic"] == 3 and res["n_real"] == 0
+    syn = res["synthetic"]
+    assert syn["nhpt"]["rep_f1"] == 1.0 and syn["nhpt"]["nhpt_mae_s"] < 0.5
+    assert res["n_synthetic"] == 3 and res["n_real"] == 0 and res["real"] == {}
     md = (out / "dataset_v0.md").read_text()
     assert "synthetic" in md.lower() and "Rep F1" in md
     # the scorer runs the pipeline exactly as the app ships it
@@ -56,8 +57,9 @@ def test_dataset_v0_includes_cup_and_reach_metrics(tmp_path: Path):
     res = json.loads((out / "dataset_v0.json").read_text())
     # Honest product-default numbers on the synthetic cup clip: 31/32 reaches, 200 ms MAE
     # (results/dataset_v0.md). Not 1.0 / 0 ms — those came from debounce 1 / clear 1.
-    assert res["rep_f1"] == 1.0 and res["reach_f1"] >= 0.95
-    assert res["reach_mae_ms"] is not None and res["reach_mae_ms"] < 250
+    syn = res["synthetic"]
+    assert syn["nhpt"]["rep_f1"] == 1.0 and syn["cup"]["rep_f1"] >= 0.95
+    assert syn["cup"]["reach_mae_ms"] is not None and syn["cup"]["reach_mae_ms"] < 250
 
 
 def test_dataset_v0_includes_arm_landmark_entry(tmp_path: Path):
@@ -66,11 +68,12 @@ def test_dataset_v0_includes_arm_landmark_entry(tmp_path: Path):
     ds = tmp_path / "ds"
     assert make.main(["--out", str(ds), "--hold", "2"]) == 0
     manifest = json.loads((ds / "manifest.json").read_text())
-    assert any(e["mode"] == "arm" for e in manifest["entries"])
+    assert any(e["mode"] == "arm" and e["exercise"] == "abduction" for e in manifest["entries"])
     out = tmp_path / "res"
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
-    assert res["arm_rep_f1"] == 1.0 and res["arm_peak_mae_deg"] < 3.0
+    arm = res["synthetic"]["abduction"]  # Arm out to the side, front-view landmark stream
+    assert arm["rep_f1"] == 1.0 and arm["peak_mae_deg"] < 3.0
 
 
 def test_agent_eval_scripted_passes_all_scenarios_without_violations(tmp_path: Path):

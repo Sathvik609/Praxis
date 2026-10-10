@@ -51,6 +51,15 @@ uv run python -m praxis_session.replay ../../evaluation/dataset_v0/synthetic_nhp
 
 # 4. Regenerate every evaluation number
 uv run python ../../evaluation/scripts/make_dataset_v0.py && uv run python ../../evaluation/scripts/eval.py
+uv run python ../../evaluation/scripts/latency.py --replay          # results/latency_v0.{md,json}
+
+# 5. Real recordings (step by step for the whole team: evaluation/PROTOCOL.md)
+uv run python tools/record_session.py record                         # consented clip, git-ignored, 30-day deletion
+uv run python tools/label_clip.py <clip.mp4> --labeller <initials>   # keyboard labeller
+uv run python tools/dataset_v1.py manifest                           # labelled clips -> manifest
+uv run python ../../evaluation/scripts/eval.py --dataset ../../evaluation/dataset_v1
+uv run python ../../evaluation/scripts/sus.py                        # SUS questionnaire scores
+uv run python tools/record_session.py purge-expired                  # daily: deletes clips past 30 days
 ```
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
@@ -137,7 +146,9 @@ Built and tested on synthetic renders: session service (`/health`, `/events`, We
 
 **6 Oct, design v2 feedback (Task 18):** after a session the feedback form asks one question per step, as the designers drew it: pain right now (0–10 with decorative faces, today's check-in pain and the change beside it), how hard it was (Too easy · Just right · Hard · I couldn't finish, each with the effort number it stands for), whether it could be done again tomorrow, and — only when the session ended early — what got in the way. The last step keeps an optional note for the therapist. Pain at or above the prescription's stop level says "Your therapist will be flagged.", the same rule the service uses to write the flag. Skipped questions are not recorded, never zero; Edit feedback on the report reopens the same form.
 
-Not started: real recordings and dataset v1 (Phase 9, needs participants). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
+**10 Oct, real-recording evaluation path:** the record → label → evaluate path for dataset v1 is built and tested end to end on stand-in clips; no real session has been recorded yet. `tools/record_session.py` records a consented 640×480 / 15 fps clip only to a git-ignored folder (it asks git first and refuses anything else), stores the consent answers (Replay demo, failure frames) with a 30-day deletion date and deletes expired clips (`purge-expired`, `withdraw`). `tools/label_clip.py` is a keyboard labeller (rep start/end, hole or dot, verified/unverified and reason, trunk lean, shoulder hike, goniometer angle, scripted errors) writing `evaluation/labels.schema.json`. `tools/dataset_v1.py` shows progress to 300 reps / 5 participants and builds the manifest. `evaluation/scripts/eval.py` replays every clip through the identical pipeline (Arm out to the side from the video through the pose model) and reports, per exercise and with real and synthetic results never pooled, rep F1, verified agreement, NHPT total-time error, cup reach-time error, arm peak-angle error against a goniometer app and lean/hike detection; it caches each clip's events (no pixels) so numbers survive the clip's deletion, and writes failure-case frames only for clips whose participant agreed. `evaluation/scripts/latency.py` and `evaluation/scripts/sus.py` regenerate the latency and SUS tables. The team protocol (consent wording, sheets at 100 %, camera placement, the 90 reps per participant and the deliberate failure takes) is `evaluation/PROTOCOL.md`.
+
+Not started: real recordings (Phase 9, needs participants; tooling ready, see above). Bedrock agent, AWS deployment and COOL cloud mode are deferred to W6 (`CLAUDE.md` §4).
 
 ## Layout
 ```
