@@ -37,3 +37,50 @@ test('bars axis reaches the tallest value even when it is not a multiple of the 
   expect(texts).toContain('100') // top tick above 91
   expect(texts).toContain('91')
 })
+
+// 10 Oct bug: the charts drew into a 320-unit viewBox at `w-full h-auto`, so on a 1200 px report
+// card every label rendered ~40 px tall and the bars grew taller than the window. Charts now have a
+// fixed pixel height and their viewBox follows the measured width, so 1 unit is 1 CSS px.
+function stubResizeObserver(width: number) {
+  const orig = globalThis.ResizeObserver
+  class RO {
+    cb: ResizeObserverCallback
+    constructor(cb: ResizeObserverCallback) {
+      this.cb = cb
+    }
+    observe(el: Element) {
+      this.cb([{ target: el, contentRect: { width, height: 0 } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver)
+    }
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = RO as unknown as typeof ResizeObserver
+  return () => {
+    globalThis.ResizeObserver = orig
+  }
+}
+
+test.each([
+  ['bars', () => <Bars title="Peg split" unit="s" values={[2.1, 1.8, 1.9]} labels={['Peg 1', 'Peg 2', 'Peg 3']} />],
+  ['line', () => <Line title="NHPT" unit="s" points={[{ x: '1 Aug', y: 48.1 }, { x: '12 Sep', y: 41.2 }]} />],
+])('%s chart keeps a fixed pixel height and 12 px text however wide its card is', (_, make) => {
+  const restore = stubResizeObserver(1200)
+  try {
+    render(make())
+    const svg = screen.getByRole('img')
+    expect(svg.getAttribute('height')).toBe('160')
+    expect(svg.getAttribute('width')).toBe('100%')
+    expect(svg.getAttribute('class') ?? '').not.toMatch(/h-auto/)
+    // the viewBox is the measured width, so nothing is scaled up
+    expect(svg.getAttribute('viewBox')).toBe('0 0 1200 160')
+    const sizes = new Set([...svg.querySelectorAll('text')].map((t) => t.getAttribute('font-size')))
+    expect([...sizes]).toEqual(['12'])
+  } finally {
+    restore()
+  }
+})
+
+test('a chart never grows past a modest height', () => {
+  render(<Bars title="Peg split" unit="s" values={[2.1]} height={400} />)
+  expect(Number(screen.getByRole('img').getAttribute('height'))).toBeLessThanOrEqual(180)
+})
