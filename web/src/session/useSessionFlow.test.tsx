@@ -63,3 +63,38 @@ test('"Next exercise" still asks for feedback, then binds the report to today an
   expect(readDay().done).toContain('cup')
   expect(readDay().finished).toEqual([{ exercise: 'cup', reportId: 's7' }])
 })
+
+const replayEnd = { type: 'replay_end', t: 30, id: 99, clip: 'synthetic_cup_01', frames: 300 }
+
+test('a replay that ends before the session finished is flagged; finishing it records the recording ending, not an early end', () => {
+  const send = vi.fn()
+  let events: Record<string, unknown>[] = []
+  const { result, rerender } = renderHook(() => useSessionFlow(events as never, send, vi.fn(), true), { wrapper })
+  expect(result.current.replayOver).toBe(false)
+  events = [replayEnd]
+  rerender()
+  expect(result.current.replayOver).toBe(true)
+  expect(result.current.recordingEnded).toBe(false)
+  act(() => result.current.finish(false, 'replay_end'))
+  expect(result.current.replayOver).toBe(false)
+  expect(result.current.feedbackOpen).toBe(true)
+  expect(result.current.early).toBe(false)
+  expect(result.current.recordingEnded).toBe(true)
+  act(() => result.current.skip())
+  expect(send).toHaveBeenLastCalledWith({ cmd: 'feedback', end_reason: 'replay_end', ended_early: false })
+})
+
+test('a session that already finished is not flagged when the recording ends, and never finishes twice', () => {
+  const send = vi.fn()
+  let events: Record<string, unknown>[] = []
+  const { result, rerender } = renderHook(() => useSessionFlow(events as never, send, vi.fn(), true), { wrapper })
+  act(() => result.current.finish(true, 'tired'))
+  act(() => result.current.save({ pain_after: 2 }))
+  events = [replayEnd]
+  rerender()
+  expect(result.current.replayOver).toBe(false)
+  act(() => result.current.finish(false, 'replay_end'))
+  expect(result.current.feedbackOpen).toBe(false)
+  expect(result.current.recordingEnded).toBe(false)
+  expect(send.mock.calls.filter(([c]) => c.cmd === 'feedback')).toEqual([[{ cmd: 'feedback', pain_after: 2, ended_early: true, end_reason: 'tired' }]])
+})

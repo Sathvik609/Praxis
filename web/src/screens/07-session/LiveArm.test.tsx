@@ -113,6 +113,16 @@ test('completion opens the feedback overlay', () => {
   expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
+test('a replay that ends before the last set moves to the feedback as the recording ending', () => {
+  armSend.mockClear()
+  mockStream([frame, { type: 'replay_end', t: 40, id: 70, clip: 'synthetic_abduction_01', frames: 400 }])
+  renderAt('/session?exercise=abduction&side=left&replay=synthetic_abduction_01')
+  const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
+  expect(dlg).toHaveTextContent('The recording has ended.')
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  expect(armSend).toHaveBeenLastCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: 'replay_end' }))
+})
+
 test('Arm out to the side sends the abduction registry id and the tier from the check-in', () => {
   sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 5 }))
   mockStream([frame])

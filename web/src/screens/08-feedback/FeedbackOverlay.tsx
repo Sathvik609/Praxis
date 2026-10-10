@@ -89,8 +89,11 @@ function FbChoices<T extends string>({ label, options, value, onChange }: { labe
  *  prescription cannot be read the line is not shown.
  *
  *  `reportedPain` (10 Oct) is the patient's last Pain / feel unwell answer of this session: the
- *  pain step opens with it selected (still editable) instead of asking from nothing. */
-export function FeedbackOverlay({ open, early = false, reportedPain = null, onSave, onSkip }: { open: boolean; early?: boolean; reportedPain?: number | null; onSave: (f: Feedback) => void; onSkip: () => void }) {
+ *  pain step opens with it selected (still editable) instead of asking from nothing.
+ *
+ *  `notice` (10 Oct) is one plain line above the question, e.g. "The recording has ended." when
+ *  a replay clip ran out before the session finished by itself (no "ended early" blame). */
+export function FeedbackOverlay({ open, early = false, reportedPain = null, notice = null, onSave, onSkip }: { open: boolean; early?: boolean; reportedPain?: number | null; notice?: string | null; onSave: (f: Feedback) => void; onSkip: () => void }) {
   const [step, setStep] = useState(0)
   const [pain, setPain] = useState<number | null>(reportedPain)
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
@@ -233,6 +236,11 @@ export function FeedbackOverlay({ open, early = false, reportedPain = null, onSa
               {`${step + 1} of ${steps}`}
             </span>
           </div>
+          {notice && (
+            <p className="fb-sub" role="status">
+              {notice}
+            </p>
+          )}
           <Dialog.Title className="fb-title">{TITLES[step]}</Dialog.Title>
           <Dialog.Description className={step === 0 ? 'fb-sub' : 'sr-only'}>
             {step === 0 ? 'Tap a number. Some ache after practice is normal.' : early && step === 3 ? 'Pick as many as apply.' : 'Choose one, or go on without answering.'}

@@ -123,6 +123,12 @@ export function LiveCup() {
   const finish = (endedEarly: boolean, reason?: EndReason | StopEnd, next?: Then) => {
     flow.finish(endedEarly, reason, { kind: 'cup', side, arcs: complete?.arcs ?? cup?.arcs_done ?? 0, reaches: complete?.reaches ?? [], ended_early: endedEarly }, next)
   }
+  // A replay clip that ran out before the session finished by itself goes to the feedback
+  // (10 Oct walkthrough: it froze on its last frame); a finished one keeps its own ending.
+  useEffect(() => {
+    if (flow.replayOver && !complete) finish(false, 'replay_end')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow.replayOver])
   const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
   const holdSeconds = useHoldSeconds(hold, lastT)
 
@@ -278,7 +284,7 @@ export function LiveCup() {
         </div>
       )}
 
-      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} onSave={flow.save} onSkip={flow.skip} />
+      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} notice={flow.recordingEnded ? 'The recording has ended.' : null} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setReportedPain(p); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar

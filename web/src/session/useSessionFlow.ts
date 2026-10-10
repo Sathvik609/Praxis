@@ -5,8 +5,9 @@ import type { PraxisEvent } from '../lib/events'
 import type { Feedback } from '../screens/08-feedback/FeedbackOverlay'
 
 /** Why a session ended early: the End dialog's reasons (`pain` opens the pain check instead),
- *  or the hold it was ended from (`rest`, `paused`). */
-export type EndReason = 'pain' | 'tired' | 'blocked' | 'finished' | 'rest' | 'paused'
+ *  or the hold it was ended from (`rest`, `paused`); `replay_end` is a replay clip that ran out
+ *  before the session finished by itself (not early, not the patient's doing). */
+export type EndReason = 'pain' | 'tired' | 'blocked' | 'finished' | 'rest' | 'paused' | 'replay_end'
 /** A stop rule ended the session (`stop:<rule id>`, e.g. `stop:exertion`); events.schema.json
  *  documents `end_reason` as free text or a stop rule id. */
 export type StopEnd = `stop:${string}`
@@ -19,10 +20,18 @@ export type StopEnd = `stop:${string}`
 /** Where to go after the feedback is stored instead of the report (`mode` = the live screen). */
 export type Then = { url: string; mode: 'arm' | 'cup' | 'nhpt' }
 
+/** `replayOver` (10 Oct walkthrough): the service sent `replay_end` (the clip ran out; the socket
+ *  stays open for the feedback) and the session has not been finished yet. The screen then
+ *  finishes with `finish(false, 'replay_end', …)` and its own fallback state, unless it already
+ *  finished by itself (e.g. the cup's done modal is open); before this a replay that never
+ *  completed froze on its last frame. */
 export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, unknown>) => void, stop: () => void, connected: boolean) {
   const nav = useNavigate()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [early, setEarly] = useState(false)
+  const [recordingEnded, setRecordingEnded] = useState(false)
+  const [done, setDone] = useState(false)
+  const finished = useRef(false)
   const fallback = useRef<unknown>(null)
   const then = useRef<Then | null>(null)
   const ending = useRef<{ ended_early: boolean; end_reason: EndReason | StopEnd | null }>({ ended_early: false, end_reason: null })
@@ -58,25 +67,37 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ack?.id])
 
+  const replayOver = !done && events.some((e) => e.type === 'replay_end')
+
+  /** `fallbackState` is the report's state when the service never answers (offline).
+   *  `next` ("Next exercise"): after the feedback is stored, bind the report to today's run
+   *  and open `next.url` instead of the report (offline still goes to the report). */
+  function finish(endedEarly: boolean, reason?: EndReason | StopEnd, fallbackState?: Record<string, unknown>, next?: Then) {
+    if (finished.current) return
+    finished.current = true
+    setDone(true)
+    then.current = next ?? null
+    ending.current = { ended_early: endedEarly, end_reason: reason ?? null }
+    fallback.current = { ...fallbackState, ...ending.current }
+    setEarly(endedEarly)
+    setRecordingEnded(reason === 'replay_end')
+    if (!connected) {
+      stop()
+      nav('/report', { state: fallback.current })
+      return
+    }
+    setFeedbackOpen(true)
+  }
+
   return {
     feedbackOpen,
     /** The session ended early (the feedback form adds its "What got in the way?" step). */
     early,
-    /** `fallbackState` is the report's state when the service never answers (offline).
-     *  `next` ("Next exercise"): after the feedback is stored, bind the report to today's run
-     *  and open `next.url` instead of the report (offline still goes to the report). */
-    finish: (endedEarly: boolean, reason?: EndReason | StopEnd, fallbackState?: Record<string, unknown>, next?: Then) => {
-      then.current = next ?? null
-      ending.current = { ended_early: endedEarly, end_reason: reason ?? null }
-      fallback.current = { ...fallbackState, ...ending.current }
-      setEarly(endedEarly)
-      if (!connected) {
-        stop()
-        nav('/report', { state: fallback.current })
-        return
-      }
-      setFeedbackOpen(true)
-    },
+    /** The session was finished by the replay clip running out (the feedback says so). */
+    recordingEnded,
+    /** The replay clip ran out and nothing has finished the session yet. */
+    replayOver,
+    finish,
     /** `ended_early` / `end_reason` come from `finish()` and override the form's. */
     save: (f: Partial<Feedback>) => {
       recordPainAfter(f.pain_after)
