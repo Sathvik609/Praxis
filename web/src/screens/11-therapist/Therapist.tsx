@@ -9,6 +9,7 @@ import { Stat } from '../../design/Stat'
 import { api, isReplaySession, useApi } from '../../lib/api'
 import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
 import { PROGRAM, upcomingVisit } from '../../lib/seed'
+import { ruleCoachLabel } from '../../session/agent'
 import { DEFAULT_SCHEDULE, ScheduleDialog } from './ScheduleDialog'
 
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
@@ -25,6 +26,7 @@ export function Therapist() {
   const [savedNote, setSavedNote] = useState<string | null>(null)
   const schedule = rx?.schedule ?? DEFAULT_SCHEDULE
   const { data: sessions } = useApi(() => api.sessions())
+  const { data: health } = useApi(() => api.health())
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [trace, setTrace] = useState<Trace | null>(null)
@@ -179,7 +181,7 @@ export function Therapist() {
                 <span className="font-bold text-[var(--mint)]">Decision trace · {trace.session ?? 'no live trace for this session'}</span>
                 <Button variant="link" className="min-h-14 w-14 px-0 text-white!" aria-label="Close trace" icon={<X />} onClick={() => setTrace(null)} />
               </div>
-              {trace.rows.length === 0 && <div className="text-white/70">No trace rows for this session in the running service. Rule-based coach · LLM agent pending.</div>}
+              {trace.rows.length === 0 && <div className="text-white/70">{`No trace rows for this session in the running service. ${ruleCoachLabel(health?.agent)}.`}</div>}
               {trace.rows.map((r, i) => (
                 <div key={i}>
                   {String(r.kind)} {Object.entries(r).filter(([k]) => !['kind', 'seq', 'ts', 'session'].includes(k)).map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join(' ').slice(0, 160)}

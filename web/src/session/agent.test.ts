@@ -1,5 +1,17 @@
 import type { PraxisEvent } from '../lib/events'
-import { COACH_LABEL, coachLabel, coachSource, describeProposal, healthLines, latestAgentStatus, modelName, promptKind, proposalContext } from './agent'
+import { COACH_LABEL, RULE_LABEL_WITH_AGENT, coachLabel, coachSource, describeProposal, healthLines, latestAgentStatus, modelName, promptKind, proposalContext, ruleCoachLabel } from './agent'
+
+test('the rule coach label follows the service: "· LLM agent pending" only while the agent is off (10 Oct)', () => {
+  expect(RULE_LABEL_WITH_AGENT).toBe('Rule-based coach')
+  expect(ruleCoachLabel({ mode: 'off', model: '', mcp: false, ready: false })).toBe(COACH_LABEL)
+  expect(ruleCoachLabel(null)).toBe(COACH_LABEL)
+  expect(ruleCoachLabel(undefined)).toBe(COACH_LABEL)
+  for (const mode of ['anthropic', 'bedrock', 'scripted'] as const) {
+    // same rule as the service (`AGENT_CFG.enabled`): the mode, not readiness
+    expect(ruleCoachLabel({ mode, model: 'm', mcp: true, ready: true })).toBe('Rule-based coach')
+    expect(ruleCoachLabel({ mode, model: 'm', mcp: false, ready: false })).toBe('Rule-based coach')
+  }
+})
 
 test('proposal context: running value first, then the prescription; range from allowed adaptations', () => {
   const rx = { exercises: { abduction: { target_deg: 90, hold_s: 3, reps: 8 } }, allowed_adaptations: { abduction: { target_deg: [60, 90], reps: [6, 8] }, cup: { fast_arcs: true } } }
