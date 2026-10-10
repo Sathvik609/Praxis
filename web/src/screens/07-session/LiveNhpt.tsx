@@ -38,6 +38,10 @@ function caption(f: FrameEvent | null, lost: boolean): string {
 export function LiveNhpt() {
   const [sp] = useSearchParams()
   const hand = sp.get('hand') ?? 'left'
+  // The reference figure faces the patient (as on Waiter – cup and the Demonstration): their
+  // left hand is the figure's right.
+  const testHand: 'left' | 'right' = hand === 'right' ? 'right' : 'left'
+  const avSide = testHand === 'left' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
   const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
@@ -172,7 +176,7 @@ export function LiveNhpt() {
               </div>
             }
           >
-            <AvatarPanel bare overlayTop={40} clip="nhpt" />
+            <AvatarPanel bare overlayTop={40} clip="nhpt" camera="front" side={avSide} patientSide={testHand} />
           </SxRef>
         )}
 
