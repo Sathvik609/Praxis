@@ -443,7 +443,7 @@ Measured by driving the real WebSocket handler with `fastapi.testclient` on an A
 - **NHPT on a printed sheet** with flat hole rings differs from a physical board with recessed holes; it is a timing aid, not the clinical instrument.
 - **Exertion is behavioural** (§3.8): no physiology, hesitation not computed, thresholds unvalidated.
 - **Latency** (§6.2) is in-process on one laptop; browser-measured end-to-end latency and any cloud latency are not measured yet.
-- **Agent coach** (§4.1): its tools, guardrails and fallbacks are tested with a scripted planner; real-model results are pending (`docs/ARCHITECTURE.md` TODO). Its judgement is not clinically validated.
+- **Agent coach** (§4.1): run against real Claude on nine synthetic scenarios (9/9 on four consecutive runs, `evaluation/results/agent_v0_anthropic.md`), not with patients and not yet on Bedrock. Its first action takes ~4–6 s, so in-rep cues stay with the rule coach. Its judgement is not clinically validated.
 - **AWS and COOL are not built** (§5, §7).
 - **Hosted review build** has no sign-in and dates days by the container clock (`TZ=America/New_York`), so a patient in another time zone sees shifted day boundaries; it is for team review, not patients (§8, `docs/RISKS.md`).
 - **Accessibility:** three palette pairs miss WCAG 2.1 AA 4.5:1 and controls are 40–48 px by design decision (`docs/RISKS.md`, 6 Oct); not yet tested with patients.

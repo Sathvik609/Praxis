@@ -86,7 +86,7 @@ flowchart LR
 
 **Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called.
 
-> **TODO (real-model numbers):** agent runs against Claude via the Anthropic API — task success, guardrail violations, first-action latency p50/p95, tokens and cost per session — go here and in `docs/TECHNICAL_REPORT.md` §4.1 once `evaluation/scripts/agent_eval.py --planner anthropic --yes` has been run and its results file is committed. No number is claimed until then.
+> **Real model (10 Oct 2026, Claude Sonnet 5 via the Anthropic API, dev):** 9/9 scenarios on each of four consecutive full runs, correct perception tool before action 7/7, 0 guardrail violations, fallback 2/2, human approval 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens and ~$0.39 per full run (`evaluation/results/agent_v0_anthropic.md`, traces `traces/agent/anthropic/`). Bedrock not run yet.
 
 ## 2. OpenCV 5 pipeline per exercise
 
