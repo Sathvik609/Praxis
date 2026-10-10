@@ -1,6 +1,9 @@
 /** Camera placement diagrams for screen 05, one per view (own drawings, inline SVG, both
- *  themes via currentColor and the palette tokens). Mint marks the practising arm, amber the
- *  camera's line of sight. Each has a text alternative that says the same thing in words. */
+ *  themes via currentColor and the palette tokens). Mint marks the practising arm and the sheet,
+ *  amber the camera's line of sight. Each has a text alternative that says the same thing in
+ *  words. Since 10 Oct 2026 the only camera is the laptop's built-in one (product owner): the
+ *  front view puts the laptop on a table facing the patient, the table view tilts its screen
+ *  forward over the sheet. The dormant side views (hidden 28 Sep) keep their tripod drawing. */
 import type { SetupView } from './setupView'
 
 const S = { stroke: 'currentColor', strokeWidth: 3, strokeLinecap: 'round' as const, fill: 'none' }
@@ -16,6 +19,25 @@ function Tripod({ x, y }: { x: number; y: number }) {
       <circle cx={x - 14} cy={y} r={4} fill="currentColor" />
     </g>
   )
+}
+
+/** A laptop in profile, keyboard towards the left (the patient), hinge on the right. `tilt` is
+ *  how far the screen leans forward past upright, in degrees; the lens sits at the screen's top
+ *  edge. Returns the drawing and where the lens is, for the line of sight. */
+function laptop(hingeX: number, baseY: number, tilt: number, screen = 64, depth = 58) {
+  const r = (tilt * Math.PI) / 180
+  const topX = hingeX - screen * Math.sin(r)
+  const topY = baseY - screen * Math.cos(r)
+  const lens = { x: topX - 4 * Math.cos(r) + 3 * Math.sin(r), y: topY + 4 * Math.sin(r) + 3 * Math.cos(r) }
+  const g = (
+    <g>
+      <rect x={hingeX - depth} y={baseY} width={depth + 2} height={6} rx={2} fill="var(--surface)" stroke="currentColor" strokeWidth={2.5} />
+      <line x1={hingeX} y1={baseY + 1} x2={topX} y2={topY} {...S} strokeWidth={6} />
+      <line x1={hingeX} y1={baseY + 1} x2={topX} y2={topY} stroke="var(--surface)" strokeWidth={2} strokeLinecap="round" />
+      <circle cx={lens.x} cy={lens.y} r={3} fill="currentColor" />
+    </g>
+  )
+  return { g, lens }
 }
 
 function Dimension({ x1, x2, label }: { x1: number; x2: number; label: string }) {
@@ -104,44 +126,59 @@ function Front() {
       <line x1={56} y1={97} x2={92} y2={99} {...S} />
       <line x1={92} y1={99} x2={92} y2={146} {...S} />
       <line x1={57} y1={60} x2={62} y2={94} stroke="var(--mint)" strokeWidth={5} strokeLinecap="round" />
-      <Sight x1={216} y1={70} x2={68} y2={70} />
-      <Tripod x={234} y={70} />
-      <text x={234} y={52} fontSize={12} fill="currentColor" textAnchor="middle" fontFamily="inherit">chest height</text>
+      <FrontLaptop />
       <Dimension x1={56} x2={234} label="2–2.5 m" />
     </>
   )
 }
 
-/** Table (Waiter – cup, NHPT): a phone on a stand above the sheet, and what the picture shows. */
+/** The laptop on a table in front of the patient, screen upright, lens at about chest height. */
+function FrontLaptop() {
+  const { g, lens } = laptop(254, 98, 4, 30, 40)
+  return (
+    <g>
+      <line x1={204} y1={104} x2={270} y2={104} {...S} />
+      <line x1={210} y1={104} x2={210} y2={146} {...S} strokeWidth={2} />
+      <line x1={264} y1={104} x2={264} y2={146} {...S} strokeWidth={2} />
+      <Sight x1={lens.x - 6} y1={lens.y} x2={68} y2={lens.y} />
+      {g}
+      <text x={234} y={52} fontSize={12} fill="currentColor" textAnchor="middle" fontFamily="inherit">chest height</text>
+    </g>
+  )
+}
+
+/** Table (Waiter – cup, NHPT): the laptop on the table with its screen tilted forward, the sheet
+ *  flat in front of it (between laptop and patient) and the camera's view reaching the sheet. */
 function Table() {
+  const sheet = { x1: 94, x2: 152 }
+  const front = 194
+  const { g, lens } = laptop(238, 114, 24, 82, 44)
   return (
     <>
-      <line x1={8} y1={128} x2={200} y2={128} {...S} />
-      <rect x={58} y={118} width={96} height={10} rx={2} fill="var(--mint)" stroke="currentColor" strokeWidth={1.5} />
-      <line x1={164} y1={128} x2={196} y2={128} {...S} />
-      <line x1={180} y1={128} x2={180} y2={34} {...S} />
-      <line x1={180} y1={34} x2={116} y2={34} {...S} />
-      <rect x={92} y={26} width={40} height={16} rx={4} fill="var(--surface)" stroke="currentColor" strokeWidth={2.5} />
-      <circle cx={106} cy={42} r={3} fill="currentColor" />
-      <line x1={106} y1={48} x2={106} y2={112} stroke="var(--amber)" strokeWidth={2} strokeDasharray="4 4" />
-      <polygon points="100,108 112,108 106,116" fill="var(--amber)" />
-      <line x1={30} y1={40} x2={30} y2={122} {...THIN} />
-      <line x1={24} y1={40} x2={36} y2={40} {...THIN} />
-      <line x1={24} y1={122} x2={36} y2={122} {...THIN} />
-      <text x={10} y={150} fontSize={13} fill="currentColor" fontFamily="inherit">45–60 cm</text>
-      {/* what the camera sees: the sheet fills about two-thirds of the picture */}
-      <rect x={214} y={46} width={60} height={45} rx={3} fill="none" stroke="currentColor" strokeWidth={2} />
-      <rect x={221} y={51.5} width={46} height={34} rx={1.5} fill="var(--mint)" stroke="currentColor" strokeWidth={1.2} />
-      <text x={244} y={108} fontSize={12} fill="currentColor" textAnchor="middle" fontFamily="inherit">the picture</text>
+      {/* table */}
+      <line x1={8} y1={120} x2={272} y2={120} {...S} />
+      <line x1={20} y1={120} x2={20} y2={146} {...S} strokeWidth={2} />
+      <line x1={260} y1={120} x2={260} y2={146} {...S} strokeWidth={2} />
+      {/* what the camera sees: a cone from the lens down to the whole sheet */}
+      <polygon points={`${lens.x},${lens.y} ${sheet.x1},116 ${sheet.x2},116`} fill="var(--amber)" opacity={0.14} />
+      <Sight x1={lens.x} y1={lens.y} x2={sheet.x1} y2={116} />
+      <Sight x1={lens.x} y1={lens.y} x2={sheet.x2} y2={116} />
+      {/* the printed sheet, flat */}
+      <rect x={sheet.x1} y={116} width={sheet.x2 - sheet.x1} height={4} rx={1} fill="var(--mint)" stroke="currentColor" strokeWidth={1.5} />
+      {g}
+      <text x={lens.x} y={lens.y - 12} fontSize={12} fill="currentColor" textAnchor="middle" fontFamily="inherit">laptop camera</text>
+      <text x={sheet.x1 + (sheet.x2 - sheet.x1) / 2} y={136} fontSize={12} fill="currentColor" textAnchor="middle" fontFamily="inherit">sheet</text>
+      <text x={14} y={112} fontSize={12} fill="currentColor" fontFamily="inherit">you</text>
+      <Dimension x1={(sheet.x1 + sheet.x2) / 2} x2={front} label="25–35 cm" />
     </>
   )
 }
 
 const ALT: Record<string, string> = {
-  side: 'Camera on a stand at seated shoulder height, 1.5 to 2 metres away, pointing at your practising side. A chair without arms so the camera can see your hip.',
+  side: 'Camera at seated shoulder height, 1.5 to 2 metres away, pointing at your practising side. A chair without arms so the camera can see your hip.',
   pendulum: 'Stand sideways to the camera with one hand on a table and the practising arm hanging. The camera sits lower, about table height, 1.5 to 2 metres away.',
-  front: 'Camera centred at chest height, 2 to 2.5 metres in front of you, facing you.',
-  table: 'A phone or webcam on a stand 45 to 60 centimetres above the table, pointing straight down. The sheet fills about two-thirds of the picture.',
+  front: 'Laptop on a table at about your chest height when seated, 2 to 2.5 metres in front of you, its camera facing you.',
+  table: 'Laptop on the table with its screen tilted forward, and the printed sheet flat on the table 25 to 35 centimetres in front of the laptop, between the laptop and you. The camera looks down at the whole sheet.',
 }
 
 export function SetupDiagram({ view, pendulum = false }: { view: SetupView; pendulum?: boolean }) {
@@ -160,13 +197,13 @@ export function SetupDiagram({ view, pendulum = false }: { view: SetupView; pend
 export function placementCopy(view: SetupView, side: string, pendulum: boolean): { heading: string; body: string } {
   if (view === 'table')
     return {
-      heading: 'Mount the camera above the table',
-      body: 'Put the phone or webcam on a stand 45–60 cm up, pointing straight down, so the sheet fills about two-thirds of the picture. Looking across the table makes pegs and hands land in the wrong place; the check below measures the tilt.',
+      heading: 'Tilt your laptop over the sheet',
+      body: 'Put the laptop on the table and lay the sheet flat 25–35 cm in front of it, between the laptop and you. Then tilt the screen forward until the whole sheet shows, so the camera looks down at it. Your face does not need to be in the picture. If the camera looks too flat across the table, pegs hide the next hole; the check below measures the angle.',
     }
   if (view === 'front')
     return {
       heading: 'Place the camera in front of you',
-      body: 'Stand the camera 2–2.5 m in front of you, centred at chest height, so both hands fit when you lift your arms out to the side.',
+      body: 'Put your laptop on a table at about your chest height when seated, and sit 2–2.5 m back facing it, so both shoulders, both hands and your hips fit when you lift your arms out to the side.',
     }
   if (pendulum)
     return {

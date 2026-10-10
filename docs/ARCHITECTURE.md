@@ -9,7 +9,7 @@ Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per e
 ```mermaid
 flowchart LR
     subgraph BROWSER["Browser · React 19 + TS + Vite"]
-        CAM["Webcam<br/>640×480 JPEG, ack-paced, 12 fps ceiling<br/>8-byte capture-time prefix"]
+        CAM["Laptop built-in camera<br/>640×480 JPEG, ack-paced, 12 fps ceiling<br/>8-byte capture-time prefix"]
         UI["Screens 03–11<br/>captions, prompts Yes / Not yet,<br/>Pause · Take a rest · Pain · End"]
         AV["Three.js avatar<br/>Blender GLB + AnimationMixer<br/>reference only, never scores"]
         TR["Show trace panel<br/>Settings › Show technical details"]
@@ -100,7 +100,7 @@ flowchart TB
         A1["cv2.cvtColor BGR→GRAY"]
         A2["cv2.aruco.ArucoDetector.detectMarkers<br/>DICT_4X4_50 ids 0–3, CORNER_REFINE_SUBPIX"]
         A3["cv2.findHomography px → sheet mm<br/>4 markers fresh · 3 markers cv2.RANSAC partial · else held ≤ 1.5 s"]
-        A4["cv2.solvePnP SOLVEPNP_IPPE + cv2.Rodrigues<br/>camera tilt_deg, setup gate ≤ 25°"]
+        A4["cv2.solvePnP SOLVEPNP_IPPE + cv2.Rodrigues<br/>camera tilt_deg, setup check ≤ 50° (laptop screen tilted forward)"]
         A5["quality: cv2.Laplacian sharpness, mean luma,<br/>marker jitter, task area in view"]
         A1 --> A2 --> A3 --> A4
         A3 --> A5

@@ -103,7 +103,7 @@ export function ChooseExercise() {
             <h1 className="text-4xl">Choose your exercise</h1>
             {/* The artifact's second clause ("the rest open reviewed instructions") named the
                 instructions-only cards, which are not ported. */}
-            <p className="lib-sub text-muted">Assigned exercises first. Tasks the camera can verify open a coached session.</p>
+            <p className="lib-sub text-muted">Assigned exercises first. Tasks the laptop camera can verify open a coached session.</p>
           </div>
           <div className="lib-head-right">
             <div role="radiogroup" aria-label="Show exercises" className="lib-filters">

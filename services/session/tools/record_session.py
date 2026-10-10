@@ -45,7 +45,7 @@ PROMPTS = {
 }
 CAMERA_DEFAULTS = {
     "front": "front, chest height, 2-2.5 m, head to hips in view",
-    "sheet": "above the table looking down, 45-60 cm, all four sheet markers in view",
+    "sheet": "laptop camera, screen tilted forward, sheet 25-35 cm in front of the laptop, all four sheet markers in view",
 }
 CONSENT_SCRIPT = [
     "Read to the participant:",

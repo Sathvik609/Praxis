@@ -128,7 +128,8 @@ test('the setup guide lists the front-view rows and placement, never the sheet r
   expect(within(guide).queryByText(/Sheet found/)).not.toBeInTheDocument()
   expect(within(guide).queryByText('Hip in view')).not.toBeInTheDocument()
   expect(within(guide).getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
-  expect(within(guide).getByRole('img', { name: /chest height, 2 to 2.5 metres/ })).toBeInTheDocument()
+  expect(within(guide).getByRole('img', { name: /Laptop on a table at about your chest height.*2 to 2.5 metres/ })).toBeInTheDocument()
+  expect(within(guide).getByText(/laptop/)).toBeInTheDocument()
   expect(within(guide).getByText(/Light from the front, no window behind you/)).toBeInTheDocument()
 })
 
@@ -173,32 +174,34 @@ test('camera blocked shows why, Try again and a recorded session', () => {
   expect(screen.getByText('AT /details/settings')).toBeInTheDocument()
 })
 
-test('sheet tasks show the overhead-mount diagram and copy in the guide; the arm task does not', () => {
+test('sheet tasks show the tilted-laptop diagram and copy in the guide; the arm task does not', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
   const { unmount } = renderSetup('/setup?exercise=cup')
   fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
-  expect(screen.getByRole('heading', { name: 'Mount the camera above the table' })).toBeInTheDocument()
-  expect(screen.getByRole('img', { name: /45 to 60 centimetres above the table/ })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Tilt your laptop over the sheet' })).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /sheet flat on the table 25 to 35 centimetres in front of the laptop/ })).toBeInTheDocument()
+  expect(screen.getByText(/tilt the screen forward until the whole sheet shows/)).toBeInTheDocument()
+  expect(screen.queryByText(/phone|webcam|stand|straight down/i)).not.toBeInTheDocument()
   expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
   expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
   unmount()
   renderSetup('/setup?exercise=abduction')
   fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
-  expect(screen.queryByRole('heading', { name: 'Mount the camera above the table' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Tilt your laptop over the sheet' })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
 })
 
-test('the coach pill shows the service hint when the camera is too steep', () => {
+test('the coach pill shows the service hint when the camera looks too flat across the sheet', () => {
   mockStream({
     type: 'setup_checks',
     t: 0,
     id: 1,
     all_required_pass: false,
-    checks: [pass('camera'), pass('person'), pass('task_area'), pass('markers'), { id: 'angle', label: 'Camera looks down at the sheet', status: 'check', hint: 'Mount the camera above the table, pointing straight down (a phone on a stand works).' }],
+    checks: [pass('camera'), pass('person'), pass('task_area'), pass('markers'), { id: 'angle', label: 'Camera looks down at the sheet', status: 'check', hint: 'Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.' }],
   })
   renderSetup('/setup?exercise=nhpt&side=left')
   fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
-  expect(coach()).toHaveTextContent(/a phone on a stand works/)
+  expect(coach()).toHaveTextContent(/Tilt the laptop screen forward and move the sheet closer/)
   expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
 })
 
