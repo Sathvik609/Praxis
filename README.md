@@ -8,6 +8,8 @@ Built on **OpenCV 5.0.0** (`opencv-python-headless==5.0.0.93`, pinned). Video is
 
 The locked exercise set (28 Sep 2026) is **three camera-coached exercises**: **Arm out to the side** (shoulder abduction, front view, pose model) and **Waiter – cup** (the printed 5-dot sheet) daily, and the **Nine-Hole Peg Test** as the weekly assessment. Pendulum, Arm to the front, Rotate out and Rotate in are **hidden**: their code, avatar clips and perception tests stay in the tree, dormant behind the registry's `visible` flag, but no screen shows them, nothing schedules them and the service refuses them. The default day is Arm out to the side → Waiter – cup (~10 min), at a dose set by the check-in pain: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag. Design source of truth: `docs/wireframes/Praxis_HiFi_Wireframes_v1.1.pdf`. Build plan: `docs/PLAN.md`.
 
+**Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system diagram (browser → OpenCV 5 session service → stop rules → rule / agent coach → trace + SQLite; AWS boxes dashed as planned for W6), the OpenCV 5 pipeline per exercise, and the agent's perception → decision → action loop with the patient's approval step.
+
 ## 60-second quickstart (edge / laptop mode)
 
 ```bash
