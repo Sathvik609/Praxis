@@ -164,7 +164,7 @@ Notes that keep the diagram honest:
 
 ## 3. Agent workflow: one perception → decision → action loop
 
-The diagram traces the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). A hand covers ArUco marker 2 on the Waiter – cup sheet. Stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, says the specific fix, recalibrates, and asks the patient whether to resume. Only the patient's "Yes" resumes the session.
+The diagram traces the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner): the scenario hides ArUco marker 2 in the frame the tools see and feeds three `reach_complete` events marked unverified (`marker_lost`). In a live session `marker_lost` means fewer than three markers for more than 1.5 s; a single covered marker is ridden through with a three-marker RANSAC fit. Stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, says the specific fix, recalibrates, and asks the patient whether to resume. Only the patient's "Yes" resumes the session.
 
 ```mermaid
 sequenceDiagram
@@ -177,9 +177,9 @@ sequenceDiagram
     participant AG as AgentCoach + Claude (Strands)
     participant T as MCP tools (agent/tools.py)
 
-    P->>B: places the cup, forearm covers marker 2
+    P->>B: forearm and cup cover the sheet's markers
     B->>PL: JPEG frames
-    Note over PL: Calibrator: 3 markers → partial RANSAC homography,<br/>then held ≤ 1.5 s, then uncalibrated
+    Note over PL: Calibrator: 4 markers fresh, 3 partial RANSAC,<br/>fewer than 3 held ≤ 1.5 s, then uncalibrated
     PL->>CS: reach_complete verified:false reason:marker_lost (×3)
     CS->>SR: on_events (runs before any coach)
     SR-->>CS: pause rule failed_reps + therapist_flag
