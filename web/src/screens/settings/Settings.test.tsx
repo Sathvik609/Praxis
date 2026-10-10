@@ -113,22 +113,22 @@ test('no recordings and an unreachable service are both said plainly', async () 
   expect(await within(await openReplay()).findByText(/Could not list recordings/)).toBeInTheDocument()
 })
 
-test('guidance switches persist and apply at once; larger text is on by default', async () => {
+test('guidance switches persist and apply at once; larger text is off by default', async () => {
   mockApi({})
   const { unmount } = await renderSettings()
   // no voice: the coach is caption-only
   expect(screen.queryByRole('switch', { name: 'Spoken instructions' })).toBeNull()
-  // larger text is on by default (the designers' artifact renders at the 18 px root)
+  // larger text is off by default since 10 Oct (pages fit a 1336 x 759 laptop window at 16 px)
   const larger = screen.getByRole('switch', { name: 'Larger text' })
-  expect(larger).toHaveAttribute('aria-checked', 'true')
+  expect(larger).toHaveAttribute('aria-checked', 'false')
   fireEvent.click(larger)
-  expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(false)
-  expect(document.documentElement.dataset.text).toBeUndefined()
+  expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(true)
+  expect(document.documentElement.dataset.text).toBe('large')
   unmount()
   await renderSettings()
-  expect(screen.getByRole('switch', { name: 'Larger text' })).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByRole('switch', { name: 'Larger text' })).toHaveAttribute('aria-checked', 'true')
   fireEvent.click(screen.getByRole('switch', { name: 'Larger text' }))
-  expect(document.documentElement.dataset.text).toBe('large')
+  expect(document.documentElement.dataset.text).toBeUndefined()
 })
 
 test('no voice or caption switches: captions are always shown, they are the coach\'s only channel', async () => {

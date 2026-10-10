@@ -8,8 +8,10 @@
 export type Guidance = { larger: boolean }
 
 export const GUIDANCE_KEY = 'praxis.guidance'
-// Larger text is on by default: the designers' artifact renders at the 18 px root (ruling R10).
-export const GUIDANCE_DEFAULT: Guidance = { larger: true }
+// Larger text is off by default since 10 Oct (product owner: pages looked zoomed in on a
+// 1336 x 759 laptop window). The 16 px root lets every screen fit by layout; patients who want the
+// designers' 18 px root turn it on in Settings, and a stored explicit value always wins.
+export const GUIDANCE_DEFAULT: Guidance = { larger: false }
 
 export function readGuidance(): Guidance {
   try {
