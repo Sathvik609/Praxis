@@ -19,6 +19,7 @@ test('refMode follows real events', () => {
   expect(refMode([ev('perception_lost', 8), ev('perception_regained', 9)], frame(), { open: false }, 10)).toBe('run')
   expect(refMode([ev('compensation_lean', 8)], frame(), { open: false }, 10)).toBe('dim-cue') // < 4 s
   expect(refMode([ev('compensation_lean', 5)], frame(), { open: false }, 10)).toBe('run') // ≥ 4 s
+  expect(refMode([ev('above_ceiling', 8, { set: 1, rep: 2, angle_deg: 101, ceiling_deg: 90 })], frame(), { open: false }, 10)).toBe('dim-cue') // past the ceiling, like a lean
   expect(refMode([ev('coach', 9.5, { action: 'correct' })], frame(), { open: false }, 10)).toBe('dim-cue')
   expect(refMode([ev('coach', 9.5, { action: 'instruct' })], frame(), { open: false }, 10)).toBe('run')
 })

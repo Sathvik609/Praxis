@@ -75,6 +75,22 @@ test('posture cue appears after a compensation_lean event in the watch tone; the
   expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
 })
 
+test('a lift past the ceiling shows the range cue in the watch tone, in words, and dims the figure', () => {
+  mockStream([frame, { type: 'above_ceiling', t: 11, id: 2, set: 1, rep: 5, angle_deg: 101, ceiling_deg: 90 }])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.getByText(/Stop at shoulder height/)).toBeInTheDocument()
+  expect(screen.getByText('Coach · range')).toBeInTheDocument()
+  expect(screen.getByText(/Stop at shoulder height/).closest('section')).toHaveClass('sx-coach-watch')
+  expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
+})
+
+test('an old above_ceiling event no longer colours the coach card', () => {
+  mockStream([{ type: 'above_ceiling', t: 2, id: 2, set: 1, rep: 1, angle_deg: 101, ceiling_deg: 90 }, frame])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.queryByText(/Stop at shoulder height/)).toBeNull()
+  expect(screen.queryByText('Coach · range')).toBeNull()
+})
+
 test('tracking lost dims the reference figure with its reason', () => {
   mockStream([frame, { type: 'perception_lost', t: 11, id: 2 }])
   renderAt('/session?exercise=abduction&side=left')

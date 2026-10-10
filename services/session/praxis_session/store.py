@@ -1,7 +1,8 @@
 """Local SQLite store (edge mode). Same tables DynamoDB will mirror in W6.
 
 patients, prescriptions(vN), sessions (summary/checkin/feedback JSON), events (non-frame),
-flags, goal_log. Raw video is never stored anywhere.
+flags, goal_log, checkins (the day's check-in, `POST /api/checkin`). Raw video is never stored
+anywhere.
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS events(session_id TEXT, seq INTEGER, json TEXT, PRIMA
 CREATE TABLE IF NOT EXISTS flags(id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, rule TEXT, detail TEXT, t REAL, date TEXT, reviewed INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS goal_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, note TEXT);
 CREATE TABLE IF NOT EXISTS schedule_log(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, t REAL, by TEXT, from_version INTEGER, to_version INTEGER, before_json TEXT, after_json TEXT);
+CREATE TABLE IF NOT EXISTS checkins(id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id TEXT, date TEXT, t REAL, tier TEXT, json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
 """
 SAMPLE_TREND = {(d, float(v)) for d, v in NHPT_TREND}
@@ -335,6 +337,35 @@ class Store:
         self._db.execute("UPDATE sessions SET feedback_json=?, summary_json=? WHERE id=?", (json.dumps(feedback), json.dumps(summary), sid))
         self._db.commit()
         return self._row(self._db.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone(), with_events=True), added
+
+    @staticmethod
+    def checkin_flag_key(patient_id: str, day: str) -> str:
+        """The `flags.session_id` of a check-in flag: one key per patient and day, so the same
+        reason on the same day is never flagged twice. No session row has this id."""
+        return f"checkin-{patient_id}-{day}"
+
+    def save_checkin(self, record: dict[str, Any], flags: list[tuple[str, str]], day: str, t: float, patient_id: str = PATIENT["id"]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        """Store one check-in (`POST /api/checkin`) and the therapist flags it calls for, in one
+        transaction. A flag whose rule is already on file for this patient and day (reviewed or
+        not) is not written again. Returns (the stored check-in, the flags added now)."""
+        key = self.checkin_flag_key(patient_id, day)
+        added: list[dict[str, Any]] = []
+        for rule, detail in flags:
+            if self._db.execute("SELECT 1 FROM flags WHERE session_id=? AND rule=? AND date=?", (key, rule, day)).fetchone():
+                continue
+            cur = self._db.execute("INSERT INTO flags(session_id, rule, detail, t, date) VALUES(?,?,?,?,?)", (key, rule, detail, t, day))
+            added.append({"id": cur.lastrowid, "session_id": key, "rule": rule, "detail": detail, "t": t, "date": day})
+        row = {**record, "patient_id": patient_id, "date": day, "t": t, "flag_rules": [r for r, _ in flags]}
+        cur = self._db.execute("INSERT INTO checkins(patient_id, date, t, tier, json) VALUES(?,?,?,?,?)", (patient_id, day, t, record.get("tier"), json.dumps(row)))
+        self._db.commit()
+        return {"id": cur.lastrowid, **row}, added
+
+    def checkins(self, day: str | None = None, patient_id: str = PATIENT["id"]) -> list[dict[str, Any]]:
+        """Stored check-ins, oldest first; one day's when `day` (YYYY-MM-DD) is given."""
+        q, args = "SELECT id, json FROM checkins WHERE patient_id=?", [patient_id]
+        if day is not None:
+            q, args = q + " AND date=?", [*args, day]
+        return [{"id": r["id"], **json.loads(r["json"])} for r in self._db.execute(q + " ORDER BY id", args)]
 
     def update_schedule(self, body: dict[str, Any], by: str = "therapist", now: float | None = None) -> dict[str, Any]:
         """The therapist's practice-day edit: validate (`Schedule`), store prescription v(N+1)

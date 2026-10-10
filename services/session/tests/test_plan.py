@@ -112,3 +112,29 @@ def test_web_mirror_matches():
     assert (num("FULL_MAX"), num("GENTLE_MAX"), num("REST_AT"), num("DAY_MINUTES")) == (plan.FULL_MAX, plan.GENTLE_MAX, plan.REST_AT, plan.DAY_MINUTES)
     web_order = re.findall(r"'(\w+)'", re.search(r"export const DAY_ORDER: ExerciseId\[\] = \[([^\]]*)\]", ts).group(1))
     assert web_order == list(plan.DAY_ORDER)
+
+
+def test_new_symptoms_make_a_rest_day_whatever_the_pain_and_the_advice_says_why():
+    plan = day_plan(1, new_symptoms=True)
+    assert plan["tier"] == "rest" and plan["items"] == [] and plan["therapist_flag"] is True
+    assert "symptom" in plan["reason"].lower() and "symptom" in plan["rest_advice"].lower()
+    lax = SEED_PRESCRIPTION.model_copy(deep=True)
+    lax.stop_rules.new_symptoms = False
+    assert day_plan(1, lax, new_symptoms=True)["tier"] == "full"
+
+
+def test_rest_advice_quotes_the_prescription_stop_level_and_claims_no_flag():
+    strict = SEED_PRESCRIPTION.model_copy(deep=True)
+    strict.stop_rules.pain_max = 5
+    advice = day_plan(5, strict)["rest_advice"]
+    assert "5 or more" in advice and "7" not in advice
+    assert "therapist has been told" not in advice  # only a written flag says so (/api/checkin)
+
+
+def test_checkin_outcome_flags_pain_and_symptoms_separately():
+    from praxis_session.plan import checkin_outcome
+
+    assert checkin_outcome(2, False)["flags"] == [] and checkin_outcome(5, False)["tier"] == "gentle"
+    both = checkin_outcome(8, True)
+    assert both["tier"] == "rest" and [r for r, _ in both["flags"]] == ["checkin_pain", "checkin_symptoms"]
+    assert both["plan"]["tier"] == "rest" and len(both["reasons"]) == 2

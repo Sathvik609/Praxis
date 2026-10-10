@@ -35,6 +35,7 @@
         "hold_too_short",
         "compensation_lean",
         "shoulder_hiking",
+        "above_ceiling",
         "set_complete",
         "arm_complete",
         "coach",
@@ -356,6 +357,23 @@
     "lean": {
       "type": "boolean"
     },
+    "above_ceiling": {
+      "description": "rep_complete (arm, 10 Oct): the lift went past ceiling_deg + 5 degrees during this rep (the above_ceiling event fired). The rep is still counted by the usual target/hold logic.",
+      "type": "boolean"
+    },
+    "above_ceiling_count": {
+      "description": "set_complete (arm, 10 Oct): above_ceiling events in this set.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "angle_deg": {
+      "description": "above_ceiling: the smoothed camera-relative angle on the frame the event fired, degrees.",
+      "type": "number"
+    },
+    "ceiling_deg": {
+      "description": "The exercise's in-code ceiling, camera-relative degrees (exercise_start, above_ceiling).",
+      "type": "number"
+    },
     "t_start": {
       "type": "number"
     },
@@ -432,6 +450,19 @@
               "description": "shoulder_hiking events seen (6 Oct).",
               "type": "integer",
               "minimum": 0
+            },
+            "above_ceiling": {
+              "description": "Arm: above_ceiling events seen (lift past the in-code ceiling + 5 degrees), 10 Oct. Not a posture cue and not in posture_cues.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "above_ceiling_by_set": {
+              "description": "Arm: above_ceiling events per set, keyed by set number as a string (\"1\", \"2\").",
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
             },
             "wrong_dot": {
               "description": "Waiter - cup: wrong_dot events from the cup FSM (cup placed on a dot that was not next) (6 Oct).",

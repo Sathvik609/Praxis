@@ -366,7 +366,7 @@ def get_events(session_id: str, types: list[str] | None = None, last_n: int = 20
 def get_set_summary(session_id: str) -> dict[str, Any]:
     """The last finished set (arm) or arc (cup), or the one in progress: reps, verified and not
     verified (with reasons; `missed` = seen to fall short, `unverified` = camera could not check),
-    peak angles, hold times, lean/hike counts, reach times, and the previous set's mean peak."""
+    peak angles, hold times, lean/hike/above-ceiling counts, reach times, and the previous set's mean peak."""
     s = _h().session
     ring = s.recent_events(last_n=400)
     bounds = [i for i, e in enumerate(ring) if e.type in ("set_complete", "arc_complete", "nhpt_complete")]
@@ -397,6 +397,7 @@ def get_set_summary(session_id: str) -> dict[str, Any]:
         "hold_s": [e.payload["hold_s"] for e in reps if "hold_s" in e.payload],
         "lean_count": sum(1 for e in reps if e.payload.get("lean")),
         "hike_count": sum(1 for e in reps if e.payload.get("hike")),
+        "above_ceiling_count": sum(1 for e in reps if e.payload.get("above_ceiling")),
         "reach_ms": [e.payload.get("reach_ms") for e in reps if e.type == "reach_complete"],
         "session_counts": dict(s.counts),
         "paused": s.paused,

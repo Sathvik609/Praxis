@@ -83,8 +83,10 @@ class CoachSession:
         # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
         # main after each frame and applied through `SessionPipeline.command`, which clamps.
         self.commands: list[dict[str, Any]] = []
-        # posture_cues = lean_cues + hiking_cues; wrong_dot counts the cup FSM's `wrong_dot` events.
-        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "missed": 0, "corrections": 0, "posture_cues": 0, "lean_cues": 0, "hiking_cues": 0, "wrong_dot": 0}
+        # posture_cues = lean_cues + hiking_cues; wrong_dot counts the cup FSM's `wrong_dot` events;
+        # above_ceiling counts the arm FSM's lifts past the ceiling (not a posture cue), and
+        # measures["above_ceiling_by_set"] splits it per set (10 Oct).
+        self.counts: dict[str, Any] = {"reps_total": 0, "verified": 0, "unverified": 0, "missed": 0, "corrections": 0, "posture_cues": 0, "lean_cues": 0, "hiking_cues": 0, "wrong_dot": 0, "above_ceiling": 0}
         self.measures: dict[str, Any] = {}
         self._last_speak_t = -1e9
         self._last_cue_t: dict[str, float] = {}
@@ -288,11 +290,16 @@ class CoachSession:
                 self.counts["lean_cues" if e.type == "compensation_lean" else "hiking_cues"] += 1
             elif e.type == "wrong_dot":
                 self.counts["wrong_dot"] += 1
+            elif e.type == "above_ceiling":
+                self.counts["above_ceiling"] += 1
+                by_set = self.measures.setdefault("above_ceiling_by_set", {})
+                key = str(e.payload.get("set") or 1)
+                by_set[key] = by_set.get(key, 0) + 1
             elif e.type == "perception_lost":
                 self.tracking_lost_events += 1
             if e.type != "frame":
                 self._ring.append(e)
-                self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep")})
+                self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep", "angle_deg", "ceiling_deg")})
         out: list[Event] = []
         state = self.exertion.update(events, t=t)
         if state["level"] != self._last_level:

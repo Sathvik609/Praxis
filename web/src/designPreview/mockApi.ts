@@ -128,7 +128,7 @@ function checkin(b: CheckinBody): CheckinResult {
   const flagged = tier === 'rest' || !!b.new_symptoms
   if (flagged) {
     const id = Math.max(0, ...state.flags.map((f) => f.id)) + 1
-    state.flags.unshift({ id, session_id: 'checkin', rule: b.new_symptoms ? 'symptoms' : 'pain', detail: reasons.join('; '), t: 0, date: state.calendar.today, reviewed: false })
+    state.flags.unshift({ id, session_id: `checkin-alex-${state.calendar.today}`, rule: b.new_symptoms ? 'checkin_symptoms' : 'checkin_pain', detail: reasons.join('; '), t: 0, date: state.calendar.today, reviewed: false })
   }
   return { tier, flagged, reasons }
 }

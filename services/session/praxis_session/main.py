@@ -24,9 +24,9 @@ import time
 from dataclasses import replace as _replace_event
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 import cv2
 import numpy as np
@@ -44,7 +44,7 @@ from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, R
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
-from praxis_session.plan import day_plan, stricter, tier_for, tier_reason
+from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION
 from praxis_session.session import CoachSession
 from praxis_session.store import DEFAULT_PATH, Store
@@ -287,6 +287,49 @@ def api_calendar(start: date | None = Query(None, alias="from"), end: date | Non
 def api_plan(pain: int = 0, nhpt_due: bool = True) -> dict[str, object]:
     """Today in the default order at the pain tier's dose (`plan.day_plan`). A rule in code."""
     return day_plan(pain, SEED_PRESCRIPTION, nhpt_due=nhpt_due)
+
+
+class CheckinBody(BaseModel):
+    """Screen 03's check-in as `web/src/lib/day.ts` posts it (`api.ts` CheckinBody). Types are
+    strict: a pain of "5", 5.5 or true is a 422, never coerced."""
+
+    pain: Annotated[int, Field(strict=True, ge=0, le=10)]
+    new_symptoms: Annotated[bool, Field(strict=True)]
+    rpe: Annotated[int | None, Field(strict=True, ge=0, le=10)] = None
+    notes: Annotated[str | None, Field(max_length=2000)] = None
+    side: Literal["left", "right"] | None = None
+    patient_id: Annotated[str | None, Field(min_length=1, max_length=64)] = None
+
+
+_checkin_traces: dict[tuple[str, str], Trace] = {}  # one trace file per day (and trace dir)
+
+
+@app.post("/api/checkin")
+def api_checkin(body: CheckinBody) -> dict[str, object]:
+    """The day's check-in (screen 03), decided in code by `plan.checkin_outcome` against the
+    **current** prescription's stop level (seed 7; a therapist can make it stricter): 0-3 full,
+    4-6 gentle, at/above the stop level or new/worse symptoms rest. A rest day writes a
+    therapist flag (`checkin_pain`, `checkin_symptoms`) to the same `flags` table the stop rules
+    use, at most once per patient, day and reason, so the web's offline re-post
+    (`syncCheckin`) never flags twice. Every check-in is stored (`checkins`), traced
+    (`traces/checkin-<date>.jsonl`) and each new flag goes on the event ring. `flagged` is true
+    whenever a flag for this check-in's reason is on file today: the therapist has been told.
+    422 on bad input, and nothing is written."""
+    now = _clock()
+    day, t = now.date().isoformat(), now.timestamp()
+    out = checkin_outcome(body.pain, body.new_symptoms, store.rx())
+    record = {"pain": body.pain, "new_symptoms": body.new_symptoms, "rpe": body.rpe, "notes": body.notes, "side": body.side, "tier": out["tier"], "reasons": out["reasons"], "flagged": bool(out["flags"])}
+    patient_id = body.patient_id or store.patient()["id"]
+    saved, added = store.save_checkin(record, out["flags"], day, t, patient_id=patient_id)
+    key = (day, str(trace_mod.DEFAULT_DIR))
+    tr = _checkin_traces.get(key)
+    if tr is None:
+        tr = _checkin_traces[key] = Trace(f"checkin-{day}")
+    tr.log("checkin", checkin_id=saved["id"], patient=patient_id, pain=body.pain, new_symptoms=body.new_symptoms, rpe=body.rpe, tier=out["tier"], reasons=out["reasons"])
+    for f in added:
+        tr.log("flag", rule=f["rule"], detail=f["detail"], flag_id=f["id"])
+        ring.append(make_event("therapist_flag", t=t, rule=f["rule"], detail=f["detail"]))
+    return {"tier": out["tier"], "flagged": record["flagged"], "reasons": out["reasons"], "plan": out["plan"]}
 
 
 class SelfReport(BaseModel):

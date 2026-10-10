@@ -43,7 +43,7 @@ export type ArmSnapshot = {
   trunk_lean_deg: number
   reps_total: number
   unverified_total: number
-  flags: { lean: boolean; lean_count: number; hike_count: number }
+  flags: { lean: boolean; lean_count: number; hike_count: number; above_ceiling_count?: number }
   finished: boolean
   /** Registry id the service is scoring (pendulum | flexion | abduction), its rep shape, the
    *  camera view it needs and the pain tier applied to the dose. */

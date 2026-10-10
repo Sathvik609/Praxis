@@ -203,3 +203,38 @@ def test_arm_done_line_is_per_exercise():
     assert d[0].cue_id == "arm_done" and "swing" in d[0].text.lower()
     d2 = RuleCoach().decide(ctx("arm", [e], 90.0, snapshot=arm_snap("flexion")))
     assert d2[0].text != d[0].text
+
+
+# ---- above_ceiling (10 Oct): a correction, never a stop ------------------------------------
+def above(t, rep=1, angle=104.0):
+    return make_event("above_ceiling", t=t, set=1, rep=rep, angle_deg=angle, ceiling_deg=90.0)
+
+
+def arm_ctx(events, t, last_cue_t=None):
+    return CoachContext(
+        mode="arm", events=events, snapshot=arm_snap("abduction"), exertion={"level": "low", "reasons": []},
+        prescription=SEED_PRESCRIPTION, t=t, last_speak_t=t - 0.1, last_cue_t=last_cue_t or {},
+    )
+
+
+def test_above_ceiling_is_a_plain_correction_with_its_evidence():
+    e = above(5.0)
+    d = RuleCoach().decide(arm_ctx([e], 5.0))
+    assert len(d) == 1
+    assert d[0].action == "correct" and d[0].cue_id == "arm_above_ceiling" and d[0].label == LABEL
+    assert "shoulder" in d[0].text.lower() and d[0].evidence == [e.id]
+    assert "104" in d[0].reason and "90" in d[0].reason
+
+
+def test_above_ceiling_respects_its_cooldown_and_rotates_its_phrases():
+    from praxis_session.coach.rules import COOLDOWN_S
+
+    c = RuleCoach()
+    first = c.decide(arm_ctx([above(10.0)], 10.0))
+    assert [d.cue_id for d in first] == ["arm_above_ceiling"]
+    # Inside the cooldown it stays silent, even within one batch of events.
+    assert c.decide(arm_ctx([above(11.0, rep=2)], 11.0, {"arm_above_ceiling": 10.0})) == []
+    assert [d.cue_id for d in RuleCoach().decide(arm_ctx([above(1.0), above(1.5, rep=2)], 1.5))] == ["arm_above_ceiling"]
+    later_t = 10.0 + COOLDOWN_S["arm_above_ceiling"] + 0.1
+    later = c.decide(arm_ctx([above(later_t, rep=3)], later_t, {"arm_above_ceiling": 10.0}))
+    assert [d.cue_id for d in later] == ["arm_above_ceiling"] and later[0].text != first[0].text

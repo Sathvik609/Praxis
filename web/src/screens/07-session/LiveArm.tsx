@@ -25,15 +25,19 @@ import { SetCheckIn } from './SetCheckIn'
 import { TracePanel } from './TracePanel'
 
 type ArmComplete = PraxisEvent & { sets: number; reps: number }
-type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
+type RepComplete = PraxisEvent & { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean; above_ceiling?: boolean }
 
 /** Trunk lean above this many degrees is shown as "leaning" in amber; the stop rule's own
  *  threshold lives in the service. */
 export const LEAN_SHOW_DEG = 12
 
-function caption(f: FrameEvent | null, lost: boolean, lean: boolean, view: 'side' | 'front', swing: boolean): string {
+/** The cue a recent event asks for: trunk lean (posture) or a lift past the ceiling (range). */
+type Cue = 'lean' | 'ceiling' | null
+
+function caption(f: FrameEvent | null, lost: boolean, cue: Cue, view: 'side' | 'front', swing: boolean): string {
   if (lost) return statusLabel('lost', 'arm', view).coach ?? ''
-  if (lean) return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
+  if (cue === 'lean') return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
+  if (cue === 'ceiling') return 'Stop at shoulder height — no higher than the line.'
   const a = f?.arm
   if (!a) return 'Getting the camera ready.'
   if (a.finished) return 'Both sets done. Rest your arm.'
@@ -90,6 +94,10 @@ export function LiveArm() {
   const live = status === 'tracking' || status === 'replay'
   const lastLean = [...events].reverse().find((e) => e.type === 'compensation_lean')
   const leanRecent = !!lastLean && (frame ? frame.t - lastLean.t < 4 : true)
+  // A lift past the in-code ceiling (service `above_ceiling`, 10 Oct): shown like the lean cue.
+  const lastAbove = [...events].reverse().find((e) => e.type === 'above_ceiling')
+  const aboveRecent = !!lastAbove && (frame ? frame.t - lastAbove.t < 4 : true)
+  const cue: Cue = leanRecent ? 'lean' : aboveRecent ? 'ceiling' : null
   const complete = events.find((e) => e.type === 'arm_complete') as ArmComplete | undefined
   const [askedSets, setAskedSets] = useState<number[]>([])
   const setDone = [...events].reverse().find((e) => e.type === 'set_complete' && !askedSets.includes(Number(e.set))) as (PraxisEvent & { set: number }) | undefined
@@ -134,9 +142,10 @@ export function LiveArm() {
   const coachCard = (
     <SxCoach
       captions={ui.captions}
-      watch={leanRecent}
+      watch={cue !== null}
+      eyebrow={cue === 'ceiling' ? 'Coach · range' : undefined}
       tone={tone}
-      caption={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
+      caption={coach.caption?.text ?? (cue ? caption(frame, lost, cue, view, swing) : label.coach ?? caption(frame, lost, null, view, swing))}
       label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
       source={coach.captionSource}
     />
