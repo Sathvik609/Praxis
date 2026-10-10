@@ -298,6 +298,27 @@ def test_posture_split(tmp_path):
     assert (c["lean_cues"], c["hiking_cues"], c["posture_cues"]) == (1, 1, 2)
 
 
+def test_above_ceiling_is_counted_per_set_corrected_and_never_stops(tmp_path):
+    import json
+
+    s = make(mode="arm", tmp_path=tmp_path)
+    snap = {"arm": {"exercise": "abduction", "kind": "hold", "reps_per_set": 8, "sets": 2}}
+    out = s.on_events([make_event("above_ceiling", t=1.0, set=1, rep=1, angle_deg=101.0, ceiling_deg=90.0)], snapshot=snap, t=1.0)
+    out += s.on_events([make_event("above_ceiling", t=30.0, set=2, rep=1, angle_deg=99.0, ceiling_deg=90.0)], snapshot=snap, t=30.0)
+    out += s.on_events([make_event("above_ceiling", t=60.0, set=2, rep=4, angle_deg=99.0, ceiling_deg=90.0)], snapshot=snap, t=60.0)
+    coach = [e for e in out if e.type == "coach"]
+    assert len(coach) == 3 and all(e.payload["action"] == "correct" and e.payload["cue_id"] == "arm_above_ceiling" for e in coach)
+    assert not any(e.type in ("stop", "pause", "rest", "therapist_flag") for e in out)
+    summary = s.summary(60.0)
+    c = summary["camera"]
+    assert c["above_ceiling"] == 3 and c["above_ceiling_by_set"] == {"1": 1, "2": 2}
+    assert c["posture_cues"] == 0  # not a posture cue
+    assert summary["stopped"] is False and summary["flags"] == []
+    rows = [json.loads(line) for line in (tmp_path / "t.jsonl").read_text().splitlines()]
+    assert any(r["kind"] == "event" and r.get("type") == "above_ceiling" for r in rows)
+    assert any(r["kind"] == "decide" and r.get("cue_id") == "arm_above_ceiling" for r in rows)
+
+
 def test_coach_notes_have_categories(tmp_path):
     s = make(mode="arm", tmp_path=tmp_path)
     s.decisions.append({"action": "correct", "cue_id": "arm_lean", "reason": "trunk lean 14°", "evidence": [1], "source": "rule"})

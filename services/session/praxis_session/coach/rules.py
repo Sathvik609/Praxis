@@ -19,7 +19,10 @@ def regress_at_lean(prescription) -> int:
     """The lean count the hold regress fires on: one before the stop rule's lean pause
     (`stop_rules.lean_events`, 3 in the seed), because the pause silences the coach."""
     return max(1, int(prescription.stop_rules.lean_events) - 1)
-COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8, "arm_swing": 1.5}
+COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0.8, "arm_swing": 1.5, "arm_above_ceiling": 8.0}
+# Corrections pass the instruct gap, but these keep their own cooldown: the FSM sends
+# `above_ceiling` at most once per rep, and one reminder per ~8 s is enough (10 Oct).
+CORRECTION_COOLDOWN: frozenset[str] = frozenset({"arm_above_ceiling"})
 
 # One intro and one done line per camera-coached arm exercise (locked set, 23 Sep), in our own
 # words (GRASP text is UBC / Heart & Stroke material; see docs/LICENSES.md). Everything else
@@ -44,6 +47,7 @@ PHRASES: dict[str, list[str]] = {
     "arm_hold": ["Hold… three.", "Hold it there. Three."],
     "arm_lower": ["Lower for three.", "Down slowly, three."],
     "arm_rep": ["Good, {rep} of {reps}.", "{rep} of {reps}. Nice.", "That's {rep} of {reps}."],
+    "arm_above_ceiling": ["Stop at shoulder height.", "No higher than your shoulder.", "That's past the line — stop at shoulder height."],
 }
 
 
@@ -68,6 +72,9 @@ class RuleCoach:
         last_cue = dict(ctx.last_cue_t)
         for e in ctx.events:
             for d in self._for_event(e, ctx):
+                if d.action == "correct" and d.cue_id in CORRECTION_COOLDOWN:
+                    if e.t - last_cue.get(d.cue_id, -1e9) < COOLDOWN_S[d.cue_id]:
+                        continue  # the same reminder too soon
                 if d.action == "instruct":
                     if e.t - last_cue.get(d.cue_id, -1e9) < COOLDOWN_S.get(d.cue_id, 0.0):
                         continue  # same cue too soon
@@ -169,6 +176,9 @@ class RuleCoach:
                 return out
             if e.type == "shoulder_hiking":
                 return [Decision("correct", "arm_hike", "Let the shoulder drop; lift from the arm, not the shoulder.", "shoulder hiking", ev)]
+            if e.type == "above_ceiling":
+                # Not a stop rule: the rep still counts; the patient is reminded of the line.
+                return [Decision("correct", "arm_above_ceiling", self._phrase("arm_above_ceiling"), f"lift {p.get('angle_deg')}° past the {p.get('ceiling_deg')}° ceiling (rep {p.get('rep')})", ev)]
             if e.type == "hold_too_short":
                 return [Decision("correct", "arm_short_hold", f"A little longer at the top next time — hold for {self._hold(ctx, ex):g}.", "hold too short", ev)]
             if e.type == "target_missed":

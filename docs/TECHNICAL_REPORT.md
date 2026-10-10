@@ -145,6 +145,26 @@ hold and no `target_missed`. Every frame's `arm` block now carries `exercise`,
 `rep_progress` (0–1), `exercise_start` opens a session with the dose, and `set_complete`
 carries `verified_reps` and `best_deg`.
 
+**Lifting past the ceiling (`above_ceiling`, 10 Oct).** The target is clamped to the 90° ceiling
+in code, but nothing stopped the patient lifting higher. For `kind="hold"` exercises (Arm out to
+the side; the dormant Arm to the front) the FSM now emits `above_ceiling {set, rep, angle_deg,
+ceiling_deg}` when the One-Euro-smoothed angle is above `ceiling_deg + ABOVE_CEILING_TOL_DEG`
+(5°, absorbs landmark jitter at the line) for `ABOVE_CEILING_FRAMES` (3, ~0.2–0.3 s at 10–15 fps)
+consecutive scored frames while lifting or holding; at most once per rep, never while the FSM is
+gated, never for the pendulum. It is **not a stop rule**: the rep is still counted and verified
+by the usual target/hold logic and carries `above_ceiling: true`; `set_complete` carries
+`above_ceiling_count` for the set, the frame snapshot `flags.above_ceiling_count`, and the session
+summary `camera.above_ceiling` (total, not part of `posture_cues`) and
+`camera.above_ceiling_by_set` (`{"1": n, "2": m}`). The rule coach answers with a `correct`
+(`arm_above_ceiling`, phrase pool "Stop at shoulder height." / "No higher than your shoulder." /
+"That's past the line — stop at shoulder height.", reason cites the angle, the ceiling and the
+rep) under its own 8 s cooldown (corrections otherwise always pass); the agent's
+`get_set_summary` reports `above_ceiling_count`. The live arm screen (07c) shows it like the lean
+cue: the coach card's watch tone with the eyebrow "Coach · range" and, when the coach has not
+spoken, the caption "Stop at shoulder height — no higher than the line." for 4 s; the reference
+figure dims as for a lean. The 5° tolerance and 3 frames are tuned on synthetic landmark streams
+only (`tests/test_arm_fsm.py`), not on real recordings.
+
 **Honest scope.** (a) Rotate out / Rotate in are **not measured**: with the elbow tucked the
 forearm points at a single webcam, and the earlier approximation (wrist offset over upper-arm
 length) was not honest enough to score anyone, so both are demo-only and self-ticked, labelled

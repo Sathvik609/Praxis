@@ -323,3 +323,66 @@ def test_flexion_still_flags_a_sustained_lean():
         e, t = run(f, rep_profile(90, 1.2, lean=35.0), t)
         evs += e
     assert types(evs).count("compensation_lean") == 3
+
+
+# ---- above_ceiling (10 Oct): lifting past the in-code 90° ceiling ---------------------------
+def front(fsm: ArmFSM, samples, t0: float = 0.0):
+    """Arm out to the side is scored from the front view (shoulders apart: view_ok False)."""
+    return run_obs(fsm, samples, t0, view_ok=False)
+
+
+def test_lifting_past_the_ceiling_fires_above_ceiling_once_and_the_rep_still_counts():
+    from praxis_session.perception.arm_fsm import ABOVE_CEILING_TOL_DEG
+
+    f = ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = front(f, rep_profile(110, 1.5))
+    above = [e for e in evs if e.type == "above_ceiling"]
+    assert len(above) == 1  # held above for 1.5 s: still one event
+    p = above[0].payload
+    assert p["rep"] == 1 and p["set"] == 1 and p["ceiling_deg"] == 90.0
+    assert p["angle_deg"] > 90.0 + ABOVE_CEILING_TOL_DEG
+    rep = [e for e in evs if e.type == "rep_complete"][0].payload
+    assert rep["verified"] is True and rep["above_ceiling"] is True  # counted per existing logic
+    assert f.snapshot()["flags"]["above_ceiling_count"] == 1
+
+
+def test_within_the_tolerance_or_a_brief_spike_is_not_above_the_ceiling():
+    f = ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=2)
+    evs, t = front(f, rep_profile(94, 1.2))  # 94° <= 90 + 5
+    spike = [(a, 0.0, 0.0) for a in [5 + 85 * i / 15 for i in range(16)] + [90] * 5 + [100, 101] + [90] * 15 + [60, 30, 5, 5, 5, 5, 5, 5, 5, 5]]
+    evs2, _ = front(f, spike, t)  # two frames over: noise, not a lift past the line
+    assert "above_ceiling" not in types(evs + evs2)
+    reps = [e.payload for e in evs + evs2 if e.type == "rep_complete"]
+    assert len(reps) == 2 and not any(r["above_ceiling"] for r in reps)
+
+
+def test_above_ceiling_is_once_per_rep_and_counted_per_set():
+    f = ArmFSM("abduction", hold_s=1.0, sets=2, reps_per_set=2)
+    t, evs = 0.0, []
+    for peak in (105, 105, 90, 105):
+        e, t = front(f, rep_profile(peak, 1.2), t)
+        evs += e
+    above = [e.payload for e in evs if e.type == "above_ceiling"]
+    assert [(a["set"], a["rep"]) for a in above] == [(1, 1), (1, 2), (2, 2)]
+    sets = [e.payload for e in evs if e.type == "set_complete"]
+    assert [s["above_ceiling_count"] for s in sets] == [2, 1]
+    assert f.snapshot()["flags"]["above_ceiling_count"] == 3
+
+
+def test_above_ceiling_waits_for_the_right_view_and_skips_the_pendulum():
+    f = ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = run_obs(f, rep_profile(110, 1.2), view_ok=True)  # side-on: frozen
+    assert "above_ceiling" not in types(evs)
+    p = ArmFSM("pendulum", sets=1, reps_per_set=3)
+    evs, _ = run_obs(p, swing(60, cycles=3))
+    assert "above_ceiling" not in types(evs)
+
+
+def test_above_ceiling_events_validate_against_the_schema():
+    from praxis_session.schema import validate_event
+
+    f = ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=1)
+    evs, _ = front(f, rep_profile(110, 1.2))
+    for e in evs:
+        if e.type in ("above_ceiling", "rep_complete", "set_complete"):
+            validate_event(e.to_dict())

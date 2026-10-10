@@ -18,9 +18,10 @@ Two rep shapes:
   counted with reason `swing_too_small`. **Approximation, validated on synthetic landmark
   streams only** (docs/RISKS.md).
 
-Events: exercise_start, state_change, rep_complete{verified, reason}, target_missed,
-hold_too_short, compensation_lean, shoulder_hiking, set_complete{verified_reps, best_deg},
-arm_complete. Angles are camera-relative progress, never clinical goniometry; the target is
+Events: exercise_start, state_change, rep_complete{verified, reason, above_ceiling},
+target_missed, hold_too_short, compensation_lean, shoulder_hiking,
+above_ceiling{set, rep, angle_deg, ceiling_deg}, set_complete{verified_reps, best_deg,
+above_ceiling_count}, arm_complete. Angles are camera-relative progress, never clinical goniometry; the target is
 clamped to the exercise's ceiling in code (CLAUDE.md guardrails).
 
 Gating (Sprint D, generalised in Sprint E): the image-plane metric only means something from
@@ -33,6 +34,13 @@ so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
 `compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
 `shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
 therefore gets no lean flags.
+
+`above_ceiling` (10 Oct, `kind="hold"` only): the smoothed metric (One-Euro in the pipeline) above
+`ceiling_deg + ABOVE_CEILING_TOL_DEG` (90 + 5 for Arm out to the side) for
+`ABOVE_CEILING_FRAMES` consecutive scored frames while lifting or holding; at most once per rep.
+It is a coaching event, not a stop rule: the rep is still counted and verified by the usual
+target/hold logic, and carries `above_ceiling: true`. The tolerance absorbs landmark jitter around
+the line; both numbers are tuned on synthetic landmark streams only (docs/RISKS.md).
 """
 
 from __future__ import annotations
@@ -47,6 +55,10 @@ from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 STATES = ("start_pose", "moving", "target_reached", "hold", "return")
 MIN_VISIBILITY = 0.5
 GATES = ("turn_side", "turn_front", "hips_out_of_view")
+# Lifting past the in-code ceiling: how far over (camera-relative degrees) and for how many
+# consecutive scored frames (~0.2-0.3 s at 10-15 fps) before `above_ceiling` fires.
+ABOVE_CEILING_TOL_DEG = 5.0
+ABOVE_CEILING_FRAMES = 3
 # FSM state -> the phase the avatar and the big count follow (Sprint E contract).
 PHASES = {
     "start_pose": "start",
@@ -137,6 +149,10 @@ class ArmFSM:
         self.reps: list[dict[str, Any]] = []
         self.lean_count = 0
         self.hike_count = 0
+        self.above_ceiling_count = 0
+        self._above_frames = 0
+        self._above_this_rep = False
+        self._above_this_set = 0
         self._angle: float | None = None
         self._lean = 0.0
         self._peak = 0.0
@@ -238,6 +254,7 @@ class ArmFSM:
                 "lean": self.lean_count >= self.lean_events_to_flag,
                 "lean_count": self.lean_count,
                 "hike_count": self.hike_count,
+                "above_ceiling_count": self.above_ceiling_count,
             },
             "finished": self.finished,
         }
@@ -276,6 +293,7 @@ class ArmFSM:
         if self.state in ("moving", "target_reached", "hold"):
             self._peak = max(self._peak, obs.shoulder_deg)
             evs += self._compensation(obs)
+            evs += self._above_ceiling(obs)
         handler = getattr(self, f"_in_{self.state}")
         return evs + handler(obs)
 
@@ -322,6 +340,30 @@ class ArmFSM:
             )
         return evs
 
+    def _above_ceiling(self, obs: ArmObservation) -> list[Event]:
+        """`above_ceiling` once per rep after `ABOVE_CEILING_FRAMES` consecutive frames over
+        `ceiling_deg + ABOVE_CEILING_TOL_DEG` (hold reps only; the caller runs it while lifting
+        or holding, never while the FSM is gated)."""
+        if obs.shoulder_deg is None or obs.shoulder_deg <= self.ceiling_deg + ABOVE_CEILING_TOL_DEG:
+            self._above_frames = 0
+            return []
+        self._above_frames += 1
+        if self._above_this_rep or self._above_frames < ABOVE_CEILING_FRAMES:
+            return []
+        self._above_this_rep = True
+        self._above_this_set += 1
+        self.above_ceiling_count += 1
+        return [
+            make_event(
+                "above_ceiling",
+                t=obs.t,
+                set=self.set,
+                rep=self.rep + 1,
+                angle_deg=round(obs.shoulder_deg, 1),
+                ceiling_deg=self.ceiling_deg,
+            )
+        ]
+
     def _complete_rep(self, rep: dict[str, Any], t: float, best: float) -> list[Event]:
         """Shared tail for both rep shapes: record it, close the set, finish the exercise."""
         self.reps.append(rep)
@@ -338,6 +380,7 @@ class ArmFSM:
                     reps=self.rep,
                     verified_reps=self._verified_this_set,
                     best_deg=round(self._best_this_set, 1),
+                    above_ceiling_count=self._above_this_set,
                 )
             )
             if self.set >= self.sets:
@@ -348,6 +391,7 @@ class ArmFSM:
             self.rep = 0
             self._best_this_set = 0.0
             self._verified_this_set = 0
+            self._above_this_set = 0
         self._held = 0.0
         evs.append(self._go("start_pose", t))
         return evs
@@ -392,6 +436,7 @@ class ArmFSM:
             "reason": None if verified else "swing_too_small",
             "lean": self._lean_this_rep,
             "hike": self._hike_this_rep,
+            "above_ceiling": False,  # a swing has no lift to take past the ceiling
             "t_start": self._t_move,
             "t_end": obs.t,
         }
@@ -419,6 +464,7 @@ class ArmFSM:
         if obs.shoulder_deg > self.start_below_deg + 5:
             self._peak, self._t_move, self._held, self._reason = obs.shoulder_deg, obs.t, 0.0, None
             self._lean_this_rep = self._hike_this_rep = False
+            self._above_this_rep, self._above_frames = False, 0
             self._lean_since = None
             return [self._go("moving", obs.t)]
         return []
@@ -475,6 +521,7 @@ class ArmFSM:
             "reason": self._reason,
             "lean": self._lean_this_rep,
             "hike": self._hike_this_rep,
+            "above_ceiling": self._above_this_rep,
             "t_start": self._t_move,
             "t_end": obs.t,
         }

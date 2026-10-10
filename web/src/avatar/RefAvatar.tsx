@@ -18,7 +18,7 @@ import type { Projection } from './scene'
 
 export type RefMode = 'idle' | 'dim-lost' | 'dim-cue' | 'run'
 
-/** Seconds a posture cue (`compensation_lean`) or a coach correction dims the figure. */
+/** Seconds a posture or range cue (`compensation_lean`, `above_ceiling`) or a coach correction dims the figure. */
 export const REF_DIM_S = 4
 /** Seconds the figure rests at the bottom between its own reps. */
 const AV_REST_S = 1
@@ -40,7 +40,7 @@ export function refMode(events: PraxisEvent[], _frame: FrameLike, hold: { open: 
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i]
     if (lost === null && (e.type === 'perception_lost' || e.type === 'perception_regained')) lost = e.type === 'perception_lost'
-    if (lean === null && e.type === 'compensation_lean') lean = e.t
+    if (lean === null && (e.type === 'compensation_lean' || e.type === 'above_ceiling')) lean = e.t
     if (correct === null && e.type === 'coach' && e.action === 'correct') correct = e.t
     if (lost !== null && lean !== null && correct !== null) break
   }
