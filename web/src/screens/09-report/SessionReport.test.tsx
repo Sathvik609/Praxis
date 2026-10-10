@@ -68,6 +68,19 @@ test('coach note eyebrows come from the note category, and a note without one ha
   expect(reach.querySelector('small')).toBeNull()
 })
 
+test('coach notes stored in the old "action: reason" form read as sentences; the category chip stays', async () => {
+  const notes = [
+    { text: 'progress: patient accepted progression', confidence: 'high', evidence: [], cat: 'Performance' },
+    { text: 'progress: two clean slow arcs, mean reach 1.2 s, 0 unverified', confidence: 'high', evidence: [22], cat: 'Performance' },
+  ]
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: { ...SESSION.summary.coach, notes } } }, '/api/patients/me': ME })
+  renderReport()
+  const accepted = (await screen.findByText('Patient accepted the faster arcs.')).closest('li')!
+  expect(accepted.querySelector('small')).toHaveTextContent('Performance')
+  expect(screen.getByText('Progression offered: two clean slow arcs, mean reach 1.2 s, 0 unverified.')).toBeInTheDocument()
+  expect(screen.queryByText(/^progress:/)).not.toBeInTheDocument()
+})
+
 test('the authority line names the clinician from data and guesses no pronoun', async () => {
   mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
   renderReport()

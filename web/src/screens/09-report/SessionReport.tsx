@@ -7,6 +7,7 @@ import { Chip } from '../../design/Chip'
 import { Check, Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
+import { noteText } from '../../lib/coachNotes'
 import { plural } from '../../lib/plural'
 import { api, isReplaySession, useApi, type SessionCoach, type SessionRecord, type SessionSummary } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
@@ -407,7 +408,7 @@ export function SessionReport() {
                 <li key={i}>
                   <span className="rp-note-b">
                     {n.cat && <small>{n.cat}</small>}
-                    {n.text}
+                    {noteText(n.text)}
                   </span>
                   <Chip tone={conf[n.confidence] ?? 'neutral'}>{cap(n.confidence)}</Chip>
                 </li>
