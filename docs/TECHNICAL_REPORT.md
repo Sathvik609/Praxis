@@ -383,7 +383,7 @@ Measured by driving the real WebSocket handler with `fastapi.testclient` on an A
 **Privacy.**
 - Frames are decoded, processed in memory and dropped. No frame, pixel or base64 image is written to disk, put in an event, a trace row, a tool result or a model message (`assert_no_pixels` checks every agent tool result; tested). The agent's `check_setup` reads the latest frame by reference in memory only.
 - Only events, metrics, the decision trace and the session summary are stored (SQLite on the host; nothing goes to AWS while `PRAXIS_CLOUD_ENABLED=0`).
-- **Where the processing happens depends on the deployment.** Run on a laptop, the video never leaves the machine. On the hosted review build (Railway), webcam frames travel over TLS to the container, are processed in memory and dropped, never stored; "video never leaves your laptop" is only true for the local run (`docs/RISKS.md`, 17 Sep). The camera setup screen names the processing place. The hosted link has no sign-in (removed 21 Sep), so sessions and traces there are readable by anyone with the link; it holds sample data only and is not for real patients (`docs/RISKS.md`, 21 Sep).
+- **Where the processing happens depends on the deployment.** Run on a laptop, the video never leaves the machine. On the hosted review build (Railway), webcam frames travel over TLS to the container, are processed in memory and dropped, never stored; "video never leaves your laptop" is only true for the local run (`docs/RISKS.md`, 17 Sep). The camera setup screen names the processing place. The hosted link has no sign-in (removed 21 Sep), so sessions and traces there are readable by anyone with the link; it is meant for sample data only and is not for real patients (`docs/RISKS.md`, 21 Sep).
 - The app has no clip-recording feature. The only recorded clips are evaluation recordings made with signed consent; replay lists a clip only while its sidecar consent allows demo use and before its 30-day `delete_after` date (`replay.py`).
 - With the agent on, check-in answers and event summaries (never images) are sent to the model provider (Anthropic API in development; Amazon Bedrock planned).
 
@@ -401,7 +401,7 @@ Measured by driving the real WebSocket handler with `fastapi.testclient` on an A
 - **Latency** (§6.2) is in-process on one laptop; browser-measured end-to-end latency and any cloud latency are not measured yet.
 - **Agent coach** (§4.1): its tools, guardrails and fallbacks are tested with a scripted planner; real-model results are pending (`docs/ARCHITECTURE.md` TODO). Its judgement is not clinically validated.
 - **AWS and COOL are not built** (§5, §7).
-- **Hosted review build** has no sign-in and runs in UTC with a fixed `TZ`; it is for team review, not patients (§8, `docs/RISKS.md`).
+- **Hosted review build** has no sign-in and dates days by the container clock (`TZ=America/New_York`), so a patient in another time zone sees shifted day boundaries; it is for team review, not patients (§8, `docs/RISKS.md`).
 - **Accessibility:** three palette pairs miss WCAG 2.1 AA 4.5:1 and controls are 40–48 px by design decision (`docs/RISKS.md`, 6 Oct); not yet tested with patients.
 - **Pain stop level 7** is a product decision (23 Sep), stricter-only per prescription; it needs a clinician's confirmation before any pilot.
 
