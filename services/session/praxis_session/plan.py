@@ -6,16 +6,18 @@ Pain tiers locked on 23 Sep 2026, default day on 28 Sep 2026. The tier is a **ru
 |------------------|--------|-------------------------------------------------------------------------|
 | 0-3              | full   | the day at the prescribed dose                                          |
 | 4-6              | gentle | the same day, reduced dose/range within the allowed adaptations          |
-| >= 7             | rest   | nothing today; the pain stop rule ends the session and flags the therapist |
+| >= 7             | rest   | nothing today; the check-in flags the therapist (so does new/worse symptoms) |
 
 Default day (~10 min, 28 Sep): Arm out to the side -> Waiter – cup. The Nine-Hole Peg Test is
 weekly. Pendulum, Arm to the front, Rotate out and Rotate in are hidden (`visible=False` in the
 registry): dormant code, never scheduled, so `demo` is always empty now.
 
 The rest threshold is `min(7, prescription.stop_rules.pain_max)`: a therapist can make it
-stricter, never looser. The seed prescription's `pain_max` is 7, so the `>= 7` flag is written
-by exactly one place, the pain stop rule (`stop_rules.py`), when the same number arrives at
-check-in. The service also enforces the tier on the live session (`main._handle_command` ->
+stricter, never looser. The seed prescription's `pain_max` is 7. The day's check-in
+(`POST /api/checkin`, `checkin_outcome`) writes a `checkin_pain` therapist flag at or above it and
+a `checkin_symptoms` flag for new or worse symptoms (both a rest day), once per patient, day and
+reason; inside a session the pain stop rule (`stop_rules.py`) writes its own `pain` flag when the
+same number arrives on the socket. The service also enforces the tier on the live session (`main._handle_command` ->
 `SessionPipeline.apply_tier`), so a client that asks for `full` with pain 5 still runs gentle.
 """
 
@@ -33,10 +35,8 @@ DAY_ORDER: tuple[str, ...] = ("abduction", "cup")
 WEEKLY: tuple[str, ...] = ("nhpt",)
 DAY_MINUTES = 10
 TIER_RANK: dict[str, int] = {"full": 0, "gentle": 1, "rest": 2}
-REST_ADVICE = (
-    "Pain of 7 or more today. Rest the arm and try again tomorrow. "
-    "Your therapist has been told."
-)
+SYMPTOMS_REASON = "New or worse symptoms today: a rest day. Check with your therapist before practising."
+SYMPTOMS_ADVICE = "New or worse symptoms since last time. Rest the arm today and check with your therapist before practising."
 
 
 def rest_at(prescription: Prescription | None = None) -> int:
@@ -73,13 +73,31 @@ def _shown(ids: tuple[str, ...]) -> list[str]:
     return [i for i in ids if EXERCISES[i].visible]
 
 
-def day_plan(pain: int = 0, prescription: Prescription | None = None, nhpt_due: bool = True) -> dict[str, Any]:
+def rest_advice(prescription: Prescription | None = None, symptoms: bool = False) -> str:
+    """What a rest day tells the patient. The stop level is the prescription's, never a fixed 7.
+    Whether the therapist was told is not claimed here: only a written flag says so
+    (`/api/checkin`'s `flagged`, which the web turns into its own line)."""
+    if symptoms:
+        return SYMPTOMS_ADVICE
+    return f"Pain of {rest_at(prescription)} or more today. Rest the arm and try again tomorrow."
+
+
+def symptoms_rest(new_symptoms: bool, prescription: Prescription | None = None) -> bool:
+    """New or worse symptoms make a rest day when the prescription's stop rules say so (the
+    seed does), exactly as the in-session stop rule (`StopRules.on_checkin`)."""
+    rx = SEED_PRESCRIPTION if prescription is None else prescription
+    return bool(new_symptoms) and bool(rx.stop_rules.new_symptoms)
+
+
+def day_plan(pain: int = 0, prescription: Prescription | None = None, nhpt_due: bool = True, new_symptoms: bool = False) -> dict[str, Any]:
     """The day in order at the tier's dose. `items` are the camera-coached day, `weekly` the
     peg test when it is due, `demo` any visible self-ticked exercise (none since 28 Sep). A rest
-    day has none of them. A hidden exercise is never scheduled, whatever the order says."""
+    day has none of them. A hidden exercise is never scheduled, whatever the order says.
+    New or worse symptoms (`symptoms_rest`) make a rest day whatever the pain."""
     rx = SEED_PRESCRIPTION if prescription is None else prescription
     p = max(0, min(10, int(pain)))
-    tier = tier_for(p, rx)
+    symptoms = symptoms_rest(new_symptoms, rx) and tier_for(p, rx) != "rest"
+    tier = "rest" if symptoms else tier_for(p, rx)
     rest = tier == "rest"
 
     def item(ex_id: str, **extra: Any) -> dict[str, Any]:
@@ -88,11 +106,37 @@ def day_plan(pain: int = 0, prescription: Prescription | None = None, nhpt_due: 
     return {
         "pain": p,
         "tier": tier,
-        "reason": tier_reason(tier, p),
+        "reason": SYMPTOMS_REASON if symptoms else tier_reason(tier, p),
         "minutes": 0 if rest else DAY_MINUTES,
         "items": [] if rest else [item(i, order=n + 1) for n, i in enumerate(_shown(DAY_ORDER))],
         "weekly": [] if rest or not nhpt_due else [item(i) for i in _shown(WEEKLY)],
         "demo": [] if rest else [EXERCISES[i].to_dict() | {"tier": tier} for i in _shown(DEMO_IDS)],
-        "rest_advice": REST_ADVICE if rest else None,
+        "rest_advice": rest_advice(rx, symptoms) if rest else None,
         "therapist_flag": rest,
     }
+
+
+def checkin_outcome(pain: int, new_symptoms: bool, prescription: Prescription | None = None, nhpt_due: bool = True) -> dict[str, Any]:
+    """The check-in, decided in code (`POST /api/checkin`): the tier, plain reasons, the therapist
+    flags it calls for as `(rule, detail)` and the day's plan at that tier.
+
+    - pain at or above the stop level (`rest_at`) -> rest + `checkin_pain` flag;
+    - new or worse symptoms (`symptoms_rest`) -> rest + `checkin_symptoms` flag, whatever the pain;
+    - otherwise 0-3 full, 4-6 gentle, no flag.
+    The flag rules are `checkin_*`, not the in-session `pain` / `symptoms` stop rules, so the
+    therapist view never reads a check-in as "Session ended by stop rule"."""
+    rx = SEED_PRESCRIPTION if prescription is None else prescription
+    p = max(0, min(10, int(pain)))
+    stop = rest_at(rx)
+    plan = day_plan(p, rx, nhpt_due=nhpt_due, new_symptoms=new_symptoms)
+    reasons: list[str] = []
+    flags: list[tuple[str, str]] = []
+    if p >= stop:
+        reasons.append(f"pain {p}/10 is at or above your stop level ({stop}): rest today")
+        flags.append(("checkin_pain", f"pain {p}/10 at check-in (stop level {stop}): rest day"))
+    if symptoms_rest(new_symptoms, rx):
+        reasons.append("new or worse symptoms since last time: rest today and check with your therapist")
+        flags.append(("checkin_symptoms", "new or worse symptoms reported at check-in: rest day"))
+    if not reasons:
+        reasons.append(tier_reason(plan["tier"], p))
+    return {"tier": plan["tier"], "reasons": reasons, "flags": flags, "plan": plan}
