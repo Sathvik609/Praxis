@@ -84,9 +84,9 @@ def test_angle_check_passes_for_an_overhead_camera_and_gates_a_steep_one():
     steep = SessionPipeline(mode="calibrate", sheet="cup_targets")
     from praxis_session.perception.board_spec import CUP_TARGETS
 
-    evs = steep.process(camera_frame(CUP_TARGETS, tilt_deg=40, yaw_deg=5)[0], 0.0, 0)
+    evs = steep.process(camera_frame(CUP_TARGETS, tilt_deg=58, yaw_deg=5)[0], 0.0, 0)
     row = _check(evs, "angle")
-    assert row["status"] == "check" and "above the table" in row["hint"]
+    assert row["status"] == "check" and "laptop screen forward" in row["hint"]
     assert _check(evs, "markers")["status"] == "pass"
     assert evs[2].to_dict()["all_required_pass"] is False
 

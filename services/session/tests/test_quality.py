@@ -86,9 +86,13 @@ def test_build_checks_has_the_wireframe_rows_plus_angle_in_order():
 def test_camera_angle_gate_from_calibration_tilt():
     from praxis_session.perception.quality import camera_angle
 
-    frame, _ = camera_frame(NHPT_BOARD, tilt_deg=40, yaw_deg=5)
+    # Laptop camera only (10 Oct): a screen tilted forward looks down at ~40–50°; flatter than
+    # 50° the seated pegs start to hide the next hole.
+    laptop, _ = camera_frame(NHPT_BOARD, tilt_deg=45, yaw_deg=5)
+    assert camera_angle(Calibrator(NHPT_BOARD).run(laptop))["ok"] is True
+    frame, _ = camera_frame(NHPT_BOARD, tilt_deg=58, yaw_deg=5)
     steep = camera_angle(Calibrator(NHPT_BOARD).run(frame))
-    assert steep["ok"] is False and steep["tilt_deg"] > 25 and "above the table" in steep["hint"]
+    assert steep["ok"] is False and steep["tilt_deg"] > 50 and "laptop screen forward" in steep["hint"]
     flat = camera_angle(Calibrator(NHPT_BOARD).run(camera_frame(NHPT_BOARD, tilt_deg=10)[0]))
     assert flat["ok"] is True and flat["hint"] is None
     none = camera_angle(Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8)))

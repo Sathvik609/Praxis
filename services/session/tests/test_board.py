@@ -157,3 +157,14 @@ def test_template_score_breaks_ties_near_the_fraction_threshold():
     assert board.occupancy(canon)["hole_4"] == "occupied"
     _, canon2, _ = _canon_kw([H[4]])
     assert board.hole_scores(canon2)[4]["empty_template_score"] < 0.7  # a seated peg
+
+
+def test_pegs_still_read_from_a_laptop_camera_angle():
+    # Laptop camera only (10 Oct): the screen tilted forward looks down at ~45°. Synthetic pegs are
+    # flat discs, so this checks the warp and Hough, not 3D peg parallax (docs/RISKS.md).
+    frame, _ = camera_frame(NHPT_BOARD, tilt_deg=45, yaw_deg=5, pegs_mm=[H[0], H[4], H[8]], noise_sigma=2.0)
+    cal = Calibrator(NHPT_BOARD).run(frame)
+    board = BoardState(NHPT_BOARD)
+    canon = board.warp(frame, cal)
+    assert len(board.detect_holes(canon)) == 9
+    assert {k for k, v in board.occupancy(canon).items() if v == "occupied"} == {"hole_0", "hole_4", "hole_8"}

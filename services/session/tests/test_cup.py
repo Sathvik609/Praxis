@@ -22,6 +22,14 @@ def test_cup_base_found_on_synthetic_sheet_within_3mm():
     assert len(st.dots_frame_px(cal)) == 5
 
 
+def test_cup_base_found_from_a_laptop_camera_angle():
+    frame, _ = camera_frame(CUP_TARGETS, tilt_deg=45, yaw_deg=5, cup_mm=D[2], noise_sigma=2.0)
+    cal = Calibrator(CUP_TARGETS).run(frame)
+    st = CupSheetState()
+    cup = st.cup_mm(st.warp(frame, cal))
+    assert cup is not None and np.hypot(cup[0] - D[2][0], cup[1] - D[2][1]) < 3.0
+
+
 def test_no_cup_on_empty_sheet():
     frame, _ = camera_frame(CUP_TARGETS)
     cal = Calibrator(CUP_TARGETS).run(frame)
