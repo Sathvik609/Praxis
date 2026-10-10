@@ -126,6 +126,8 @@ def test_ws_checkin_pain_stop_rule_and_trace(client):
     assert "checkin" in kinds and "stop_rule" in kinds and "flag" in kinds
     s = client.get(f"/api/session/{sid}/summary").json()
     assert s["stopped"] is True and s["flags"][0]["rule"] == "pain"
+    # 10 Oct: the in-session pain answer is in the summary for the report
+    assert s["reported_pain"]["pain"] == 7 and isinstance(s["reported_pain"]["t"], float)
 
 
 def test_ws_coach_event_follows_perception_events(client):

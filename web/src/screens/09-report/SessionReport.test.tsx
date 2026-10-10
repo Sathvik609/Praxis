@@ -277,3 +277,29 @@ test('an agent that was configured but did nothing leaves the chip at the rule c
   expect(screen.queryByText(/\+ Claude agent/)).toBeNull()
   expect(screen.getByText(/No coach notes/)).toBeInTheDocument()
 })
+
+// 10 Oct walkthrough: a session ended by the pain stop rule, feedback skipped, read "— → —".
+test('pain reported during the session fills "after" when the feedback was skipped, and says so', async () => {
+  const rec = { ...SESSION, status: 'ended_early', feedback: {}, summary: { ...SESSION.summary, stopped: true, reported_pain: { pain: 8, t: 41.2 } } }
+  mockApi({ '/api/sessions/abc': rec, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 8')).toBeInTheDocument()
+  expect(screen.getByText('pain before → during the session')).toBeInTheDocument()
+  expect(screen.getByText('You reported pain 8/10 during the session.')).toBeInTheDocument()
+})
+
+test('a feedback answer stays the "after" value; the in-session report is still listed', async () => {
+  const rec = { ...SESSION, feedback: { pain_after: 5 }, summary: { ...SESSION.summary, reported_pain: { pain: 8, t: 41.2 } } }
+  mockApi({ '/api/sessions/abc': rec, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 5')).toBeInTheDocument()
+  expect(screen.getByText('pain before → after')).toBeInTheDocument()
+  expect(screen.getByText('You reported pain 8/10 during the session.')).toBeInTheDocument()
+})
+
+test('no in-session report: no extra pain line', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 2')).toBeInTheDocument()
+  expect(screen.queryByText(/during the session/)).toBeNull()
+})

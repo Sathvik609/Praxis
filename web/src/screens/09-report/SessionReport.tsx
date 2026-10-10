@@ -315,6 +315,11 @@ export function SessionReport() {
   const need = (nx?.needs ?? []).map((n) => EQUIPMENT.find((e) => e.id === n)?.label).filter(Boolean).join(' · ')
   const exertion = s.summary.exertion
   const agentNote = s.summary.coach.note?.text ? s.summary.coach.note : null
+  // The Pain / feel unwell answer (stored by the service) fills "after" when the patient skipped
+  // the feedback screen, and is always listed so a stop-level report is never lost.
+  const inSessionPain = typeof s.summary.reported_pain?.pain === 'number' ? s.summary.reported_pain.pain : null
+  const painFromSession = told.pain_after == null && inSessionPain != null
+  const painAfter = told.pain_after ?? inSessionPain
 
   return (
     <div className="rp p-6">
@@ -412,10 +417,11 @@ export function SessionReport() {
         <div className="rp-col">
           <Card title="What you told us">
             <div className="rp-told">
-              <Stat value={`${String(ck.pain_before ?? '—')} → ${String(told.pain_after ?? '—')}`} label="pain before → after" />
+              <Stat value={`${String(ck.pain_before ?? '—')} → ${String(painAfter ?? '—')}`} label={painFromSession ? 'pain before → during the session' : 'pain before → after'} />
               <Stat value={told.effort != null ? String(told.effort) : '—'} unit="/10" label={told.effort != null ? 'effort' : 'effort · not recorded'} />
             </div>
             <p className="rp-told-line">{toldLine}</p>
+            {inSessionPain != null && <p className="rp-told-line">{`You reported pain ${inSessionPain}/10 during the session.`}</p>}
             {typeof told.detail === 'string' && told.detail && <p className="rp-told-line text-muted">Your note: “{told.detail}”</p>}
             {saveError && <p role="alert" className="rp-told-line text-muted">We couldn't save your changes. What you told us before is kept.</p>}
             <Button variant="secondary" onClick={() => setEditFb(true)}>Edit feedback</Button>
