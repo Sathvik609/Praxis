@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import platform
 import time
 from dataclasses import replace as _replace_event
 from datetime import date, datetime, timedelta
@@ -83,12 +84,25 @@ EVAL_DIR = Path(os.environ["PRAXIS_EVAL_DIR"]) if "PRAXIS_EVAL_DIR" in os.enviro
 WEB_DIST = Path(os.environ["PRAXIS_WEB_DIST"]) if "PRAXIS_WEB_DIST" in os.environ else _HERE.parents[1] / "web_dist"
 
 
+def opencv_build() -> dict[str, object]:
+    """Which cv2 is loaded: on the AWS Graviton box it must be COOL's (/opt/cool), not the wheel."""
+    path = str(getattr(cv2, "__file__", "") or "")
+    return {
+        "version": cv2.__version__,
+        "path": path,
+        "cool": "/opt/cool" in path,
+        "dnn": hasattr(cv2, "dnn") and hasattr(cv2.dnn, "readNetFromONNX"),
+        "arch": platform.machine(),
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
     return {
         "status": "ok",
         "service": "praxis-session",
         "opencv_version": cv2.__version__,
+        "opencv_build": opencv_build(),
         "mode": "cloud" if CLOUD_ENABLED else "edge",
         "models": {
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),

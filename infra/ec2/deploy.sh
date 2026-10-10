@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# One-command deploy of the Praxis session service to an AWS Graviton (c8g) instance launched
+# from the COOL AMI ("Cloud Optimized OpenCV For AWS Graviton4", Ubuntu, /opt/cool).
+#
+#   infra/ec2/deploy.sh <public-ip-or-dns> [--agent] [--skip-web]
+#
+# --agent     copy ANTHROPIC_API_KEY from services/session/.env to /etc/praxis/agent.env on the
+#             host (root-only, never printed) and turn the Claude agent coach on.
+# --skip-web  reuse the last web/dist build.
+#
+# Idempotent: re-run it to ship a new version. Needs ssh key ~/.ssh/praxis-aws (user ubuntu).
+set -euo pipefail
+
+HOST="${1:?usage: deploy.sh <host> [--agent] [--skip-web]}"; shift || true
+AGENT=0; SKIP_WEB=0
+for a in "$@"; do
+  case "$a" in
+    --agent) AGENT=1 ;;
+    --skip-web) SKIP_WEB=1 ;;
+    *) echo "unknown option $a" >&2; exit 2 ;;
+  esac
+done
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+KEY="${PRAXIS_SSH_KEY:-$HOME/.ssh/praxis-aws}"
+SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "ubuntu@$HOST")
+RSYNC_SSH="ssh -i $KEY -o StrictHostKeyChecking=accept-new"
+
+echo "== 1/5 reach $HOST"
+"${SSH[@]}" 'uname -m; test -d /opt/cool && echo "COOL found at /opt/cool" || { echo "no /opt/cool: is this the COOL AMI?"; exit 1; }'
+
+if [ "$SKIP_WEB" = 0 ]; then
+  echo "== 2/5 build the web app"
+  (cd "$ROOT/web" && pnpm install --frozen-lockfile >/dev/null && pnpm build >/dev/null)
+fi
+
+echo "== 3/5 copy the service, web build and replay clips"
+"${SSH[@]}" 'sudo mkdir -p /opt/praxis/app /opt/praxis/data && sudo chown -R ubuntu:ubuntu /opt/praxis'
+rsync -az --delete -e "$RSYNC_SSH" \
+  --exclude '__pycache__' --exclude '.venv' --exclude '.env' --exclude '*.db' --exclude 'models/' \
+  "$ROOT/services/session/praxis_session" "$ROOT/services/session/tools" \
+  "$ROOT/services/session/pyproject.toml" "$ROOT/services/session/uv.lock" \
+  "ubuntu@$HOST:/opt/praxis/app/"
+rsync -az --delete -e "$RSYNC_SSH" "$ROOT/web/dist/" "ubuntu@$HOST:/opt/praxis/app/web_dist/"
+rsync -az -e "$RSYNC_SSH" "$ROOT/evaluation/dataset_v0" "ubuntu@$HOST:/opt/praxis/app/evaluation/"
+rsync -az -e "$RSYNC_SSH" "$ROOT/infra/ec2/remote_setup.sh" "$ROOT/infra/ec2/praxis.service" "ubuntu@$HOST:/opt/praxis/"
+
+if [ "$AGENT" = 1 ]; then
+  echo "== 3b agent key -> /etc/praxis/agent.env (not printed)"
+  KEYLINE="$(grep -E '^ANTHROPIC_API_KEY=' "$ROOT/services/session/.env" || true)"
+  [ -n "$KEYLINE" ] || { echo "no ANTHROPIC_API_KEY in services/session/.env" >&2; exit 1; }
+  printf '%s\nPRAXIS_AGENT=anthropic\n' "$KEYLINE" | "${SSH[@]}" \
+    'sudo mkdir -p /etc/praxis && sudo tee /etc/praxis/agent.env >/dev/null && sudo chmod 600 /etc/praxis/agent.env'
+fi
+
+echo "== 4/5 install on the host (COOL OpenCV, pinned deps, models, systemd)"
+"${SSH[@]}" 'bash /opt/praxis/remote_setup.sh'
+
+echo "== 5/5 health"
+"${SSH[@]}" 'curl -fsS localhost:8000/health' | python3 -c '
+import json, sys
+h = json.load(sys.stdin)
+b = h["opencv_build"]
+print(f"opencv {b[\"version\"]} · {b[\"arch\"]} · COOL={b[\"cool\"]} · dnn={b[\"dnn\"]}")
+print("models", h["models"], "· agent", h["agent"].get("mode"), "ready" if h["agent"].get("ready") else "off")
+sys.exit(0 if b["cool"] else 1)'
+echo "deployed: http://$HOST:8000/health"

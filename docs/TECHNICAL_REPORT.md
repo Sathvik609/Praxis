@@ -384,6 +384,8 @@ Design `docs/superpowers/specs/2026-09-29-agent-coach-design.md`; how-to and wor
 **In-session pain on the report (10 Oct).** `CoachSession.on_pain` keeps the last Pain / feel unwell answer as `summary.reported_pain` (`{pain, t}`, null when none), so a session ended by the pain stop rule whose feedback screen was skipped still shows the number on the report ("2 → 8 · pain before → during the session", plus "You reported pain 8/10 during the session."), and screen 08 opens with the live screen's last Pain / feel unwell answer pre-selected (still editable).
 
 ## 5. AWS deployment — planned, not built
+**10 Oct:** the deploy is scripted but not yet run: `infra/ec2/deploy.sh` (one command, idempotent) installs the service on a c8g instance from the COOL AMI with COOL's `cv2` (no OpenCV wheel in the venv; the setup refuses to continue unless `cv2.__file__` is under `/opt/cool` and `cv2.dnn`/`cv2.aruco` exist), and `/health` now reports `opencv_build {version, path, cool, dnn, arch}` so the running build is visible. See `infra/ec2/README.md`.
+
 **Nothing in this section exists yet.** There is no AWS account resource, no EC2 instance, no Bedrock call, no CDK app (`infra/` is not in the tree) and no tools Lambda (`services/tools-lambda/` is not in the tree). The only deployment today is the edge build: one container (`services/session/Dockerfile`) on a laptop or on Railway for team review (§8). Work is scheduled for W6 (14–20 Oct); `docs/ARCHITECTURE.md` draws these parts dashed.
 
 What is in the code now so the swap is mechanical:

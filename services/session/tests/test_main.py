@@ -81,6 +81,15 @@ def test_ws_nhpt_returns_frame_event_first(client):
     assert msg["type"] == "frame" and msg["calibrated"] and msg["nhpt"]["mode"] == "nhpt"
 
 
+def test_health_reports_which_opencv_build_runs(client):
+    # COOL evidence on AWS: the loaded cv2 says where it came from (/opt/cool on the COOL AMI).
+    b = client.get("/health").json()["opencv_build"]
+    assert b["version"].startswith("5.")
+    assert b["path"].endswith(".so") or "cv2" in b["path"]
+    assert b["cool"] is ("/opt/cool" in b["path"])
+    assert b["dnn"] is True and b["arch"] in ("arm64", "aarch64", "x86_64")
+
+
 def test_health_reports_models_block(client):
     body = client.get("/health").json()
     assert set(body["models"]) == {"hand", "pose"}
