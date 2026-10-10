@@ -41,3 +41,12 @@ test('the report never shrinks to the window: the page scrolls instead of clippi
   expect(last('.rp', /min-height\s*:\s*100%/)).toBeTruthy()
   expect(last('.rp', /flex-shrink\s*:/)?.body).toMatch(/flex-shrink\s*:\s*0/)
 })
+
+test('pages fit the window by layout, never by zooming the page (no fit engine)', () => {
+  // 10 Oct: a page-zoom fit engine blurs text below readable size and skews pointer coordinates on
+  // the Three.js avatar hotspots and the camera overlays. Spacing and control heights fit the pages.
+  expect(rules.filter((r) => /(^|[;\s])zoom\s*:/.test(r.body)).map((r) => r.selector)).toEqual([])
+  const pageRoots = /^(html|body|#root|main|\.ui-main|\.ui-shell|\.rp|\.ci-form|\.th-grid|\.pg|\.st)$/
+  const scaled = rules.filter((r) => r.selector.split(',').some((s) => pageRoots.test(s.trim())) && /transform\s*:\s*scale/.test(r.body))
+  expect(scaled.map((r) => r.selector)).toEqual([])
+})

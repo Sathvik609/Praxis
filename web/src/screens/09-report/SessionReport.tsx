@@ -365,16 +365,18 @@ export function SessionReport() {
         ) : (
           <>
             {(cam.reach_ms?.length || cam.peak_deg?.length) ? <div className="rp-exs">{histCols()}</div> : null}
-            {cam.splits_s && <div className="mt-5"><Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} /></div>}
+            {cam.splits_s && <div className="mt-5"><Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} height={140} /></div>}
           </>
         )}
         {/* Kept small (ruling R7): exertion chip, the no-score statement and the latency line. */}
-        <p className="rp-meta mt-3">
-          Exertion
-          <Chip tone={exertion.level === 'high' ? 'red' : exertion.level === 'moderate' ? 'amber' : 'mint'}>{cap(exertion.level)}</Chip>
-          · behavioural index
-        </p>
-        <p className="rp-ex-sub">Verified and unverified are counted separately. Nothing here is combined into a score.</p>
+        <div className="rp-cam-foot">
+          <p className="rp-meta mt-3">
+            Exertion
+            <Chip tone={exertion.level === 'high' ? 'red' : exertion.level === 'moderate' ? 'amber' : 'mint'}>{cap(exertion.level)}</Chip>
+            · behavioural index
+          </p>
+          <p className="rp-ex-sub">Verified and unverified are counted separately. Nothing here is combined into a score.</p>
+        </div>
         {latency && latency.frames > 0 && <p className="rp-ex-sub tabular-nums">{latencyText(latency)}</p>}
       </Card>
 
@@ -415,7 +417,7 @@ export function SessionReport() {
         </div>
 
         <div className="rp-col">
-          <Card title="What you told us">
+          <Card title="What you told us" action={<Button variant="secondary" onClick={() => setEditFb(true)}>Edit feedback</Button>}>
             <div className="rp-told">
               <Stat value={`${String(ck.pain_before ?? '—')} → ${String(painAfter ?? '—')}`} label={painFromSession ? 'pain before → during the session' : 'pain before → after'} />
               <Stat value={told.effort != null ? String(told.effort) : '—'} unit="/10" label={told.effort != null ? 'effort' : 'effort · not recorded'} />
@@ -424,8 +426,21 @@ export function SessionReport() {
             {inSessionPain != null && <p className="rp-told-line">{`You reported pain ${inSessionPain}/10 during the session.`}</p>}
             {typeof told.detail === 'string' && told.detail && <p className="rp-told-line text-muted">Your note: “{told.detail}”</p>}
             {saveError && <p role="alert" className="rp-told-line text-muted">We couldn't save your changes. What you told us before is kept.</p>}
-            <Button variant="secondary" onClick={() => setEditFb(true)}>Edit feedback</Button>
           </Card>
+
+          {/* Flags sit right under What you told us (10 Oct) so they are in the first screen. */}
+          {s.summary.flags.length > 0 && (
+            <Card tone="watch" title="Therapist flags">
+              <ul className="space-y-2 text-lg">
+                {s.summary.flags.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <Flag aria-hidden className="mt-1 h-5 w-5 shrink-0 text-red-ink" />
+                    <span>{f.rule}: {f.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           <Card title="Next practice" className="rp-next">
             {canStart && nx && (
@@ -455,18 +470,6 @@ export function SessionReport() {
             <p>{cap(s.delivery)}</p>
           </Card>
 
-          {s.summary.flags.length > 0 && (
-            <Card tone="watch" title="Therapist flags">
-              <ul className="space-y-2 text-lg">
-                {s.summary.flags.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <Flag aria-hidden className="mt-1 h-5 w-5 shrink-0 text-red-ink" />
-                    <span>{f.rule}: {f.detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
         </div>
       </div>
 

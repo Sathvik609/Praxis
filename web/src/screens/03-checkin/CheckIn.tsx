@@ -259,14 +259,18 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
               <div className="mb-2 font-bold">Energy today</div>
               <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
             </div>
+          </Card>
+        </div>
+        {/* 10 Oct: Time and New-or-worse sit in the right column so the form fits one laptop
+            screen (1336 x 759) without scrolling under the flow bar. */}
+        <div className="flex flex-col gap-5">
+          <Card className="ci-today space-y-5">
             <div>
               <div className="mb-2 font-bold">Time you have</div>
               <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} />
             </div>
             <Checkbox label="Something new or worse since last time" checked={symptoms} onChange={setSymptoms} description="If so, there are no exercises today and your therapist reviews it first." />
           </Card>
-        </div>
-        <div className="flex flex-col gap-5">
           <Card className="ci-note">
             <p className="text-muted">
               Your answers set today's pace and go into your report for {clinician}. Pain of {gentle} means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs. Pain of {stopAt} or more, or something new or worse, means rest today and your therapist is told. Feeling is what you tell us, never read from your face.
