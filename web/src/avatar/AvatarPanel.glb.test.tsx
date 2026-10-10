@@ -211,7 +211,7 @@ test('hotspots (GLB loaded): one button per area, "{label} — {word}", pressed 
   expect(onHot).toHaveBeenCalledWith('lShoulder')
 })
 
-test('theater: the dock (step, progress, Play/Pause, Replay, Slower, Audio) replaces caption, view line and controls', async () => {
+test('theater: the dock (step, progress, Play/Pause, Replay, Slower; no Audio, captions only) replaces caption, view line and controls', async () => {
   h.load.mockResolvedValue(asset)
   render(<AvatarPanel clip="abduction" theater holdS={3} limitDeg={60} />)
   await screen.findByTestId('glb-scene')
@@ -224,7 +224,7 @@ test('theater: the dock (step, progress, Play/Pause, Replay, Slower, Audio) repl
   fireEvent.click(screen.getByRole('button', { name: 'Slower' }))
   expect(screen.getByRole('button', { name: 'Slower · 0.5×' })).toHaveAttribute('aria-pressed', 'true')
   expect(h.lastGlb!.clock.current.speed).toBe(0.5)
-  expect(screen.getByRole('button', { name: 'Audio off' })).toHaveAttribute('aria-pressed', 'false')
+  expect(screen.queryByRole('button', { name: /^Audio/ })).toBeNull()
   expect(screen.queryByTestId('view-line')).toBeNull()
   expect(screen.queryByRole('button', { name: 'Close-up' })).toBeNull()
   expect(screen.queryByText(/Reference only/)).toBeNull()

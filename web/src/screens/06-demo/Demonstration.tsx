@@ -15,7 +15,7 @@ const RECHECK_AFTER_MS = 2 * 3600e3
 
 /** Screen 06 · Demonstration, design v2 (6 Oct 2026): the designers' full-screen theater
  *  (`dth-*`). The reference figure plays the clip mirrored so it faces the patient, with the
- *  theater dock (step, progress, Play/Pause, Replay, Slower, Audio) and its readouts (AvatarPanel
+ *  theater dock (step, progress, Play/Pause, Replay, Slower) and its readouts (AvatarPanel
  *  `theater`). When the clip ends, "Before you start" lists the target, Watch for and Stop if,
  *  with Watch again and one primary action.
  *

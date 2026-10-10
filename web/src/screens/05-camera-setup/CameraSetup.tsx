@@ -9,7 +9,6 @@ import { readDay, sessionUrl, sideOr, startExercise, syncCheckin, therapistLine,
 import { EXERCISES, exerciseById, isHiddenExercise, type Exercise } from '../../lib/seed'
 import { cameraBlockedCopy } from '../../session/CameraBlocked'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
-import { browserSpeak } from '../../session/useCoach'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { SETUP_TIPS, SetupDiagram, placementCopy } from './SetupDiagram'
 import { resolveChecks, setupViewFor, type Check } from './setupView'
@@ -118,7 +117,6 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
   // event, so there the still-pose step is time-only.
   const steady = last<QualityEvent>('quality')?.steadiness?.ok !== false
   const local = processingPlace().includes('this device')
-  const [audio, setAudio] = useState(false)
   const [info, setInfo] = useState(false)
   // Seconds the patient has been ready and still; it drives the still-pose countdown and then
   // the auto-continue, and drops back to 0 whenever readiness or steadiness is lost.
@@ -165,10 +163,6 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
       : stillLeft === 0
         ? { tone: 'mint', icon: 'check', text: 'All set. Starting your session' }
         : { tone: 'mint', num: stillLeft ?? CS_STILL_S, text: 'Hold still in your starting pose' }
-  const coachText = coach?.text ?? ''
-  useEffect(() => {
-    if (audio && coachText) browserSpeak(coachText, 'instruct')
-  }, [audio, coachText])
 
   const offCopy = blocked
     ? cameraBlockedCopy(/unreachable/i.test(error ?? '') ? 'service_unreachable' : 'camera_blocked', error)
@@ -194,25 +188,6 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
           <h1 className="cs-title">{ex.name}</h1>
           <p className="cs-sub">{`Camera setup · ${sideWord} arm`}</p>
         </div>
-        <button
-          type="button"
-          className={`cs-audio ${audio ? 'cs-audio-on' : ''}`}
-          aria-pressed={audio}
-          onClick={() => {
-            const next = !audio
-            setAudio(next)
-            if (!next) {
-              try {
-                window.speechSynthesis?.cancel()
-              } catch {
-                /* no speech engine */
-              }
-            }
-          }}
-        >
-          {ico(audio ? 'vol' : 'mute', 16)}
-          {audio ? 'Audio on' : 'Audio off'}
-        </button>
       </header>
       <main className="cs-stage">
         <div className="cs-frame">
@@ -379,7 +354,5 @@ const CS_ICONS: Record<string, string[]> = {
   check: ['M5 12.5 9.5 17 19 7.5'],
   lock: ['M6 11h12v9H6z', 'M8.5 11V8a3.5 3.5 0 0 1 7 0v3'],
   camoff: ['M3 3l18 18', 'M7.5 7.5H3v11.5h14', 'M10 5h6l1.5 2.5H21v10', 'M9.6 10.6a3.6 3.6 0 0 0 4.9 4.9'],
-  vol: ['M11 5 6 9H2.5v6H6l5 4z', 'M15.5 8.5a5 5 0 0 1 0 7', 'M18.5 5.5a9 9 0 0 1 0 13'],
-  mute: ['M11 5 6 9H2.5v6H6l5 4z', 'M22 9l-6 6M16 9l6 6'],
   dot: ['c:12:12:4'],
 }

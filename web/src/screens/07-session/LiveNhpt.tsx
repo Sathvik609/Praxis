@@ -8,7 +8,7 @@ import { latencyLine, useLatency } from '../../session/latency'
 import { liveStatus, statusLabel } from '../../session/liveStatus'
 import type { FrameEvent } from '../../session/OverlayCanvas'
 import { useEventHistory } from '../../session/eventHistory'
-import { browserSpeak, useCoach } from '../../session/useCoach'
+import { useCoach } from '../../session/useCoach'
 import { useCoachPrompt } from '../../session/useCoachPrompt'
 import { useRestBreak } from '../../session/useRestBreak'
 import { useSessionFlow, type EndReason, type StopEnd } from '../../session/useSessionFlow'
@@ -51,8 +51,8 @@ export function LiveNhpt() {
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const ui = useSxSession()
-  // Spoken cues follow Settings > Spoken instructions; captions stay on while the coach speaks.
-  const coach = useCoach(events, { speak: browserSpeak, voice: ui.spoken })
+  // Caption-only coach (10 Oct): every cue is shown as text, nothing is spoken.
+  const coach = useCoach(events)
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
   const flow = useSessionFlow(events, send, stop, connected)
@@ -109,7 +109,6 @@ export function LiveNhpt() {
 
   const coachCard = (
     <SxCoach
-      captions={ui.captions}
       caption={coach.caption?.text ?? label.coach ?? caption(frame, lost)}
       label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
       source={coach.captionSource}
@@ -210,11 +209,6 @@ export function LiveNhpt() {
         onEnd={ui.openEnd}
         traceOpen={traceOpen}
         onTrace={() => setTraceOpen((v) => !v)}
-        captions={ui.captions}
-        captionsLocked={ui.captionsLocked}
-        onCaptions={ui.toggleCaptions}
-        volume={ui.volume}
-        onVolume={ui.setVolume}
         resting={rest.since != null || !!coach.overlay}
       />
       <SxEndDialog

@@ -1,7 +1,6 @@
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../design/Button'
 import { Pause, Play, RotateCcw } from '../design/Icon'
-import { browserSpeak } from '../session/useCoach'
 import { AvatarScene, type Clock, type FigureMode, type Projection, type Tick } from './AvatarScene'
 import { CLIPS, type Clip, mirror } from './clips'
 import type { Insets } from './framing'
@@ -46,7 +45,7 @@ type Props = {
    *  figure keeps clear of. */
   overlayTop?: number
   className?: string
-  /** Demonstration theater: the dock (step, progress, Play/Pause, Replay, Slower, Audio) replaces
+  /** Demonstration theater: the dock (step, progress, Play/Pause, Replay, Slower) replaces
    *  the caption, view line and controls; for Arm out to the side the figure's own shoulder angle,
    *  the limit line and the trunk-lean tag are drawn over the stage. */
   theater?: boolean
@@ -379,16 +378,11 @@ export function AvatarPanel({
   const viewMaxW = w ? (overlayTop ? w - ZOOM_BUTTONS_W - 2 * EDGE : w - 3 * EDGE) : undefined
 
   // Theater dock: step text, hold countdown and a segmented progress bar from one rAF timeline.
-  const [audio, setAudio] = useState(false)
   const [finished, setFinished] = useState(false)
   const segRefs = useRef<(HTMLDivElement | null)[]>([])
   const holdRef = useRef<HTMLSpanElement>(null)
   const doneRef = useRef(false)
   const prevPos = useRef(0)
-  const audioRef = useRef(false)
-  useEffect(() => {
-    audioRef.current = audio
-  }, [audio])
   const timeline = useMemo<Timeline>(() => {
     if (script) {
       const n = script.steps.length
@@ -482,9 +476,6 @@ export function AvatarPanel({
   }, [theater, timeline, onComplete, script])
   const stepText = (caption || '').replace(/^Step \d+ of \d+\s*·\s*/, '')
   const stepLabel = stepText ? stepText.charAt(0).toUpperCase() + stepText.slice(1) : ''
-  useEffect(() => {
-    if (theater && audioRef.current && stepLabel) browserSpeak(stepLabel, 'instruct')
-  }, [theater, step, stepLabel])
   const theaterReplay = () => {
     doneRef.current = false
     prevPos.current = 0
@@ -695,30 +686,6 @@ export function AvatarPanel({
                 {speed === 1 ? 'Slower' : `Slower · ${speed}×`}
               </button>
             </div>
-            <button
-              type="button"
-              className={`dth-btn ${audio ? 'dth-on' : ''}`}
-              aria-pressed={audio}
-              onClick={() => {
-                const next = !audio
-                setAudio(next)
-                if (next && stepLabel) browserSpeak(stepLabel, 'instruct')
-                else if (!next) {
-                  try {
-                    window.speechSynthesis?.cancel()
-                  } catch {
-                    /* no speech engine */
-                  }
-                }
-              }}
-            >
-              {dtIcon(
-                audio
-                  ? [<path key="a" d="M11 5 6 9H2v6h4l5 4V5z" />, <path key="b" d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />]
-                  : [<path key="a" d="M11 5 6 9H2v6h4l5 4V5z" />, <path key="b" d="m22 9-6 6M16 9l6 6" />],
-              )}
-              {audio ? 'Audio on' : 'Audio off'}
-            </button>
           </div>
         </div>
       ) : (

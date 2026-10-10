@@ -1,7 +1,7 @@
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
 import type { PraxisEvent } from '../../lib/events'
 import { statusLabel } from '../../session/liveStatus'
-import { browserSpeak, coachVolume, resetSpeech, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
+import type { CoachEvent, Overlay } from '../../session/useCoach'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
 import { TracePanel } from './TracePanel'
 import { mockApi, PRESCRIPTION } from '../../test/api-mock'
@@ -13,10 +13,6 @@ const barProps = () => ({
   onEnd: vi.fn(),
   traceOpen: false,
   onTrace: vi.fn(),
-  captions: true,
-  onCaptions: vi.fn(),
-  volume: 0.8,
-  onVolume: vi.fn(),
 })
 
 const statsProps = { metricLabel: 'Lifts', metric: '3 of 8', head: 'Rep 3 of 8', dots: null }
@@ -75,26 +71,10 @@ describe('SxBar', () => {
     expect(screen.getByRole('button', { name: 'End session' })).toBeEnabled()
   })
 
-  it('captions switch toggles, but is locked on while the coach speaks', () => {
-    const p = barProps()
-    const { rerender } = render(<SxBar {...p} />)
-    const sw = screen.getByRole('switch', { name: 'Captions' })
-    expect(sw).toHaveAttribute('aria-checked', 'true')
-    fireEvent.click(sw)
-    expect(p.onCaptions).toHaveBeenCalledTimes(1)
-    rerender(<SxBar {...p} captionsLocked />)
-    expect(screen.getByRole('switch', { name: 'Captions' })).toHaveAttribute('aria-disabled', 'true')
-    fireEvent.click(screen.getByRole('switch', { name: 'Captions' }))
-    expect(p.onCaptions).toHaveBeenCalledTimes(1)
-  })
-
-  it('volume slider reports 0–1', () => {
-    const p = barProps()
-    render(<SxBar {...p} />)
-    const slider = screen.getByRole('slider', { name: 'Coach voice volume' })
-    expect(slider).toHaveValue('80')
-    fireEvent.change(slider, { target: { value: '35' } })
-    expect(p.onVolume).toHaveBeenCalledWith(0.35)
+  it('has no voice volume and no captions switch: the coach is caption-only, captions always on', () => {
+    render(<SxBar {...barProps()} />)
+    expect(screen.queryByRole('slider')).toBeNull()
+    expect(screen.queryByRole('switch')).toBeNull()
   })
 })
 
@@ -152,11 +132,10 @@ describe('SxCoach', () => {
     expect(container.querySelector('section')).toHaveClass('sx-coach-watch')
   })
 
-  it('captions off hides the caption but keeps the coach label', () => {
-    render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" captions={false} />)
-    expect(screen.queryByText('Lift slowly')).toBeNull()
-    expect(screen.getByText(/Captions are off/)).toBeInTheDocument()
-    expect(screen.getByText('Rule-based coach')).toBeVisible()
+  it('always shows the caption: there is no captions-off state', () => {
+    render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" />)
+    expect(screen.getByText('Lift slowly')).toBeInTheDocument()
+    expect(screen.queryByText(/Captions are off/)).toBeNull()
   })
 })
 
@@ -361,69 +340,21 @@ describe('SxEndDialog', () => {
 })
 
 describe('useSxSession', () => {
-  it('captions follow the caption-panel preference only while speech is off', () => {
-    localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
-    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: false }))
-    const { result } = renderHook(() => useSxSession())
-    expect(result.current.captions).toBe(false)
-    expect(result.current.captionsLocked).toBe(false)
-    act(() => result.current.toggleCaptions())
-    expect(result.current.captions).toBe(true)
-  })
-
-  it('with spoken instructions on, captions stay on and cannot be switched off', () => {
+  it('has no caption state: an old stored captionsPanel:false or spoken:true changes nothing', () => {
     localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
     localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true }))
     const { result } = renderHook(() => useSxSession())
-    expect(result.current.captions).toBe(true)
-    expect(result.current.captionsLocked).toBe(true)
-    act(() => result.current.toggleCaptions())
-    expect(result.current.captions).toBe(true)
+    expect(result.current).not.toHaveProperty('captions')
+    expect(result.current).not.toHaveProperty('toggleCaptions')
   })
 
-  it('volume and the end dialog', () => {
+  it('the end dialog', () => {
     const { result } = renderHook(() => useSxSession())
-    act(() => result.current.setVolume(0.4))
-    expect(result.current.volume).toBe(0.4)
-    expect(coachVolume()).toBe(0.4)
     expect(result.current.endOpen).toBe(false)
     act(() => result.current.openEnd())
     expect(result.current.endOpen).toBe(true)
     act(() => result.current.closeEnd())
     expect(result.current.endOpen).toBe(false)
-  })
-})
-
-describe('coach volume', () => {
-  it('is kept under praxis.volume and set on every spoken cue', () => {
-    const utterances: { volume?: number }[] = []
-    class FakeUtterance {
-      text: string
-      rate = 1
-      volume = 1
-      onend?: () => void
-      onerror?: () => void
-      constructor(text: string) {
-        this.text = text
-        utterances.push(this)
-      }
-    }
-    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
-    vi.stubGlobal('speechSynthesis', { speak: vi.fn(), cancel: vi.fn() })
-    try {
-      setCoachVolume(0.25)
-      expect(coachVolume()).toBe(0.25)
-      expect(localStorage.getItem('praxis.volume')).toBe('0.25')
-      setCoachVolume(3)
-      expect(coachVolume()).toBe(1)
-      setCoachVolume(0.6)
-      resetSpeech()
-      browserSpeak('Lift slowly.')
-      expect(utterances[0].volume).toBe(0.6)
-    } finally {
-      vi.unstubAllGlobals()
-      resetSpeech()
-    }
   })
 })
 

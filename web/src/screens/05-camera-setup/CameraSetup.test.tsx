@@ -243,6 +243,12 @@ test('Continue carries rehearse=1 into the session', () => {
   expect(screen.getByText('AT /session?exercise=cup&side=left&rehearse=1')).toBeInTheDocument()
 })
 
+test('the coach is caption-only: no audio button', () => {
+  mockStream(ARM_EVENT)
+  renderSetup('/setup?exercise=abduction&side=left')
+  expect(screen.queryByRole('button', { name: /^Audio/ })).toBeNull()
+})
+
 test('Exit goes back to Choose exercise', () => {
   mockStream(null)
   renderSetup('/setup?exercise=cup&side=left')

@@ -103,13 +103,6 @@ export function Settings() {
         <div className="st-col">
           <Card title="Guidance">
             <ul className="st-list">
-              <SettingsRow title="Spoken instructions" sub="Coach cues read aloud by this browser" control={<Switch label="Spoken instructions" checked={guidance.spoken} onChange={(v) => setG('spoken', v)} />} />
-              {/* Captions for all speech: while the coach speaks the panel stays on. */}
-              <SettingsRow
-                title="Caption panel"
-                sub="Captions are always shown when the coach speaks."
-                control={<Switch label="Caption panel" checked={guidance.spoken || prefs.captionsPanel} disabled={guidance.spoken} onChange={(v) => setP('captionsPanel', v)} />}
-              />
               <SettingsRow title="Language" sub="English (US)" control={<span className="st-val">Only option</span>} />
             </ul>
           </Card>
