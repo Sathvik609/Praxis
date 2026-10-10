@@ -34,7 +34,9 @@ export function Therapist() {
   const flagsRef = useRef<HTMLElement>(null)
 
   const me = patients?.find((p) => p.id === selectedId) ?? patients?.[0]
-  const nextVisit = rx ? upcomingVisit(schedule.next_visit ? visitText(schedule.next_visit.at) : null) : upcomingVisit(PROGRAM.nextVisit)
+  const visitSample = !!schedule.next_visit?.sample
+  const upcoming = upcomingVisit(schedule.next_visit ? visitText(schedule.next_visit.at) : null)
+  const nextVisit = upcoming && visitSample ? `${upcoming} (sample)` : upcoming
   // Pain before → after from the stored sessions (newest first), never a fixed sentence.
   const painRows = (sessions ?? []).filter((s) => !isReplaySession(s) && typeof s.feedback?.pain_after === 'number').slice(0, 4) // replays never count (same rule as Progress)
   const painSample = painRows.some((s) => s.illustrative)
@@ -134,7 +136,10 @@ export function Therapist() {
                   <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">Coordination</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="mint">Assessment</Chip></li>
                   <li className="py-2">Practice days · {daysLabel(schedule.practice_days)} · peg test {WEEKDAYS[schedule.nhpt_day]}</li>
-                  <li className="py-2">Next visit · {schedule.next_visit ? `${visitText(schedule.next_visit.at)} · ${schedule.next_visit.with}` : 'not booked'}</li>
+                  <li className="flex items-center justify-between gap-2 py-2">
+                    <span>Next visit · {schedule.next_visit ? `${visitText(schedule.next_visit.at)} · ${schedule.next_visit.with}` : 'not booked'}</span>
+                    {visitSample && <Chip tone="neutral">Sample</Chip>}
+                  </li>
                 </ul>
                 {savedNote && <p className="mt-2 font-bold text-mint-ink" role="status">{savedNote}</p>}
                 <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>

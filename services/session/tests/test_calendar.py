@@ -142,6 +142,16 @@ def test_api_calendar_defaults_to_this_week_from_the_clock(client, at_28_sep):
     assert cal["week"]["planned_days"] == 5 and cal["week"]["done_days"] == 0
 
 
+def test_api_calendar_sample_visit_follows_the_clock_and_says_sample(client, monkeypatch):
+    import praxis_session.main as main
+
+    monkeypatch.setattr(main, "_clock", lambda: datetime(2026, 10, 10, 9, 0))
+    cal = client.get("/api/calendar").json()
+    assert cal["next_visit"]["date"] == "2026-10-13" and cal["next_visit"]["upcoming"] is True and cal["next_visit"]["sample"] is True
+    assert client.get("/api/prescription").json()["schedule"]["next_visit"]["sample"] is True
+    assert client.get("/api/patients/me").json()["program"]["next_visit"] == "Tue 13 Oct, 2:30 PM"
+
+
 def test_api_calendar_range_shows_the_labelled_seed_history(client, at_28_sep):
     cal = client.get("/api/calendar?from=2026-09-07&to=2026-09-13").json()
     d = _days(cal)

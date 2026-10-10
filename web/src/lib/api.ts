@@ -3,7 +3,8 @@ import { SESSION_API_URL } from './config'
 
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string | null; level: number; version: number } }
 /** Practice days live in the prescription (screen 12, 28 Sep): weekdays 0 = Mon … 6 = Sun. */
-export type NextVisit = { at: string; with: string }
+/** `sample`: the seed's visit, served relative to today until the therapist books one. */
+export type NextVisit = { at: string; with: string; sample?: boolean }
 export type Schedule = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null; minutes_per_day: number }
 export type Prescription = { program: string; version: number; level: number; side: string; clinician: string; exercises: Record<string, Record<string, unknown>>; allowed_adaptations: Record<string, Record<string, unknown>>; stop_rules: { pain_max: number; lean_deg: number; lean_events: number; failed_reps: number; exertion_high_s: number; new_symptoms: boolean }; schedule?: Schedule; edited?: { by: string; at: string; what: string; from_version: number } | null }
 /** `GET /api/calendar` (service `calendar_view.py`). `done` only from live sessions; replays are
@@ -13,7 +14,7 @@ export type CalendarSession = { id: string; title: string | null; exercise: stri
 export type ClinicVisit = { at: string; with: string; with_short: string; time: string }
 export type CalendarDay = { date: string; weekday: number; is_today: boolean; status: CalendarStatus; planned: boolean; nhpt_due: boolean; minutes: number; minutes_done: number; exercises: { id: string; name: string }[]; sessions: CalendarSession[]; sample: boolean; clinic_visit: ClinicVisit | null }
 export type CalendarWeek = { from: string; to: string; done_days: number; planned_days: number; minutes_done: number; minutes_planned: number; nhpt_done: boolean }
-export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean }) | null; tracking_since: string | null }
+export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean; sample?: boolean }) | null; tracking_since: string | null }
 export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null }
 /** `cat` (6 Oct, Task 17) is the report's note eyebrow; older stored notes have none. */
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }

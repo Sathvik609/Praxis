@@ -55,7 +55,7 @@ export const EQUIPMENT: { id: EquipmentId; label: string }[] = [
 export const DEFAULT_EQUIPMENT: EquipmentId[] = ['sheets', 'cup', 'table', 'chair']
 
 export const PATIENT = { name: 'Alex M.', initial: 'A', side: 'left' as const, goal: 'Use a cup on my own.', goalAttempts: 2 }
-export const PROGRAM = { label: 'Hospital GRASP, Level 2 · Left side', short: 'Hospital GRASP L2 · v3 · Dr. Rao', clinician: 'Dr. Anita Rao, OT', nextVisit: 'Thu 1 Oct, 2:30 PM', level: 2, version: 3 }
+export const PROGRAM = { label: 'Hospital GRASP, Level 2 · Left side', short: 'Hospital GRASP L2 · v3 · Dr. Rao', clinician: 'Dr. Anita Rao, OT', level: 2, version: 3 }
 
 const STOP_IF = 'pain rises or you feel dizzy'
 

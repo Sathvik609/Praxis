@@ -104,6 +104,17 @@ test('side cards: today (no start button, D-FLOW) and the clinic visit; the week
   const visit = screen.getByRole('region', { name: 'Clinic visit' })
   expect(visit).toHaveTextContent('Fri 2 Oct, 2:30 PM')
   expect(visit).toHaveTextContent('Dr. Anita Rao, OT')
+  expect(visit).not.toHaveTextContent('Sample')
+})
+
+test('the seeded visit is labelled Sample (its date moves with today until the therapist books one)', async () => {
+  const c = cal('2026-09-21', '2026-10-04')
+  mockApi({ '/api/calendar': { ...c, next_visit: { ...c.next_visit!, sample: true } } })
+  renderCalendar()
+  const visit = await screen.findByRole('region', { name: 'Clinic visit' })
+  expect(within(visit).getByText('Sample')).toBeInTheDocument()
+  expect(visit).toHaveTextContent('Sample date · your therapist books the real visit.')
+  expect(visit).not.toHaveTextContent('Set by your therapist.')
 })
 
 test('‹ › move a week at a time', async () => {

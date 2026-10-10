@@ -17,7 +17,7 @@ from typing import Any
 
 from praxis_session.calendar_view import practice_counts, short_name
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
-from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, sample_next_visit, visit_text
 from praxis_session.seed_data import NHPT_TREND, PATIENT, SAMPLE_PRACTICE, SESSIONS
 from praxis_session.stop_rules import pain_after_detail
 
@@ -64,6 +64,13 @@ def _next_practice(summary: dict[str, Any], clinician: str) -> dict[str, Any]:
     if mode == "arm":
         return {"text": f"Continue your assigned plan. No level change — that needs {clinician}.", "proposal": "keep hold at 3 s, watch leaning" if cam.get("posture_cues") else "keep hold at 3 s", "level_change": False}
     return {"text": "Assessment recorded. Practice continues on the assigned plan.", "proposal": "repeat the peg test weekly, same board and camera setup", "level_change": False}
+
+
+
+def local_today() -> date:
+    """Local today for values served relative to the day (the sample next visit). `main` points
+    this at its own clock, so a test that pins `main._clock` pins it too."""
+    return date.today()
 
 
 class Store:
@@ -181,10 +188,16 @@ class Store:
         return self._db.execute("SELECT json FROM prescriptions ORDER BY version DESC, id DESC LIMIT 1").fetchone()
 
     def prescription(self) -> dict[str, Any]:
-        """The newest version as stored; a row from before 28 Sep gets the seed schedule."""
+        """The newest version as stored; a row from before 28 Sep gets the seed schedule. While
+        the seed's next visit is unedited it is served as a sample relative to today
+        (`sample_next_visit`, marked `"sample": true`), never a fixed date that slips into the
+        past (10 Oct walkthrough). A visit a person booked is served as stored."""
         raw = json.loads(self._latest_rx_row()["json"])
         if "schedule" not in raw:
             raw["schedule"] = SEED_PRESCRIPTION.schedule.model_dump(mode="json")
+        seed_visit = SEED_PRESCRIPTION.schedule.model_dump(mode="json")["next_visit"]
+        if not raw.get("edited") and raw["schedule"].get("next_visit") == seed_visit:
+            raw["schedule"]["next_visit"] = sample_next_visit(local_today()).model_dump(mode="json") | {"sample": True}
         return raw
 
     def rx(self) -> Prescription:

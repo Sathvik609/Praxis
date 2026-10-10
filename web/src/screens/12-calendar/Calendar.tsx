@@ -204,12 +204,12 @@ function VisitCard({ data }: { data: CalendarData }) {
     <Card as="section" aria-label="Clinic visit" padding="sm" className="py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-2xl">Clinic visit</h2>
-        {upcoming && <Chip tone="amber">Bring your report</Chip>}
+        {upcoming && (v.sample ? <Chip tone="neutral">Sample</Chip> : <Chip tone="amber">Bring your report</Chip>)}
       </div>
       {upcoming ? (
         <>
           <p className="mt-2 text-lg font-bold">{v.text}</p>
-          <p className="text-lg text-muted">With {v.with}. Set by your therapist.</p>
+          <p className="text-lg text-muted">With {v.with}. {v.sample ? 'Sample date · your therapist books the real visit.' : 'Set by your therapist.'}</p>
         </>
       ) : (
         <p className="mt-2 text-lg text-muted">Not booked yet · your therapist sets it.</p>
