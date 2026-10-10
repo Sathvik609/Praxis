@@ -67,12 +67,13 @@ flowchart TD
 - `evidence` must list ids of events in **this session's** ring; otherwise the call is refused and nothing happens (CLAUDE.md rule 5).
 - Dose changes are clamped to `allowed_adaptations` and are only prompts; the pipeline clamps again when the patient taps Yes. A resume is only a prompt. Decline changes nothing; "Why?" repeats the reason.
 - One prompt at a time; ≤ 6 tool calls per run, ≤ 60 per session, ≤ 12 runs per session, 15 s per run.
+- **Daily cap across all sessions** (`PRAXIS_AGENT_DAILY_RUNS`, default 100 runs per UTC day, `0` = unlimited; `agent/budget.py`). The public site has no login, so this bounds model spend. Why 100: one run costs about $0.03 on Sonnet 5 (real runs ≈ 14k tokens, mostly input), so 100 runs cap the worst case at about $3 a day, enough for ~20–30 sessions at 3–5 runs each; 300 would allow ~$9 a day. `AgentCoach.run_once` takes a slot before any planner runs (Strands + Claude or scripted alike); over the cap the model is not called, the session gets `agent_status offline` "Daily agent limit reached · rule coach continues" once, the trace gets `agent_error {error_kind: "daily_cap"}` (later blocked checkpoints in that session: `agent_skip`), and the rule coach carries on. The count is in memory and resets at UTC midnight; **a restart also resets it**, so the team also sets a spend limit in the Anthropic console (`docs/RISKS.md`). `/health` → `agent.runs_today`, `agent.daily_runs_limit`.
 - Outputs are queued and applied by the socket coroutine, which re-checks the stop: a pain stop mid-run drops everything the run queued (`agent_drop` trace row, run `outcome: stale`).
 - Privacy: no tool result, trace row or model message holds pixels, frame bytes or base64 (`assert_no_pixels` on every result; tested). The latest frame is a reference in memory, overwritten by the next frame, never written.
 
 ## Failure handling
 
-Model error, timeout, refusal or malformed call → trace `agent_error {error_kind, message}`, `agent_status offline` ("Coach offline · rule coach (…)"), the rule coach carries on, the next checkpoint retries and clears offline on success. MCP connection error → the run uses the direct tools (`agent_run.transport: direct`, `agent_error error_kind: mcp`). `PRAXIS_AGENT=off` → no agent, no MCP routes, the rule coach labelled "Rule-based coach · LLM agent pending", byte-for-byte as before. `PRAXIS_AGENT=anthropic` without a key → no agent runs; the socket sends `agent_status offline` with the reason and the rule coach is labelled "Rule-based coach".
+Daily cap reached → no model call, `agent_error error_kind: daily_cap`, `agent_status offline` "Daily agent limit reached · rule coach continues" (once per session), rule coach only until the next UTC day. Model error, timeout, refusal or malformed call → trace `agent_error {error_kind, message}`, `agent_status offline` ("Coach offline · rule coach (…)"), the rule coach carries on, the next checkpoint retries and clears offline on success. MCP connection error → the run uses the direct tools (`agent_run.transport: direct`, `agent_error error_kind: mcp`). `PRAXIS_AGENT=off` → no agent, no MCP routes, the rule coach labelled "Rule-based coach · LLM agent pending", byte-for-byte as before. `PRAXIS_AGENT=anthropic` without a key → no agent runs; the socket sends `agent_status offline` with the reason and the rule coach is labelled "Rule-based coach".
 
 ## Configuration
 
@@ -83,13 +84,14 @@ Model error, timeout, refusal or malformed call → trace `agent_error {error_ki
 | `PRAXIS_AGENT_MODEL` | default `claude-sonnet-5` (effort `low`, `max_tokens` 800, no retries, no `thinking.budget_tokens`, no sampling params) |
 | `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION` | for `bedrock`, which also needs `PRAXIS_CLOUD_ENABLED=1` |
 | `PRAXIS_MCP_URL` | where the agent reaches the MCP routes (default `http://127.0.0.1:$PORT/mcp`, `PORT` default 8000) |
+| `PRAXIS_AGENT_DAILY_RUNS` | agent runs per UTC day across all sessions (default `100`, `0` = unlimited; in-process, a restart resets the count); over it the rule coach coaches alone until midnight UTC |
 | `PRAXIS_MCP=1` | mount the MCP routes with the agent off (read tools for an outside MCP client; coach actions still need an agent run) |
 
 ```bash
 cd services/session
 cp .env.example .env            # fill ANTHROPIC_API_KEY; .env is git-ignored
 uv run uvicorn praxis_session.main:app --port 8000 --env-file .env
-curl -s localhost:8000/health | jq .agent   # {"mode":"anthropic","model":"claude-sonnet-5","mcp":true,"ready":true}
+curl -s localhost:8000/health | jq .agent   # {"mode":"anthropic","model":"claude-sonnet-5","mcp":true,"ready":true,"runs_today":0,"daily_runs_limit":100}
 ```
 
 ## Contract with the web app

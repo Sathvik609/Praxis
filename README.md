@@ -73,13 +73,13 @@ Off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). With it
 cd services/session
 cp .env.example .env              # set ANTHROPIC_API_KEY and PRAXIS_AGENT=anthropic (.env is git-ignored)
 uv run uvicorn praxis_session.main:app --port 8000 --env-file .env
-curl -s localhost:8000/health     # "agent": {"mode": "anthropic", "model": "claude-sonnet-5", "mcp": true, "ready": true}
+curl -s localhost:8000/health     # "agent": {"mode": "anthropic", "model": "claude-sonnet-5", "mcp": true, "ready": true, "runs_today": 0, "daily_runs_limit": 100}
 PRAXIS_AGENT=scripted uv run uvicorn praxis_session.main:app --port 8000   # no key: canned tool calls, for UI work
 uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # nine scenarios, free (CI)
 uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes   # real model, prints the cost first
 ```
 
-Status 10 Oct: run against real Claude (Sonnet 5 via the Anthropic API, dev): 9/9 scenarios on four consecutive full runs, 0 guardrail violations, ~$0.39 per run (`evaluation/results/agent_v0_anthropic.md`, traces in `traces/agent/anthropic/`). Bedrock not run yet. Keep `PRAXIS_AGENT=off` on the public Railway site until a spend limit exists (`docs/RISKS.md`). Bedrock: `PRAXIS_AGENT=bedrock`, `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION`, and `PRAXIS_CLOUD_ENABLED=1`.
+Status 10 Oct: run against real Claude (Sonnet 5 via the Anthropic API, dev): 9/9 scenarios on four consecutive full runs, 0 guardrail violations, ~$0.39 per run (`evaluation/results/agent_v0_anthropic.md`, traces in `traces/agent/anthropic/`). Bedrock not run yet. On a public site, `PRAXIS_AGENT_DAILY_RUNS` (default 100 runs per UTC day, ≈ $3/day worst case at ~$0.03 per run across all sessions, `0` = unlimited; in memory, a restart resets it) caps model runs, after which the rule coach coaches alone and the session says "Daily agent limit reached · rule coach continues"; also set a spend limit in the Anthropic console (`docs/RISKS.md`). Bedrock: `PRAXIS_AGENT=bedrock`, `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION`, and `PRAXIS_CLOUD_ENABLED=1`.
 
 ## One-container deploy (Railway / any Docker host)
 

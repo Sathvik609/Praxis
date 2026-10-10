@@ -14,6 +14,12 @@ check once more. A run that ends after the session moved on is `stale` (its queu
 dropped). A model error, timeout, refusal or malformed call ends the run with `agent_error
 {error_kind, message}` and `agent_status offline`; the rule coach carries on, and the next
 checkpoint tries again.
+
+Before any planner is called, a run takes one slot from the process-wide `DailyRunBudget`
+(`PRAXIS_AGENT_DAILY_RUNS`, agent/budget.py). Over the cap the model is not called: the first
+blocked run in a session writes `agent_error {error_kind: "daily_cap"}` and `agent_status
+offline` ("Daily agent limit reached · rule coach continues"), later ones an `agent_skip` row;
+the rule coach carries on, and the next UTC day the agent runs again.
 """
 from __future__ import annotations
 
@@ -22,6 +28,7 @@ import time
 from typing import Any
 
 from praxis_session.agent import tools as T
+from praxis_session.agent.budget import DAILY_CAP_REASON, DailyRunBudget
 from praxis_session.agent.model import RUN_TIMEOUT_S, RunContext, build_prompt, classify_error
 
 # Which checkpoint wins when several coalesce into one run.
@@ -36,13 +43,15 @@ def _rank(trigger: str) -> int:
 class AgentCoach:
     name = "agent"
 
-    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS) -> None:
+    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS, daily: DailyRunBudget | None = None) -> None:
         self.planner = planner
         self.handle = handle
         self.registry = registry
         self.label = label or handle.label
         self.timeout_s = timeout_s
         self.max_runs = max_runs
+        self.daily = daily  # None: no daily cap (evaluation, tests); main.py passes AGENT_CFG.budget
+        self._cap_notified = False
         self.pending: list[tuple[str, list[int], float]] = []
         self.offline = False
         self.runs: list[dict[str, Any]] = []  # per-run outcome (evaluation reads it)
@@ -101,6 +110,8 @@ class AgentCoach:
         also = list(also or [])
         if s.stopped:
             return {"outcome": "skipped"}
+        if self.daily is not None and not self.daily.acquire():
+            return self._daily_cap(trigger)
         preferred = getattr(self.planner, "transport", "mcp")
         run = h.begin_run(trigger, transport=preferred)
         h.status("thinking", trigger)
@@ -130,6 +141,7 @@ class AgentCoach:
             outcome = "stale" if (s.stopped or run.epoch != s.epoch) else "done"
             h.status("idle", trigger)
             self.offline = False
+            self._cap_notified = False
         row = {
             "phase": "end", "trigger": trigger, "model": model, "transport": transport, "ms": ms,
             "input_tokens": res.input_tokens if res else None, "output_tokens": res.output_tokens if res else None,
@@ -141,3 +153,16 @@ class AgentCoach:
             row["error_kind"] = kind
         self.runs.append(row)
         return row
+
+    def _daily_cap(self, trigger: str) -> dict[str, Any]:
+        """Over the daily cap: no model call; say so once per session, then the rule coach carries on."""
+        h, s = self.handle, self.handle.session
+        message = f"daily agent limit reached ({self.daily.limit} runs per UTC day); model not called"
+        if not self._cap_notified:
+            s.trace.log("agent_error", error_kind="daily_cap", message=message, trigger=trigger)
+            h.status("offline", trigger, reason=DAILY_CAP_REASON)
+            self._cap_notified = True
+        else:
+            s.trace.log("agent_skip", trigger=trigger, reason=message)
+        self.offline = True
+        return {"phase": "end", "trigger": trigger, "outcome": "daily_cap"}
