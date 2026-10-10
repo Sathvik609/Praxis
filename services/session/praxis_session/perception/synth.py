@@ -249,8 +249,10 @@ def write_arm_landmarks(
     seed: int = 1,
     peak_deg: float = 90.0,
     side: str = "left",
+    frontal: bool = False,
 ) -> dict:
-    """Write a JSONL stream of synthetic 33-point landmarks (px) for Arm-to-the-front lifts.
+    """Write a JSONL stream of synthetic 33-point landmarks (px) for arm lifts: a side-view
+    figure (Arm to the front) or, with `frontal=True`, a front-view one (Arm out to the side).
 
     The pose DNN cannot detect a drawn figure, so arm evaluation feeds landmarks through the
     same ArmFSM the live pipeline uses. Labels: reps[{set, rep, t_start, t_peak, peak_deg, t_end}].
@@ -267,7 +269,7 @@ def write_arm_landmarks(
 
     def emit(angle: float) -> None:
         nonlocal t
-        lm = figure(angle, side=side) + rng.normal(0, 0.8, (33, 2)).astype(np.float32)
+        lm = figure(angle, side=side, frontal=frontal) + rng.normal(0, 0.8, (33, 2)).astype(np.float32)
         lines.append(json.dumps({"t": round(t, 4), "landmarks_px": np.round(lm, 2).tolist()}))
         t += dt
 
