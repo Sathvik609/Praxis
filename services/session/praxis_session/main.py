@@ -482,7 +482,7 @@ async def _start_agent(ws: WebSocket, coach: CoachSession, pipeline: SessionPipe
     label = AGENT_CFG.label or "Claude agent"
     handle = agent_tools.REGISTRY.register(agent_tools.SessionHandle(session=coach, pipeline=pipeline, store=store, label=label))
     if AGENT_CFG.ready:
-        coach.agent = AgentCoach(make_planner(AGENT_CFG), handle, label=label)
+        coach.agent = AgentCoach(make_planner(AGENT_CFG), handle, label=label, daily=AGENT_CFG.budget)
     first = [make_event("session_start", session_id=coach.session_id, mode=coach.mode, exercise=coach.exercise, label=coach.rule_label, agent=AGENT_CFG.health(MCP_MOUNTED) | {"label": label})]
     if not AGENT_CFG.ready:
         first.append(make_event("agent_status", state="offline", reason=f"Coach offline · rule coach ({AGENT_CFG.reason})", label=label))

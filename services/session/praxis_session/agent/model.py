@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from praxis_session.agent import tools as T
+from praxis_session.agent.budget import DailyRunBudget, parse_limit
 
 AGENT_LABELS = {
     "anthropic": "Claude agent · Anthropic API (dev)",
@@ -49,6 +50,8 @@ class AgentConfig:
     region: str | None = None
     mcp_url: str = "http://127.0.0.1:8000/mcp"
     mcp_enabled: bool = False
+    # Process-wide daily run cap (PRAXIS_AGENT_DAILY_RUNS); shared by every session's AgentCoach.
+    budget: DailyRunBudget = field(default_factory=DailyRunBudget, compare=False, repr=False)
 
     @property
     def enabled(self) -> bool:
@@ -60,6 +63,7 @@ class AgentConfig:
 
     def health(self, mcp_mounted: bool) -> dict[str, Any]:
         out: dict[str, Any] = {"mode": self.mode, "model": self.model, "mcp": mcp_mounted, "ready": self.ready}
+        out |= self.budget.health()
         if self.reason:
             out["reason"] = self.reason
         return out
@@ -72,12 +76,13 @@ def load_config(env: Mapping[str, str] | None = None) -> AgentConfig:
     port = env.get("PORT") or "8000"
     mcp_url = (env.get("PRAXIS_MCP_URL") or f"http://127.0.0.1:{port}/mcp").rstrip("/")
     mcp_flag = env.get("PRAXIS_MCP", "") == "1"
+    budget = DailyRunBudget(parse_limit(env.get("PRAXIS_AGENT_DAILY_RUNS")))
     if mode in ("", "off", "0", "false", "none"):
-        return AgentConfig("off", None, False, "PRAXIS_AGENT=off", mcp_url=mcp_url, mcp_enabled=mcp_flag)
+        return AgentConfig("off", None, False, "PRAXIS_AGENT=off", mcp_url=mcp_url, mcp_enabled=mcp_flag, budget=budget)
     if mode == "anthropic":
         model = env.get("PRAXIS_AGENT_MODEL") or DEFAULT_MODEL
         has_key = bool((env.get("ANTHROPIC_API_KEY") or "").strip())
-        return AgentConfig("anthropic", model, has_key, None if has_key else "ANTHROPIC_API_KEY is not set", mcp_url=mcp_url, mcp_enabled=True)
+        return AgentConfig("anthropic", model, has_key, None if has_key else "ANTHROPIC_API_KEY is not set", mcp_url=mcp_url, mcp_enabled=True, budget=budget)
     if mode == "bedrock":
         model = env.get("PRAXIS_BEDROCK_MODEL_ID") or None
         region = env.get("AWS_REGION") or env.get("AWS_DEFAULT_REGION") or None
@@ -88,10 +93,10 @@ def load_config(env: Mapping[str, str] | None = None) -> AgentConfig:
             reason = "PRAXIS_BEDROCK_MODEL_ID is not set"
         elif not region:
             reason = "AWS_REGION is not set"
-        return AgentConfig("bedrock", model, reason is None, reason, region=region, mcp_url=mcp_url, mcp_enabled=True)
+        return AgentConfig("bedrock", model, reason is None, reason, region=region, mcp_url=mcp_url, mcp_enabled=True, budget=budget)
     if mode == "scripted":
-        return AgentConfig("scripted", "scripted", True, None, mcp_url=mcp_url, mcp_enabled=True)
-    return AgentConfig("off", None, False, f"unknown PRAXIS_AGENT={mode!r}; the coach stays rule-based", mcp_url=mcp_url, mcp_enabled=mcp_flag)
+        return AgentConfig("scripted", "scripted", True, None, mcp_url=mcp_url, mcp_enabled=True, budget=budget)
+    return AgentConfig("off", None, False, f"unknown PRAXIS_AGENT={mode!r}; the coach stays rule-based", mcp_url=mcp_url, mcp_enabled=mcp_flag, budget=budget)
 
 
 def build_model(cfg: AgentConfig, env: Mapping[str, str] | None = None) -> Any:

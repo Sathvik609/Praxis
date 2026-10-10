@@ -18,7 +18,7 @@ SCRIPTS = {
 
 def test_health_reports_the_agent_off_by_default(client):
     agent = client.get("/health").json()["agent"]
-    assert agent == {"mode": "off", "model": None, "mcp": False, "ready": False, "reason": "PRAXIS_AGENT=off"}
+    assert agent == {"mode": "off", "model": None, "mcp": False, "ready": False, "reason": "PRAXIS_AGENT=off", "runs_today": 0, "daily_runs_limit": 100}
 
 
 def test_agent_off_keeps_the_pending_label_and_no_agent_events(client):

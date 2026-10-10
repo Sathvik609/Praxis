@@ -18,7 +18,7 @@ from praxis_session.session import CoachSession
 def test_config_defaults_to_off():
     c = M.load_config({})
     assert c.mode == "off" and not c.enabled and not c.ready and c.label is None
-    assert c.health(False) == {"mode": "off", "model": None, "mcp": False, "ready": False, "reason": "PRAXIS_AGENT=off"}
+    assert c.health(False) == {"mode": "off", "model": None, "mcp": False, "ready": False, "reason": "PRAXIS_AGENT=off", "runs_today": 0, "daily_runs_limit": 100}
 
 
 def test_config_anthropic_needs_a_key_and_defaults_to_sonnet_5():
