@@ -21,7 +21,7 @@ streams, runs the agent at its checkpoints, answers the patient prompts, and che
 `evaluation/results/agent_v0.{md,json}` plus sample traces in `traces/agent/`. `--planner
 anthropic` runs Claude (`PRAXIS_AGENT_MODEL`, default claude-sonnet-5) through Strands with the
 tools over streamable-HTTP MCP, prints an estimated cost first and needs `--yes`; results go to
-`evaluation/results/agent_v0_anthropic.{md,json}`.
+`evaluation/results/agent_v0_anthropic.{md,json}` and its traces to `traces/agent/anthropic/`.
 """
 from __future__ import annotations
 
@@ -308,6 +308,8 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
         "output_tokens": sum(r.get("output_tokens") or 0 for r in res["runs"]),
         "transport": sorted({r["transport"] for r in res["runs"]}),
         "outcomes": [r["outcome"] for r in res["runs"]],
+        # what the patient saw from the agent, so a failed check can be read without the trace
+        "agent_said": [e.get("text") for e in agent_lines if e.get("text")],
     }
 
 
@@ -371,6 +373,12 @@ def write_results(summary: dict[str, Any], out_dir: Path, stem: str) -> Path:
         failed = ", ".join(k for k, ok in r["checks"].items() if not ok) or "—"
         lines.append(f"| {r['id']} | {'yes' if r['success'] else 'no'} | {r['runs']} | {r['tool_calls']} | {', '.join(r['transport']) or '—'} | {', '.join(r['outcomes'])} | {failed} | {len(r['violations'])} |")
     lines.append("")
+    if summary["planner"] != "scripted":
+        lines += ["## What the agent said (captions and prompts the patient saw)", ""]
+        for r in summary["rows"]:
+            said = r.get("agent_said") or []
+            lines.append(f"- **{r['id']}**: " + (" → ".join(f"“{t}”" for t in said) if said else "(nothing; see outcomes)"))
+        lines += ["", f"Traces: `traces/agent/{summary['planner']}/<scenario>.jsonl`.", ""]
     path = out_dir / f"{stem}.md"
     path.write_text("\n".join(lines))
     return path
@@ -441,9 +449,11 @@ def main(argv: list[str] | None = None) -> int:
             res = asyncio.run(run_scenario(sc, args.planner, Path(tmp), registry, http_url))
             rows.append(evaluate(sc, res))
             src = Path(tmp) / f"eval-{sc['id']}.jsonl"
-            if args.planner == "scripted" and src.exists():
-                args.traces.mkdir(parents=True, exist_ok=True)
-                shutil.copy(src, args.traces / f"{sc['id']}.jsonl")
+            if src.exists():
+                # model runs keep their own traces (judge evidence); scripted ones stay the CI samples
+                dest = args.traces if args.planner == "scripted" else args.traces / args.planner
+                dest.mkdir(parents=True, exist_ok=True)
+                shutil.copy(src, dest / f"{sc['id']}.jsonl")
             r = rows[-1]
             print(f"{'PASS' if r['success'] else 'FAIL'} {sc['id']}: runs={r['runs']} tools={r['tool_calls']} transport={','.join(r['transport'])} violations={len(r['violations'])}" + ("" if r["success"] else f" failed={[k for k, v in r['checks'].items() if not v]} {r['violations']}"))
     summary = summarise(rows, args.planner, model)

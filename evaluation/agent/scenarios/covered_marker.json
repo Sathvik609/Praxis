@@ -133,7 +133,7 @@
       ]
     },
     "speak_mentions": [
-      "2"
+      "bottom.right"
     ],
     "prompt_kinds": [
       "resume"

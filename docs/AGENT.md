@@ -1,6 +1,6 @@
 # Agent coach — how it works
 
-Design: `docs/superpowers/specs/2026-09-29-agent-coach-design.md` (approved 29 Sep 2026). Service code: `services/session/praxis_session/agent/` (tools, MCP servers, model/planners) and `coach/agent.py` (AgentCoach). Built 29 Sep with a **scripted planner** only: the Anthropic key returned 503 that day, so no real-model run has happened yet (`docs/RISKS.md`).
+Design: `docs/superpowers/specs/2026-09-29-agent-coach-design.md` (approved 29 Sep 2026). Service code: `services/session/praxis_session/agent/` (tools, MCP servers, model/planners) and `coach/agent.py` (AgentCoach). Built 29 Sep with a scripted planner; **run against real Claude (Sonnet 5, Anthropic API, dev) on 10 Oct 2026**: 9/9 scenarios on each of four consecutive full runs with the final prompt, 0 guardrail violations (`evaluation/results/agent_v0_anthropic.md`). Bedrock is configured but not yet run (no working AWS credentials).
 
 ## What it is
 
@@ -102,4 +102,13 @@ curl -s localhost:8000/health | jq .agent   # {"mode":"anthropic","model":"claud
 
 ## Evaluation
 
-`evaluation/scripts/agent_eval.py`, scenarios in `evaluation/agent/scenarios/` (regenerate with `evaluation/agent/make_scenarios.py`). Scripted (CI): 9/9, 0 guardrail violations, `evaluation/results/agent_v0.md`, sample traces in `traces/agent/`. The scripted planner fixes the tool calls, so it validates tools, transport, guardrails, fallbacks and the approval path, not the model's judgement; `--planner anthropic --yes` is the model run (about 13 runs, estimated ~$0.94 at Sonnet 5 list price, printed before it asks for `--yes`; not yet run).
+`evaluation/scripts/agent_eval.py`, scenarios in `evaluation/agent/scenarios/` (regenerate with `evaluation/agent/make_scenarios.py`). Scripted (CI): 9/9, 0 guardrail violations, `evaluation/results/agent_v0.md`, sample traces in `traces/agent/`. The scripted planner fixes the tool calls, so it validates tools, transport, guardrails, fallbacks and the approval path, not the model's judgement; `--planner anthropic --yes` is the model run (about 13 agent runs; the printed estimate is ~$0.94, the measured cost is ~$0.39 per full run at Sonnet 5 list price).
+
+**Real Claude, 10 Oct 2026** (`evaluation/results/agent_v0_anthropic.{md,json}`, traces in `traces/agent/anthropic/`): task success 9/9, correct perception tool before every action 7/7, guardrail violations 0, fallback 2/2 (model timeout → rule coach; MCP down → direct tools), human approval respected 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens per session. Repeated: four consecutive full runs with the final prompt were 9/9 each (36/36). The first runs that day were 7/9 and 8/9; the misses were prompt gaps, fixed in `agent/model.py` and `perception/quality.py` without changing any scenario expectation except one that was too weak (covered_marker now requires the spoken fix to name the **bottom-right** corner instead of matching any "2"):
+- setup recovery now reads `get_set_summary` first, so a hand covering the cup (every setup check passing) is named as the cause instead of "everything looks good";
+- compensation on most reps of a set (lean / hiking) → correct the form **and** propose a smaller target;
+- `text` and `reason` are patient-facing: plain words, no "rms" or marker ids; setup hints name the sheet corner (`quality.corner_name`);
+- `speak` cue: `instruct` for guidance and praise, `correct` only for a fault;
+- the resume caption asks once (no "ready to continue? Ready to carry on?").
+
+Known model behaviour (`docs/RISKS.md`): the resume reason can claim a fix the camera has not confirmed yet (dim_light: "Lighting adjusted…"); the agent praises after most clean arcs; first action takes ~4–6 s, so it never replaces the rule coach's in-rep cues.

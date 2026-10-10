@@ -38,7 +38,7 @@ scenarios = [
             {"answer": {"kind": "resume", "choice": "accept"}},
         ],
         "script": {"checkin": [{"tool": "get_prescription"}, {"tool": "speak", "args": {"text": "Slow arcs today, one dot at a time.", "cue": "instruct", "evidence": "$evidence"}}], **RECOVERY_SCRIPT},
-        "expect": {"triggers": ["checkin", "pause:failed_reps"], "perceive_before": {"speak": ["check_setup"], "request_resume": ["check_setup", "recalibrate"]}, "speak_mentions": ["2"], "prompt_kinds": ["resume"], "resumed_by_patient": True, "stopped": False, "errors": []},
+        "expect": {"triggers": ["checkin", "pause:failed_reps"], "perceive_before": {"speak": ["check_setup"], "request_resume": ["check_setup", "recalibrate"]}, "speak_mentions": ["bottom.right"], "prompt_kinds": ["resume"], "resumed_by_patient": True, "stopped": False, "errors": []},
     },
     {
         "id": "dim_light",

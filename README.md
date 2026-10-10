@@ -67,7 +67,7 @@ uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # nin
 uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes   # real model, prints the cost first
 ```
 
-Status 29 Sep: built and tested with the scripted planner only (the API key returned 503); no real-model result yet. Keep `PRAXIS_AGENT=off` on the public Railway site until a spend limit exists (`docs/RISKS.md`). Bedrock: `PRAXIS_AGENT=bedrock`, `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION`, and `PRAXIS_CLOUD_ENABLED=1`.
+Status 10 Oct: run against real Claude (Sonnet 5 via the Anthropic API, dev): 9/9 scenarios on four consecutive full runs, 0 guardrail violations, ~$0.39 per run (`evaluation/results/agent_v0_anthropic.md`, traces in `traces/agent/anthropic/`). Bedrock not run yet. Keep `PRAXIS_AGENT=off` on the public Railway site until a spend limit exists (`docs/RISKS.md`). Bedrock: `PRAXIS_AGENT=bedrock`, `PRAXIS_BEDROCK_MODEL_ID`, `AWS_REGION`, and `PRAXIS_CLOUD_ENABLED=1`.
 
 ## One-container deploy (Railway / any Docker host)
 
