@@ -8,7 +8,7 @@ import { Check, Download, Flag, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
 import { plural } from '../../lib/plural'
-import { api, isReplaySession, useApi, type SessionRecord, type SessionSummary } from '../../lib/api'
+import { api, isReplaySession, useApi, type SessionCoach, type SessionRecord, type SessionSummary } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
 import { dayPlan, demoUrl, nextExercise, sideOr } from '../../lib/day'
 import { DAY_MINUTES, DAY_ORDER, doseFor } from '../../lib/plan'
@@ -66,6 +66,13 @@ const AGAIN: Record<string, string> = { yes_easily: 'Yes, easily', yes_probably:
 const shortName = (c: string) => c.replace(/^Dr\.? [A-Z][a-z]+ /, 'Dr. ')
 
 type Finished = { exercise: ExerciseId; reportId: string }
+
+/** The coach card's chip: the service's rule-coach label, plus the agent's name when the agent
+ *  actually took part (a decision or the session note); a configured but silent agent is not named. */
+function coachChip(c: SessionCoach): string {
+  const tookPart = !!c.agent && ((c.agent_decisions ?? 0) > 0 || !!c.note?.text)
+  return tookPart ? `${c.label} + ${c.agent!.split(' · ')[0]}` : c.label
+}
 
 /** Screen 09 · Session report (design v2, 6 Oct; designers' artifact `SessionReport`). Loads only
  *  `api.session(id)`, plus the other sessions of today's run from `readDay().finished[].reportId`.
@@ -307,6 +314,7 @@ export function SessionReport() {
   const nx = next ? exerciseById(next) : undefined
   const need = (nx?.needs ?? []).map((n) => EQUIPMENT.find((e) => e.id === n)?.label).filter(Boolean).join(' · ')
   const exertion = s.summary.exertion
+  const agentNote = s.summary.coach.note?.text ? s.summary.coach.note : null
 
   return (
     <div className="rp p-6">
@@ -375,10 +383,19 @@ export function SessionReport() {
               </span>
             }
             className="rp-notes-card"
-            action={<Chip tone="neutral">{s.summary.coach.label}</Chip>}
+            action={<Chip tone="neutral">{coachChip(s.summary.coach)}</Chip>}
           >
             <ul className="rp-notes">
-              {s.summary.coach.notes.length === 0 && <li className="text-muted">No coach notes: nothing needed correcting or changing.</li>}
+              {agentNote && (
+                <li>
+                  <span className="rp-note-b">
+                    <small>{`Coach's note · ${agentNote.label || s.summary.coach.agent || 'agent'}`}</small>
+                    {agentNote.text}
+                  </span>
+                  <Chip tone="focus">Agent</Chip>
+                </li>
+              )}
+              {s.summary.coach.notes.length === 0 && !agentNote && <li className="text-muted">No coach notes: nothing needed correcting or changing.</li>}
               {s.summary.coach.notes.map((n, i) => (
                 <li key={i}>
                   <span className="rp-note-b">
