@@ -17,7 +17,7 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Event ring + `events.schema.json` contract validator | built, tested |
 | Sheet geometry (`board_spec.py`) + printable PDFs (`tools/make_sheets.py`) | built, tested |
 | Synthetic camera-frame renderer (`perception/synth.py`) | built, tested |
-| ArUco → homography calibration, refuse until four markers | built, tested on synthetic frames |
+| ArUco → homography calibration; nothing is measured until four markers are seen (setup no longer blocks, 10 Oct) | built, tested on synthetic frames |
 | Setup quality checks (lighting, steadiness, task area, presence fallback) | built, tested on synthetic frames |
 | Pipeline `calibrate` mode, perception-lost/regained events | built, tested |
 | Web: shell, tokens (light/dark), primitives, webcam → WS hook, Live indicator | built, tested |
@@ -84,6 +84,8 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 
 ### 3.2 Setup quality checks
 `perception/quality.py` feeds the five rows of wireframe screen 05 plus the camera-angle row added in Sprint D: camera permission (browser-side), one person in view, hand and task area in view (all targets project inside the frame with a 16 px margin), sheet found (all four markers; a partial or held fix does not pass it), camera looks down at the sheet (`tilt_deg` ≤ 25°, see §3.1), lighting and steady tracking (mean luma 60–200, variance of Laplacian ≥ 40, mean marker-corner jitter < 2 px over 10 frames). "One person in view" is a **frame-difference motion fallback** (`method: frame_difference`) until the pose model lands in Phase 5; it is not a required check for Continue.
+
+**Nothing blocks (10 Oct 2026, product-owner decision).** The rows above are advice, not a gate: every failing row still shows its fix (markers name the sheet corner, `quality.corner_name`; the task area also asks the patient to move closer below `MIN_PX_PER_MM` = 0.75 px/mm, where an 8 mm peg is under ~6 px), and the auto-continue countdown still runs only when every required row passes, but the patient can always tap **Continue anyway**. Measurement does not change: without the four markers there is no homography, so the cup and peg pipelines count nothing and the live screen says "Show all four corner markers of the sheet. Nothing is counted until I can see it." A sheet that was never seen never raises `perception_lost` (the loss rule needs a prior fix), so the session does not pause on it; a sheet lost after a fix still pauses (D-CAL-1). This supersedes the "refuse to start until all four markers are visible" line in `CLAUDE.md` §1 (not edited here; the team owns it). Checked on 10 Oct by feeding generated frames into the real calibrate socket for both sheets: good placement, 40° tilt, covered marker, dark room, blur, sheet half out of frame, sheet far away, shaky camera — each failing case gives its own hint.
 
 ### 3.3 Pipeline and events
 `pipeline.py` composes calibration and quality per frame into `calibration`, `quality`, `setup_checks` events (validated against `events.schema.json`). Twenty consecutive uncalibrated frames after a calibrated one (`LOSS_FRAMES`, on top of the calibrator's 1.5 s hold, so roughly 3 s at 12 fps) emit `perception_lost` (with missing ids); recovery emits `perception_regained`. One pipeline per WebSocket connection; frames are dropped after processing.

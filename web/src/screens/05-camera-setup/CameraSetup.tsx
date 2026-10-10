@@ -301,8 +301,10 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
               Cancel
             </button>
           )}
-          <button type="button" className="cs-continue" disabled={!ready} onClick={goSession}>
-            {goLeft != null ? `Continue · ${goLeft}` : 'Continue'}
+          {/* Nothing blocks (10 Oct, product owner): failing checks stay visible with their fix, but the
+              patient may always go on; without the sheet nothing is counted and the session says so. */}
+          <button type="button" className="cs-continue" onClick={goSession}>
+            {goLeft != null ? `Continue · ${goLeft}` : ready ? 'Continue' : 'Continue anyway'}
           </button>
         </div>
       </footer>

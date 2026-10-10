@@ -72,10 +72,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('continue is disabled until all required checks pass', () => {
+test('nothing blocks: with failing checks the patient can still Continue anyway (10 Oct decision)', () => {
   mockStream({ type: 'setup_checks', t: 0, id: 1, all_required_pass: false, checks: [] })
-  renderSetup('/setup?exercise=nhpt')
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  renderSetup('/setup?exercise=nhpt&side=left')
+  const go = screen.getByRole('button', { name: 'Continue anyway' })
+  expect(go).toBeEnabled()
+  fireEvent.click(go)
+  expect(screen.getByText('AT /session?exercise=nhpt&hand=left')).toBeInTheDocument()
 })
 
 test('the live pill says Live · not recording and where the video is processed while the camera is on', () => {
@@ -132,13 +135,12 @@ test('the setup guide lists the front-view rows and placement, never the sheet r
 test('pose rows the camera does not check yet are confirmed by the patient in the coach pill', () => {
   mockStream(ARM_EVENT)
   renderSetup('/setup?exercise=abduction&side=right')
-  const cont = screen.getByRole('button', { name: 'Continue' })
-  expect(cont).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   expect(coach()).toHaveTextContent('Turn your chair so you face the camera straight on.')
   fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
   expect(coach()).toHaveTextContent('Move back until both hands fit with your arms out to the side.')
   fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
-  expect(cont).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
   expect(coach()).toHaveTextContent('Hold still in your starting pose')
 })
 
@@ -150,17 +152,16 @@ test('once the service decides a pose row, the camera wins and there is no tick 
   renderSetup('/setup?exercise=abduction&side=left')
   expect(coach()).toHaveTextContent('Turn your chair so you face the camera straight on.')
   expect(within(coach()).queryByRole('button')).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
 })
 
 test('the table view asks "Is this your left arm?" and Continue waits for the answer even when the service passes', () => {
   mockStream(TABLE_PASS)
   renderSetup('/setup?exercise=cup&side=left')
-  const cont = screen.getByRole('button', { name: 'Continue' })
-  expect(cont).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   expect(coach()).toHaveTextContent('Is this your left arm?')
   fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
-  expect(cont).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
 })
 
 test('camera blocked shows why, Try again and a recorded session', () => {
@@ -198,7 +199,7 @@ test('the coach pill shows the service hint when the camera is too steep', () =>
   renderSetup('/setup?exercise=nhpt&side=left')
   fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
   expect(coach()).toHaveTextContent(/a phone on a stand works/)
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
 })
 
 test('ready: a still-pose countdown, then a 4 s auto-continue into the session', () => {
@@ -266,7 +267,7 @@ test('a stopped day never opens the camera', () => {
   expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
-test('passing checks left over with the camera off never continue: Continue disabled, no countdown', () => {
+test('passing checks left over with the camera off never auto-continue: Continue anyway, no countdown', () => {
   vi.useFakeTimers()
   mockStream(TABLE_PASS)
   const view = renderSetup('/setup?exercise=cup&side=right')
@@ -282,18 +283,18 @@ test('passing checks left over with the camera off never continue: Continue disa
       </Routes>
     </MemoryRouter>,
   )
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   for (let i = 0; i < 8; i++) tick(1000)
   expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
 })
 
-test('passing checks with the socket not connected never continue', () => {
+test('passing checks with the socket not connected never auto-continue', () => {
   vi.useFakeTimers()
   mockStream(TABLE_PASS, true, null, false)
   renderSetup('/setup?exercise=cup&side=right')
   const yes = within(coach() ?? document.body).queryByRole('button', { name: 'Yes, my right arm' })
   if (yes) fireEvent.click(yes)
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   for (let i = 0; i < 8; i++) tick(1000)
   expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
 })
@@ -307,7 +308,7 @@ test('checks from before a camera restart are not read as the new run\'s', () =>
   fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
   fireEvent.click(screen.getByRole('button', { name: /Restart camera/ }))
   // the same (old) setup_checks event is still the newest one the screen holds
-  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   for (let i = 0; i < 8; i++) tick(1000)
   expect(screen.queryByText(/^AT /)).not.toBeInTheDocument()
 })

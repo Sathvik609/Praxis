@@ -48,3 +48,11 @@ test('table tasks (cup, NHPT) talk about the sheet markers; arm defaults to the 
   expect(statusLabel('lost', 'nhpt', 'table').coach).toMatch(/four corner markers/)
   expect(statusLabel('calibrating', 'arm').coach).toMatch(/side to the camera/)
 })
+
+test('with no sheet in view the cup and peg screens say nothing is counted yet (nothing blocks, 10 Oct)', () => {
+  for (const mode of ['cup', 'nhpt'] as const) {
+    const s = statusLabel('calibrating', mode)
+    expect(s.coach).toMatch(/Show all four corner markers of the sheet/)
+    expect(s.coach).toMatch(/Nothing is counted until I can see it/)
+  }
+})
