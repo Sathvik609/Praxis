@@ -137,3 +137,13 @@ def test_task_area_refuses_a_sheet_too_far_away():
         near, _ = camera_frame(spec)
         ok = task_area_in_view(Calibrator(spec).run(near), spec, near.shape)
         assert ok["ok"] is True and ok["px_per_mm"] >= 0.75
+
+
+def test_blur_threshold_passes_a_real_webcam_and_catches_real_blur():
+    # A focused 640x480 Mac webcam on a plain wall measured ~33 (10 Oct); heavy blur is < 10.
+    import cv2
+
+    f, _ = camera_frame(NHPT_BOARD, noise_sigma=2.0)
+    assert lighting(cv2.GaussianBlur(f, (0, 0), 1.5))["ok"] is True  # ~22: mild softness passes
+    blurry = lighting(cv2.GaussianBlur(f, (0, 0), 2.5))  # ~5
+    assert blurry["ok"] is False and "blurry" in blurry["hint"]

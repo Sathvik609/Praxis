@@ -15,6 +15,11 @@ from praxis_session.perception.board_spec import SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
 
+# Variance of the Laplacian below this reads as blurry. 40 (synthetic) failed a focused Mac webcam
+# on a plain wall (~33, 10 Oct); heavy blur measures < 10.
+BLUR_MIN_SHARPNESS = 15.0
+
+
 def lighting(frame_bgr: np.ndarray) -> dict:
     gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
     luma = float(gray.mean())
@@ -24,7 +29,7 @@ def lighting(frame_bgr: np.ndarray) -> dict:
         hint = "Too dark. Add light in front of you, not behind."
     elif luma > 200:
         hint = "Too bright. Move the lamp or close the blind."
-    elif sharp < 40:
+    elif sharp < BLUR_MIN_SHARPNESS:
         hint = "Image is blurry. Clean the lens or hold the camera still."
     return {
         "mean_luma": round(luma, 1),
@@ -191,12 +196,12 @@ def build_checks(
     if not needs_sheet:
         return [
             row("camera", "Camera permission", camera_ok, "Allow the camera in your browser."),
-            row("person", "One person in view", present, "Sit sideways so your shoulder, elbow and hip are in view."),
+            row("person", "One person in view", present, "Face the camera with both shoulders and your hips in view."),
             row(
                 "side_view",
-                "Side of your body to the camera",
+                "Facing the camera",
                 None,
-                "Turn so your practising shoulder faces the camera; hips and shoulder in view.",
+                "Turn your chair so you face the camera straight on.",
             ),
             row("lighting", "Lighting", bool(lighting_d["ok"]), lighting_d.get("hint")),
         ]
