@@ -1,0 +1,193 @@
+{
+ "date": "2026-10-10",
+ "host": {
+  "platform": "macOS-26.5.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "cpu_count": 8,
+  "python": "3.12.14",
+  "cv2_version": "5.0.0"
+ },
+ "method": "in-process fastapi.testclient, real WebSocket handler, ack-driven, rule coach",
+ "pooled_live": {
+  "capture_to_event_ms": {
+   "n": 702,
+   "p50": 9.7,
+   "p95": 14.8,
+   "max": 29.8
+  },
+  "event_to_cue_ms": {
+   "n": 11,
+   "p50": 0.8,
+   "p95": 1.2,
+   "max": 1.2
+  }
+ },
+ "runs": [
+  {
+   "name": "synthetic_nhpt_01",
+   "kind": "live-style",
+   "clip": "synthetic_nhpt_01.mp4",
+   "mode": "nhpt",
+   "exercise": null,
+   "clip_fps": 10.0,
+   "frames": 185,
+   "dropped": 0,
+   "models": {
+    "hand": true
+   },
+   "capture_to_event_ms": {
+    "n": 185,
+    "p50": 9.8,
+    "p95": 12.7,
+    "max": 17.3
+   },
+   "proc_ms": {
+    "n": 185,
+    "p50": 9.3,
+    "p95": 12.1,
+    "max": 16.7
+   },
+   "event_to_cue_ms": {
+    "n": 2,
+    "p50": 0.6,
+    "p95": 0.7,
+    "max": 0.7
+   },
+   "round_trip_ms": {
+    "n": 185,
+    "p50": 10.0,
+    "p95": 12.9,
+    "max": 17.6
+   },
+   "summary_latency": {
+    "capture_to_event_p50": 9.8,
+    "capture_to_event_p95": 12.7,
+    "proc_p50": 9.3,
+    "proc_p95": 12.1,
+    "event_to_cue_p50": 0.6,
+    "event_to_cue_p95": 0.7,
+    "frames": 185,
+    "dropped": 0,
+    "cues": 2
+   },
+   "coach": "Rule-based coach \u00b7 LLM agent pending"
+  },
+  {
+   "name": "synthetic_cup_01",
+   "kind": "live-style",
+   "clip": "synthetic_cup_01.mp4",
+   "mode": "cup",
+   "exercise": null,
+   "clip_fps": 10.0,
+   "frames": 517,
+   "dropped": 0,
+   "models": {
+    "hand": true
+   },
+   "capture_to_event_ms": {
+    "n": 517,
+    "p50": 9.3,
+    "p95": 15.7,
+    "max": 29.8
+   },
+   "proc_ms": {
+    "n": 517,
+    "p50": 8.6,
+    "p95": 15.0,
+    "max": 29.3
+   },
+   "event_to_cue_ms": {
+    "n": 9,
+    "p50": 0.9,
+    "p95": 1.2,
+    "max": 1.2
+   },
+   "round_trip_ms": {
+    "n": 517,
+    "p50": 9.6,
+    "p95": 15.9,
+    "max": 30.0
+   },
+   "summary_latency": {
+    "capture_to_event_p50": 9.3,
+    "capture_to_event_p95": 15.7,
+    "proc_p50": 8.6,
+    "proc_p95": 15.0,
+    "event_to_cue_p50": 0.9,
+    "event_to_cue_p95": 1.2,
+    "frames": 517,
+    "dropped": 0,
+    "cues": 9
+   },
+   "coach": "Rule-based coach \u00b7 LLM agent pending"
+  },
+  {
+   "name": "synthetic_nhpt_01 (replay)",
+   "kind": "replay",
+   "clip": "synthetic_nhpt_01",
+   "mode": "nhpt",
+   "frames": 185,
+   "models": {
+    "hand": true
+   },
+   "proc_ms": {
+    "n": 185,
+    "p50": 10.9,
+    "p95": 15.3,
+    "max": 22.8
+   },
+   "event_to_cue_ms": {
+    "n": 3,
+    "p50": 0.8,
+    "p95": 1.0,
+    "max": 1.0
+   },
+   "summary_latency": {
+    "capture_to_event_p50": null,
+    "capture_to_event_p95": null,
+    "proc_p50": 10.9,
+    "proc_p95": 15.3,
+    "event_to_cue_p50": 0.8,
+    "event_to_cue_p95": 1.0,
+    "frames": 185,
+    "dropped": 0,
+    "cues": 3
+   }
+  },
+  {
+   "name": "synthetic_cup_01 (replay)",
+   "kind": "replay",
+   "clip": "synthetic_cup_01",
+   "mode": "cup",
+   "frames": 517,
+   "models": {
+    "hand": true
+   },
+   "proc_ms": {
+    "n": 517,
+    "p50": 11.5,
+    "p95": 18.3,
+    "max": 31.7
+   },
+   "event_to_cue_ms": {
+    "n": 32,
+    "p50": 1.1,
+    "p95": 1.8,
+    "max": 2.2
+   },
+   "summary_latency": {
+    "capture_to_event_p50": null,
+    "capture_to_event_p95": null,
+    "proc_p50": 11.5,
+    "proc_p95": 18.3,
+    "event_to_cue_p50": 1.1,
+    "event_to_cue_p95": 1.8,
+    "frames": 517,
+    "dropped": 0,
+    "cues": 32
+   }
+  }
+ ],
+ "store": null
+}
