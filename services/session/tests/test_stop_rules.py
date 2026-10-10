@@ -26,6 +26,16 @@ def test_new_symptoms_block_before_session():
     assert types(evs) == ["stop", "therapist_flag"] and evs[0].payload["rule"] == "symptoms"
 
 
+def test_every_stop_text_says_once_that_the_therapist_is_flagged():
+    """10 Oct: the stop overlay shows only the service's text (no fixed web line), and every stop
+    writes its therapist flag in the same batch, so the text must say so, once."""
+    for evs in (StopRules(SEED_PRESCRIPTION).on_pain(8, t=1.0), StopRules(SEED_PRESCRIPTION).on_checkin(pain=2, new_symptoms=True, t=0.0)):
+        stop, flag = evs
+        assert flag.type == "therapist_flag"
+        text = stop.payload["text"].lower()
+        assert text.count("therapist is flagged") == 1 and text.count("therapist") == 1
+
+
 def test_lean_flag_pauses_once():
     sr = StopRules(SEED_PRESCRIPTION)
     evs = sr.on_events([make_event("compensation_lean", t=5.0, lean_deg=15, count=3, flagged=True)])

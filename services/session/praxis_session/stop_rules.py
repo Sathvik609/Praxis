@@ -74,7 +74,7 @@ class StopRules:
         if self.th.new_symptoms and new_symptoms:
             self.stopped = True
             return [
-                make_event("stop", t=t, rule="symptoms", text="Something new or worse since last time: review with your therapist before practising."),
+                make_event("stop", t=t, rule="symptoms", text="Something new or worse since last time: no practice today, and your therapist is flagged to review it first."),
                 self._flag(t, "symptoms", "new or worse symptoms reported at check-in"),
             ]
         return self.on_pain(pain, t)

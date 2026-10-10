@@ -48,10 +48,9 @@ export function SessionOverlay({
     <Overlay open title={title}>
       <p className="mt-3 text-2xl">{overlay.text}</p>
       {overlay.kind === 'stopped' ? (
-        <>
-          <p className="mt-2 text-muted">Your progress so far is saved. Your therapist is flagged and will see this session.</p>
-          <div className="mt-6 flex justify-end"><Button onClick={onEnd}>Save and continue</Button></div>
-        </>
+        // The service's stop text is the one statement: it writes the therapist flag with the
+        // stop and says so, so no fixed line repeats it (10 Oct walkthrough).
+        <div className="mt-6 flex justify-end"><Button onClick={onEnd}>Save and continue</Button></div>
       ) : (
         <>
           {note && (
