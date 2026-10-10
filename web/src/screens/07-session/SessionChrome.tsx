@@ -3,7 +3,6 @@ import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, 
 import { Chip } from '../../design/Chip'
 import { usePainStopLevel } from '../../lib/api'
 import { plural } from '../../lib/plural'
-import { readPrefs } from '../../lib/prefs'
 import type { AgentStatus, CoachSource } from '../../session/agent'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
@@ -157,8 +156,8 @@ function CoachLabel({ label, source }: { label: string; source: CoachSource }) {
 
 /** Coach card. The eyebrow names the coach implementation that said the caption
  *  (`coachLabel(...)`) as visible text with its icon. `watch` is the posture tone, `tone` the
- *  artifact's mint / amber / neutral card. With captions off (only possible while spoken
- *  instructions are off) the caption is hidden; the label stays. */
+ *  artifact's mint / amber / neutral card. The caption is always shown: the coach is
+ *  caption-only since 10 Oct, so there is no captions-off state. */
 export function SxCoach({
   caption,
   label,
@@ -166,7 +165,6 @@ export function SxCoach({
   eyebrow,
   tone,
   watch = false,
-  captions = true,
   sub,
 }: {
   caption: string
@@ -175,7 +173,6 @@ export function SxCoach({
   eyebrow?: string
   tone?: 'mint' | 'amber' | 'neutral'
   watch?: boolean
-  captions?: boolean
   sub?: ReactNode
 }) {
   const toneClass = watch ? 'sx-coach-watch cup-coach-amber' : tone ? `cup-coach-${tone}` : ''
@@ -186,11 +183,7 @@ export function SxCoach({
         <span aria-hidden>·</span>
         <CoachLabel label={label} source={source} />
       </div>
-      {captions ? (
-        <p className="sx-coach-text" aria-live="polite">{caption}</p>
-      ) : (
-        <p className="sx-coach-off">Captions are off. Turn them on with the captions switch below.</p>
-      )}
+      <p className="sx-coach-text" aria-live="polite">{caption}</p>
       {sub && <p className="sx-small">{sub}</p>}
     </section>
   )
@@ -403,9 +396,9 @@ export function SxHold({
 }
 
 /** The fixed control bar (CLAUDE.md §1: Pause · Take a rest · Pain / feel unwell · End session on
- *  every in-session screen), in the artifact's `.sx-btn` look, plus the captions switch and Show
- *  trace (the stylesheet shows it in Judge view only). No voice: the coach is caption-only since
- *  10 Oct, so there is no volume control. */
+ *  every in-session screen), in the artifact's `.sx-btn` look, plus Show trace (the stylesheet
+ *  shows it in Judge view only). The coach is caption-only since 10 Oct: captions are always
+ *  shown, so there is no captions switch and no volume control. */
 export function SxBar({
   onPause,
   onRest,
@@ -413,9 +406,6 @@ export function SxBar({
   onEnd,
   traceOpen,
   onTrace,
-  captions,
-  onCaptions,
-  captionsLocked = false,
   resting = false,
 }: {
   onPause: () => void
@@ -424,29 +414,10 @@ export function SxBar({
   onEnd: () => void
   traceOpen: boolean
   onTrace: () => void
-  captions: boolean
-  onCaptions: () => void
-  captionsLocked?: boolean
   resting?: boolean
 }) {
   return (
     <footer className="sx-bar">
-      <button
-        type="button"
-        role="switch"
-        className="sx-switch"
-        aria-checked={captions}
-        aria-disabled={captionsLocked || undefined}
-        aria-label="Captions"
-        title={captionsLocked ? 'Captions stay on while the coach speaks' : captions ? 'Captions on' : 'Captions off'}
-        onClick={() => !captionsLocked && onCaptions()}
-      >
-        <svg className="sx-cc-ic" viewBox="0 0 24 24" aria-hidden>
-          <rect x={3} y={5} width={18} height={14} rx={3} />
-          <path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" />
-        </svg>
-        <span className="sx-switch-track" aria-hidden><span className="sx-switch-thumb" /></span>
-      </button>
       <button type="button" className="sx-linkbtn sx-trace-btn" aria-pressed={traceOpen} onClick={onTrace}>{traceOpen ? 'Hide trace' : 'Show trace'}</button>
       <button type="button" className="sx-btn sx-btn-secondary" onClick={onPause}>Pause</button>
       <button type="button" className="sx-btn sx-btn-secondary" disabled={resting} onClick={onRest}>Take a rest</button>
@@ -512,16 +483,11 @@ export const sxClock = (t: number | null | undefined) => {
   return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`
 }
 
-/** Per-screen session UI state: captions (the Settings caption-panel preference) and the End
- *  dialog. */
+/** Per-screen session UI state: the End dialog. (Captions need no state: always shown.) */
 export function useSxSession() {
-  const [panel, setPanel] = useState(() => readPrefs().captionsPanel)
   const [endOpen, setEndOpen] = useState(false)
   const closeEnd = useCallback(() => setEndOpen(false), [])
   return {
-    captions: panel,
-    captionsLocked: false,
-    toggleCaptions: () => setPanel((c) => !c),
     endOpen,
     openEnd: () => setEndOpen(true),
     closeEnd,

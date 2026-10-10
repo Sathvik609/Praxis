@@ -13,8 +13,6 @@ const barProps = () => ({
   onEnd: vi.fn(),
   traceOpen: false,
   onTrace: vi.fn(),
-  captions: true,
-  onCaptions: vi.fn(),
 })
 
 const statsProps = { metricLabel: 'Lifts', metric: '3 of 8', head: 'Rep 3 of 8', dots: null }
@@ -73,22 +71,10 @@ describe('SxBar', () => {
     expect(screen.getByRole('button', { name: 'End session' })).toBeEnabled()
   })
 
-  it('captions switch toggles, but is locked on while the coach speaks', () => {
-    const p = barProps()
-    const { rerender } = render(<SxBar {...p} />)
-    const sw = screen.getByRole('switch', { name: 'Captions' })
-    expect(sw).toHaveAttribute('aria-checked', 'true')
-    fireEvent.click(sw)
-    expect(p.onCaptions).toHaveBeenCalledTimes(1)
-    rerender(<SxBar {...p} captionsLocked />)
-    expect(screen.getByRole('switch', { name: 'Captions' })).toHaveAttribute('aria-disabled', 'true')
-    fireEvent.click(screen.getByRole('switch', { name: 'Captions' }))
-    expect(p.onCaptions).toHaveBeenCalledTimes(1)
-  })
-
-  it('has no voice volume: the coach is caption-only', () => {
+  it('has no voice volume and no captions switch: the coach is caption-only, captions always on', () => {
     render(<SxBar {...barProps()} />)
     expect(screen.queryByRole('slider')).toBeNull()
+    expect(screen.queryByRole('switch')).toBeNull()
   })
 })
 
@@ -146,11 +132,10 @@ describe('SxCoach', () => {
     expect(container.querySelector('section')).toHaveClass('sx-coach-watch')
   })
 
-  it('captions off hides the caption but keeps the coach label', () => {
-    render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" captions={false} />)
-    expect(screen.queryByText('Lift slowly')).toBeNull()
-    expect(screen.getByText(/Captions are off/)).toBeInTheDocument()
-    expect(screen.getByText('Rule-based coach')).toBeVisible()
+  it('always shows the caption: there is no captions-off state', () => {
+    render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" />)
+    expect(screen.getByText('Lift slowly')).toBeInTheDocument()
+    expect(screen.queryByText(/Captions are off/)).toBeNull()
   })
 })
 
@@ -355,13 +340,12 @@ describe('SxEndDialog', () => {
 })
 
 describe('useSxSession', () => {
-  it('captions follow the caption-panel preference; an old stored spoken:true changes nothing', () => {
+  it('has no caption state: an old stored captionsPanel:false or spoken:true changes nothing', () => {
     localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
     localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true }))
     const { result } = renderHook(() => useSxSession())
-    expect(result.current.captions).toBe(false)
-    act(() => result.current.toggleCaptions())
-    expect(result.current.captions).toBe(true)
+    expect(result.current).not.toHaveProperty('captions')
+    expect(result.current).not.toHaveProperty('toggleCaptions')
   })
 
   it('the end dialog', () => {

@@ -174,7 +174,6 @@ export function LiveCup() {
 
   const coachCard = (
     <SxCoach
-      captions={ui.captions}
       eyebrow={eyebrow}
       tone={coachTone}
       caption={coach.caption?.text ?? label.coach ?? caption(frame, lost, serviceProgression)}
@@ -286,9 +285,6 @@ export function LiveCup() {
         onEnd={ui.openEnd}
         traceOpen={traceOpen}
         onTrace={() => setTraceOpen((v) => !v)}
-        captions={ui.captions}
-        captionsLocked={ui.captionsLocked}
-        onCaptions={ui.toggleCaptions}
         resting={rest.since != null || !!coach.overlay}
       />
       <SxEndDialog

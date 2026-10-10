@@ -109,7 +109,6 @@ export function LiveNhpt() {
 
   const coachCard = (
     <SxCoach
-      captions={ui.captions}
       caption={coach.caption?.text ?? label.coach ?? caption(frame, lost)}
       label={coach.caption ? coachLabel(coach.caption) : coach.ruleLabel}
       source={coach.captionSource}
@@ -210,9 +209,6 @@ export function LiveNhpt() {
         onEnd={ui.openEnd}
         traceOpen={traceOpen}
         onTrace={() => setTraceOpen((v) => !v)}
-        captions={ui.captions}
-        captionsLocked={ui.captionsLocked}
-        onCaptions={ui.toggleCaptions}
         resting={rest.since != null || !!coach.overlay}
       />
       <SxEndDialog

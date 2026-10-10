@@ -205,14 +205,16 @@ test('the service pause event that answers a rest does not stack the pause overl
   expect(screen.queryByRole('alertdialog', { name: 'Paused' })).not.toBeInTheDocument()
 })
 
-test('the coach is caption-only: a cue is shown as text, with no voice control, whatever an old build stored', () => {
+test('the coach is caption-only: a cue is always shown as text, with no voice or captions control, whatever an old build stored', () => {
   const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
   try {
     localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true, larger: false }))
+    localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
     mockStream([frame, cue])
     renderAt('/session?hand=left')
     expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()
     expect(screen.queryByRole('slider', { name: /volume/i })).toBeNull()
+    expect(screen.queryByRole('switch', { name: 'Captions' })).toBeNull()
   } finally {
     localStorage.clear()
   }

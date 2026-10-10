@@ -133,7 +133,6 @@ export function LiveArm() {
 
   const coachCard = (
     <SxCoach
-      captions={ui.captions}
       watch={leanRecent}
       tone={tone}
       caption={coach.caption?.text ?? (leanRecent ? caption(frame, lost, true, view, swing) : label.coach ?? caption(frame, lost, false, view, swing))}
@@ -245,9 +244,6 @@ export function LiveArm() {
         onEnd={ui.openEnd}
         traceOpen={traceOpen}
         onTrace={() => setTraceOpen((v) => !v)}
-        captions={ui.captions}
-        captionsLocked={ui.captionsLocked}
-        onCaptions={ui.toggleCaptions}
         resting={rest.since != null || !!coach.overlay}
       />
       <SxEndDialog

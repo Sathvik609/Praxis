@@ -131,13 +131,11 @@ test('guidance switches persist and apply at once; larger text is on by default'
   expect(document.documentElement.dataset.text).toBe('large')
 })
 
-test('the caption panel can be hidden and the choice persists', async () => {
+test('no voice or caption switches: captions are always shown, they are the coach\'s only channel', async () => {
   mockApi({})
   await renderSettings()
-  const panel = screen.getByRole('switch', { name: 'Caption panel' })
-  expect(panel).toHaveAttribute('aria-checked', 'true')
-  fireEvent.click(panel)
-  expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').captionsPanel).toBe(false)
+  expect(screen.queryByRole('switch', { name: 'Spoken instructions' })).toBeNull()
+  expect(screen.queryByRole('switch', { name: 'Caption panel' })).toBeNull()
 })
 
 test('display switches set attributes on the page and persist', async () => {

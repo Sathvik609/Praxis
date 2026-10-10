@@ -103,7 +103,6 @@ export function Settings() {
         <div className="st-col">
           <Card title="Guidance">
             <ul className="st-list">
-              <SettingsRow title="Caption panel" sub="The coach's cues as text in a session" control={<Switch label="Caption panel" checked={prefs.captionsPanel} onChange={(v) => setP('captionsPanel', v)} />} />
               <SettingsRow title="Language" sub="English (US)" control={<span className="st-val">Only option</span>} />
             </ul>
           </Card>
