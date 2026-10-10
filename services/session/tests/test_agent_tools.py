@@ -180,6 +180,24 @@ def test_request_resume_only_while_a_rule_pause_holds(reg, tmp_path):
     assert h.session.paused  # never resumes on its own
 
 
+@pytest.mark.parametrize(
+    ("reason", "caption"),
+    [
+        ("All four corners are visible again.", "All four corners are visible again. Ready to carry on?"),
+        ("Setup looks good now — ready to continue?", "Setup looks good now — ready to continue?"),
+        ("Sheet markers are all visible now", "Sheet markers are all visible now. Ready to carry on?"),
+    ],
+)
+def test_request_resume_caption_asks_once(reg, tmp_path, reason, caption):
+    h = handle(reg, tmp_path)
+    h.session.on_events([unverified(float(i)) for i in range(1, 4)], snapshot={}, t=3.0)
+    pause = h.session.recent_events(types=["pause"])[-1]
+    h.begin_run("pause:failed_reps")
+    call(reg, "request_resume", session_id="s1", reason=reason, evidence=[pause.id])
+    coach = next(x for x in h.drain(4.0) if x.type == "coach")
+    assert coach.payload["text"] == caption
+
+
 def test_request_resume_refused_when_not_paused(reg, tmp_path):
     h = handle(reg, tmp_path)
     h.session.on_events([unverified(1.0)], snapshot={}, t=1.0)

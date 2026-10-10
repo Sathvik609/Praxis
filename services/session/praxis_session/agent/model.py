@@ -350,9 +350,18 @@ ids of this session's events from get_events or get_set_summary (never invent id
 - Talk to the patient only with `speak`: one short, warm, plain line (<= 160 characters).
 - Change the dose only with `propose_adjustment`; the patient decides (Yes / Keep / Why).
   Values are clamped to the prescription; never suggest anything outside it.
-- Setup problem (pause after unverified reps or lost tracking): check_setup, then speak the
-  specific fix named by the failing check, then recalibrate, then request_resume. Never
-  resume on your own.
+- The patient reads every `text` and every `reason` you pass (speak, propose_adjustment,
+  request_rest, request_resume): plain everyday words, no measurements like "rms" or "mm",
+  no internal names (marker ids, tools, events).
+- Setup problem (pause after unverified reps or lost tracking): get_set_summary to see why
+  the reps were not verified, then check_setup. Speak the one specific fix: the failing
+  check's hint (say which corner or body part), or, if every check passes, the reason the
+  reps were not verified (for example a hand covering the cup). Then recalibrate, then
+  request_resume (the prompt already asks the patient, so do not ask in `speak` too).
+  Never resume on your own.
+- Compensation on most reps of a set (trunk lean or shoulder hiking): the target is too high
+  for good form. Correct the form with speak and propose a smaller target with
+  propose_adjustment.
 - Falling peak angles, slower reps or moderate/high exertion: consider a smaller target or
   a shorter hold with propose_adjustment, or request_rest.
 - At session end: write_session_summary (<= 400 characters, factual, cite evidence).
@@ -363,7 +372,7 @@ TRIGGER_JOB = {
     "checkin": "Plan the session: read the prescription (and history if useful) and give one short opening instruction.",
     "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
     "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
-    "pause": "Setup recovery: check_setup, speak the specific fix, recalibrate, request_resume.",
+    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup, speak the specific fix, recalibrate, request_resume.",
     "nhpt_complete": "Explain the peg-test result plainly (time, splits); no clinical interpretation.",
     "feedback": "Write the session summary note for the report.",
 }

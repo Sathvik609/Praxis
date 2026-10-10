@@ -450,7 +450,7 @@ def recalibrate(session_id: str) -> dict[str, Any]:
 # ---- exertion / program ---------------------------------------------------------------------
 def get_exertion_state(session_id: str) -> dict[str, Any]:
     """Behavioural exertion (`low|moderate|high`, score, reasons) from rep-time slope, falling
-    peaks, tremor and hesitation plus the last RPE; not a physiological measurement."""
+    peaks and tremor plus the last RPE; not a physiological measurement."""
     return dict(_h().session.exertion.state)
 
 
@@ -491,8 +491,9 @@ def read_patient_model(session_id: str) -> dict[str, Any]:
 
 # ---- coach actions --------------------------------------------------------------------------
 def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str, Any]:
-    """Say one short line to the patient (captioned). `cue` is `instruct` or `correct`; at most
-    160 characters, at most one line every 4 s. `evidence`: ids of the events it is based on."""
+    """Say one short line to the patient (captioned). `cue`: `instruct` for guidance, plans and
+    praise; `correct` only to fix a fault (form, setup). At most 160 characters, at most one
+    line every 4 s. `evidence`: ids of the events it is based on."""
     h = _h()
     if cue not in ("instruct", "correct"):
         raise ToolRejected("cue must be 'instruct' or 'correct'", "field")
@@ -610,7 +611,10 @@ def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[st
     h.prompt_seq += 1
     pid = f"resume-{h.prompt_seq}"
     prompt = {"id": pid, "kind": "resume", "title": "Setup looks good — resume?", "text": why, "options": ["Yes, resume", "Not yet"], "within_prescription": True}
-    d = _decision("instruct", "agent_resume_request", f"{why} Ready to carry on?"[:SPEAK_MAX_CHARS], why, ids, {"prompt": prompt}, tool="request_resume")
+    # the caption asks once: the model's reason may already end in a question
+    stem = why.rstrip()
+    caption = stem if stem.endswith("?") else f"{stem}{'' if stem.endswith(('.', '!')) else '.'} Ready to carry on?"
+    d = _decision("instruct", "agent_resume_request", caption[:SPEAK_MAX_CHARS], why, ids, {"prompt": prompt}, tool="request_resume")
     h._queue("prompt", {"decision": d, "prompt": prompt, "prompt_kind": "resume", "reason": why, "accept": None})
     return {"ok": True, "prompt_id": pid, "resumed": False}
 

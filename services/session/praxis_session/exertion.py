@@ -1,7 +1,8 @@
 """Behavioural exertion / fatigue index (P0). Always labeled method="behavioural".
 
 Signals: rep-time slope (later reps slower), falling peak angles (arm), tremor share of the
-fingertip trace (hand), hesitation (long dwell before a lift), and the last self-reported RPE.
+fingertip trace (hand), and the last self-reported RPE. Hesitation (long dwell before a lift)
+is not computed yet.
 No physiology is measured; rPPG is P1 and not present.
 """
 from __future__ import annotations
