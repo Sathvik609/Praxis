@@ -132,7 +132,7 @@ export function Settings() {
           </Card>
           <Card title="Help">
             <ul className="st-list">
-              <SettingsRow title="Camera and microphone setup" sub="Step-by-step with pictures" to={setupUrl('abduction', side)} />
+              <SettingsRow title="Camera and microphone setup" sub="Laptop camera only · step-by-step with pictures" to={setupUrl('abduction', side)} />
               <SettingsRow title="Equipment and substitutes" sub="What to use if something is missing" to="/details/choose" />
             </ul>
           </Card>
