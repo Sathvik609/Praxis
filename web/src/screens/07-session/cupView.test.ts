@@ -1,4 +1,4 @@
-import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts } from './cupView'
+import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts, paceVsArc1 } from './cupView'
 
 // Real service fields (0-based dots): reach_complete {to_dot, verified, reason, reach_ms, t_lift},
 // wrong_dot {dot, expected} at the same t as the reach that landed on the wrong dot.
@@ -55,4 +55,14 @@ test('progression facts come from the camera: verified slow reaches and the arc 
   const f = cupProgressFacts(evs as never, cupFrame({ arc_means_ms: [1600, 1200] }))
   expect(f).toEqual({ verified: 2, total: 3, fasterPct: 25 })
   expect(cupProgressFacts([], cupFrame({ arc_means_ms: [null, 1200] })).fasterPct).toBeNull()
+})
+
+test('pace against arc 1 in words: under 5 % either way is the same pace, never "0% faster" (10 Oct)', () => {
+  expect(paceVsArc1(0)).toBe('same pace as arc 1')
+  expect(paceVsArc1(4)).toBe('same pace as arc 1')
+  expect(paceVsArc1(-4)).toBe('same pace as arc 1')
+  expect(paceVsArc1(5)).toBe('reach time 5% faster than arc 1')
+  expect(paceVsArc1(25)).toBe('reach time 25% faster than arc 1')
+  expect(paceVsArc1(-12)).toBe('reach time 12% slower than arc 1')
+  expect(paceVsArc1(null)).toBeNull()
 })

@@ -18,7 +18,7 @@ import { useRestBreak } from '../../session/useRestBreak'
 import { useSessionFlow, type EndReason, type StopEnd, type Then } from '../../session/useSessionFlow'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { FeedbackOverlay } from '../08-feedback/FeedbackOverlay'
-import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts } from './cupView'
+import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts, paceVsArc1 } from './cupView'
 import { LivePrompt } from './LivePrompt'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession, type DotState } from './SessionChrome'
 import { ExertionChip, PainCheck, SessionOverlay, overlayEndReason } from './SessionOverlays'
@@ -152,7 +152,8 @@ export function LiveCup() {
 
   const pain = readCheckinPain()
   const facts = cupProgressFacts(events, frame)
-  const basis = `Based on: ${facts.verified} of ${facts.total} verified${facts.fasterPct != null ? ` · reach time ${Math.abs(facts.fasterPct)}% ${facts.fasterPct >= 0 ? 'faster' : 'slower'} than arc 1` : ''}${pain != null ? ` · pain ${pain} before you started` : ''}`
+  const pace = paceVsArc1(facts.fasterPct)
+  const basis = `Based on: ${facts.verified} of ${facts.total} verified${pace ? ` · ${pace}` : ''}${pain != null ? ` · pain ${pain} before you started` : ''}`
   // only the coach's own progression prompt opens the modal; the screen never proposes one
   const serviceProgression = !!cp.prompt && promptKind(cp.prompt) === 'progression' && !hold.prompt
   const showModal = !flow.feedbackOpen && !hold.open && !complete && serviceProgression
