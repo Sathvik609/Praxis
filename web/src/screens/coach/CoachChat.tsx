@@ -6,7 +6,7 @@ import { api, useApi } from '../../lib/api'
 import { readDay, therapistLine, type Day } from '../../lib/day'
 import { FULL_MAX, GENTLE_MAX, readCheckinPain } from '../../lib/plan'
 import { exerciseById } from '../../lib/seed'
-import { COACH_LABEL } from '../../session/agent'
+import { ruleCoachLabel } from '../../session/agent'
 import { nextSuggestion, pending, routeText, shortestPending, whyFor, type CoachId, type SuggestCtx } from './coachSuggest'
 
 type Msg = { from: 'me' | 'coach'; text: string; suggest?: CoachId; alert?: boolean }
@@ -47,6 +47,9 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
   const calendar = useApi(() => api.calendar())
   const rx = useApi(() => api.prescription())
   const sessions = useApi(() => api.sessions())
+  // The chat is always the rule coach; its label follows the service's agent mode (10 Oct).
+  const health = useApi(() => api.health())
+  const coachWho = ruleCoachLabel(health.data?.agent)
   const settled = [plan, calendar, rx, sessions].every((r) => r.data != null || r.error != null)
   const ctx: Omit<SuggestCtx, 'skip'> | null = plan.data ? { plan: plan.data, day, calendar: calendar.data, rx: rx.data, sessions: sessions.data } : null
 
@@ -181,7 +184,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
       <div className="lc-log" role="log" aria-live="polite">
         {msgs.length === 0 && (
           <div className="lc-bubble">
-            <span className="lc-who">{COACH_LABEL}</span>
+            <span className="lc-who">{coachWho}</span>
             <p>Reading today's plan…</p>
           </div>
         )}
@@ -191,7 +194,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
           ) : (
             <div key={i} className="lc-turn">
               <div className={`lc-bubble${m.alert ? ' lc-alert' : ''}`}>
-                <span className="lc-who">{COACH_LABEL}</span>
+                <span className="lc-who">{coachWho}</span>
                 <p>{m.text}</p>
               </div>
               {m.suggest && card(m.suggest)}

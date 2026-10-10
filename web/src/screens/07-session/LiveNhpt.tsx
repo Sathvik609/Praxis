@@ -38,6 +38,10 @@ function caption(f: FrameEvent | null, lost: boolean): string {
 export function LiveNhpt() {
   const [sp] = useSearchParams()
   const hand = sp.get('hand') ?? 'left'
+  // The reference figure faces the patient (as on Waiter – cup and the Demonstration): their
+  // left hand is the figure's right.
+  const testHand: 'left' | 'right' = hand === 'right' ? 'right' : 'left'
+  const avSide = testHand === 'left' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
   const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
@@ -48,6 +52,8 @@ export function LiveNhpt() {
   })
   // One-off events (splits, completion, stops) outlive the socket's 200-event window here.
   const events = useEventHistory(recent)
+  // The last Pain / feel unwell answer, pre-selected in the feedback (10 Oct walkthrough).
+  const [reportedPain, setReportedPain] = useState<number | null>(null)
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const ui = useSxSession()
@@ -171,7 +177,7 @@ export function LiveNhpt() {
               </div>
             }
           >
-            <AvatarPanel bare overlayTop={40} clip="nhpt" />
+            <AvatarPanel bare overlayTop={40} clip="nhpt" camera="front" side={avSide} patientSide={testHand} />
           </SxRef>
         )}
 
@@ -199,9 +205,9 @@ export function LiveNhpt() {
         />
       </main>
 
-      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} onSave={flow.save} onSkip={flow.skip} />
+      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
-      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
+      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setReportedPain(p); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar
         onPause={() => send({ cmd: 'pause' })}
         onRest={rest.start}

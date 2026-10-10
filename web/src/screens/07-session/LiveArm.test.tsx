@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
@@ -254,4 +254,19 @@ test('ending from a stop rule records the stop rule as the end reason, never nul
   fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
   fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
   expect(armSend).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
+})
+
+test('10 Oct: the pain told in the Pain / feel unwell dialog is pre-selected in the feedback', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=abduction&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Pain / feel unwell' }))
+  fireEvent.click(screen.getByRole('radio', { name: '8' }))
+  fireEvent.click(screen.getByRole('button', { name: /Send/ }))
+  expect(armSend).toHaveBeenCalledWith({ cmd: 'pain', pain: 8 })
+  fireEvent.click(screen.getByRole('button', { name: 'End session' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Too tired to continue' }))
+  const end = screen.getAllByRole('button', { name: 'End session' })
+  fireEvent.click(end[end.length - 1])
+  const fb = screen.getByRole('dialog', { name: 'How was your practice?' })
+  expect(within(fb).getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'true')
 })

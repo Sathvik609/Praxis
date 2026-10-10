@@ -236,3 +236,70 @@ test('a report opened from history uses the per-exercise columns, each with its 
   expect(cols[1].textContent).toMatch(/1 verified · 1 unverified/)
   expect(document.body.textContent).not.toMatch(/Not done yet/)
 })
+
+// 10 Oct walkthrough: the Claude agent's session note was missing from the report.
+const AGENT_COACH = {
+  label: 'Rule-based coach',
+  notes: [],
+  decisions: 4,
+  agent: 'Claude agent · Anthropic API (dev)',
+  agent_decisions: 2,
+  note: { text: 'Steady slow arcs; reach time held across the fast arcs.', evidence: [12, 30], label: 'Claude agent · Anthropic API (dev)' },
+}
+
+test("the agent's session note is shown as a labelled coach's note, and the chip names both coaches", async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: AGENT_COACH } }, '/api/patients/me': ME })
+  renderReport()
+  const note = (await screen.findByText('Steady slow arcs; reach time held across the fast arcs.')).closest('li')!
+  expect(note.querySelector('small')).toHaveTextContent("Coach's note · Claude agent · Anthropic API (dev)")
+  expect(note).toHaveTextContent('Agent')
+  expect(screen.getByText('Rule-based coach + Claude agent')).toBeInTheDocument()
+  expect(screen.queryByText(/No coach notes/)).toBeNull()
+  expect(document.body.textContent).not.toMatch(/LLM agent pending/)
+})
+
+test('rule notes and the agent note sit side by side; the agent note comes first', async () => {
+  const coach = { ...AGENT_COACH, notes: [{ text: 'correct: trunk lean in 2 of 16 lifts', confidence: 'medium', evidence: [58], cat: 'Posture' }] }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText(/trunk lean in 2 of 16/)
+  const items = document.querySelectorAll('.rp-notes > li')
+  expect(items).toHaveLength(2)
+  expect(items[0]).toHaveTextContent("Coach's note")
+  expect(items[1]).toHaveTextContent('Posture')
+})
+
+test('an agent that was configured but did nothing leaves the chip at the rule coach', async () => {
+  const coach = { label: 'Rule-based coach', notes: [], decisions: 0, agent: 'Claude agent · Anthropic API (dev)', agent_decisions: 0 }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Rule-based coach')).toBeInTheDocument()
+  expect(screen.queryByText(/\+ Claude agent/)).toBeNull()
+  expect(screen.getByText(/No coach notes/)).toBeInTheDocument()
+})
+
+// 10 Oct walkthrough: a session ended by the pain stop rule, feedback skipped, read "— → —".
+test('pain reported during the session fills "after" when the feedback was skipped, and says so', async () => {
+  const rec = { ...SESSION, status: 'ended_early', feedback: {}, summary: { ...SESSION.summary, stopped: true, reported_pain: { pain: 8, t: 41.2 } } }
+  mockApi({ '/api/sessions/abc': rec, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 8')).toBeInTheDocument()
+  expect(screen.getByText('pain before → during the session')).toBeInTheDocument()
+  expect(screen.getByText('You reported pain 8/10 during the session.')).toBeInTheDocument()
+})
+
+test('a feedback answer stays the "after" value; the in-session report is still listed', async () => {
+  const rec = { ...SESSION, feedback: { pain_after: 5 }, summary: { ...SESSION.summary, reported_pain: { pain: 8, t: 41.2 } } }
+  mockApi({ '/api/sessions/abc': rec, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 5')).toBeInTheDocument()
+  expect(screen.getByText('pain before → after')).toBeInTheDocument()
+  expect(screen.getByText('You reported pain 8/10 during the session.')).toBeInTheDocument()
+})
+
+test('no in-session report: no extra pain line', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('2 → 2')).toBeInTheDocument()
+  expect(screen.queryByText(/during the session/)).toBeNull()
+})

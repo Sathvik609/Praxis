@@ -25,6 +25,17 @@ export function coachSource(e: WithCoach): CoachSource {
   return e?.source === 'agent' ? 'agent' : 'rule'
 }
 
+/** The rule coach's label while an agent is configured (service `RULE_LABEL_WITH_AGENT`). */
+export const RULE_LABEL_WITH_AGENT = 'Rule-based coach'
+
+/** Label for something the rule coach answers on its own (e.g. the "Ask the coach" chat), by the
+ *  service's rule: "· LLM agent pending" only while `/health` says the agent is off (or the
+ *  service cannot be asked); with an agent configured it is plain "Rule-based coach", which
+ *  never claims the agent answered. */
+export function ruleCoachLabel(h: AgentHealth | null | undefined): string {
+  return h && h.mode !== 'off' ? RULE_LABEL_WITH_AGENT : COACH_LABEL
+}
+
 export function coachLabel(e: WithCoach): string {
   return typeof e?.label === 'string' && e.label ? e.label : COACH_LABEL
 }

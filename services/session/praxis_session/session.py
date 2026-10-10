@@ -78,6 +78,8 @@ class CoachSession:
         self.pause_rule: str | None = None
         self.checkin: dict[str, Any] = {}
         self.feedback: dict[str, Any] = {}
+        # Last in-session pain report ({"pain", "t"}) from the Pain / feel unwell dialog.
+        self.reported_pain: dict[str, Any] | None = None
         self.decisions: list[dict[str, Any]] = []
         self.pending_prompt: dict[str, Any] | None = None
         # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
@@ -131,6 +133,7 @@ class CoachSession:
 
     def on_pain(self, pain: int, t: float) -> list[Event]:
         self.trace.log("pain", pain=pain)
+        self.reported_pain = {"pain": pain, "t": t}
         return self._log_stop(self.stop_rules.on_pain(pain, t))
 
     def on_rpe(self, rpe: int, t: float) -> list[Event]:
@@ -426,5 +429,8 @@ class CoachSession:
             "coach": self._coach_summary(notes),
             "flags": list(self.stop_rules.flags),
             "stopped": self.stopped,
+            # The last "Pain / feel unwell" answer of this session (None when none was given), so
+            # the report has it even when the patient skips the feedback screen.
+            "reported_pain": dict(self.reported_pain) if self.reported_pain else None,
             "delivery": "queued · not yet delivered",
         }

@@ -73,6 +73,16 @@ test('review flags scrolls to its section; the trace panel has no disk paths', a
   expect(screen.getByText(/No trace rows for this session/)).toBeInTheDocument()
 })
 
+test('10 Oct: the empty trace line names the coach by the service\'s agent mode, never a stale "pending"', async () => {
+  mockApi({ ...ROUTES, '/health': { status: 'ok', agent: { mode: 'bedrock', model: 'm', mcp: true, ready: true } } })
+  Element.prototype.scrollIntoView = vi.fn()
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  fireEvent.click(screen.getAllByRole('button', { name: 'Open trace' })[0])
+  expect(await screen.findByText(/No trace rows for this session in the running service\. Rule-based coach\.$/)).toBeInTheDocument()
+  expect(screen.queryByText(/LLM agent pending/)).toBeNull()
+})
+
 test('a replayed session is badged Replay in the summaries and left out of the pain line (same rule as Progress)', async () => {
   const replay = { ...SESSION, id: 'rp', source: 'replay', replay: true, date: '2026-09-23', title: 'Waiter – cup', checkin: { pain_before: 9 }, feedback: { pain_after: 9 } }
   mockApi({ ...ROUTES, '/api/sessions': { sessions: [replay, { ...SESSION, source: 'live' }] } })

@@ -471,6 +471,23 @@
             }
           }
         },
+        "reported_pain": {
+          "description": "The last Pain / feel unwell answer given during the session (cmd pain), on the session's clock; null when none was given (10 Oct).",
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "pain": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "t": {
+              "type": "number"
+            }
+          }
+        },
         "told_us": {
           "description": "What the patient told us: the check-in (pain_before, energy, minutes, new_symptoms) then the feedback form, merged; Edit feedback (PATCH /api/sessions/{id}/feedback) merges again. Every feedback key is optional (the form can be skipped).",
           "type": "object",

@@ -68,6 +68,18 @@ def test_pain_stop_silences_the_coach(tmp_path):
     assert [x.type for x in s.on_events([e], snapshot={}, t=5.0)] == []
 
 
+def test_summary_carries_the_last_in_session_pain_report(tmp_path):
+    """10 Oct walkthrough: pain reported with "Pain / feel unwell" must reach the report even
+    when the patient skips the feedback screen."""
+    s = make(tmp_path=tmp_path)
+    assert s.summary()["reported_pain"] is None
+    s.on_pain(3, t=2.0)
+    assert s.summary()["reported_pain"] == {"pain": 3, "t": 2.0}
+    s.on_pain(8, t=5.5)
+    assert s.summary()["reported_pain"] == {"pain": 8, "t": 5.5}
+    assert s.stopped
+
+
 def test_checkin_sets_rpe_and_symptoms_stop(tmp_path):
     s = make(tmp_path=tmp_path)
     assert s.on_checkin(pain=2, energy="tired", minutes=14, new_symptoms=False, t=0.0) == []

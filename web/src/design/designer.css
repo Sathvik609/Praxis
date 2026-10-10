@@ -1620,6 +1620,9 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] .rp-ex-pend .rp-ex-h b{color:var(--muted)}
 /* Layout: camera card full width (~45% of the page), then coach notes | told + next practice */
 .rp{min-height:100%}
+/* App, 10 Oct (no fit engine, D-SIZE): never shrink the report to the window inside the flex-column
+   main; the page scrolls instead of clipping the right column's cards. */
+.rp{flex-shrink:0}
 .rp-cam{min-height:45vh;display:flex;flex-direction:column}
 .rp-cam .rp-exs{flex:1}
 .rp-cam .rp-ex{flex:1}

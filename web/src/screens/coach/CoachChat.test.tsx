@@ -23,8 +23,8 @@ beforeEach(() => {
   sessionStorage.clear()
 })
 
-async function renderChat(onBegin = vi.fn(), onOpenChange = vi.fn()) {
-  const fetchMock = mockApi(ROUTES)
+async function renderChat(onBegin = vi.fn(), onOpenChange = vi.fn(), extra: Record<string, unknown> = {}) {
+  const fetchMock = mockApi({ ...ROUTES, ...extra })
   render(
     <MemoryRouter initialEntries={['/']}>
       <Routes>
@@ -45,6 +45,18 @@ test('shows the rule-based coach label and suggests the next exercise from the r
   expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/plan?pain=0'))).toBe(true)
   // Clinician comes from the data, never hard-coded; no fake minutes or invented history.
   expect(document.body.textContent).not.toMatch(/Dr\. Rao|41\.2|−18%|~\d+ min/)
+})
+
+test('10 Oct: with the Claude agent on, the chat is labelled "Rule-based coach" — never "pending", never Claude', async () => {
+  await renderChat(vi.fn(), vi.fn(), { '/health': { status: 'ok', agent: { mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true } } })
+  expect(await screen.findAllByText('Rule-based coach')).not.toHaveLength(0)
+  expect(screen.queryByText(/LLM agent pending/)).toBeNull()
+  expect(within(screen.getByRole('log')).queryByText(/Claude/)).toBeNull()
+})
+
+test('with the agent off the chat keeps "Rule-based coach · LLM agent pending"', async () => {
+  await renderChat(vi.fn(), vi.fn(), { '/health': { status: 'ok', agent: { mode: 'off', model: null, mcp: false, ready: false } } })
+  expect(screen.getAllByText('Rule-based coach · LLM agent pending').length).toBeGreaterThan(0)
 })
 
 test('"Something hurts" goes to the check-in and never promises a flag', async () => {

@@ -110,3 +110,11 @@ export function cupProgressFacts(events: Ev[], frame: FrameEvent | null): { veri
   const fasterPct = a && b ? Math.round(((a - b) / a) * 100) : null
   return { verified: slow.filter((e) => e.verified).length, total: slow.length, fasterPct }
 }
+
+/** Arc 2's pace against arc 1 for the progression evidence line. A change under 5 % either way
+ *  is reach-time noise and reads "same pace as arc 1" (never "0% faster"); null when unknown. */
+export function paceVsArc1(fasterPct: number | null): string | null {
+  if (fasterPct == null) return null
+  if (Math.abs(fasterPct) < 5) return 'same pace as arc 1'
+  return `reach time ${Math.abs(fasterPct)}% ${fasterPct > 0 ? 'faster' : 'slower'} than arc 1`
+}
