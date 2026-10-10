@@ -11,7 +11,7 @@ const adjust = (id: number) =>
   })
 
 function useBoth(events: PraxisEvent[], send: (m: Record<string, unknown>) => void) {
-  const c = useCoach(events, { speak: vi.fn() })
+  const c = useCoach(events)
   return useCoachPrompt(events, c.prompt, c.dismissPrompt, send)
 }
 

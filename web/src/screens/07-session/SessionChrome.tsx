@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState, type ChangeEvent, type CSSProperties, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useState, type ReactNode, type RefObject } from 'react'
 import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
 import { Chip } from '../../design/Chip'
 import { usePainStopLevel } from '../../lib/api'
@@ -6,10 +6,9 @@ import { plural } from '../../lib/plural'
 import { readPrefs } from '../../lib/prefs'
 import type { AgentStatus, CoachSource } from '../../session/agent'
 import { CameraBlocked } from '../../session/CameraBlocked'
-import { readGuidance } from '../../session/guidance'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
-import { coachVolume, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
+import type { CoachEvent, Overlay } from '../../session/useCoach'
 import type { EndReason } from '../../session/useSessionFlow'
 import { pausedNote } from './LivePrompt'
 import { RULE_TITLE } from './SessionOverlays'
@@ -404,9 +403,9 @@ export function SxHold({
 }
 
 /** The fixed control bar (CLAUDE.md §1: Pause · Take a rest · Pain / feel unwell · End session on
- *  every in-session screen), in the artifact's `.sx-btn` look, plus the captions switch, the
- *  coach voice volume and Show trace (the stylesheet shows it in Judge view only). Captions are
- *  locked on while the coach speaks. No voice-command hint: none exist. */
+ *  every in-session screen), in the artifact's `.sx-btn` look, plus the captions switch and Show
+ *  trace (the stylesheet shows it in Judge view only). No voice: the coach is caption-only since
+ *  10 Oct, so there is no volume control. */
 export function SxBar({
   onPause,
   onRest,
@@ -417,8 +416,6 @@ export function SxBar({
   captions,
   onCaptions,
   captionsLocked = false,
-  volume,
-  onVolume,
   resting = false,
 }: {
   onPause: () => void
@@ -430,12 +427,8 @@ export function SxBar({
   captions: boolean
   onCaptions: () => void
   captionsLocked?: boolean
-  volume: number
-  onVolume: (v: number) => void
   resting?: boolean
 }) {
-  const vol = Math.round(volume * 100)
-  const change = (e: ChangeEvent<HTMLInputElement>) => onVolume(Number(e.target.value) / 100)
   return (
     <footer className="sx-bar">
       <button
@@ -454,12 +447,6 @@ export function SxBar({
         </svg>
         <span className="sx-switch-track" aria-hidden><span className="sx-switch-thumb" /></span>
       </button>
-      <label className="sx-vol">
-        <svg className="sx-vol-ic" viewBox="0 0 24 24" aria-hidden>
-          <path d={vol === 0 ? 'M11 5 6 9H3v6h3l5 4V5Zm6 4 5 5m0-5-5 5' : vol < 50 ? 'M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7' : 'M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13'} />
-        </svg>
-        <input type="range" min={0} max={100} step={5} value={vol} onChange={change} aria-label="Coach voice volume" style={{ '--v': `${vol}%` } as CSSProperties} />
-      </label>
       <button type="button" className="sx-linkbtn sx-trace-btn" aria-pressed={traceOpen} onClick={onTrace}>{traceOpen ? 'Hide trace' : 'Show trace'}</button>
       <button type="button" className="sx-btn sx-btn-secondary" onClick={onPause}>Pause</button>
       <button type="button" className="sx-btn sx-btn-secondary" disabled={resting} onClick={onRest}>Take a rest</button>
@@ -525,27 +512,16 @@ export const sxClock = (t: number | null | undefined) => {
   return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`
 }
 
-/** Per-screen session UI state: captions (the Settings caption-panel preference applies only
- *  while spoken instructions are off; with speech on, captions are locked on), the coach voice
- *  volume (`praxis.volume`) and the End dialog. */
+/** Per-screen session UI state: captions (the Settings caption-panel preference) and the End
+ *  dialog. */
 export function useSxSession() {
-  const [spoken] = useState(() => readGuidance().spoken)
   const [panel, setPanel] = useState(() => readPrefs().captionsPanel)
-  const [volume, setVol] = useState(() => coachVolume())
   const [endOpen, setEndOpen] = useState(false)
   const closeEnd = useCallback(() => setEndOpen(false), [])
   return {
-    spoken,
-    captions: spoken || panel,
-    captionsLocked: spoken,
-    toggleCaptions: () => {
-      if (!spoken) setPanel((c) => !c)
-    },
-    volume,
-    setVolume: (v: number) => {
-      setCoachVolume(v)
-      setVol(coachVolume())
-    },
+    captions: panel,
+    captionsLocked: false,
+    toggleCaptions: () => setPanel((c) => !c),
     endOpen,
     openEnd: () => setEndOpen(true),
     closeEnd,

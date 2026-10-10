@@ -116,15 +116,14 @@ test('no recordings and an unreachable service are both said plainly', async () 
 test('guidance switches persist and apply at once; larger text is on by default', async () => {
   mockApi({})
   const { unmount } = await renderSettings()
-  expect(screen.getByRole('switch', { name: 'Spoken instructions' })).toHaveAttribute('aria-checked', 'false')
+  // no voice: the coach is caption-only
+  expect(screen.queryByRole('switch', { name: 'Spoken instructions' })).toBeNull()
   // larger text is on by default (the designers' artifact renders at the 18 px root)
   const larger = screen.getByRole('switch', { name: 'Larger text' })
   expect(larger).toHaveAttribute('aria-checked', 'true')
   fireEvent.click(larger)
   expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').larger).toBe(false)
   expect(document.documentElement.dataset.text).toBeUndefined()
-  fireEvent.click(screen.getByRole('switch', { name: 'Spoken instructions' }))
-  expect(JSON.parse(localStorage.getItem('praxis.guidance') ?? '{}').spoken).toBe(true)
   unmount()
   await renderSettings()
   expect(screen.getByRole('switch', { name: 'Larger text' })).toHaveAttribute('aria-checked', 'false')
@@ -132,18 +131,13 @@ test('guidance switches persist and apply at once; larger text is on by default'
   expect(document.documentElement.dataset.text).toBe('large')
 })
 
-test('captions cannot be switched off while the coach speaks; the panel can be hidden when speech is off', async () => {
+test('the caption panel can be hidden and the choice persists', async () => {
   mockApi({})
   await renderSettings()
-  expect(screen.getByText('Captions are always shown when the coach speaks.')).toBeInTheDocument()
   const panel = screen.getByRole('switch', { name: 'Caption panel' })
   expect(panel).toHaveAttribute('aria-checked', 'true')
-  expect(panel).toBeEnabled()
   fireEvent.click(panel)
   expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').captionsPanel).toBe(false)
-  fireEvent.click(screen.getByRole('switch', { name: 'Spoken instructions' }))
-  expect(panel).toBeDisabled()
-  expect(panel).toHaveAttribute('aria-checked', 'true')
 })
 
 test('display switches set attributes on the page and persist', async () => {

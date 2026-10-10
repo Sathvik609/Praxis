@@ -1,7 +1,7 @@
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
 import type { PraxisEvent } from '../../lib/events'
 import { statusLabel } from '../../session/liveStatus'
-import { browserSpeak, coachVolume, resetSpeech, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
+import type { CoachEvent, Overlay } from '../../session/useCoach'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
 import { TracePanel } from './TracePanel'
 import { mockApi, PRESCRIPTION } from '../../test/api-mock'
@@ -15,8 +15,6 @@ const barProps = () => ({
   onTrace: vi.fn(),
   captions: true,
   onCaptions: vi.fn(),
-  volume: 0.8,
-  onVolume: vi.fn(),
 })
 
 const statsProps = { metricLabel: 'Lifts', metric: '3 of 8', head: 'Rep 3 of 8', dots: null }
@@ -88,13 +86,9 @@ describe('SxBar', () => {
     expect(p.onCaptions).toHaveBeenCalledTimes(1)
   })
 
-  it('volume slider reports 0–1', () => {
-    const p = barProps()
-    render(<SxBar {...p} />)
-    const slider = screen.getByRole('slider', { name: 'Coach voice volume' })
-    expect(slider).toHaveValue('80')
-    fireEvent.change(slider, { target: { value: '35' } })
-    expect(p.onVolume).toHaveBeenCalledWith(0.35)
+  it('has no voice volume: the coach is caption-only', () => {
+    render(<SxBar {...barProps()} />)
+    expect(screen.queryByRole('slider')).toBeNull()
   })
 })
 
@@ -361,69 +355,22 @@ describe('SxEndDialog', () => {
 })
 
 describe('useSxSession', () => {
-  it('captions follow the caption-panel preference only while speech is off', () => {
-    localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
-    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: false }))
-    const { result } = renderHook(() => useSxSession())
-    expect(result.current.captions).toBe(false)
-    expect(result.current.captionsLocked).toBe(false)
-    act(() => result.current.toggleCaptions())
-    expect(result.current.captions).toBe(true)
-  })
-
-  it('with spoken instructions on, captions stay on and cannot be switched off', () => {
+  it('captions follow the caption-panel preference; an old stored spoken:true changes nothing', () => {
     localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
     localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true }))
     const { result } = renderHook(() => useSxSession())
-    expect(result.current.captions).toBe(true)
-    expect(result.current.captionsLocked).toBe(true)
+    expect(result.current.captions).toBe(false)
     act(() => result.current.toggleCaptions())
     expect(result.current.captions).toBe(true)
   })
 
-  it('volume and the end dialog', () => {
+  it('the end dialog', () => {
     const { result } = renderHook(() => useSxSession())
-    act(() => result.current.setVolume(0.4))
-    expect(result.current.volume).toBe(0.4)
-    expect(coachVolume()).toBe(0.4)
     expect(result.current.endOpen).toBe(false)
     act(() => result.current.openEnd())
     expect(result.current.endOpen).toBe(true)
     act(() => result.current.closeEnd())
     expect(result.current.endOpen).toBe(false)
-  })
-})
-
-describe('coach volume', () => {
-  it('is kept under praxis.volume and set on every spoken cue', () => {
-    const utterances: { volume?: number }[] = []
-    class FakeUtterance {
-      text: string
-      rate = 1
-      volume = 1
-      onend?: () => void
-      onerror?: () => void
-      constructor(text: string) {
-        this.text = text
-        utterances.push(this)
-      }
-    }
-    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
-    vi.stubGlobal('speechSynthesis', { speak: vi.fn(), cancel: vi.fn() })
-    try {
-      setCoachVolume(0.25)
-      expect(coachVolume()).toBe(0.25)
-      expect(localStorage.getItem('praxis.volume')).toBe('0.25')
-      setCoachVolume(3)
-      expect(coachVolume()).toBe(1)
-      setCoachVolume(0.6)
-      resetSpeech()
-      browserSpeak('Lift slowly.')
-      expect(utterances[0].volume).toBe(0.6)
-    } finally {
-      vi.unstubAllGlobals()
-      resetSpeech()
-    }
   })
 })
 
