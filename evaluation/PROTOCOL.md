@@ -6,9 +6,12 @@ follow it top to bottom. Every command is run from `services/session` in a termi
 
 | exercise | id in the tools | camera | one rep is |
 |---|---|---|---|
-| Arm out to the side | `abduction` | in front of the person | one lift: arm up to shoulder height, hold 3 s, back down |
-| Waiter – cup | `cup` | above the table, looking down at the cup sheet | one move of the cup from one dot to the next |
-| Nine-Hole Peg Test | `nhpt` | above the table, looking down at the peg board | one peg seated in a hole |
+| Arm out to the side | `abduction` | laptop on a table in front of the person | one lift: arm up to shoulder height, hold 3 s, back down |
+| Waiter – cup | `cup` | laptop screen tilted forward over the cup sheet | one move of the cup from one dot to the next |
+| Nine-Hole Peg Test | `nhpt` | laptop screen tilted forward over the peg board | one peg seated in a hole |
+
+**Only the laptop's built-in camera is used** (product decision, 10 Oct 2026): no phone, no USB
+webcam, no mirror, no stand. Record with the same laptop camera the app uses.
 
 Goal: **at least 300 labelled reps from at least 5 participants**, across all three exercises
 (§4 has the arithmetic). Participants are healthy adult volunteers (team, friends, family), not
@@ -22,7 +25,7 @@ patients; the report says so.
 - [ ] iCloud / OneDrive / Dropbox **not** syncing the repo folder (§1.3)
 - [ ] Both sheets printed at 100 % and checked with a ruler (§1.4)
 - [ ] A plastic cup with a blue tape ring round its base; nine coloured pegs, a dish and the peg board (§1.5)
-- [ ] An external USB webcam on a clamp, stand or a stack of books for the table exercises (§3)
+- [ ] A tape measure, to place the sheet 25–35 cm in front of the laptop (§3)
 - [ ] A phone with a goniometer / inclinometer app, and a second teammate to read it (§6)
 - [ ] Printed consent sheets and the paper pseudonym key (§2)
 - [ ] The take sheet for each participant (§5) and a pen
@@ -41,8 +44,9 @@ uv run pytest -q tests/test_dataset_tools.py   # 1 minute: the recorder and labe
 ```bash
 uv run python tools/record_session.py record --help
 ```
-The built-in webcam is `--camera 0`; a USB webcam is usually `--camera 1`. macOS asks for camera
-permission for the Terminal the first time: allow it, then run the command again.
+The laptop's built-in camera is `--camera 0` (the only camera we use; unplug any other camera so
+the number does not change). macOS asks for camera permission for the Terminal the first time:
+allow it, then run the command again.
 
 ### 1.3 Make sure clips cannot leave the laptop
 Clips are written to `evaluation/dataset_v1/raw/` and git ignores every video and image type
@@ -125,16 +129,23 @@ next free code (`p01`, `p02`, …); never type a name anywhere.
 ### Arm out to the side (`abduction`) — front view
 - Participant sits on a chair **without arm rests**, facing the camera, the practising arm free
   to lift out to the side.
-- Camera (laptop webcam is fine) at **chest height, 2–2.5 m** away, straight on. The frame must
+- The laptop stands on a table so its camera is at about the seated participant's **chest
+  height**, **2–2.5 m** away, straight on. The frame must
   show the head to below the hips and both shoulders with a hand-width of space above the lifted
   arm. Hips must be visible: the trunk-lean check needs them.
 - Plain wall behind, nobody else in the frame.
 
-### Waiter – cup (`cup`) and NHPT (`nhpt`) — looking down at the sheet
-- Webcam **45–60 cm above the table, looking down**: no more than about 25° from straight down
-  (the app's setup check "Camera looks down at the sheet" uses that limit). A USB webcam on a
-  clamp, a phone stand or a stack of books at the far side of the table works; a laptop's
-  built-in camera usually cannot look down far enough.
+### Waiter – cup (`cup`) and NHPT (`nhpt`) — laptop tilted over the sheet
+- The laptop sits on the table; the printed sheet lies **flat 25–35 cm in front of the laptop**,
+  between the laptop and the participant (measure from the laptop's front edge to the middle of
+  the sheet).
+- **Tilt the screen forward** until the whole sheet shows in the picture. The camera then looks
+  down at about 40–50° from straight down. The participant's face does not need to be in view.
+- The app's setup check "Camera looks down at the sheet" passes up to **50° from straight down**
+  (`MAX_TILT_DEG`, `perception/quality.py`). Flatter than that, seated pegs hide the next hole
+  and hands project off the sheet; the hint then reads "Tilt the laptop screen forward and move
+  the sheet closer, so the camera looks down at it."
+- Write the tilt the setup check shows in `--camera-note` (e.g. `laptop, sheet 30 cm, tilt 44°`).
 - All **four** corner markers in view with a finger-width margin; the participant's hand and the
   dish must not leave the frame.
 - Optional but recommended: open the app (`uv run uvicorn praxis_session.main:app --port 8000`,
@@ -159,10 +170,12 @@ Per participant, the full plan in §5:
 | C3 dim light | Waiter – cup, 1 arc with the main light off | 8 |
 | N1 clean | NHPT, 9 pegs | 9 |
 | N2 errors | NHPT, 9 pegs with a dropped peg and covered markers | 9 |
-| **total** | | **90** |
+| N3 too flat | NHPT, 9 pegs with the screen tilted back past 50° | 9 |
+| **total** | | **99** |
 
-- **5 participants × 90 = 450 labelled reps** (abduction 5 × 24 = 120, cup 5 × 48 = 240,
-  NHPT 5 × 18 = 90, i.e. 10 NHPT trials for the total-time error).
+- **5 participants × 99 = 495 labelled reps** (abduction 5 × 24 = 120, cup 5 × 48 = 240,
+  NHPT 5 × 27 = 135, i.e. 15 NHPT trials for the total-time error, 5 of them deliberately too
+  flat).
 - **Minimum** if time runs short: A1 + A2 + C1 + N1 = 16 + 8 + 32 + 9 = 65 per person,
   × 5 = **325 ≥ 300**. Never drop the error takes entirely: they are the failure cases.
 - Clips get discarded (camera bumped, participant interrupted), so aim for the full plan.
@@ -192,6 +205,7 @@ the preview. Prompts per take:
 | **C3** | One normal arc with the main light off (`--lighting "dim: main light off, side lamp"`, `--errors dim_light`). | label what a person can see: a clearly visible move is `verified`; error `dim_light` on every move |
 | **N1** | Pegs in the dish. Pick up the first peg (the timer starts on that lift), put all nine in any holes, one at a time, as quickly as comfortable. | every peg `verified`, hole = the hole it went into |
 | **N2** | As N1, but drop the 4th peg on the table on purpose and pick it up again; during the 7th peg a teammate covers **two** markers with paper for about 5 s. | dropped peg: press `p` at the drop; that peg's rep is `verified` when it is seated, error `dropped_peg` · 7th peg: `unverified`, reason `marker_lost`, error `covered_marker` (today the NHPT marks the whole test "limited" on marker loss rather than the single peg, so expect this rep to show as a disagreement: that is a finding, not a labelling error) |
+| **N3** | As N1, but first tilt the screen **back** (or slide the sheet further away) until the setup check shows the camera **more than 50° from straight down**, e.g. 55–65°, with all four markers still in view. Note the tilt in `--camera-note` and pass `--errors too_flat`. This is the deliberate test of the 50° cap: it is set from geometry (peg height vs hole pitch), not measured on real pegs. Report N3 next to, not inside, the N1/N2 numbers. | label what a person can see: a peg seated in a hole you can see is `verified`; error `other` (the labeller has no `too_flat` code; the sidecar's `planned_errors` says `too_flat`) |
 
 Rules: the participant uses the same (practising) arm for the whole session; rest whenever they
 ask; if anything hurts, stop and do not continue that exercise. Re-record a take rather than
