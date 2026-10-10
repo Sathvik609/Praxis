@@ -120,6 +120,32 @@ test('the effort badge says it comes from the answer', () => {
   expect(screen.getByText('effort 2/10 (from your answer)')).toBeInTheDocument()
 })
 
+test('pain reported during the session is pre-selected, still editable, and saved as pain_after', () => {
+  const onSave = vi.fn()
+  render(<FeedbackOverlay open reportedPain={8} onSave={onSave} onSkip={vi.fn()} />)
+  expect(screen.getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByText('You told us 8 during the session. Change it if it has changed.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('radio', { name: '6' }))
+  expect(screen.getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'false')
+  next()
+  next()
+  fireEvent.click(screen.getByRole('button', { name: 'Save and see report' }))
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ pain_after: 6 }))
+})
+
+test('no pain reported during the session: nothing is pre-selected', () => {
+  render(<FeedbackOverlay open reportedPain={null} onSave={vi.fn()} onSkip={vi.fn()} />)
+  expect(screen.queryByRole('radio', { checked: true })).toBeNull()
+  expect(screen.queryByText(/during the session/)).toBeNull()
+})
+
+test('a pain report that arrives while the dialog is closed is pre-selected when it opens', () => {
+  const view = render(<FeedbackOverlay open={false} reportedPain={null} onSave={vi.fn()} onSkip={vi.fn()} />)
+  view.rerender(<FeedbackOverlay open={false} reportedPain={8} onSave={vi.fn()} onSkip={vi.fn()} />)
+  view.rerender(<FeedbackOverlay open reportedPain={8} onSave={vi.fn()} onSkip={vi.fn()} />)
+  expect(screen.getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'true')
+})
+
 test('Skip on the first step reports nothing (not recorded, never zero)', () => {
   const onSkip = vi.fn()
   render(<FeedbackOverlay open onSave={vi.fn()} onSkip={onSkip} />)

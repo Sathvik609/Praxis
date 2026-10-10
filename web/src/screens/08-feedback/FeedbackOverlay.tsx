@@ -86,10 +86,13 @@ function FbChoices<T extends string>({ label, options, value, onChange }: { labe
  *
  *  Pain at or above the prescription's stop level (`stop_rules.pain_max`) says the therapist
  *  will be flagged: the service writes that `pain_after` flag on the same rule. When the
- *  prescription cannot be read the line is not shown. */
-export function FeedbackOverlay({ open, early = false, onSave, onSkip }: { open: boolean; early?: boolean; onSave: (f: Feedback) => void; onSkip: () => void }) {
+ *  prescription cannot be read the line is not shown.
+ *
+ *  `reportedPain` (10 Oct) is the patient's last Pain / feel unwell answer of this session: the
+ *  pain step opens with it selected (still editable) instead of asking from nothing. */
+export function FeedbackOverlay({ open, early = false, reportedPain = null, onSave, onSkip }: { open: boolean; early?: boolean; reportedPain?: number | null; onSave: (f: Feedback) => void; onSkip: () => void }) {
   const [step, setStep] = useState(0)
-  const [pain, setPain] = useState<number | null>(null)
+  const [pain, setPain] = useState<number | null>(reportedPain)
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [again, setAgain] = useState<Again | null>(null)
   const [barriers, setBarriers] = useState<string[]>([])
@@ -103,6 +106,7 @@ export function FeedbackOverlay({ open, early = false, onSave, onSkip }: { open:
     if (open) {
       setStep(0)
       setBefore(readCheckinPain())
+      if (reportedPain != null) setPain(reportedPain)
     }
   }
   // Read the stop level only while the dialog is open (the report keeps it mounted closed).
@@ -188,6 +192,7 @@ export function FeedbackOverlay({ open, early = false, onSave, onSkip }: { open:
             <span className="fb-delta">{deltaTxt}</span>
           </div>
         )}
+        {reportedPain != null && <p className="fb-sub">{`You told us ${reportedPain} during the session. Change it if it has changed.`}</p>}
         {pain != null && painMax != null && pain >= painMax && <p className="fb-alert">Your therapist will be flagged.</p>}
       </div>
     ) : step === 1 ? (

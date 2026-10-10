@@ -89,6 +89,8 @@ export function LiveCup() {
   const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   // One-off events (reaches, completion, stops) outlive the socket's 200-event window here.
   const events = useEventHistory(recent)
+  // The last Pain / feel unwell answer, pre-selected in the feedback (10 Oct walkthrough).
+  const [reportedPain, setReportedPain] = useState<number | null>(null)
   const [traceOpen, setTraceOpen] = useState(false)
   const [painOpen, setPainOpen] = useState(false)
   const ui = useSxSession()
@@ -276,9 +278,9 @@ export function LiveCup() {
         </div>
       )}
 
-      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} onSave={flow.save} onSkip={flow.skip} />
+      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
-      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
+      <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setReportedPain(p); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar
         onPause={() => send({ cmd: 'pause' })}
         onRest={rest.start}
