@@ -52,6 +52,17 @@ class MarkerSteadiness:
         return {"jitter_px": round(jitter, 2), "ok": jitter < self.max_jitter_px}
 
 
+# Below this the 8 mm pegs are under ~6 px wide (synthetic-derived, 10 Oct; see docs/RISKS.md).
+MIN_PX_PER_MM = 0.75
+
+
+def sheet_px_per_mm(cal: CalibrationResult, spec: SheetSpec) -> float:
+    """Image pixels per sheet millimetre at the sheet centre (mean of the two axes)."""
+    cx, cy = spec.width_mm / 2, spec.height_mm / 2
+    p = cal.to_px(np.array([[cx, cy], [cx + 10, cy], [cx, cy + 10]], np.float32))
+    return float((np.linalg.norm(p[1] - p[0]) + np.linalg.norm(p[2] - p[0])) / 20.0)
+
+
 def task_area_in_view(
     cal: CalibrationResult, spec: SheetSpec, frame_shape: tuple, margin_px: int = 16
 ) -> dict:
@@ -67,10 +78,14 @@ def task_area_in_view(
             & (px[:, 1] <= h - margin_px)
         )
     )
-    return {
-        "ok": inside,
-        "hint": None if inside else "Move the camera back so the whole sheet is in view.",
-    }
+    ppm = sheet_px_per_mm(cal, spec)
+    big_enough = ppm >= MIN_PX_PER_MM
+    hint = None
+    if not inside:
+        hint = "Move the camera back so the whole sheet is in view."
+    elif not big_enough:
+        hint = "Move the camera closer so the sheet fills more of the view."
+    return {"ok": inside and big_enough, "hint": hint, "px_per_mm": round(ppm, 2)}
 
 
 MAX_TILT_DEG = 25.0

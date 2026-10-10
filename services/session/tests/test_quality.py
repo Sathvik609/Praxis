@@ -122,3 +122,18 @@ def test_missing_marker_hint_lists_every_hidden_corner():
     hint = {r["id"]: r for r in rows}["markers"]["hint"]
     for corner in ("top-left", "top-right", "bottom-right", "bottom-left"):
         assert corner in hint
+
+
+def test_task_area_refuses_a_sheet_too_far_away():
+    # A sheet that calibrates but is tiny in the frame leaves pegs under ~6 px: ask to come closer.
+    from praxis_session.perception.board_spec import CUP_TARGETS
+
+    for spec in (NHPT_BOARD, CUP_TARGETS):
+        far, _ = camera_frame(spec, scale=0.35)
+        cal = Calibrator(spec).run(far)
+        assert cal.calibrated
+        d = task_area_in_view(cal, spec, far.shape)
+        assert d["ok"] is False and "closer" in d["hint"] and d["px_per_mm"] < 0.75
+        near, _ = camera_frame(spec)
+        ok = task_area_in_view(Calibrator(spec).run(near), spec, near.shape)
+        assert ok["ok"] is True and ok["px_per_mm"] >= 0.75
