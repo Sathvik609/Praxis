@@ -32,3 +32,12 @@ test('-webkit-backdrop-filter comes before its unprefixed twin (the build keeps 
   const unprefixedFirst = rules.filter((r) => /(?<![-\w])backdrop-filter\s*:[^;}]+;\s*-webkit-backdrop-filter/.test(r.body))
   expect(unprefixedFirst.map((r) => r.selector)).toEqual([])
 })
+
+test('the report never shrinks to the window: the page scrolls instead of clipping its cards', () => {
+  // 10 Oct walkthrough: `.rp{min-height:100%}` inside the flex-column `main.ui-main` let the report
+  // shrink to the window (the artifact's fit engine handled this; the app has none), and the
+  // right column's cards (overflow hidden) were cut off at 1336 × 759 and 1280 × 800.
+  const last = (sel: string, prop: RegExp) => [...rules].reverse().find((r) => r.selector.split(',').some((s) => s.trim() === sel) && prop.test(r.body))
+  expect(last('.rp', /min-height\s*:\s*100%/)).toBeTruthy()
+  expect(last('.rp', /flex-shrink\s*:/)?.body).toMatch(/flex-shrink\s*:\s*0/)
+})
