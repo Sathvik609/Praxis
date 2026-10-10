@@ -1,12 +1,12 @@
 # Praxis — Technical Report
 
-> Status: **Phase 0–8 (16 Sep 2026)**. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based or fallback is labeled here, in the UI, and in the trace.
+> Status: **edge build, 10 Oct 2026**. Built: the OpenCV 5 pipeline for the three exercises, stop rules, rule coach, Claude agent coach (off by default), every screen, SQLite store, replay. **Not built:** anything on AWS (§5), the COOL benchmark (§7), real recordings / dataset v1 (§6). Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based, scripted or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Locked exercise set (28 Sep 2026, supersedes the 23 Sep seven): three camera-coached exercises — Arm out to the side (daily, front view, pose model), Waiter – cup (daily, printed 5-dot sheet) and the Nine-Hole Peg Test (weekly assessment). Pendulum, Arm to the front, Rotate out and Rotate in are hidden: their code stays dormant behind the registry's `visible` flag, and nothing shows, schedules or runs them. Default day: Arm out to the side → Waiter – cup (~10 min). Pain tiers at check-in: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag.
 
 ## 2. System architecture
-One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from the browser) → OpenCV 5 perception → stop rules → coach (rule-based first, Strands/Bedrock agent in W6) → JSON events, captions, overlay geometry back to the browser. Raw frames never leave the process. Design: `docs/superpowers/specs/2026-09-16-praxis-rebuild-design.md`. Diagrams (system, OpenCV 5 pipeline per exercise, agent workflow): [`docs/ARCHITECTURE.md`](ARCHITECTURE.md).
+One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from the browser) → OpenCV 5 perception → stop rules → coach (the rule coach for every in-rep cue; the Claude agent coach at checkpoints, built 29 Sep and off by default, §4.1; Bedrock as its provider is planned for W6) → JSON events, captions, overlay geometry back to the browser. Raw frames never leave the process. Design: `docs/superpowers/specs/2026-09-16-praxis-rebuild-design.md`. Diagrams (system, OpenCV 5 pipeline per exercise, agent workflow): [`docs/ARCHITECTURE.md`](ARCHITECTURE.md).
 
 **Frame stream and back-pressure (Sprint D, 17 Sep).** The browser prefixes every JPEG with its capture time (8-byte little-endian float64, ms since epoch from `performance.timeOrigin + performance.now()`; `web/src/session/latency.ts`, `praxis_session/latency.py`) and sends the next frame only after the service answered the previous one with its per-frame event (`frame`, or `setup_checks` in calibrate mode; 250 ms safety timeout), so `fps` is a ceiling and a slow host gets fewer, fresher frames instead of a growing queue. On the service a reader task feeds one queue; `pipeline.process` runs in the default thread pool (OpenCV releases the GIL) and any frames that queued up meanwhile are dropped oldest-first (`frame.dropped`, with `frame_index` still counting every received frame). Every `frame`/`heartbeat` event carries `t_capture` and `latency = {capture_to_event_ms, proc_ms}`; every `coach` event that follows perception events carries `latency = {event_to_cue_ms, capture_to_cue_ms}`; the live screens show `latency p50/p95 · capture→event · event→cue` over a rolling window of 60, and `summary.latency` (kept in `main.py`, merged into the summary and the stored record) carries the session percentiles shown on the report. Replay keeps clip time and reports `proc_ms` only. `capture_to_event_ms` compares the browser clock with the service clock: exact on the laptop (one clock), skew-inclusive when the service is remote. Setup sockets (`mode=calibrate`) create no coach session, and a trace file is only opened on the first non-header row.
 
@@ -189,7 +189,17 @@ a `self_report` trace row and event with `verified: false`, `source: "self_ticke
 label "Demo only · self-ticked, not camera-verified", and returns the sets ticked today. A
 camera-coached id is refused (`not_demo`): those count only from OpenCV events.
 
-### 3.8 Exertion context — Phase 7 (not started)
+### 3.8 Exertion context (`exertion.py`, built 16 Sep; RPE fade 17 Sep)
+A **behavioural** index, never a physiological measurement; every state carries `method: "behavioural"` and the UI labels the chip that way. `Exertion.update(events, rpe, t)` runs on every batch of perception events in `CoachSession.on_events`, before the stop rules, and scores four signals:
+
+| Signal | Source events | Adds to the score when |
+|---|---|---|
+| Rep-time slope | `rep_complete` duration, `reach_complete` `reach_ms` (last 12, needs ≥ 6) | linear slope / mean > 6 % per rep ("reps getting slower") |
+| Falling peaks | `rep_complete` `peak_deg` (last 8, needs ≥ 4) | first − last > 8° ("peak angle falling") |
+| Tremor share | `frame.hand.tremor_ratio` from the hand tracker (last 10, needs ≥ 3) | mean > 0.45 |
+| Last RPE | check-in / mid-session RPE | RPE ≥ 7 adds 1.5, 5–6 adds 0.6; the term halves for every 120 s of low behavioural score (`RPE_HALF_LIFE_S`), and a fresh RPE restarts the clock |
+
+Score ≥ 1.2 → `high`, ≥ 0.5 → `moderate`, else `low`, with one plain-language reason per contributing signal. A level change emits an `exertion` event (shown as the chip on the live screens and in the report); the agent reads the same state with `get_exertion_state`. `high` sustained for `stop_rules.exertion_high_s` (60 s in the seed prescription) triggers the `exertion` stop rule: a forced rest plus a therapist flag, once until the level drops. **Not in the build:** hesitation (dwell before a lift) is named in the module docstring and the `get_exertion_state` tool description but is not computed; rPPG is P1 and absent; no simulator feeds this index. All thresholds were set on synthetic streams and are unvalidated on real fatigue.
 
 ## 3.9 Avatar (reference, never a scorer)
 `web/src/avatar/` (Sprint B, 17 Sep). Everything is generated from primitives in code; there are no imported models, textures or pre-rendered clips.
@@ -323,8 +333,23 @@ Design `docs/superpowers/specs/2026-09-29-agent-coach-design.md`; how-to and wor
 
 **Honest report data and Edit feedback (6 Oct, design v2).** `CoachSession.summary()` counts the cup FSM's `wrong_dot` events (`camera.wrong_dot`) and splits posture cues into `lean_cues` (`compensation_lean`) and `hiking_cues` (`shoulder_hiking`); `posture_cues` stays their sum. Each report coach note gets `cat` from its decision (`session.note_category`): rest/stop → Safety; a correction for trunk lean or shoulder hiking → Posture; a correction for a rep the camera could not verify → Data quality; progress, regress and other corrections → Performance. The feedback form's `pain_after` at or above the prescription's `pain_max` (7) writes a `pain_after` therapist flag through `StopRules.on_pain_after` (trace row `flag`, `summary.flags`, the `flags` table on save); it never stops the session or emits `stop` (the session is over) and is written once per session. `store._next_practice` names the current prescription's clinician (`calendar_view.short_name`: "Dr. Anita Rao, OT" → "Dr. Rao") instead of a fixed name. `PATCH /api/sessions/{id}/feedback` (Report · Edit feedback) merges the screen-08 answers (`pain_after`, `difficulty`, `effort`, `again_tomorrow`, `barriers`, `detail`, each type- and length-checked; `ended_early` / `end_reason` are dropped, never merged: how the session ended is fixed at its end) into the stored `feedback_json`, rebuilds `summary.told_us` as check-in then feedback (as the end-of-session path does), adds the `pain_after` flag to the stored summary and the `flags` table when it is not already there (a lowered pain never withdraws a flag; status is untouched), writes a `feedback_edit` trace row (plus `flag`) to the session's trace (the live session's when it is still in memory, else its JSONL file), and returns the session row. 404 for an unknown or hidden session; 422 for a non-object body, any other key, or a value that fails its check (e.g. a `pain_after` that is not an integer 0–10). The new feedback keys (`difficulty`, `again_tomorrow`, `barriers`, `ended_early`, `end_reason`) and these summary fields are documented in `events.schema.json` (`summary`).
 
-## 5. AWS deployment
-Deferred to W6. `PRAXIS_CLOUD_ENABLED` (default 0) gates every cloud call.
+## 5. AWS deployment — planned, not built
+**Nothing in this section exists yet.** There is no AWS account resource, no EC2 instance, no Bedrock call, no CDK app (`infra/` is not in the tree) and no tools Lambda (`services/tools-lambda/` is not in the tree). The only deployment today is the edge build: one container (`services/session/Dockerfile`) on a laptop or on Railway for team review (§8). Work is scheduled for W6 (14–20 Oct); `docs/ARCHITECTURE.md` draws these parts dashed.
+
+What is in the code now so the swap is mechanical:
+- `PRAXIS_CLOUD_ENABLED` (default `0`, `main.py`) gates every cloud call; `PRAXIS_AGENT=bedrock` refuses to start without it (`agent/model.py` `load_config`).
+- `agent/model.py` `build_model` constructs a Strands `BedrockModel` from `PRAXIS_BEDROCK_MODEL_ID` and `AWS_REGION` (unit-tested, never called).
+- The SQLite tables (`store.py`) use the schema DynamoDB will mirror; traces are JSON lines ready for S3.
+- The FastMCP servers already speak streamable HTTP, so an AgentCore Gateway target needs no new tool code.
+
+The plan, in order:
+1. **Cloud/judge mode.** A Graviton **c8g** EC2 instance launched from the **COOL AMI** (OpenCV 5.0 / COOL 3.1 under `/opt/cool`), the session service under systemd, HTTPS in front. Not ECS.
+2. **Agent on Bedrock.** `PRAXIS_AGENT=bedrock` with Claude on Amazon Bedrock; the same tools, guardrails and trace as the Anthropic API path.
+3. **Storage and logs.** S3 for event logs, traces, reports and consented clips only (never raw video by default); CloudWatch for service logs and latency metrics; SSM for configuration.
+4. **Infra as code.** AWS CDK (TypeScript), one-command deploy, synth tested in CI.
+5. **If time allows (in this order):** DynamoDB for the store, Cognito (patient vs therapist), Polly for cues, the arm64 tools Lambda behind AgentCore Gateway, API Gateway rate limits.
+
+Each item ships with its evidence (instance id, AMI id, region, a CloudWatch log line, a Bedrock trace) in this section, or it is not claimed.
 
 ## 6. Evaluation
 Metrics: rep F1, NHPT MAE, reach-time MAE, angle error vs goniometer app, compensation detection rate, event-to-cue latency p50/p95, scripted coach scenarios, SUS.
@@ -335,14 +360,50 @@ Metrics: rep F1, NHPT MAE, reach-time MAE, angle error vs goniometer app, compen
 ### 6.2 Latency (17 Sep 2026) — one laptop, in-process, no browser
 Measured by driving the real WebSocket handler with `fastapi.testclient` on an Apple M3 laptop (hand model on, `summary.latency` percentiles, nearest-rank). Replay, clip time: `synthetic_nhpt_01` proc p50/p95 **16.3 / 25.1 ms** over 185 frames, event→cue **0.9 / 1.2 ms** (3 cues); `synthetic_cup_01` proc **13.2 / 30.9 ms** over 517 frames, event→cue **1.1 / 1.9 ms** (33 cues). Live-style, 60 capture-stamped synthetic frames each: NHPT capture→event **10.1 / 13.2 ms**, cup **9.4 / 11.4 ms**, 0 dropped. Event→cue is the rule coach's own decision time; the Bedrock agent (W6) is where the ≤ 1.5 s budget will be spent. **Not included**: browser JPEG encoding, the WebSocket hop and render, so a browser-measured number (the line on the live screens) will be higher; that measurement needs a real webcam session and is part of Phase 9.
 
-## 7. COOL benchmark
-W6.
+## 7. COOL benchmark — planned, not built
+**No benchmark has been run** and `benchmark/` is not in the tree. Plan (W6): time the classical OpenCV stage only (decode, ArUco + homography, warp, Hough / HSV / contours / template, no DNN and no agent) on the committed replay clips, on c8g with the COOL AMI vs c8g with stock `opencv-python-headless==5.0.0.93`, optionally c7i as an x86 reference. Report fps, per-frame p50/p95, cost per 1,000 frames, COOL version, AMI id, instance type and region, from a script that regenerates the table. Until then no COOL claim is made anywhere.
 
-## 8. Privacy and safety
-Video processed in memory only; never stored by default. Only events, metrics, logs leave the device. Clips only with explicit consent, 30-day deletion. Feeling is self-reported, never read from the face; face analysis limited to presence.
+## 8. Responsible use (privacy, safety, human control)
+
+**What Praxis is and is not.** An adherence and coaching aid for exercises a therapist has already prescribed. It is **not a medical device**, does not diagnose, does not choose exercises, and its numbers are not clinical measurements: arm angles are camera-relative progress, not goniometry (§3.7), and the on-screen peg test is a timing aid, not the standardized clinical instrument. No composite accuracy or recovery score is shown anywhere.
+
+**The therapist prescribes; code enforces it.** The prescription (`prescription.py`, versioned) holds the dose, the allowed adaptations and the stop rules. The rule coach and the agent can only propose changes inside `allowed_adaptations`; `prescription.clamp` clamps every proposal, the patient must tap Yes, and `SessionPipeline.command` clamps again before anything changes. The 90° shoulder ceiling is in code (`ArmFSM`), not in a prompt. The check-in pain tier (0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag) is computed by the service, never by the client or the coach (§3.7.1).
+
+**Stop rules run first, in code.** `StopRules` sees every perception event before either coach: pain ≥ the prescription's `pain_max` (7), new or worse symptoms at check-in, trunk lean beyond `lean_deg` three times, three consecutive unverified reps, three consecutive missed reps (forced rest), behavioural exertion high for 60 s, and perception loss. Each writes a therapist flag where a clinician should see it. Nothing the agent does can override or shorten a stop: agent outputs are queued and dropped if a stop lands while it is running (`agent_drop`), and `end_session` can end a session but never extend one.
+
+**Human override, always.** Pause · Take a rest · Pain / feel unwell · End session are fixed on every live screen. A pause the patient asks for is resumed only by the patient; the agent's `request_resume` is refused for it. Every resume after a rule pause and every dose change is a prompt the patient can decline ("Not yet" / "Keep"), and "Why?" repeats the reason with the evidence. Voice prompts have a tap fallback; captions accompany every spoken cue.
+
+**Failure modes and what the patient sees.**
+- *Tracking lost* (markers or shoulder out of view): the session pauses and says why; it resumes by itself when tracking returns.
+- *Reps the camera could not check* (cup hidden by the hand, markers lost, no hand near the hole): counted as **unverified, not failed**, shown next to verified counts everywhere; three in a row pause for a setup check.
+- *Agent error, timeout, refusal, MCP down*: the trace records `agent_error`, the header says "Coach offline · rule coach", and the rule coach carries on; MCP failure falls back to the same tools called directly.
+- *No hand or pose model files*: the tracker reports `available: false` in `/health`, and the NHPT runs on board occupancy alone.
+- *Wrong numbers*: every threshold is tuned on synthetic data until dataset v1 (§6, §9); the UI never presents an angle or time as a clinical result.
+
+**Privacy.**
+- Frames are decoded, processed in memory and dropped. No frame, pixel or base64 image is written to disk, put in an event, a trace row, a tool result or a model message (`assert_no_pixels` checks every agent tool result; tested). The agent's `check_setup` reads the latest frame by reference in memory only.
+- Only events, metrics, the decision trace and the session summary are stored (SQLite on the host; nothing goes to AWS while `PRAXIS_CLOUD_ENABLED=0`).
+- **Where the processing happens depends on the deployment.** Run on a laptop, the video never leaves the machine. On the hosted review build (Railway), webcam frames travel over TLS to the container, are processed in memory and dropped, never stored; "video never leaves your laptop" is only true for the local run (`docs/RISKS.md`, 17 Sep). The camera setup screen names the processing place. The hosted link has no sign-in (removed 21 Sep), so sessions and traces there are readable by anyone with the link; it holds sample data only and is not for real patients (`docs/RISKS.md`, 21 Sep).
+- The app has no clip-recording feature. The only recorded clips are evaluation recordings made with signed consent; replay lists a clip only while its sidecar consent allows demo use and before its 30-day `delete_after` date (`replay.py`).
+- With the agent on, check-in answers and event summaries (never images) are sent to the model provider (Anthropic API in development; Amazon Bedrock planned).
+
+**Feeling is self-reported.** Pain, effort and symptoms come only from what the patient says or taps. The face is never analysed for emotion, pain or identity; person detection is used for presence and pose only.
+
+**Content attribution.** GRASP (Graded Repetitive Arm Supplementary Program) is UBC / Heart & Stroke Foundation material. Praxis uses exercise concepts and names only; all instructions are paraphrased and all illustrations are our own, cited in `docs/LICENSES.md`. Avatar motion derives from UI-PRMD (ODC PDDL 1.0) and IntelliRehabDS (CC BY 4.0); only derived joint angles are in the repo.
 
 ## 9. Limitations and honest scope
-Exercise ceiling (28 Sep): Arm out to the side, Waiter – cup and the NHPT, all camera-coached. Shoulder rotations are not measured because a single webcam cannot measure them honestly; Pendulum and Arm to the front are dormant (code and tests kept, hidden from every screen and refused by the service). Arm out to the side is validated on synthetic landmark streams only. Angles are camera-relative progress, not goniometry. NHPT is a timing aid, not a clinical instrument. Everything so far is validated on synthetic renders only.
+- **No real-world accuracy yet.** Every perception number (§6.1) comes from synthetic renders or synthetic landmark streams. HSV ranges, Hough parameters, hand and pose thresholds and the cup FSM have not been tuned on real lighting, hands or pegs. Dataset v1 (≥ 5 participants, 300+ reps) and pilot SUS are open (Phase 9).
+- **Three exercises only** (28 Sep): Arm out to the side, Waiter – cup and the NHPT. Pendulum, Arm to the front and the rotations are dormant (code and tests kept, hidden and refused by the service). Shoulder rotations are not measured because one webcam cannot measure them honestly.
+- **Angles are image-plane estimates.** Abduction from the front view cannot be told apart from a scaption-plane or cross-body lift; angle error against a goniometer app is unmeasured.
+- **Parallax.** The sheet homography assumes the sheet plane; hands and peg tops above it project off. Setup refuses a camera tilt above 25°, but the residual error is unmeasured on a real camera.
+- **NHPT on a printed sheet** with flat hole rings differs from a physical board with recessed holes; it is a timing aid, not the clinical instrument.
+- **Exertion is behavioural** (§3.8): no physiology, hesitation not computed, thresholds unvalidated.
+- **Latency** (§6.2) is in-process on one laptop; browser-measured end-to-end latency and any cloud latency are not measured yet.
+- **Agent coach** (§4.1): its tools, guardrails and fallbacks are tested with a scripted planner; real-model results are pending (`docs/ARCHITECTURE.md` TODO). Its judgement is not clinically validated.
+- **AWS and COOL are not built** (§5, §7).
+- **Hosted review build** has no sign-in and runs in UTC with a fixed `TZ`; it is for team review, not patients (§8, `docs/RISKS.md`).
+- **Accessibility:** three palette pairs miss WCAG 2.1 AA 4.5:1 and controls are 40–48 px by design decision (`docs/RISKS.md`, 6 Oct); not yet tested with patients.
+- **Pain stop level 7** is a product decision (23 Sep), stricter-only per prescription; it needs a clinician's confirmation before any pilot.
 
 ## 10. Reproducibility
 Every number in §6–7 will be regenerated by scripts in `evaluation/` and `benchmark/`.
