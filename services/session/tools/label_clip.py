@@ -2,25 +2,37 @@
 imshow). Writes <clip>.labels.json next to the clip in the praxis.labels/1 schema
 (evaluation/labels.schema.json).
 
-    uv run python tools/label_clip.py evaluation/dataset_v1/raw/p01/flexion/20260926T101500.mp4 \
-        --labeller ST [--gonio 88,91,86,90,...]
+    cd services/session
+    uv run python tools/label_clip.py ../../evaluation/dataset_v1/raw/p01/abduction/20261012T101500.mp4 \
+        --labeller ST [--gonio 88,91,86,-,90,...]
+    uv run python tools/label_clip.py <clip.mp4> --labeller ST --validate-only
 
-Keys (also drawn on the frame):
+Opens a window on the clip (step-by-step guide: evaluation/PROTOCOL.md §7). Keys, also drawn on
+the frame:
   space  play / pause          , .  one frame back / forward      [ ]  one second back / forward
   s      rep starts here       e    rep ends here (creates the rep; the rep becomes "current")
-  u      current rep: toggle expected verified / unverified (asks nothing; reason = "other")
+  u      current rep: toggle expected verified / unverified (reason "other")
   o      current rep: occluded (unverified, reason occluded)
-  l / h  current rep: toggle trunk lean / shoulder hike (arm exercises)
-  1-9    NHPT: hole 1-9 (stored 0-8) · cup: dot 1-5 (stored 0-4)
-  g      arm: type the goniometer angle, then Enter (Backspace edits, Esc cancels)
-  d      deliberate error on the current rep: cycles lean, hike, small_swing, occluded_cup,
-         dropped_peg, short_hold, other, none
+  r      current rep: cycle the unverified reason (occluded, marker_lost, hold_too_short,
+         target_missed, other)
+  l / h  Arm out to the side: toggle trunk lean / shoulder hike on the current rep
+  1-9    NHPT: hole 1-9 (stored 0-8) · Waiter – cup: dot 1-5 the cup was set on (stored 0-4)
+  g      Arm out to the side: type the goniometer angle, then Enter (Backspace edits, Esc cancels)
+  d      deliberate error on the current rep: cycles lean, hike, past_ceiling, low_lift,
+         short_hold, occluded_cup, covered_marker, dim_light, dropped_peg, other, none
   p      NHPT: a peg was dropped here
   x      delete the current rep          c    mark the file complete (every rep labelled)
   w      write                          q    write and quit          Esc  quit without writing
 
-Times are frame_index / fps, the same clock replay and eval.py use. Rep times are when the
-labeller pressed the key on the paused or playing frame: pause and step with , . for accuracy.
+Rep boundaries (what s and e mean per exercise):
+  Arm out to the side  s = the arm starts to lift · e = the arm is back down at the side
+  Waiter – cup         s = the cup leaves its dot · e = the cup is set down on the next dot
+  NHPT                 s = the peg leaves the dish · e = the peg is seated in its hole
+
+Times are frame_index / fps (the file's own fps), the same clock replay and eval.py use. Rep
+times are when the labeller pressed the key on the paused or playing frame: pause and step
+with , . for accuracy. `--gonio` takes the paper goniometer readings in rep order ('-' = not
+measured) and fills them in as the reps are created.
 """
 
 from __future__ import annotations
@@ -35,7 +47,8 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools import dataset_v1 as ds  # noqa: E402
 
-ERRORS = [None, "lean", "hike", "small_swing", "occluded_cup", "dropped_peg", "short_hold", "other"]
+ERRORS = [None, "lean", "hike", "past_ceiling", "low_lift", "short_hold", "occluded_cup", "covered_marker", "dim_light", "dropped_peg", "other"]
+REASONS = ["occluded", "marker_lost", "hold_too_short", "target_missed", "other"]
 WINDOW = "Praxis labeller"
 
 
@@ -109,6 +122,10 @@ class LabelState:
             self.dirty = True
         elif r is not None and k == "o":
             r["expected"], r["reason"] = "unverified", "occluded"
+            self.dirty = True
+        elif r is not None and k == "r":
+            i = REASONS.index(r["reason"]) if r.get("reason") in REASONS else -1
+            r["expected"], r["reason"] = "unverified", REASONS[(i + 1) % len(REASONS)]
             self.dirty = True
         elif r is not None and self.arm and k in ("l", "h"):
             f = "lean" if k == "l" else "hike"
@@ -199,7 +216,7 @@ class LabelState:
         return d
 
     def help_lines(self) -> list[str]:
-        common = "space play  ,. frame  [] 1s  s start  e end  u verified?  o occluded  d error  x del  c complete  w write  q quit"
+        common = "space play  ,. frame  [] 1s  s start  e end  u verified?  o occluded  r reason  d error  x del  c complete  w write  q quit"
         extra = {"nhpt": "1-9 hole  p drop", "cup": "1-5 dot"}.get(self.exercise, "l lean  h hike  g gonio")
         return [common, extra]
 
@@ -235,7 +252,7 @@ KEYMAP = {32: "space", 13: "enter", 10: "enter", 27: "esc", 8: "backspace", 127:
 
 def write_labels(state: LabelState, path: Path) -> list[str]:
     d = state.to_json()
-    errs = ds.validate_labels(d)
+    errs = ds.validate_labels(d) + [f"warning: {w}" for w in ds.label_warnings(d)]
     path.write_text(json.dumps(d, indent=1) + "\n")
     state.dirty = False
     return errs
@@ -312,25 +329,48 @@ def run_ui(video: Path, state: LabelState, out: Path) -> int:  # pragma: no cove
     return 0
 
 
+def clip_fps(video: Path, meta: dict[str, Any]) -> float:
+    """The file's own fps (what replay and eval.py use for t = frame_index / fps), else the
+    sidecar's, else 15."""
+    if video.exists():
+        import cv2
+
+        cap = cv2.VideoCapture(str(video))
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0) if cap.isOpened() else 0.0
+        cap.release()
+        if fps > 0:
+            return fps
+    return float(meta.get("fps") or ds.FPS)
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("video")
-    ap.add_argument("--labeller", required=True, help="your initials")
+    ap = argparse.ArgumentParser(
+        prog="label_clip.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument("video", help="the clip, e.g. ../../evaluation/dataset_v1/raw/p01/cup/<timestamp>.mp4")
+    ap.add_argument("--labeller", default=None, help="your initials (required unless --validate-only)")
     ap.add_argument("--gonio", default=None, help="goniometer degrees per rep in order, comma list ('-' = not measured)")
-    ap.add_argument("--validate-only", action="store_true", help="check the existing labels file and exit")
+    ap.add_argument("--validate-only", action="store_true", help="check the existing labels file and exit (1 = problems)")
     args = ap.parse_args(argv)
+    if not args.validate_only and not args.labeller:
+        ap.error("--labeller (your initials) is required")
     video = Path(args.video)
     sidecar = video.with_suffix(".json")
     meta = json.loads(sidecar.read_text()) if sidecar.exists() else {}
     exercise = meta.get("exercise") or video.parent.name
-    ds.check_exercise(exercise)
+    try:
+        ds.check_exercise(exercise)
+    except ValueError as e:
+        print(e)
+        return 2
     out = video.with_suffix(".labels.json")
     existing = json.loads(out.read_text()) if out.exists() else None
     if args.validate_only:
         errs = ds.validate_labels(existing) if existing else ["no labels file"]
-        print(json.dumps({"labels": str(out), "errors": errs}, indent=1))
+        warns = ds.label_warnings(existing) if existing and not errs else []
+        print(json.dumps({"labels": str(out), "errors": errs, "warnings": warns, "complete": bool(existing and existing.get("complete"))}, indent=1))
         return 1 if errs else 0
-    state = LabelState(meta.get("clip_id") or video.stem, exercise, args.labeller, float(meta.get("fps") or ds.FPS), existing)
+    state = LabelState(meta.get("clip_id") or video.stem, exercise, args.labeller, clip_fps(video, meta), existing)
     if args.gonio:
         state.apply_gonio([None if v.strip() in ("", "-") else float(v) for v in args.gonio.split(",")])
     return run_ui(video, state, out)

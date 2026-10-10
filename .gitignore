@@ -19,10 +19,20 @@ cdk.out/
 # Models (downloaded by script, never committed)
 services/session/models/*.onnx
 
-# Recordings and local data (consented clips never committed)
+# Recordings and local data (consented clips never committed; tools/record_session.py asks git
+# before writing a clip and refuses any path that is not ignored here)
 evaluation/dataset_v*/**/*.mp4
 evaluation/dataset_v*/**/*.mov
-!evaluation/dataset_v*/**/synthetic_*.mp4
+evaluation/dataset_v*/**/*.avi
+evaluation/dataset_v*/**/*.mkv
+evaluation/dataset_v*/**/*.webm
+evaluation/dataset_v*/**/*.m4v
+evaluation/dataset_v*/**/*.jpg
+evaluation/dataset_v*/**/*.png
+!evaluation/dataset_v0/synthetic_*.mp4
+# Failure-case frames (pixels from consented real clips): local only, deleted with the clip
+evaluation/failure_cases/*
+!evaluation/failure_cases/README.md
 services/session/praxis.db
 services/session/data/
 
