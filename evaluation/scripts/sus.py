@@ -1,0 +1,127 @@
+"""Score the System Usability Scale (Brooke 1996) responses into results/sus_v0.{md,json}.
+
+    cd services/session
+    uv run python ../../evaluation/scripts/sus.py [--csv ../../evaluation/sus/responses.csv] [--out DIR]
+
+Input: one row per participant (`evaluation/sus/responses_template.csv`): participant (pseudonym
+p01, p02, ... never a name), date, q1..q10 as integers 1-5, notes. Scoring: odd items score - 1,
+even items 5 - score, sum x 2.5 -> 0..100 per participant. Reports n, mean, sample SD (n - 1),
+min, max and the per-item mean answer. Any malformed row stops the run with the row number:
+nothing is guessed. Notes stay in the CSV and are not copied into the results.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import math
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+HERE = Path(__file__).resolve()
+ITEMS = [f"q{i}" for i in range(1, 11)]
+PSEUDONYM = re.compile(r"^p\d{2,3}$")
+TARGET = 75.0
+
+
+def sus_score(answers: list[int]) -> float:
+    """Brooke's scoring for ten 1-5 answers in item order."""
+    if len(answers) != 10 or any(a not in (1, 2, 3, 4, 5) for a in answers):
+        raise ValueError("SUS needs ten answers, each an integer 1-5")
+    total = sum((a - 1) if i % 2 == 0 else (5 - a) for i, a in enumerate(answers))
+    return total * 2.5
+
+
+def read_responses(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    with open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        missing = [c for c in ["participant", "date", *ITEMS] if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f"{path}: missing columns {missing} (copy responses_template.csv)")
+        for n, r in enumerate(reader, start=2):  # row 1 is the header
+            if not any((v or "").strip() for v in r.values()):
+                continue  # blank line
+            p = (r["participant"] or "").strip().lower()
+            if not PSEUDONYM.match(p):
+                raise ValueError(f"row {n}: participant must be a pseudonym like p01, got {r['participant']!r}")
+            if p in seen:
+                raise ValueError(f"row {n}: {p} appears twice (one SUS per participant)")
+            seen.add(p)
+            try:
+                answers = [int((r[q] or "").strip()) for q in ITEMS]
+            except ValueError:
+                raise ValueError(f"row {n} ({p}): every q1..q10 must be a whole number 1-5 (unanswered: mark 3 on paper)") from None
+            try:
+                score = sus_score(answers)
+            except ValueError as e:
+                raise ValueError(f"row {n} ({p}): {e}") from None
+            rows.append({"participant": p, "date": (r["date"] or "").strip(), "answers": answers, "sus": score})
+    return rows
+
+
+def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    scores = [r["sus"] for r in rows]
+    n = len(scores)
+    mean = sum(scores) / n if n else None
+    sd = math.sqrt(sum((s - mean) ** 2 for s in scores) / (n - 1)) if n > 1 and mean is not None else None
+    item_means = {q: round(sum(r["answers"][i] for r in rows) / n, 2) for i, q in enumerate(ITEMS)} if n else {}
+    return {
+        "n": n,
+        "mean": None if mean is None else round(mean, 1),
+        "sd": None if sd is None else round(sd, 1),
+        "min": min(scores) if scores else None,
+        "max": max(scores) if scores else None,
+        "target": TARGET,
+        "target_met": mean is not None and mean >= TARGET,
+        "item_means": item_means,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="sus.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--csv", default=str(HERE.parents[1] / "sus" / "responses.csv"), help="responses (default: %(default)s)")
+    ap.add_argument("--out", default=str(HERE.parents[1] / "results"), help="where sus_v0.{md,json} go (default: %(default)s)")
+    args = ap.parse_args(argv)
+    path = Path(args.csv)
+    if not path.exists():
+        print(f"no responses at {path}: copy evaluation/sus/responses_template.csv to responses.csv and add one row per participant")
+        return 2
+    try:
+        rows = read_responses(path)
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        return 1
+    if not rows:
+        print(f"{path} has no responses yet")
+        return 2
+    s = summarise(rows)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    doc = {"instrument": "SUS (Brooke 1996), standard 10 items", "source": str(path.name), **s,
+           "participants": [{k: r[k] for k in ("participant", "date", "sus")} for r in rows]}
+    (out / "sus_v0.json").write_text(json.dumps(doc, indent=1) + "\n")
+    md = [
+        "# sus_v0", "",
+        "System Usability Scale (Brooke 1996, standard wording, `evaluation/sus/questionnaire.md`), regenerated by "
+        "`evaluation/scripts/sus.py`. Scores run 0–100 and are not percentages.", "",
+        f"**n = {s['n']} · mean {s['mean']} · SD {s['sd'] if s['sd'] is not None else '– (n = 1)'} · min {s['min']} · max {s['max']}** "
+        f"(target mean ≥ {TARGET:g}: {'met' if s['target_met'] else 'not met'}).", "",
+        "| participant | date | SUS |", "|---|---|---|",
+        *[f"| {r['participant']} | {r['date']} | {r['sus']:g} |" for r in rows],
+        "", "Mean answer per item (1 = strongly disagree, 5 = strongly agree; odd items are positive, even items negative):", "",
+        "| " + " | ".join(ITEMS) + " |", "|" + "---|" * len(ITEMS),
+        "| " + " | ".join(f"{s['item_means'][q]:g}" for q in ITEMS) + " |", "",
+    ]
+    if s["n"] < 5:
+        md.append(f"_Only {s['n']} participant(s): too few to report as a usability result._")
+    (out / "sus_v0.md").write_text("\n".join(md) + "\n")
+    print(json.dumps({k: s[k] for k in ("n", "mean", "sd", "min", "max", "target_met")}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
