@@ -103,3 +103,22 @@ def test_build_checks_marks_missing_markers_with_hint():
     by_id = {r["id"]: r for r in rows}
     assert by_id["markers"]["status"] == "check" and "0, 1, 2, 3" in by_id["markers"]["hint"]
     assert by_id["person"]["status"] == "pending"
+
+
+def test_missing_marker_hint_names_the_corner_of_the_sheet():
+    # The patient cannot see marker ids; the hint says which corner to clear (sheet as printed).
+    from praxis_session.perception.board_spec import CUP_TARGETS
+
+    frame, _ = camera_frame(CUP_TARGETS, hide_marker=2)
+    cal = Calibrator(CUP_TARGETS).run(frame)
+    rows = build_checks(cal, lighting(frame), {"ok": True}, task_area_in_view(cal, CUP_TARGETS, frame.shape), {"present": True}, spec=CUP_TARGETS)
+    hint = {r["id"]: r for r in rows}["markers"]["hint"]
+    assert "bottom-right corner" in hint and "2" in hint
+
+
+def test_missing_marker_hint_lists_every_hidden_corner():
+    cal = Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8))
+    rows = build_checks(cal, {"ok": True, "hint": None}, {"ok": True}, {"ok": False, "hint": "x"}, {"present": None}, spec=NHPT_BOARD)
+    hint = {r["id"]: r for r in rows}["markers"]["hint"]
+    for corner in ("top-left", "top-right", "bottom-right", "bottom-left"):
+        assert corner in hint

@@ -340,7 +340,7 @@ class SessionPipeline:
                 steady.update(m)
             steady_d = steady.update(cal.marker_corners_px)
             area = task_area_in_view(cal, self.spec, frame.shape)
-            rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True)
+            rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True, spec=self.spec)
             # Root cause first: without the markers, task area and tilt cannot be judged.
             order = {"markers": 0, "angle": 1, "task_area": 2, "lighting": 3}
             checks = sorted((r for r in rows if r["id"] not in ("camera", "person")), key=lambda r: order.get(r["id"], 9))
@@ -434,7 +434,7 @@ class SessionPipeline:
         )
         needs_sheet = self.for_mode != "arm"
         area = task_area_in_view(cal, self.spec, frame_bgr.shape)
-        checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet)
+        checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet, spec=self.spec)
         required = REQUIRED_BY_MODE.get(self.for_mode, REQUIRED_BY_MODE["default"])
         required_ok = all(c["status"] == "pass" for c in checks if c["id"] in required)
         self._emit(

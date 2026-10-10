@@ -116,6 +116,19 @@ class Presence:
         return {"present": m > self.threshold, "motion": round(m, 2), "method": "frame_difference"}
 
 
+def corner_name(spec: SheetSpec, marker_id: int) -> str:
+    """Where marker `marker_id` sits on the sheet as printed ("bottom-right"); patients see
+    corners, not ArUco ids."""
+    cx, cy = spec.marker_centres_mm[marker_id]
+    return f"{'top' if cy < spec.height_mm / 2 else 'bottom'}-{'left' if cx < spec.width_mm / 2 else 'right'}"
+
+
+def _markers_named(spec: SheetSpec | None, ids: list[int]) -> str:
+    if spec is None:
+        return ", ".join(map(str, ids))
+    return ", ".join(f"{corner_name(spec, i)} corner ({i})" for i in ids)
+
+
 def build_checks(
     cal: CalibrationResult,
     lighting_d: dict,
@@ -124,6 +137,7 @@ def build_checks(
     presence_d: dict,
     camera_ok: bool = True,
     needs_sheet: bool = True,
+    spec: SheetSpec | None = None,
 ) -> list[dict]:
     """The wireframe's five rows plus the camera-angle row (D-CAL-3), in order; status
     pass|check|pending with a fix hint.
@@ -142,13 +156,16 @@ def build_checks(
     if markers_ok:
         markers_hint = None
     elif cal.calibrated:
+        n = len(cal.missing)
         markers_hint = (
-            f"Marker {', '.join(map(str, cal.missing))} is covered. "
+            f"The marker{'s' if n > 1 else ''} in the {_markers_named(spec, cal.missing)} {'are' if n > 1 else 'is'} covered. "
             "Keep all four corners clear to start."
+            if spec is not None
+            else f"Marker {', '.join(map(str, cal.missing))} is covered. Keep all four corners clear to start."
         )
     else:
         markers_hint = (
-            f"Markers missing: {', '.join(map(str, cal.missing))}. "
+            f"Markers missing: {_markers_named(spec, cal.missing)}. "
             "Flatten the sheet and keep it in view."
         )
     angle = camera_angle(cal)
