@@ -24,6 +24,19 @@ def test_seed_matches_wireframe(tmp_path):
     assert len(st.sessions()) == len(sessions)
 
 
+def test_the_seed_arm_session_carries_per_lift_angles_matching_its_counts(tmp_path):
+    """10 Oct walkthrough: Home's shoulder card said "No arm session yet" beside "5 of 6
+    verified lifts" from the same sample session, which had counts but no per-lift angles."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    arm = next(s for s in st.sessions() if s["id"] == "s-0908-arm")
+    cam = arm["summary"]["camera"]
+    assert arm["illustrative"] is True
+    assert len(cam["peak_deg"]) == len(cam["peak_verified"]) == cam["reps_total"]
+    assert sum(cam["peak_verified"]) == cam["verified"] and cam["peak_verified"].count(False) == cam["unverified"]
+    assert max(cam["peak_deg"]) <= 90  # the in-code ceiling
+
+
 def test_an_existing_database_picks_up_the_current_seed_prescription(tmp_path):
     """A database seeded before 23 Sep holds pain_max 5 and the old exercise list. The seed
     prescription is code, so the same version is rewritten on start; a newer version (a real

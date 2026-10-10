@@ -75,6 +75,17 @@ it('shoulder without any arm session: no number is invented', () => {
   expect(v.empty).toBe('Starts after your next arm session.')
 })
 
+it('an arm session with no verified angle never reads as "no arm session" next to its own lift counts (10 Oct)', () => {
+  // the seed's sample session before 10 Oct: counts, but no per-lift angles
+  const s = rec('2026-09-08', 'abduction', { reps_total: 6, verified: 5, unverified: 1, posture_cues: 1 }, 'sample')
+  const v = areaSummary('lShoulder', fx({ sessions: [s] })) as AreaView
+  expect(v.headline).toBe('No lift angle yet')
+  expect(v.empty).toBe('No verified lift angle in your last arm session.')
+  expect(v.quality[0]).toEqual({ k: 'Verified lifts', v: '5', u: 'of 6', c: '1 unverified · last session' })
+  expect(v.sample).toBe(true)
+  expect(JSON.stringify(v)).not.toMatch(/No arm session yet/)
+})
+
 it('a sample arm session is marked sample', () => {
   const v = areaSummary('lShoulder', fx({ sessions: [arm('2026-09-08', [76], [true], {}, 'sample'), arm('2026-10-03', [88], [true])] })) as AreaView
   expect(v.trend!.points.map((p) => p.sample)).toEqual([true, false])

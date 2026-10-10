@@ -63,7 +63,9 @@ SESSIONS = [
         "checkin": {"pain_before": 3, "energy": "tired", "minutes": 14, "new_symptoms": False},
         # Pain reached the stop level (7, `prescription.py`) mid-set: session ended, therapist flagged.
         "feedback": {"pain_after": 7, "effort": 7, "compared": "harder"},
-        "summary": _summary("arm", {"reps_total": 6, "verified": 5, "unverified": 1, "corrections": 2, "coverage_pct": 91, "posture_cues": 1, "active_s": 380},
+        "summary": _summary("arm", {"reps_total": 6, "verified": 5, "unverified": 1, "corrections": 2, "coverage_pct": 91, "posture_cues": 1, "active_s": 380,
+                                    # per-lift angles (10 Oct) so Home's shoulder card reads the same sample as its lift counts
+                                    "peak_deg": [74, 78, 81, 79, 77, 70], "peak_verified": [True, True, True, True, True, False]},
                             [{"text": "stop: pain 7/10 during Arm out to the side, rep 6 of set 2", "confidence": "high", "evidence": [41]}],
                             exertion="high", flags=[{"t": 380.0, "rule": "pain", "detail": "pain 7/10 reported (stop level 7)"}], stopped=True),
         "events": [],
