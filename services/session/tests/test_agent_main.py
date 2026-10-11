@@ -109,3 +109,34 @@ def test_answer_accepting_an_agent_adjustment_emits_an_agent_command(tmp_path):
     assert p.snapshot()["arm"]["target_deg"] == 75.0
     confirm = next(e for e in out if e.type == "coach")
     assert confirm.payload["text"] == "Done. Target is now 75.0°."
+
+
+def test_malformed_commands_are_refused_without_killing_the_session(tmp_path):
+    """A bad value from the browser (or anyone on the socket) is a refused command event,
+    never an exception that ends the session; pain outside 0-10 is refused, not clamped."""
+    import praxis_session.main as main
+    from praxis_session.pipeline import SessionPipeline
+    from praxis_session.prescription import SEED_PRESCRIPTION
+    from praxis_session.session import CoachSession
+
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="m1", exercise="abduction")
+    bad = [
+        {"cmd": "checkin", "pain": "seven"},
+        {"cmd": "checkin", "pain": 3, "minutes": "lots"},
+        {"cmd": "pain", "pain": None},
+        {"cmd": "pain", "pain": 11},
+        {"cmd": "pain", "pain": -1},
+        {"cmd": "rpe", "rpe": [5]},
+        {"cmd": "set_target", "target_deg": "high"},
+        {"cmd": "sample_colour", "hole": "x"},
+    ]
+    for cmd in bad:
+        out = main._handle_command(cmd, p, s, now=1.0)
+        assert out and out[0].type == "command" and out[0].payload["ok"] is False, cmd
+        assert not s.stopped, cmd
+    # A non-object JSON body is treated like garbage, not a crash.
+    assert main._handle_command(main._as_command([1, 2]), p, s, now=1.0)[0].payload["ok"] is False
+    # The session still works afterwards.
+    ok = main._handle_command({"cmd": "pain", "pain": 2}, p, s, now=2.0)
+    assert ok[0].payload["ok"] is True

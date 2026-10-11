@@ -702,7 +702,7 @@ def _apply_coach_commands(pipeline: SessionPipeline, coach: CoachSession) -> lis
 
 async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> None:
     try:
-        cmd = json.loads(text)
+        cmd = _as_command(json.loads(text))
     except json.JSONDecodeError:
         cmd = {}
     for e in _handle_command(cmd, pipeline, coach, now=now):
@@ -711,18 +711,48 @@ async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | Non
     await _deliver_agent(ws, coach, time.time() if now is None else now)
 
 
+class _BadCommand(ValueError):
+    """A browser command with a missing, mistyped or out-of-range value."""
+
+
+def _as_command(obj: object) -> dict:
+    """A parsed WebSocket text frame as a command dict; anything but a JSON object is empty."""
+    return obj if isinstance(obj, dict) else {}
+
+
+def _int_field(cmd: dict, key: str, default: int, lo: int, hi: int) -> int:
+    """An integer field in [lo, hi]; anything else (text, null, bool, list, out of range) is
+    refused rather than coerced, so a pain of 11 or "seven" never reaches the stop rules."""
+    v = cmd.get(key, default)
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v or int(v) != v:
+        raise _BadCommand(f"{key} must be a whole number")
+    if not lo <= int(v) <= hi:
+        raise _BadCommand(f"{key} must be {lo}-{hi}")
+    return int(v)
+
+
 def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None = None) -> list:
     """Text commands from the browser: pipeline commands and coach-session inputs.
 
     `now` is wall-clock for live sessions and clip time in replay, so the coach's cooldowns
-    and the exertion timer see one clock."""
+    and the exertion timer see one clock. A malformed command is answered with
+    `command {ok: false, error}` and the session carries on: one bad frame from the socket
+    must never end a patient's session."""
+    try:
+        return _handle_command_unchecked(cmd, pipeline, coach, now)
+    except (_BadCommand, TypeError, ValueError, KeyError) as exc:
+        return [make_event("command", cmd=cmd.get("cmd") if isinstance(cmd, dict) else None, ok=False, error=f"bad_command: {exc}"[:200])]
+
+
+def _handle_command_unchecked(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSession | None, now: float | None) -> list:
     name = cmd.get("cmd")
     now = time.time() if now is None else now
     out: list = []
     if pipeline is None or coach is None:
         return [make_event("command", cmd=name, ok=False, error="no pipeline")]
     if name == "checkin":
-        pain = int(cmd.get("pain", 0))
+        pain = _int_field(cmd, "pain", 0, 0, 10)
+        minutes = _int_field(cmd, "minutes", 0, 0, 600)
         # Pain tier (plan.py), enforced here and not left to the client: pain 4-6 tightens the
         # running dose to gentle before the first rep; >= 7 is a rest day, and the pain stop
         # rule below ends the session and writes the therapist flag.
@@ -730,13 +760,13 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
         applied = pipeline.apply_tier(tier)
         coach.trace.log("tier", rule="pain_tier", pain=pain, tier=tier, running=applied["tier"], changed=applied["changed"], reason=tier_reason(tier, pain))
         notes = cmd.get("notes")
-        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None)
+        out += coach.on_checkin(pain, str(cmd.get("energy", "")), minutes, bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, tier=tier, tier_applied=applied["changed"]), *out]
     if name == "pain":
-        out += coach.on_pain(int(cmd.get("pain", 0)), now)
+        out += coach.on_pain(_int_field(cmd, "pain", 0, 0, 10), now)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *out]
     if name == "rpe":
-        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.on_rpe(int(cmd.get("rpe", 0)), now)]
+        return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.on_rpe(_int_field(cmd, "rpe", 0, 0, 10), now)]
     if name == "pause":
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id), *coach.pause(now)]
     if name == "resume":
