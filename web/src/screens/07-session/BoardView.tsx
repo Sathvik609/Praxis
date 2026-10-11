@@ -34,7 +34,7 @@ export function BoardView({
   const cellClass = (state: HoleState) =>
     `flex h-14 w-14 items-center justify-center rounded-full border-4 text-xl font-bold ${style[state]}`
   return (
-    <div aria-label="board view" className="relative rounded-[var(--r-card)] bg-surface p-8">
+    <div role="group" aria-label="board view" className="relative rounded-[var(--r-card)] bg-surface p-8">
       {corners.map((pos) => (
         <span key={pos} aria-hidden className={`absolute ${pos} h-6 w-6 border-teal`} />
       ))}
@@ -53,7 +53,7 @@ export function BoardView({
               <span data-testid="hole" aria-hidden>{k + 1}</span>
             </button>
           ) : (
-            <span key={k} data-testid={`hole-${k}`} data-state={state} aria-label={`hole ${k + 1} ${word[state]}`} className={cellClass(state)}>
+            <span key={k} data-testid={`hole-${k}`} data-state={state} role="img" aria-label={`hole ${k + 1} ${word[state]}`} className={cellClass(state)}>
               <span data-testid="hole" aria-hidden>{k + 1}</span>
             </span>
           ),

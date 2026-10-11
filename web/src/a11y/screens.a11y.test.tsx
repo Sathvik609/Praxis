@@ -57,12 +57,16 @@ test.each(SETUP)('%s has no axe violations', async (_name, path, rec) => {
 const LIVE: [string, string, string, number][] = [
   ['Live Waiter – cup', '/session?exercise=cup&side=left', 'cup', 0.5],
   ['Live NHPT', '/session?exercise=nhpt&side=left', 'nhpt', 0.5],
+  ['Live NHPT · replay (board view)', '/session?exercise=nhpt&hand=left&replay=synthetic_nhpt_01', 'nhpt', 0.5],
+  ['Live Waiter – cup · replay', '/session?exercise=cup&side=left&replay=synthetic_cup_01', 'cup', 0.5],
   ['Live Arm out to the side', '/session?exercise=abduction&side=left', 'abduction', 0.25],
 ]
 test.each(LIVE)('%s has no axe violations', async (_name, path, rec, share) => {
   feed(rec, share)
   await renderRoute(path)
   await expectAccessiblePage()
+  // the replay draws the board view instead of the camera (found by the browser pass, 10 Oct)
+  if (path.includes('synthetic_nhpt')) expect(screen.getByRole('group', { name: 'board view' })).toBeInTheDocument()
 })
 
 test('Coach chat drawer (deep link) is a named modal dialog with no axe violations', async () => {

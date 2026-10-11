@@ -5,7 +5,7 @@
  *  One rule is off in jsdom and only one: `color-contrast`. jsdom has no layout engine and the
  *  vitest run loads no CSS (`css: false`), so axe cannot know any colour and reports every text
  *  node as "incomplete". Contrast is checked instead by `design/contrast.test.ts` (every token
- *  pair, both themes) and by `tools/a11y-browser.mjs` (axe in headless Chrome over the built
+ *  pair, both themes) and by `scripts/a11y-browser.mjs` (axe in headless Chrome over the built
  *  pages, with the three D-CONTRAST exceptions named there). Nothing else is excluded. */
 import { screen } from '@testing-library/react'
 import axe from 'axe-core'

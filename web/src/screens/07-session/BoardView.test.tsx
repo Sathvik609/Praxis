@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { expectNoAxeViolations } from '../../test/axe'
 import { BoardView } from './BoardView'
 
 test('board view renders nine holes with occupancy and next target', () => {
@@ -34,4 +35,11 @@ test('with a sample handler every hole is a 56 px button and a seated tap report
 test('shows the sampled confirmation once the frame carries a colour', () => {
   render(<BoardView occupancy={{}} nextHole={null} onSampleHole={() => {}} sampled />)
   expect(screen.getByRole('status')).toHaveTextContent(/Peg colour sampled/)
+})
+
+test('replay board (no sampling) has no axe violations: each hole is a labelled image in a named group', async () => {
+  render(<BoardView occupancy={{ hole_0: 'occupied' }} nextHole={1} />)
+  expect(screen.getByRole('group', { name: 'board view' })).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: 'hole 2 next' })).toBeInTheDocument()
+  await expectNoAxeViolations()
 })
