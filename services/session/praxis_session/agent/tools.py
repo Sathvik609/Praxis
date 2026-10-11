@@ -50,6 +50,12 @@ RUN_TOOL_CALLS = 6
 SESSION_TOOL_CALLS = 60
 SESSION_RUNS = 12
 RECAL_FRAMES = 3
+# Praise after a clean set/arc: at most one `speak(cue="instruct")` per PRAISE_EVERY_N clean
+# reviews, unless something changed (first review, an unverified or missed rep, a peak drop of
+# PEAK_DROP_DEG or more, a correction since the last praise).
+PRAISE_EVERY_N = 3
+PEAK_DROP_DEG = 3.0
+REVIEW_TRIGGERS = ("arc_complete", "set_complete")
 
 SERVERS: dict[str, tuple[str, ...]] = {
     "perception": ("get_events", "get_set_summary", "check_setup", "recalibrate"),
@@ -130,6 +136,13 @@ class SessionHandle:
     tool_calls: int = 0
     last_speak_clock: float = -1e18
     prompt_seq: int = 0
+    # request_resume refused (setup still failing): one more `correct` line may break the 4 s gap
+    fix_repeat_allowed: bool = False
+    # praise rate limit (PRAISE_EVERY_N)
+    praised: bool = False
+    clean_reviews: int = 0
+    praise_run_seen: int | None = None
+    corrections_at_praise: int = 0
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     @property
@@ -140,6 +153,7 @@ class SessionHandle:
         with self.lock:
             self.runs += 1
             self.run = RunState(id=self.runs, trigger=trigger, epoch=self.session.epoch, t0=time.monotonic(), transport=transport)
+            self.fix_repeat_allowed = False
             return self.run
 
     def end_run(self) -> RunState | None:
@@ -367,7 +381,10 @@ def get_set_summary(session_id: str) -> dict[str, Any]:
     """The last finished set (arm) or arc (cup), or the one in progress: reps, verified and not
     verified (with reasons; `missed` = seen to fall short, `unverified` = camera could not check),
     peak angles, hold times, lean/hike/above-ceiling counts, reach times, and the previous set's mean peak."""
-    s = _h().session
+    return _set_summary(_h().session)
+
+
+def _set_summary(s: Any) -> dict[str, Any]:
     ring = s.recent_events(last_n=400)
     bounds = [i for i, e in enumerate(ring) if e.type in ("set_complete", "arc_complete", "nhpt_complete")]
     if bounds:
@@ -500,14 +517,48 @@ def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str
         raise ToolRejected("cue must be 'instruct' or 'correct'", "field")
     line = _text(text, "text", SPEAK_MAX_CHARS)
     ids = _action_guard(evidence, count=False)
+    if cue == "instruct" and h.run is not None and h.run.trigger in REVIEW_TRIGGERS:
+        why_not = _praise_gate(h)
+        if why_not is not None:
+            h.session.trace.log("praise_suppressed", reason=why_not, text=line, evidence=ids, run=h.run.id)
+            return {"ok": True, "suppressed": True, "reason": why_not, "action": cue}
     # Session clock (wall time live, clip time in replay), the clock the rule coach paces on.
     now = float(h.session.clock)
     if now - h.last_speak_clock < SPEAK_MIN_GAP_S:
-        raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
+        if not (cue == "correct" and h.fix_repeat_allowed):
+            raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
+        h.fix_repeat_allowed = False  # the one repeat after a refused resume
     h.last_speak_clock = now
     h.run.acted()  # type: ignore[union-attr]
     h._queue("decision", {"decision": _decision(cue, "agent_speak", line, "", ids, tool="speak")})
     return {"ok": True, "queued": True, "action": cue}
+
+
+def _praise_gate(h: SessionHandle) -> str | None:
+    """None when this praise may be said; otherwise why it is held back. Counted per review
+    (one set/arc checkpoint run), not per call."""
+    s = h.session
+    run = h.run
+    assert run is not None
+    if h.praise_run_seen != run.id:
+        h.praise_run_seen = run.id
+        h.clean_reviews += 1
+    summ = _set_summary(s)
+    changed: list[str] = []
+    if not h.praised:
+        changed.append("first review")
+    if summ["not_verified"]:
+        changed.append("reps not verified")
+    peaks, prev = summ["peak_deg"], summ["previous_set_mean_peak_deg"]
+    if peaks and prev is not None and prev - sum(peaks) / len(peaks) >= PEAK_DROP_DEG:
+        changed.append("peak drop")
+    if int(s.counts.get("corrections", 0)) != h.corrections_at_praise:
+        changed.append("a correction since the last praise")
+    if changed or h.clean_reviews >= PRAISE_EVERY_N:
+        h.praised, h.clean_reviews = True, 0
+        h.corrections_at_praise = int(s.counts.get("corrections", 0))
+        return None
+    return f"praise rate limit: {h.clean_reviews} clean review(s) since the last praise (at most one per {PRAISE_EVERY_N} unless something changed)"
 
 
 def _rx_key(h: SessionHandle) -> str:
@@ -600,7 +651,9 @@ def request_rest(session_id: str, seconds: int, reason: str, evidence: list[int]
 
 def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[str, Any]:
     """While a rule pause holds (unverified reps, lost tracking, lean), ask the patient whether
-    to carry on: a "Setup looks good — resume?" prompt. The session resumes only on their tap."""
+    to carry on: a "Setup looks good — resume?" prompt. The session resumes only on their tap.
+    A fresh camera setup check runs first: if any check still fails, no prompt is shown and the
+    result is `{ok: false, reason: "setup still failing: <check>"}`; say the fix again."""
     h = _h()
     s = h.session
     why = _text(reason, "reason", REASON_MAX_CHARS)
@@ -608,7 +661,22 @@ def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[st
         raise ToolRejected("the session is not paused", "state")
     if s.pause_rule == "patient":
         raise ToolRejected("the patient paused themselves; they resume when they are ready", "state")
-    ids = _action_guard(evidence)
+    ids = _action_guard(evidence, count=False)
+    # 10 Oct: never offer a resume the camera has not confirmed. A fresh OpenCV setup check
+    # runs here, on the latest frame; anything still failing means no prompt at all.
+    chk = h.pipeline.check_setup()
+    if not chk.get("ok"):
+        why_not = f"setup could not be checked: {chk.get('error', 'no frame')}"
+        s.trace.log("resume_blocked", reason=why_not, evidence=ids)
+        h.fix_repeat_allowed = True
+        return {"ok": False, "reason": why_not, "resume_offered": False}
+    if chk.get("failing"):
+        first = next(c for c in chk["checks"] if c["status"] != "pass")
+        why_not = f"setup still failing: {first['id']}"
+        s.trace.log("resume_blocked", reason=why_not, failing=chk["failing"], evidence=ids)
+        h.fix_repeat_allowed = True
+        return {"ok": False, "reason": why_not, "failing": chk["failing"], "hint": first.get("hint"), "resume_offered": False, "next": "say the fix again (one repeat is allowed now); do not offer a resume"}
+    h.run.acted()  # type: ignore[union-attr]
     h.prompt_seq += 1
     pid = f"resume-{h.prompt_seq}"
     prompt = {"id": pid, "kind": "resume", "title": "Setup looks good — resume?", "text": why, "options": ["Yes, resume", "Not yet"], "within_prescription": True}
@@ -617,7 +685,7 @@ def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[st
     caption = stem if stem.endswith("?") else f"{stem}{'' if stem.endswith(('.', '!')) else '.'} Ready to carry on?"
     d = _decision("instruct", "agent_resume_request", caption[:SPEAK_MAX_CHARS], why, ids, {"prompt": prompt}, tool="request_resume")
     h._queue("prompt", {"decision": d, "prompt": prompt, "prompt_kind": "resume", "reason": why, "accept": None})
-    return {"ok": True, "prompt_id": pid, "resumed": False}
+    return {"ok": True, "prompt_id": pid, "resumed": False, "setup_checked": True}
 
 
 def flag_therapist(session_id: str, reason: str, evidence: list[int]) -> dict[str, Any]:

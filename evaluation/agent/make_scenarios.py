@@ -21,6 +21,9 @@ RECOVERY_SCRIPT = {
         {"tool": "speak", "if": "check_setup.all_pass", "args": {"text": "The camera looks fine: after placing the cup, lift your hand clear so I can see the base.", "cue": "correct", "evidence": "$evidence"}},
         {"tool": "recalibrate"},
         {"tool": "request_resume", "args": {"reason": "I re-checked the setup with the camera.", "evidence": "$evidence"}},
+        # 10 Oct: request_resume runs a fresh check and offers nothing while it still fails;
+        # its `hint` is the fix to say again (one repeat line is allowed after a refusal).
+        {"tool": "speak", "if": "request_resume.hint", "args": {"text": "Still not quite: {request_resume.hint}", "cue": "correct", "evidence": "$evidence"}},
     ]
 }
 
@@ -42,16 +45,17 @@ scenarios = [
     },
     {
         "id": "dim_light",
-        "title": "Dim light: markers found but the frame is too dark",
+        "title": "Dim light: markers found but the frame is too dark, and it stays dark",
         "mode": "cup",
         "steps": [
             {"frame": {"dim": 0.22}},
             {"events": [reach(1, False, "marker_lost"), reach(2, False, "marker_lost"), reach(3, False, "marker_lost")]},
-            {"run": {"feed": {"dim": 1.0}}},
-            {"answer": {"kind": "resume", "choice": "decline"}},
+            # the patient has not fixed the light yet: the fresh check in request_resume still
+            # fails, so no resume prompt is shown and the fix is said again (10 Oct)
+            {"run": {"feed": {"dim": 0.22}}},
         ],
         "script": RECOVERY_SCRIPT,
-        "expect": {"triggers": ["pause:failed_reps"], "perceive_before": {"speak": ["check_setup"]}, "speak_mentions": ["dark|light"], "prompt_kinds": ["resume"], "paused_at_end": True, "stopped": False, "errors": []},
+        "expect": {"triggers": ["pause:failed_reps"], "perceive_before": {"speak": ["check_setup"]}, "speak_mentions": ["dark|light"], "prompt_kinds": [], "resume_blocked": True, "paused_at_end": True, "stopped": False, "errors": []},
     },
     {
         "id": "three_unverified",

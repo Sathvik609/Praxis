@@ -104,6 +104,7 @@ def test_setup_recovery_loop(tmp_path):
 
 def test_resume_prompt_not_yet_keeps_the_pause(tmp_path):
     s, p, h = build(tmp_path, scripts={"pause": [{"tool": "request_resume", "args": {"reason": "Looks fixed.", "evidence": "$evidence"}}]})
+    p.process(camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[0])[0], 0.0, 0)  # a clean setup: the resume check passes
     s.on_events([unverified(float(i)) for i in (1, 2, 3)], snapshot={}, t=3.0)
     asyncio.run(s.agent.run_pending())
     prompt = coach_events(h.drain(4.0))[-1].payload["ui"]["prompt"]

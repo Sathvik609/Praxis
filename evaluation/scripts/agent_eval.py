@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import dataclasses
+import gc
 import json
 import logging
 import os
@@ -254,6 +255,10 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
         checks["resumed_by_patient"] = not s.paused and any(e.get("type") == "command" and e.get("cmd") == "resume" and e.get("source") == "agent" for e in log)
     if ex.get("paused_at_end"):
         checks["paused_at_end"] = s.paused
+    if ex.get("resume_blocked"):
+        # the fresh setup check refused the resume: no resume prompt was shown
+        resume_prompts = [e for e in agent_lines if ((e.get("ui") or {}).get("prompt") or {}).get("kind") == "resume"]
+        checks["resume_blocked"] = bool(_rows(s, "resume_blocked")) and not resume_prompts
     if "applied_only_after_accept" in ex:
         spec = ex["applied_only_after_accept"]
         ok = True
@@ -415,6 +420,16 @@ def estimate_cost(scenarios: list[dict[str, Any]]) -> tuple[int, float]:
     return runs, round(usd, 2)
 
 
+async def _run_all(scenarios: list[dict[str, Any]], planner: str, trace_dir: Path, registry: T.Registry, http_url: str | None) -> list[dict[str, Any]]:
+    out = []
+    for sc in scenarios:
+        out.append(await run_scenario(sc, planner, trace_dir, registry, http_url))
+    # let closed clients finish their callbacks while the loop is still open
+    gc.collect()
+    await asyncio.sleep(0.05)
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--planner", choices=("scripted", "anthropic", "bedrock"), default="scripted")
@@ -445,8 +460,10 @@ def main(argv: list[str] | None = None) -> int:
     http_url = serve_mcp(registry) if (args.planner != "scripted" or args.http) else None
     rows = []
     with tempfile.TemporaryDirectory() as tmp:
-        for sc in scenarios:
-            res = asyncio.run(run_scenario(sc, args.planner, Path(tmp), registry, http_url))
+        # One event loop for every scenario (10 Oct): a loop per scenario left each run's async
+        # HTTP clients to be collected after their loop had closed ("Event loop is closed").
+        results = asyncio.run(_run_all(scenarios, args.planner, Path(tmp), registry, http_url))
+        for sc, res in zip(scenarios, results):
             rows.append(evaluate(sc, res))
             src = Path(tmp) / f"eval-{sc['id']}.jsonl"
             if src.exists():

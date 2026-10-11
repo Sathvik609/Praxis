@@ -382,7 +382,11 @@ ids of this session's events from get_events or get_set_summary (never invent id
   check's hint (say which corner or body part), or, if every check passes, the reason the
   reps were not verified (for example a hand covering the cup). Then recalibrate, then
   request_resume (the prompt already asks the patient, so do not ask in `speak` too).
+  request_resume re-checks the camera first: if it returns ok=false the setup still fails,
+  so speak its `hint` once more and stop. Never claim a fix the camera has not confirmed.
   Never resume on your own.
+- Praise after a clean set or arc is rate-limited in code (about one in three unless something
+  changed); a `suppressed` result is normal, do not retry it.
 - Compensation on most reps of a set (trunk lean or shoulder hiking): the target is too high
   for good form. Correct the form with speak and propose a smaller target with
   propose_adjustment.
@@ -400,7 +404,7 @@ TRIGGER_JOB = {
     "checkin": "Plan the session: read the prescription (and history if useful) and give one short opening instruction.",
     "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
     "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
-    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup, speak the specific fix, recalibrate, request_resume.",
+    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup, speak the specific fix, recalibrate, request_resume (if it says the setup still fails, say its hint again).",
     "nhpt_complete": "Explain the peg-test result plainly (time, splits); no clinical interpretation.",
     "feedback": "Write the session summary note for the report.",
 }
@@ -515,12 +519,25 @@ class StrandsPlanner:
             except Exception:  # pragma: no cover
                 pass
 
-    def _agent(self, tools: list[Any]) -> Any:
+    def _agent(self, tools: list[Any], model: Any) -> Any:
         if self._agent_factory is not None:
-            return self._agent_factory(model=self._model_factory(self.cfg), tools=tools, system_prompt=SYSTEM_PROMPT)
+            return self._agent_factory(model=model, tools=tools, system_prompt=SYSTEM_PROMPT)
         from strands import Agent
 
-        return Agent(model=self._model_factory(self.cfg), tools=tools, system_prompt=SYSTEM_PROMPT, callback_handler=None, retry_strategy=None)
+        return Agent(model=model, tools=tools, system_prompt=SYSTEM_PROMPT, callback_handler=None, retry_strategy=None)
+
+    @staticmethod
+    async def _close_model(model: Any) -> None:
+        """Close the run's async HTTP client (AnthropicModel.client) on the loop that opened it."""
+        close = getattr(getattr(model, "client", None), "close", None)
+        if close is None:
+            return
+        try:
+            res = close()
+            if asyncio.iscoroutine(res):
+                await res
+        except Exception:  # pragma: no cover - closing a broken client
+            pass
 
     async def run(self, ctx: RunContext) -> PlanResult:
         transport, clients, mcp_error = "mcp", [], None
@@ -528,14 +545,18 @@ class StrandsPlanner:
             clients, tools = await asyncio.to_thread(self._start_mcp)
         except Exception as e:
             transport, tools, mcp_error = "direct", direct_tools(ctx.registry), f"{type(e).__name__}: {e}"[:200]
+        model = None
         try:
-            agent = self._agent(tools)
+            model = self._model_factory(self.cfg)
+            agent = self._agent(tools, model)
             result = await agent.invoke_async(ctx.prompt)
             if getattr(result, "stop_reason", None) == "refusal":
                 raise AgentRefusal("the model declined this checkpoint")
             usage = getattr(getattr(result, "metrics", None), "accumulated_usage", None) or {}
             return PlanResult(transport, usage.get("inputTokens"), usage.get("outputTokens"), str(result)[:300], mcp_error)
         finally:
+            if model is not None:
+                await self._close_model(model)
             if clients:
                 await asyncio.to_thread(self._stop_mcp, clients)
 

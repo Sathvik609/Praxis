@@ -115,6 +115,15 @@
           "reason": "I re-checked the setup with the camera.",
           "evidence": "$evidence"
         }
+      },
+      {
+        "tool": "speak",
+        "if": "request_resume.hint",
+        "args": {
+          "text": "Still not quite: {request_resume.hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
       }
     ]
   },
