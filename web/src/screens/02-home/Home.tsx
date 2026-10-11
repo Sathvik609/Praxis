@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AvatarPanel, type Hotspot } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
+import { arrowSelect } from '../../design/arrowKeys'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { Check, ZoomIn, ZoomOut } from '../../design/Icon'
@@ -9,6 +10,7 @@ import { api, isReplaySession, useApi } from '../../lib/api'
 import { STATUS_WORD, areaSummary, type AreaKey } from '../../lib/areaSummary'
 import { WEEKDAYS } from '../../lib/calendar'
 import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
+import { prefersReducedMotion } from '../../lib/motion'
 import { plural } from '../../lib/plural'
 import { REGIONS, exerciseById, type ExerciseId } from '../../lib/seed'
 import { demoUrl, readSide } from '../../lib/day'
@@ -38,6 +40,7 @@ export function Home() {
   const nav = useNavigate()
   const [zoomIdx, setZoomIdx] = useState(1)
   const [focus, setFocus] = useState<AreaKey>('lShoulder')
+  const [reducedMotion] = useState(prefersReducedMotion) // the idle figure stays still
   const [coachOpen, setCoachOpen] = useState(false)
   const region = REGIONS[focus]
   const { data: me } = useApi(() => api.me())
@@ -77,7 +80,7 @@ export function Home() {
               return (
                 <div key={d.date} className="flex min-w-0 flex-col items-center gap-1">
                   <span className="text-base text-muted">{letter}</span>
-                  <span aria-label={done ? `${letter}: done` : today ? `${letter}: today` : `${letter}: not yet`} className={`wk-day ${done ? 'wk-done' : today ? 'wk-today' : 'wk-todo'}`}>
+                  <span role="img" aria-label={done ? `${letter}: done` : today ? `${letter}: today` : `${letter}: not yet`} className={`wk-day ${done ? 'wk-done' : today ? 'wk-today' : 'wk-todo'}`}>
                     {done ? <Check aria-hidden className="h-5 w-5" strokeWidth={3} /> : today ? 'now' : '·'}
                   </span>
                 </div>
@@ -104,12 +107,12 @@ export function Home() {
             <Button variant="inverse" className="w-12 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
           </div>
         </div>
-        <div className="hp-tabs" role="tablist" aria-label="Affected areas">
+        <div className="hp-tabs" role="tablist" aria-label="Affected areas" onKeyDown={arrowSelect}>
           {AR_ORDER.map((k) => {
             const r = REGIONS[k]
             const on = k === focus
             return (
-              <button key={k} type="button" role="tab" aria-selected={on} className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
+              <button key={k} type="button" role="tab" aria-selected={on} aria-controls="area-panel" className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
                 <span className={`hp-dot hp-dot-${r.status}`} aria-hidden />
                 <span>{r.title}</span>
                 <span className={`hp-st hp-st-${r.status}`}>{STATUS_WORD[r.status]}</span>
@@ -118,7 +121,7 @@ export function Home() {
           })}
         </div>
         <div className="hp-stage relative">
-          <AvatarPanel clip="idle" camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
+          <AvatarPanel clip="idle" autoplay={!reducedMotion} camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
           <StageMinis k={focus} name={region.title} view={view} />
         </div>
         <div className="hp-actions">

@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mic } from '../../design/Icon'
+import { useReturnFocus } from '../../design/Overlay'
 import { api, useApi } from '../../lib/api'
 import { readDay, therapistLine, type Day } from '../../lib/day'
 import { FULL_MAX, GENTLE_MAX, readCheckinPain } from '../../lib/plan'
@@ -27,11 +28,12 @@ function speechRecognition(): (new () => SR) | null {
  *  bubble. New or worse pain is never answered here: it goes to the check-in, which is what
  *  writes a therapist flag. Free text is keyword-routed; the mic only fills the input. */
 export function CoachChat({ open, onOpenChange, onBegin }: Props) {
+  const returnFocus = useReturnFocus()
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="lc-scrim" />
-        <Dialog.Content className="lc-panel">
+        <Dialog.Content {...returnFocus} className="lc-panel">
           <ChatBody onBegin={onBegin} />
         </Dialog.Content>
       </Dialog.Portal>

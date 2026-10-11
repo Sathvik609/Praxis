@@ -68,7 +68,7 @@ export function Therapist() {
         </Link>
       </header>
 
-      <div className="th-grid grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">
+      <div role="main" className="th-grid grid flex-1 grid-cols-[minmax(280px,1fr)_3fr] gap-6 p-6">
         <Card as="div" padding="sm" className="self-start">
           <h2 className="mb-2 text-2xl">Patients</h2>
           <Field label="Search patients" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Name" className="mb-2" />

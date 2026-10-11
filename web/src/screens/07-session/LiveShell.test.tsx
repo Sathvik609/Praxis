@@ -22,3 +22,10 @@ test('status chip: offline says the rule coach carries on, with the reason as a 
   expect(holder).toHaveAttribute('title', 'model timeout')
   expect(holder).toHaveAccessibleDescription('model timeout')
 })
+
+test('status chip: "thinking" is shown but not announced (the caption that follows is), offline is announced', () => {
+  const { rerender } = render(<AgentStatusChip status={{ state: 'thinking', trigger: 'set_complete', label: 'Claude agent' }} />)
+  expect(screen.getByText('Coach is thinking…').closest('[aria-hidden="true"]')).not.toBeNull()
+  rerender(<AgentStatusChip status={{ state: 'offline', reason: 'model timeout', label: 'Rule-based coach' }} />)
+  expect(screen.getByText('Coach offline · rule coach').closest('[aria-hidden="true"]')).toBeNull()
+})

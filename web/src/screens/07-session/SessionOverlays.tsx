@@ -46,7 +46,7 @@ export function SessionOverlay({
   if (!overlay) return null
   const title = RULE_TITLE[overlay.rule] ?? (overlay.kind === 'stopped' ? 'Session ended' : 'Paused')
   return (
-    <Overlay open title={title}>
+    <Overlay open title={title} alert={overlay.kind === 'stopped' || overlay.rule === 'perception'}>
       <p className="mt-3 text-2xl">{overlay.text}</p>
       {overlay.kind === 'stopped' ? (
         // The service's stop text is the one statement: it writes the therapist flag with the
@@ -90,7 +90,8 @@ export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmi
   const painMax = usePainStopLevel(open)
   if (!open) return null
   return (
-    <Overlay open title="How is the pain right now?">
+    // Escape = Back to session; a stray tap on the backdrop does not dismiss it
+    <Overlay open title="How is the pain right now?" onClose={onCancel} backdropCloses={false}>
       <p className="mt-2 text-muted">Pain at or above {painMax ?? 'your stop level'} ends the session and flags your therapist. Take your time.</p>
       <div className="mt-5"><NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" /></div>
       <div className="mt-6 flex flex-wrap justify-end gap-3">

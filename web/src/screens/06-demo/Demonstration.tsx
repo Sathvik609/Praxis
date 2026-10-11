@@ -5,7 +5,9 @@ import { Button } from '../../design/Button'
 import { Activity, AlertTriangle, Flag, RotateCcw, X } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay, OverlayActions } from '../../design/Overlay'
+import { useModalFocus } from '../../design/useModalFocus'
 import { api, useApi, type Prescription } from '../../lib/api'
+import { prefersReducedMotion } from '../../lib/motion'
 import { dayPosition, markDemoSeen, readDay, saveCheckin, setupUrl, sideOr, startExercise, therapistLine, type Day, type DayCheckin } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
 import { EXERCISES, exerciseById, isHiddenExercise, type ExerciseId } from '../../lib/seed'
@@ -114,6 +116,9 @@ function DemonstrationFor() {
 
   const ctl = useRef<AvatarCtl | null>(null)
   const [complete, setComplete] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  // Reduced motion: the figure waits for Play (the dock's Play / Pause / Replay stay available)
+  const [reducedMotion] = useState(prefersReducedMotion)
   const onComplete = useCallback(() => setComplete(true), [])
   const pos = dayPosition(day, ex.id)
   const sideWord = side === 'right' ? 'Right' : 'Left'
@@ -121,6 +126,8 @@ function DemonstrationFor() {
     setComplete(false)
     ctl.current?.replay()
   }
+  // "Before you start": focus inside while open, Escape = Watch again, focus back on close
+  useModalFocus(modalRef, complete, { onEscape: watchAgain })
   const stopAt = Math.min(7, rx?.stop_rules?.pain_max ?? 7)
   const restTitle = restResult?.stop === 'rest' ? 'Rest today' : restResult?.stop === 'session' ? 'Stopped for today' : 'No exercises today'
 
@@ -137,9 +144,10 @@ function DemonstrationFor() {
         </div>
         {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
       </header>
-      <main className="dth-main" aria-hidden={complete || undefined}>
+      <div className="dth-main" aria-hidden={complete || undefined}>
         <AvatarPanel
           theater
+          autoplay={!reducedMotion}
           overlayTop={92}
           limitDeg={limitDeg}
           ctlRef={ctl}
@@ -155,10 +163,10 @@ function DemonstrationFor() {
             {`Stop if your ${ex.stopIf}.`}
           </p>
         )}
-      </main>
+      </div>
       {complete && (
         <div className="dth-scrim">
-          <div role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">
+          <div ref={modalRef} role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">
             <h2 id="dth-modal-title" className="dth-mtitle">Before you start</h2>
             <p className="dth-msub">{`${ex.name} · ${sideWord} arm`}</p>
             <dl className="dth-rows">
@@ -201,9 +209,9 @@ function DemonstrationFor() {
                 Watch again
               </button>
               {demo ? (
-                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={tick}>I did a set</button>
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={tick}>I did a set</button>
               ) : (
-                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
               )}
               <Overlay
                 open={painRe && !restResult}

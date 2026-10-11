@@ -43,7 +43,7 @@ test('library v2: the artifact header, filters Assigned / All GRASP L2 / Equipme
   const row = screen.getByTestId('choose-cards')
   expect(row.className).toMatch(/grid-cols-3/)
   expect(row.className).toMatch(/max-lg:grid-cols-/)
-  expect(within(row).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  expect(within(row).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
   // eyebrow + tag replace the Today · n / Weekly / Camera coached chips
   const peg = screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })
   expect(within(peg).getByText('Dexterity · timed')).toBeInTheDocument()
@@ -57,7 +57,7 @@ test('library v2: the artifact header, filters Assigned / All GRASP L2 / Equipme
 
 test('Assigned shows the default day in order then the weekly peg test, Arm out to the side preselected, one Start session per card', () => {
   renderChoose()
-  expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
+  expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
   expect(screen.getByRole('button', { name: 'Select Arm out to the side' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getAllByRole('button', { name: /^Start session: / }).map((b) => b.textContent)).toEqual(['Start session', 'Start session', 'Start session'])
   expect(screen.queryByRole('button', { name: 'Begin setup' })).not.toBeInTheDocument()

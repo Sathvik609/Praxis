@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useId, useState, type KeyboardEvent } from 'react'
 import { Button } from '../../design/Button'
+import { arrowSelect } from '../../design/arrowKeys'
 import { TextArea } from '../../design/Field'
 import { api, useApi, type Feedback } from '../../lib/api'
 import { readCheckinPain } from '../../lib/plan'
@@ -61,7 +62,7 @@ function FbFace({ face, active, dim }: { face: (typeof FB_FACES)[number]; active
 
 function FbChoices<T extends string>({ label, options, value, onChange }: { label: string; options: Option<T>[]; value: T | null; onChange: (v: T | null) => void }) {
   return (
-    <div role="radiogroup" aria-label={label} className="fb-choices">
+    <div role="radiogroup" aria-label={label} className="fb-choices" onKeyDown={arrowSelect}>
       {options.map((o) => (
         <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className="fb-choice" onClick={() => onChange(value === o.value ? null : o.value)}>
           <b>{o.label}</b>

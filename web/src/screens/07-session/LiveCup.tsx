@@ -1,6 +1,7 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CupRef, type CupRefMode } from '../../avatar/CupRef'
+import { useModalFocus } from '../../design/useModalFocus'
 import { SESSION_WS_URL } from '../../lib/config'
 import { demoUrl, nextExercise, readDay } from '../../lib/day'
 import type { PraxisEvent } from '../../lib/events'
@@ -50,9 +51,11 @@ const CUE_S = 4
  *  "won't start until you answer" line is not shown. */
 function ProgressionModal({ prompt, basis, whyOpen, whyText, onChoose }: { prompt: Prompt; basis: string; whyOpen: boolean; whyText: string | null; onChoose: (choice: string, index: number) => void }) {
   const id = useId()
+  const ref = useRef<HTMLDivElement>(null)
+  useModalFocus(ref, true) // an answer is needed: no Escape
   return (
     <div className="sx-scrim cup-scrim">
-      <div className="sx-modal cup-modal" role="dialog" aria-modal aria-labelledby={`${id}-t`}>
+      <div ref={ref} className="sx-modal cup-modal" role="dialog" aria-modal aria-labelledby={`${id}-t`}>
         <div className="cup-modal-h">
           <h2 id={`${id}-t`}>Ready to go faster?</h2>
           <span className="cup-tag">Inside your program</span>
@@ -170,6 +173,8 @@ export function LiveCup() {
   const doneVerified = complete ? complete.reaches.filter((r) => r.verified).length : verifiedReaches
   const doneUnverified = complete ? complete.reaches.length - doneVerified : unverified
   const doneOpen = !!complete && !doneClosed && !flow.feedbackOpen
+  const doneRef = useRef<HTMLDivElement>(null)
+  useModalFocus(doneRef, doneOpen) // Next exercise or Finish: no Escape
 
   const stats = (() => {
     if (complete) return { metricLabel: 'Active time', metric: sxClock(activeS), metricSub: 'this exercise', head: 'All arcs complete', dots: { label: 'complete', items: dots.map((): DotState => 'done') } }
@@ -256,7 +261,7 @@ export function LiveCup() {
 
       {doneOpen && (
         <div className="sx-scrim cup-scrim">
-          <div className="sx-modal cup-modal cup-done" role="dialog" aria-modal aria-labelledby="cup-done-t">
+          <div ref={doneRef} className="sx-modal cup-modal cup-done" role="dialog" aria-modal aria-labelledby="cup-done-t">
             <div className="cup-modal-h">
               <h2 id="cup-done-t">Waiter – cup, done</h2>
               <span className="cup-tag cup-tag-mint">{`All ${complete.arcs} arcs complete`}</span>

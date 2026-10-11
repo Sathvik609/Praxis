@@ -35,9 +35,9 @@ test('stopped overlay names the rule and says the therapist is flagged once, in 
   // "therapist is flagged". The service writes the flag with the stop, so its text is the one statement.
   const text = 'Pain 8/10 is at your stop level. Session ended and saved; your therapist is flagged.'
   render(<SessionOverlay overlay={{ kind: 'stopped', rule: 'pain', text }} onResume={vi.fn()} onEnd={vi.fn()} />)
-  expect(screen.getByRole('dialog', { name: 'Session ended · pain at stop level' })).toBeInTheDocument()
+  expect(screen.getByRole('alertdialog', { name: 'Session ended · pain at stop level' })).toBeInTheDocument() // a stop is announced as an alert
   expect(screen.getByText(text)).toBeInTheDocument()
-  const body = screen.getByRole('dialog').textContent ?? ''
+  const body = screen.getByRole('alertdialog').textContent ?? ''
   expect(body.match(/therapist/gi)).toHaveLength(1)
   expect(body.match(/saved/gi)).toHaveLength(1)
   expect(screen.getByRole('button', { name: /Save and continue/ })).toBeInTheDocument()

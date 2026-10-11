@@ -299,7 +299,7 @@ export function RefAvatar({
           </div>
           <div className="av-reps">
             <span className="av-reps-l">{ui.demo && mode === 'run' && !waiting ? 'Watch once, then follow' : 'Reference reps'}</span>
-            <span className="av-ticks" aria-label={`${ui.reps} of ${repsPerSet} reference reps`}>
+            <span className="av-ticks" role="img" aria-label={`${ui.reps} of ${repsPerSet} reference reps`}>
               {Array.from({ length: repsPerSet }, (_, i) => <i key={i} className={i < ui.reps ? 'is-done' : ''} />)}
             </span>
           </div>
