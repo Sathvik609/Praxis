@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useId, useState, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
 import { Chip } from '../../design/Chip'
+import { useModalFocus } from '../../design/useModalFocus'
+import { arrowSelect } from '../../design/arrowKeys'
 import { usePainStopLevel } from '../../lib/api'
 import { plural } from '../../lib/plural'
 import type { AgentStatus, CoachSource } from '../../session/agent'
@@ -372,10 +374,13 @@ export function SxHold({
   resumeByPrompt?: boolean
 }) {
   const id = useId()
+  const ref = useRef<HTMLDivElement>(null)
+  // not modal (the control bar stays usable): focus moves in on open and back on close
+  useModalFocus(ref, open, { trap: false })
   if (!open) return null
   return (
     <div className="sx-hold-wrap">
-      <div className="sx-hold" role="alertdialog" aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`}>
+      <div ref={ref} className="sx-hold" role="alertdialog" aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`}>
         <div className="sx-hold-head">
           <h2 id={`${id}-t`}>{title}</h2>
           <span className="sx-hold-time" aria-label={`${kind === 'resting' ? 'resting' : 'paused'} for ${seconds} seconds`}>{clock(seconds)}</span>
@@ -389,7 +394,7 @@ export function SxHold({
         )}
         {prompt && <div className="sx-prompt">{prompt}</div>}
         {!resumeByPrompt && (
-          <button type="button" className="sx-btn sx-btn-primary sx-btn-wide" autoFocus onClick={primary.onClick}>{primary.label}</button>
+          <button type="button" className="sx-btn sx-btn-primary sx-btn-wide" data-autofocus onClick={primary.onClick}>{primary.label}</button>
         )}
         {onEnd && <button type="button" className="sx-linkbtn sx-hold-end" onClick={onEnd}>End session instead</button>}
       </div>
@@ -447,21 +452,15 @@ export function SxEndDialog({ open, done, noun, onPain, onEnd, onClose }: { open
     setWasOpen(open)
     if (!open) setPick(null)
   }
-  useEffect(() => {
-    if (!open) return
-    const k = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', k)
-    return () => window.removeEventListener('keydown', k)
-  }, [open, onClose])
+  const ref = useRef<HTMLDivElement>(null)
+  useModalFocus(ref, open, { onEscape: onClose })
   if (!open) return null
   return (
     <div className="sx-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="sx-modal" role="dialog" aria-modal aria-labelledby={`${id}-t`}>
+      <div ref={ref} className="sx-modal" role="dialog" aria-modal aria-labelledby={`${id}-t`}>
         <h2 id={`${id}-t`}>Ending the session</h2>
         <p className="sx-modal-sub">{`The ${done} ${plural(done, noun)} the camera verified so far ${done === 1 ? 'is' : 'are'} saved either way. Telling us why helps your therapist plan your next visit.`}</p>
-        <div className="sx-reasons" role="radiogroup" aria-label="Why are you ending?">
+        <div className="sx-reasons" role="radiogroup" aria-label="Why are you ending?" onKeyDown={arrowSelect}>
           <button type="button" role="radio" aria-checked={pick === 'pain'} className="sx-reason sx-reason-pain" onClick={() => setPick('pain')}>I have pain or feel unwell</button>
           {END_REASONS.map(([k, l]) => (
             <button key={k} type="button" role="radio" aria-checked={pick === k} className="sx-reason" onClick={() => setPick(k)}>{l}</button>
@@ -470,7 +469,7 @@ export function SxEndDialog({ open, done, noun, onPain, onEnd, onClose }: { open
         <div className="sx-modal-foot">
           <p>{painMax != null ? `Pain of ${painMax} or more ends practice for today and flags your therapist.` : 'Pain at your stop level ends practice for today and flags your therapist.'}</p>
           <div className="sx-end-actions">
-            <button type="button" className="sx-btn sx-btn-secondary" autoFocus onClick={onClose}>Go back</button>
+            <button type="button" className="sx-btn sx-btn-secondary" data-autofocus onClick={onClose}>Go back</button>
             <button type="button" className="sx-btn sx-btn-primary" disabled={!pick} onClick={() => (pick === 'pain' ? onPain() : pick && onEnd(pick))}>End session</button>
           </div>
         </div>

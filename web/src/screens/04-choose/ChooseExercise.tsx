@@ -2,6 +2,8 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
+import { arrowSelect } from '../../design/arrowKeys'
+import { useReturnFocus } from '../../design/Overlay'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Checkbox } from '../../design/Checkbox'
@@ -28,11 +30,12 @@ function readEquipment(): EquipmentId[] {
 /** Centered sheet on the Radix Dialog: closes on Escape and on the overlay, always has a
  *  title and a description for assistive tech. */
 function Sheet({ open, onOpenChange, title, description, children }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; description: string; children: ReactNode }) {
+  const returnFocus = useReturnFocus()
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="ui-scrim fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
-        <Dialog.Content className="ui-dialog fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[min(880px,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-[var(--r-card)] bg-surface p-8 text-ink shadow-[var(--shadow-2)]">
+        <Dialog.Content {...returnFocus} className="ui-dialog fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[min(880px,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-[var(--r-card)] bg-surface p-8 text-ink shadow-[var(--shadow-2)]">
           <div className="flex items-start gap-3">
             <Dialog.Title className="text-3xl">{title}</Dialog.Title>
             <Dialog.Close asChild>
@@ -106,7 +109,7 @@ export function ChooseExercise() {
             <p className="lib-sub text-muted">Assigned exercises first. Tasks the laptop camera can verify open a coached session.</p>
           </div>
           <div className="lib-head-right">
-            <div role="radiogroup" aria-label="Show exercises" className="lib-filters">
+            <div role="radiogroup" aria-label="Show exercises" className="lib-filters" onKeyDown={arrowSelect}>
               {FILTERS.map(([v, t]) => (
                 <button key={v} type="button" role="radio" aria-checked={filter === v} className="lib-filter" onClick={() => setFilter(v)}>
                   {t}

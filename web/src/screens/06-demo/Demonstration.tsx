@@ -5,6 +5,7 @@ import { Button } from '../../design/Button'
 import { Activity, AlertTriangle, Flag, RotateCcw, X } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay, OverlayActions } from '../../design/Overlay'
+import { useModalFocus } from '../../design/useModalFocus'
 import { api, useApi, type Prescription } from '../../lib/api'
 import { dayPosition, markDemoSeen, readDay, saveCheckin, setupUrl, sideOr, startExercise, therapistLine, type Day, type DayCheckin } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
@@ -114,6 +115,7 @@ function DemonstrationFor() {
 
   const ctl = useRef<AvatarCtl | null>(null)
   const [complete, setComplete] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
   const onComplete = useCallback(() => setComplete(true), [])
   const pos = dayPosition(day, ex.id)
   const sideWord = side === 'right' ? 'Right' : 'Left'
@@ -121,6 +123,8 @@ function DemonstrationFor() {
     setComplete(false)
     ctl.current?.replay()
   }
+  // "Before you start": focus inside while open, Escape = Watch again, focus back on close
+  useModalFocus(modalRef, complete, { onEscape: watchAgain })
   const stopAt = Math.min(7, rx?.stop_rules?.pain_max ?? 7)
   const restTitle = restResult?.stop === 'rest' ? 'Rest today' : restResult?.stop === 'session' ? 'Stopped for today' : 'No exercises today'
 
@@ -158,7 +162,7 @@ function DemonstrationFor() {
       </div>
       {complete && (
         <div className="dth-scrim">
-          <div role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">
+          <div ref={modalRef} role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">
             <h2 id="dth-modal-title" className="dth-mtitle">Before you start</h2>
             <p className="dth-msub">{`${ex.name} · ${sideWord} arm`}</p>
             <dl className="dth-rows">
@@ -201,9 +205,9 @@ function DemonstrationFor() {
                 Watch again
               </button>
               {demo ? (
-                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={tick}>I did a set</button>
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={tick}>I did a set</button>
               ) : (
-                <button type="button" className="dth-mbtn dth-mbtn-1" autoFocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
               )}
               <Overlay
                 open={painRe && !restResult}

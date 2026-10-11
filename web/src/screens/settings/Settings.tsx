@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { applyTheme, getTheme, type Theme } from '../../app/theme'
+import { arrowSelect } from '../../design/arrowKeys'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Overlay, OverlayActions } from '../../design/Overlay'
@@ -84,7 +85,7 @@ export function Settings() {
                 title="Theme"
                 sub={theme === 'auto' ? 'Follows your device' : theme === 'dark' ? 'Low-glare navy for evenings' : 'Light is the default'}
                 control={
-                  <div role="radiogroup" aria-label="Theme" className="st-seg">
+                  <div role="radiogroup" aria-label="Theme" className="st-seg" onKeyDown={arrowSelect}>
                     {THEMES.map(([v, l]) => (
                       <button key={v} type="button" role="radio" aria-checked={theme === v} onClick={() => pick(v)}>
                         {l}

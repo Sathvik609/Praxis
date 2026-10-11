@@ -13,7 +13,9 @@ type Head = { name: string; word: string; headline: string }
 export function AreaDetail({ k, head, view, goal, onGo }: { k: AreaKey; head: Head; view: AreaView | AreaEmpty; goal: { text: string | null; attempts: number }; onGo: (to: string) => void }) {
   const v = 'name' in view ? view : null
   return (
-    <section key={k} className={`ad-card ad2 ad-${k}`} aria-live="polite" aria-label={`${head.name} details`}>
+    // the panel of Home's "Affected areas" tabs; not a live region (a tab change would read the
+    // whole card), the selected tab says which area it shows
+    <section key={k} id="area-panel" role="tabpanel" className={`ad-card ad2 ad-${k}`} aria-label={`${head.name} details`}>
       <header className="ad-head">
         <span className="ad-ico" aria-hidden>
           <svg viewBox="0 0 24 24">

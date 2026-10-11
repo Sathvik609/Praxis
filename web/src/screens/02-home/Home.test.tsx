@@ -92,15 +92,15 @@ test('start session goes to Choose (design v2 flow: Choose → Demo → Check-in
 
 test('the area card header shows the status word as text; tabs switch the focus area', async () => {
   await renderHome()
-  const shoulder = screen.getByRole('region', { name: 'Left shoulder details' })
+  const shoulder = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
   expect(within(shoulder).getByText('Watch')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('tab', { name: /Left hand/ }))
   expect(screen.getByRole('tab', { name: /Left hand/ })).toHaveAttribute('aria-selected', 'true')
-  const hand = screen.getByRole('region', { name: 'Left hand details' })
+  const hand = screen.getByRole('tabpanel', { name: 'Left hand details' })
   expect(within(hand).getByText('Focus')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('tab', { name: /Left elbow/ }))
-  const elbow = screen.getByRole('region', { name: 'Left elbow details' })
+  const elbow = screen.getByRole('tabpanel', { name: 'Left elbow details' })
   expect(within(elbow).getByText('Stable')).toBeInTheDocument()
   expect(within(elbow).getByText('No measure for this area in your program.')).toBeInTheDocument()
 })
@@ -108,7 +108,7 @@ test('the area card header shows the status word as text; tabs switch the focus 
 test('shoulder numbers come from the last live arm session: best verified peak, never an unverified one', async () => {
   mockApi(routes({ '/api/sessions': { sessions: [ARM, { ...ARM, id: 'r1', date: '2026-10-06', started_at: '2026-10-06T09:00:00', source: 'replay', replay: true, summary: { ...ARM.summary, camera: { peak_deg: [95], peak_verified: [true] } } }] } }))
   await renderHome()
-  const card = screen.getByRole('region', { name: 'Left shoulder details' })
+  const card = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
   expect(await within(card).findByText('88°')).toBeInTheDocument()
   expect(within(card).getByRole('img', { name: '88 of 90 degrees' })).toBeInTheDocument()
   expect(within(card).getByText("At today's safe limit")).toBeInTheDocument()
@@ -119,7 +119,7 @@ test('shoulder numbers come from the last live arm session: best verified peak, 
 
 test('without an arm session the shoulder says when it starts, with no invented number', async () => {
   await renderHome()
-  const card = screen.getByRole('region', { name: 'Left shoulder details' })
+  const card = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
   expect(await within(card).findByText('Starts after your next arm session.')).toBeInTheDocument()
   expect(within(card).queryByRole('img')).not.toBeInTheDocument()
 })
@@ -130,7 +130,7 @@ test('"Sample" is visible whenever a sample value is shown, and only then', asyn
   expect(screen.queryByText('Sample')).not.toBeInTheDocument() // shoulder: no sample values
   fireEvent.click(screen.getByRole('tab', { name: /Left hand/ }))
   expect(await screen.findByText('Sample')).toBeInTheDocument()
-  const hand = screen.getByRole('region', { name: 'Left hand details' })
+  const hand = screen.getByRole('tabpanel', { name: 'Left hand details' })
   expect(within(hand).getByText('Getting quicker')).toBeInTheDocument()
   expect(within(hand).getByText('3.8 s faster since 20 Sep')).toBeInTheDocument()
   expect(within(hand).getByRole('img', { name: /1 Aug 68 s \(sample\)/ })).toBeInTheDocument()

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AvatarPanel, type Hotspot } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
+import { arrowSelect } from '../../design/arrowKeys'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { Check, ZoomIn, ZoomOut } from '../../design/Icon'
@@ -104,12 +105,12 @@ export function Home() {
             <Button variant="inverse" className="w-12 px-0!" aria-label="Zoom out" disabled={zoomIdx === 0} icon={<ZoomOut />} onClick={() => setZoomIdx((i) => Math.max(0, i - 1))} />
           </div>
         </div>
-        <div className="hp-tabs" role="tablist" aria-label="Affected areas">
+        <div className="hp-tabs" role="tablist" aria-label="Affected areas" onKeyDown={arrowSelect}>
           {AR_ORDER.map((k) => {
             const r = REGIONS[k]
             const on = k === focus
             return (
-              <button key={k} type="button" role="tab" aria-selected={on} className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
+              <button key={k} type="button" role="tab" aria-selected={on} aria-controls="area-panel" className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
                 <span className={`hp-dot hp-dot-${r.status}`} aria-hidden />
                 <span>{r.title}</span>
                 <span className={`hp-st hp-st-${r.status}`}>{STATUS_WORD[r.status]}</span>
