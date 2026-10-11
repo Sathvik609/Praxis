@@ -44,7 +44,7 @@ export type CameraView = 'side' | 'front' | 'table'
 
 const FIND: Record<CameraView, string> = {
   side: 'Turn your practising side to the camera.',
-  front: 'Face the camera with both shoulders and hips in view.',
+  front: 'Face the camera with your head, both shoulders and hips in view.',
   table: 'Show all four corner markers of the sheet. Nothing is counted until I can see it.',
 }
 const LOST: Record<CameraView, string> = {

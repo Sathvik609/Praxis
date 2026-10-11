@@ -285,7 +285,7 @@ def build_checks(
     if not needs_sheet:
         return [
             row("camera", "Camera permission", camera_ok, "Allow the camera in your browser."),
-            row("person", "One person in view", present, "Face the camera with both shoulders and your hips in view."),
+            row("person", "One person in view", present, "Face the camera with your head, both shoulders and your hips in view."),
             row(
                 "side_view",
                 "Facing the camera",

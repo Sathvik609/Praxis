@@ -36,7 +36,7 @@ The camera is processed in memory on the server and never stored. The red **"Liv
 
 **Arm out to the side** needs no printout:
 1. Home → **Start session** → **Arm out to the side** → watch the demonstration → answer the check-in (pain 0–10).
-2. Camera setup: put the laptop on a table about 2 m away so that your shoulders and hips are in view, facing the camera.
+2. Camera setup: put the laptop on a table about 2 m away, facing you, so that your **head, shoulders and hips** are in view. The face is never analysed, but the pose model finds a person by the head, so a cropped-out head means no detection (measured, report §8.4).
 3. Lift the arm out to the side to about shoulder height, hold for 3 s, then lower it. The angle shown is a camera-relative progress estimate, not a clinical measurement, and the 90° ceiling is enforced in code.
 4. Things to try: **lean your trunk** sideways while lifting (a posture correction appears; the third lean pauses the set and flags the therapist), or **walk out of view** (the session pauses and says why, then resumes when you come back). Tapping **Pain / feel unwell** with a 7 or higher stops the session.
 
@@ -61,6 +61,8 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 | Runs on AWS Graviton with COOL | report §6, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
 | OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl`, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
-| Agent evaluation (real Claude, 12 scenarios × 3) and the rule-only ablation | [`evaluation/results/agent_v0_anthropic.md`](../evaluation/results/agent_v0_anthropic.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md) |
+| Agent evaluation (real Claude, 15 scenarios × 3) and the rule-only ablation | [`evaluation/results/agent_v0_anthropic.md`](../evaluation/results/agent_v0_anthropic.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md) |
+| Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
+| Camera robustness (107 synthetic conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
 | Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §8 |
 | What is not done yet | report §9 (Limitations) |
