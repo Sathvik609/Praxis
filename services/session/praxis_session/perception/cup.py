@@ -11,6 +11,11 @@ whole reach and the cup base was seen resting on the destination; otherwise it i
 is reported and the sequence re-anchors. The slow -> fast phase switch is explicit
 (set_phase), never automatic: the coach proposes and the patient confirms.
 
+Reach time (11 Oct 2026): `clear_frames` stationary frames confirm a placement, but the
+placement is timed at the first frame of that run (`t_placed` in the `placed` state_change), so
+reach_ms is lift -> arrival at any frame rate (it was late by clear_frames - 1 frame periods,
++200 ms at 10 fps).
+
 Sprint D-SEG-3: the base colour can be sampled from a tap (sample_cup_colour; the blue band
 stays the default), and a placement that was inferred from the hand while the base was hidden
 still counts as verified when the base was seen within `dot_radius_mm` of the destination at
@@ -181,6 +186,7 @@ class CupFSM:
         self._seq_idx = 0
         self._t_lift = 0.0
         self._t_placed = 0.0
+        self._settle_t = 0.0  # first frame of the current stationary run on the destination
         self._src: int | None = None
         self._dst: int | None = None
         self._lost = False
@@ -299,6 +305,7 @@ class CupFSM:
 
     def _enter_over(self, obs: CupObservation, k: int, occluded: bool) -> list[Event]:
         self._dst, self._occluded, self._count = k, occluded, 1
+        self._settle_t = obs.t
         self._rest_seen_t = None if occluded else obs.t
         evs = [self._go("over_dot", obs.t, to_dot=k)]
         return evs + self._maybe_place(obs)
@@ -312,11 +319,15 @@ class CupFSM:
                 return [self._go("in_transit", obs.t)]
             moved = self._last_cup is not None and _d(cup, self._last_cup) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
+            if self._count == 1:
+                self._settle_t = obs.t
             self._occluded = False
             self._rest_seen_t = obs.t
         else:
             if obs.hand_mm is not None and _d(obs.hand_mm, dst) <= self.dot_radius_mm:
                 self._count += 1
+                if self._count == 1:
+                    self._settle_t = obs.t
                 self._occluded = True
             else:
                 self._count = 0
@@ -324,8 +335,8 @@ class CupFSM:
 
     def _maybe_place(self, obs: CupObservation) -> list[Event]:
         if self._count >= self.clear_frames:
-            self._t_placed, self._count = obs.t, 0
-            return [self._go("placed", obs.t, to_dot=self._dst)]
+            self._t_placed, self._count = self._settle_t, 0
+            return [self._go("placed", obs.t, to_dot=self._dst, t_placed=self._t_placed)]
         return []
 
     def _in_placed(self, obs: CupObservation, cup) -> list[Event]:
