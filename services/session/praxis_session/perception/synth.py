@@ -51,7 +51,7 @@ def camera_frame(
     yaw_deg: float = 5.0,
     scale: float = 1.0,
     noise_sigma: float = 0.0,
-    hide_marker: int | None = None,
+    hide_marker: int | list[int] | None = None,
     seed: int = 0,
     pegs_mm: list[tuple[float, float]] | None = None,
     peg_bgr: tuple[int, int, int] = (40, 40, 220),
@@ -70,8 +70,9 @@ def camera_frame(
     occlude the way a hand does.
     """
     canon = sheet_canonical(spec, CANON_PX_PER_MM)
-    if hide_marker is not None:
-        cx, cy = spec.marker_centres_mm[hide_marker]
+    hidden = [] if hide_marker is None else [hide_marker] if isinstance(hide_marker, int) else list(hide_marker)
+    for mid in hidden:  # one id, or several (a forearm across two corners)
+        cx, cy = spec.marker_centres_mm[mid]
         s = int(spec.marker_size_mm * CANON_PX_PER_MM / 2) + 2
         c = (int(cx * CANON_PX_PER_MM), int(cy * CANON_PX_PER_MM))
         cv2.rectangle(canon, (c[0] - s, c[1] - s), (c[0] + s, c[1] + s), 255, -1)

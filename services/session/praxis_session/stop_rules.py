@@ -50,6 +50,7 @@ class StopRules:
         self._lean_seen = 0  # the FSM's running lean count at the last lean event
         self._lean_base = 0  # ... and at the last lean pause: the rule re-arms from there
         self._exertion_flagged = False
+        self._exercise_done = False  # cup / NHPT / arm sets complete: nothing left to measure
         self.flags: list[dict[str, Any]] = []
 
     def on_resume(self) -> None:
@@ -127,6 +128,12 @@ class StopRules:
                 # therapist flag; it needs a tap (or the agent's resume prompt after a fresh check).
                 hint = str(e.payload.get("hint") or "Check the camera setup.")
                 out.append(make_event("pause", t=e.t, rule="setup", text=f"Paused so the camera can measure the lift. {hint}", reason=e.payload.get("reason"), hint=hint))
+            elif e.type in ("cup_complete", "nhpt_complete", "arm_complete"):
+                self._exercise_done = True
+            elif e.type == "perception_lost" and self._exercise_done:
+                # The exercise is over and the camera still streams: the patient putting the
+                # sheet away is not a tracking problem (fake-camera e2e, 11 Oct).
+                continue
             elif e.type == "perception_lost":
                 # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
                 missing = e.payload.get("missing") or []

@@ -1,11 +1,14 @@
 {
   "id": "covered_marker",
-  "title": "Covered marker: three unverified reaches, marker 2 under the hand",
+  "title": "Covered markers: the forearm rests across the two bottom corners, three reaches unverified",
   "mode": "cup",
   "steps": [
     {
       "frame": {
-        "hide_marker": 2
+        "hide_marker": [
+          2,
+          3
+        ]
       }
     },
     {
@@ -142,7 +145,7 @@
       ]
     },
     "speak_mentions": [
-      "bottom.right"
+      "bottom"
     ],
     "prompt_kinds": [
       "resume"
@@ -150,5 +153,6 @@
     "resumed_by_patient": true,
     "stopped": false,
     "errors": []
-  }
+  },
+  "notes": "11 Oct: two markers, not one. One covered corner is tolerated live (three-marker RANSAC fit), so a single hidden marker never makes a reach unverified (fake-camera e2e). Losing two corners for >1.5 s during each reach (a forearm resting across the bottom edge) is what yields marker_lost reaches."
 }

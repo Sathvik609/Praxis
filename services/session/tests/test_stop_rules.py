@@ -157,3 +157,16 @@ def test_perception_pause_names_what_was_lost():
     arm = StopRules(SEED_PRESCRIPTION).on_events([make_event("perception_lost", t=3.0, missing=["pose"])])[0]
     assert "shoulder" in arm.payload["text"] and "marker" not in arm.payload["text"]
     assert all("carry on" in e.payload["text"] for e in (sheet, arm))
+
+
+def test_tracking_loss_after_the_exercise_is_complete_does_not_pause():
+    """Fake-camera e2e (11 Oct): once the cup / peg test / arm sets are done the camera keeps
+    streaming; the patient tidying the sheet away must not post 'I lost tracking. Paused' on
+    the done screen (or start an agent setup-recovery run)."""
+    for done in ("cup_complete", "nhpt_complete", "arm_complete"):
+        sr = StopRules(SEED_PRESCRIPTION)
+        assert types(sr.on_events([make_event(done, t=1.0)])) == []
+        assert sr.on_events([make_event("perception_lost", t=3.0, missing=[0, 1, 2, 3])]) == [], done
+    # In the same batch, completion first, then the loss: still no pause.
+    sr = StopRules(SEED_PRESCRIPTION)
+    assert sr.on_events([make_event("cup_complete", t=1.0), make_event("perception_lost", t=1.5, missing=[0])]) == []
