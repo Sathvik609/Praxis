@@ -88,7 +88,7 @@ flowchart LR
 
 **Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called. Added later on 10 Oct and so far scored only with the scripted planner (12/12, 0 violations; agent vs rule-only ablation in `evaluation/results/agent_ablation_v0.md`): MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (`docs/AGENT.md`).
 
-> **Real model (10 Oct 2026, Claude Sonnet 5 via the Anthropic API, dev):** 9/9 scenarios on each of four consecutive full runs, correct perception tool before action 7/7, 0 guardrail violations, fallback 2/2, human approval 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens and ~$0.39 per full run (`evaluation/results/agent_v0_anthropic.md`, traces `traces/agent/anthropic/`). Bedrock not run yet.
+> **Real model:** 12 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, 10 Oct): 32/36 runs passed (0.889, 95 % Wilson CI 0.747–0.956), 0 guardrail violations, fallbacks 6/6, patient approval respected 20/21, first action p50/p95 4.8/7.6 s, ~$0.07 per session; misses: mcp_down 1/3 (stayed silent on a clean arc, the check expects one line), falling_peaks 2/3, green_cup 2/3 (fix not worded as expected). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
 
 ## 2. OpenCV 5 pipeline per exercise
 

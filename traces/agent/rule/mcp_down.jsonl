@@ -1,5 +1,5 @@
-{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791679122.564685, "session": "eval-mcp_down", "kind": "session"}
-{"type": "reach_complete", "id": 302, "t": 1.0, "to_dot": 1, "verified": true, "reason": null, "arc": 1, "seq": 2, "ts": 1791679122.567204, "session": "eval-mcp_down", "kind": "event"}
-{"type": "arc_complete", "id": 303, "t": 1.0, "arc": 1, "seq": 3, "ts": 1791679122.567518, "session": "eval-mcp_down", "kind": "event"}
-{"action": "instruct", "cue_id": "cup_onto_dot", "reason": "verified reach", "evidence": [302], "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 4, "ts": 1791679122.5675871, "session": "eval-mcp_down", "kind": "decide"}
-{"tool": "speak", "text": "Dot 2. Good.", "ui": {"avatar_clip": "cup"}, "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 5, "ts": 1791679122.567623, "session": "eval-mcp_down", "kind": "action"}
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791680029.632899, "session": "eval-mcp_down", "kind": "session"}
+{"type": "reach_complete", "id": 302, "t": 1.0, "to_dot": 1, "verified": true, "reason": null, "arc": 1, "seq": 2, "ts": 1791680029.6410398, "session": "eval-mcp_down", "kind": "event"}
+{"type": "arc_complete", "id": 303, "t": 1.0, "arc": 1, "seq": 3, "ts": 1791680029.6418188, "session": "eval-mcp_down", "kind": "event"}
+{"action": "instruct", "cue_id": "cup_onto_dot", "reason": "verified reach", "evidence": [302], "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 4, "ts": 1791680029.642164, "session": "eval-mcp_down", "kind": "decide"}
+{"tool": "speak", "text": "Dot 2. Good.", "ui": {"avatar_clip": "cup"}, "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 5, "ts": 1791680029.6422982, "session": "eval-mcp_down", "kind": "action"}
