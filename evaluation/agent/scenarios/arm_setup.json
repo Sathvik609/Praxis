@@ -1,0 +1,87 @@
+{
+  "id": "arm_setup",
+  "title": "Arm out to the side: the patient sits side-on to the camera for 3 s",
+  "mode": "arm",
+  "steps": [
+    {
+      "pose": {
+        "frontal": false,
+        "n": 40,
+        "dt": 0.1
+      }
+    },
+    {
+      "run": {
+        "feed": {
+          "pose": {
+            "frontal": true
+          }
+        }
+      }
+    },
+    {
+      "answer": {
+        "kind": "resume",
+        "choice": "accept"
+      }
+    }
+  ],
+  "script": {
+    "pause": [
+      {
+        "tool": "check_setup"
+      },
+      {
+        "tool": "speak",
+        "if": "check_setup.first_hint",
+        "args": {
+          "text": "{check_setup.first_hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "recalibrate"
+      },
+      {
+        "tool": "request_resume",
+        "args": {
+          "reason": "The camera sees you from the front now.",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "speak",
+        "if": "request_resume.hint",
+        "args": {
+          "text": "Still not quite: {request_resume.hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "pause:setup"
+    ],
+    "perceive_before": {
+      "speak": [
+        "check_setup"
+      ],
+      "request_resume": [
+        "check_setup",
+        "recalibrate"
+      ]
+    },
+    "speak_mentions": [
+      "face the camera"
+    ],
+    "prompt_kinds": [
+      "resume"
+    ],
+    "resumed_by_patient": true,
+    "stopped": false,
+    "errors": []
+  }
+}

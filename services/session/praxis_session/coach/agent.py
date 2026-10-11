@@ -20,6 +20,10 @@ Before any planner is called, a run takes one slot from the process-wide `DailyR
 blocked run in a session writes `agent_error {error_kind: "daily_cap"}` and `agent_status
 offline` ("Daily agent limit reached · rule coach continues"), later ones an `agent_skip` row;
 the rule coach carries on, and the next UTC day the agent runs again.
+
+Every run end and every agent error is also one JSON line on stdout (`agent/metrics.py`,
+CloudWatch-ready) and feeds the `/api/agent/metrics` aggregate. `agent_run` trace rows carry
+the autonomy `policy_version` (agent/tools.py `AUTONOMY`).
 """
 from __future__ import annotations
 
@@ -29,6 +33,7 @@ from typing import Any
 
 from praxis_session.agent import tools as T
 from praxis_session.agent.budget import DAILY_CAP_REASON, DailyRunBudget
+from praxis_session.agent.metrics import METRICS, AgentMetrics
 from praxis_session.agent.model import RUN_TIMEOUT_S, RunContext, build_prompt, classify_error
 
 # Which checkpoint wins when several coalesce into one run.
@@ -43,7 +48,7 @@ def _rank(trigger: str) -> int:
 class AgentCoach:
     name = "agent"
 
-    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS, daily: DailyRunBudget | None = None) -> None:
+    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS, daily: DailyRunBudget | None = None, metrics: AgentMetrics | None = None) -> None:
         self.planner = planner
         self.handle = handle
         self.registry = registry
@@ -52,6 +57,7 @@ class AgentCoach:
         self.max_runs = max_runs
         self.daily = daily  # None: no daily cap (evaluation, tests); main.py passes AGENT_CFG.budget
         self._cap_notified = False
+        self.metrics = METRICS if metrics is None else metrics
         self.pending: list[tuple[str, list[int], float]] = []
         self.offline = False
         self.runs: list[dict[str, Any]] = []  # per-run outcome (evaluation reads it)
@@ -116,7 +122,7 @@ class AgentCoach:
         run = h.begin_run(trigger, transport=preferred)
         h.status("thinking", trigger)
         model = getattr(self.planner, "model", "")
-        s.trace.log("agent_run", phase="start", trigger=trigger, model=model, transport=preferred, also=also, label=self.label, run=run.id)
+        s.trace.log("agent_run", phase="start", trigger=trigger, model=model, transport=preferred, also=also, label=self.label, run=run.id, policy_version=T.POLICY_VERSION)
         ctx = RunContext(handle=h, trigger=trigger, evidence=evidence, prompt=build_prompt(h, trigger, evidence, also), also=also, registry=self.registry)
         t0 = time.perf_counter()
         res, err = None, None
@@ -130,10 +136,12 @@ class AgentCoach:
         transport = res.transport if res is not None else preferred
         if res is not None and res.mcp_error:
             s.trace.log("agent_error", error_kind="mcp", message=res.mcp_error, fallback="direct", run=run.id)
+            self.metrics.error(session=s.session_id, error_kind="mcp", message=res.mcp_error, trigger=trigger, fallback="direct")
         if err is not None:
             kind = "timeout" if isinstance(err, asyncio.TimeoutError) else classify_error(err)
             message = str(err)[:200] or type(err).__name__
             s.trace.log("agent_error", error_kind=kind, message=message, run=run.id)
+            self.metrics.error(session=s.session_id, error_kind=kind, message=message, trigger=trigger, fallback="rule_coach")
             h.status("offline", trigger, reason=f"Coach offline · rule coach ({kind})")
             self.offline = True
             outcome = "error"
@@ -146,9 +154,10 @@ class AgentCoach:
             "phase": "end", "trigger": trigger, "model": model, "transport": transport, "ms": ms,
             "input_tokens": res.input_tokens if res else None, "output_tokens": res.output_tokens if res else None,
             "outcome": outcome, "tool_calls": run.calls, "actions": run.actions, "first_action_ms": run.first_action_ms,
-            "label": self.label, "run": run.id,
+            "label": self.label, "run": run.id, "policy_version": T.POLICY_VERSION,
         }
         s.trace.log("agent_run", **row)
+        self.metrics.run(session=s.session_id, trigger=trigger, outcome=outcome, ms=ms, first_action_ms=run.first_action_ms, tool_calls=run.calls, actions=run.actions, input_tokens=row["input_tokens"], output_tokens=row["output_tokens"], transport=transport, model=model, policy_version=T.POLICY_VERSION)
         if err is not None:
             row["error_kind"] = kind
         self.runs.append(row)
@@ -158,8 +167,10 @@ class AgentCoach:
         """Over the daily cap: no model call; say so once per session, then the rule coach carries on."""
         h, s = self.handle, self.handle.session
         message = f"daily agent limit reached ({self.daily.limit} runs per UTC day); model not called"
+        self.metrics.run(session=s.session_id, trigger=trigger, outcome="daily_cap", policy_version=T.POLICY_VERSION)
         if not self._cap_notified:
             s.trace.log("agent_error", error_kind="daily_cap", message=message, trigger=trigger)
+            self.metrics.error(session=s.session_id, error_kind="daily_cap", message=message, trigger=trigger, fallback="rule_coach")
             h.status("offline", trigger, reason=DAILY_CAP_REASON)
             self._cap_notified = True
         else:

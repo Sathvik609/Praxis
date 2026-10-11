@@ -33,8 +33,9 @@ flowchart LR
         subgraph AG["Agent coach (built; off by default)"]
             AC["AgentCoach (coach/agent.py)<br/>at checkpoints only"]
             PL["StrandsPlanner · Claude Sonnet 5<br/>Anthropic API (dev) today"]
-            MCP["FastMCP 3.4 servers in-app<br/>/mcp/perception · /mcp/exertion · /mcp/coach"]
-            TL["agent/tools.py<br/>14 tools, guardrails, clamps"]
+            MCP["FastMCP 3.4 servers in-app<br/>/mcp/perception · /mcp/exertion · /mcp/coach<br/>loopback or X-Praxis-MCP-Token, else 403"]
+            TL["agent/tools.py<br/>17 tools, AUTONOMY policy,<br/>guardrails, clamps"]
+            MET["agent/metrics.py<br/>JSON line per run / error → stdout<br/>GET /api/agent/metrics"]
         end
         TRC["Trace (trace.py)<br/>traces/&lt;id&gt;.jsonl · GET /api/trace"]
         DB[("SQLite Store (store.py)<br/>patients, prescriptions vN,<br/>sessions, events, flags")]
@@ -53,7 +54,8 @@ flowchart LR
     SR --> RC
     CS -->|"checkpoint"| AC
     AC --> PL -->|"MCP streamable HTTP"| MCP --> TL
-    TL -->|"check_setup / recalibrate<br/>on latest frame in memory"| PIPE
+    TL -->|"check_setup / recalibrate /<br/>resample_target_colour<br/>on latest frame in memory"| PIPE
+    AC --> MET
     TL -->|"intents, drained by socket loop,<br/>stop re-checked"| CS
     CS --> TRC
     CS -->|"on feedback"| DB
@@ -84,7 +86,7 @@ flowchart LR
 
 **What runs where today.** Edge mode: everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call; the `bedrock` planner refuses to start without it (`agent/model.py` `load_config`).
 
-**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called.
+**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called. Added later on 10 Oct and so far scored only with the scripted planner (12/12, 0 violations; agent vs rule-only ablation in `evaluation/results/agent_ablation_v0.md`): MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (`docs/AGENT.md`).
 
 > **Real model (10 Oct 2026, Claude Sonnet 5 via the Anthropic API, dev):** 9/9 scenarios on each of four consecutive full runs, correct perception tool before action 7/7, 0 guardrail violations, fallback 2/2, human approval 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens and ~$0.39 per full run (`evaluation/results/agent_v0_anthropic.md`, traces `traces/agent/anthropic/`). Bedrock not run yet.
 
@@ -197,7 +199,8 @@ sequenceDiagram
     T->>PL: command recalibrate → new Calibrator (4 markers needed again)
     T-->>AG: calibrated, markers_found [0,1,2,3], rms_mm 0.165, tilt_deg 15.9
     AG->>T: request_resume(reason, evidence)
-    Note over T: allowed only while a rule pause holds,<br/>refused if the patient paused themselves
+    T->>PL: fresh check_setup on the latest frame
+    Note over T: allowed only while a rule pause holds and every check<br/>now passes; else {ok:false, "setup still failing: …"}, nothing shown
     T-->>CS: intent queued: prompt kind resume
     Note over CS: socket loop drains intents and re-checks stop:<br/>a pain stop mid-run drops them (agent_drop)
     CS->>B: prompt "Setup looks good — resume?" (Yes, resume · Not yet)
@@ -212,14 +215,47 @@ Where control sits in this loop:
 | Layer | What it does here | Code |
 |---|---|---|
 | Stop rules | Pause + therapist flag on three unverified reps; also pain ≥ 7, new/worse symptoms, trunk lean ×3, exertion high 60 s, perception loss. Runs before any coach. | `stop_rules.py` `StopRules.on_events`, `on_exertion`, `on_checkin`, `on_pain` |
-| Checkpoint | Only `checkin`, `set_complete`, `arc_complete`, `nhpt_complete`, `pause:failed_reps`, `pause:perception`, `feedback` start an agent run. | `session.py` `CHECKPOINT_EVENTS`, `CHECKPOINT_PAUSES` |
+| Checkpoint | Only `checkin`, `set_complete`, `arc_complete`, `nhpt_complete`, `pause:failed_reps`, `pause:perception`, `pause:setup`, `feedback` start an agent run. | `session.py` `CHECKPOINT_EVENTS`, `CHECKPOINT_PAUSES` |
+| Autonomy | One table: each tool is `autonomous`, `forbidden_after_stop`, `patient_approval` or `never`; `invoke` enforces it and every `agent_run` row carries `policy_version`. | `agent/tools.py` `AUTONOMY`, `invoke` |
+| Plan | `set_session_plan` at check-in; a revision needs new evidence ids and a `because`; `plan` trace rows; `summary.coach.plan` in the report. | `agent/tools.py`, `session.py` `set_plan` |
 | Evidence | Every coach tool must cite event ids that exist in this session's ring, or the call is refused. | `agent/tools.py` `_action_guard` |
 | Clamps | Dose changes (`propose_adjustment`) are clamped by `prescription.clamp`, become a Yes / Keep / Why prompt, and are clamped again by `SessionPipeline.command` on Yes. | `agent/tools.py`, `prescription.py`, `pipeline.py` |
 | Budgets | ≤ 6 tool calls and ≤ 15 s per run, ≤ 60 calls and ≤ 12 runs per session; rest ≤ 120 s. | `agent/tools.py` constants, `agent/model.py` `RUN_TIMEOUT_S`, `coach/agent.py` |
-| Human approval | Resume and every dose change happen only on the patient's tap. Decline changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt` |
+| Human approval | Resume and every dose change happen only on the patient's tap; a resume is offered only after a fresh passing `check_setup`. Decline changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt`; `agent/tools.py` `request_resume` |
+| Security | MCP routes: loopback without proxy headers, or the per-process `X-Praxis-MCP-Token`; patient text reaches the model only as capped, quoted data. | `agent/mcp_server.py` `MCPAccessGuard`; `agent/model.py` `quote_patient_text` |
+| Observability | One JSON log line per run end and per error (CloudWatch-ready); `/api/agent/metrics`. | `agent/metrics.py`, `main.py` |
 | Privacy | No tool result, trace row or model message holds pixels (`assert_no_pixels` on every result). | `agent/tools.py` |
 | Failure | Model error, timeout or refusal → `agent_error`, `agent_status offline`, the rule coach carries on. MCP down → same functions as direct tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
 
-`pause:perception` (lost tracking for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a modal.
+`pause:perception` (lost tracking for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a modal. `pause:setup` (Arm out to the side: the pose is seen but the view gate holds for 3 s, e.g. side-on) follows it too, with the pose facts (`facing` vs `needed_view`, both shoulders, hips, trunk lean) naming the fix (`arm_setup` scenario).
+
+### 3.1 Active perception: the camera result changes the next tool call (green cup)
+
+Scenario `evaluation/agent/scenarios/green_cup.json` (trace `traces/agent/green_cup.jsonl`): the patient uses a green cup. The default HSV band looks for the blue base, so the cup is never seen; with the hand model on, placements are inferred from the hand and reported unverified (`cup_occluded`), and three in a row pause the session.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant PL as SessionPipeline (OpenCV 5)
+    participant CS as CoachSession + StopRules
+    participant AG as AgentCoach
+    participant T as tools (MCP)
+    actor P as Patient
+    PL->>CS: reach_complete verified:false reason:cup_occluded (×3)
+    CS->>AG: pause failed_reps → checkpoint
+    AG->>T: get_set_summary · check_setup
+    T->>PL: fresh ArUco + homography; warpPerspective; cup mask with the current window
+    T-->>AG: markers pass, lighting pass, target: check (cup not seen, colour_source default)
+    AG->>T: resample_target_colour(cup)
+    T->>PL: HSV patch on dot 1 (paper, skipped), dot 0 (green, S 195) → inRange + findContours test
+    T-->>AG: applied: before detected false → after detected true, cup ≈ 60 mm on dot 0
+    AG->>T: speak("…I've tuned the camera to it…") · request_resume
+    T->>PL: fresh check_setup: every check passes (target seen)
+    T-->>CS: resume prompt (Yes / Not yet)
+    P->>CS: Yes, resume
+    PL->>CS: cup moves dot 0 → dot 1: reach_complete verified:true
+```
+
+With the agent off, the same scenario stays paused with a generic message and no reach is ever verified (`evaluation/results/agent_ablation_v0.md`).
 
 More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/TECHNICAL_REPORT.md` §2–§4.

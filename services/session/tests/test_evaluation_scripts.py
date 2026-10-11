@@ -80,9 +80,36 @@ def test_agent_eval_scripted_passes_all_scenarios_without_violations(tmp_path: P
     ag = _load("agent_eval")
     assert ag.main(["--planner", "scripted", "--out", str(tmp_path / "res"), "--traces", str(tmp_path / "tr")]) == 0
     res = json.loads((tmp_path / "res" / "agent_v0.json").read_text())
-    assert res["scenarios"] == 9 and res["task_success"] == 9 and res["guardrail_violations"] == 0
-    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 9
+    assert res["scenarios"] == 12 and res["task_success"] == 12 and res["guardrail_violations"] == 0
+    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 12
     assert "Scripted planner" in (tmp_path / "res" / "agent_v0.md").read_text()
+
+
+def test_agent_eval_rule_baseline_and_ablation(tmp_path: Path):
+    """--planner rule: the same scenarios with the agent off, scored with the shared capability
+    checks; the ablation table compares it with the scripted agent."""
+    ag = _load("agent_eval")
+    out = tmp_path / "res"
+    assert ag.main(["--planner", "scripted", "--out", str(out), "--traces", str(tmp_path / "tr")]) == 0
+    assert ag.main(["--planner", "rule", "--out", str(out), "--traces", str(tmp_path / "tr")]) == 0
+    rule = json.loads((out / "agent_v0_rule.json").read_text())
+    assert rule["guardrail_violations"] == 0
+    caps = {r["id"]: r["capability"] for r in rule["rows"]}
+    assert caps["green_cup"]["target_recovered"] is False and caps["covered_marker"]["camera_checked_resume"] is False
+    assert caps["pain_stop_mid_run"]["stop_honoured"] is True
+    abl = (out / "agent_ablation_v0.md").read_text()
+    assert "Rule coach only (agent off)" in abl and "Agent (scripted planner)" in abl
+    assert "| Resume gated by a fresh camera check | 5/5 | 0/5 |" in abl
+
+
+def test_agent_eval_repeat_reports_a_pass_rate_interval(tmp_path: Path):
+    ag = _load("agent_eval")
+    assert ag.main(["--planner", "scripted", "--repeat", "2", "--scenario", "mcp_down", "--scenario", "falling_peaks", "--out", str(tmp_path), "--traces", str(tmp_path / "tr")]) == 0
+    res = json.loads((tmp_path / "agent_v0.json").read_text())
+    assert res["repeat"] == 2 and len(res["rows"]) == 4
+    assert res["per_scenario"]["mcp_down"] == {"passes": 2, "runs": 2, "rate": 1.0}
+    assert res["pass_rate"] == 1.0 and res["pass_rate_ci95"][1] == 1.0 and res["pass_rate_ci95"][0] < 1.0
+    assert ag.wilson(9, 10)[0] < 0.9 < ag.wilson(9, 10)[1]
 
 
 def test_agent_eval_real_model_needs_a_key_and_confirmation(tmp_path: Path, monkeypatch, capsys):

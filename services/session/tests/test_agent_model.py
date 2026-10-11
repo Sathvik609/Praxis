@@ -175,3 +175,40 @@ def test_strands_planner_falls_back_to_direct_tools_and_calls_them(tmp_path):
     assert coach.payload["text"] == "Nice steady arc." and coach.payload["source"] == "agent"
     row = [r for r in s.trace.tail(20) if r["kind"] == "tool"][-1]
     assert row["transport"] == "direct" and row["name"] == "speak" and row["ok"] is True
+
+
+def test_strands_planner_closes_the_model_client_inside_the_run_loop(tmp_path):
+    """Each run builds a model (and with it an async HTTP client); it is closed before the run
+    returns, on the loop that opened it. Left open, it was garbage-collected after the event
+    loop closed ("Event loop is closed" at eval shutdown) and leaked in the live service."""
+    reg = T.Registry()
+    s = CoachSession(mode="cup", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="cl1")
+    h = reg.register(T.SessionHandle(session=s, pipeline=SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)))
+    e = make_event("arc_complete", t=1.0, arc=1, reaches=4, unverified=0)
+    s.on_events([e], snapshot={}, t=1.0)
+    fake = FakeModel([])
+    closed = []
+
+    class Client:
+        async def close(self):
+            closed.append(asyncio.get_running_loop())
+
+    fake.model.client = Client()
+
+    class Mcp:
+        def __init__(self, url):
+            raise ConnectionError("no MCP")
+
+    cfg = M.load_config({"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": "sk-test"})
+    planner = M.StrandsPlanner(cfg, model_factory=lambda c: fake.model, mcp_factory=Mcp)
+
+    async def go():
+        h.begin_run("arc_complete")
+        try:
+            await planner.run(M.RunContext(handle=h, trigger="arc_complete", evidence=[e.id], prompt="Checkpoint", registry=reg))
+            return asyncio.get_running_loop()
+        finally:
+            h.end_run()
+
+    loop = asyncio.run(go())
+    assert closed == [loop]

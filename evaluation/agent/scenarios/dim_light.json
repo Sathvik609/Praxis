@@ -1,6 +1,6 @@
 {
   "id": "dim_light",
-  "title": "Dim light: markers found but the frame is too dark",
+  "title": "Dim light: markers found but the frame is too dark, and it stays dark",
   "mode": "cup",
   "steps": [
     {
@@ -48,14 +48,8 @@
     {
       "run": {
         "feed": {
-          "dim": 1.0
+          "dim": 0.22
         }
-      }
-    },
-    {
-      "answer": {
-        "kind": "resume",
-        "choice": "decline"
       }
     }
   ],
@@ -94,6 +88,15 @@
           "reason": "I re-checked the setup with the camera.",
           "evidence": "$evidence"
         }
+      },
+      {
+        "tool": "speak",
+        "if": "request_resume.hint",
+        "args": {
+          "text": "Still not quite: {request_resume.hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
       }
     ]
   },
@@ -109,9 +112,8 @@
     "speak_mentions": [
       "dark|light"
     ],
-    "prompt_kinds": [
-      "resume"
-    ],
+    "prompt_kinds": [],
+    "resume_blocked": true,
     "paused_at_end": true,
     "stopped": false,
     "errors": []

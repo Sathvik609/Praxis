@@ -1,0 +1,7 @@
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791679122.5256279, "session": "eval-green_cup", "kind": "session"}
+{"pain_before": 1, "energy": "ok", "minutes": 10, "new_symptoms": false, "has_note": false, "seq": 2, "ts": 1791679122.527651, "session": "eval-green_cup", "kind": "checkin"}
+{"type": "reach_complete", "id": 280, "t": 6.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 3, "ts": 1791679122.527869, "session": "eval-green_cup", "kind": "event"}
+{"type": "reach_complete", "id": 281, "t": 11.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 4, "ts": 1791679122.5279071, "session": "eval-green_cup", "kind": "event"}
+{"type": "reach_complete", "id": 282, "t": 16.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 5, "ts": 1791679122.527937, "session": "eval-green_cup", "kind": "event"}
+{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 6, "ts": 1791679122.527972, "session": "eval-green_cup", "kind": "stop_rule"}
+{"rule": "failed_reps", "detail": "3 consecutive unverified reps (cup_occluded)", "seq": 7, "ts": 1791679122.528, "session": "eval-green_cup", "kind": "flag"}

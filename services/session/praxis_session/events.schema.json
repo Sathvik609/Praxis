@@ -17,6 +17,7 @@
         "setup_checks",
         "perception_lost",
         "perception_regained",
+        "setup_blocked",
         "frame",
         "exercise_start",
         "state_change",

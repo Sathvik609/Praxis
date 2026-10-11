@@ -121,6 +121,12 @@ class StopRules:
                         self._unverified_streak = 0  # fires again after the next N, not once per session
                         out.append(make_event("pause", t=e.t, rule="failed_reps", text="Three in a row I couldn't verify. Let's pause and check the setup."))
                         out.append(self._flag(e.t, "failed_reps", f"{self.th.failed_reps} consecutive unverified reps ({e.payload.get('reason')})"))
+            elif e.type == "setup_blocked":
+                # 10 Oct: the camera sees the patient but cannot measure (side-on for a front-view
+                # lift, hips out of view) for SETUP_BLOCK_S: pause with the specific fix. Not a
+                # therapist flag; it needs a tap (or the agent's resume prompt after a fresh check).
+                hint = str(e.payload.get("hint") or "Check the camera setup.")
+                out.append(make_event("pause", t=e.t, rule="setup", text=f"Paused so the camera can measure the lift. {hint}", reason=e.payload.get("reason"), hint=hint))
             elif e.type == "perception_lost":
                 # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
                 out.append(make_event("pause", t=e.t, rule="perception", text="I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.", missing=e.payload.get("missing")))

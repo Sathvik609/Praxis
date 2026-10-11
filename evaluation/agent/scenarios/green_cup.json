@@ -1,0 +1,187 @@
+{
+  "id": "green_cup",
+  "title": "A green cup: the camera cannot see it, the agent re-samples its colour with OpenCV",
+  "mode": "cup",
+  "steps": [
+    {
+      "frame": {
+        "cup_dot": 0,
+        "cup_bgr": [
+          60,
+          170,
+          40
+        ]
+      }
+    },
+    {
+      "checkin": {
+        "pain": 1
+      }
+    },
+    {
+      "run": {}
+    },
+    {
+      "events": [
+        {
+          "type": "reach_complete",
+          "t": 6,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 1140,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 11,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 1340,
+          "arc": 1,
+          "phase": "slow"
+        },
+        {
+          "type": "reach_complete",
+          "t": 16,
+          "to_dot": 1,
+          "from_dot": 0,
+          "verified": false,
+          "reason": "cup_occluded",
+          "reach_ms": 1540,
+          "arc": 1,
+          "phase": "slow"
+        }
+      ]
+    },
+    {
+      "run": {}
+    },
+    {
+      "answer": {
+        "kind": "resume",
+        "choice": "accept"
+      }
+    },
+    {
+      "track": [
+        {
+          "cup_dot": 0,
+          "cup_bgr": [
+            60,
+            170,
+            40
+          ],
+          "n": 4
+        },
+        {
+          "cup_mm": [
+            65.59,
+            108.35
+          ],
+          "cup_bgr": [
+            60,
+            170,
+            40
+          ],
+          "n": 3
+        },
+        {
+          "cup_dot": 1,
+          "cup_bgr": [
+            60,
+            170,
+            40
+          ],
+          "n": 9
+        }
+      ]
+    }
+  ],
+  "script": {
+    "checkin": [
+      {
+        "tool": "get_prescription"
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "Slow arcs today, one dot at a time.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ],
+    "pause": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "check_setup"
+      },
+      {
+        "tool": "resample_target_colour",
+        "unless": "check_setup.measures.target_seen",
+        "args": {
+          "target": "cup",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "speak",
+        "if": "resample_target_colour.applied",
+        "args": {
+          "text": "I couldn't see your cup's colour. I've tuned the camera to it and can see the cup now.",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "speak",
+        "unless": "resample_target_colour.applied",
+        "args": {
+          "text": "{check_setup.first_hint}",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "request_resume",
+        "args": {
+          "reason": "The camera can see your cup now.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "checkin",
+      "pause:failed_reps"
+    ],
+    "perceive_before": {
+      "resample_target_colour": [
+        "check_setup"
+      ],
+      "request_resume": [
+        "check_setup",
+        "resample_target_colour"
+      ]
+    },
+    "speak_mentions": [
+      "colou?r"
+    ],
+    "resample_applied": true,
+    "verified_after_resample": 1,
+    "prompt_kinds": [
+      "resume"
+    ],
+    "resumed_by_patient": true,
+    "stopped": false,
+    "errors": []
+  }
+}

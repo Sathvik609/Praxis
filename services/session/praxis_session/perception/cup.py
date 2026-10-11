@@ -75,18 +75,21 @@ class CupSheetState:
         self.colour_range = rng
         return rng
 
-    def cup_mask(self, canonical_bgr: np.ndarray) -> np.ndarray:
+    def cup_mask(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> np.ndarray:
+        """`colour_range`: "current" (the sampled window if any, else the default blue band),
+        None (the default band) or a window dict to test without applying it (agent resample)."""
+        rng = self.colour_range if isinstance(colour_range, str) else colour_range
         hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
-        if self.colour_range is None:
+        if rng is None:
             mask = cv2.inRange(hsv, self.lo, self.hi)
         else:
-            mask = hue_window_mask(hsv, self.colour_range)
+            mask = hue_window_mask(hsv, rng)
         k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         return cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
 
-    def cup_mm(self, canonical_bgr: np.ndarray) -> tuple[float, float, float] | None:
+    def cup_mm(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> tuple[float, float, float] | None:
         contours, _ = cv2.findContours(
-            self.cup_mask(canonical_bgr), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            self.cup_mask(canonical_bgr, colour_range), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
         if not contours:
             return None
