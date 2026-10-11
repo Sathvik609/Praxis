@@ -59,7 +59,9 @@ export function SessionHeader({ title, sub, status, label, live = false, replay 
   return (
     <header className="sx-head">
       <span className="sx-brand">Praxis</span>
-      <span className="sx-htitle">{title}</span>
+      {/* The screen's one level-1 heading: a role, not an h1 element, so the global heading
+          rules in designer.css do not restyle the artifact's header title. */}
+      <span className="sx-htitle" role="heading" aria-level={1}>{title}</span>
       <span className="sx-hsub">{sub}</span>
       <span className="sx-hright">
         {(live || replay) && (

@@ -7,19 +7,26 @@
  *  node as "incomplete". Contrast is checked instead by `design/contrast.test.ts` (every token
  *  pair, both themes) and by `tools/a11y-browser.mjs` (axe in headless Chrome over the built
  *  pages, with the three D-CONTRAST exceptions named there). Nothing else is excluded. */
+import { screen } from '@testing-library/react'
 import axe from 'axe-core'
 
 const BEST_PRACTICE = ['heading-order', 'landmark-unique', 'landmark-no-duplicate-main', 'landmark-main-is-top-level', 'page-has-heading-one', 'empty-heading', 'aria-allowed-role', 'presentation-role-conflict']
 
 export type AxeOptions = {
-  /** A screen that renders without the patient Shell has no page `main` in the test; set when
-   *  the screen is checked as a whole page (it owns its own `main`). */
+  /** Check the whole document as a page (one `main`, one h1, every node in a landmark, lang and
+   *  title). Leave unset for a dialog or a component rendered on its own. */
   page?: boolean
 }
 
-export async function axeViolations(root: Element = document.body, { page = false }: AxeOptions = {}) {
+export async function axeViolations(root?: Element, { page = false }: AxeOptions = {}) {
+  // A whole page is checked from the document, so the page-level rules (one h1, lang, title)
+  // run; they need what index.html gives the real page.
+  if (page) {
+    document.documentElement.lang = 'en'
+    document.title = 'Praxis'
+  }
   const rules = page ? [...BEST_PRACTICE, 'landmark-one-main', 'region'] : BEST_PRACTICE.filter((r) => r !== 'page-has-heading-one')
-  const result = await axe.run(root, {
+  const result = await axe.run(root ?? (page ? document : document.body), {
     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
     rules: {
       'color-contrast': { enabled: false }, // jsdom: no layout, no CSS (see the module comment)
@@ -39,4 +46,11 @@ export async function axeViolations(root: Element = document.body, { page = fals
 export async function expectNoAxeViolations(root?: Element, options?: AxeOptions) {
   const violations = await axeViolations(root, options)
   expect(violations, JSON.stringify(violations, null, 2)).toEqual([])
+}
+
+/** What axe leaves "incomplete" in jsdom (`landmark-one-main`, `page-has-heading-one` need
+ *  layout), checked directly: one `main` landmark and one level-1 heading per page. */
+export function expectPageStructure() {
+  expect(document.querySelectorAll('main, [role="main"]'), 'main landmarks').toHaveLength(1)
+  expect(screen.getAllByRole('heading', { level: 1 }), 'level-1 headings').toHaveLength(1)
 }
