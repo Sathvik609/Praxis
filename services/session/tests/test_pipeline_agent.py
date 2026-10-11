@@ -35,14 +35,14 @@ def test_check_setup_without_a_frame_says_so():
 
 def test_check_setup_names_the_covered_marker_and_passes_when_clear():
     p = cup()
-    f, _ = camera_frame(CUP_TARGETS, hide_marker=2)
+    f, _ = camera_frame(CUP_TARGETS, hide_marker=2, cup_mm=CUP_TARGETS.targets_mm[0])
     p.process(f, 0.0, 0)
     r = p.check_setup()
     assert r["ok"] is True and "markers" in r["failing"] and r["all_pass"] is False
     markers = next(c for c in r["checks"] if c["id"] == "markers")
     assert markers["status"] == "check" and "2" in markers["hint"]
     assert r["measures"]["markers_missing"] == [2]
-    clean, _ = camera_frame(CUP_TARGETS)
+    clean, _ = camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[0])  # the cup in view: the target check passes
     p.process(clean, 0.1, 1)
     r = p.check_setup()
     assert r["all_pass"] is True and r["failing"] == []

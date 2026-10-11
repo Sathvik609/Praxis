@@ -1,0 +1,3 @@
+{"mode": "arm", "exercise": "abduction", "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791679118.282979, "session": "eval-arm_setup", "kind": "session"}
+{"type": "setup_blocked", "id": 32, "t": 3.0, "reason": "turn_front", "seq": 2, "ts": 1791679118.286491, "session": "eval-arm_setup", "kind": "event"}
+{"action": "pause", "rule": "setup", "text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.", "seq": 3, "ts": 1791679118.286677, "session": "eval-arm_setup", "kind": "stop_rule"}

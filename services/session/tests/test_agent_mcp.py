@@ -89,6 +89,6 @@ def test_mounted_routes_answer_mcp_initialize(setup):
     body = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "0"}}}
     with TestClient(app) as c:
         for name in ("perception", "exertion", "coach"):
-            r = c.post(f"/mcp/{name}", json=body, headers={"Accept": "application/json, text/event-stream"})
+            r = c.post(f"/mcp/{name}", json=body, headers={"Accept": "application/json, text/event-stream", M.TOKEN_HEADER: M.mcp_token()})
             assert r.status_code == 200, (name, r.text)
             assert name in r.text and "serverInfo" in r.text

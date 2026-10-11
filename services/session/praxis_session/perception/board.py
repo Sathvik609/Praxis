@@ -284,14 +284,16 @@ class BoardState:
         return rng
 
     # ---- pegs -----------------------------------------------------------------------------
-    def peg_mask(self, canonical_bgr: np.ndarray) -> np.ndarray:
+    def peg_mask(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> np.ndarray:
+        """`colour_range`: "current", None (the default saturated band) or a window to test."""
+        rng = self.colour_range if isinstance(colour_range, str) else colour_range
         hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
-        if self.colour_range is None:
+        if rng is None:
             mask = cv2.inRange(hsv, self.peg_hsv_lo, self.peg_hsv_hi)
             skin_excluded = True
         else:
-            mask = hue_window_mask(hsv, self.colour_range)
-            skin_excluded = bool(self.colour_range["skin_excluded"])
+            mask = hue_window_mask(hsv, rng)
+            skin_excluded = bool(rng["skin_excluded"])
         if skin_excluded:
             skin = cv2.inRange(hsv, np.array(SKIN_HSV_LO, np.uint8), np.array(SKIN_HSV_HI, np.uint8))
             mask = cv2.bitwise_and(mask, cv2.bitwise_not(skin))
@@ -310,11 +312,11 @@ class BoardState:
         return out
 
     def peg_blobs(
-        self, canonical_bgr: np.ndarray, exclude_mm: Sequence[RectMM] | None = None
+        self, canonical_bgr: np.ndarray, exclude_mm: Sequence[RectMM] | None = None, colour_range: Any = "current"
     ) -> list[tuple[float, float, float]]:
         """(x, y, area) in canonical px for every peg-coloured blob above a minimum area,
         outside the excluded (hand) rectangles."""
-        mask = self._exclude(self.peg_mask(canonical_bgr), exclude_mm)
+        mask = self._exclude(self.peg_mask(canonical_bgr, colour_range), exclude_mm)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         min_area = (self.px_per_mm * 2.0) ** 2
         blobs = []

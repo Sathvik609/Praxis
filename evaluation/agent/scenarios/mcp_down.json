@@ -2,6 +2,7 @@
   "id": "mcp_down",
   "title": "MCP servers unreachable: the same tools run directly",
   "mode": "cup",
+  "infra": true,
   "mcp_url": "http://127.0.0.1:9/mcp",
   "steps": [
     {

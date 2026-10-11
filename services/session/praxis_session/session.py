@@ -21,7 +21,7 @@ RULE_LABEL_WITH_AGENT = "Rule-based coach"
 SESSION_RING = 400  # non-frame events kept per session: what an agent's evidence ids may cite
 # Checkpoints (agent coach design §3): event type -> trigger name, and stop-rule pauses.
 CHECKPOINT_EVENTS = {"set_complete": "set_complete", "arc_complete": "arc_complete", "nhpt_complete": "nhpt_complete"}
-CHECKPOINT_PAUSES = ("failed_reps", "perception")
+CHECKPOINT_PAUSES = ("failed_reps", "perception", "setup")
 
 WHY_TEXT = {
     "progression": "Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.",
@@ -101,6 +101,10 @@ class CoachSession:
         # Agent prompts waiting for the patient's tap: id -> {kind, prompt, reason, accept}.
         self.prompts: dict[str, dict[str, Any]] = {}
         self.coach_note: dict[str, Any] | None = None
+        self.patient_note: str | None = None  # typed at check-in; data for the agent, never instructions
+        # The agent's session plan (10 Oct): set at check-in, revised only on new evidence.
+        self.plan: dict[str, Any] | None = None
+        self.plan_history: list[dict[str, Any]] = []
         self._clock_t = 0.0
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
@@ -155,10 +159,14 @@ class CoachSession:
         if isinstance(t, (int, float)) and t > self._clock_t:
             self._clock_t = float(t)
 
-    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None) -> list[Event]:
+    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None, notes: str | None = None) -> list[Event]:
         self._tick(t)
         self.checkin ={"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
-        self.trace.log("checkin", **self.checkin)
+        # 10 Oct: the patient's typed note is kept apart from the structured answers: it never
+        # goes on the event ring (agent evidence) and reaches the model only as quoted, capped
+        # data (agent.model.build_prompt), never as instructions.
+        self.patient_note = (str(notes).strip() or None) if notes else None
+        self.trace.log("checkin", **self.checkin, has_note=self.patient_note is not None)
         if rpe is not None:
             self.exertion.update([], rpe=rpe, t=t)
         out = self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t))
@@ -276,6 +284,12 @@ class CoachSession:
         value = f"{proposal.get('value')}{unit if unit == '°' else (' ' + unit if unit else '')}"
         text = f"Done. {names.get(str(proposal.get('field')), 'Setting')} is now {value}."
         return cmd, [say(rec["action"], "agent_adjust_applied", text, f"patient accepted ({prompt_id})")]
+
+    def set_plan(self, plan: dict[str, Any]) -> None:
+        """Store a plan version (agent tool `set_session_plan`) and trace it as a `plan` row."""
+        self.plan = dict(plan)
+        self.plan_history.append(dict(plan))
+        self.trace.log("plan", **plan)
 
     # ---- evidence ring and checkpoints (29 Sep) --------------------------------------------
     def has_event(self, event_id: int) -> bool:
@@ -420,6 +434,8 @@ class CoachSession:
             out["agent_decisions"] = sum(1 for d in self.decisions if d.get("source") == "agent")
         if self.coach_note is not None:
             out["note"] = self.coach_note
+        if self.plan is not None:
+            out["plan"] = {**self.plan, "history": [{k: v.get(k) for k in ("version", "goals", "watch", "because", "evidence", "trigger")} for v in self.plan_history]}
         return out
 
     def summary(self, t: float | None = None) -> dict[str, Any]:

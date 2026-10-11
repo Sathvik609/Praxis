@@ -10,6 +10,14 @@ checks (`perception.quality`) and a fresh ArUco detection (`cv2.aruco.ArucoDetec
 `cv2.findHomography`, `cv2.solvePnP`) on demand. `recalibrate` resets the calibrator (sheet
 tasks) or the pose gate (arm) on the next frame; `set_target` / `set_reps` are clamped to the
 prescription in code like `set_hold`. Only numbers and short text come back, never pixels.
+
+Active perception (10 Oct): `check_setup` also reports whether the task's target is seen on the
+warped sheet (cup base / pegs with the current colour window) and, for the arm, concrete pose
+facts (facing, needed view, both shoulders, trunk lean). `resample_target_colour` re-samples the
+cup or peg colour from the latest frame (cv2.warpPerspective to the canonical sheet, the HSV
+patch sampler of the tap-to-sample path, cv2.inRange + cv2.findContours to test it) and applies
+the new window only if detection then succeeds where the current window failed. In arm mode a
+view gate held for SETUP_BLOCK_S emits `setup_blocked` (the stop rules pause with the fix).
 """
 
 from __future__ import annotations
@@ -18,10 +26,11 @@ import time
 from collections import deque
 from typing import Any, Literal
 
+import cv2
 import numpy as np
 
 from praxis_session.events import Event, EventRing, make_event
-from praxis_session.perception.board import BoardState
+from praxis_session.perception.board import BoardState, hsv_window_from_patch
 from praxis_session.perception.board_spec import SHEETS
 from praxis_session.perception.calibration import CalibrationResult, Calibrator
 from praxis_session.perception.cup import CupFSM, CupObservation, CupSheetState
@@ -47,6 +56,16 @@ from praxis_session.perception.quality import (
     lighting,
     task_area_in_view,
 )
+
+# Arm view gates (arm_fsm.gate_for) -> the fix the patient hears.
+GATE_HINTS = {
+    "turn_front": "Face the camera with both shoulders in view.",
+    "turn_side": "Turn side-on so your practising shoulder faces the camera.",
+    "hips_out_of_view": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+}
+SETUP_BLOCK_S = 3.0  # a gate held this long (stream time) while the pose is seen -> setup_blocked
+MIN_SAMPLE_S = 60  # a sampled patch below this median saturation is paper or print, not a cup/peg
+PEG_DIAMETER_MM = 8.0
 
 Mode = Literal["calibrate", "nhpt", "cup", "arm"]
 MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
@@ -135,6 +154,8 @@ class SessionPipeline:
         self._recent_markers: deque[dict[int, np.ndarray]] = deque(maxlen=10)
         self._recal_pending = False
         self.frames_since_recalibrate: int | None = None
+        self._gate_since: float | None = None  # stream time the current arm gate began
+        self._setup_blocked = False  # setup_blocked sent for this gate episode
         self.tier = tier
         self.prescription = SEED_PRESCRIPTION if prescription is None else prescription
         self._arm_args: dict[str, Any] = {"target_deg": target_deg, "hold_s": hold_s, "sets": sets, "reps_per_set": reps, "prescription": self.prescription}
@@ -164,8 +185,8 @@ class SessionPipeline:
         if self._recal_pending:
             self._apply_recalibrate()
         evs = self._process_mode(frame_bgr, t, frame_index)
-        if self.frames_since_recalibrate is not None:
-            self.frames_since_recalibrate += 1  # counted once the frame is fully processed
+        if self.frames_since_recalibrate is not None and self.mode != "arm":
+            self.frames_since_recalibrate += 1  # counted once the frame is fully processed (arm: in process_pose)
         return evs
 
     def _process_mode(self, frame_bgr: np.ndarray, t: float, frame_index: int) -> list[Event]:
@@ -298,6 +319,7 @@ class SessionPipeline:
             self._angle_filter.reset()
             self._metric_filter.reset()
             self._pose_miss = 0
+            self._gate_since, self._setup_blocked = None, False
             if self._arm is not None:
                 self._arm.gate = None
         else:
@@ -314,25 +336,44 @@ class SessionPipeline:
         visibility, view gate) plus lighting. Returns rows `{id, label, status, hint}`, the
         failing ids and the numbers behind them; never pixels."""
         frame = self.latest_frame
-        if frame is None:
+        is_arm = self.mode == "arm" or self.for_mode == "arm"
+        if frame is None and not (is_arm and self.last_pose is not None):
             return {"ok": False, "error": "no camera frame has arrived yet", "checks": [], "failing": []}
-        age = round(time.monotonic() - self._latest_frame_mono, 2)
-        light = lighting(frame)
-        measures: dict[str, Any] = {"mean_luma": light["mean_luma"], "sharpness": light["sharpness"]}
-        if self.mode == "arm" or self.for_mode == "arm":
+        # Arm sessions replayed from landmarks have no image: the pose facts still count, and
+        # lighting is simply not judged (no row) rather than guessed.
+        age = round(time.monotonic() - self._latest_frame_mono, 2) if frame is not None else None
+        light = lighting(frame) if frame is not None else None
+        measures: dict[str, Any] = {"mean_luma": light["mean_luma"] if light else None, "sharpness": light["sharpness"] if light else None}
+        if is_arm:
             pose = self.last_pose or {"present": False}
             present = bool(pose.get("present"))
             vis = pose.get("visibility")
             gate = pose.get("gate")
-            view_hint = {"turn_front": "Face the camera with both shoulders in view.", "turn_side": "Turn side-on so your practising shoulder faces the camera."}.get(str(gate))
+            sh_vis = pose.get("shoulders_visibility")
+            lean = pose.get("trunk_lean_deg")
+            lean_max = float(self.prescription.stop_rules.lean_deg)
             checks = [
                 _row("person", "Person in view", present, "Sit so your upper body is in the picture."),
+                _row("view", "Facing the camera the right way", None if not present else gate not in ("turn_front", "turn_side"), GATE_HINTS.get(str(gate))),
+                _row("hips", "Hips in view", None if not present else gate != "hips_out_of_view", GATE_HINTS["hips_out_of_view"]),
                 _row("pose", "Shoulder, elbow and hip visible", None if not present else (vis is not None and vis >= 0.5), "Move back a little so your shoulder, elbow and hip are all in view."),
-                _row("view", "Facing the camera the right way", None if not present else gate not in ("turn_front", "turn_side"), view_hint),
-                _row("hips", "Hips in view", None if not present else gate != "hips_out_of_view", "Move the camera back or down so your hips are in view."),
-                _row("lighting", "Lighting", bool(light["ok"]), light.get("hint")),
+                _row("shoulders", "Both shoulders visible", None if not present or sh_vis is None else sh_vis >= 0.5, "Sit so both shoulders are in the picture."),
+                _row("posture", "Sitting upright", None if not present or lean is None else abs(float(lean)) <= lean_max, "Sit up tall with your back against the chair before you lift."),
             ]
-            measures |= {"pose_present": present, "visibility": vis, "gate": gate}
+            if light is not None:
+                checks.append(_row("lighting", "Lighting", bool(light["ok"]), light.get("hint")))
+            measures |= {
+                "pose_present": present,
+                "visibility": vis,
+                "hip_visibility": pose.get("hip_visibility"),
+                "shoulders_visibility": sh_vis,
+                "trunk_lean_deg": lean,
+                "lean_limit_deg": lean_max,
+                "facing": pose.get("facing"),
+                "needed_view": pose.get("needed_view") or (self._arm.view if self._arm is not None else None),
+                "gate": gate,
+                "image": frame is not None,
+            }
         else:
             cal = Calibrator(self.spec).run(frame, 0.0)
             steady = MarkerSteadiness()
@@ -341,9 +382,19 @@ class SessionPipeline:
             steady_d = steady.update(cal.marker_corners_px)
             area = task_area_in_view(cal, self.spec, frame.shape)
             rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True, spec=self.spec)
-            # Root cause first: without the markers, task area and tilt cannot be judged.
-            order = {"markers": 0, "angle": 1, "task_area": 2, "lighting": 3}
+            target, seen = self._target_seen(frame, cal)
+            if target is not None:
+                label, hint = {
+                    "cup": ("Cup seen on the sheet", "Put the cup on a dot so the camera can see its base."),
+                    "pegs": ("Pegs seen", "Put the pegs in the dish beside the board, where the camera can see them."),
+                }[target]
+                rows.append(_row("target", label, seen, hint))
+            # Root cause first: without the markers, task area and tilt cannot be judged; the
+            # target can only be judged once the sheet itself checks out.
+            order = {"markers": 0, "angle": 1, "task_area": 2, "lighting": 3, "target": 4}
             checks = sorted((r for r in rows if r["id"] not in ("camera", "person")), key=lambda r: order.get(r["id"], 9))
+            colour = (self._cup_sheet.colour_range if self._cup_sheet is not None else self._board.colour_range if self._board is not None else None)
+            measures |= {"target": target, "target_seen": seen, "colour_source": None if target is None else ("sampled" if colour else "default")}
             angle = camera_angle(cal)
             measures |= {
                 "markers_found": sorted(int(k) for k in cal.marker_corners_px),
@@ -355,6 +406,103 @@ class SessionPipeline:
         failing = [c["id"] for c in checks if c["status"] != "pass"]
         first_hint = next((c["hint"] for c in checks if c["status"] == "check" and c["hint"]), None)
         return {"ok": True, "mode": self.mode, "frame_age_s": age, "checks": checks, "failing": failing, "all_pass": not failing, "first_hint": first_hint, "measures": measures}
+
+    def _target_seen(self, frame: np.ndarray, cal: CalibrationResult) -> tuple[str | None, bool | None]:
+        """Is the task's target detected on this frame with the current colour window?"""
+        if self._cup_sheet is not None:
+            if not cal.calibrated:
+                return "cup", None
+            return "cup", self._cup_sheet.cup_mm(self._cup_sheet.warp(frame, cal)) is not None
+        if self._board is not None:
+            if not cal.calibrated:
+                return "pegs", None
+            return "pegs", len(self._board.peg_blobs(self._board.warp(frame, cal))) > 0
+        return None, None
+
+    def resample_target_colour(self, target: str) -> dict[str, Any]:
+        """Active perception for the agent: when the sheet is calibrated but the cup (or the
+        pegs) is not detected, sample its colour from the latest frame on the warped sheet and
+        apply the new HSV window only if detection then succeeds where the current one failed.
+        Returns before/after detection results and the window numbers, never pixels."""
+        frame = self.latest_frame
+        if frame is None:
+            return {"ok": False, "error": "no camera frame has arrived yet"}
+        if (target == "cup" and self._cup_sheet is None) or (target == "pegs" and self._board is None) or target not in ("cup", "pegs"):
+            return {"ok": False, "error": f"{target!r} is not this session's target ({'cup' if self._cup_sheet is not None else 'pegs' if self._board is not None else 'none'})"}
+        cal = Calibrator(self.spec).run(frame, 0.0)
+        if not cal.calibrated:
+            return {"ok": False, "error": "the sheet's markers are not found (at least three are needed); fix the setup first", "markers_missing": list(cal.missing)}
+        return self._resample_cup(frame, cal) if target == "cup" else self._resample_pegs(frame, cal)
+
+    @staticmethod
+    def _window(rng: dict[str, Any]) -> dict[str, Any]:
+        return {k: rng[k] for k in ("source", "h", "s", "v", "h_lo", "h_hi", "s_min", "v_min", "skin_excluded")}
+
+    def _resample_cup(self, frame: np.ndarray, cal: CalibrationResult) -> dict[str, Any]:
+        sheet, fsm = self._cup_sheet, self._cup
+        assert sheet is not None and fsm is not None
+        canon = sheet.warp(frame, cal)
+        before = {"detected": sheet.cup_mm(canon) is not None, "colour_source": "sampled" if sheet.colour_range else "default"}
+        if before["detected"]:
+            return {"ok": True, "target": "cup", "applied": False, "reason": "the cup is already detected with the current colour", "before": before, "after": before}
+        # Where the cup should be: the dot it rests on, the next dot, then every other dot.
+        order: list[int] = []
+        for k in (fsm.dot, fsm.expected_next, *range(len(self.spec.targets_mm))):
+            if k is not None and k not in order:
+                order.append(int(k))
+        ppm = sheet.px_per_mm
+        tried: list[dict[str, Any]] = []
+        for k in order:
+            x, y = self.spec.targets_mm[k]
+            try:
+                rng = hsv_window_from_patch(canon, (x * ppm, y * ppm), 3.0 * ppm)
+            except ValueError:
+                tried.append({"dot": k, "result": "outside the view"})
+                continue
+            if rng["s"] < MIN_SAMPLE_S:
+                tried.append({"dot": k, "result": "no colour here (paper or print)", "s": rng["s"]})
+                continue
+            got = sheet.cup_mm(canon, rng)
+            if got is None or float(np.hypot(got[0] - x, got[1] - y)) > fsm.dot_radius_mm:
+                tried.append({"dot": k, "result": "no cup-sized blob of that colour on the dot", "h": rng["h"]})
+                continue
+            sheet.colour_range = rng  # applied: detection succeeded where the current window failed
+            after = {"detected": True, "cup_mm": [round(got[0], 1), round(got[1], 1)], "diameter_mm": round(float(got[2]), 1), "colour_source": "sampled"}
+            return {"ok": True, "target": "cup", "applied": True, "sampled_at_dot": k, "before": before, "after": after, "colour": self._window(rng), "tried": tried}
+        return {"ok": True, "target": "cup", "applied": False, "reason": "no dot shows a cup-sized patch of one colour", "before": before, "after": before, "tried": tried}
+
+    def _resample_pegs(self, frame: np.ndarray, cal: CalibrationResult) -> dict[str, Any]:
+        board = self._board
+        assert board is not None
+        canon = board.warp(frame, cal)
+        n_before = len(board.peg_blobs(canon))
+        before = {"pegs_detected": n_before, "colour_source": "sampled" if board.colour_range else "default"}
+        if n_before:
+            return {"ok": True, "target": "pegs", "applied": False, "reason": "pegs are already detected with the current colour", "before": before, "after": before}
+        # Candidates: peg-sized blobs with some colour (S >= 40) that the current window misses.
+        hsv = cv2.cvtColor(canon, cv2.COLOR_BGR2HSV)
+        cand = cv2.inRange(hsv, np.array((0, 40, 50), np.uint8), np.array((180, 255, 255), np.uint8))
+        cand = cv2.morphologyEx(cand, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+        contours, _ = cv2.findContours(cand, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ppm = board.px_per_mm
+        lo_area, hi_area = np.pi * (0.3 * PEG_DIAMETER_MM * ppm) ** 2, np.pi * (1.0 * PEG_DIAMETER_MM * ppm) ** 2
+        blobs = sorted((c for c in contours if lo_area <= cv2.contourArea(c) <= hi_area), key=cv2.contourArea, reverse=True)[:6]
+        best: tuple[int, dict[str, Any], tuple[float, float]] | None = None
+        tried: list[dict[str, Any]] = []
+        for c in blobs:
+            m = cv2.moments(c)
+            centre = (m["m10"] / m["m00"], m["m01"] / m["m00"])
+            rng = hsv_window_from_patch(canon, centre, 0.3 * PEG_DIAMETER_MM * ppm)
+            n = len(board.peg_blobs(canon, colour_range=rng))
+            xy = board.canonical_to_mm(centre)
+            tried.append({"at_mm": [round(xy[0], 1), round(xy[1], 1)], "h": rng["h"], "s": rng["s"], "pegs_detected": n})
+            if rng["s"] >= 40 and n > 0 and (best is None or n > best[0]):
+                best = (n, rng, xy)
+        if best is None:
+            return {"ok": True, "target": "pegs", "applied": False, "reason": "no peg-sized patch of one colour found", "before": before, "after": before, "tried": tried}
+        n, rng, xy = best
+        board.colour_range = rng  # applied: detection succeeded where the current window failed
+        return {"ok": True, "target": "pegs", "applied": True, "sampled_at_mm": [round(xy[0], 1), round(xy[1], 1)], "before": before, "after": {"pegs_detected": n, "colour_source": "sampled"}, "colour": self._window(rng), "tried": tried}
 
     def snapshot(self, t: float | None = None) -> dict[str, Any]:
         nhpt = None
@@ -605,6 +753,8 @@ class SessionPipeline:
     def process_pose(self, res: PoseResult | None, t: float, frame_index: int) -> list[Event]:
         """Arm mode from a pose result (the model output, or injected landmarks in tests/replay)."""
         assert self._arm is not None
+        if self._recal_pending:  # landmark replays never pass through process()
+            self._apply_recalibrate()
         out: list[Event] = []
         self._last_t = t
         t0 = time.perf_counter()
@@ -667,6 +817,10 @@ class SessionPipeline:
             "hip_visibility": None if angles is None else round(float(angles["hip_visibility"]), 2),
             "gate": snap_before["gate"] if res is not None else None,
             "angle_deg": None if angles is None else angles["metric_deg"],
+            "shoulders_visibility": None if angles is None else round(float(angles["shoulders_visibility"]), 2),
+            "trunk_lean_deg": None if angles is None else round(float(angles["trunk_lean_deg"]), 1),
+            "facing": None if angles is None else ("front" if angles["front_view_ok"] else "side"),
+            "needed_view": self._arm.view,
         }
         self._emit(
             out,
@@ -694,6 +848,16 @@ class SessionPipeline:
         self._detect_ms = 0.0
         for e in self._arm.step(obs):
             self._emit(out, e)
+        # A view gate held while the person is seen: the camera cannot measure. Once per episode.
+        gate = snap_before["gate"] if res is not None else None
+        if gate is not None:
+            if self._gate_since is None:
+                self._gate_since = t
+            if not self._setup_blocked and t - self._gate_since >= SETUP_BLOCK_S:
+                self._setup_blocked = True
+                self._emit(out, make_event("setup_blocked", t=t, frame_index=frame_index, target="pose", reason=gate, hint=GATE_HINTS.get(gate, "Check the camera setup."), held_s=round(t - self._gate_since, 1)))
+        elif res is not None:
+            self._gate_since, self._setup_blocked = None, False
         # pose loss bookkeeping (mirrors marker loss)
         if res is not None:
             self._pose_seen, self._pose_miss = True, 0
@@ -705,4 +869,6 @@ class SessionPipeline:
             if self._pose_miss >= POSE_LOSS_FRAMES and not self._pose_lost:
                 self._pose_lost = True
                 self._emit(out, make_event("perception_lost", t=t, frame_index=frame_index, missing=["pose"]))
+        if self.frames_since_recalibrate is not None:
+            self.frames_since_recalibrate += 1
         return out

@@ -1,0 +1,6 @@
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791679121.039398, "session": "eval-dim_light", "kind": "session"}
+{"type": "reach_complete", "id": 185, "t": 1.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 2, "ts": 1791679121.042264, "session": "eval-dim_light", "kind": "event"}
+{"type": "reach_complete", "id": 186, "t": 2.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 3, "ts": 1791679121.04285, "session": "eval-dim_light", "kind": "event"}
+{"type": "reach_complete", "id": 187, "t": 3.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 4, "ts": 1791679121.043104, "session": "eval-dim_light", "kind": "event"}
+{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 5, "ts": 1791679121.0431669, "session": "eval-dim_light", "kind": "stop_rule"}
+{"rule": "failed_reps", "detail": "3 consecutive unverified reps (marker_lost)", "seq": 6, "ts": 1791679121.0432022, "session": "eval-dim_light", "kind": "flag"}

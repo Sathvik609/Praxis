@@ -44,9 +44,9 @@ def unverified(t):
 
 def test_tool_catalogue_matches_the_design():
     assert set(T.SERVERS) == {"perception", "exertion", "coach"}
-    assert set(T.SERVERS["perception"]) == {"get_events", "get_set_summary", "check_setup", "recalibrate"}
-    assert set(T.SERVERS["exertion"]) == {"get_exertion_state", "get_prescription", "read_patient_model"}
-    assert set(T.SERVERS["coach"]) == {"speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary"}
+    assert set(T.SERVERS["perception"]) == {"get_events", "get_set_summary", "check_setup", "recalibrate", "resample_target_colour"}
+    assert set(T.SERVERS["exertion"]) == {"get_exertion_state", "get_prescription", "read_patient_model", "get_session_plan"}
+    assert set(T.SERVERS["coach"]) == {"speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary", "set_session_plan"}
     # every coach tool maps onto one of the six actions, and nothing else exists
     assert set(T.ACTION_OF.values()) <= {"instruct", "correct", "progress", "regress", "rest", "stop"}
 
@@ -166,8 +166,14 @@ def test_propose_adjustment_rejects_fields_outside_the_prescription(reg, tmp_pat
         call(reg, "propose_adjustment", session_id="s1", exercise="abduction", field="target_deg", value=95, reason="r", evidence=[e.id])
 
 
+def clean(h):
+    """A clean camera frame (four markers, the cup on dot 0): request_resume's fresh check passes."""
+    h.pipeline.process(camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[0])[0], 0.0, 0)
+
+
 def test_request_resume_only_while_a_rule_pause_holds(reg, tmp_path):
     h = handle(reg, tmp_path)
+    clean(h)
     evs = [unverified(float(i)) for i in range(1, 4)]
     h.session.on_events(evs, snapshot={}, t=3.0)
     assert h.session.paused and h.session.pause_rule == "failed_reps"
@@ -190,6 +196,7 @@ def test_request_resume_only_while_a_rule_pause_holds(reg, tmp_path):
 )
 def test_request_resume_caption_asks_once(reg, tmp_path, reason, caption):
     h = handle(reg, tmp_path)
+    clean(h)
     h.session.on_events([unverified(float(i)) for i in range(1, 4)], snapshot={}, t=3.0)
     pause = h.session.recent_events(types=["pause"])[-1]
     h.begin_run("pause:failed_reps")

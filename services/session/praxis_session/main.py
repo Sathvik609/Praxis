@@ -34,6 +34,7 @@ import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.agent import tools as agent_tools
+from praxis_session.agent.metrics import METRICS as AGENT_METRICS
 from praxis_session.agent.model import load_config as load_agent_config, make_planner
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
@@ -112,6 +113,14 @@ def health() -> dict[str, object]:
         "agent": AGENT_CFG.health(MCP_MOUNTED),
     }
 
+
+
+@app.get("/api/agent/metrics")
+def api_agent_metrics() -> dict[str, object]:
+    """Agent observability (10 Oct): today's runs by outcome, errors by kind, first-action
+    p50/p95, mean tool calls, fallbacks and the daily-cap status; in memory since the last
+    restart. The same events are JSON lines on stdout (agent/metrics.py) for CloudWatch."""
+    return {"mode": AGENT_CFG.mode, "model": AGENT_CFG.model, "policy_version": agent_tools.POLICY_VERSION, **AGENT_METRICS.summary(AGENT_CFG.budget)}
 
 
 @app.get("/events")
@@ -711,7 +720,8 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
         tier = stricter(tier_for(pain, coach.prescription), pipeline.tier)
         applied = pipeline.apply_tier(tier)
         coach.trace.log("tier", rule="pain_tier", pain=pain, tier=tier, running=applied["tier"], changed=applied["changed"], reason=tier_reason(tier, pain))
-        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"))
+        notes = cmd.get("notes")
+        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, tier=tier, tier_applied=applied["changed"]), *out]
     if name == "pain":
         out += coach.on_pain(int(cmd.get("pain", 0)), now)
