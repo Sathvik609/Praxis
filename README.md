@@ -69,6 +69,20 @@ uv run python tools/record_session.py purge-expired                  # daily: de
 
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
+### Browser end-to-end check with a simulated camera
+
+A real Chrome plays an OpenCV-rendered clip as its webcam (`--use-file-for-fake-video-capture`), so camera setup → detection → session → coach → feedback → report runs exactly as a judge sees it, with no person and no printout. The clips show what a laptop camera sees of a printed sheet 25–35 cm in front of it (~40° tilt, upside down in the raw frame, sensor noise): the NHPT run, Waiter – cup (2 slow + 2 fast arcs), the sheet leaving the view for 4 s, a fingertip on one corner marker (setup), a hand over the two near corners mid-session (agent run), and too dark / blurred / half-out-of-frame setups. Synthetic: this validates the product path, not real-world accuracy.
+
+```bash
+cd services/session && uv run python tools/make_fake_camera.py      # ~3 min, writes evaluation/fake_camera/ (git-ignored)
+cd ../../web && pnpm build
+cd ../services/session && PRAXIS_WEB_DIST=../../web/dist PRAXIS_DB=/tmp/praxis-e2e.db uv run uvicorn praxis_session.main:app --port 8100
+cd ../../web && node scripts/e2e-fake-camera.mjs --origin http://127.0.0.1:8100 --out /tmp/praxis-e2e   # ~12 min
+#   --only setup,arm,nhpt,cup,loss,replay (default) · agent (needs PRAXIS_AGENT=anthropic on the service: real model calls, a few cents) · --headed
+```
+
+It checks the setup rows and the hint the patient sees for each failure, the overlay geometry against where the renderer put the sheet (and that the canvas mirrors with the video while the frames sent stay unmirrored), live counts, the timer and splits, captions, the trace and latency line, perception loss with pause and resume, replay, and the report. Screenshots, the service's events per run and `results.json` land in `--out`; the exit code is 1 when a check fails.
+
 ## Agent coach (Claude + OpenCV tools over MCP, optional)
 
 Off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). With it on, Claude Sonnet 5 (Strands Agents) runs at checkpoints — check-in, end of a set/arc, a stop-rule pause after unverified reps or lost tracking, peg-test end, session end — and calls OpenCV 5 tools served by FastMCP at `/mcp/perception`, `/mcp/exertion`, `/mcp/coach` (streamable HTTP, same port). Every dose change and every resume is a prompt the patient accepts; stop rules still run first. Details and the workflow diagram: `docs/AGENT.md`.
