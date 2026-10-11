@@ -615,7 +615,9 @@ def resample_target_colour(session_id: str, target: str, evidence: list[int]) ->
     the sheet, samples the colour where the target should be (the cup on a dot; peg-sized
     colour patches), tests detection with that colour against the current one and applies it
     only if the target is then detected where it was not. `target`: "cup" or "pegs". Returns
-    before/after detection (never pixels). Re-check with check_setup or get_events after."""
+    before/after detection (never pixels). If `applied`, tell the patient the camera had not
+    recognised their cup's colour and has now learned it; otherwise ask them to put the cup
+    on a dot."""
     h = _h()
     s = h.session
     if target not in ("cup", "pegs"):
