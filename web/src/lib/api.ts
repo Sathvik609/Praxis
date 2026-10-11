@@ -74,7 +74,8 @@ export type PlanView = { pain: number; tier: 'full' | 'gentle' | 'rest'; reason:
 export type SelfReport = { ok: boolean; exercise: string; verified?: false; source?: 'self_ticked'; label?: string; sets_today?: number; error?: string }
 
 /** `GET /health`. `agent` is absent on a service from before the agent coach (29 Sep). */
-export type Health = { status: string; service?: string; opencv_version?: string; mode?: string; models?: Record<string, boolean>; agent?: AgentHealth }
+export type OpenCVBuild = { version: string; cool: boolean; arch?: string; dnn?: boolean; path?: string }
+export type Health = { status: string; service?: string; opencv_version?: string; opencv_build?: OpenCVBuild; mode?: string; models?: Record<string, boolean>; agent?: AgentHealth }
 
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`)

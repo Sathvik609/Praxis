@@ -53,7 +53,7 @@ test('shows the arc, direction, dot progress, unverified count and hand / cup tr
   expect(within(stats).getByRole('img', { name: '3 of 5 dots · across' })).toBeInTheDocument()
   expect(stats).toHaveTextContent('9 verified · 1 unverified')
   // the OpenCV line is a developer line (Judge view only)
-  expect(screen.getByText(/cv2 5.0 · HSV cup on the warped sheet/)).toHaveClass('sx-mono')
+  expect(screen.getByText(/OpenCV 5 · HSV cup on the warped sheet/)).toHaveClass('sx-mono')
   expect(screen.getByText(/hand not in view · cup tracked/)).toBeInTheDocument()
 })
 
@@ -149,7 +149,7 @@ test('Show trace swaps the reference for the trace and keeps the caption, counts
   mockStream([frame])
   renderAt('/session?exercise=cup&side=left')
   fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
-  expect(screen.getAllByText(/cv2 5.0 · HSV cup on the warped sheet · cup over dot 3 · hand not clear/).length).toBe(2)
+  expect(screen.getAllByText(/OpenCV 5 · HSV cup on the warped sheet · cup over dot 3 · hand not clear/).length).toBe(2)
   expect(screen.getByRole('button', { name: 'Copy JSON' })).toBeInTheDocument()
   expect(screen.queryByLabelText('Reference figure')).toBeNull()
   expect(screen.getByText('Coach')).toBeInTheDocument()

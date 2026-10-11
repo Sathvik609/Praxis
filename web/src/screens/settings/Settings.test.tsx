@@ -192,7 +192,7 @@ test('privacy, cloud and help rows say what is real', async () => {
   // jsdom runs on localhost, so the edge wording applies; hosted builds say "on the Praxis service"
   expect(screen.getByText('On this device, never stored')).toBeInTheDocument()
   expect(screen.getByText('Default')).toBeInTheDocument()
-  expect(screen.getByText('Cloud mode (AWS) is off')).toBeInTheDocument()
+  expect(screen.getByText('Edge mode · this laptop')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /^Camera and microphone setup/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /^Equipment and substitutes/ })).toBeInTheDocument()
 })

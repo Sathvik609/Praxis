@@ -150,7 +150,7 @@ export function LiveCup() {
   const correcting = !!lastCorrect && lastT != null && lastT - lastCorrect.t < CUE_S
   const lastWrong = [...events].reverse().find((e) => e.type === 'wrong_dot')
   const wrongRecent = !!lastWrong && lastT != null && lastT - lastWrong.t < CUE_S
-  const pipe = `cv2 5.0 · HSV cup on the warped sheet${!live ? '' : dotNow != null ? ` · cup over dot ${dotNow + 1} · hand ${cup?.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`
+  const pipe = `OpenCV 5 · HSV cup on the warped sheet${!live ? '' : dotNow != null ? ` · cup over dot ${dotNow + 1} · hand ${cup?.hand_clear ? 'clear' : 'not clear'}` : ' · place the cup on dot 1'}`
 
   // coach card: a correction is amber, a verified placement in the last 2 s mint, else neutral
   const coachTone = correcting ? 'amber' : lastReach?.verified && lastT != null && lastT - lastReach.t < 2 ? 'mint' : 'neutral'

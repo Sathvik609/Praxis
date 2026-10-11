@@ -7,7 +7,7 @@ import { Card } from '../../design/Card'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Switch } from '../../design/Switch'
 import { api, useApi, type Health, type Patient } from '../../lib/api'
-import { processingPlace } from '../../lib/config'
+import { deploymentLabel, processingPlace } from '../../lib/config'
 import { readDay, readSide, resetTodayCheckin, setupUrl, todayKey, type Day } from '../../lib/day'
 import { readPrefs, writePrefs, type Prefs } from '../../lib/prefs'
 import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
@@ -118,7 +118,7 @@ export function Settings() {
                 disabled={!!day.stopped || !day.checkin}
               />
               <CoachRow health={health} error={healthError} />
-              <SettingsRow title="Cloud mode (AWS) is off" sub={`In this build. Video is ${processingPlace()}.`} />
+              <SettingsRow {...deploymentLabel(health)} />
             </ul>
           </Card>
         </div>

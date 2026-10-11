@@ -117,7 +117,7 @@ export function LiveNhpt() {
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
   const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
   const holdSeconds = useHoldSeconds(hold, lastT)
-  const pipe = `cv2 5.0 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`
+  const pipe = `OpenCV 5 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`
 
   const coachCard = (
     <SxCoach
