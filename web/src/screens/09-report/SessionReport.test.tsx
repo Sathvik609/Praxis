@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ME, SESSION, mockApi } from '../../test/api-mock'
 import { SessionReport } from './SessionReport'
@@ -331,4 +331,58 @@ test('a cup report has no above-90° count', async () => {
   renderReport()
   await screen.findByText('tracking coverage')
   expect(screen.queryByText(/above 90°/)).not.toBeInTheDocument()
+})
+
+// 10 Oct walkthrough: the agent writes its note after the session is saved, so a report opened
+// right away missed it until a reload.
+describe('a late agent note', () => {
+  const noNote = { ...AGENT_COACH, note: undefined }
+  function serve(notes: (typeof AGENT_COACH.note | undefined)[], agent = true) {
+    let n = 0
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/api/sessions/abc')) {
+        const note = notes[Math.min(n++, notes.length - 1)]
+        const coach = agent ? { ...noNote, ...(note ? { note } : {}) } : { label: 'Rule-based coach', notes: [], decisions: 2 }
+        return { ok: true, status: 200, json: async () => ({ ...SESSION, summary: { ...SESSION.summary, coach } }) } as Response
+      }
+      if (url.includes('/api/patients/me')) return { ok: true, status: 200, json: async () => ME } as Response
+      return { ok: false, status: 404, json: async () => ({ error: 'unmocked' }) } as Response
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return () => fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/sessions/abc')).length
+  }
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  test('is fetched again every 2 s and shown when it lands, with no loading text', async () => {
+    const calls = serve([undefined, undefined, AGENT_COACH.note])
+    renderReport()
+    await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+    expect(screen.getByRole('heading', { name: 'What the camera measured' })).toBeInTheDocument()
+    expect(screen.queryByText(AGENT_COACH.note.text)).toBeNull()
+    expect(document.body.textContent).not.toMatch(/waiting|loading/i)
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(2)
+    expect(screen.queryByText(AGENT_COACH.note.text)).toBeNull()
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.getByText(AGENT_COACH.note.text)).toBeInTheDocument()
+    for (let i = 0; i < 10; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(3)
+  })
+
+  test('stops asking after 20 s when no note comes', async () => {
+    const calls = serve([undefined])
+    renderReport()
+    for (let i = 0; i < 30; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(11)
+    expect(screen.getByText(/No coach notes/)).toBeInTheDocument()
+  })
+
+  test('a session without an agent is fetched once', async () => {
+    const calls = serve([undefined], false)
+    renderReport()
+    for (let i = 0; i < 5; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(1)
+  })
 })

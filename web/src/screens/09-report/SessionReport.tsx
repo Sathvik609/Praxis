@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
@@ -76,6 +76,10 @@ function coachChip(c: SessionCoach): string {
   return tookPart ? `${c.label} + ${c.agent!.split(' · ')[0]}` : c.label
 }
 
+// How long the report waits for a Claude agent's late session note: every 2 s for up to 20 s.
+const NOTE_POLL_MS = 2000
+const NOTE_POLLS = 10
+
 /** Screen 09 · Session report (design v2, 6 Oct; designers' artifact `SessionReport`). Loads only
  *  `api.session(id)`, plus the other sessions of today's run from `readDay().finished[].reportId`.
  *  Camera measurements are separated from what the patient reported; in today's run each
@@ -86,10 +90,25 @@ function coachChip(c: SessionCoach): string {
 export function SessionReport() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { data: fetched, error } = useApi(() => api.session(id ?? ''), [id])
+  const { data: fetched, error, reload } = useApi(() => api.session(id ?? ''), [id])
   const { data: me } = useApi(() => api.me())
   const [edited, setEdited] = useState<SessionRecord | null>(null)
   const data = edited ?? fetched
+  // The Claude agent writes its session note after the session is saved (10 Oct walkthrough: a
+  // report opened right away missed it until a reload). While the summary says an agent was
+  // active and has no note, ask again every NOTE_POLL_MS, at most NOTE_POLLS times; the page
+  // shows nothing while waiting and the note appears when it lands.
+  const [polls, setPolls] = useState(0)
+  const fetchedCoach = (fetched as Partial<SessionRecord> | null)?.summary?.coach
+  const notePending = !!fetchedCoach?.agent && !fetchedCoach.note?.text
+  useEffect(() => {
+    if (!notePending || polls >= NOTE_POLLS) return
+    const h = setTimeout(() => {
+      setPolls((n) => n + 1)
+      reload()
+    }, NOTE_POLL_MS)
+    return () => clearTimeout(h)
+  }, [notePending, polls, reload])
   const has = !!data?.summary && !isHiddenSession(data)
   const dayRun = useDayRun(data?.summary ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped) // day flow (Track C)
   const thisId = has ? (exerciseOfSession(data!)?.id ?? null) : null
@@ -319,7 +338,9 @@ export function SessionReport() {
   const nx = next ? exerciseById(next) : undefined
   const need = (nx?.needs ?? []).map((n) => EQUIPMENT.find((e) => e.id === n)?.label).filter(Boolean).join(' · ')
   const exertion = s.summary.exertion
-  const agentNote = s.summary.coach.note?.text ? s.summary.coach.note : null
+  // an edit of the feedback keeps the note that landed meanwhile on the fetched copy
+  const lateNote = fetchedCoach?.note?.text ? fetchedCoach.note : null
+  const agentNote = s.summary.coach.note?.text ? s.summary.coach.note : lateNote
   // The Pain / feel unwell answer (stored by the service) fills "after" when the patient skipped
   // the feedback screen, and is always listed so a stop-level report is never lost.
   const inSessionPain = typeof s.summary.reported_pain?.pain === 'number' ? s.summary.reported_pain.pain : null
