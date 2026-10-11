@@ -55,6 +55,15 @@ test('the meta line reads date · title and the status chip says Complete', asyn
   expect(screen.getByText('Complete')).toBeInTheDocument()
 })
 
+test('a peg test that lost tracking says its time is limited, not a clean 100 % (e2e 11 Oct)', async () => {
+  const camera = { reps_total: 9, verified: 9, unverified: 0, coverage_pct: 100, active_s: 38, nhpt_total_s: 24.2, splits_s: [1.4, 2.5, 2.4, 2.3, 5.2, 3.2, 2.4, 2.5, 2.3] }
+  const nhpt = { ...SESSION, mode: 'nhpt', title: 'Nine-Hole Peg Test · 24.2 s', tracking: 'limited', summary: { ...SESSION.summary, mode: 'nhpt', tracking: 'limited', tracking_lost_events: 1, camera } }
+  mockApi({ '/api/sessions/abc': nhpt, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Limited tracking')).toBeInTheDocument()
+  expect(screen.getByText(/Nine-Hole Peg Test:/).closest('p')).toHaveTextContent(/camera lost the board during the test/)
+})
+
 test('coach note eyebrows come from the note category, and a note without one has none', async () => {
   const notes = [
     { text: 'correct: trunk lean in 2 of 16 lifts', confidence: 'medium', evidence: [58], cat: 'Posture' },
