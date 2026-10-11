@@ -2,8 +2,10 @@
 # One-command deploy of the Praxis session service to an AWS Graviton (c8g) instance launched
 # from the COOL AMI ("Cloud Optimized OpenCV For AWS Graviton4", Ubuntu, /opt/cool).
 #
-#   infra/ec2/deploy.sh <public-ip-or-dns> [--agent] [--skip-web]
+#   infra/ec2/deploy.sh <public-ip-or-dns> [--agent] [--skip-web] [--stock]
 #
+# --stock     allow a plain Graviton Ubuntu instance (no COOL AMI): cv2 from the pinned
+#             opencv-python-headless wheel. Without it the target must be the COOL AMI.
 # --agent     copy ANTHROPIC_API_KEY from services/session/.env to /etc/praxis/agent.env on the
 #             host (root-only, never printed) and turn the Claude agent coach on.
 # --skip-web  reuse the last web/dist build.
@@ -12,11 +14,12 @@
 set -euo pipefail
 
 HOST="${1:?usage: deploy.sh <host> [--agent] [--skip-web]}"; shift || true
-AGENT=0; SKIP_WEB=0
+AGENT=0; SKIP_WEB=0; STOCK=0
 for a in "$@"; do
   case "$a" in
     --agent) AGENT=1 ;;
     --skip-web) SKIP_WEB=1 ;;
+    --stock) STOCK=1 ;;
     *) echo "unknown option $a" >&2; exit 2 ;;
   esac
 done
@@ -27,7 +30,7 @@ SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "ubu
 RSYNC_SSH="ssh -i $KEY -o StrictHostKeyChecking=accept-new"
 
 echo "== 1/5 reach $HOST"
-"${SSH[@]}" 'uname -m; test -d /opt/cool && echo "COOL found at /opt/cool" || { echo "no /opt/cool: is this the COOL AMI?"; exit 1; }'
+"${SSH[@]}" "uname -m; if test -d /opt/cool; then echo 'COOL found at /opt/cool'; elif [ $STOCK = 1 ]; then echo 'no COOL: stock OpenCV wheel (--stock)'; else echo 'no /opt/cool: use the COOL AMI or pass --stock'; exit 1; fi"
 
 if [ "$SKIP_WEB" = 0 ]; then
   echo "== 2/5 build the web app"
@@ -57,11 +60,12 @@ echo "== 4/5 install on the host (COOL OpenCV, pinned deps, models, systemd)"
 "${SSH[@]}" 'bash /opt/praxis/remote_setup.sh'
 
 echo "== 5/5 health"
-"${SSH[@]}" 'curl -fsS localhost:8000/health' | python3 -c '
-import json, sys
+"${SSH[@]}" 'curl -fsS localhost:8000/health' | STOCK="$STOCK" python3 -c '
+import json, os, sys
+stock = os.environ.get("STOCK") == "1"
 h = json.load(sys.stdin)
 b = h["opencv_build"]
-print(f"opencv {b[\"version\"]} · {b[\"arch\"]} · COOL={b[\"cool\"]} · dnn={b[\"dnn\"]}")
+print("opencv %s · %s · COOL=%s · dnn=%s" % (b["version"], b["arch"], b["cool"], b["dnn"]))
 print("models", h["models"], "· agent", h["agent"].get("mode"), "ready" if h["agent"].get("ready") else "off")
-sys.exit(0 if b["cool"] else 1)'
+sys.exit(0 if (b["cool"] or stock) else 1)' 
 echo "deployed: http://$HOST:8000/health"

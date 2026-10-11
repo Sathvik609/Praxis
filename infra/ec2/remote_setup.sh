@@ -17,28 +17,42 @@ if ! command -v uv >/dev/null || [ "$(uv --version | awk '{print $2}')" != "$UV_
 fi
 export PATH="$HOME/.local/bin:$PATH"
 
-[ -x "$COOL_PY" ] || { echo "COOL Python 3.12 not found at $COOL_PY"; exit 1; }
-[ -d "$VENV" ] || uv venv --python "$COOL_PY" "$VENV"
-
+# Mode: COOL when the COOL AMI is present (/opt/cool), else the pinned opencv-python-headless
+# wheel (stock mode, deploy.sh --stock) so a plain Graviton Ubuntu box can run the service.
+sudo mkdir -p /etc/praxis
 cd "$APP"
-# Pinned deps from uv.lock, minus the OpenCV wheel (COOL provides cv2).
-uv export --frozen --no-dev --no-emit-project --no-hashes | grep -viE '^opencv-python' > /opt/praxis/requirements.txt
-uv pip install --python "$VENV/bin/python" -r /opt/praxis/requirements.txt --quiet
-uv pip uninstall --python "$VENV/bin/python" opencv-python-headless opencv-python >/dev/null 2>&1 || true
+if [ -x "$COOL_PY" ]; then
+  MODE=cool
+  [ -d "$VENV" ] || uv venv --python "$COOL_PY" "$VENV"
+  # Pinned deps from uv.lock, minus the OpenCV wheel (COOL provides cv2).
+  uv export --frozen --no-dev --no-emit-project --no-hashes | grep -viE '^opencv-python' > /opt/praxis/requirements.txt
+  uv pip install --python "$VENV/bin/python" -r /opt/praxis/requirements.txt --quiet
+  uv pip uninstall --python "$VENV/bin/python" opencv-python-headless opencv-python >/dev/null 2>&1 || true
+  printf 'PYTHONPATH=%s\nLD_LIBRARY_PATH=%s\n' "$COOL_SITE" "$COOL_LIB" | sudo tee /etc/praxis/opencv.env >/dev/null
+else
+  MODE=stock
+  [ -d "$VENV" ] || uv venv --python 3.12 "$VENV"
+  uv export --frozen --no-dev --no-emit-project --no-hashes > /opt/praxis/requirements.txt
+  uv pip install --python "$VENV/bin/python" -r /opt/praxis/requirements.txt --quiet
+  : | sudo tee /etc/praxis/opencv.env >/dev/null
+fi
+echo "OpenCV mode: $MODE"
 
-# cv2 must come from COOL, with the dnn module our hand / pose models use.
-PYTHONPATH="$COOL_SITE" LD_LIBRARY_PATH="$COOL_LIB" "$VENV/bin/python" - <<'PY'
-import cv2, sys
+# cv2 must have the dnn module (hand / pose models) and aruco (sheet markers); in COOL mode it
+# must come from /opt/cool.
+set -a; . /etc/praxis/opencv.env; set +a
+PRAXIS_OPENCV_MODE="$MODE" "$VENV/bin/python" - <<'PY'
+import os, cv2
 print("cv2", cv2.__version__, "from", cv2.__file__)
-assert "/opt/cool" in cv2.__file__, "cv2 is not COOL"
-assert hasattr(cv2, "dnn") and hasattr(cv2.dnn, "readNetFromONNX"), "COOL build has no cv2.dnn"
-assert hasattr(cv2, "aruco"), "COOL build has no cv2.aruco"
+if os.environ["PRAXIS_OPENCV_MODE"] == "cool":
+    assert "/opt/cool" in cv2.__file__, "cv2 is not COOL"
+assert hasattr(cv2, "dnn") and hasattr(cv2.dnn, "readNetFromONNX"), "this OpenCV build has no cv2.dnn"
+assert hasattr(cv2, "aruco"), "this OpenCV build has no cv2.aruco"
 PY
 
-PYTHONPATH="$COOL_SITE" LD_LIBRARY_PATH="$COOL_LIB" "$VENV/bin/python" tools/fetch_models.py --dir "$APP/models"
+"$VENV/bin/python" tools/fetch_models.py --dir "$APP/models"
 
 sudo install -m 644 /opt/praxis/praxis.service /etc/systemd/system/praxis.service
-sudo mkdir -p /etc/praxis
 sudo systemctl daemon-reload
 sudo systemctl enable praxis.service >/dev/null
 sudo systemctl restart praxis.service

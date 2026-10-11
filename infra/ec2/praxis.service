@@ -1,5 +1,5 @@
 # Praxis session service on the COOL Graviton instance (installed by remote_setup.sh).
-# cv2 comes from COOL via PYTHONPATH / LD_LIBRARY_PATH; the venv has no OpenCV wheel.
+# On the COOL AMI cv2 comes from COOL (opencv.env); elsewhere from the pinned wheel (stock mode).
 [Unit]
 Description=Praxis session service (FastAPI + OpenCV 5 COOL)
 After=network-online.target
@@ -8,8 +8,8 @@ Wants=network-online.target
 [Service]
 User=ubuntu
 WorkingDirectory=/opt/praxis/app
-Environment=PYTHONPATH=/opt/cool/python_3.12/site-packages
-Environment=LD_LIBRARY_PATH=/opt/cool/cpp_sdk/lib
+# COOL paths (written by remote_setup.sh only on the COOL AMI; empty in stock mode).
+EnvironmentFile=-/etc/praxis/opencv.env
 Environment=PRAXIS_CLOUD_ENABLED=1
 Environment=PRAXIS_EVAL_DIR=/opt/praxis/app/evaluation/dataset_v0
 Environment=PRAXIS_WEB_DIST=/opt/praxis/app/web_dist
