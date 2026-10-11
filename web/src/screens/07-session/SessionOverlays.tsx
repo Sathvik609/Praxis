@@ -15,6 +15,7 @@ export const RULE_TITLE: Record<string, string> = {
   perception: 'Tracking lost',
   lean: 'Paused · posture',
   failed_reps: 'Paused · let’s check the setup',
+  setup: 'Paused · check your position',
   patient: 'Paused',
   pain: 'Session ended · pain at stop level',
   symptoms: 'Session ended · new symptoms',

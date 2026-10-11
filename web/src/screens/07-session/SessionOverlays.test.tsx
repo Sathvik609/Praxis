@@ -90,3 +90,9 @@ test('compact exertion chip: one line in the artifact classes, word + icon + rea
   expect(screen.getByText('behavioural index · reps getting slower')).toHaveClass('sx-small')
   expect(container.querySelector('.ui-card, [class*="rounded-[var(--r-card)]"]')).toBeNull()
 })
+
+test('a setup pause (Arm out to the side held side-on) names the reason and shows the service fix', () => {
+  render(<SessionOverlay overlay={{ kind: 'paused', rule: 'setup', text: 'Turn your chair so you face the camera straight on.' }} onResume={vi.fn()} onEnd={vi.fn()} />)
+  expect(screen.getByText('Paused · check your position')).toBeInTheDocument()
+  expect(screen.getByText(/face the camera straight on/)).toBeInTheDocument()
+})
