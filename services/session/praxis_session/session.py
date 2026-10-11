@@ -61,6 +61,7 @@ class CoachSession:
         # Agent prompts waiting for the patient's tap: id -> {kind, prompt, reason, accept}.
         self.prompts: dict[str, dict[str, Any]] = {}
         self.coach_note: dict[str, Any] | None = None
+        self.patient_note: str | None = None  # typed at check-in; data for the agent, never instructions
         self._clock_t = 0.0
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
@@ -115,10 +116,14 @@ class CoachSession:
         if isinstance(t, (int, float)) and t > self._clock_t:
             self._clock_t = float(t)
 
-    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None) -> list[Event]:
+    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None, notes: str | None = None) -> list[Event]:
         self._tick(t)
         self.checkin ={"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
-        self.trace.log("checkin", **self.checkin)
+        # 10 Oct: the patient's typed note is kept apart from the structured answers: it never
+        # goes on the event ring (agent evidence) and reaches the model only as quoted, capped
+        # data (agent.model.build_prompt), never as instructions.
+        self.patient_note = (str(notes).strip() or None) if notes else None
+        self.trace.log("checkin", **self.checkin, has_note=self.patient_note is not None)
         if rpe is not None:
             self.exertion.update([], rpe=rpe, t=t)
         out = self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t))

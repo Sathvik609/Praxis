@@ -701,7 +701,8 @@ def _handle_command(cmd: dict, pipeline: SessionPipeline | None, coach: CoachSes
         tier = stricter(tier_for(pain, coach.prescription), pipeline.tier)
         applied = pipeline.apply_tier(tier)
         coach.trace.log("tier", rule="pain_tier", pain=pain, tier=tier, running=applied["tier"], changed=applied["changed"], reason=tier_reason(tier, pain))
-        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"))
+        notes = cmd.get("notes")
+        out += coach.on_checkin(pain, str(cmd.get("energy", "")), int(cmd.get("minutes", 0)), bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, tier=tier, tier_applied=applied["changed"]), *out]
     if name == "pain":
         out += coach.on_pain(int(cmd.get("pain", 0)), now)
