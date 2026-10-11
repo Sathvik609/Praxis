@@ -73,13 +73,55 @@ def local_today() -> date:
     return date.today()
 
 
+class _Rows:
+    """A statement's result, read in full while the connection lock was held."""
+
+    def __init__(self, rows: list[sqlite3.Row], lastrowid: int | None, rowcount: int) -> None:
+        self._rows, self.lastrowid, self.rowcount = rows, lastrowid, rowcount
+
+    def fetchone(self) -> sqlite3.Row | None:
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self) -> list[sqlite3.Row]:
+        return list(self._rows)
+
+    def __iter__(self):
+        return iter(self._rows)
+
+
+class _SerialConnection:
+    """One sqlite3 connection shared by FastAPI's thread pool, used one statement at a time.
+
+    e2e 11 Oct: Home asks for the patient, progress, calendar and prescription at once; with
+    concurrent cursors on one connection a read came back None (a 500 on /api/patients/me).
+    Each statement now runs and is fetched in full under one lock."""
+
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self._conn = conn
+        self._lock = threading.RLock()
+
+    def execute(self, sql: str, params: Any = ()) -> _Rows:
+        with self._lock:
+            cur = self._conn.execute(sql, params)
+            return _Rows(cur.fetchall(), cur.lastrowid, cur.rowcount)
+
+    def executescript(self, script: str) -> None:
+        with self._lock:
+            self._conn.executescript(script)
+
+    def commit(self) -> None:
+        with self._lock:
+            self._conn.commit()
+
+
 class Store:
     def __init__(self, path: Path | str = DEFAULT_PATH) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(str(self.path), check_same_thread=False)
+        conn = sqlite3.connect(str(self.path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        self._db = _SerialConnection(conn)
         self._note_lock = threading.Lock()  # the agent's note is written from a tool thread
-        self._db.row_factory = sqlite3.Row
         self._db.executescript(SCHEMA)
         self._migrate()
 
