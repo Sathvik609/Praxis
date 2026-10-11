@@ -95,7 +95,12 @@ const pending = new Map()
 const waiters = []
 ws.addEventListener('message', (m) => {
   const msg = JSON.parse(m.data)
-  if (msg.method) for (const w of waiters.splice(0)) (w.method === msg.method ? w.resolve() : waiters.push(w))
+  if (msg.method) {
+    for (const w of waiters.splice(0)) {
+      if (w.method === msg.method) w.resolve()
+      else waiters.push(w)
+    }
+  }
   if (msg.id && pending.has(msg.id)) {
     pending.get(msg.id)(msg)
     pending.delete(msg.id)

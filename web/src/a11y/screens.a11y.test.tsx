@@ -3,7 +3,7 @@
  *  the live screens, a recorded event stream fed through the webcam hook (`harness.tsx`). One
  *  test per screen; dialogs and in-session states are in `dialogs.a11y.test.tsx`.
  *  See docs/ACCESSIBILITY.md and `test/axe.ts` (what is and is not checked in jsdom). */
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import { expectNoAxeViolations, expectPageStructure } from '../test/axe'
 import { feed, renderRoute, stubService } from './harness'
 
@@ -72,4 +72,17 @@ test.each(LIVE)('%s has no axe violations', async (_name, path, rec, share) => {
 test('Coach chat drawer (deep link) is a named modal dialog with no axe violations', async () => {
   await renderRoute('/details/coach')
   await expectNoAxeViolations(screen.getByRole('dialog', { name: 'Praxis coach' }))
+})
+
+test.each(LIVE)('%s: the coach caption is the one polite announcer; counters are not live', async (_name, path, rec, share) => {
+  feed(rec, share)
+  await renderRoute(path)
+  const caption = screen.getByRole('region', { name: 'Coach' }).querySelector('[aria-live="polite"]')
+  expect(caption?.textContent).toBeTruthy()
+  const speaking = [...document.querySelectorAll('[aria-live="polite"]')].filter((el) => el.textContent?.trim())
+  expect(speaking).toEqual([caption])
+  const progress = screen.getByRole('region', { name: 'Progress' })
+  expect(progress.querySelector('[aria-live], [role="status"], [role="log"], [role="alert"]')).toBeNull()
+  // the state chip is a status (announced on change only: connecting, tracking, lost, paused)
+  expect(within(screen.getByRole('banner')).getByRole('status')).toHaveTextContent(/\w/)
 })
