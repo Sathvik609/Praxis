@@ -35,7 +35,7 @@ from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDis
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.metrics import METRICS as AGENT_METRICS
-from praxis_session.agent.model import load_config as load_agent_config, make_planner
+from praxis_session.agent.model import load_config as load_agent_config, make_planner, with_listening_port
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
 from praxis_session.session import RULE_LABEL_WITH_AGENT
@@ -515,7 +515,8 @@ async def _start_agent(ws: WebSocket, coach: CoachSession, pipeline: SessionPipe
     label = AGENT_CFG.label or "Claude agent"
     handle = agent_tools.REGISTRY.register(agent_tools.SessionHandle(session=coach, pipeline=pipeline, store=store, label=label))
     if AGENT_CFG.ready:
-        coach.agent = AgentCoach(make_planner(AGENT_CFG), handle, label=label, daily=AGENT_CFG.budget)
+        planner = make_planner(with_listening_port(AGENT_CFG, ws.scope.get("server")))
+        coach.agent = AgentCoach(planner, handle, label=label, daily=AGENT_CFG.budget)
     first = [make_event("session_start", session_id=coach.session_id, mode=coach.mode, exercise=coach.exercise, label=coach.rule_label, agent=AGENT_CFG.health(MCP_MOUNTED) | {"label": label})]
     if not AGENT_CFG.ready:
         first.append(make_event("agent_status", state="offline", reason=f"Coach offline · rule coach ({AGENT_CFG.reason})", label=label))
