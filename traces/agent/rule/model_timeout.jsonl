@@ -1,0 +1,8 @@
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791679122.567708, "session": "eval-model_timeout", "kind": "session"}
+{"type": "reach_complete", "id": 307, "t": 1.0, "to_dot": 1, "verified": true, "reason": null, "arc": 1, "seq": 2, "ts": 1791679122.5696452, "session": "eval-model_timeout", "kind": "event"}
+{"type": "arc_complete", "id": 308, "t": 1.0, "arc": 1, "seq": 3, "ts": 1791679122.569862, "session": "eval-model_timeout", "kind": "event"}
+{"action": "instruct", "cue_id": "cup_onto_dot", "reason": "verified reach", "evidence": [307], "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 4, "ts": 1791679122.569921, "session": "eval-model_timeout", "kind": "decide"}
+{"tool": "speak", "text": "Dot 2. Good.", "ui": {"avatar_clip": "cup"}, "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 5, "ts": 1791679122.569955, "session": "eval-model_timeout", "kind": "action"}
+{"type": "reach_complete", "id": 311, "t": 2.0, "to_dot": 2, "verified": true, "reason": null, "arc": 2, "seq": 6, "ts": 1791679122.570001, "session": "eval-model_timeout", "kind": "event"}
+{"action": "instruct", "cue_id": "cup_onto_dot", "reason": "verified reach", "evidence": [311], "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 7, "ts": 1791679122.570037, "session": "eval-model_timeout", "kind": "decide"}
+{"tool": "speak", "text": "Onto 3.", "ui": {"avatar_clip": "cup"}, "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 8, "ts": 1791679122.5700638, "session": "eval-model_timeout", "kind": "action"}

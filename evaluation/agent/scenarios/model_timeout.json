@@ -2,6 +2,7 @@
   "id": "model_timeout",
   "title": "The model does not answer within the run budget",
   "mode": "cup",
+  "infra": true,
   "timeout_s": 0.2,
   "steps": [
     {
