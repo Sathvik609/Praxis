@@ -58,8 +58,8 @@ def coach_events(out, source="agent"):
 # ---- (a) setup recovery ---------------------------------------------------------------------
 def test_setup_recovery_loop(tmp_path):
     s, p, h = build(tmp_path, scripts=RECOVERY)
-    covered, _ = camera_frame(CUP_TARGETS, hide_marker=2)
-    clean, _ = camera_frame(CUP_TARGETS)
+    covered, _ = camera_frame(CUP_TARGETS, hide_marker=2, cup_mm=CUP_TARGETS.targets_mm[0])
+    clean, _ = camera_frame(CUP_TARGETS, cup_mm=CUP_TARGETS.targets_mm[0])  # the cup on dot 0: the target check passes
     p.process(covered, 0.0, 0)
     out = s.on_events([unverified(float(i)) for i in (1, 2, 3)], snapshot={}, t=3.0)
     assert s.paused and s.pause_rule == "failed_reps" and any(e.type == "pause" for e in out)

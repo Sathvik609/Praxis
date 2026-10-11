@@ -269,7 +269,7 @@ class ScriptedPlanner:
     `"$session"`, `"$evidence"` (the checkpoint's event ids), `"$last:<type>"` (id list of the
     newest event of that type) and `"{tool.path}"` inside strings (a value from an earlier
     result, e.g. `{check_setup.first_hint}`); `"if": "tool.path"` runs a step only when that
-    value is truthy; `{"sleep": s}` waits; `{"raise": "timeout"|"error"}` fails the run.
+    value is truthy (`"unless"`: only when it is not); `{"sleep": s}` waits; `{"raise": "timeout"|"error"}` fails the run.
     """
 
     mode = "scripted"
@@ -305,6 +305,9 @@ class ScriptedPlanner:
                     raise (asyncio.TimeoutError() if step["raise"] == "timeout" else RuntimeError(str(step["raise"])))
                 cond = step.get("if")
                 if cond and not _lookup(results, *cond.split(".", 1)):
+                    continue
+                cond = step.get("unless")
+                if cond and _lookup(results, *cond.split(".", 1)):
                     continue
                 name = step["tool"]
                 args = self._resolve(step.get("args", {}), ctx, results)
@@ -385,7 +388,12 @@ ids of this session's events from get_events or get_set_summary (never invent id
 - Setup problem (pause after unverified reps or lost tracking): get_set_summary to see why
   the reps were not verified, then check_setup. Speak the one specific fix: the failing
   check's hint (say which corner or body part), or, if every check passes, the reason the
-  reps were not verified (for example a hand covering the cup). Then recalibrate, then
+  reps were not verified (for example a hand covering the cup). If the sheet checks pass but
+  the `target` check fails (the cup or pegs are not seen, e.g. a cup that is not blue), call
+  resample_target_colour: OpenCV re-samples the colour and applies it only if detection then
+  works; if it did not apply, ask the patient to put the cup on a dot. For the arm, use the
+  pose facts (facing vs needed_view, both shoulders, hips, trunk lean) to name the fix. Then
+  recalibrate, then
   request_resume (the prompt already asks the patient, so do not ask in `speak` too).
   request_resume re-checks the camera first: if it returns ok=false the setup still fails,
   so speak its `hint` once more and stop. Never claim a fix the camera has not confirmed.
@@ -409,7 +417,7 @@ TRIGGER_JOB = {
     "checkin": "Plan the session: read the prescription (and history if useful), set_session_plan (goals, what to watch, evidence = the check-in event), then give one short opening instruction.",
     "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this set's evidence changes it.",
     "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this arc's evidence changes it.",
-    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup, speak the specific fix, recalibrate, request_resume (if it says the setup still fails, say its hint again).",
+    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup (if only the target check fails: resample_target_colour), speak the specific fix, recalibrate, request_resume (if it says the setup still fails, say its hint again).",
     "nhpt_complete": "Explain the peg-test result plainly (time, splits); no clinical interpretation.",
     "feedback": "Write the session summary note for the report.",
 }

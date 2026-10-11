@@ -44,7 +44,7 @@ def unverified(t):
 
 def test_tool_catalogue_matches_the_design():
     assert set(T.SERVERS) == {"perception", "exertion", "coach"}
-    assert set(T.SERVERS["perception"]) == {"get_events", "get_set_summary", "check_setup", "recalibrate"}
+    assert set(T.SERVERS["perception"]) == {"get_events", "get_set_summary", "check_setup", "recalibrate", "resample_target_colour"}
     assert set(T.SERVERS["exertion"]) == {"get_exertion_state", "get_prescription", "read_patient_model", "get_session_plan"}
     assert set(T.SERVERS["coach"]) == {"speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary", "set_session_plan"}
     # every coach tool maps onto one of the six actions, and nothing else exists

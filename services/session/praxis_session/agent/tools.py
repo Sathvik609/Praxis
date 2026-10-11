@@ -63,7 +63,7 @@ PLAN_ITEM_MAX_CHARS = 100
 BECAUSE_MAX_CHARS = 200
 
 SERVERS: dict[str, tuple[str, ...]] = {
-    "perception": ("get_events", "get_set_summary", "check_setup", "recalibrate"),
+    "perception": ("get_events", "get_set_summary", "check_setup", "recalibrate", "resample_target_colour"),
     "exertion": ("get_exertion_state", "get_prescription", "read_patient_model", "get_session_plan"),
     "coach": ("speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary", "set_session_plan"),
 }
@@ -523,6 +523,28 @@ def recalibrate(session_id: str) -> dict[str, Any]:
     return out
 
 
+def resample_target_colour(session_id: str, target: str, evidence: list[int]) -> dict[str, Any]:
+    """Active perception, OpenCV on the latest frame: use when the sheet's markers are found but
+    check_setup says the cup (or the pegs) is not seen, e.g. a cup that is not blue. Warps to
+    the sheet, samples the colour where the target should be (the cup on a dot; peg-sized
+    colour patches), tests detection with that colour against the current one and applies it
+    only if the target is then detected where it was not. `target`: "cup" or "pegs". Returns
+    before/after detection (never pixels). Re-check with check_setup or get_events after."""
+    h = _h()
+    s = h.session
+    if target not in ("cup", "pegs"):
+        raise ToolRejected("target must be 'cup' or 'pegs'", "field")
+    ids = _action_guard(evidence, count=False)
+    res = h.pipeline.resample_target_colour(target)
+    if not res.get("ok"):
+        raise ToolRejected(str(res.get("error", "resample is not available here")), "unsupported")
+    s.trace.log("resample", target=target, applied=bool(res.get("applied")), before=res.get("before"), after=res.get("after"), colour=res.get("colour"), evidence=ids, run=h.run.id if h.run else None)
+    if res.get("applied"):
+        h.run.acted()  # type: ignore[union-attr]
+        h._queue("command", {"payload": {"cmd": "sample_colour", "source": "agent", "ok": True, "session_id": s.session_id, "target": target, "colour": res.get("colour"), "evidence": ids}})
+    return {k: v for k, v in res.items() if k != "tried"} | {"tried": (res.get("tried") or [])[:6]}
+
+
 # ---- exertion / program ---------------------------------------------------------------------
 def get_exertion_state(session_id: str) -> dict[str, Any]:
     """Behavioural exertion (`low|moderate|high`, score, reasons) from rep-time slope, falling
@@ -838,7 +860,7 @@ def get_session_plan(session_id: str) -> dict[str, Any]:
 TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     f.__name__: f
     for f in (
-        get_events, get_set_summary, check_setup, recalibrate,
+        get_events, get_set_summary, check_setup, recalibrate, resample_target_colour,
         get_exertion_state, get_prescription, read_patient_model, get_session_plan,
         speak, propose_adjustment, request_rest, request_resume, flag_therapist, end_session, write_session_summary, set_session_plan,
     )

@@ -21,7 +21,7 @@ RULE_LABEL_WITH_AGENT = "Rule-based coach"
 SESSION_RING = 400  # non-frame events kept per session: what an agent's evidence ids may cite
 # Checkpoints (agent coach design §3): event type -> trigger name, and stop-rule pauses.
 CHECKPOINT_EVENTS = {"set_complete": "set_complete", "arc_complete": "arc_complete", "nhpt_complete": "nhpt_complete"}
-CHECKPOINT_PAUSES = ("failed_reps", "perception")
+CHECKPOINT_PAUSES = ("failed_reps", "perception", "setup")
 
 WHY_TEXT = {
     "progression": "Your program (Hospital GRASP L2) assigns 2 slow arcs then 2 fast arcs. The camera verified the slow arcs, so the fast arcs are the next step your therapist planned. Nothing goes above the prescribed level.",
