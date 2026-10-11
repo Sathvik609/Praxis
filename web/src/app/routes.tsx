@@ -20,7 +20,7 @@ import { Shell } from './Shell'
  *  opens straight on Home.
  *
  *  The live session and the clinician dashboard render outside the patient Shell. */
-const routes: RouteObject[] = [
+export const routes: RouteObject[] = [
   { path: '/', element: <Navigate to="/details" replace /> },
   { path: '/session', element: <SessionRouter /> },
   { path: '/therapist', element: <Therapist /> },

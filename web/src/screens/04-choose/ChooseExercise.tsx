@@ -168,7 +168,7 @@ export function ChooseExercise() {
                         <span className="lib-eyebrow">{eyebrow}</span>
                         <span className="lib-tag">{tag}</span>
                       </div>
-                      <h3 className="mt-2 text-2xl">{e.name}</h3>
+                      <h2 className="mt-2 text-2xl">{e.name}</h2>
                       <div id={`choose-${e.id}-details`}>
                         <p className="mt-1">{e.equipment}</p>
                         <p>{dose}</p>

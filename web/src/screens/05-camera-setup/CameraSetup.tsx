@@ -189,7 +189,7 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
           <p className="cs-sub">{`Camera setup · ${sideWord} arm`}</p>
         </div>
       </header>
-      <main className="cs-stage">
+      <div className="cs-stage">
         <div className="cs-frame">
           <video ref={videoRef} muted playsInline className="cs-video" />
           <OverlayCanvas width={640} height={480} calibration={cal} />
@@ -270,7 +270,7 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
             )}
           </div>
         )}
-      </main>
+      </div>
       <footer className="cs-bar">
         {/* The artifact's Seated/Bedside segment (hidden by its CSS, read by nothing) is not
             ported; this empty cell keeps the steps centred in the bar's 1fr · auto · 1fr grid. */}

@@ -137,7 +137,7 @@ function DemonstrationFor() {
         </div>
         {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
       </header>
-      <main className="dth-main" aria-hidden={complete || undefined}>
+      <div className="dth-main" aria-hidden={complete || undefined}>
         <AvatarPanel
           theater
           overlayTop={92}
@@ -155,7 +155,7 @@ function DemonstrationFor() {
             {`Stop if your ${ex.stopIf}.`}
           </p>
         )}
-      </main>
+      </div>
       {complete && (
         <div className="dth-scrim">
           <div role="dialog" aria-modal aria-labelledby="dth-modal-title" className="dth-modal">

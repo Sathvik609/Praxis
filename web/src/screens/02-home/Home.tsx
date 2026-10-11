@@ -77,7 +77,7 @@ export function Home() {
               return (
                 <div key={d.date} className="flex min-w-0 flex-col items-center gap-1">
                   <span className="text-base text-muted">{letter}</span>
-                  <span aria-label={done ? `${letter}: done` : today ? `${letter}: today` : `${letter}: not yet`} className={`wk-day ${done ? 'wk-done' : today ? 'wk-today' : 'wk-todo'}`}>
+                  <span role="img" aria-label={done ? `${letter}: done` : today ? `${letter}: today` : `${letter}: not yet`} className={`wk-day ${done ? 'wk-done' : today ? 'wk-today' : 'wk-todo'}`}>
                     {done ? <Check aria-hidden className="h-5 w-5" strokeWidth={3} /> : today ? 'now' : '·'}
                   </span>
                 </div>
