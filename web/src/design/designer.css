@@ -1431,6 +1431,7 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 .cs-coach{left:0!important;right:0!important;margin-inline:auto!important;width:fit-content!important;transform:none!important}
 /* Live readout: top-right of the camera card */
 .sx-feed .sx-foot{top:14px!important;right:14px!important;bottom:auto!important;left:auto!important;align-items:flex-end!important}
+.sx-feed .sx-mono-row{position:absolute;left:14px;bottom:10px;z-index:3;max-width:calc(100% - 28px);pointer-events:none}
 .sx-feed .sx-band{background:rgba(12,16,24,.78)!important;border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:none!important;padding:6px 12px!important;border-radius:10px!important;font-size:16px!important;line-height:24px!important}
 .sx-feed .sx-band-amber{color:#F5B04A!important}.sx-feed .sx-band-mint{color:#6FE0BE!important}
 /* Captions switch */

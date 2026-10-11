@@ -2,9 +2,21 @@ import { act, fireEvent, render, renderHook, screen } from '@testing-library/rea
 import type { PraxisEvent } from '../../lib/events'
 import { statusLabel } from '../../session/liveStatus'
 import type { CoachEvent, Overlay } from '../../session/useCoach'
-import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
+import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
 import { TracePanel } from './TracePanel'
 import { mockApi, PRESCRIPTION } from '../../test/api-mock'
+
+test('the judge line has its own row at the foot of the feed, not the top-right band stack (e2e 11 Oct)', () => {
+  // The NHPT line ("cv2 5.0 · findContours + HoughCircles occupancy · ...") is wider than the
+  // top-right stack, which grows leftwards over the "You" tag; at the foot it truncates instead.
+  const { container } = render(
+    <SxFeed replay={false} camActive status="tracking" videoRef={{ current: null }} frame={null} note="left hand" band="Cup found" mono="cv2 5.0 · findContours + HoughCircles occupancy · holes: hough · dnn hand · 44 fps max" onRetry={() => {}} />,
+  )
+  const mono = screen.getByText(/findContours/)
+  expect(mono).toHaveClass('sx-mono', 'sx-mono-row')
+  expect(mono.closest('.sx-foot')).toBeNull()
+  expect(container.querySelector('.sx-foot')).toHaveTextContent('Cup found')
+})
 
 const barProps = () => ({
   onPause: vi.fn(),
