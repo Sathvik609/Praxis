@@ -1,0 +1,85 @@
+{
+ "label": "stock",
+ "env": {
+  "cv2_version": "5.0.0",
+  "cv2_file": "/opt/praxis/stockvenv/lib/python3.12/site-packages/cv2/__init__.py",
+  "build": [
+   "Baseline:                    NEON FP16",
+   "Custom HAL:                  YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  ],
+  "threads": 2,
+  "python": "3.12.3",
+  "machine": "aarch64",
+  "cpu": "Neoverse-V2",
+  "numpy": "2.3.3"
+ },
+ "repeats": 5,
+ "stages": {
+  "decode": {
+   "n": 925,
+   "mean_ms": 0.5661,
+   "p50_ms": 0.5672,
+   "p95_ms": 0.5747
+  },
+  "aruco_H": {
+   "n": 925,
+   "mean_ms": 1.8884,
+   "p50_ms": 1.8754,
+   "p95_ms": 1.9868
+  },
+  "warp": {
+   "n": 925,
+   "mean_ms": 0.4697,
+   "p50_ms": 0.4701,
+   "p95_ms": 0.4731
+  },
+  "hough": {
+   "n": 925,
+   "mean_ms": 2.6689,
+   "p50_ms": 2.6306,
+   "p95_ms": 2.8507
+  },
+  "peg_mask": {
+   "n": 925,
+   "mean_ms": 0.4812,
+   "p50_ms": 0.4817,
+   "p95_ms": 0.4909
+  },
+  "peg_blobs": {
+   "n": 925,
+   "mean_ms": 0.5647,
+   "p50_ms": 0.564,
+   "p95_ms": 0.6072
+  },
+  "hole_match": {
+   "n": 925,
+   "mean_ms": 3.4051,
+   "p50_ms": 3.3284,
+   "p95_ms": 3.6536
+  },
+  "cup": {
+   "n": 2585,
+   "mean_ms": 1.284,
+   "p50_ms": 1.2862,
+   "p95_ms": 1.3029
+  },
+  "pipeline_nhpt": {
+   "n": 925,
+   "mean_ms": 6.8591,
+   "p50_ms": 6.8333,
+   "p95_ms": 7.016
+  },
+  "pipeline_cup": {
+   "n": 2585,
+   "mean_ms": 3.6022,
+   "p50_ms": 3.5921,
+   "p95_ms": 3.6992
+  },
+  "hand_dnn": {
+   "n": 220,
+   "mean_ms": 17.2329,
+   "p50_ms": 21.3574,
+   "p95_ms": 21.7497
+  }
+ }
+}

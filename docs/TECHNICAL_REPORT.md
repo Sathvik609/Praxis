@@ -1,6 +1,6 @@
 # Praxis — Technical Report
 
-> Status: **edge build, 10 Oct 2026**. Built: the OpenCV 5 pipeline for the three exercises, stop rules, rule coach, Claude agent coach (off by default), every screen, SQLite store, replay. **Not built:** COOL on AWS and HTTPS (§5; the service itself runs on a Graviton c8g instance since 11 Oct), the COOL benchmark (§7), real recordings / dataset v1 (§6). Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based, scripted or fallback is labeled here, in the UI, and in the trace.
+> Status: **edge build, 10 Oct 2026**. Built: the OpenCV 5 pipeline for the three exercises, stop rules, rule coach, Claude agent coach (off by default), every screen, SQLite store, replay. **On AWS since 11 Oct:** the service runs on a Graviton4 c8g.large launched from the COOL AMI with COOL's OpenCV 5.1.0-dev, behind CloudFront HTTPS (§5), and the COOL vs stock benchmark is measured (§7). **Not built:** real recordings / dataset v1 (§6), Bedrock, S3/CloudWatch, CDK. Every section is filled in the same commit that ships the feature it describes. Anything simulated, rule-based, scripted or fallback is labeled here, in the UI, and in the trace.
 
 ## 1. Problem and clinical framing
 Adherence and coaching aid for therapist-prescribed upper-limb rehab at home. Not a medical device. The therapist prescribes; the coach proposes within the prescription; hard-coded stop rules override the coach. Locked exercise set (28 Sep 2026, supersedes the 23 Sep seven): three camera-coached exercises — Arm out to the side (daily, front view, pose model), Waiter – cup (daily, printed 5-dot sheet) and the Nine-Hole Peg Test (weekly assessment). Pendulum, Arm to the front, Rotate out and Rotate in are hidden: their code stays dormant behind the registry's `visible` flag, and nothing shows, schedules or runs them. Default day: Arm out to the side → Waiter – cup (~10 min). Pain tiers at check-in: 0–3 full, 4–6 gentle, ≥ 7 rest + therapist flag.
@@ -71,9 +71,10 @@ One Python 3.12 process: FastAPI + WebSocket frame ingest (640×480 JPEG from th
 | Design v2, task 16 (6 Oct): camera setup (artifact `cs-*`, live J65151–65385): top bar (Exit, title, `Camera setup · <Side> arm`; the Audio button was removed 10 Oct), stage with video, `OverlayCanvas`, `cs-guide`, `cs-live` pill "Live · not recording · Mirrored · <processing place>", `i` guide dialog (`SetupDiagram`, copy, mini checklist, `cs-telemetry` in Judge view, Restart camera, Change exercise), `cs-off` card (camera off / blocked via `cameraBlockedCopy`, recorded session → Settings), `cs-coach` pill (current row's hint, self-check confirm), `cs-steps` + Still pose, Continue. `resolveChecks` table view = service rows + client `side_confirm` ("Is this your <side> arm?"); `ready` = `all_required_pass` and every self-check confirmed. Still pose 2 s (reset by `quality.steadiness.ok === false`; time-only for the arm setup, which has no `quality` event), then 4 s auto-continue to `sessionUrl` (+`&rehearse=1`) with a `cs-skip` Cancel. No `usePreviewSetup`, no Seated/Bedside segment, no crumbs; `Checklist.tsx` removed | built, tested (vitest) |
 | Design v2, task 18 (6 Oct): post-session feedback (artifact `fb-*`, live J65659–65772): raw Radix dialog named by the eyebrow "How was your practice?", step question as the title, `n of 3` (4 when `early`); pain 0–10 radios named by number with roving tabindex, `aria-hidden` faces, "Before you started" from `readCheckinPain()` + Same / Up n / Down n; `difficulty` cards with `effort` 2/4/7/9 (screen-reader text "effort n/10 (from your answer)"), `again_tomorrow`, `barriers` (early only), optional `detail` note on the last step. `.fb-alert` "Your therapist will be flagged." only when `pain_after >= rx.stop_rules.pain_max` (prescription read while open; no line when it cannot be read), matching the service's `pain_after` flag. `Feedback` type in `lib/api.ts`; the report's Edit feedback passes `early` | built, tested (vitest) |
 | Real recordings, dataset v1, browser-measured latency, pilots | not started (Phase 9, needs people) |
-| Agent on Bedrock, AWS, COOL | deferred (W6) |
+| AWS EC2 Graviton4 + COOL + CloudFront HTTPS, COOL benchmark | built 11 Oct (§5, §7) |
+| Agent on Bedrock, S3/CloudWatch, CDK | not built |
 
-## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`)
+## 3. Perception (OpenCV 5.0.0, `opencv-python-headless==5.0.0.93`; COOL 5.1.0-dev on AWS, §5)
 
 ### 3.1 Sheets and calibration (ArUco → homography → mm)
 `perception/board_spec.py` is the single source of truth for both printed sheets: the NHPT board sheet (A4 portrait, ArUco DICT_4X4_50 ids 0–3 of 40 mm at known centres, nine 10 mm hole rings at 32 mm pitch) and the Waiter – cup target sheet (A4 landscape, same markers, five 20 mm dots on a 250 mm-radius arc spanning ±26°, ~219 mm chord). `perception/render.py` draws the canonical sheet with `cv2.aruco.generateImageMarker` and `cv2.circle`; `tools/make_sheets.py` writes `docs/sheets/*.pdf` at true scale.
@@ -385,12 +386,19 @@ Design `docs/superpowers/specs/2026-09-29-agent-coach-design.md`; how-to and wor
 
 **In-session pain on the report (10 Oct).** `CoachSession.on_pain` keeps the last Pain / feel unwell answer as `summary.reported_pain` (`{pain, t}`, null when none), so a session ended by the pain stop rule whose feedback screen was skipped still shows the number on the report ("2 → 8 · pain before → during the session", plus "You reported pain 8/10 during the session."), and screen 08 opens with the live screen's last Pain / feel unwell answer pre-selected (still editable).
 
-## 5. AWS deployment — running on Graviton (stock OpenCV); COOL pending
-**11 Oct 2026, deployed and verified.** EC2 `<instance-id>`, **c8g.large (AWS Graviton4, arm64)**, region **us-east-2** (the new account's project is pinned to Ohio), Ubuntu 24.04 LTS arm64 (`ami-0ecd65aaebb33ebda`), 20 GB gp3, security group `praxis-sg` (SSH from one admin IP, TCP 8000 public). Installed with one command, `infra/ec2/deploy.sh <host> --stock --agent`: pinned dependencies from `uv.lock` (OpenCV 5.0.0 `opencv-python-headless` manylinux aarch64 wheel), SHA256-pinned ONNX models, systemd `praxis.service`. `/health` on the instance: `opencv_build {version 5.0.0, arch aarch64, dnn true, cool false}`, `mode: cloud`, hand + pose models loaded, agent `claude-sonnet-5` ready with the daily cap (0/100). The MCP routes answer **403** from the internet (loopback / per-process token only). A replay of `synthetic_cup_01` through the instance ran the Claude agent at arc checkpoints: 3 runs, 0 errors, first action ~6.2 s, $0.12 (`/api/agent/metrics`). **Not yet:** COOL (the Marketplace subscription is blocked by an account-plan issue, AWS case 179167533900910 — the same script switches to COOL automatically on the COOL AMI), HTTPS via CloudFront (needed for the browser webcam), CloudWatch log shipping, the COOL benchmark. Between test sessions the instance is stopped.
+## 5. AWS deployment — Graviton4 + COOL + CloudFront HTTPS (11 Oct 2026)
+**Live and verified, 11 Oct 2026.** EC2 `<instance-id>`, **c8g.large (AWS Graviton4, Neoverse-V2, 2 vCPU, 4 GiB)**, region **us-east-2**, launched from the AWS Marketplace **COOL AMI** `ami-005a9f90c70ba8d9b` (Cloud Optimized OpenCV for AWS Graviton, v3, Ubuntu 24.04, `/opt/cool`), 60 GB gp3 (the AMI's minimum), Elastic IP `[redacted-ip]`. Installed with one command, `infra/ec2/deploy.sh <host> --agent`: a venv on COOL's Python 3.12 with every pinned dependency from `uv.lock` **except** the OpenCV wheel, so `import cv2` resolves to COOL; SHA256-pinned ONNX models; systemd `praxis.service`. `/health` through HTTPS: `opencv_build {version 5.1.0-dev, path /opt/cool/python_3.12/site-packages/cv2, cool true, dnn true, arch aarch64}`, hand + pose models loaded, agent `claude-sonnet-5` ready with the daily cap. COOL's build: SIMD baseline SVE + NEON (FP16, DOTPROD, BF16), custom HAL carotene + KleidiCV 0.7.0.
+
+- **Same behaviour on COOL.** The full service test suite run on the instance against COOL's `cv2`: **634 / 636 pass**; the two failures check `.gitignore` rules and need a git checkout (none on the host). No perception test changed.
+- **HTTPS for the webcam.** CloudFront distribution `<cloudfront-id>` → `https://dl8xykmg8ki61.cloudfront.net` (HTTP → HTTPS redirect, caching disabled, all viewer headers forwarded so WebSockets upgrade, origin HTTP :8000). A full `synthetic_cup_01` replay over `wss://` through CloudFront: 517 frames, 31 reaches, 33 coach decisions, the Claude agent active (`agent_status` events), `replay_end` received.
+- **Network.** Security group `praxis-sg`: TCP 8000 only from the CloudFront origin-facing prefix list (`pl-b6a144df`) and one admin IP; SSH from one admin IP. The MCP routes answer **403** from the internet (loopback / per-process token only).
+- **Cost guardrails.** AWS Organizations SCPs allow only small Graviton instance types and only us-east-1/us-east-2; budget `praxis-monthly-50` ($50/month) with an automatic action that **stops this instance** at 100 % (SSM); Cost Anomaly Detection alerts; root MFA; no long-lived access keys (CloudShell only). Running cost ≈ $0.08/h (c8g.large) + $0.01/h (COOL) + $0.005/h (public IPv4) + EBS; the instance is stopped between work sessions.
+- **History.** A first deploy (same day) used a plain Ubuntu arm64 AMI with the stock wheel (`deploy.sh --stock`, instance `<instance-id>`, now terminated) while the Marketplace subscription was blocked by an account-plan issue (AWS case 179167533900910); activating AWS Organizations advanced features unblocked it.
+- **Not on AWS yet:** Bedrock (the agent calls the Anthropic API; `PRAXIS_AGENT=bedrock` is built and unit-tested), S3 / CloudWatch log shipping, CDK.
 
 **10 Oct:** the deploy is scripted but not yet run: `infra/ec2/deploy.sh` (one command, idempotent) installs the service on a c8g instance from the COOL AMI with COOL's `cv2` (no OpenCV wheel in the venv; the setup refuses to continue unless `cv2.__file__` is under `/opt/cool` and `cv2.dnn`/`cv2.aruco` exist), and `/health` now reports `opencv_build {version, path, cool, dnn, arch}` so the running build is visible. See `infra/ec2/README.md`.
 
-**Nothing in this section exists yet.** There is no AWS account resource, no EC2 instance, no Bedrock call, no CDK app (`infra/` is not in the tree) and no tools Lambda (`services/tools-lambda/` is not in the tree). The only deployment today is the edge build: one container (`services/session/Dockerfile`) on a laptop or on Railway for team review (§8). Work is scheduled for W6 (14–20 Oct); `docs/ARCHITECTURE.md` draws these parts dashed.
+Beyond the EC2/COOL/CloudFront deployment above there is no Bedrock call, no CDK app and no tools Lambda yet; Railway still hosts the edge build for team review (§8).
 
 What is in the code now so the swap is mechanical:
 - `PRAXIS_CLOUD_ENABLED` (default `0`, `main.py`) gates every cloud call; `PRAXIS_AGENT=bedrock` refuses to start without it (`agent/model.py` `load_config`).
@@ -399,7 +407,7 @@ What is in the code now so the swap is mechanical:
 - The FastMCP servers already speak streamable HTTP, so an AgentCore Gateway target needs no new tool code.
 
 The plan, in order:
-1. **Cloud/judge mode.** A Graviton **c8g** EC2 instance launched from the **COOL AMI** (OpenCV 5.0 / COOL 3.1 under `/opt/cool`), the session service under systemd, HTTPS in front. Not ECS.
+1. ~~**Cloud/judge mode.**~~ **Done 11 Oct** (above): c8g from the COOL AMI, systemd, CloudFront HTTPS.
 2. **Agent on Bedrock.** `PRAXIS_AGENT=bedrock` with Claude on Amazon Bedrock; the same tools, guardrails and trace as the Anthropic API path.
 3. **Storage and logs.** S3 for event logs, traces, reports and consented clips only (never raw video by default); CloudWatch for service logs and latency metrics; SSM for configuration.
 4. **Infra as code.** AWS CDK (TypeScript), one-command deploy, synth tested in CI.
@@ -428,8 +436,24 @@ Measured by driving the real WebSocket handler with `fastapi.testclient` on an A
 ### 6.4 Usability (SUS) — method
 The standard 10-item System Usability Scale (Brooke 1996, wording unchanged, `evaluation/sus/questionnaire.md`) is given on paper after each participant uses the app for one default day; answers go into `evaluation/sus/responses.csv` (pseudonyms only) and `evaluation/scripts/sus.py` scores them (odd items − 1, 5 − even items, × 2.5) into `evaluation/results/sus_v0.{md,json}`: n, mean, sample SD, min, max and per-item means. Target mean ≥ 75; with 5–10 participants the mean is an indication, not a benchmark. No SUS response has been collected yet.
 
-## 7. COOL benchmark — planned, not built
-**No benchmark has been run** and `benchmark/` is not in the tree. Plan (W6): time the classical OpenCV stage only (decode, ArUco + homography, warp, Hough / HSV / contours / template, no DNN and no agent) on the committed replay clips, on c8g with the COOL AMI vs c8g with stock `opencv-python-headless==5.0.0.93`, optionally c7i as an x86 reference. Report fps, per-frame p50/p95, cost per 1,000 frames, COOL version, AMI id, instance type and region, from a script that regenerates the table. Until then no COOL claim is made anywhere.
+## 7. COOL benchmark — measured 11 Oct 2026 (`benchmark/`)
+`benchmark/cool_bench.py` times Praxis's own per-frame work on one c8g.large (Graviton4) launched from the COOL AMI, running the same script under COOL's `cv2` (5.1.0-dev, SVE baseline, KleidiCV 0.7.0 HAL) and under the pinned stock wheel (`opencv-python-headless==5.0.0.93`, NEON baseline, KleidiCV 26.03 HAL), on identical JPEG bytes from the two replay clips (640×480, q80), 3 alternating rounds × 5 passes. Full table, environment and raw JSON: `benchmark/results/cool_vs_stock_c8g.md`, `benchmark/results/raw/`.
+
+| Stage, p50 ms per frame | Stock 5.0.0 | COOL 5.1.0-dev | Speed-up |
+|---|---|---|---|
+| Peg mask (HSV `inRange`) | 0.482 | 0.303 | **1.59×** |
+| Peg blobs (`findContours` + moments) | 0.566 | 0.381 | **1.49×** |
+| Hole finding (`HoughCircles`) | 2.618 | 1.982 | **1.32×** |
+| Hole occupancy (masked `matchTemplate` ×9) | 3.337 | 2.830 | **1.18×** |
+| `warpPerspective` | 0.470 | 0.489 | 0.96× |
+| JPEG decode | 0.567 | 0.621 | 0.91× |
+| ArUco + homography + solvePnP | 1.875 | 2.178 | 0.86× |
+| Cup (warp + `inRange` + contours) | 1.286 | 1.538 | 0.84× |
+| **Full NHPT frame** (classical pipeline) | 6.839 | 6.508 | **1.05×** |
+| **Full cup frame** (classical pipeline) | 3.592 | 3.896 | 0.92× |
+| Hand model (`cv2.dnn`, not classical) | 21.36 | 24.38 | 0.88× |
+
+**Reading.** COOL is faster on the stages that dominate the NHPT board (thresholding, contours, Hough, template matching) and slower on decode, ArUco and the DNN; the stock aarch64 wheel already ships a newer KleidiCV than COOL's build, so it is a strong baseline, not an unoptimised one. End to end the classical NHPT frame is 5 % faster and the cup frame 8 % slower. Either build processes a frame in under 7 ms (classical) — far inside the 66–100 ms budget at 10–15 fps — so one c8g.large has headroom for several concurrent sessions. Praxis runs COOL in production (§5). Not measured: an x86 c7i reference, multi-session throughput, cost per 1,000 frames under load.
 
 ## 8. Responsible use (privacy, safety, human control)
 
@@ -471,7 +495,7 @@ Audited against WCAG 2.1 AA on 10 Oct 2026 (`docs/ACCESSIBILITY.md`). axe-core 4
 - **Exertion is behavioural** (§3.8): no physiology, hesitation not computed, thresholds unvalidated.
 - **Latency** (§6.2) is in-process on one laptop; browser-measured end-to-end latency and any cloud latency are not measured yet.
 - **Agent coach** (§4.1): 12 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, 10 Oct): 32/36 runs passed (0.889, 95 % Wilson CI 0.747–0.956), 0 guardrail violations, fallbacks 6/6, patient approval respected 20/21, first action p50/p95 4.8/7.6 s, ~$0.07 per session; misses: mcp_down 1/3 (stayed silent on a clean arc, the check expects one line), falling_peaks 2/3, green_cup 2/3 (fix not worded as expected). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`. Not tested with patients; its judgement is not clinically validated; in-rep cues stay with the rule coach.
-- **AWS and COOL are not built** (§5, §7).
+- **AWS is EC2 + COOL + CloudFront only** (§5): no Bedrock, S3, CloudWatch or CDK. The COOL speed-up is stage-dependent (§7): 1.2–1.6× on thresholding / contours / Hough / template, slower on decode, ArUco and DNN; 1.05× end to end on NHPT.
 - **Hosted review build** has no sign-in and dates days by the container clock (`TZ=America/New_York`), so a patient in another time zone sees shifted day boundaries; it is for team review, not patients (§8, `docs/RISKS.md`).
 - **Accessibility:** three palette pairs miss WCAG 2.1 AA 4.5:1 and controls are 40–48 px by design decision (`docs/RISKS.md`, 6 Oct); not yet tested with patients.
 - **Pain stop level 7** is a product decision (23 Sep), stricter-only per prescription; it needs a clinician's confirmation before any pilot.
