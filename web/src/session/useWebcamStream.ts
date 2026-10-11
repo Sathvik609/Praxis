@@ -37,6 +37,21 @@ async function acquireCamera(): Promise<MediaStream> {
   }
 }
 
+/** Source rectangle [sx, sy, sw, sh] that centre-crops a `vw`×`vh` video to 4:3 (what the
+ *  preview's object-fit: cover shows), so a 16:9 camera — the `video: true` fallback above gets
+ *  the native size — is not squashed into the 640×480 frame. A squash breaks the square-pixel
+ *  camera model behind the service's camera-angle row (11 Oct 2026 synthetic sweep: 45° read
+ *  as 23°) and misaligns the overlay. */
+export function crop43(vw: number, vh: number): [number, number, number, number] {
+  if (!(vw > 0 && vh > 0)) return [0, 0, vw, vh]
+  if (vw * 3 > vh * 4) {
+    const sw = (vh * 4) / 3
+    return [(vw - sw) / 2, 0, sw, vh]
+  }
+  const sh = (vw * 3) / 4
+  return [0, (vh - sh) / 2, vw, sh]
+}
+
 type Opts = { wsUrl: string; mode: string; fps?: number; params?: Record<string, string>; replay?: string | null }
 
 /** Streams 640x480 JPEG frames to the session service and collects the JSON events it returns.
@@ -154,7 +169,13 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
         inflight.waiting = true
         inflight.sentAt = now
         const tCapture = nowEpochMs()
-        ctx.drawImage(videoRef.current, 0, 0, 640, 480)
+        const v = videoRef.current
+        if (v.videoWidth > 0 && v.videoHeight > 0) {
+          const [sx, sy, sw, sh] = crop43(v.videoWidth, v.videoHeight)
+          ctx.drawImage(v, sx, sy, sw, sh, 0, 0, 640, 480)
+        } else {
+          ctx.drawImage(v, 0, 0, 640, 480)
+        }
         canvas.toBlob(
           (b) => {
             if (b && ws.readyState === WebSocket.OPEN) {
