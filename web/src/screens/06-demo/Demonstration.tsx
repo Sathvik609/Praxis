@@ -7,6 +7,7 @@ import { NumberScale } from '../../design/NumberScale'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { useModalFocus } from '../../design/useModalFocus'
 import { api, useApi, type Prescription } from '../../lib/api'
+import { prefersReducedMotion } from '../../lib/motion'
 import { dayPosition, markDemoSeen, readDay, saveCheckin, setupUrl, sideOr, startExercise, therapistLine, type Day, type DayCheckin } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
 import { EXERCISES, exerciseById, isHiddenExercise, type ExerciseId } from '../../lib/seed'
@@ -116,6 +117,8 @@ function DemonstrationFor() {
   const ctl = useRef<AvatarCtl | null>(null)
   const [complete, setComplete] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
+  // Reduced motion: the figure waits for Play (the dock's Play / Pause / Replay stay available)
+  const [reducedMotion] = useState(prefersReducedMotion)
   const onComplete = useCallback(() => setComplete(true), [])
   const pos = dayPosition(day, ex.id)
   const sideWord = side === 'right' ? 'Right' : 'Left'
@@ -144,6 +147,7 @@ function DemonstrationFor() {
       <div className="dth-main" aria-hidden={complete || undefined}>
         <AvatarPanel
           theater
+          autoplay={!reducedMotion}
           overlayTop={92}
           limitDeg={limitDeg}
           ctlRef={ctl}

@@ -13,8 +13,20 @@ export function Shell() {
   useEffect(() => applyGuidance(), []) // Settings > Larger text, kept in this browser
   return (
     <div className="ui-shell grid h-screen grid-rows-[4rem_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
+      {/* WCAG 2.4.1: the first Tab stop skips the header's controls (index.css `.ui-skip`). It
+          moves focus itself: a #hash would break the design preview's hash router. */}
+      <a
+        href="#main"
+        className="ui-skip"
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById('main')?.focus()
+        }}
+      >
+        Skip to main content
+      </a>
       <Nav program={me?.program?.label ?? PROGRAM.label} initial={me?.initial ?? PATIENT.initial} />
-      <main className="ui-main flex min-h-0 flex-col overflow-auto">
+      <main id="main" tabIndex={-1} className="ui-main flex min-h-0 flex-col overflow-auto">
         <Outlet />
       </main>
     </div>

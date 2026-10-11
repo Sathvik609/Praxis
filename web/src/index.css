@@ -65,6 +65,36 @@ h3 {
   font-weight: 600;
 }
 
+/* Keyboard focus (WCAG 2.4.7): every control the designers did not give a focus style shows the
+   focus token instead of the browser default. In the base layer, so the Tailwind ring utilities
+   and every designer.css focus rule (unlayered) still win; visible only with :focus-visible.
+   Targets of programmatic focus (tabindex -1: the Shell's main) get no ring. */
+@layer base {
+  :where(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex='-1'])):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Skip link (WCAG 2.4.1), the Shell's first Tab stop: off screen until focused. Fixed, so it
+   takes no cell in the designers' shell grid. */
+.ui-skip {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 100;
+  padding: 12px 16px;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--teal-ink);
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+  transform: translateY(-200%);
+}
+.ui-skip:focus {
+  transform: none;
+}
+
 /* The designers' stylesheet, last and unlayered so it overrides the Tailwind layers exactly as in
    the design-preview artifact (cascade order preserved). */
 @import './design/designer.css';

@@ -10,6 +10,7 @@ import { api, isReplaySession, useApi } from '../../lib/api'
 import { STATUS_WORD, areaSummary, type AreaKey } from '../../lib/areaSummary'
 import { WEEKDAYS } from '../../lib/calendar'
 import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
+import { prefersReducedMotion } from '../../lib/motion'
 import { plural } from '../../lib/plural'
 import { REGIONS, exerciseById, type ExerciseId } from '../../lib/seed'
 import { demoUrl, readSide } from '../../lib/day'
@@ -39,6 +40,7 @@ export function Home() {
   const nav = useNavigate()
   const [zoomIdx, setZoomIdx] = useState(1)
   const [focus, setFocus] = useState<AreaKey>('lShoulder')
+  const [reducedMotion] = useState(prefersReducedMotion) // the idle figure stays still
   const [coachOpen, setCoachOpen] = useState(false)
   const region = REGIONS[focus]
   const { data: me } = useApi(() => api.me())
@@ -119,7 +121,7 @@ export function Home() {
           })}
         </div>
         <div className="hp-stage relative">
-          <AvatarPanel clip="idle" camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
+          <AvatarPanel clip="idle" autoplay={!reducedMotion} camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
           <StageMinis k={focus} name={region.title} view={view} />
         </div>
         <div className="hp-actions">

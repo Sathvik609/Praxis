@@ -35,15 +35,16 @@ export const STATUS_ICON: Record<LiveStatus, ReactNode> = {
 }
 
 /** Agent run state (`agent_status` events) in the session header, so it never moves the
- *  columns. The polite live region is always mounted and empty while idle, so a new run is
- *  announced once. Offline means the rule coach carries on; the reason is a tooltip and the
+ *  columns. The polite live region is always mounted and empty while idle; it announces only
+ *  "Coach offline" (a run in progress is shown, not announced: its caption is). Offline means the rule coach carries on; the reason is a tooltip and the
  *  chip's accessible description. */
 export function AgentStatusChip({ status }: { status: AgentStatus | null }) {
   const id = useId()
   const reason = status?.reason || 'The Claude agent is unavailable. The rule-based coach carries on.'
   return (
     <span aria-live="polite" data-testid="agent-status" className="inline-flex">
-      {status?.state === 'thinking' && <Chip tone="focus" icon={<LoaderCircle className="motion-safe:animate-spin" />}>Coach is thinking…</Chip>}
+      {/* shown, not announced: the caption the run produces is (one polite region per screen) */}
+      {status?.state === 'thinking' && <span aria-hidden className="inline-flex"><Chip tone="focus" icon={<LoaderCircle className="motion-safe:animate-spin" />}>Coach is thinking…</Chip></span>}
       {status?.state === 'offline' && (
         <span title={reason} aria-describedby={id} className="inline-flex">
           <Chip tone="amber" icon={<CloudOff />}>Coach offline · rule coach</Chip>
