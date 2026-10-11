@@ -1,7 +1,10 @@
 """Board state from a calibrated frame (OpenCV cv2.__version__ == 5.0.0).
 
 1. warp()          cv2.warpPerspective with the calibration homography -> canonical top-down
-                   view of the board region at a fixed px/mm.
+                   view of the board region at a fixed px/mm, then normalise_to_paper(): a
+                   per-channel grey closing (cv2.morphologyEx) estimates the white paper's
+                   brightness and the view is divided by it (flat field + white balance), so
+                   the HSV windows below hold in a dim room, under a warm bulb or a shadow.
 2. detect_holes()  cv2.HoughCircles on the canonical view, run ONCE and cached; each circle is
                    snapped to the nearest expected hole from the SheetSpec. Holes Hough misses
                    fall back to spec positions; hole_source reports "hough" | "mixed" | "spec".
@@ -16,8 +19,9 @@
 3. occupancy()     Peg mask = cv2.inRange in HSV, then cv2.findContours for blobs. Two mask
                    modes:
                      - default: "saturated, not sheet-white and not skin" - S >= 90, V >= 60
-                       minus the skin band H 0-25 (OpenCV 0-180 units: 0-12), S 40-170, V 80-255,
-                       which also drops a light wooden board or peg tint;
+                       minus the skin band H 0-25 (OpenCV 0-180 units: 0-50 deg), S 40-170,
+                       V 40-255 (light to deep skin tones), which also drops a light wooden
+                       board or peg tint;
                      - sampled: sample_peg_colour() sets a +-12 deg hue window (+-6 units, wrapped
                        around red) with S/V floors from a 6 mm patch the patient tapped; the skin
                        band is excluded only when it does not overlap the sampled window.
@@ -29,7 +33,8 @@
                    seated peg ~0.61, peg hovering 5 mm off the hole ~0.81). Outside the tie zone
                    the fraction alone decides
                    (tests/test_board.py::test_template_score_breaks_ties_near_the_fraction_threshold).
-4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit). The hand
+4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit) and no
+                   longer than 45 mm (cv2.minAreaRect: a pen is not a peg). The hand
                    box (from the hand tracker, expanded by 15 mm) is excluded here only - never
                    from hole occupancy, because the hand covers a hole right after seating a peg.
 """

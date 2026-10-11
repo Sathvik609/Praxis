@@ -1,7 +1,9 @@
 """Waiter – cup: cup base on the printed 5-dot target sheet (OpenCV cv2.__version__ == 5.0.0).
 
-CupSheetState: cv2.warpPerspective to a canonical top-down view of the whole sheet, HSV
-segmentation (cv2.inRange) of the cup's blue base band, cv2.findContours -> largest blob ->
+CupSheetState: cv2.warpPerspective to a canonical top-down view of the whole sheet, normalised
+to the paper's brightness (board.normalise_to_paper, 100 mm closing), HSV segmentation
+(cv2.inRange) of the cup's blue base band, cv2.findContours -> the pieces around the largest
+blob (fingers split the band) -> size and cv2.minAreaRect aspect gates (a pen is not a cup) ->
 centroid + equivalent diameter in mm.
 
 CupFSM: at_dot -> lifted -> in_transit -> over_dot -> placed -> hand_clear (-> at_dot).
