@@ -3,9 +3,10 @@
  *  fed through the webcam hook. Test files call `vi.mock('../avatar/AvatarScene', …)` themselves
  *  (WebGL is not available in jsdom). */
 import { act, render } from '@testing-library/react'
+import { useEffect } from 'react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { RouterProvider, createMemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation, useRoutes, type Location } from 'react-router-dom'
 import { routes } from '../app/routes'
 import { handle } from '../designPreview/mockApi'
 import * as hook from '../session/useWebcamStream'
@@ -50,9 +51,22 @@ export async function settle(rounds = 4) {
   for (let i = 0; i < rounds; i++) await act(() => new Promise((r) => setTimeout(r, 0)))
 }
 
+/** The app's route table in a MemoryRouter (`useRoutes`: the data router's fetch-based
+ *  navigation does not run under jsdom). `path()` is the current location's pathname. */
 export async function renderRoute(path: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [path] })
-  const view = render(<RouterProvider router={router} />)
+  const at: { current: Location | null } = { current: null }
+  function Routes() {
+    const location = useLocation()
+    useEffect(() => {
+      at.current = location
+    })
+    return useRoutes(routes)
+  }
+  const view = render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes />
+    </MemoryRouter>,
+  )
   await settle()
-  return { ...view, router }
+  return { ...view, path: () => at.current?.pathname ?? '' }
 }
