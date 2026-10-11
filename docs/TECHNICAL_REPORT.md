@@ -23,7 +23,7 @@ What is measured and what is not, in one place:
 |---|---|
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 636 service tests + 945 web tests green; CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 15 scenarios × 3: 44/45 passed, **0 guardrail violations** (§8.3) |
-| AWS: Graviton4 + COOL + CloudFront | **live**; 634/636 tests pass on COOL; benchmark measured (§7) |
+| AWS: Graviton4 + COOL + CloudFront | **live** (stopped between work sessions); 634/636 tests pass on COOL; benchmark re-measured 11 Oct (§7) |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 4.1°, rep F1 **0.94** (§8.4). Two pose defects it exposed are fixed. NHPT and Waiter – cup: synthetic only (§8.1); our own recordings protocol is built, not run (§8.5). |
 | Usability (SUS), patient or therapist pilots | not run yet (§8.6) |
 | Bedrock, S3, CloudWatch shipping, CDK | not built (§7.4) |
@@ -188,23 +188,25 @@ In `green_cup`, the default blue window cannot see a green cup, so the agent cal
 **Verified on the instance.** `/health` through HTTPS reports `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded and the agent ready. The full service test suite run against COOL's `cv2` passes **634 / 636**; the two failures check `.gitignore` rules and need a git checkout that the host does not have. A full Waiter – cup replay over `wss://` through CloudFront produced 517 frames, 31 reaches, 33 coach decisions and agent runs.
 
 ### 7.2 COOL vs stock OpenCV on the same Graviton4
-`benchmark/cool_bench.py` times Praxis's own per-frame stages on identical JPEG bytes from the two replay clips (640 × 480, q80) under COOL's `cv2` and under the pinned stock wheel (`opencv-python-headless==5.0.0.93`, NEON, KleidiCV 26.03), interleaved over 3 rounds × 5 passes, on one c8g.large. Raw JSON and environment: `benchmark/results/`.
+`benchmark/cool_bench.py` times Praxis's own per-frame stages on identical JPEG bytes from the two replay clips (640 × 480, q80). It runs them under COOL's `cv2` and under the pinned stock wheel (`opencv-python-headless==5.0.0.93`, NEON, KleidiCV 26.03), interleaved over 3 rounds × 5 passes on one c8g.large. `benchmark/summarize.py` writes the table from the raw JSON (`benchmark/results/cool_vs_stock_c8g.md`, `raw_v1/`). This run (v1) measures the code after the 11 Oct perception audit, whose brightness normalisation adds about 0.7 ms to the warp and about 2 ms to the cup stage; the first run (v0) is kept in `raw_v0/`.
 
 | p50 ms per frame | Stock 5.0.0 | COOL 5.1.0-dev | Speed-up |
 |---|---|---|---|
-| Peg mask (HSV `inRange`) | 0.482 | 0.303 | **1.59×** |
-| Peg blobs (`findContours` + moments) | 0.566 | 0.381 | **1.49×** |
-| Holes (`HoughCircles`) | 2.618 | 1.982 | **1.32×** |
-| Occupancy (masked `matchTemplate` × 9) | 3.337 | 2.830 | **1.18×** |
-| `warpPerspective` | 0.470 | 0.489 | 0.96× |
-| JPEG decode | 0.567 | 0.621 | 0.91× |
-| ArUco + homography + solvePnP | 1.875 | 2.178 | 0.86× |
-| Cup (warp + `inRange` + contours) | 1.286 | 1.538 | 0.84× |
-| **Full NHPT frame** (classical) | 6.839 | 6.508 | **1.05×** |
-| **Full cup frame** (classical) | 3.592 | 3.896 | 0.92× |
-| Hand model (`cv2.dnn`) | 21.36 | 24.38 | 0.88× |
+| Peg mask (HSV `inRange`) | 0.481 | 0.304 | **1.58×** |
+| Peg blobs (`findContours` + moments) | 0.576 | 0.395 | **1.46×** |
+| Holes (`HoughCircles`) | 2.181 | 1.526 | **1.43×** |
+| Occupancy (masked `matchTemplate` × 9) | 3.359 | 2.878 | **1.17×** |
+| Cup (warp + normalise + `inRange` + contours) | 3.369 | 3.317 | 1.02× |
+| `warpPerspective` + normalise | 1.185 | 1.319 | 0.90× |
+| JPEG decode | 0.566 | 0.620 | 0.91× |
+| ArUco + homography + solvePnP | 1.893 | 2.192 | 0.86× |
+| **Full NHPT frame** (classical) | 7.690 | 7.452 | **1.03×** |
+| **Full cup frame** (classical) | 5.216 | 5.573 | 0.94× |
+| Hand model (`cv2.dnn`) | 21.61 | 24.53 | 0.88× |
 
-**Reading it honestly.** COOL is 1.2–1.6× faster on the stages that dominate the NHPT board (thresholding, contours, Hough, template matching). It is slower on decode, ArUco and the DNN, because the stock aarch64 wheel already ships a newer KleidiCV, which makes it a strong baseline rather than a naive one. End to end, the classical NHPT frame is 5 % faster and the cup frame 8 % slower. Both builds process a frame in under 7 ms, far inside the 66–100 ms budget at 10–15 fps, so one c8g.large has headroom for several concurrent sessions. We run COOL in production because it serves the NHPT, the heaviest classical workload. Not measured yet: an x86 (c7i) reference, multi-session throughput, and cost per 1,000 frames under load.
+Compute cost per 1,000 frames (hourly price over frames per hour at the measured p50, one stream at a time): full NHPT frame **$0.00017 stock vs $0.00019 COOL**, full cup frame $0.00012 vs $0.00014. COOL's AMI adds $0.01/h.
+
+**Reading it honestly.** COOL is 1.2–1.6× faster on the stages that dominate the NHPT board: thresholding, contours, Hough and template matching. It is slower on decode, ArUco, the warp and the DNN, because the stock aarch64 wheel already ships a newer KleidiCV, which makes it a strong baseline rather than a naive one. End to end, the classical NHPT frame is 3 % faster and the cup frame 6 % slower, and per frame COOL costs slightly more once its AMI fee is counted. Both builds process a classical frame in under 8 ms, far inside the 66–100 ms budget at 10–15 fps. We run COOL in production because it executes the whole workload on Graviton and speeds up the NHPT's heaviest classical stages, not because it is cheaper. Not measured yet: an x86 (c7i) reference, multi-session throughput, and browser-to-cue latency through CloudFront.
 
 ### 7.3 Why this shape
 A single container keeps raw frames inside one process: there is no queue, no object store and no second service that could leak video. Graviton matches the classical OpenCV workload (SIMD-heavy, no GPU needed), and COOL is OpenCV built for it. CloudFront supplies the HTTPS a browser needs before it will open the camera, with no certificate management on the instance.
@@ -321,7 +323,7 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise conc
 - **The printed NHPT is a timing aid.** Flat printed rings are not a physical board's recessed holes, so the times are not the standardized clinical instrument's.
 - **Exertion is behavioural**; hesitation is not yet computed, and the thresholds are unvalidated.
 - **The agent** is evaluated on synthetic scenarios only. It takes 4–8 s to act, and its judgement is not clinically validated.
-- **AWS** is EC2 + COOL + CloudFront. Bedrock, S3, CloudWatch shipping and CDK are not built. COOL's gain is stage-dependent (§7.2).
+- **AWS** is EC2 + COOL + CloudFront. Bedrock, S3, CloudWatch shipping and CDK are not built. COOL's gain is stage-dependent: 1.03× on a full NHPT frame, 0.94× on a cup frame (§7.2).
 - **Scope.** Three exercises, by decision. Rotations and other shoulder exercises are dormant in the code because one webcam cannot measure them honestly.
 - **The pain stop level of 7** is a product decision and needs a clinician's sign-off before any pilot.
 
