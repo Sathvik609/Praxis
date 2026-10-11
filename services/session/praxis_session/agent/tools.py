@@ -57,6 +57,8 @@ PRAISE_EVERY_N = 3
 PEAK_DROP_DEG = 3.0
 REVIEW_TRIGGERS = ("arc_complete", "set_complete")
 
+POLICY_VERSION = "2026-10-10.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
+
 SERVERS: dict[str, tuple[str, ...]] = {
     "perception": ("get_events", "get_set_summary", "check_setup", "recalibrate"),
     "exertion": ("get_exertion_state", "get_prescription", "read_patient_model"),

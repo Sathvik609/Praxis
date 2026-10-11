@@ -50,6 +50,7 @@ import numpy as np  # noqa: E402
 
 from praxis_session.agent import mcp_server  # noqa: E402
 from praxis_session.agent import tools as T  # noqa: E402
+from praxis_session.agent.metrics import AgentMetrics  # noqa: E402
 from praxis_session.agent.model import AGENT_LABELS, PRICE_PER_MTOK, ScriptedPlanner, StrandsPlanner, load_config  # noqa: E402
 from praxis_session.coach.agent import AgentCoach  # noqa: E402
 from praxis_session.events import Event, make_event  # noqa: E402
@@ -106,7 +107,7 @@ async def run_scenario(sc: dict[str, Any], planner_kind: str, trace_dir: Path, r
     else:
         cfg = load_config()
         planner = StrandsPlanner(dataclasses.replace(cfg, mcp_url=mcp_url or cfg.mcp_url))
-    s.agent = AgentCoach(planner, h, registry=registry, label=label, timeout_s=float(sc.get("timeout_s", 15.0)))
+    s.agent = AgentCoach(planner, h, registry=registry, label=label, timeout_s=float(sc.get("timeout_s", 15.0)), metrics=AgentMetrics(emit=False))
     log = Log()
     t, frame_i = 0.0, 0
     answers: list[dict[str, Any]] = []

@@ -34,6 +34,7 @@ import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
 from praxis_session.agent import tools as agent_tools
+from praxis_session.agent.metrics import METRICS as AGENT_METRICS
 from praxis_session.agent.model import load_config as load_agent_config, make_planner
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
@@ -111,6 +112,14 @@ def health() -> dict[str, object]:
         "agent": AGENT_CFG.health(MCP_MOUNTED),
     }
 
+
+
+@app.get("/api/agent/metrics")
+def api_agent_metrics() -> dict[str, object]:
+    """Agent observability (10 Oct): today's runs by outcome, errors by kind, first-action
+    p50/p95, mean tool calls, fallbacks and the daily-cap status; in memory since the last
+    restart. The same events are JSON lines on stdout (agent/metrics.py) for CloudWatch."""
+    return {"mode": AGENT_CFG.mode, "model": AGENT_CFG.model, "policy_version": agent_tools.POLICY_VERSION, **AGENT_METRICS.summary(AGENT_CFG.budget)}
 
 
 @app.get("/events")
