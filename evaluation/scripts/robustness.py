@@ -190,6 +190,37 @@ def mirror():
     return lambda img, _rng: cv2.flip(img, 1)
 
 
+def lens_k(r: dict[str, Any], size) -> np.ndarray:
+    w, h = size
+    f = r["focal"] * w
+    return np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float64)
+
+
+def distort_image(img: np.ndarray, K: np.ndarray, k1: float) -> np.ndarray:
+    """Radial lens distortion (k1 < 0: barrel, as in wide laptop cameras): every output pixel
+    looks up its undistorted position (cv2.undistortPoints) in the ideal render."""
+    h, w = img.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    pts = np.stack([xx.ravel(), yy.ravel()], axis=1).reshape(-1, 1, 2)
+    und = cv2.undistortPoints(pts, K, np.array([k1, 0, 0, 0, 0], np.float64), P=K).reshape(h, w, 2)
+    return cv2.remap(img, und[..., 0], und[..., 1], cv2.INTER_LINEAR, borderValue=TABLE_BGR)
+
+
+def distort_points(px: np.ndarray, K: np.ndarray, k1: float) -> np.ndarray:
+    n = (px - K[:2, 2]) / K[0, 0]
+    r2 = np.sum(n * n, axis=1, keepdims=True)
+    return n * (1 + k1 * r2) * K[0, 0] + K[:2, 2]
+
+
+def true_px(spec: SheetSpec, pts_mm, H: np.ndarray, cond: "Condition") -> np.ndarray:
+    """Where sheet points truly land in the frame (through the lens distortion, if any)."""
+    r = {**BASE, **cond.render}
+    px = cv2.perspectiveTransform(np.array(pts_mm, np.float32).reshape(-1, 1, 2), H).reshape(-1, 2)
+    if r.get("k1"):
+        px = distort_points(px.astype(np.float64), lens_k(r, r.get("size", SIZE)), r["k1"]).astype(np.float32)
+    return px
+
+
 # ---- rendering --------------------------------------------------------------------------------
 def wood_texture(size: tuple[int, int], rng: np.random.Generator) -> np.ndarray:
     w, h = size
@@ -297,6 +328,8 @@ def render(spec: SheetSpec, cond: Condition, scene: dict[str, Any], seed: int) -
         frame = clutter(frame, H, spec, rng, on_sheet=r["clutter"] == "on_sheet")
     if "print" in r:
         frame = print_clip(frame, H, spec, r["print"], size)
+    if r.get("k1"):
+        frame = distort_image(frame, lens_k(r, size), r["k1"])
     for f in cond.photometric:
         frame = f(frame, rng)
     if r["noise"] > 0:
@@ -352,7 +385,7 @@ def true_tilt(r: dict[str, Any]) -> float:
     return math.degrees(math.acos(abs(math.cos(t) * math.cos(y))))
 
 
-def calib_block(spec: SheetSpec, frame: np.ndarray, H_true: np.ndarray, clean: np.ndarray) -> tuple[dict[str, Any], Any]:
+def calib_block(spec: SheetSpec, frame: np.ndarray, H_true: np.ndarray, clean: np.ndarray, cond: "Condition") -> tuple[dict[str, Any], Any]:
     cal = Calibrator(spec).run(frame, 0.0)
     out: dict[str, Any] = {
         "calibrated": bool(cal.calibrated),
@@ -362,7 +395,7 @@ def calib_block(spec: SheetSpec, frame: np.ndarray, H_true: np.ndarray, clean: n
         "target_err_mm": None,
     }
     if cal.calibrated:
-        t_px = cv2.perspectiveTransform(np.array(spec.targets_mm, np.float32).reshape(-1, 1, 2), H_true).reshape(-1, 2)
+        t_px = true_px(spec, spec.targets_mm, H_true, cond)
         err = np.linalg.norm(cal.to_mm(t_px) - np.array(spec.targets_mm, np.float32), axis=1)
         out["target_err_mm"] = round(float(err.max()), 2)
     # Running session: primed with the clean view 0.1 s earlier.
@@ -434,7 +467,7 @@ def nhpt_block(cond: Condition, seed: int, clean: np.ndarray) -> dict[str, Any]:
     if hand:
         scene |= {"skin_blobs_mm": hand, "skin_bgr": skin}
     frame, H = render(spec, cond, scene, seed + 1)
-    cal_d, cal = calib_block(spec, frame, H, clean)
+    cal_d, cal = calib_block(spec, frame, H, clean, cond)
     out: dict[str, Any] = {"sheet": "nhpt", **cal_d, **rows_block(spec, frame, cal, cond, H)}
     cal_e = Calibrator(spec).run(empty, 0.0)
     if not (cal.calibrated and cal_e.calibrated):
@@ -481,7 +514,7 @@ def cup_block(cond: Condition, seed: int, clean: np.ndarray) -> dict[str, Any]:
     if r.get("hand_cup"):
         scene |= {"skin_blobs_mm": r["hand_cup"], "skin_bgr": r.get("skin_bgr", SKIN_BGR)}
     frame, H = render(spec, cond, scene, seed + 2)
-    cal_d, cal = calib_block(spec, frame, H, clean)
+    cal_d, cal = calib_block(spec, frame, H, clean, cond)
     out: dict[str, Any] = {"sheet": "cup", **cal_d, **rows_block(spec, frame, cal, cond, H)}
     if not cal.calibrated:
         out |= {"cup_found": None, "cup_err_mm": None}
@@ -554,9 +587,14 @@ def conditions() -> list[Condition]:
     C.append(Condition("wood table + objects around the sheet", "background", {"background": "wood", "clutter": "around"}))
     C.append(Condition("objects around + blue/red pens on the sheet", "background", {"background": "wood", "clutter": "on_sheet"}))
     C.append(Condition("no cup, pens on the sheet", "background", {"background": "wood", "clutter": "on_sheet", "no_cup": True}, sheets=("cup",)))
-    for how in ("centre", "top", "bottom"):
-        exp = {} if how == "centre" else {"markers": "corner"}
-        C.append(Condition(f"A4 PDF on US Letter, {how}-aligned", "print", {"print": how}, expect_rows=exp))
+    C.append(Condition("sheet PDF (210 × 279.4 page, 11 Oct) on US Letter, any alignment", "print", {"print": "centre"},
+                       note="the page fits Letter exactly, so this is the only placement"))
+    for how in ("top", "bottom"):
+        C.append(Condition(f"old full-A4 PDF on US Letter, {how}-aligned", "print", {"print": how}, expect_rows={"markers": "corner"},
+                           note="pages before 11 Oct; fixed by cutting the page to what A4 and Letter share"))
+    for k1 in (-0.1, -0.25):
+        C.append(Condition(f"barrel lens distortion k1={k1} (f 0.8 w, tilt 45°)", "lens", {"k1": k1, "focal": 0.8, "tilt": 45.0},
+                           note="the homography assumes a distortion-free lens"))
     for amp in (5, 10, 20):
         C.append(Condition(f"paper curl, ends up {amp} mm", "paper", {"curl": (lambda a: (lambda u: a * (2 * u - 1) ** 2))(float(amp))}))
     for amp in (4, 8):
@@ -613,6 +651,74 @@ def run(only: set[str] | None = None) -> dict[str, Any]:
 
 
 # ---- report -----------------------------------------------------------------------------------
+# What the first run of this sweep found (11 Oct 2026, before the fixes) and what changed. The
+# tables below are regenerated by the script; this list is the history and is kept by hand.
+FIXES = [
+    ("Dim room (mean luma 30–45)", "NHPT lost every peg at luma 30; the cup base was missed at 30 and 45",
+     "board/cup warp divides by the paper's own brightness (grey closing → flat field + white balance)"),
+    ("Warm bulb + noise", "the paper itself read as 6–7 phantom pegs (warm laptop scene, dim evening)",
+     "same paper normalisation: the paper is white again before the HSV windows"),
+    ("Deep skin tone over the grid", "4 phantom pegs (skin V 75 was under the skin band's V ≥ 80 floor)",
+     "skin band V floor 80 → 40; every tone in the sweep now reads clean"),
+    ("Pen on the sheet", "a red/blue pen was a free peg (NHPT) and an 85 mm-off phantom cup",
+     "free pegs ≤ 45 mm long; the cup blob must be cup-shaped (minAreaRect aspect ≤ 3)"),
+    ("Fingers across the cup (~55 % of the base visible)", "no cup (three pieces, none cup-sized)",
+     "the base is the union of the pieces within 40 mm of the largest (tests/test_perception_robustness.py)"),
+    ("Mirrored video", "no marker decodes in a mirror image: never calibrated, hint said 'flatten the sheet'",
+     "ArUco re-runs on cv2.flip and the corners are mapped back (calibration.mirrored)"),
+    ("Sheet partly out of frame / blurred corner / blur", "hint always said 'Flatten the sheet and keep it in view'",
+     "missing markers are predicted from the visible ones: 'outside the picture', 'covered', or 'in view but cannot be read'"),
+    ("A4 PDF printed on US Letter", "top- or bottom-aligned by the viewer, two corner markers were cut off: never calibrated",
+     "the page is cut to 210 × 279.4 mm (what A4 and Letter share); geometry unchanged"),
+    ("16:9 camera squashed to 640×480", "camera-angle row read 45° as ~23° (square-pixel model broken)",
+     "the web centre-crops to 4:3 before encoding (web/src/session/useWebcamStream.ts); the row below is the server on a squashed frame"),
+]
+
+
+def summary(res: dict[str, Any]) -> list[str]:
+    conds = res["conditions"]
+    n = [c["nhpt"] for c in conds if "nhpt" in c]
+    k = [c["cup"] for c in conds if "cup" in c]
+    nc = [d for d in n if d["calibrated"]]
+    kc = [d for d in k if d["calibrated"]]
+    ph = sum(len(d.get("phantom_holes") or []) + (d.get("phantom_free") or 0) for d in nc)
+    phantom_cup = sum(1 for d in kc if d.get("cup_expected") is False and d.get("cup_found"))
+    errs = [d["target_err_mm"] for d in n + k if d.get("target_err_mm") is not None]
+    worst = max(
+        ((d["target_err_mm"], c["condition"], d["sheet"]) for c in conds for d in (c.get("nhpt"), c.get("cup"))
+         if d and d.get("target_err_mm") is not None),
+    )
+    return [
+        "## Summary",
+        "",
+        "| | NHPT board | Waiter – cup |",
+        "|---|---|---|",
+        f"| conditions | {len(n)} | {len(k)} |",
+        f"| first fix (all four markers) | {len(nc)} | {len(kc)} |",
+        f"| running session still calibrated (fresh / partial / held ≤ 1.5 s) | {sum(1 for d in n if d['session_source'])} | {sum(1 for d in k if d['session_source'])} |",
+        f"| occupancy all correct / cup found within 10 mm (when calibrated) | {sum(1 for d in nc if d.get('occupancy_ok'))} of {len(nc)} | {sum(1 for d in kc if d.get('cup_ok') and d.get('cup_expected', True))} of {sum(1 for d in kc if d.get('cup_expected', True))} |",
+        f"| phantoms (empty hole read occupied, extra free peg / cup where none) | {ph} | {phantom_cup} |",
+        f"| setup rows right for the condition | {sum(1 for d in n if d['hint_ok'])} of {len(n)} | {sum(1 for d in k if d['hint_ok'])} of {len(k)} |",
+        "",
+        f"Worst target round-trip error over all calibrated frames: {worst[0]:.2f} mm ({worst[1]}, {worst[2]}); "
+        f"median {float(np.median(errs)):.2f} mm. Remaining misses are physics or by design: blur that destroys the "
+        "marker codes (the hint says so), a hand hiding ~80 % of the cup base (the FSM infers the placement and marks it "
+        "unverified), cup and peg colours outside the default windows until the patient taps to sample, black pegs and "
+        "a black cup band (no colour to segment, even sampled), a peg on a 45 %-filled far frame with defocus (the setup "
+        "row asks to come closer), and a sheet curled 20 mm (8–11 mm target error; nothing flags it, see below).",
+        "",
+        "Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm at 10 mm, 3 mm at 20 mm) but "
+        "also with lens distortion (≈1–2 mm at k1 = −0.25) and distance, so it is reported, not used as a 'sheet not "
+        "flat' gate, until real recordings separate the two.",
+        "",
+        "## What the first run found and what changed (11 Oct 2026)",
+        "",
+        "| condition | before | fix |",
+        "|---|---|---|",
+        *[f"| {a} | {b} | {c} |" for a, b, c in FIXES],
+        "",
+    ]
+
 def _yn(v: Any) -> str:
     return "–" if v is None else ("yes" if v else "**no**")
 
@@ -645,6 +751,7 @@ def to_markdown(res: dict[str, Any]) -> str:
         "the right advice for the condition.",
         "",
     ]
+    out += summary(res)
     conds = res["conditions"]
     out += ["## NHPT board sheet", "",
             "| condition | cal | session | RMS mm | err mm | tilt ° | holes | occupancy (pegs 0,4,8) | free peg | phantoms | setup rows |",
