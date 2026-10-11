@@ -129,7 +129,9 @@ class StopRules:
                 out.append(make_event("pause", t=e.t, rule="setup", text=f"Paused so the camera can measure the lift. {hint}", reason=e.payload.get("reason"), hint=hint))
             elif e.type == "perception_lost":
                 # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
-                out.append(make_event("pause", t=e.t, rule="perception", text="I lost tracking. Paused until the markers or your shoulder are back in view, then we carry on.", missing=e.payload.get("missing")))
+                missing = e.payload.get("missing") or []
+                what = "your shoulder is" if "pose" in missing else "all four corner markers are"
+                out.append(make_event("pause", t=e.t, rule="perception", text=f"I lost tracking. Paused until {what} back in view, then we carry on.", missing=missing))
         return out
 
     def on_exertion(self, state: dict[str, Any], high_for_s: float, t: float) -> list[Event]:

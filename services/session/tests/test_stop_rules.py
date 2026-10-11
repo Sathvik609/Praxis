@@ -147,3 +147,13 @@ def test_perception_pause_says_it_will_carry_on_and_fires_again_after_regain():
     assert "carry on" in evs[0].payload["text"].lower()
     assert sr.on_events([make_event("perception_regained", t=4.0)]) == []
     assert types(sr.on_events([make_event("perception_lost", t=9.0, missing=[0])])) == ["pause"]
+
+
+def test_perception_pause_names_what_was_lost():
+    """e2e 11 Oct: the peg test's pause said "the markers or your shoulder"; a sheet task names
+    the corner markers, the arm task the shoulder."""
+    sheet = StopRules(SEED_PRESCRIPTION).on_events([make_event("perception_lost", t=3.0, missing=[0, 1, 2, 3])])[0]
+    assert "corner markers" in sheet.payload["text"] and "shoulder" not in sheet.payload["text"]
+    arm = StopRules(SEED_PRESCRIPTION).on_events([make_event("perception_lost", t=3.0, missing=["pose"])])[0]
+    assert "shoulder" in arm.payload["text"] and "marker" not in arm.payload["text"]
+    assert all("carry on" in e.payload["text"] for e in (sheet, arm))
