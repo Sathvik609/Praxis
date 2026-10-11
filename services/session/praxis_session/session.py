@@ -101,6 +101,9 @@ class CoachSession:
         # Agent prompts waiting for the patient's tap: id -> {kind, prompt, reason, accept}.
         self.prompts: dict[str, dict[str, Any]] = {}
         self.coach_note: dict[str, Any] | None = None
+        # Set when the patient sends the feedback form: from then on the agent may only read and
+        # write the report note (agent/tools.py `invoke`).
+        self.ended = False
         self.patient_note: str | None = None  # typed at check-in; data for the agent, never instructions
         # The agent's session plan (10 Oct): set at check-in, revised only on new evidence.
         self.plan: dict[str, Any] | None = None
@@ -173,7 +176,11 @@ class CoachSession:
         if self.agent is not None and not self.stopped:
             # The check-in is the patient's own report, kept (not emitted) so the agent's
             # opening instruction can cite it as evidence.
-            e = make_event("checkin", t=t, **self.checkin)
+            # 11 Oct: typed values only on the ring. `energy` is client text; free text there used
+            # to reach the model verbatim (and unbounded) through get_events.
+            from praxis_session.agent.model import safe_checkin
+
+            e = make_event("checkin", t=t, **safe_checkin(self.checkin))
             self._ring.append(e)
             self.trace.log("event", type="checkin", id=e.id, t=t)
             self._checkpoint("checkin", [e.id], t)
@@ -300,14 +307,16 @@ class CoachSession:
         return evs[-last_n:] if last_n > 0 else []
 
     def on_feedback(self, feedback: dict[str, Any], t: float) -> None:
-        """Session end: the feedback form. The agent (when on) writes a coach note after it.
-        Pain at or above the stop level writes a `pain_after` therapist flag (no stop: the
-        session is already over)."""
+        """Session end: the feedback form. The agent (when on) writes a coach note after it,
+        also after a stop (the note explains the stop; nothing else is allowed then). Pain at or
+        above the stop level writes a `pain_after` therapist flag (no stop: the session is
+        already over)."""
         self._tick(t)
         self.feedback = feedback
         self.trace.log("feedback", **feedback)
         self._log_stop(self.stop_rules.on_pain_after(feedback.get("pain_after"), t))
         self.epoch += 1
+        self.ended = True
         if self.agent is not None:
             ids = [e.id for e in self.recent_events(last_n=5)]
             self.trace.log("event", type="feedback", t=t)

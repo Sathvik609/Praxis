@@ -502,10 +502,19 @@ async def session_ws(
         while len(sessions) > 50:
             old = sessions.pop(next(iter(sessions)))
             latency_stats.pop(old.session_id, None)
-    if replay and pipeline is not None and coach is not None:
-        await _replay_loop(ws, replay, pipeline, coach, stats)
-        return
-    await _live_loop(ws, pipeline, coach, stats)
+    try:
+        if replay and pipeline is not None and coach is not None:
+            await _replay_loop(ws, replay, pipeline, coach, stats)
+            return
+        await _live_loop(ws, pipeline, coach, stats)
+    finally:
+        # 11 Oct audit: the socket is gone, so the agent must not keep running (model spend,
+        # tools on a dead pipeline): pending checkpoints dropped, the run in flight cancelled
+        # (a feedback run may finish its report note), the tool handle unregistered.
+        if coach is not None and coach.agent is not None:
+            coach.agent.close("socket closed")
+        elif coach is not None:
+            agent_tools.REGISTRY.remove(coach.session_id)
 
 
 async def _start_agent(ws: WebSocket, coach: CoachSession, pipeline: SessionPipeline) -> None:

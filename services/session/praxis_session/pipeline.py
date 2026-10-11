@@ -22,6 +22,7 @@ view gate held for SETUP_BLOCK_S emits `setup_blocked` (the stop rules pause wit
 
 from __future__ import annotations
 
+import math
 import time
 from collections import deque
 from typing import Any, Literal
@@ -276,8 +277,10 @@ class SessionPipeline:
         ex = self._arm.exercise
         try:
             wanted = float(cmd["hold_s"])
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, OverflowError):
             return {"ok": False, "error": "set_hold needs a numeric hold_s"}
+        if not math.isfinite(wanted):
+            return {"ok": False, "error": "set_hold needs a finite hold_s"}
         try:
             hold = clamp(self.prescription, ex.rx, "hold_s", wanted)
         except KeyError:
@@ -295,8 +298,10 @@ class SessionPipeline:
         ex = self._arm.exercise
         try:
             wanted = float(cmd[key])
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, OverflowError):
             return {"ok": False, "error": f"needs a numeric {key}"}
+        if not math.isfinite(wanted):
+            return {"ok": False, "error": f"needs a finite {key}"}
         try:
             value = clamp(self.prescription, ex.rx, key, wanted)
         except KeyError:

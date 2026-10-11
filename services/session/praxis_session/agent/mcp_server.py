@@ -11,8 +11,9 @@ Mounted in the session service's FastAPI app at `/mcp/perception`, `/mcp/exertio
 outside client can read perception but cannot speak to a patient.
 
 Access (10 Oct): the routes answer only (a) a loopback client (127.0.0.1 / ::1) whose request
-carries no proxy header (`X-Forwarded-For`, `Forwarded`, `X-Real-IP`: a reverse proxy on the
-same host would make every internet client look local), or (b) any client that sends
+carries no proxy header (`X-Forwarded-For`, `Forwarded`, `X-Real-IP`, `Via`,
+`X-Forwarded-Host/Proto/Port`, `CloudFront-*`, `X-Amz-Cf-*`: a reverse proxy on the same host,
+or uvicorn's `--proxy-headers`, would make an internet client look local), or (b) any client that sends
 `X-Praxis-MCP-Token: <token>`, where the token is `PRAXIS_MCP_TOKEN` or, if unset, a random
 per-process secret generated at import. The in-process Strands MCP client and the scripted
 HTTP transport send it (`agent.model.mcp_headers`). Everything else gets 403 and never reaches
@@ -47,7 +48,11 @@ INSTRUCTIONS = {
 
 TOKEN_HEADER = "X-Praxis-MCP-Token"
 LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
-PROXY_HEADERS = (b"x-forwarded-for", b"forwarded", b"x-real-ip")
+# Any of these means the request came through a proxy (CloudFront adds X-Forwarded-For and Via;
+# the EC2 unit runs uvicorn with --proxy-headers --forwarded-allow-ips=*, which rewrites the
+# client address from X-Forwarded-For, so loopback is only trusted with none of them present).
+PROXY_HEADERS = (b"x-forwarded-for", b"forwarded", b"x-real-ip", b"via", b"x-forwarded-host", b"x-forwarded-proto", b"x-forwarded-port")
+PROXY_PREFIXES = (b"cloudfront-", b"x-amz-cf-")
 
 
 def resolve_token() -> str:
@@ -73,7 +78,8 @@ def access_allowed(scope: dict[str, Any], token: str | None = None) -> bool:
         return hmac.compare_digest(sent, token.encode())
     client = scope.get("client")
     host = client[0] if client else None
-    return host in LOOPBACK and not any(h in headers for h in PROXY_HEADERS)
+    proxied = any(h in headers for h in PROXY_HEADERS) or any(k.startswith(PROXY_PREFIXES) for k in headers)
+    return host in LOOPBACK and not proxied
 
 
 class MCPAccessGuard:

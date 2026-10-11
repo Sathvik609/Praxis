@@ -68,21 +68,25 @@ class AgentMetrics:
         today = self._day(self._now())
         with self._lock:
             rows = [r for r in self._rows if self._day(r["ts"]) == today]
-        runs = [r for r in rows if r["evt"] == "agent_run"]
+        attempts = [r for r in rows if r["evt"] == "agent_run"]
+        # A daily-cap refusal is not a run (no planner, no model call): counted apart, so
+        # `runs_today` agrees with the budget's own count (11 Oct audit).
+        runs = [r for r in attempts if r["outcome"] != "daily_cap"]
         errors = [r for r in rows if r["evt"] == "agent_error"]
         first = [float(r["first_action_ms"]) for r in runs if r.get("first_action_ms") is not None]
-        calls = [int(r.get("tool_calls") or 0) for r in runs if r["outcome"] != "daily_cap"]
+        calls = [int(r.get("tool_calls") or 0) for r in runs]
         out: dict[str, Any] = {
             "day_utc": today,
             "runs_today": len(runs),
-            "by_outcome": dict(Counter(r["outcome"] for r in runs)),
+            "blocked_by_cap": len(attempts) - len(runs),
+            "by_outcome": dict(Counter(r["outcome"] for r in attempts)),
             "errors_by_kind": dict(Counter(r["error_kind"] for r in errors)),
             "first_action_ms_p50": _pct(first, 0.5),
             "first_action_ms_p95": _pct(first, 0.95),
             "mean_tool_calls": round(sum(calls) / len(calls), 2) if calls else None,
             "fallbacks": {
                 "direct_tools": sum(1 for r in runs if r.get("transport") == "direct"),
-                "rule_coach": sum(1 for r in runs if r["outcome"] in ("error", "daily_cap")),
+                "rule_coach": sum(1 for r in attempts if r["outcome"] in ("error", "daily_cap")),
             },
             "tokens": sum(int(r.get("tokens") or 0) for r in runs),
             "cost_usd_est": round(sum(float(r.get("cost_usd_est") or 0) for r in runs), 4),

@@ -24,6 +24,16 @@ the rule coach carries on, and the next UTC day the agent runs again.
 Every run end and every agent error is also one JSON line on stdout (`agent/metrics.py`,
 CloudWatch-ready) and feeds the `/api/agent/metrics` aggregate. `agent_run` trace rows carry
 the autonomy `policy_version` (agent/tools.py `AUTONOMY`).
+
+Scheduling rules (11 Oct audit):
+- `feedback` supersedes everything still pending (the session is over; those checkpoints are
+  stale) and is the one checkpoint that still runs after a stop, so the report note can explain
+  the stop (the tool layer then allows only reads and `write_session_summary`);
+- a pending `pause:*` checkpoint is skipped when the pause has already cleared;
+- `close()` (the socket closed) drops pending checkpoints, cancels the run in flight unless it
+  is the `feedback` run (which only writes the report note), and unregisters the session's tool
+  handle once nothing runs. A cancelled run still gets its `agent_run {phase: end, outcome:
+  cancelled}` row and metrics line.
 """
 from __future__ import annotations
 
@@ -62,14 +72,27 @@ class AgentCoach:
         self.offline = False
         self.runs: list[dict[str, Any]] = []  # per-run outcome (evaluation reads it)
         self._task: asyncio.Task | None = None
+        self.closed = False
+        self._current: str | None = None  # trigger of the run in flight
+
+    def _skip(self, trigger: str, reason: str) -> None:
+        self.handle.session.trace.log("agent_skip", trigger=trigger, reason=reason)
+
+    def _may_run(self, trigger: str) -> bool:
+        """Stopped sessions run nothing but the feedback checkpoint (the report note)."""
+        return not self.handle.session.stopped or trigger == "feedback"
 
     # ---- scheduling ------------------------------------------------------------------------
     def on_checkpoint(self, trigger: str, evidence: list[int], t: float) -> None:
-        s = self.handle.session
-        if s.stopped:
+        if self.closed or not self._may_run(trigger):
             return
+        if trigger == "feedback" and self.pending:
+            # the session is over: whatever was still waiting is stale
+            for old, _, _ in self.pending:
+                self._skip(old, "superseded by feedback: the session has ended")
+            self.pending = []
         if self.handle.runs + (1 if self.pending else 0) >= self.max_runs:
-            s.trace.log("agent_skip", trigger=trigger, reason=f"session run budget ({self.max_runs}) used")
+            self._skip(trigger, f"session run budget ({self.max_runs}) used")
             return
         self.pending.append((trigger, list(evidence), t))
         self._kick()
@@ -84,14 +107,35 @@ class AgentCoach:
         self._task = loop.create_task(self._drain())
 
     async def _drain(self) -> None:
-        while self.pending and not self.handle.session.stopped:
-            trigger, evidence, t, also = self._coalesce()
-            await self.run_once(trigger, evidence, t, also)
-        if self.handle.session.stopped:
-            self.pending.clear()
+        try:
+            while self.pending:  # after close() only a feedback checkpoint can be left
+                nxt = self._coalesce()
+                if nxt is None:
+                    continue
+                trigger, evidence, t, also = nxt
+                self._current = trigger
+                try:
+                    await self.run_once(trigger, evidence, t, also)
+                finally:
+                    self._current = None
+        finally:
+            if self.closed:
+                self._unregister()
 
-    def _coalesce(self) -> tuple[str, list[int], float, list[str]]:
+    def _coalesce(self) -> tuple[str, list[int], float, list[str]] | None:
         batch, self.pending = self.pending, []
+        s = self.handle.session
+        keep = []
+        for item in batch:
+            if not self._may_run(item[0]):
+                self._skip(item[0], "session stopped")
+            elif item[0].startswith("pause") and not s.paused:
+                self._skip(item[0], "the pause cleared before the agent ran")
+            else:
+                keep.append(item)
+        if not keep:
+            return None
+        batch = keep
         batch.sort(key=lambda x: _rank(x[0]))
         trigger, _, t = batch[0]
         evidence: list[int] = []
@@ -110,11 +154,45 @@ class AgentCoach:
         if self._task is not None and not self._task.done():
             self._task.cancel()
 
+    def close(self, reason: str = "socket closed") -> None:
+        """The session's socket closed: drop pending checkpoints, cancel the run in flight
+        (except a feedback run: it only writes the report note) and unregister the tool handle
+        once nothing runs. Safe to call twice."""
+        if self.closed:
+            return
+        self.closed = True
+        keep = [p for p in self.pending if p[0] == "feedback"]
+        for trig, _, _ in self.pending:
+            if trig != "feedback":
+                self._skip(trig, reason)
+        self.pending = keep
+        running = self._task is not None and not self._task.done()
+        if running and self._current != "feedback" and not keep:
+            self._task.cancel()  # type: ignore[union-attr]
+        elif not running and keep:
+            self._kick()  # the feedback run goes through; `_drain` unregisters after it
+        if not running and not keep:
+            self._unregister()
+
+    async def wait_closed(self) -> None:
+        """Wait until the background task (if any) has finished after `close()`."""
+        task = self._task
+        if task is not None and not task.done():
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+    def _unregister(self) -> None:
+        reg = self.registry if self.registry is not None else T.REGISTRY
+        if reg.get(self.handle.session_id) is self.handle:
+            reg.remove(self.handle.session_id)
+
     # ---- one run -------------------------------------------------------------------------
     async def run_once(self, trigger: str, evidence: list[int], t: float, also: list[str] | None = None) -> dict[str, Any]:
         h, s = self.handle, self.handle.session
         also = list(also or [])
-        if s.stopped:
+        if not self._may_run(trigger):
             return {"outcome": "skipped"}
         if self.daily is not None and not self.daily.acquire():
             return self._daily_cap(trigger)
@@ -123,16 +201,25 @@ class AgentCoach:
         h.status("thinking", trigger)
         model = getattr(self.planner, "model", "")
         s.trace.log("agent_run", phase="start", trigger=trigger, model=model, transport=preferred, also=also, label=self.label, run=run.id, policy_version=T.POLICY_VERSION)
-        ctx = RunContext(handle=h, trigger=trigger, evidence=evidence, prompt=build_prompt(h, trigger, evidence, also), also=also, registry=self.registry)
         t0 = time.perf_counter()
         res, err = None, None
+        cancelled = False
         try:
+            ctx = RunContext(handle=h, trigger=trigger, evidence=evidence, prompt=build_prompt(h, trigger, evidence, also), also=also, registry=self.registry)
             res = await asyncio.wait_for(self.planner.run(ctx), timeout=self.timeout_s)
+        except asyncio.CancelledError:  # the socket closed: still write the end row, then stop
+            cancelled = True
         except Exception as e:  # model / transport failure: the rule coach carries on
             err = e
         finally:
             h.end_run()
         ms = round((time.perf_counter() - t0) * 1000.0, 1)
+        if cancelled:
+            row = {"phase": "end", "trigger": trigger, "model": model, "transport": preferred, "ms": ms, "input_tokens": None, "output_tokens": None, "outcome": "cancelled", "tool_calls": run.calls, "actions": run.actions, "first_action_ms": run.first_action_ms, "label": self.label, "run": run.id, "policy_version": T.POLICY_VERSION}
+            s.trace.log("agent_run", **row)
+            self.metrics.run(session=s.session_id, trigger=trigger, outcome="cancelled", ms=ms, first_action_ms=run.first_action_ms, tool_calls=run.calls, actions=run.actions, transport=preferred, model=model, policy_version=T.POLICY_VERSION)
+            self.runs.append(row)
+            raise asyncio.CancelledError()
         transport = res.transport if res is not None else preferred
         if res is not None and res.mcp_error:
             s.trace.log("agent_error", error_kind="mcp", message=res.mcp_error, fallback="direct", run=run.id)

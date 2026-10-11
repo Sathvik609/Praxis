@@ -27,6 +27,7 @@ from __future__ import annotations
 import contextvars
 import functools
 import json
+import math
 import re
 import threading
 import time
@@ -57,7 +58,7 @@ PRAISE_EVERY_N = 3
 PEAK_DROP_DEG = 3.0
 REVIEW_TRIGGERS = ("arc_complete", "set_complete")
 
-POLICY_VERSION = "2026-10-10.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
+POLICY_VERSION = "2026-10-11.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
 PLAN_MAX_ITEMS = 3
 PLAN_ITEM_MAX_CHARS = 100
 BECAUSE_MAX_CHARS = 200
@@ -220,8 +221,14 @@ class SessionHandle:
         self.intents.append(("status", None, data))
 
     def _queue(self, kind: str, data: dict[str, Any]) -> None:
-        epoch = self.run.epoch if self.run is not None else self.session.epoch
-        self.intents.append((kind, epoch, data))
+        """Queue an output of the current run. A tool that finishes after its run ended (timed
+        out or cancelled while the tool was still working) queues nothing (11 Oct audit)."""
+        run = self.run
+        if run is None:
+            d = data.get("decision")
+            self.session.trace.log("agent_drop", reason="run ended before the tool finished", intent=kind, text=d.text if d is not None else None)
+            return
+        self.intents.append((kind, run.epoch, data))
 
     def drain(self, t: float) -> list[Event]:
         """Apply queued agent outputs on the caller's (WebSocket) coroutine and return the events
@@ -313,6 +320,10 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
             raise ToolRejected(f"{name} is never allowed: {AUTONOMY[name][1]}", "policy")
         if level in ("forbidden_after_stop", "patient_approval") and h.session.stopped:
             raise ToolRejected(f"{name} is forbidden after a stop: the session is stopped", "stopped")
+        if level in ("forbidden_after_stop", "patient_approval") and getattr(h.session, "ended", False):
+            # 11 Oct: once the patient has finished (feedback sent), the agent may only read and
+            # write the report note; nothing it says, proposes or flags would reach anyone.
+            raise ToolRejected(f"{name} is not allowed once the session has ended: only reads and the report note", "ended")
         assert fn is not None
         with h.lock:
             if h.tool_calls >= SESSION_TOOL_CALLS:
@@ -362,28 +373,68 @@ def bind(name: str, transport: str, registry: Registry | None = None) -> Callabl
 
 
 # ---- guardrail helpers ----------------------------------------------------------------------
+def _number(value: Any, what: str) -> float:
+    """A finite number from a model argument (a number or a numeric string); bools, NaN and
+    infinities are refused (NaN used to clamp to the prescription's maximum)."""
+    if isinstance(value, bool):
+        raise ToolRejected(f"{what} needs a number, got {value!r}", "field")
+    try:
+        x = float(value)
+    except (TypeError, ValueError, OverflowError):
+        raise ToolRejected(f"{what} needs a number, got {value!r}", "field") from None
+    if not math.isfinite(x):
+        raise ToolRejected(f"{what} must be a finite number, got {value!r}", "field")
+    return x
+
+
+def _event_id(value: Any) -> int:
+    """An evidence id: an int, or a string of digits (models sometimes quote ids). Bools,
+    fractions, NaN/inf and anything else are refused, never truncated into some other id."""
+    if isinstance(value, bool):
+        raise ToolRejected(f"evidence ids must be integers, got {value!r}", "evidence")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        return int(value)
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    raise ToolRejected(f"evidence ids must be integers, got {value!r}", "evidence")
+
+
+def _evidence_ids(evidence: Any) -> list[int]:
+    if not isinstance(evidence, (list, tuple)) or not evidence:
+        raise ToolRejected("evidence must list at least one event id from get_events", "evidence")
+    return [_event_id(x) for x in evidence]
+
+
+def _run_guard(h: SessionHandle) -> RunState:
+    """The current run, live and not stale; otherwise the call is refused."""
+    run = h.run
+    if run is None:
+        raise ToolRejected("coach actions only run inside an agent checkpoint run", "no_run")
+    if h.session.stopped:
+        raise ToolRejected("the session is stopped; nothing more can be said or changed", "stopped")
+    if run.epoch != h.session.epoch:
+        raise ToolRejected("stale: the session moved on since this checkpoint", "stale")
+    return run
+
+
+def _acted(h: SessionHandle) -> None:
+    run = h.run  # None when the run ended while this tool was still working
+    if run is not None:
+        run.acted()
+
+
 def _action_guard(evidence: Any, count: bool = True) -> list[int]:
     h = _h()
     s = h.session
-    if h.run is None:
-        raise ToolRejected("coach actions only run inside an agent checkpoint run", "no_run")
-    if s.stopped:
-        raise ToolRejected("the session is stopped; nothing more can be said or changed", "stopped")
-    if h.run.epoch != s.epoch:
-        raise ToolRejected("stale: the session moved on since this checkpoint", "stale")
-    if not isinstance(evidence, (list, tuple)) or not evidence:
-        raise ToolRejected("evidence must list at least one event id from get_events", "evidence")
-    ids: list[int] = []
-    for x in evidence:
-        try:
-            ids.append(int(x))
-        except (TypeError, ValueError):
-            raise ToolRejected(f"evidence ids must be integers, got {x!r}", "evidence") from None
+    _run_guard(h)
+    ids = _evidence_ids(evidence)
     bad = [i for i in ids if not s.has_event(i)]
     if bad:
         raise ToolRejected(f"evidence ids {bad} are not events of this session", "evidence")
     if count:
-        h.run.acted()
+        _acted(h)
     return ids
 
 
@@ -430,7 +481,7 @@ def get_events(session_id: str, types: list[str] | None = None, last_n: int = 20
     """Recent perception and stop-rule events of this session (never frames), newest last.
     Use their `id` values as `evidence` for coach actions. `types` filters by event type
     (e.g. ["rep_complete", "pause"]); `last_n` is at most 50."""
-    n = max(1, min(50, int(last_n)))
+    n = max(1, min(50, int(_number(last_n, "last_n"))))
     evs = _h().session.recent_events(types=list(types) if types else None, last_n=n)
     return {"events": [_compact(e) for e in evs]}
 
@@ -438,7 +489,8 @@ def get_events(session_id: str, types: list[str] | None = None, last_n: int = 20
 def get_set_summary(session_id: str) -> dict[str, Any]:
     """The last finished set (arm) or arc (cup), or the one in progress: reps, verified and not
     verified (with reasons; `missed` = seen to fall short, `unverified` = camera could not check),
-    peak angles, hold times, lean/hike/above-ceiling counts, reach times, and the previous set's mean peak."""
+    peak angles, hold times, lean/hike/above-ceiling counts, reach times, and the previous set's
+    mean peak. After the peg test, `nhpt` holds its total time and the nine per-peg splits."""
     return _set_summary(_h().session)
 
 
@@ -459,7 +511,21 @@ def _set_summary(s: Any) -> dict[str, Any]:
     peaks = [e.payload["peak_deg"] for e in reps if "peak_deg" in e.payload]
     prev_peaks = [e.payload["peak_deg"] for e in prev if e.type == "rep_complete" and "peak_deg" in e.payload]
     not_ok = [{"id": e.id, "reason": e.payload.get("reason"), "kind": "missed" if is_miss(e.payload) else "unverified"} for e in reps if e.payload.get("verified") is False]
+    nhpt = None
+    if kind == "nhpt" and boundary is not None:
+        # The peg-test result in numbers (11 Oct): `_compact` strips the splits list from
+        # events, so the nhpt_complete job ("time, splits") had nothing to explain them with.
+        splits = [round(float(x), 2) for x in (boundary.payload.get("splits_s") or [])][:9]
+        nhpt = {
+            "total_s": boundary.payload.get("total_s"),
+            "splits_s": splits,
+            "pegs": len(splits),
+            "slowest_peg": (splits.index(max(splits)) + 1) if splits else None,
+            "fastest_peg": (splits.index(min(splits)) + 1) if splits else None,
+            "tracking_lost_events": getattr(s, "tracking_lost_events", 0),
+        }
     return {
+        "nhpt": nhpt,
         "kind": kind,
         "boundary_event_id": boundary.id if boundary else None,
         "boundary": _compact(boundary) if boundary else None,
@@ -494,8 +560,9 @@ def recalibrate(session_id: str) -> dict[str, Any]:
     whether the pose is visible. Use after the patient has fixed the setup."""
     h = _h()
     s = h.session
-    if s.stopped:
-        raise ToolRejected("the session is stopped", "stopped")
+    # 11 Oct: it resets tracking, so like every action it needs a live agent run (an outside
+    # MCP client with the token can read perception but not reset it mid-session).
+    _run_guard(h)
     res = h.pipeline.command({"cmd": "recalibrate"})
     if not res.get("ok"):
         raise ToolRejected(res.get("error", "recalibrate is not available here"), "unsupported")
@@ -540,7 +607,7 @@ def resample_target_colour(session_id: str, target: str, evidence: list[int]) ->
         raise ToolRejected(str(res.get("error", "resample is not available here")), "unsupported")
     s.trace.log("resample", target=target, applied=bool(res.get("applied")), before=res.get("before"), after=res.get("after"), colour=res.get("colour"), evidence=ids, run=h.run.id if h.run else None)
     if res.get("applied"):
-        h.run.acted()  # type: ignore[union-attr]
+        _acted(h)
         h._queue("command", {"payload": {"cmd": "sample_colour", "source": "agent", "ok": True, "session_id": s.session_id, "target": target, "colour": res.get("colour"), "evidence": ids}})
     return {k: v for k, v in res.items() if k != "tried"} | {"tried": (res.get("tried") or [])[:6]}
 
@@ -609,7 +676,7 @@ def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str
             raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
         h.fix_repeat_allowed = False  # the one repeat after a refused resume
     h.last_speak_clock = now
-    h.run.acted()  # type: ignore[union-attr]
+    _acted(h)
     h._queue("decision", {"decision": _decision(cue, "agent_speak", line, "", ids, tool="speak")})
     return {"ok": True, "queued": True, "action": cue}
 
@@ -641,6 +708,12 @@ def _praise_gate(h: SessionHandle) -> str | None:
     return f"praise rate limit: {h.clean_reviews} clean review(s) since the last praise (at most one per {PRAISE_EVERY_N} unless something changed)"
 
 
+def _prompt_waiting(h: SessionHandle) -> bool:
+    """One prompt at a time: an unanswered prompt, or one queued and not yet delivered."""
+    s = h.session
+    return bool(s.prompts or s.pending_prompt or any(k == "prompt" for k, _, _ in list(h.intents)))
+
+
 def _rx_key(h: SessionHandle) -> str:
     arm = getattr(h.pipeline, "_arm", None)
     if arm is not None:
@@ -659,15 +732,12 @@ def propose_adjustment(session_id: str, exercise: str, field: str, value: float 
     run = _running(h)
     if exercise != run.get("exercise"):
         raise ToolRejected(f"{exercise!r} is not the running exercise ({run.get('exercise')!r})", "field")
-    if s.prompts or s.pending_prompt or any(k == "prompt" for k, _, _ in list(h.intents)):
+    if _prompt_waiting(h):
         raise ToolRejected("a prompt is already waiting for the patient", "prompt_pending")
     rx = _rx_key(h)
     if field in ARM_FIELDS and getattr(h.pipeline, "_arm", None) is not None:
         cmd, key, unit = ARM_FIELDS[field]
-        try:
-            wanted = float(value)
-        except (TypeError, ValueError):
-            raise ToolRejected(f"{field} needs a number", "field") from None
+        wanted = _number(value, field)
         try:
             new = clamp(s.prescription, rx, field, wanted)
         except KeyError:
@@ -718,10 +788,7 @@ def request_rest(session_id: str, seconds: int, reason: str, evidence: list[int]
     """Ask for a rest break of `seconds` (10-120). The patient resumes with a tap."""
     h = _h()
     why = _text(reason, "reason", REASON_MAX_CHARS)
-    try:
-        want = int(seconds)
-    except (TypeError, ValueError):
-        raise ToolRejected("seconds must be a whole number", "field") from None
+    want = int(round(_number(seconds, "seconds")))
     secs = max(REST_MIN_S, min(REST_MAX_S, want))
     ids = _action_guard(evidence)
     text = f"Let's rest for {secs} seconds. {why}"[:SPEAK_MAX_CHARS]
@@ -741,6 +808,8 @@ def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[st
         raise ToolRejected("the session is not paused", "state")
     if s.pause_rule == "patient":
         raise ToolRejected("the patient paused themselves; they resume when they are ready", "state")
+    if _prompt_waiting(h):
+        raise ToolRejected("a prompt is already waiting for the patient", "prompt_pending")
     ids = _action_guard(evidence, count=False)
     # 10 Oct: never offer a resume the camera has not confirmed. A fresh OpenCV setup check
     # runs here, on the latest frame; anything still failing means no prompt at all.
@@ -756,7 +825,7 @@ def request_resume(session_id: str, reason: str, evidence: list[int]) -> dict[st
         s.trace.log("resume_blocked", reason=why_not, failing=chk["failing"], evidence=ids)
         h.fix_repeat_allowed = True
         return {"ok": False, "reason": why_not, "failing": chk["failing"], "hint": first.get("hint"), "resume_offered": False, "next": "say the fix again (one repeat is allowed now); do not offer a resume"}
-    h.run.acted()  # type: ignore[union-attr]
+    _acted(h)
     h.prompt_seq += 1
     pid = f"resume-{h.prompt_seq}"
     prompt = {"id": pid, "kind": "resume", "title": "Setup looks good — resume?", "text": why, "options": ["Yes, resume", "Not yet"], "within_prescription": True}
@@ -794,10 +863,10 @@ def write_session_summary(session_id: str, note: str, evidence: list[int]) -> di
     s = h.session
     if h.run is None:
         raise ToolRejected("coach actions only run inside an agent checkpoint run", "no_run")
-    ids = [int(x) for x in evidence] if isinstance(evidence, (list, tuple)) and evidence else []
-    if not ids or any(not s.has_event(i) for i in ids):
+    ids = _evidence_ids(evidence)
+    if any(not s.has_event(i) for i in ids):
         raise ToolRejected("evidence must list event ids of this session", "evidence")
-    h.run.acted()
+    _acted(h)
     s.coach_note = {"text": text, "evidence": ids, "label": h.label}
     s.trace.log("coach_note", text=text, evidence=ids, label=h.label)
     stored = False

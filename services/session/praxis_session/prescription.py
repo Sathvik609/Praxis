@@ -1,6 +1,8 @@
 """Therapist prescription: dose, allowed adaptations and stop rules. Clamps live here, in code."""
 from __future__ import annotations
 
+import math
+
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -147,7 +149,11 @@ SEED_PRESCRIPTION = Prescription(
 
 
 def clamp(p: Prescription, exercise: str, field: str, value: float) -> float:
-    """Clamp an adaptation to the prescribed range; unknown fields are not adaptable."""
+    """Clamp an adaptation to the prescribed range; unknown fields are not adaptable. A
+    non-finite value is refused (ValueError): NaN compares false, so `max(lo, min(hi, nan))`
+    used to return the range's maximum (11 Oct audit)."""
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{exercise}.{field}: {value!r} is not a finite number")
     rng = p.allowed_adaptations.get(exercise, {}).get(field)
     if not isinstance(rng, list) or len(rng) != 2:
         raise KeyError(f"{exercise}.{field} is not an allowed adaptation")
