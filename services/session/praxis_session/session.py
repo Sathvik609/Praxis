@@ -418,7 +418,9 @@ class CoachSession:
             d.label = (d.label or LABEL) if self.rule_label == LABEL else self.rule_label
         else:
             d.label = d.label or "Claude agent"
-        self.trace.log("decide", action=d.action, cue_id=d.cue_id, reason=d.reason, evidence=d.evidence, label=d.label, source=d.source)
+        # agent decisions name the run and tool that made them (trace chain: run -> tool -> decide)
+        link = {"run": d.ui.get("agent_run"), "tool": d.ui.get("agent_tool")} if d.source == "agent" and d.ui.get("agent_tool") else {}
+        self.trace.log("decide", action=d.action, cue_id=d.cue_id, reason=d.reason, evidence=d.evidence, label=d.label, source=d.source, **link)
         for call in d.tool_calls:
             self.trace.log("tool", **call)
         spoken = speak(d.text, t, d.cue_id, d.action)

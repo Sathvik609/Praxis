@@ -357,7 +357,26 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
         ms = round((time.perf_counter() - t0) * 1000.0, 1)
         summary = json.dumps(result if ok else {"error": str(err), "kind": getattr(err, "kind", "error")}, default=str)[:240]
         safe_args = {k: (v[:120] if isinstance(v, str) else v) for k, v in args.items() if k != "session_id"}
-        h.session.trace.log("tool", server=SERVER_OF.get(name, "none"), name=name, autonomy=level or None, args=safe_args, ok=ok, ms=ms, transport=transport, result_summary=summary, run=h.run.id if h.run else None)
+        extra = {}
+        if ok and isinstance(result, dict) and name in OPENCV_TOOLS:
+            extra["opencv"] = opencv_digest(name, result)
+        h.session.trace.log("tool", server=SERVER_OF.get(name, "none"), name=name, autonomy=level or None, args=safe_args, ok=ok, ms=ms, transport=transport, result_summary=summary, run=h.run.id if h.run else None, **extra)
+
+
+OPENCV_TOOLS = ("check_setup", "recalibrate", "resample_target_colour")
+_DIGEST_MEASURES = ("markers_found", "markers_missing", "rms_mm", "tilt_deg", "jitter_px", "mean_luma", "sharpness", "target", "target_seen", "colour_source", "pose_present", "visibility", "facing", "needed_view", "gate", "trunk_lean_deg")
+
+
+def opencv_digest(name: str, result: dict[str, Any]) -> dict[str, Any]:
+    """What OpenCV found, in a few readable fields for the trace (11 Oct): the 240-character
+    `result_summary` cut a `check_setup` result off before its failing checks and hint."""
+    if name == "check_setup":
+        m = result.get("measures") or {}
+        return {"failing": result.get("failing", []), "first_hint": result.get("first_hint"), "frame_age_s": result.get("frame_age_s")} | {k: m[k] for k in _DIGEST_MEASURES if k in m}
+    if name == "resample_target_colour":
+        return {k: result.get(k) for k in ("target", "applied", "reason", "before", "after", "sampled_at_dot", "sampled_at_mm") if result.get(k) is not None} | {"tried": len(result.get("tried") or [])}
+    keys = ("reset", "frames_seen", "calibrated", "markers_found", "markers_missing", "rms_mm", "tilt_deg", "pose_visible", "visibility", "gate", "failing", "note")
+    return {k: result[k] for k in keys if k in result}
 
 
 def bind(name: str, transport: str, registry: Registry | None = None) -> Callable[..., dict[str, Any]]:
@@ -451,7 +470,7 @@ def _decision(action: str, cue_id: str, text: str, reason: str, evidence: list[i
     h = _h()
     trigger = h.run.trigger if h.run else "external"
     # No `tool_calls` here: `invoke` already wrote the tool's own trace row (with `server`).
-    ui = {**(ui or {}), "agent_tool": tool}
+    ui = {**(ui or {}), "agent_tool": tool, "agent_run": h.run.id if h.run else None}
     return Decision(action, cue_id, text, reason or f"Claude agent at {trigger}", evidence, ui, h.label, [], source="agent")  # type: ignore[arg-type]
 
 

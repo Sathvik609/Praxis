@@ -389,3 +389,32 @@ def test_metrics_runs_today_counts_runs_not_cap_refusals():
     s = m.summary(b)
     assert s["runs_today"] == 1 and s["blocked_by_cap"] == 3
     assert s["runs_today"] == s["cap"]["runs_today"]
+
+
+# ---- 8. a readable trace chain: event -> run -> tool (OpenCV digest) -> decision -> answer ----
+def test_perception_tool_rows_carry_a_readable_opencv_digest(tmp_path):
+    s, p, h, reg = build(tmp_path)
+    f, _ = camera_frame(CUP_TARGETS, hide_marker=2, cup_mm=CUP_TARGETS.targets_mm[0])
+    p.process(f, 0.0, 0)
+    s.on_events([unverified(float(i)) for i in (1, 2, 3)], snapshot={}, t=3.0)
+    s.agent.pending.clear()
+    h.begin_run("pause:failed_reps")
+    try:
+        call(reg, "check_setup")
+    finally:
+        h.end_run()
+    row = [r for r in rows(s, "tool") if r.get("name") == "check_setup"][-1]
+    cv = row["opencv"]
+    assert "markers" in cv["failing"] and cv["first_hint"]
+    assert cv["markers_missing"] == [2] and "mean_luma" in cv
+
+
+def test_agent_decisions_name_their_run(tmp_path):
+    scripts = {"arc_complete": [{"tool": "get_set_summary"}, {"tool": "speak", "args": {"text": "Arc done.", "cue": "instruct", "evidence": "$evidence"}}]}
+    s, p, h, reg = build(tmp_path, scripts)
+    arc_event(s)
+    asyncio.run(s.agent.run_pending())
+    h.drain(2.0)
+    run_id = [r for r in rows(s, "agent_run") if r["phase"] == "end"][-1]["run"]
+    dec = [r for r in rows(s, "decide") if r.get("source") == "agent"][-1]
+    assert dec["run"] == run_id and dec["tool"] == "speak"
