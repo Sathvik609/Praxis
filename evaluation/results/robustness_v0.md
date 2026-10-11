@@ -14,7 +14,7 @@ Columns: **cal** = first fix (all four markers, fresh calibrator); **session** =
 | first fix (all four markers) | 74 | 83 |
 | running session still calibrated (fresh / partial / held ≤ 1.5 s) | 81 | 91 |
 | occupancy all correct / cup found within 10 mm (when calibrated) | 69 of 74 | 67 of 77 |
-| phantoms (empty hole read occupied, extra free peg / cup where none) | 1 | 0 |
+| phantoms (empty hole read occupied, extra free peg / cup where none) | 2 | 0 |
 | setup rows right for the condition | 81 of 81 | 91 of 91 |
 
 Worst target round-trip error over all calibrated frames: 10.64 mm (paper curl, ends up 20 mm, cup); median 0.23 mm. Remaining misses are physics or by design: blur that destroys the marker codes (the hint says so), a hand hiding ~80 % of the cup base (the FSM infers the placement and marks it unverified), cup and peg colours outside the default windows until the patient taps to sample, black pegs and a black cup band (no colour to segment, even sampled), a peg on a 45 %-filled far frame with defocus (the setup row asks to come closer), and a sheet curled 20 mm (8–11 mm target error; nothing flags it, see below).
@@ -55,7 +55,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | sheet rotated 90° in plane | yes | fresh | 0.345 | 0.24 | 40.1 (40.3) | hough | ok | yes | 0 | none (right) |
 | sheet rotated 180° in plane | yes | fresh | 0.312 | 0.22 | 40.2 (40.3) | hough | ok | yes | 0 | none (right) |
 | sheet rotated 270° in plane | yes | fresh | 0.313 | 0.37 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| sheet fills 30% of frame | yes | fresh | 0.933 | 1.19 | 40.2 (40.3) | mixed | ok | yes | 0 | task_area: “Move the camera closer so the sheet fills more of the view.” (right) |
+| sheet fills 30% of frame | yes | fresh | 0.933 | 1.19 | 40.2 (40.3) | hough | ok | yes | 0 | task_area: “Move the camera closer so the sheet fills more of the view.” (right) |
 | sheet fills 40% of frame | yes | fresh | 0.717 | 0.62 | 40.1 (40.3) | hough | ok | yes | 0 | task_area: “Move the camera closer so the sheet fills more of the view.” (right) |
 | sheet fills 50% of frame | yes | fresh | 0.633 | 0.66 | 40.5 (40.3) | hough | ok | yes | 0 | task_area: “Move the camera closer so the sheet fills more of the view.” (right) |
 | sheet fills 60% of frame | yes | fresh | 0.48 | 0.24 | 40.4 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -110,7 +110,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | barrel lens distortion k1=-0.25 (f 0.8 w, tilt 45°) | yes | fresh | 0.988 | 1.12 | 45.0 (45.2) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 5 mm | yes | fresh | 0.809 | 1.88 | 40.2 (40.3) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 10 mm | yes | fresh | 1.466 | 3.88 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [4, 8]** | **no** | **1** | none (right) |
+| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [4, 8]** | **no** | **2** | none (right) |
 | folded crease, ridge 4 mm | yes | fresh | 0.56 | 1.17 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | folded crease, ridge 8 mm | yes | fresh | 1.005 | 2.38 | 40.3 (40.3) | mixed | ok | yes | 0 | none (right) |
 | mirrored frame | yes | fresh | 0.336 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -138,7 +138,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | lens f=1.1·w, tilt 45° | yes | fresh | 0.255 | 0.3 | 45.3 (45.2) | yes | 0.5 | ok | none (right) |
 | lens f=2.0·w, tilt 45° | yes | fresh | 0.21 | 0.26 | 45.3 (45.2) | yes | 0.5 | ok | none (right) |
 | sheet rotated 30° in plane | yes | fresh | 0.158 | 0.23 | 40.3 (40.3) | yes | 0.5 | ok | none (right) |
-| sheet rotated 90° in plane | yes | fresh | 0.187 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
+| sheet rotated 90° in plane | yes | fresh | 0.187 | 0.24 | 40.3 (40.3) | yes | 0.5 | ok | none (right) |
 | sheet rotated 180° in plane | yes | fresh | 0.218 | 0.22 | 40.2 (40.3) | yes | 0.4 | ok | none (right) |
 | sheet rotated 270° in plane | yes | fresh | 0.236 | 0.28 | 40.3 (40.3) | yes | 0.5 | ok | none (right) |
 | sheet fills 30% of frame | yes | fresh | 0.604 | 0.5 | 40.3 (40.3) | yes | 0.3 | ok | task_area: “Move the camera closer so the sheet fills more of the view.” (right) |

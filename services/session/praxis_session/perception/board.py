@@ -79,14 +79,16 @@ def normalise_to_paper(canonical_bgr: np.ndarray, px_per_mm: float, kernel_mm: f
     larger than the largest dark object on the sheet that should not be taken for shading
     (a peg, a printed ring or marker, the cup base)."""
     h, w = canonical_bgr.shape[:2]
-    step = max(1, int(round(px_per_mm * PAPER_CELL_MM)))
+    cell_mm = max(PAPER_CELL_MM, kernel_mm / 15.0)  # ~15 cells across the kernel keeps it cheap
+    step = max(1, int(round(px_per_mm * cell_mm)))
     small = cv2.resize(canonical_bgr, (max(1, w // step), max(1, h // step)), interpolation=cv2.INTER_AREA)
-    k = max(3, int(round(kernel_mm / PAPER_CELL_MM)) | 1)
-    paper = cv2.morphologyEx(small, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+    k = max(3, int(round(kernel_mm / cell_mm)) | 1)
+    # A rectangular element is separable (fast) and, for a smooth light field, as good as a disc.
+    paper = cv2.morphologyEx(small, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (k, k)))
     paper = cv2.blur(paper, (3, 3))
-    paper = cv2.resize(paper, (w, h), interpolation=cv2.INTER_LINEAR).astype(np.float32)
-    out = canonical_bgr.astype(np.float32) * (PAPER_LEVEL / np.maximum(paper, PAPER_FLOOR))
-    return np.clip(out, 0, 255).astype(np.uint8)
+    paper = cv2.resize(paper, (w, h), interpolation=cv2.INTER_LINEAR)
+    paper = cv2.max(paper, np.full_like(paper, int(PAPER_FLOOR)))
+    return cv2.divide(canonical_bgr, paper, scale=PAPER_LEVEL)  # saturating uint8
 
 
 def hsv_window_from_patch(

@@ -865,7 +865,7 @@
     "px_per_mm": 1.51,
     "cup_expected": true,
     "cup_found": true,
-    "cup_err_mm": 0.4,
+    "cup_err_mm": 0.5,
     "cup_ok": true,
     "colour": "default"
    }
@@ -1016,7 +1016,7 @@
     "mean_luma": 94.4,
     "sharpness": 448.7,
     "px_per_mm": 0.43,
-    "holes": "mixed",
+    "holes": "hough",
     "occupancy_ok": true,
     "occupancy_wrong": [],
     "phantom_holes": [],
@@ -4676,9 +4676,9 @@
      8
     ],
     "phantom_holes": [],
-    "free_pegs": 1,
+    "free_pegs": 2,
     "free_peg_found": false,
-    "phantom_free": 1,
+    "phantom_free": 2,
     "colour": "default"
    },
    "cup": {
