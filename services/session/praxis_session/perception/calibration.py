@@ -10,6 +10,15 @@ refuse to start otherwise). After that, brief occlusion is tolerated (Sprint D-C
   the previous homography is reused, ``age_s`` says how stale it is;
 - otherwise not calibrated (``source=None``).
 
+Mirrored video (11 Oct 2026): the web sends the camera's own (unmirrored) frames, but some
+cameras, drivers and virtual cameras deliver a mirror image, in which no ArUco code decodes. When
+no marker of the sheet is found, detection is repeated on ``cv2.flip(gray, 1)``; markers found
+there have their corners mapped back to the frame (x -> w - 1 - x), so the homography includes
+the reflection and every downstream step (warp, holes, cup, hand landmarks) works on the frame
+as received; ``mirrored`` says so, and the orientation that worked is tried first next time.
+``rejected`` counts candidate squares ArUco found but could not decode (blur, glare), which
+lets the setup hint say "cannot read" rather than "missing".
+
 ``tilt_deg`` (Sprint D-CAL-3) is the angle between the camera axis and the sheet normal from
 ``cv2.solvePnP`` (planar IPPE) on the visible marker corners with a nominal pinhole
 (f = 1.2 x frame width, principal point at the centre, no distortion); it is a setup gate,
@@ -49,6 +58,10 @@ class CalibrationResult:
     source: Source | None = None
     age_s: float = 0.0
     tilt_deg: float | None = None
+    mirrored: bool = False
+    rejected: int = 0
+    # corners (N x 4 x 2, frame px) of the undecoded candidate squares; not serialised
+    rejected_px: np.ndarray = field(default_factory=lambda: np.zeros((0, 4, 2), np.float32))
 
     def to_mm(self, pts_px: np.ndarray) -> np.ndarray:
         assert self.H_px_to_mm is not None
@@ -69,6 +82,8 @@ class CalibrationResult:
             "source": self.source,
             "age_s": round(float(self.age_s), 3),
             "tilt_deg": None if self.tilt_deg is None else round(float(self.tilt_deg), 1),
+            "mirrored": self.mirrored,
+            "rejected": self.rejected,
             "markers_px": {
                 str(k): np.round(v, 1).tolist() for k, v in self.marker_corners_px.items()
             },
@@ -117,6 +132,7 @@ class Calibrator:
         self._det = cv2.aruco.ArucoDetector(DICT, params)
         self._last_good: CalibrationResult | None = None  # last fresh or partial result
         self._last_good_t: float = 0.0
+        self._prefer_mirrored = False  # the orientation that decoded last time is tried first
 
     @property
     def ever_calibrated(self) -> bool:
@@ -125,20 +141,33 @@ class Calibrator:
     def run(self, frame_bgr: np.ndarray, t: float | None = None) -> CalibrationResult:
         t = time.time() if t is None else float(t)
         gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-        corners, ids, _ = self._det.detectMarkers(gray)
-        found: dict[int, np.ndarray] = {}
-        if ids is not None:
-            for c, i in zip(corners, ids.ravel().tolist(), strict=True):
-                if i in self.spec.marker_centres_mm:
-                    found[i] = c.reshape(4, 2)
+        w = gray.shape[1]
+        mirrored = self._prefer_mirrored
+        found, rej_px = self._detect(cv2.flip(gray, 1) if mirrored else gray)
+        if not found:
+            other, rej2 = self._detect(gray if mirrored else cv2.flip(gray, 1))
+            if other:
+                found, rej_px, mirrored = other, rej2, not mirrored
+        mirrored = mirrored and bool(found)
+        if found:
+            self._prefer_mirrored = mirrored
+        # `pnp` keeps the corners as a real camera saw them (the un-mirrored image) for solvePnP;
+        # `found` is in the coordinates of the frame as received.
+        pnp = found
+        if mirrored:
+            found = {k: np.column_stack([w - 1 - c[:, 0], c[:, 1]]).astype(np.float32) for k, c in pnp.items()}
+            rej_px = np.stack([w - 1 - rej_px[..., 0], rej_px[..., 1]], axis=-1).astype(np.float32)
+        rejected = len(rej_px)
         missing = sorted(set(self.spec.marker_centres_mm) - set(found))
 
         if not missing:
-            res = self._fit(found, missing, "fresh", frame_bgr.shape, method=0)
+            res = self._fit(found, missing, "fresh", frame_bgr.shape, method=0, pnp=pnp)
         elif len(found) >= MIN_PARTIAL_MARKERS and self._last_good is not None:
-            res = self._fit(found, missing, "partial", frame_bgr.shape, method=cv2.RANSAC)
+            res = self._fit(found, missing, "partial", frame_bgr.shape, method=cv2.RANSAC, pnp=pnp)
         else:
             res = None
+        if res is not None:
+            res.mirrored, res.rejected, res.rejected_px = mirrored, rejected, rej_px
 
         if res is not None and res.calibrated:
             self._last_good, self._last_good_t = res, t
@@ -157,8 +186,25 @@ class Calibrator:
                 source="held",
                 age_s=t - self._last_good_t,
                 tilt_deg=prev.tilt_deg,
+                mirrored=prev.mirrored,
+                rejected=rejected,
+                rejected_px=rej_px,
             )
-        return CalibrationResult(self.spec.name, False, missing, None, None, found)
+        return CalibrationResult(
+            self.spec.name, False, missing, None, None, found,
+            mirrored=mirrored, rejected=rejected, rejected_px=rej_px,
+        )
+
+    def _detect(self, gray: np.ndarray) -> tuple[dict[int, np.ndarray], np.ndarray]:
+        """This sheet's markers (id -> 4x2 corners) and the corners of undecoded candidates."""
+        corners, ids, rejected = self._det.detectMarkers(gray)
+        found: dict[int, np.ndarray] = {}
+        if ids is not None:
+            for c, i in zip(corners, ids.ravel().tolist(), strict=True):
+                if i in self.spec.marker_centres_mm:
+                    found[i] = c.reshape(4, 2)
+        quads = np.array([r.reshape(4, 2) for r in rejected], np.float32).reshape(-1, 4, 2)
+        return found, quads
 
     def _fit(
         self,
@@ -167,16 +213,25 @@ class Calibrator:
         source: Source,
         frame_shape: tuple,
         method: int,
+        pnp: dict[int, np.ndarray] | None = None,
     ) -> CalibrationResult:
         order = sorted(found)
         src = np.concatenate([found[i] for i in order]).astype(np.float32)
         dst = np.concatenate([self.spec.marker_corners_mm(i) for i in order]).astype(np.float32)
-        H, _ = cv2.findHomography(src, dst, method, RANSAC_PX)
+        if method == cv2.RANSAC:
+            # findHomography measures the RANSAC threshold in the DESTINATION space, so the
+            # robust fit runs sheet mm -> frame px (threshold in px, where corner noise lives)
+            # and is inverted. Until 11 Oct 2026 it ran px -> mm, making "3 px" 3 mm: on a
+            # close sheet a corner several px off was kept as an inlier.
+            H_mm_px, _ = cv2.findHomography(dst, src, cv2.RANSAC, RANSAC_PX)
+            H = None if H_mm_px is None else np.linalg.inv(H_mm_px)
+        else:
+            H, _ = cv2.findHomography(src, dst, method)
         if H is None:
             return CalibrationResult(self.spec.name, False, missing, None, None, found)
         proj = cv2.perspectiveTransform(src.reshape(-1, 1, 2), H).reshape(-1, 2)
         rms = float(np.sqrt(np.mean(np.sum((proj - dst) ** 2, axis=1))))
-        tilt = sheet_tilt_deg(found, self.spec, frame_shape)
+        tilt = sheet_tilt_deg(found if pnp is None else pnp, self.spec, frame_shape)
         return CalibrationResult(
             self.spec.name, True, missing, H, rms, found, source=source, age_s=0.0, tilt_deg=tilt
         )

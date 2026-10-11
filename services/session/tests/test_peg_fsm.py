@@ -130,7 +130,7 @@ def test_pinch_in_source_zone_starts_a_transfer_from_a_dish():
     reps = [e for e in evs if e.type == "rep_complete"]
     assert len(reps) == 1 and reps[0].payload["verified"] is True
     assert reps[0].payload["reason"] is None and reps[0].payload["hole"] == 4
-    assert abs(reps[0].payload["t_grasp"] - 0.2) < 1e-9
+    assert abs(reps[0].payload["t_grasp"] - 0.1) < 1e-9  # timed from the first pinched frame (11 Oct)
 
 
 def test_pinch_outside_the_source_zone_or_a_single_frame_does_not_grasp():

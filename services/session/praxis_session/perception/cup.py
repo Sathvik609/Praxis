@@ -1,7 +1,9 @@
 """Waiter – cup: cup base on the printed 5-dot target sheet (OpenCV cv2.__version__ == 5.0.0).
 
-CupSheetState: cv2.warpPerspective to a canonical top-down view of the whole sheet, HSV
-segmentation (cv2.inRange) of the cup's blue base band, cv2.findContours -> largest blob ->
+CupSheetState: cv2.warpPerspective to a canonical top-down view of the whole sheet, normalised
+to the paper's brightness (board.normalise_to_paper, 100 mm closing), HSV segmentation
+(cv2.inRange) of the cup's blue base band, cv2.findContours -> the pieces around the largest
+blob (fingers split the band) -> size and cv2.minAreaRect aspect gates (a pen is not a cup) ->
 centroid + equivalent diameter in mm.
 
 CupFSM: at_dot -> lifted -> in_transit -> over_dot -> placed -> hand_clear (-> at_dot).
@@ -10,6 +12,11 @@ whole reach and the cup base was seen resting on the destination; otherwise it i
 `unverified` with a reason (marker_lost | cup_occluded). Dots follow ARC (1..5..1); a wrong dot
 is reported and the sequence re-anchors. The slow -> fast phase switch is explicit
 (set_phase), never automatic: the coach proposes and the patient confirms.
+
+Reach time (11 Oct 2026): `clear_frames` stationary frames confirm a placement, but the
+placement is timed at the first frame of that run (`t_placed` in the `placed` state_change), so
+reach_ms is lift -> arrival at any frame rate (it was late by clear_frames - 1 frame periods,
++200 ms at 10 fps).
 
 Sprint D-SEG-3: the base colour can be sampled from a tap (sample_cup_colour; the blue band
 stays the default), and a placement that was inferred from the hand while the base was hidden
@@ -27,7 +34,7 @@ import cv2
 import numpy as np
 
 from praxis_session.events import Event, make_event
-from praxis_session.perception.board import hsv_window_from_patch, hue_window_mask
+from praxis_session.perception.board import hsv_window_from_patch, hue_window_mask, normalise_to_paper
 from praxis_session.perception.board_spec import CUP_TARGETS, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
@@ -48,8 +55,18 @@ class CupSheetState:
         cup_hsv_lo: tuple[int, int, int] = (95, 80, 60),
         cup_hsv_hi: tuple[int, int, int] = (130, 255, 255),
         min_diameter_mm: float = 30.0,
+        max_aspect: float = 3.0,
+        normalise: bool = True,
+        paper_kernel_mm: float = 100.0,
+        group_mm: float = 40.0,
+        max_cup_mm: float = 100.0,
     ) -> None:
         self.spec = spec
+        self.max_aspect = max_aspect
+        self.group_mm = group_mm
+        self.max_cup_mm = max_cup_mm
+        self.normalise = normalise
+        self.paper_kernel_mm = paper_kernel_mm
         self.px_per_mm = px_per_mm
         self.w, self.h = (
             int(round(spec.width_mm * px_per_mm)),
@@ -63,7 +80,12 @@ class CupSheetState:
     def warp(self, frame_bgr: np.ndarray, cal: CalibrationResult) -> np.ndarray:
         if not cal.calibrated or cal.H_px_to_mm is None:
             raise RuntimeError("warp requires a calibrated frame")
-        return cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
+        canon = cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
+        if self.normalise:
+            # Paper-referenced white balance + flat field (board.normalise_to_paper); the kernel
+            # is wider than the cup base so the base itself is never taken for shading.
+            canon = normalise_to_paper(canon, self.px_per_mm, self.paper_kernel_mm)
+        return canon
 
     def sample_cup_colour(
         self, canonical_bgr: np.ndarray, xy_mm: tuple[float, float]
@@ -91,19 +113,36 @@ class CupSheetState:
         contours, _ = cv2.findContours(
             self.cup_mask(canonical_bgr, colour_range), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
-        if not contours:
-            return None
-        c = max(contours, key=cv2.contourArea)
-        area = cv2.contourArea(c)
-        diameter_mm = 2 * np.sqrt(area / np.pi) / self.px_per_mm
-        if diameter_mm < self.min_diameter_mm:
-            return None
-        m = cv2.moments(c)
-        return (
-            m["m10"] / m["m00"] / self.px_per_mm,
-            m["m01"] / m["m00"] / self.px_per_mm,
-            float(diameter_mm),
-        )
+        ppm = self.px_per_mm
+        # Fingers gripping the cup split its base band into pieces, none cup-sized on its own
+        # (11 Oct 2026 sweep: 55 % visible in three pieces read as "no cup"). So the base is
+        # the union of the pieces around a seed: every blob no longer than a cup whose centroid
+        # is within `group_mm` of the seed's. The union must still be cup-sized and cup-shaped:
+        # the base band seen from a laptop angle warps to a disc or a crescent (aspect <= ~2),
+        # while a pen or a ruler of the same colour is a long thin bar and is never the cup.
+        blobs = []
+        for c in contours:
+            a = cv2.contourArea(c)
+            if a < (3.0 * ppm) ** 2 or max(cv2.minAreaRect(c)[1]) > self.max_cup_mm * ppm:
+                continue
+            m = cv2.moments(c)
+            blobs.append((a, np.array([m["m10"] / m["m00"], m["m01"] / m["m00"]]), c))
+        blobs.sort(key=lambda b: -b[0])
+        for _, seed, _ in blobs:
+            group = [b for b in blobs if float(np.linalg.norm(b[1] - seed)) <= self.group_mm * ppm]
+            area = sum(b[0] for b in group)
+            diameter_mm = 2 * np.sqrt(area / np.pi) / ppm
+            if diameter_mm < self.min_diameter_mm:
+                continue
+            if not self._cup_shaped(np.concatenate([b[2] for b in group])):
+                continue
+            centre = sum(b[0] * b[1] for b in group) / area
+            return (float(centre[0]) / ppm, float(centre[1]) / ppm, float(diameter_mm))
+        return None
+
+    def _cup_shaped(self, contour: np.ndarray) -> bool:
+        (_, _), (a, b), _ = cv2.minAreaRect(contour)
+        return min(a, b) > 0 and max(a, b) / min(a, b) <= self.max_aspect
 
     def dots_frame_px(self, cal: CalibrationResult) -> list[list[float]]:
         if not cal.calibrated:
@@ -149,6 +188,7 @@ class CupFSM:
         self._seq_idx = 0
         self._t_lift = 0.0
         self._t_placed = 0.0
+        self._settle_t = 0.0  # first frame of the current stationary run on the destination
         self._src: int | None = None
         self._dst: int | None = None
         self._lost = False
@@ -267,6 +307,7 @@ class CupFSM:
 
     def _enter_over(self, obs: CupObservation, k: int, occluded: bool) -> list[Event]:
         self._dst, self._occluded, self._count = k, occluded, 1
+        self._settle_t = obs.t
         self._rest_seen_t = None if occluded else obs.t
         evs = [self._go("over_dot", obs.t, to_dot=k)]
         return evs + self._maybe_place(obs)
@@ -280,11 +321,15 @@ class CupFSM:
                 return [self._go("in_transit", obs.t)]
             moved = self._last_cup is not None and _d(cup, self._last_cup) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
+            if self._count == 1:
+                self._settle_t = obs.t
             self._occluded = False
             self._rest_seen_t = obs.t
         else:
             if obs.hand_mm is not None and _d(obs.hand_mm, dst) <= self.dot_radius_mm:
                 self._count += 1
+                if self._count == 1:
+                    self._settle_t = obs.t
                 self._occluded = True
             else:
                 self._count = 0
@@ -292,8 +337,8 @@ class CupFSM:
 
     def _maybe_place(self, obs: CupObservation) -> list[Event]:
         if self._count >= self.clear_frames:
-            self._t_placed, self._count = obs.t, 0
-            return [self._go("placed", obs.t, to_dot=self._dst)]
+            self._t_placed, self._count = self._settle_t, 0
+            return [self._go("placed", obs.t, to_dot=self._dst, t_placed=self._t_placed)]
         return []
 
     def _in_placed(self, obs: CupObservation, cup) -> list[Event]:

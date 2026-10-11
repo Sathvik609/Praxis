@@ -1,7 +1,10 @@
 """Board state from a calibrated frame (OpenCV cv2.__version__ == 5.0.0).
 
 1. warp()          cv2.warpPerspective with the calibration homography -> canonical top-down
-                   view of the board region at a fixed px/mm.
+                   view of the board region at a fixed px/mm, then normalise_to_paper(): a
+                   per-channel grey closing (cv2.morphologyEx) estimates the white paper's
+                   brightness and the view is divided by it (flat field + white balance), so
+                   the HSV windows below hold in a dim room, under a warm bulb or a shadow.
 2. detect_holes()  cv2.HoughCircles on the canonical view, run ONCE and cached; each circle is
                    snapped to the nearest expected hole from the SheetSpec. Holes Hough misses
                    fall back to spec positions; hole_source reports "hough" | "mixed" | "spec".
@@ -16,8 +19,9 @@
 3. occupancy()     Peg mask = cv2.inRange in HSV, then cv2.findContours for blobs. Two mask
                    modes:
                      - default: "saturated, not sheet-white and not skin" - S >= 90, V >= 60
-                       minus the skin band H 0-25 (OpenCV 0-180 units: 0-12), S 40-170, V 80-255,
-                       which also drops a light wooden board or peg tint;
+                       minus the skin band H 0-25 (OpenCV 0-180 units: 0-50 deg), S 40-170,
+                       V 40-255 (light to deep skin tones), which also drops a light wooden
+                       board or peg tint;
                      - sampled: sample_peg_colour() sets a +-12 deg hue window (+-6 units, wrapped
                        around red) with S/V floors from a 6 mm patch the patient tapped; the skin
                        band is excluded only when it does not overlap the sampled window.
@@ -29,7 +33,8 @@
                    seated peg ~0.61, peg hovering 5 mm off the hole ~0.81). Outside the tie zone
                    the fraction alone decides
                    (tests/test_board.py::test_template_score_breaks_ties_near_the_fraction_threshold).
-4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit). The hand
+4. free_pegs_mm()  peg blobs not inside any hole (source zone / dropped / in transit) and no
+                   longer than 45 mm (cv2.minAreaRect: a pen is not a peg). The hand
                    box (from the hand tracker, expanded by 15 mm) is excluded here only - never
                    from hole occupancy, because the hand covers a hole right after seating a peg.
 """
@@ -45,14 +50,45 @@ import numpy as np
 from praxis_session.perception.board_spec import NHPT_BOARD, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
-# HSV skin band (OpenCV H in 0-180, i.e. 0-50 degrees): light-to-mid skin tones, and with it
-# light wood and cardboard tints. Saturated pegs sit above S 170 and are not touched.
-SKIN_HSV_LO = (0, 40, 80)
+# HSV skin band (OpenCV H in 0-180, i.e. 0-50 degrees): light to deep skin tones, and with it
+# light wood and cardboard tints. Saturated pegs sit above S 170 and are not touched. The V floor
+# was 80 until 11 Oct 2026: a deep skin tone (BGR 35,45,75 -> V 75) slipped under it and read as
+# four phantom pegs (evaluation/results/robustness_v0.md); 40 covers it, and the peg mask's own
+# V >= 60 floor leaves no gap below.
+SKIN_HSV_LO = (0, 40, 40)
 SKIN_HSV_HI = (25, 170, 255)
+# Paper-referenced normalisation (11 Oct 2026): the printed sheet is white paper, so its
+# brightness at every point is a measured reference for the light falling there. A grey-level
+# closing (dilate then erode, per channel) on a 2 mm-per-cell copy of the canonical view removes
+# everything darker and smaller than the kernel (ink, pegs, the cup base) and keeps the paper and
+# large-scale shading such as a lamp's shadow edge; dividing by it maps the paper to PAPER_LEVEL
+# in every channel. That is white balance and flat-field correction in one step, so the fixed
+# HSV windows hold under a dim room, a warm bulb or a shadow across the sheet. Gain is capped
+# where there is no paper (outside the frame: black after the warp).
+PAPER_LEVEL = 250.0
+PAPER_FLOOR = 16.0  # below this the "paper" is not paper (off-frame); caps the gain at ~15x
+PAPER_CELL_MM = 2.0
 SKIN_S_MARGIN = 20  # a sampled colour with median S above 170 + margin keeps the skin exclusion
 HUE_WINDOW = 6  # +-12 degrees in OpenCV's 0-180 hue units
 
 RectMM = tuple[float, float, float, float]
+
+
+def normalise_to_paper(canonical_bgr: np.ndarray, px_per_mm: float, kernel_mm: float) -> np.ndarray:
+    """Divide the canonical view by its paper brightness (see PAPER_LEVEL). `kernel_mm` must be
+    larger than the largest dark object on the sheet that should not be taken for shading
+    (a peg, a printed ring or marker, the cup base)."""
+    h, w = canonical_bgr.shape[:2]
+    cell_mm = max(PAPER_CELL_MM, kernel_mm / 15.0)  # ~15 cells across the kernel keeps it cheap
+    step = max(1, int(round(px_per_mm * cell_mm)))
+    small = cv2.resize(canonical_bgr, (max(1, w // step), max(1, h // step)), interpolation=cv2.INTER_AREA)
+    k = max(3, int(round(kernel_mm / cell_mm)) | 1)
+    # A rectangular element is separable (fast) and, for a smooth light field, as good as a disc.
+    paper = cv2.morphologyEx(small, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (k, k)))
+    paper = cv2.blur(paper, (3, 3))
+    paper = cv2.resize(paper, (w, h), interpolation=cv2.INTER_LINEAR)
+    paper = cv2.max(paper, np.full_like(paper, int(PAPER_FLOOR)))
+    return cv2.divide(canonical_bgr, paper, scale=PAPER_LEVEL)  # saturating uint8
 
 
 def hsv_window_from_patch(
@@ -125,8 +161,14 @@ class BoardState:
         template_empty_score: float | None = 0.75,
         tie_zone: float = 0.1,
         hand_margin_mm: float = 15.0,
+        normalise: bool = True,
+        paper_kernel_mm: float = 30.0,
+        max_peg_len_mm: float = 45.0,
     ) -> None:
         self.spec = spec
+        self.normalise = normalise
+        self.paper_kernel_mm = paper_kernel_mm
+        self.max_peg_len_mm = max_peg_len_mm
         self.px_per_mm = px_per_mm
         self.half_extent_mm = half_extent_mm
         self.canonical_w = self.canonical_h = int(round(2 * half_extent_mm * px_per_mm))
@@ -180,9 +222,12 @@ class BoardState:
         if not cal.calibrated or cal.H_px_to_mm is None:
             raise RuntimeError("warp requires a calibrated frame")
         H = self._mm_to_canon @ cal.H_px_to_mm  # frame px -> mm -> canonical px
-        return cv2.warpPerspective(
+        canon = cv2.warpPerspective(
             frame_bgr, H, (self.canonical_w, self.canonical_h), flags=cv2.INTER_LINEAR
         )
+        if self.normalise:
+            canon = normalise_to_paper(canon, self.px_per_mm, self.paper_kernel_mm)
+        return canon
 
     def holes_frame_px(self, cal: CalibrationResult) -> list[list[float]]:
         """Hole centres in frame pixels for the overlay (spec positions, calibrated)."""
@@ -314,15 +359,17 @@ class BoardState:
     def peg_blobs(
         self, canonical_bgr: np.ndarray, exclude_mm: Sequence[RectMM] | None = None, colour_range: Any = "current"
     ) -> list[tuple[float, float, float]]:
-        """(x, y, area) in canonical px for every peg-coloured blob above a minimum area,
-        outside the excluded (hand) rectangles."""
+        """(x, y, area) in canonical px for every peg-coloured blob above a minimum area and no
+        longer than `max_peg_len_mm` (a peg lying on its side is ~32 mm; a pen or a phone is not
+        a peg), outside the excluded (hand) rectangles."""
         mask = self._exclude(self.peg_mask(canonical_bgr, colour_range), exclude_mm)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         min_area = (self.px_per_mm * 2.0) ** 2
+        max_len = self.max_peg_len_mm * self.px_per_mm
         blobs = []
         for c in contours:
             a = cv2.contourArea(c)
-            if a < min_area:
+            if a < min_area or max(cv2.minAreaRect(c)[1]) > max_len:
                 continue
             m = cv2.moments(c)
             blobs.append((m["m10"] / m["m00"], m["m01"] / m["m00"], a))

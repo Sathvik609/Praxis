@@ -4,6 +4,10 @@ Any-hole targets, timer from the first peg lift (first at_source -> grasped) to 
 seated, per-peg splits (seated-to-seated). Emits nhpt_start, nhpt_split, nhpt_complete on top
 of the FSM's own events. This is a timing aid, not a clinical instrument (CLAUDE.md §1).
 
+The timer uses the FSM's own event times (`t_grasp`, `t_seated`: the first frame of the confirmed
+run), not the frame on which the debounce confirmed it (11 Oct 2026; the total was late by
+(debounce - 1) frame periods before).
+
 Occupancy debounce is time-based: `debounce_s` (0.25 s in the product) is converted to a
 frame count from the observed frame gaps (median of the last ten), so a 100 ms flicker is
 ignored at 12 fps and at 30 fps alike; `debounce_frames` stays as a floor for slow streams.
@@ -85,9 +89,9 @@ class NHPT:
         for ev in self.fsm.step(obs):
             out.append(ev)
             if ev.type == "state_change" and ev.payload["to"] == "grasped" and self.t_start is None:
-                self.t_start = ev.t
-                self._last_seat_t = ev.t
-                out.append(make_event("nhpt_start", t=ev.t))
+                self.t_start = float(ev.payload.get("t_grasp", ev.t))
+                self._last_seat_t = self.t_start
+                out.append(make_event("nhpt_start", t=ev.t, t_start=self.t_start))
             elif (
                 ev.type == "state_change"
                 and ev.payload["to"] == "seated"
@@ -95,10 +99,11 @@ class NHPT:
             ):
                 hole = self.fsm._seated_hole
                 assert self._last_seat_t is not None
-                split = round(ev.t - self._last_seat_t, 4)
-                self._last_seat_t = ev.t
+                t_seat = float(ev.payload.get("t_seated", ev.t))
+                split = round(t_seat - self._last_seat_t, 4)
+                self._last_seat_t = t_seat
                 self.pegs.append(
-                    {"peg": len(self.pegs) + 1, "hole": hole, "t": ev.t, "split_s": split}
+                    {"peg": len(self.pegs) + 1, "hole": hole, "t": t_seat, "split_s": split}
                 )
                 out.append(
                     make_event(
@@ -107,11 +112,11 @@ class NHPT:
                         peg=len(self.pegs),
                         hole=hole,
                         split_s=split,
-                        elapsed_s=round(ev.t - self.t_start, 4),
+                        elapsed_s=round(t_seat - self.t_start, 4),
                     )
                 )
                 if len(self.pegs) >= self.n_pegs:
-                    self.t_end = ev.t
+                    self.t_end = t_seat
                     out.append(
                         make_event(
                             "nhpt_complete",

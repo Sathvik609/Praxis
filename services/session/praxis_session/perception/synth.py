@@ -20,27 +20,52 @@ SKIN_BGR = (120, 160, 220)
 WOOD_BGR = (60, 110, 160)
 
 
-def view_homography(
-    spec: SheetSpec, size: tuple[int, int], tilt_deg: float, yaw_deg: float, scale: float
+def view_camera(
+    spec: SheetSpec,
+    size: tuple[int, int],
+    tilt_deg: float,
+    yaw_deg: float,
+    scale: float,
+    roll_deg: float = 0.0,
+    focal_per_width: float = 1.4,
 ) -> np.ndarray:
-    """mm -> px for a pinhole camera looking at the sheet plane.
+    """3x4 projection: sheet mm (x, y, z) -> homogeneous frame px, z = height above the paper.
 
     The sheet is centred on the optical axis at a distance that makes it fill ~80 % of the
-    frame at scale 1; tilt rotates it about the sheet's x axis, yaw about its y axis.
+    frame at scale 1; roll turns it in its own plane (a sheet laid sideways or upside down),
+    tilt rotates it about the sheet's x axis, yaw about its y axis. `focal_per_width` is the
+    focal length in frame widths (1.4: a narrow webcam; ~0.8: a wide laptop camera).
     """
     w, h = size
-    f = 1.4 * w
+    f = focal_per_width * w
     fill = 0.8
     dist = f * max(spec.width_mm / (fill * w), spec.height_mm / (fill * h)) / scale
-    t, y = math.radians(tilt_deg), math.radians(yaw_deg)
+    t, y, r = math.radians(tilt_deg), math.radians(yaw_deg), math.radians(roll_deg)
     Rx = np.array([[1, 0, 0], [0, math.cos(t), -math.sin(t)], [0, math.sin(t), math.cos(t)]])
     Ry = np.array([[math.cos(y), 0, math.sin(y)], [0, 1, 0], [-math.sin(y), 0, math.cos(y)]])
-    R = Ry @ Rx
+    Rz = np.array([[math.cos(r), -math.sin(r), 0], [math.sin(r), math.cos(r), 0], [0, 0, 1]])
+    R = Ry @ Rx @ Rz
     K = np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]])
-    P = K @ np.column_stack([R[:, 0], R[:, 1], np.array([0.0, 0.0, dist])])
+    # Sheet axes: x right, y down (towards the patient), so "up off the paper" is -z here
+    # (x cross y points into the table).
+    Rt = np.column_stack([R[:, 0], R[:, 1], -R[:, 2], np.array([0.0, 0.0, dist])])
     cx, cy = spec.centre_mm
-    T = np.array([[1, 0, -cx], [0, 1, -cy], [0, 0, 1]])
-    H = P @ T
+    T = np.array([[1, 0, 0, -cx], [0, 1, 0, -cy], [0, 0, 1, 0], [0, 0, 0, 1]], np.float64)
+    return K @ Rt @ T
+
+
+def view_homography(
+    spec: SheetSpec,
+    size: tuple[int, int],
+    tilt_deg: float,
+    yaw_deg: float,
+    scale: float,
+    roll_deg: float = 0.0,
+    focal_per_width: float = 1.4,
+) -> np.ndarray:
+    """mm -> px for a pinhole camera looking at the sheet plane (z = 0 of `view_camera`)."""
+    P = view_camera(spec, size, tilt_deg, yaw_deg, scale, roll_deg, focal_per_width)
+    H = P[:, [0, 1, 3]]
     return H / H[2, 2]
 
 
@@ -62,13 +87,45 @@ def camera_frame(
     board_bgr: tuple[int, int, int] | None = None,
     skin_blobs_mm: list[tuple[float, float, float]] | None = None,
     skin_bgr: tuple[int, int, int] = SKIN_BGR,
+    roll_deg: float = 0.0,
+    focal_per_width: float = 1.4,
+    border_bgr: tuple[int, int, int] = (90, 90, 90),
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return (BGR frame, H_true mm->px). Optional coloured peg discs and a blue cup base disc.
 
     `board_bgr` tints the sheet's white background (a wooden or coloured board under the
     print); `skin_blobs_mm` draws skin-coloured discs (x, y, radius) after the pegs, so they
-    occlude the way a hand does.
+    occlude the way a hand does. `roll_deg` / `focal_per_width` set the view (`view_camera`);
+    `border_bgr` is the table around the sheet.
     """
+    canon_bgr = scene_canonical(
+        spec, hide_marker, pegs_mm, peg_bgr, peg_diameter_mm, cup_mm, cup_bgr,
+        cup_diameter_mm, board_bgr, skin_blobs_mm, skin_bgr,
+    )
+    H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale, roll_deg, focal_per_width)
+    S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
+    frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=border_bgr)
+    if noise_sigma > 0:
+        rng = np.random.default_rng(seed)
+        noise = rng.normal(0, noise_sigma, frame.shape)
+        frame = np.clip(frame.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    return frame, H_mm_px
+
+
+def scene_canonical(
+    spec: SheetSpec,
+    hide_marker: int | None = None,
+    pegs_mm: list[tuple[float, float]] | None = None,
+    peg_bgr: tuple[int, int, int] = (40, 40, 220),
+    peg_diameter_mm: float = 8.0,
+    cup_mm: tuple[float, float] | None = None,
+    cup_bgr: tuple[int, int, int] = (200, 90, 30),
+    cup_diameter_mm: float = 60.0,
+    board_bgr: tuple[int, int, int] | None = None,
+    skin_blobs_mm: list[tuple[float, float, float]] | None = None,
+    skin_bgr: tuple[int, int, int] = SKIN_BGR,
+) -> np.ndarray:
+    """The sheet with pegs, cup base and skin discs drawn flat, top-down at CANON_PX_PER_MM."""
     canon = sheet_canonical(spec, CANON_PX_PER_MM)
     hidden = [] if hide_marker is None else [hide_marker] if isinstance(hide_marker, int) else list(hide_marker)
     for mid in hidden:  # one id, or several (a forearm across two corners)
@@ -91,14 +148,7 @@ def camera_frame(
     for x, y, rad in skin_blobs_mm or []:
         c = (int(round(x * CANON_PX_PER_MM)), int(round(y * CANON_PX_PER_MM)))
         cv2.circle(canon_bgr, c, int(round(rad * CANON_PX_PER_MM)), skin_bgr, -1, cv2.LINE_AA)
-    H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale)
-    S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
-    frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=(90, 90, 90))
-    if noise_sigma > 0:
-        rng = np.random.default_rng(seed)
-        noise = rng.normal(0, noise_sigma, frame.shape)
-        frame = np.clip(frame.astype(np.float32) + noise, 0, 255).astype(np.uint8)
-    return frame, H_mm_px
+    return canon_bgr
 
 
 def write_nhpt_clip(

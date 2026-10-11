@@ -17,11 +17,11 @@ OpenCV-rendered sheets and a synthetic landmark stream: they validate the pipeli
 | exercise | entries | participants | labelled reps | predicted | TP | FP | FN | Rep F1 (P / R) | verified agreement | timing / angle error |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Arm out to the side | 1 | 1 | 16 | 16 | 16 | 0 | 0 | **1.0** (1.0 / 1.0) | 1.0 (n=16) | peak-angle MAE 0.77°, bias 0.77° (n=16) |
-| Waiter – cup | 1 | 1 | 32 | 31 | 31 | 0 | 1 | **0.9841** (1.0 / 0.9688) | 1.0 (n=31) | reach-time MAE 200.0 ms (n=31) |
-| Nine-Hole Peg Test | 1 | 1 | 9 | 9 | 9 | 0 | 0 | **1.0** (1.0 / 1.0) | 1.0 (n=9) | NHPT total-time MAE 0.2 s (n=1) |
+| Waiter – cup | 1 | 1 | 32 | 31 | 31 | 0 | 1 | **0.9841** (1.0 / 0.9688) | 1.0 (n=31) | reach-time MAE 0.0 ms (n=31) |
+| Nine-Hole Peg Test | 1 | 1 | 9 | 9 | 9 | 0 | 0 | **1.0** (1.0 / 1.0) | 1.0 (n=9) | NHPT total-time MAE 0.0 s (n=1) |
 
 | id | exercise | source | labelled | predicted | TP | FP | FN | NHPT labelled | NHPT pred | abs err | misses |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| synthetic_nhpt_01 | nhpt | video | 9 | 9 | 9 | 0 | 0 | 17.0 | 17.2 | 0.2 | 0 |
+| synthetic_nhpt_01 | nhpt | video | 9 | 9 | 9 | 0 | 0 | 17.0 | 17.0 | 0.0 | 0 |
 | synthetic_cup_01 | cup | video | 32 | 31 | 31 | 0 | 1 |  |  |  | 1 |
 | synthetic_arm_01 | abduction | landmarks | 16 | 16 | 16 | 0 | 0 |  |  |  | 0 |

@@ -149,6 +149,49 @@ def corner_name(spec: SheetSpec, marker_id: int) -> str:
     return f"{'top' if cy < spec.height_mm / 2 else 'bottom'}-{'left' if cx < spec.width_mm / 2 else 'right'}"
 
 
+# ArUco candidate squares that did not decode, with no marker read at all: the sheet is probably
+# there but blurred or glaring (11 Oct sweep: 5-9 on motion-blurred renders, 0 on an empty view).
+UNREADABLE_MIN_REJECTED = 4
+
+
+def missing_marker_causes(
+    cal: CalibrationResult, spec: SheetSpec, frame_shape: tuple
+) -> dict[int, str]:
+    """Why each missing marker is missing: "outside" when its predicted square (with the white
+    margin around it) leaves the frame; "unreadable" when ArUco found an undecoded candidate
+    square of about the marker's size where the marker should be (blur, glare: centre within a
+    quarter side, area 0.6-1.6x); else "covered" (a hand, a cup or a fold over it, which is not
+    a marker-sized square in the right place). The prediction is the homography of the
+    markers that ARE visible (cv2.findHomography on their corners, sheet mm -> frame px); with
+    no marker visible there is nothing to predict from and the result is empty."""
+    if not cal.missing or not cal.marker_corners_px:
+        return {}
+    ids = sorted(cal.marker_corners_px)
+    src = np.concatenate([spec.marker_corners_mm(i) for i in ids]).astype(np.float32)
+    dst = np.concatenate([np.asarray(cal.marker_corners_px[i], np.float32) for i in ids])
+    H, _ = cv2.findHomography(src, dst, 0)
+    if H is None:
+        return {}
+    h, w = frame_shape[:2]
+    out: dict[int, str] = {}
+    for i in cal.missing:
+        c = spec.marker_corners_mm(i)
+        ctr = c.mean(axis=0)
+        quad = (ctr + (c - ctr) * 1.5).reshape(-1, 1, 2).astype(np.float32)
+        px = cv2.perspectiveTransform(quad, H).reshape(-1, 2)
+        inside = bool(np.all((px[:, 0] >= 0) & (px[:, 0] < w) & (px[:, 1] >= 0) & (px[:, 1] < h)))
+        m = cv2.perspectiveTransform(c.reshape(-1, 1, 2).astype(np.float32), H).reshape(-1, 2)
+        m_area = abs(cv2.contourArea(m))
+        m_ctr, side = m.mean(axis=0), float(np.sqrt(max(m_area, 1.0)))
+        seen = any(
+            float(np.linalg.norm(q.mean(axis=0) - m_ctr)) <= 0.25 * side
+            and 0.6 <= abs(cv2.contourArea(q)) / max(m_area, 1.0) <= 1.6
+            for q in np.asarray(cal.rejected_px, np.float32).reshape(-1, 4, 2)
+        )
+        out[i] = "outside" if not inside else ("unreadable" if seen else "covered")
+    return out
+
+
 def _markers_named(spec: SheetSpec | None, ids: list[int]) -> str:
     if spec is None:
         return ", ".join(map(str, ids))
@@ -164,9 +207,11 @@ def build_checks(
     camera_ok: bool = True,
     needs_sheet: bool = True,
     spec: SheetSpec | None = None,
+    frame_shape: tuple | None = None,
 ) -> list[dict]:
     """The wireframe's five rows plus the camera-angle row (D-CAL-3), in order; status
-    pass|check|pending with a fix hint.
+    pass|check|pending with a fix hint. With `frame_shape`, a missing marker's hint says
+    whether it is outside the picture or covered (`missing_marker_causes`).
 
     Arm to the front uses no printed sheet: with needs_sheet=False the marker, angle and
     task-area rows are replaced by one side-view row (pending until the pose model gates it)."""
@@ -179,8 +224,41 @@ def build_checks(
     # Setup needs all four markers (CLAUDE.md: refuse to start); a partial or held fix is
     # enough to keep a running session going but not to unlock Continue.
     markers_ok = bool(cal.calibrated and not cal.missing)
+    causes = (
+        missing_marker_causes(cal, spec, frame_shape)
+        if spec is not None and frame_shape is not None and not markers_ok
+        else {}
+    )
     if markers_ok:
         markers_hint = None
+    elif causes:
+        # Name the cause per corner (11 Oct 2026 sweep: a sheet half out of the frame was told
+        # to "flatten the sheet").
+        out = [i for i in cal.missing if causes.get(i) == "outside"]
+        unread = [i for i in cal.missing if causes.get(i) == "unreadable"]
+        cov = [i for i in cal.missing if causes.get(i) not in ("outside", "unreadable")]
+        # The cause sentences name every missing corner; no "Markers missing:" list in front, so
+        # the hint fits one setup row and the agent's 160-character speak line.
+        parts: list[str] = []
+        if out:
+            parts.append(
+                f"The {_markers_named(spec, out)} {'are' if len(out) > 1 else 'is'} outside the picture: "
+                "move the sheet into the middle of the view, or tilt the screen."
+            )
+        if unread:
+            parts.append(
+                f"The marker{'s' if len(unread) > 1 else ''} in the {_markers_named(spec, unread)} "
+                f"{'are' if len(unread) > 1 else 'is'} in view but cannot be read: hold the laptop still, "
+                "wipe the lens and add light."
+            )
+        if cov:
+            parts.append(
+                f"The marker{'s' if len(cov) > 1 else ''} in the {_markers_named(spec, cov)} "
+                f"{'are' if len(cov) > 1 else 'is'} covered or creased: clear and flatten {'them' if len(cov) > 1 else 'it'}."
+            )
+        if cal.calibrated:
+            parts.append("Keep all four corners clear to start.")
+        markers_hint = " ".join(parts)
     elif cal.calibrated:
         n = len(cal.missing)
         markers_hint = (
@@ -189,10 +267,15 @@ def build_checks(
             if spec is not None
             else f"Marker {', '.join(map(str, cal.missing))} is covered. Keep all four corners clear to start."
         )
+    elif cal.rejected >= UNREADABLE_MIN_REJECTED and not cal.marker_corners_px:
+        markers_hint = (
+            "The corner markers cannot be read. If the sheet is in view, hold the laptop still, "
+            "wipe the lens and add light."
+        )
     else:
         markers_hint = (
             f"Markers missing: {_markers_named(spec, cal.missing)}. "
-            "Flatten the sheet and keep it in view."
+            "Put the whole sheet flat on the table, in view of the camera."
         )
     angle = camera_angle(cal)
     light_ok = bool(lighting_d["ok"] and steadiness_d["ok"])

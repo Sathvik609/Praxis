@@ -386,7 +386,7 @@ class SessionPipeline:
                 steady.update(m)
             steady_d = steady.update(cal.marker_corners_px)
             area = task_area_in_view(cal, self.spec, frame.shape)
-            rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True, spec=self.spec)
+            rows = build_checks(cal, light, steady_d, area, {"present": None}, needs_sheet=True, spec=self.spec, frame_shape=frame.shape)
             target, seen = self._target_seen(frame, cal)
             if target is not None:
                 label, hint = {
@@ -587,7 +587,7 @@ class SessionPipeline:
         )
         needs_sheet = self.for_mode != "arm"
         area = task_area_in_view(cal, self.spec, frame_bgr.shape)
-        checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet, spec=self.spec)
+        checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet, spec=self.spec, frame_shape=frame_bgr.shape)
         required = REQUIRED_BY_MODE.get(self.for_mode, REQUIRED_BY_MODE["default"])
         # `required` tells the setup screen which rows gate the start; the others are advice
         checks = [c | {"required": c["id"] in required} for c in checks]

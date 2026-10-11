@@ -1,0 +1,313 @@
+"""Robustness fixes found by evaluation/scripts/robustness.py (11 Oct 2026), on synthetic renders.
+
+Each test pins one failure the sweep exposed and its negative twin (no phantom pegs / cup).
+"""
+
+import math
+
+import cv2
+import numpy as np
+import pytest
+
+from praxis_session.perception.board import BoardState
+from praxis_session.perception.board_spec import CUP_TARGETS, NHPT_BOARD
+from praxis_session.perception.calibration import Calibrator
+from praxis_session.perception.cup import CupSheetState
+from praxis_session.perception.synth import camera_frame
+
+H = NHPT_BOARD.targets_mm
+DOT = CUP_TARGETS.targets_mm[2]
+WARM = np.array([0.55, 0.85, 1.15], np.float32)  # tungsten cast (B, G, R gains)
+DEEP_SKIN = (35, 45, 75)  # BGR, a deep skin tone (V < 80)
+
+
+def _jpeg(img: np.ndarray, q: int = 70) -> np.ndarray:
+    return cv2.imdecode(cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, q])[1], cv2.IMREAD_COLOR)
+
+
+def _photo(frame: np.ndarray, gain=1.0, cast=None, noise=3.0, seed=0) -> np.ndarray:
+    f = frame.astype(np.float32) * gain
+    if cast is not None:
+        f = f * cast
+    f = f + np.random.default_rng(seed).normal(0, noise, f.shape)
+    return _jpeg(np.clip(f, 0, 255).astype(np.uint8))
+
+
+def _board(frame_empty, frame):
+    cal_e = Calibrator(NHPT_BOARD).run(frame_empty, 0.0)
+    cal = Calibrator(NHPT_BOARD).run(frame, 0.0)
+    assert cal_e.calibrated and cal.calibrated
+    board = BoardState(NHPT_BOARD)
+    board.detect_holes(board.warp(frame_empty, cal_e))
+    return board, board.warp(frame, cal)
+
+
+def _occupied(board, canon) -> set[int]:
+    return {int(k.split("_")[1]) for k, v in board.occupancy(canon).items() if v == "occupied"}
+
+
+# ---- light: paper-referenced normalisation before HSV -----------------------------------------
+@pytest.mark.parametrize("gain", [0.16, 0.25])  # mean luma ~30 and ~45: a dim room
+def test_pegs_read_in_a_dim_room(gain):
+    pegs = [H[0], H[4], H[8], (160.0, 192.0)]
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=pegs)
+    board, canon = _board(_photo(e, gain, seed=1), _photo(f, gain, seed=2))
+    assert _occupied(board, canon) == {0, 4, 8}
+    free = board.free_pegs_mm(canon)
+    assert len(free) == 1 and math.dist(free[0], (160.0, 192.0)) < 4.0
+
+
+def test_warm_light_paper_is_not_a_field_of_pegs():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    board, canon = _board(_photo(e, cast=WARM, noise=6, seed=1), _photo(e, cast=WARM, noise=6, seed=2))
+    assert _occupied(board, canon) == set()
+    assert board.free_pegs_mm(canon) == []
+
+
+def test_warm_dim_light_reads_pegs_without_phantoms():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[H[2], H[6]])
+    board, canon = _board(_photo(e, 0.22, WARM, 8, 1), _photo(f, 0.22, WARM, 8, 2))
+    assert _occupied(board, canon) == {2, 6}
+    assert board.free_pegs_mm(canon) == []
+
+
+def test_hard_shadow_across_the_grid_does_not_hide_pegs():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, Hm = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[H[0], H[4], H[8]])
+
+    def shade(img):
+        out = img.astype(np.float32)
+        out[:, img.shape[1] // 2 :] *= 0.3  # a lamp's hard shadow over the right half
+        return out.astype(np.uint8)
+
+    board, canon = _board(_photo(shade(e), seed=1), _photo(shade(f), seed=2))
+    assert _occupied(board, canon) == {0, 4, 8}
+
+
+@pytest.mark.parametrize("gain,cast", [(0.16, None), (0.25, WARM), (1.0, WARM)])
+def test_cup_base_found_in_dim_or_warm_light(gain, cast):
+    f, _ = camera_frame(CUP_TARGETS, tilt_deg=40, cup_mm=DOT)
+    f = _photo(f, gain, cast, seed=3)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    got = sheet.cup_mm(sheet.warp(f, cal))
+    assert got is not None and math.dist(got[:2], DOT) < 3.0
+
+
+@pytest.mark.parametrize("gain,cast", [(0.16, None), (0.25, WARM), (1.0, WARM)])
+def test_no_phantom_cup_in_dim_or_warm_light(gain, cast):
+    f, _ = camera_frame(CUP_TARGETS, tilt_deg=40)
+    f = _photo(f, gain, cast, noise=8, seed=4)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    assert sheet.cup_mm(sheet.warp(f, cal)) is None
+
+
+# ---- skin: every tone is excluded, not just light ones -----------------------------------------
+def test_deep_skin_hand_over_the_grid_is_not_a_peg():
+    hand = [(120.0, 140.0, 30.0), (95.0, 120.0, 9.0), (105.0, 110.0, 9.0), (118.0, 106.0, 9.0)]
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[H[0]], skin_blobs_mm=hand, skin_bgr=DEEP_SKIN)
+    board, canon = _board(_photo(e, seed=1), _photo(f, seed=2))
+    assert _occupied(board, canon) == {0}
+    assert board.free_pegs_mm(canon) == []
+
+
+# ---- shape: a pen is neither a peg nor a cup --------------------------------------------------
+def _pen(frame, Hm, a_mm, b_mm, bgr, width_mm=9.0):
+    pa = cv2.perspectiveTransform(np.array([[a_mm]], np.float32), Hm)[0, 0]
+    pb = cv2.perspectiveTransform(np.array([[b_mm]], np.float32), Hm)[0, 0]
+    ppm = float(np.linalg.norm(pb - pa)) / math.dist(a_mm, b_mm)
+    out = frame.copy()
+    cv2.line(out, tuple(np.round(pa).astype(int)), tuple(np.round(pb).astype(int)), bgr, max(2, round(width_mm * ppm)), cv2.LINE_AA)
+    return out
+
+
+def test_a_pen_on_the_board_is_not_a_free_peg():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, Hm = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[(160.0, 192.0)])
+    f = _pen(f, Hm, (60.0, 92.0), (150.0, 94.0), (200, 80, 30))
+    board, canon = _board(_photo(e, seed=1), _photo(f, seed=2))
+    free = board.free_pegs_mm(canon)
+    assert len(free) == 1 and math.dist(free[0], (160.0, 192.0)) < 4.0
+
+
+def test_a_peg_lying_on_its_side_is_still_a_free_peg():
+    e, Hm = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f = _pen(e, Hm, (150.0, 195.0), (175.0, 195.0), (40, 40, 220), width_mm=7.0)  # 32 mm peg
+    board, canon = _board(_photo(e, seed=1), _photo(f, seed=2))
+    assert len(board.free_pegs_mm(canon)) == 1
+
+
+def test_a_blue_pen_on_the_sheet_is_not_the_cup():
+    f, Hm = camera_frame(CUP_TARGETS, tilt_deg=40)
+    f = _photo(_pen(f, Hm, (90.0, 175.0), (210.0, 180.0), (200, 80, 30)), seed=5)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    assert sheet.cup_mm(sheet.warp(f, cal)) is None
+
+
+def test_the_cup_is_found_next_to_a_blue_pen():
+    f, Hm = camera_frame(CUP_TARGETS, tilt_deg=40, cup_mm=DOT)
+    f = _photo(_pen(f, Hm, (90.0, 175.0), (230.0, 180.0), (200, 80, 30), width_mm=12.0), seed=5)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    got = sheet.cup_mm(sheet.warp(f, cal))
+    assert got is not None and math.dist(got[:2], DOT) < 3.0
+
+
+# ---- occlusion: fingers splitting the base band ------------------------------------------------
+def _fingers(n, width_mm, spacing_mm, x0_mm, angle_deg=80.0):
+    a = math.radians(angle_deg)
+    out = []
+    for k in range(n):
+        cx = x0_mm + k * spacing_mm
+        for s in np.linspace(-45, 45, 19):
+            out.append((cx + s * math.cos(a), DOT[1] + s * math.sin(a), width_mm / 2))
+    return out
+
+
+def test_cup_base_split_by_two_fingers_is_still_found():
+    # ~55 % of the base visible, in three pieces none of which is cup-sized on its own
+    f, _ = camera_frame(CUP_TARGETS, tilt_deg=40, cup_mm=DOT, skin_blobs_mm=_fingers(2, 12, 22, 138))
+    f = _photo(f, seed=6)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    got = sheet.cup_mm(sheet.warp(f, cal))
+    assert got is not None and math.dist(got[:2], DOT) < 8.0
+
+
+def test_small_blue_stickers_are_not_a_cup_even_together():
+    f, Hm = camera_frame(CUP_TARGETS, tilt_deg=40)
+    for x in (120.0, 150.0, 230.0):  # three 16 mm blue stickers, two of them 30 mm apart
+        p = cv2.perspectiveTransform(np.array([[[x, 160.0]]], np.float32), Hm)[0, 0]
+        cv2.circle(f, tuple(int(v) for v in np.round(p)), 11, (200, 90, 30), -1, cv2.LINE_AA)
+    f = _photo(f, seed=7)
+    cal = Calibrator(CUP_TARGETS).run(f, 0.0)
+    sheet = CupSheetState(CUP_TARGETS)
+    assert sheet.cup_mm(sheet.warp(f, cal)) is None
+
+
+# ---- mirrored video: some cameras / virtual cameras flip the picture ---------------------------
+@pytest.mark.parametrize("spec", [NHPT_BOARD, CUP_TARGETS])
+def test_a_mirrored_frame_calibrates_and_maps_to_the_right_millimetres(spec):
+    f, Hm = camera_frame(spec, tilt_deg=40, noise_sigma=3)
+    plain = Calibrator(spec).run(f, 0.0)
+    m = cv2.flip(f, 1)
+    res = Calibrator(spec).run(m, 0.0)
+    assert res.calibrated and res.mirrored and not plain.mirrored
+    assert res.to_dict()["mirrored"] is True
+    # a target seen at x in the plain frame is at (w-1-x) in the mirrored one
+    t = np.array(spec.targets_mm, np.float32)
+    px = cv2.perspectiveTransform(t.reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    px[:, 0] = m.shape[1] - 1 - px[:, 0]
+    assert np.allclose(res.to_mm(px), t, atol=1.0)
+    assert abs(res.tilt_deg - plain.tilt_deg) < 1.0
+
+
+def test_pegs_read_through_a_mirrored_frame():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[H[0], H[4], H[8]])
+    board, canon = _board(cv2.flip(_photo(e, seed=1), 1), cv2.flip(_photo(f, seed=2), 1))
+    assert _occupied(board, canon) == {0, 4, 8}
+
+
+def _markers_hint(spec, frame):
+    from praxis_session.perception.quality import build_checks, lighting, task_area_in_view
+
+    cal = Calibrator(spec).run(frame, 0.0)
+    rows = build_checks(cal, lighting(frame), {"ok": True}, task_area_in_view(cal, spec, frame.shape),
+                        {"present": None}, spec=spec, frame_shape=frame.shape)
+    return {r["id"]: r for r in rows}["markers"]["hint"]
+
+
+def test_marker_hint_says_outside_the_picture_when_the_sheet_is_cut_off():
+    f, _ = camera_frame(CUP_TARGETS, tilt_deg=40, scale=1.25)  # marker 0 falls off the frame
+    hint = _markers_hint(CUP_TARGETS, f)
+    assert "top-left corner (0)" in hint and "outside the picture" in hint
+    assert "covered" not in hint
+
+
+def test_marker_hint_says_covered_when_a_hand_is_on_the_corner():
+    cx, cy = NHPT_BOARD.marker_centres_mm[2]
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, skin_blobs_mm=[(cx, cy, 30.0)])
+    hint = _markers_hint(NHPT_BOARD, f)
+    assert "bottom-right corner (2)" in hint and "covered" in hint
+    assert "outside the picture" not in hint
+
+
+def test_marker_hint_says_unreadable_when_squares_are_seen_but_not_decoded():
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, noise_sigma=3)
+    k = np.zeros((15, 15), np.float32)
+    k[7, :] = 1 / 15  # 15 px motion blur: the camera moved
+    hint = _markers_hint(NHPT_BOARD, cv2.filter2D(f, -1, k))
+    assert "markers cannot be read" in hint
+
+
+def test_marker_hint_says_unreadable_for_one_blurred_corner():
+    f, Hm = camera_frame(CUP_TARGETS, tilt_deg=40, noise_sigma=3)
+    c = cv2.perspectiveTransform(CUP_TARGETS.marker_corners_mm(2).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    x0, y0 = np.floor(c.min(axis=0)).astype(int) - 12
+    x1, y1 = np.ceil(c.max(axis=0)).astype(int) + 12
+    k = np.zeros((15, 15), np.float32)
+    k[7, :] = 1 / 15
+    f[y0:y1, x0:x1] = cv2.filter2D(f, -1, k)[y0:y1, x0:x1]  # glare / smear on one corner only
+    hint = _markers_hint(CUP_TARGETS, f)
+    assert "bottom-right corner (2)" in hint and "cannot be read" in hint and "covered" not in hint
+
+
+def test_marker_hints_fit_a_setup_row_and_the_agents_speak_limit():
+    # the agent may speak a hint verbatim (speak: <= 160 characters), and the row is one line
+    from praxis_session.agent.tools import SPEAK_MAX_CHARS
+
+    hints = []
+    for spec in (NHPT_BOARD, CUP_TARGETS):
+        f, Hm = camera_frame(spec, tilt_deg=40, noise_sigma=3)
+        hints.append(_markers_hint(spec, f))  # None: all found
+        for ids in ([1, 2], [0, 1, 2]):
+            g = f.copy()
+            for k in ids:
+                c = cv2.perspectiveTransform(spec.marker_corners_mm(k).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+                ctr = c.mean(axis=0)
+                cv2.fillPoly(g, [np.round(ctr + (c - ctr) * 1.4).astype(np.int32)], (120, 160, 220))
+            hints.append(_markers_hint(spec, g))
+        k = np.zeros((15, 15), np.float32)
+        k[7, :] = 1 / 15
+        hints.append(_markers_hint(spec, cv2.filter2D(f, -1, k)))
+        big, _ = camera_frame(spec, tilt_deg=40, scale=1.4)
+        hints.append(_markers_hint(spec, big))
+    for h in hints[1:]:
+        assert h is None or len(h) <= SPEAK_MAX_CHARS, (len(h), h)
+
+
+def test_marker_hint_asks_for_the_sheet_when_nothing_is_there():
+    hint = _markers_hint(NHPT_BOARD, np.full((480, 640, 3), 90, np.uint8))
+    assert "Markers missing" in hint and "in view" in hint and "can be read" not in hint
+
+
+def test_partial_fit_ransac_threshold_is_in_pixels_not_millimetres():
+    # findHomography's RANSAC threshold is measured in the DESTINATION space. The partial fit
+    # mapped px -> mm, so "3 px" was really 3 mm: on a close sheet (~2.4 px/mm) a corner 5 px
+    # off (2 mm) was kept as an inlier and bent the homography.
+    from praxis_session.perception.synth import view_homography
+
+    spec = NHPT_BOARD
+    Hm = view_homography(spec, (640, 480), 30.0, 5.0, 1.9)  # close: ~2.4 px/mm
+    found = {
+        k: cv2.perspectiveTransform(spec.marker_corners_mm(k).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+        for k in (0, 1, 3)
+    }
+    found[1][2] += np.array([5.0, 0.0], np.float32)  # one bad corner
+    res = Calibrator(spec)._fit(found, [2], "partial", (480, 640, 3), method=cv2.RANSAC)
+    t = np.array(spec.targets_mm, np.float32)
+    px = cv2.perspectiveTransform(t.reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    assert np.abs(res.to_mm(px) - t).max() < 0.1
+
+
+def test_mirror_fallback_finds_nothing_on_a_frame_without_a_sheet():
+    rng = np.random.default_rng(0)
+    noise = rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)
+    res = Calibrator(NHPT_BOARD).run(noise, 0.0)
+    assert not res.calibrated and res.marker_corners_px == {} and not res.mirrored
