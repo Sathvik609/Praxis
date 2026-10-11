@@ -62,6 +62,9 @@ class CoachSession:
         self.prompts: dict[str, dict[str, Any]] = {}
         self.coach_note: dict[str, Any] | None = None
         self.patient_note: str | None = None  # typed at check-in; data for the agent, never instructions
+        # The agent's session plan (10 Oct): set at check-in, revised only on new evidence.
+        self.plan: dict[str, Any] | None = None
+        self.plan_history: list[dict[str, Any]] = []
         self._clock_t = 0.0
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
@@ -242,6 +245,12 @@ class CoachSession:
         text = f"Done. {names.get(str(proposal.get('field')), 'Setting')} is now {value}."
         return cmd, [say(rec["action"], "agent_adjust_applied", text, f"patient accepted ({prompt_id})")]
 
+    def set_plan(self, plan: dict[str, Any]) -> None:
+        """Store a plan version (agent tool `set_session_plan`) and trace it as a `plan` row."""
+        self.plan = dict(plan)
+        self.plan_history.append(dict(plan))
+        self.trace.log("plan", **plan)
+
     # ---- evidence ring and checkpoints (29 Sep) --------------------------------------------
     def has_event(self, event_id: int) -> bool:
         return any(e.id == event_id for e in self._ring)
@@ -385,6 +394,8 @@ class CoachSession:
             out["agent_decisions"] = sum(1 for d in self.decisions if d.get("source") == "agent")
         if self.coach_note is not None:
             out["note"] = self.coach_note
+        if self.plan is not None:
+            out["plan"] = {**self.plan, "history": [{k: v.get(k) for k in ("version", "goals", "watch", "because", "evidence", "trigger")} for v in self.plan_history]}
         return out
 
     def summary(self, t: float | None = None) -> dict[str, Any]:

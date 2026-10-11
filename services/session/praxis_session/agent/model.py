@@ -336,6 +336,7 @@ class ScriptedPlanner:
 DEFAULT_SCRIPT: dict[str, list[dict[str, Any]]] = {
     "checkin": [
         {"tool": "get_prescription"},
+        {"tool": "set_session_plan", "args": {"goals": ["Follow today's prescribed dose, within its ranges"], "watch": ["setup problems the camera reports"], "evidence": "$evidence"}},
         {"tool": "speak", "args": {"text": "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.", "cue": "instruct", "evidence": "$evidence"}},
     ],
     "set_complete": [
@@ -371,6 +372,10 @@ You run only at checkpoints (check-in, end of a set or arc, a stop-rule pause, p
 session end). Each run: at most 6 tool calls, then stop. Every coach action needs `evidence`:
 ids of this session's events from get_events or get_set_summary (never invent ids).
 
+- Plan: at check-in call set_session_plan (<= 3 goals within the prescription, <= 3 things to
+  watch, evidence = the check-in event). At a set/arc review, revise it with set_session_plan
+  only when new camera evidence changes what to aim for or watch (falling peaks, compensation,
+  unverified reps), citing the new event ids and saying `because`; otherwise leave it.
 - Talk to the patient only with `speak`: one short, warm, plain line (<= 160 characters).
 - Change the dose only with `propose_adjustment`; the patient decides (Yes / Keep / Why).
   Values are clamped to the prescription; never suggest anything outside it.
@@ -401,9 +406,9 @@ camera evidence decide what you propose.
 When done, reply with one short sentence describing what you did."""
 
 TRIGGER_JOB = {
-    "checkin": "Plan the session: read the prescription (and history if useful) and give one short opening instruction.",
-    "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
-    "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment.",
+    "checkin": "Plan the session: read the prescription (and history if useful), set_session_plan (goals, what to watch, evidence = the check-in event), then give one short opening instruction.",
+    "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this set's evidence changes it.",
+    "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this arc's evidence changes it.",
     "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup, speak the specific fix, recalibrate, request_resume (if it says the setup still fails, say its hint again).",
     "nhpt_complete": "Explain the peg-test result plainly (time, splits); no clinical interpretation.",
     "feedback": "Write the session summary note for the report.",
@@ -427,6 +432,9 @@ def build_prompt(h: T.SessionHandle, trigger: str, evidence: list[int], also: li
         "checkin": safe_checkin(s.checkin),
         "source": "replay" if s.replay_clip else "live",
     }
+    plan = getattr(s, "plan", None)
+    if plan:
+        ctx["plan"] = {k: plan.get(k) for k in ("version", "goals", "watch", "because")}
     note = getattr(s, "patient_note", None)
     if note:
         ctx["patient_note"] = quote_patient_text(note)

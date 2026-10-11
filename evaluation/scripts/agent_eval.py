@@ -288,6 +288,12 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
         checks["transport"] = bool(res["runs"]) and all(r["transport"] == ex["transport"] for r in res["runs"])
     if ex.get("note"):
         checks["note"] = bool(s.coach_note)
+    if "plan_versions" in ex:
+        checks["plan_versions"] = len(s.plan_history) == ex["plan_versions"] and bool((s.summary().get("coach") or {}).get("plan"))
+    if ex.get("plan_revised_because"):
+        # every revision cites new evidence and says why (the tool enforces it; checked here too)
+        revs = s.plan_history[1:]
+        checks["plan_revised_because"] = bool(revs) and all(v.get("because") for v in revs)
     violations = guardrail_violations(res)
     first = [r["first_action_ms"] for r in res["runs"] if r.get("first_action_ms") is not None]
     tokens = sum((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0) for r in res["runs"])

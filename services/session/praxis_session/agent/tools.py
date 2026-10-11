@@ -58,12 +58,58 @@ PEAK_DROP_DEG = 3.0
 REVIEW_TRIGGERS = ("arc_complete", "set_complete")
 
 POLICY_VERSION = "2026-10-10.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
+PLAN_MAX_ITEMS = 3
+PLAN_ITEM_MAX_CHARS = 100
+BECAUSE_MAX_CHARS = 200
 
 SERVERS: dict[str, tuple[str, ...]] = {
     "perception": ("get_events", "get_set_summary", "check_setup", "recalibrate"),
-    "exertion": ("get_exertion_state", "get_prescription", "read_patient_model"),
-    "coach": ("speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary"),
+    "exertion": ("get_exertion_state", "get_prescription", "read_patient_model", "get_session_plan"),
+    "coach": ("speak", "propose_adjustment", "request_rest", "request_resume", "flag_therapist", "end_session", "write_session_summary", "set_session_plan"),
 }
+
+# The autonomy policy (10 Oct), one table the tool layer enforces (`invoke`) and docs/AGENT.md
+# renders (`autonomy_markdown`). Levels:
+# - autonomous: the agent may call it on its own, at any time in a run (reads; the report note);
+# - forbidden_after_stop: on its own, but refused once a stop rule or the agent ended the session;
+# - patient_approval: only ever a prompt; nothing changes until the patient taps Yes (also
+#   refused after a stop);
+# - never: not a tool at all; refused by name if anything asks for it.
+AUTONOMY_LEVELS = ("autonomous", "forbidden_after_stop", "patient_approval", "never")
+AUTONOMY: dict[str, tuple[str, str]] = {
+    "get_events": ("autonomous", "read-only: this session's events (ids are the evidence)"),
+    "get_set_summary": ("autonomous", "read-only: the last set or arc in numbers"),
+    "check_setup": ("autonomous", "read-only OpenCV checks on the latest frame; changes nothing"),
+    "get_exertion_state": ("autonomous", "read-only behavioural exertion"),
+    "get_prescription": ("autonomous", "read-only: dose, allowed adaptations, stop rules"),
+    "read_patient_model": ("autonomous", "read-only short history (empty for a replay)"),
+    "get_session_plan": ("autonomous", "read-only: the agent's own plan for this session"),
+    "write_session_summary": ("autonomous", "a factual coach note in the report; allowed after a stop so the stop is explained"),
+    "recalibrate": ("forbidden_after_stop", "resets tracking only (calibrator or pose gate); no dose change"),
+    "resample_target_colour": ("forbidden_after_stop", "tunes the cup/peg colour window only when OpenCV detection then succeeds where it failed; no dose change"),
+    "set_session_plan": ("forbidden_after_stop", "internal plan (goals, what to watch); every version cites evidence, a revision needs new evidence and a reason"),
+    "speak": ("forbidden_after_stop", "one captioned line, <= 160 chars, rate-limited, praise limited, evidence required"),
+    "request_rest": ("forbidden_after_stop", "a 10-120 s rest only makes the session safer; the patient resumes"),
+    "flag_therapist": ("forbidden_after_stop", "adds a flag for the therapist; never clears one"),
+    "end_session": ("forbidden_after_stop", "can end the session early, never extend it"),
+    "propose_adjustment": ("patient_approval", "a dose change is a Yes / Keep / Why prompt, clamped to the prescription here and again when applied"),
+    "request_resume": ("patient_approval", "a resume prompt, offered only after a fresh passing setup check"),
+    "apply_adjustment": ("never", "only the patient's Yes applies a dose change"),
+    "resume_session": ("never", "only the patient's tap resumes a paused session"),
+    "change_prescription": ("never", "the therapist prescribes; the agent works inside the prescription"),
+    "override_stop_rule": ("never", "stop rules run before the agent and it cannot lift them"),
+    "clear_therapist_flag": ("never", "flags are the therapist's to review"),
+    "raise_ceiling": ("never", "the 90 deg ceiling and the prescription's ranges are enforced in code"),
+}
+
+
+def autonomy_markdown() -> str:
+    """The AUTONOMY table as Markdown (docs/AGENT.md holds this exact text; a test checks it)."""
+    lines = ["| Tool | Autonomy | Why |", "|---|---|---|"]
+    order = {lvl: i for i, lvl in enumerate(AUTONOMY_LEVELS)}
+    for name, (lvl, why) in sorted(AUTONOMY.items(), key=lambda kv: (order[kv[1][0]], kv[0])):
+        lines.append(f"| `{name}` | {lvl} | {why} |")
+    return "\n".join(lines)
 SERVER_OF: dict[str, str] = {name: server for server, names in SERVERS.items() for name in names}
 # Every coach tool is one of the six actions (speak: instruct|correct; propose: progress|regress).
 ACTION_OF: dict[str, str] = {
@@ -74,6 +120,7 @@ ACTION_OF: dict[str, str] = {
     "flag_therapist": "instruct",
     "end_session": "stop",
     "write_session_summary": "instruct",
+    "set_session_plan": "instruct",
 }
 ARM_FIELDS = {"target_deg": ("set_target", "target_deg", "°"), "hold_s": ("set_hold", "hold_s", "s"), "reps": ("set_reps", "reps", "reps")}
 FIELD_NAMES = {"target_deg": "target", "hold_s": "hold", "reps": "reps per set", "phase": "arc speed"}
@@ -251,7 +298,8 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
     Raises `ToolRejected` (after tracing) when a guardrail says no."""
     reg = registry or REGISTRY
     fn = TOOLS.get(name)
-    if fn is None:
+    level = AUTONOMY.get(name, ("", ""))[0]
+    if fn is None and level != "never":
         raise ToolRejected(f"unknown tool {name!r}; the tools are {', '.join(TOOLS)}", "unknown_tool")
     sid = str(args.get("session_id", ""))
     h = reg.get(sid)
@@ -260,6 +308,12 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
     t0 = time.perf_counter()
     ok, result, err = True, None, None
     try:
+        # The autonomy policy, before budgets and before the tool runs.
+        if level == "never":
+            raise ToolRejected(f"{name} is never allowed: {AUTONOMY[name][1]}", "policy")
+        if level in ("forbidden_after_stop", "patient_approval") and h.session.stopped:
+            raise ToolRejected(f"{name} is forbidden after a stop: the session is stopped", "stopped")
+        assert fn is not None
         with h.lock:
             if h.tool_calls >= SESSION_TOOL_CALLS:
                 raise ToolRejected(f"session tool budget used ({SESSION_TOOL_CALLS} calls)", "budget")
@@ -276,6 +330,8 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
         finally:
             _HANDLE.reset(token)
         assert_no_pixels(result)
+        if level == "patient_approval" and (result.get("applied") or result.get("resumed")):
+            raise ToolRejected(f"internal: {name} must only prompt the patient", "policy")
         return result
     except ToolRejected as e:
         ok, err = False, e
@@ -290,7 +346,7 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
         ms = round((time.perf_counter() - t0) * 1000.0, 1)
         summary = json.dumps(result if ok else {"error": str(err), "kind": getattr(err, "kind", "error")}, default=str)[:240]
         safe_args = {k: (v[:120] if isinstance(v, str) else v) for k, v in args.items() if k != "session_id"}
-        h.session.trace.log("tool", server=SERVER_OF[name], name=name, args=safe_args, ok=ok, ms=ms, transport=transport, result_summary=summary, run=h.run.id if h.run else None)
+        h.session.trace.log("tool", server=SERVER_OF.get(name, "none"), name=name, autonomy=level or None, args=safe_args, ok=ok, ms=ms, transport=transport, result_summary=summary, run=h.run.id if h.run else None)
 
 
 def bind(name: str, transport: str, registry: Registry | None = None) -> Callable[..., dict[str, Any]]:
@@ -728,11 +784,62 @@ def write_session_summary(session_id: str, note: str, evidence: list[int]) -> di
     return {"ok": True, "stored_in_report": stored}
 
 
+def _items(value: Any, what: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, (list, tuple)):
+        raise ToolRejected(f"{what} must be a list of short strings", "field")
+    if len(value) > PLAN_MAX_ITEMS:
+        raise ToolRejected(f"{what}: at most {PLAN_MAX_ITEMS} items", "field")
+    return [_text(v, f"{what} item", PLAN_ITEM_MAX_CHARS) for v in value]
+
+
+def set_session_plan(session_id: str, goals: list[str], watch: list[str], evidence: list[int], because: str = "") -> dict[str, Any]:
+    """Set the session plan at check-in, or revise it later: up to 3 `goals` (what this session
+    aims for, within the prescription) and up to 3 things to `watch` (e.g. trunk lean, falling
+    peaks, cup hidden by the hand), each <= 100 characters. A revision must cite at least one
+    event id that no earlier version cited and say `because` (what the camera showed); only
+    revise when new evidence warrants it. The patient does not see the plan; the report does."""
+    h = _h()
+    s = h.session
+    ids = _action_guard(evidence, count=False)
+    goal_list, watch_list = _items(goals, "goals"), _items(watch, "watch")
+    if not goal_list:
+        raise ToolRejected("goals: give at least one goal", "field")
+    prev = s.plan
+    if prev is not None:
+        why = _text(because, "because (what new evidence changed the plan)", BECAUSE_MAX_CHARS)
+        cited = {i for v in s.plan_history for i in v["evidence"]}
+        if not [i for i in ids if i not in cited]:
+            raise ToolRejected("a revision needs new evidence: cite an event id that no earlier plan version cited", "evidence")
+    else:
+        why = (str(because or "").strip()[:BECAUSE_MAX_CHARS]) or None
+    plan = {
+        "version": len(s.plan_history) + 1,
+        "goals": goal_list,
+        "watch": watch_list,
+        "evidence": ids,
+        "because": why,
+        "trigger": h.run.trigger if h.run else None,
+        "t": s.clock,
+        "label": h.label,
+    }
+    s.set_plan(plan)
+    return {"ok": True, "version": plan["version"], "revised": prev is not None}
+
+
+def get_session_plan(session_id: str) -> dict[str, Any]:
+    """The current session plan (goals, what to watch, evidence, why it last changed) and how
+    many versions it has had; `plan` is null before the check-in sets one."""
+    s = _h().session
+    return {"plan": s.plan, "versions": len(s.plan_history)}
+
+
 TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     f.__name__: f
     for f in (
         get_events, get_set_summary, check_setup, recalibrate,
-        get_exertion_state, get_prescription, read_patient_model,
-        speak, propose_adjustment, request_rest, request_resume, flag_therapist, end_session, write_session_summary,
+        get_exertion_state, get_prescription, read_patient_model, get_session_plan,
+        speak, propose_adjustment, request_rest, request_resume, flag_therapist, end_session, write_session_summary, set_session_plan,
     )
 }

@@ -92,6 +92,20 @@
         "tool": "read_patient_model"
       },
       {
+        "tool": "set_session_plan",
+        "args": {
+          "goals": [
+            "2 slow arcs, then 2 fast if offered",
+            "one dot at a time"
+          ],
+          "watch": [
+            "cup hidden by the hand",
+            "reach time"
+          ],
+          "evidence": "$evidence"
+        }
+      },
+      {
         "tool": "speak",
         "args": {
           "text": "Pain 1 today, so the full program: slow arcs first.",
@@ -138,6 +152,7 @@
       ]
     },
     "note": true,
+    "plan_versions": 1,
     "prompt_kinds": [],
     "stopped": false,
     "errors": []

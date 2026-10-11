@@ -75,19 +75,29 @@ scenarios = [
         "title": "Falling peaks and moderate exertion in set 1 of Arm out to the side",
         "mode": "arm",
         "steps": [
+            {"checkin": {"pain": 2}},
+            {"run": {}},
             {"events": [{"type": "rep_complete", "t": 3.0 * i, "set": 1, "rep": i + 1, "peak_deg": pk, "hold_s": 3.1, "verified": pk >= 82, "reason": None if pk >= 82 else "target_missed", "lean": False, "hike": False, "t_start": 3.0 * i - 2.5, "t_end": 3.0 * i} for i, pk in enumerate([90, 89, 86, 84, 82, 79, 81, 78])]
              + [{"type": "set_complete", "t": 21.0, "set": 1, "reps": 8, "verified_reps": 5, "best_deg": 90.0}]},
             {"rpe": 6},
             {"run": {}},
             {"answer": {"kind": "adjustment", "choice": "accept"}},
         ],
-        "script": {"set_complete": [
-            {"tool": "get_set_summary"},
-            {"tool": "get_exertion_state"},
-            {"tool": "get_prescription"},
-            {"tool": "propose_adjustment", "args": {"exercise": "abduction", "field": "target_deg", "value": 80, "reason": "Your peaks slid from 90° to about 80° over the set; an 80° line keeps set 2 countable.", "evidence": "$evidence"}},
-        ]},
-        "expect": {"triggers": ["set_complete"], "perceive_before": {"propose_adjustment": ["get_set_summary"]}, "prompt_kinds": ["adjustment"], "applied_only_after_accept": {"field": "target_deg", "range": [60, 90]}, "stopped": False, "errors": []},
+        "script": {
+            "checkin": [
+                {"tool": "get_prescription"},
+                {"tool": "set_session_plan", "args": {"goals": ["2 sets of 8 to the 90° line, 3 s holds"], "watch": ["trunk lean", "peak angle across the set"], "evidence": "$evidence"}},
+                {"tool": "speak", "args": {"text": "Two sets of eight today. Lift out to the side, hold three seconds.", "cue": "instruct", "evidence": "$evidence"}},
+            ],
+            "set_complete": [
+                {"tool": "get_set_summary"},
+                {"tool": "get_exertion_state"},
+                {"tool": "propose_adjustment", "args": {"exercise": "abduction", "field": "target_deg", "value": 80, "reason": "Your peaks slid from 90° to about 80° over the set; an 80° line keeps set 2 countable.", "evidence": "$evidence"}},
+                # the camera evidence (falling peaks) changes the plan: revised with a reason
+                {"tool": "set_session_plan", "args": {"goals": ["Set 2 at the 80° line if you accept it", "keep 3 s holds"], "watch": ["peaks falling further", "exertion"], "evidence": "$evidence", "because": "Set 1 peaks slid from 90° to about 78° and the effort rating was 6."}},
+            ],
+        },
+        "expect": {"triggers": ["checkin", "set_complete"], "perceive_before": {"propose_adjustment": ["get_set_summary"]}, "prompt_kinds": ["adjustment"], "applied_only_after_accept": {"field": "target_deg", "range": [60, 90]}, "plan_versions": 2, "plan_revised_because": True, "stopped": False, "errors": []},
     },
     {
         "id": "repeated_lean",
@@ -168,11 +178,16 @@ scenarios = [
             {"run": {}},
         ],
         "script": {
-            "checkin": [{"tool": "get_prescription"}, {"tool": "read_patient_model"}, {"tool": "speak", "args": {"text": "Pain 1 today, so the full program: slow arcs first.", "cue": "instruct", "evidence": "$evidence"}}],
+            "checkin": [
+                {"tool": "get_prescription"},
+                {"tool": "read_patient_model"},
+                {"tool": "set_session_plan", "args": {"goals": ["2 slow arcs, then 2 fast if offered", "one dot at a time"], "watch": ["cup hidden by the hand", "reach time"], "evidence": "$evidence"}},
+                {"tool": "speak", "args": {"text": "Pain 1 today, so the full program: slow arcs first.", "cue": "instruct", "evidence": "$evidence"}},
+            ],
             "arc_complete": [{"tool": "get_set_summary"}, {"tool": "speak", "args": {"text": "Arc {get_set_summary.boundary.arc}: {get_set_summary.verified} of {get_set_summary.reps} verified.", "cue": "instruct", "evidence": "$evidence"}}],
             "feedback": [{"tool": "get_set_summary"}, {"tool": "write_session_summary", "args": {"note": "One slow arc, {get_set_summary.session_counts.verified} verified reaches, no setup problems.", "evidence": "$evidence"}}],
         },
-        "expect": {"triggers": ["checkin", "arc_complete", "feedback"], "perceive_before": {"speak": ["get_prescription"]}, "note": True, "prompt_kinds": [], "stopped": False, "errors": []},
+        "expect": {"triggers": ["checkin", "arc_complete", "feedback"], "perceive_before": {"speak": ["get_prescription"]}, "note": True, "plan_versions": 1, "prompt_kinds": [], "stopped": False, "errors": []},
     },
 ]
 
