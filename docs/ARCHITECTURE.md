@@ -2,7 +2,7 @@
 
 Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per exercise, (3) one concrete agent loop where OpenCV output changes what the agent does next. Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
 
-**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned for W6 (14–20 Oct) and do not exist yet**: there is no EC2 instance, no Bedrock run, no CDK app, no S3 bucket and no COOL benchmark. The `infra/`, `benchmark/` and `services/tools-lambda/` folders listed in `CLAUDE.md` §2 are not in the tree yet.
+**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: Bedrock as the agent's provider (the agent uses the Anthropic API), S3, CloudWatch log shipping, CDK, and the `services/tools-lambda/` folder.
 
 ## 1. System architecture
 
@@ -63,28 +63,29 @@ flowchart LR
     TRC --> TR
     UI -->|"answer, pain, pause, commands"| WS
 
-    subgraph AWS["AWS · planned W6, NOT BUILT"]
-        EC2["c8g Graviton EC2<br/>from the COOL AMI (OpenCV 5 / COOL)<br/>service under systemd"]
-        BR["Amazon Bedrock<br/>Claude via BedrockModel"]
-        S3["S3: event logs, traces,<br/>reports, consented clips only"]
-        CW["CloudWatch logs + metrics"]
-        CDK["AWS CDK (TypeScript)<br/>one-command deploy"]
-        MORE["Polly · Cognito · DynamoDB ·<br/>Lambda arm64 + AgentCore Gateway"]
+    subgraph AWS["AWS us-east-2 · live since 11 Oct 2026"]
+        CF["CloudFront HTTPS<br/>dl8xykmg8ki61.cloudfront.net<br/>WSS upgrade, caching off"]
+        EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
+        GRD["Guardrails: SG from CloudFront prefix list only,<br/>SCP (small Graviton, 2 regions), $50 budget<br/>action stops the instance"]
+        BR["Amazon Bedrock<br/>Claude via BedrockModel (planned)"]
+        S3["S3: event logs, traces,<br/>reports (planned)"]
+        CW["CloudWatch logs + metrics (planned)"]
+        CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
     end
 
-    SVC -.->|"same container, cloud mode"| EC2
+    UI -->|"HTTPS / WSS"| CF --> EC2
+    SVC ==>|"infra/ec2/deploy.sh: same code,<br/>cv2 = COOL"| EC2
+    GRD --- EC2
     PL -.->|"PRAXIS_AGENT=bedrock<br/>needs PRAXIS_CLOUD_ENABLED=1"| BR
     TRC -.-> S3
-    DB -.->|"same schema"| MORE
-    SVC -.-> CW
+    MET -.-> CW
     CDK -.-> EC2
 
     classDef planned stroke-dasharray: 6 4,stroke:#A15C00,fill:#FFF8EC,color:#5A3A00
-    class EC2,BR,S3,CW,CDK,MORE planned
-    style AWS stroke-dasharray: 6 4,stroke:#A15C00,fill:#FFFDF8
+    class BR,S3,CW,CDK planned
 ```
 
-**What runs where today.** Edge mode: everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call; the `bedrock` planner refuses to start without it (`agent/model.py` `load_config`).
+**What runs where today.** Edge mode: everything above the AWS box runs on one laptop, and the same service runs on the c8g instance for the hosted judge endpoint (AWS box) (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call; the `bedrock` planner refuses to start without it (`agent/model.py` `load_config`).
 
 **Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called. Added later on 10 Oct and so far scored only with the scripted planner (12/12, 0 violations; agent vs rule-only ablation in `evaluation/results/agent_ablation_v0.md`): MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (`docs/AGENT.md`).
 
@@ -200,7 +201,7 @@ sequenceDiagram
     T-->>AG: calibrated, markers_found [0,1,2,3], rms_mm 0.165, tilt_deg 15.9
     AG->>T: request_resume(reason, evidence)
     T->>PL: fresh check_setup on the latest frame
-    Note over T: allowed only while a rule pause holds and every check<br/>now passes; else {ok:false, "setup still failing: …"}, nothing shown
+    Note over T: allowed only while a rule pause holds and every check<br/>now passes, else {ok:false, "setup still failing: …"}, nothing shown
     T-->>CS: intent queued: prompt kind resume
     Note over CS: socket loop drains intents and re-checks stop:<br/>a pain stop mid-run drops them (agent_drop)
     CS->>B: prompt "Setup looks good — resume?" (Yes, resume · Not yet)
@@ -244,7 +245,7 @@ sequenceDiagram
     PL->>CS: reach_complete verified:false reason:cup_occluded (×3)
     CS->>AG: pause failed_reps → checkpoint
     AG->>T: get_set_summary · check_setup
-    T->>PL: fresh ArUco + homography; warpPerspective; cup mask with the current window
+    T->>PL: fresh ArUco + homography, warpPerspective, cup mask with the current window
     T-->>AG: markers pass, lighting pass, target: check (cup not seen, colour_source default)
     AG->>T: resample_target_colour(cup)
     T->>PL: HSV patch on dot 1 (paper, skipped), dot 0 (green, S 195) → inRange + findContours test
@@ -258,4 +259,4 @@ sequenceDiagram
 
 With the agent off, the same scenario stays paused with a generic message and no reach is ever verified (`evaluation/results/agent_ablation_v0.md`).
 
-More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/TECHNICAL_REPORT.md` §2–§4.
+More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/ENGINEERING_NOTES.md` §2–§4.

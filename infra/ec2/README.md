@@ -3,7 +3,7 @@
 Status 11 Oct 2026: **live.** `<instance-id>` (c8g.large, us-east-2) from the COOL AMI
 `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), Elastic IP `[redacted-ip]`, HTTPS at
 **https://dl8xykmg8ki61.cloudfront.net** (CloudFront `<cloudfront-id>`). `/health` shows
-`"cool": true`. Evidence: `docs/TECHNICAL_REPORT.md` §5; benchmark: `benchmark/results/`.
+`"cool": true`. Evidence: `docs/ENGINEERING_NOTES.md` §5; benchmark: `benchmark/results/`.
 
 ## What it builds
 - One **c8g.large** (Graviton4, 2 vCPU, 4 GiB) in **us-east-2** (the account's project region), launched from the AWS Marketplace

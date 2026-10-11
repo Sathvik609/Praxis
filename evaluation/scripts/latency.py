@@ -1,4 +1,4 @@
-"""Regenerate the latency numbers (TECHNICAL_REPORT §6.2): capture->event, processing and
+"""Regenerate the latency numbers (ENGINEERING_NOTES §6.2): capture->event, processing and
 event->cue, p50/p95 (nearest rank, `praxis_session.latency.percentile`).
 
     cd services/session
