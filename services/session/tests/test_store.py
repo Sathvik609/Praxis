@@ -3,6 +3,20 @@ from datetime import date
 from praxis_session.store import Store
 
 
+def test_concurrent_reads_from_the_threadpool_never_fail(tmp_path):
+    """e2e 11 Oct: Home fires /api/patients/me, /api/progress, /api/calendar and
+    /api/prescription at once; FastAPI runs them on threads that shared one sqlite3 connection,
+    and a read came back None (500 'NoneType' object is not subscriptable)."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    calls = [st.patient, st.progress, st.prescription, st.sessions, st.flags] * 80
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(lambda f: f(), calls))
+    assert all(r is not None for r in results)
+
+
 def test_seed_matches_wireframe(tmp_path):
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()

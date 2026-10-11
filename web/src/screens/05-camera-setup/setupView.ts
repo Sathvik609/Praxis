@@ -31,6 +31,20 @@ export type Check = {
   source?: 'camera' | 'self'
   /** A self-check's confirm button text (default "Yes, I can see it"). */
   yes?: string
+  /** From the service: whether the row gates the start (`all_required_pass`). `false` marks
+   *  advice, such as the frame-difference "One person in view"; absent counts as a gate. */
+  required?: boolean
+}
+
+/** The row the setup walk asks about now (-1 when every row passes): the first gating row with
+ *  a camera problem (so the patient hears the specific fix, e.g. the covered corner), else the
+ *  first gating row still open (a self-check such as "Is this your left arm?"), else advice. */
+export function currentStepIndex(rows: Check[]): number {
+  const gate = (r: Check) => r.required !== false
+  const failing = rows.findIndex((r) => gate(r) && (r.status === 'check' || r.status === 'fail'))
+  if (failing >= 0) return failing
+  const open = rows.findIndex((r) => gate(r) && r.status !== 'pass')
+  return open >= 0 ? open : rows.findIndex((r) => r.status !== 'pass')
 }
 
 /** The sheet tasks' rows before the first `setup_checks` event (Waiter – cup, NHPT). */
@@ -112,7 +126,7 @@ export function resolveChecks(
     const status = svc?.status ?? 'pending'
     if (s.self && status !== 'pass') blocked = true
     const hint = status === 'pass' || status === 'pending' ? null : s.id === 'lighting' ? (svc?.hint ?? s.hint) : s.hint
-    return { id: s.id, label: s.label, status, hint, source: 'camera' }
+    return { id: s.id, label: s.label, status, hint, source: 'camera', ...(svc?.required != null ? { required: svc.required } : {}) }
   })
   return { rows, ready: service?.all_required_pass === true && selfOk && !blocked }
 }

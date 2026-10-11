@@ -27,8 +27,17 @@ function Kind({ k, children }: { k: keyof typeof INK; children: string }) {
   return <span className={`inline-block w-[5.5rem] shrink-0 font-bold ${INK[k]}`}>{children}</span>
 }
 
+/** Live events carry wall-clock `t` (epoch seconds) and replay events clip time: the clock reads
+ *  as hh:mm:ss.s, clip time as seconds. */
+function traceTime(t: number): string {
+  if (t < 1e9) return `${t.toFixed(1)} s`
+  const d = new Date(Math.round(t * 10) * 100)
+  const two = (n: number) => String(n).padStart(2, '0')
+  return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}.${Math.floor(d.getMilliseconds() / 100)}`
+}
+
 function Time({ t }: { t: number }) {
-  return <span className={`inline-block min-w-[4rem] shrink-0 whitespace-nowrap tabular-nums ${INK.time}`}>{t.toFixed(1)} s</span>
+  return <span className={`inline-block min-w-[4rem] shrink-0 whitespace-nowrap tabular-nums ${INK.time}`}>{traceTime(t)}</span>
 }
 
 const seconds = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`)

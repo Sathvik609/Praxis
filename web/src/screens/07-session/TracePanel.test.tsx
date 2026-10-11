@@ -53,6 +53,19 @@ test('agent runs render under their perception event: run header, tools with ✓
   expect(screen.getByText(new RegExp(`${esc(AGENT)} at checkpoints`))).toBeInTheDocument()
 })
 
+test('live events carry wall-clock time: rows show the clock, never raw epoch seconds (e2e 11 Oct)', () => {
+  const t = new Date(2026, 9, 11, 14, 3, 21, 400).getTime() / 1000
+  render(<TracePanel events={[{ type: 'rep_complete', t, id: 7 }] as never} agentRows={[]} />)
+  const rows = screen.getByTestId('trace-rows')
+  expect(rows).toHaveTextContent('14:03:21.4')
+  expect(rows.textContent).not.toMatch(/\d{9,}/)
+})
+
+test('replay events keep clip seconds', () => {
+  render(<TracePanel events={[{ type: 'rep_complete', t: 12.34, id: 7 }] as never} agentRows={[]} replay />)
+  expect(screen.getByTestId('trace-rows')).toHaveTextContent('12.3 s')
+})
+
 test('each agent run collapses and expands from its header', () => {
   render(<TracePanel events={agentEvents} agentRows={agentRows()} />)
   const run = screen.getAllByRole('button', { name: /agent run/ })[0]

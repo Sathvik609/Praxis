@@ -589,7 +589,9 @@ class SessionPipeline:
         area = task_area_in_view(cal, self.spec, frame_bgr.shape)
         checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet, spec=self.spec)
         required = REQUIRED_BY_MODE.get(self.for_mode, REQUIRED_BY_MODE["default"])
-        required_ok = all(c["status"] == "pass" for c in checks if c["id"] in required)
+        # `required` tells the setup screen which rows gate the start; the others are advice
+        checks = [c | {"required": c["id"] in required} for c in checks]
+        required_ok = all(c["status"] == "pass" for c in checks if c["required"])
         self._emit(
             out,
             make_event(
@@ -637,12 +639,16 @@ class SessionPipeline:
         # The hand runs first so its box can be excluded from the free-peg blobs (D-SEG-1).
         hand_block, hand_mm, hand_rect = self._hand_block(frame_bgr, t, cal)
         if cal.calibrated:
+            holes_px = self._board.holes_frame_px(cal)
+        # A held fix with no marker in view is the sheet gone (pushed away, out of frame), not a
+        # covered corner: warping the empty table would read every hole empty and re-count a
+        # seated peg on regain (e2e 11 Oct), so the peg FSM gets no board until a marker is back.
+        if cal.calibrated and (cal.source != "held" or cal.marker_corners_px):
             canon = self._board.warp(frame_bgr, cal)
             self._last_canon = canon
             board_d = self._board.to_event_payload(
                 canon, exclude_mm=[hand_rect] if hand_rect is not None else None
             )
-            holes_px = self._board.holes_frame_px(cal)
         occ = board_d["occupancy"] if board_d else {}
         # Any-hole mode: no suggested hole, so the UI draws no amber ring (D-SEG-2).
         next_hole = None

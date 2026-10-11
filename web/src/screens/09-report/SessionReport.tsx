@@ -205,6 +205,9 @@ export function SessionReport() {
   const daySide = dayRun?.checkin?.side ?? sideOr(null)
   const dayTitle = inDay ? DAY_ORDER.map((x) => exerciseById(x)?.name ?? x).join(' + ') : s.title
   const ctx = s.summary.mode === 'nhpt' ? 'assessment' : side ? `${side} side` : null
+  // the service marks a peg test "limited" after any tracking loss: pegs seated while the board
+  // was out of view cannot be verified, so the time is not a clean result (store.py)
+  const nhptLimited = s.summary.mode === 'nhpt' && s.tracking === 'limited'
   const statusChip =
     s.status !== 'complete' ? <Chip tone="amber">Ended early</Chip> : canStart ? <Chip tone="amber">{`${doneCount} of ${DAY_ORDER.length} done`}</Chip> : <Chip tone="mint">Complete</Chip>
   // Only active time is summed across today's exercises; counts stay per exercise.
@@ -355,6 +358,7 @@ export function SessionReport() {
           <p className="rp-meta">
             <span>{[prettyDate(s.date), dayTitle, ctx].filter(Boolean).join(' · ')}</span>
             {statusChip}
+            {nhptLimited && <Chip tone="amber">Limited tracking</Chip>}
             {isReplaySession(s) && <Chip tone="amber">Replay · not counted</Chip>}
           </p>
         </div>
@@ -385,6 +389,7 @@ export function SessionReport() {
         {cam.nhpt_total_s != null && (
           <p className="mt-4 text-xl">
             Nine-Hole Peg Test: <b>{cam.nhpt_total_s.toFixed(1)} s</b> · insertion-only · timing aid, not a clinical instrument
+            {nhptLimited && ' · the camera lost the board during the test, so this time is limited'}
           </p>
         )}
         {inDay ? (

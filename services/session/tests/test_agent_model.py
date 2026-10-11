@@ -30,6 +30,20 @@ def test_config_anthropic_needs_a_key_and_defaults_to_sonnet_5():
     assert "sk-test" not in json.dumps(c.health(True))  # the key is never reported
 
 
+def test_mcp_url_follows_the_port_the_service_listens_on():
+    """e2e 11 Oct: `uvicorn ... --port 8100` (no PORT env) left the agent's MCP client on
+    127.0.0.1:8000, another process: every run ended with 0 tool calls. Unless PORT or
+    PRAXIS_MCP_URL says otherwise, the session's own listening port wins."""
+    env = {"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": "sk-test"}
+    c = M.load_config(env)
+    assert M.with_listening_port(c, ("127.0.0.1", 8100), env).mcp_url == "http://127.0.0.1:8100/mcp"
+    assert M.with_listening_port(c, None, env).mcp_url == c.mcp_url
+    pinned = {**env, "PRAXIS_MCP_URL": "http://10.0.0.5:9000/mcp"}
+    assert M.with_listening_port(M.load_config(pinned), ("127.0.0.1", 8100), pinned).mcp_url == "http://10.0.0.5:9000/mcp"
+    port = {**env, "PORT": "9001"}
+    assert M.with_listening_port(M.load_config(port), ("0.0.0.0", 9001), port).mcp_url == "http://127.0.0.1:9001/mcp"
+
+
 def test_config_bedrock_only_with_cloud_enabled():
     c = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_BEDROCK_MODEL_ID": "m", "AWS_REGION": "us-west-2"})
     assert not c.ready and "PRAXIS_CLOUD_ENABLED" in c.reason

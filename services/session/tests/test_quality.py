@@ -45,6 +45,27 @@ def test_task_area_needs_calibration():
     assert not d["ok"] and d["hint"]
 
 
+def test_task_area_row_waits_for_the_sheet():
+    """Until the markers are found the task area cannot be judged: the row is pending, so the
+    markers row (which names the missing corners) is the one the patient is asked to fix."""
+    cal = Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8))
+    area = task_area_in_view(cal, NHPT_BOARD, (480, 640, 3))
+    rows = {r["id"]: r for r in build_checks(cal, {"ok": True, "hint": None}, {"ok": True}, area, {"present": True}, spec=NHPT_BOARD)}
+    assert rows["task_area"]["status"] == "pending"
+    assert rows["markers"]["status"] == "check" and "corner" in rows["markers"]["hint"]
+
+
+def test_a_blurry_or_dark_picture_is_the_fix_asked_for_not_the_markers_it_hides():
+    """e2e 11 Oct: a blurred camera hid all four markers and the setup asked the patient to
+    'flatten the sheet'. While the picture itself fails, the markers row waits (pending)."""
+    cal = Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8))
+    area = task_area_in_view(cal, NHPT_BOARD, (480, 640, 3))
+    blurry = {"ok": False, "hint": "Image is blurry. Clean the lens or hold the camera still."}
+    rows = {r["id"]: r for r in build_checks(cal, blurry, {"ok": True}, area, {"present": True}, spec=NHPT_BOARD)}
+    assert rows["markers"]["status"] == "pending"
+    assert rows["lighting"]["status"] == "check" and "blurry" in rows["lighting"]["hint"]
+
+
 def test_presence_from_motion():
     p = Presence()
     still = np.zeros((480, 640, 3), np.uint8)

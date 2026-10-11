@@ -124,12 +124,14 @@ export function SxFeed({
         <b>You</b>
         {note && <span>· {note}</span>}
       </div>
-      {(band || mono) && (
+      {band && (
         <div className="sx-foot">
-          {band && <div className={`sx-band sx-band-${bandTone}`}>{band}</div>}
-          {mono && <div className="sx-mono">{mono}</div>}
+          <div className={`sx-band sx-band-${bandTone}`}>{band}</div>
         </div>
       )}
+      {/* The judge line keeps its own row at the foot of the feed: in the top-right stack a long
+          line (the NHPT one) grew leftwards over the "You" tag (e2e 11 Oct). */}
+      {mono && <div className="sx-mono sx-mono-row">{mono}</div>}
       {children}
       {(status === 'camera_blocked' || status === 'service_unreachable') && (
         <div className="sx-blocked"><CameraBlocked reason={status} detail={errorDetail} onRetry={onRetry} /></div>

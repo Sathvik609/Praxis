@@ -200,9 +200,62 @@ test('the coach pill shows the service hint when the camera looks too flat acros
     checks: [pass('camera'), pass('person'), pass('task_area'), pass('markers'), { id: 'angle', label: 'Camera looks down at the sheet', status: 'check', hint: 'Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.' }],
   })
   renderSetup('/setup?exercise=nhpt&side=left')
-  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  // a camera problem is asked first; "Is this your left arm?" waits until the picture checks out
   expect(coach()).toHaveTextContent(/Tilt the laptop screen forward and move the sheet closer/)
+  expect(within(coach()).queryByRole('button', { name: 'Yes, my left arm' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
+})
+
+// e2e with a fake camera, 11 Oct: the frame-difference "person" row (advice, `required: false`)
+// stood first in the walk, so every failure showed "Sit so your upper body..." and a still
+// patient never got to "Is this your left arm?" or the auto-continue.
+const req = (id: string, status: string, hint: string | null = null, required = true) => ({ id, label: id, status, hint, required })
+const STILL_PATIENT = (overrides: Record<string, ReturnType<typeof req>> = {}, allPass = true) => ({
+  type: 'setup_checks',
+  t: 0,
+  id: 1,
+  all_required_pass: allPass,
+  checks: [
+    req('camera', 'pass'),
+    req('person', 'check', 'Sit so your upper body and the table are in view.', false),
+    req('task_area', 'pass'),
+    req('markers', 'pass'),
+    req('angle', 'pass'),
+    req('lighting', 'pass'),
+  ].map((r) => overrides[r.id] ?? r),
+})
+
+test('the person row is advice: a still patient with every required row passing is asked the side and goes on', () => {
+  vi.useFakeTimers()
+  mockStream(STILL_PATIENT())
+  renderSetup('/setup?exercise=nhpt&side=left')
+  expect(coach()).not.toHaveTextContent(/Sit so your upper body/)
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, my left arm' }))
+  expect(coach()).toHaveTextContent('Hold still in your starting pose')
+  for (let i = 0; i < 6; i++) tick(1000)
+  expect(screen.getByText('AT /session?exercise=nhpt&hand=left')).toBeInTheDocument()
+})
+
+test('a covered corner: the pill names the corner, not the person or task-area hint', () => {
+  mockStream(
+    STILL_PATIENT(
+      {
+        task_area: req('task_area', 'pending', 'Show all four corner markers first.'),
+        markers: req('markers', 'check', 'Markers missing: bottom-left corner (3). Flatten the sheet and keep it in view.'),
+        angle: req('angle', 'pending', 'Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.'),
+      },
+      false,
+    ),
+  )
+  renderSetup('/setup?exercise=nhpt&side=left')
+  expect(coach()).toHaveTextContent('Markers missing: bottom-left corner (3)')
+  expect(screen.getByText('Sheet').closest('li')).toHaveAttribute('aria-current', 'step')
+})
+
+test('too dark: the pill gives the lighting fix', () => {
+  mockStream(STILL_PATIENT({ lighting: req('lighting', 'check', 'Too dark. Add light in front of you, not behind.') }, false))
+  renderSetup('/setup?exercise=cup&side=left')
+  expect(coach()).toHaveTextContent('Too dark. Add light in front of you, not behind.')
 })
 
 test('ready: a still-pose countdown, then a 4 s auto-continue into the session', () => {

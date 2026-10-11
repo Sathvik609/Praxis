@@ -72,7 +72,9 @@ def task_area_in_view(
     cal: CalibrationResult, spec: SheetSpec, frame_shape: tuple, margin_px: int = 16
 ) -> dict:
     if not cal.calibrated:
-        return {"ok": False, "hint": "Show all four corner markers first."}
+        # cannot be judged before the sheet is found: pending, so the markers row (which names
+        # the missing corners) is the fix the setup screen asks for first
+        return {"ok": None, "hint": "Show all four corner markers first."}
     h, w = frame_shape[:2]
     px = cal.to_px(np.array(spec.targets_mm, np.float32))
     inside = bool(
@@ -218,7 +220,14 @@ def build_checks(
             "Sit so your upper body and the table are in view.",
         ),
         row("task_area", "Hand and task area in view", area_d["ok"], area_d.get("hint")),
-        row("markers", "Sheet found · all four corner markers visible", markers_ok, markers_hint),
+        # A dark, bright or blurred picture hides markers that are there: the picture is the fix
+        # to ask for first, so a missing-marker row waits (pending) until the lighting passes.
+        row(
+            "markers",
+            "Sheet found · all four corner markers visible",
+            None if (not markers_ok and not lighting_d["ok"]) else markers_ok,
+            markers_hint,
+        ),
         row("angle", "Camera looks down at the sheet", angle["ok"], angle["hint"]),
         row("lighting", "Lighting and steady tracking", light_ok, light_hint),
     ]

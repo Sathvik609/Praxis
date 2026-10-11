@@ -21,7 +21,7 @@ import json
 import os
 import re
 from contextlib import AsyncExitStack, asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Mapping
 
 from praxis_session.agent import tools as T
@@ -97,6 +97,16 @@ def load_config(env: Mapping[str, str] | None = None) -> AgentConfig:
     if mode == "scripted":
         return AgentConfig("scripted", "scripted", True, None, mcp_url=mcp_url, mcp_enabled=True, budget=budget)
     return AgentConfig("off", None, False, f"unknown PRAXIS_AGENT={mode!r}; the coach stays rule-based", mcp_url=mcp_url, mcp_enabled=mcp_flag, budget=budget)
+
+
+def with_listening_port(cfg: AgentConfig, server: tuple[str, int] | None, env: Mapping[str, str] | None = None) -> AgentConfig:
+    """The MCP routes are this process's own: point the client at the port the request came
+    in on (ASGI scope `server`) unless PRAXIS_MCP_URL or PORT pins it. e2e 11 Oct: with
+    `uvicorn --port 8100` and no PORT the client went to 127.0.0.1:8000, another process."""
+    env = os.environ if env is None else env
+    if env.get("PRAXIS_MCP_URL") or env.get("PORT") or not server or server[1] is None:
+        return cfg
+    return replace(cfg, mcp_url=f"http://127.0.0.1:{int(server[1])}/mcp")
 
 
 def build_model(cfg: AgentConfig, env: Mapping[str, str] | None = None) -> Any:
