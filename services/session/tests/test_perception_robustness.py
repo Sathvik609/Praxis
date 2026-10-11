@@ -263,6 +263,25 @@ def test_marker_hint_asks_for_the_sheet_when_nothing_is_there():
     assert "Markers missing" in hint and "in view" in hint and "can be read" not in hint
 
 
+def test_partial_fit_ransac_threshold_is_in_pixels_not_millimetres():
+    # findHomography's RANSAC threshold is measured in the DESTINATION space. The partial fit
+    # mapped px -> mm, so "3 px" was really 3 mm: on a close sheet (~2.4 px/mm) a corner 5 px
+    # off (2 mm) was kept as an inlier and bent the homography.
+    from praxis_session.perception.synth import view_homography
+
+    spec = NHPT_BOARD
+    Hm = view_homography(spec, (640, 480), 30.0, 5.0, 1.9)  # close: ~2.4 px/mm
+    found = {
+        k: cv2.perspectiveTransform(spec.marker_corners_mm(k).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+        for k in (0, 1, 3)
+    }
+    found[1][2] += np.array([5.0, 0.0], np.float32)  # one bad corner
+    res = Calibrator(spec)._fit(found, [2], "partial", (480, 640, 3), method=cv2.RANSAC)
+    t = np.array(spec.targets_mm, np.float32)
+    px = cv2.perspectiveTransform(t.reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    assert np.abs(res.to_mm(px) - t).max() < 0.1
+
+
 def test_mirror_fallback_finds_nothing_on_a_frame_without_a_sheet():
     rng = np.random.default_rng(0)
     noise = rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)

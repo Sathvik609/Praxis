@@ -218,7 +218,15 @@ class Calibrator:
         order = sorted(found)
         src = np.concatenate([found[i] for i in order]).astype(np.float32)
         dst = np.concatenate([self.spec.marker_corners_mm(i) for i in order]).astype(np.float32)
-        H, _ = cv2.findHomography(src, dst, method, RANSAC_PX)
+        if method == cv2.RANSAC:
+            # findHomography measures the RANSAC threshold in the DESTINATION space, so the
+            # robust fit runs sheet mm -> frame px (threshold in px, where corner noise lives)
+            # and is inverted. Until 11 Oct 2026 it ran px -> mm, making "3 px" 3 mm: on a
+            # close sheet a corner several px off was kept as an inlier.
+            H_mm_px, _ = cv2.findHomography(dst, src, cv2.RANSAC, RANSAC_PX)
+            H = None if H_mm_px is None else np.linalg.inv(H_mm_px)
+        else:
+            H, _ = cv2.findHomography(src, dst, method)
         if H is None:
             return CalibrationResult(self.spec.name, False, missing, None, None, found)
         proj = cv2.perspectiveTransform(src.reshape(-1, 1, 2), H).reshape(-1, 2)
