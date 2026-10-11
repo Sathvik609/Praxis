@@ -58,10 +58,10 @@ uploaded. Turn that sync off for the recording laptop, or record with
 `.json` files into `evaluation/dataset_v1/raw/` afterwards (§8.5).
 
 ### 1.4 Print the sheets at 100 %
-Open `docs/sheets/nhpt_board.pdf` (A4 portrait) and `docs/sheets/cup_targets.pdf` (A4
-landscape). In the print dialog choose **Actual size / 100 % / no scaling** — never "Fit to page".
+Open `docs/sheets/nhpt_board.pdf` (portrait) and `docs/sheets/cup_targets.pdf` (landscape); each page is 210 × 279.4 mm, so it prints on A4 or US Letter without clipping a marker (11 Oct 2026; the earlier full-A4 pages lost two markers on Letter in some viewers). In the print dialog choose **Actual size / 100 % / no scaling** — never "Fit to page".
 Check with a ruler:
 
+- the scale bar under the title is **80 mm** long;
 - every black square marker is **40 mm** wide;
 - NHPT sheet: marker centres 130 mm apart left–right; the hole rings are **32 mm** apart;
 - cup sheet: marker centres 217 mm apart left–right.

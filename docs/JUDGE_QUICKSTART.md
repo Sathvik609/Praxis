@@ -40,7 +40,7 @@ The camera is processed in memory on the server and never stored. The red **"Liv
 3. Lift the arm out to the side to about shoulder height, hold for 3 s, then lower it. The angle shown is a camera-relative progress estimate, not a clinical measurement, and the 90° ceiling is enforced in code.
 4. Things to try: **lean your trunk** sideways while lifting (a posture correction appears; the third lean pauses the set and flags the therapist), or **walk out of view** (the session pauses and says why, then resumes when you come back). Tapping **Pain / feel unwell** with a 7 or higher stops the session.
 
-**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 at 100 %: [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf), [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf)). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand to see the setup hint name that corner.
+**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 or US Letter, at 100 % / actual size: [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf), [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf)). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand to see the setup hint name that corner.
 
 ## 5. Run it locally instead (edge / privacy mode, ~3 min)
 

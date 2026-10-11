@@ -17,7 +17,7 @@ The locked exercise set (28 Sep 2026) is **three camera-coached exercises**: **A
 ## 60-second quickstart (edge / laptop mode)
 
 ```bash
-# 0. Print the sheets at 100 % (A4). Check a marker measures 40 mm with a ruler.
+# 0. Print the sheets at 100 % (A4 or US Letter). Check the scale bar measures 80 mm.
 #    docs/sheets/nhpt_board.pdf · docs/sheets/cup_targets.pdf
 
 # 1. Session service (Python 3.12 + uv). fetch_models downloads the Apache-2.0 OpenCV Zoo ONNX files (25 MB).

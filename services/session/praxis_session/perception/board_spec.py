@@ -81,3 +81,21 @@ CUP_TARGETS = SheetSpec(
 )
 
 SHEETS: dict[str, SheetSpec] = {s.name: s for s in (NHPT_BOARD, CUP_TARGETS)}
+
+A4_MM = (210.0, 297.0)
+LETTER_MM = (215.9, 279.4)
+
+
+def page_mm(spec: SheetSpec) -> tuple[float, float, float, float]:
+    """The printed page (width, height) and the offset (ox, oy) of its top-left corner in sheet
+    mm: the A4 artwork cut, centred, to what A4 and US Letter share in the sheet's orientation
+    (210 x 279.4 mm). Printed at 100 % it fits either paper, however the viewer aligns it, so no
+    marker is clipped (11 Oct 2026: an A4 page on Letter lost two markers when top- or
+    bottom-aligned). Only white margin is cut: every marker keeps >= 11 mm of paper around it,
+    and the sheet geometry (marker and target positions) is unchanged."""
+    short, long_ = min(A4_MM[0], LETTER_MM[0]), min(A4_MM[1], LETTER_MM[1])
+    if spec.width_mm <= spec.height_mm:
+        pw, ph = min(spec.width_mm, short), min(spec.height_mm, long_)
+    else:
+        pw, ph = min(spec.width_mm, long_), min(spec.height_mm, short)
+    return pw, ph, (spec.width_mm - pw) / 2, (spec.height_mm - ph) / 2
