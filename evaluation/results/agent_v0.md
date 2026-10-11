@@ -11,7 +11,7 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 | Guardrail violations | 0 |
 | Fallback correctness | 3/3 |
 | Human approval respected | 8/8 |
-| Checkpoint → first action p50 / p95 (ms) | 61.2 / 82.9 |
+| Checkpoint → first action p50 / p95 (ms) | 6.7 / 24.5 |
 | Tokens per session | 0 |
 | Model cost (list price) | $0.0 total, $0.0 per session |
 

@@ -1,6 +1,6 @@
-{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791743233.7369258, "session": "eval-dim_light", "kind": "session"}
-{"type": "reach_complete", "id": 212, "t": 1.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 2, "ts": 1791743233.7436512, "session": "eval-dim_light", "kind": "event"}
-{"type": "reach_complete", "id": 213, "t": 2.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 3, "ts": 1791743233.7441862, "session": "eval-dim_light", "kind": "event"}
-{"type": "reach_complete", "id": 214, "t": 3.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 4, "ts": 1791743233.7442749, "session": "eval-dim_light", "kind": "event"}
-{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 5, "ts": 1791743233.744359, "session": "eval-dim_light", "kind": "stop_rule"}
-{"rule": "failed_reps", "detail": "3 consecutive unverified reps (marker_lost)", "seq": 6, "ts": 1791743233.74442, "session": "eval-dim_light", "kind": "flag"}
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791747853.353992, "session": "eval-dim_light", "kind": "session"}
+{"type": "reach_complete", "id": 212, "t": 1.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 2, "ts": 1791747853.359061, "session": "eval-dim_light", "kind": "event"}
+{"type": "reach_complete", "id": 213, "t": 2.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 3, "ts": 1791747853.359493, "session": "eval-dim_light", "kind": "event"}
+{"type": "reach_complete", "id": 214, "t": 3.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 4, "ts": 1791747853.359553, "session": "eval-dim_light", "kind": "event"}
+{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 5, "ts": 1791747853.3596091, "session": "eval-dim_light", "kind": "stop_rule"}
+{"rule": "failed_reps", "detail": "3 consecutive unverified reps (marker_lost)", "seq": 6, "ts": 1791747853.359654, "session": "eval-dim_light", "kind": "flag"}

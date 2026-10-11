@@ -1,7 +1,7 @@
-{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791743231.8738859, "session": "eval-covered_marker", "kind": "session"}
-{"pain_before": 2, "energy": "ok", "minutes": 10, "new_symptoms": false, "has_note": false, "seq": 2, "ts": 1791743231.877162, "session": "eval-covered_marker", "kind": "checkin"}
-{"type": "reach_complete", "id": 146, "t": 6.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 3, "ts": 1791743231.878022, "session": "eval-covered_marker", "kind": "event"}
-{"type": "reach_complete", "id": 147, "t": 11.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 4, "ts": 1791743231.878348, "session": "eval-covered_marker", "kind": "event"}
-{"type": "reach_complete", "id": 148, "t": 16.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 5, "ts": 1791743231.8785841, "session": "eval-covered_marker", "kind": "event"}
-{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 6, "ts": 1791743231.878727, "session": "eval-covered_marker", "kind": "stop_rule"}
-{"rule": "failed_reps", "detail": "3 consecutive unverified reps (marker_lost)", "seq": 7, "ts": 1791743231.878836, "session": "eval-covered_marker", "kind": "flag"}
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791747851.796652, "session": "eval-covered_marker", "kind": "session"}
+{"pain_before": 2, "energy": "ok", "minutes": 10, "new_symptoms": false, "has_note": false, "seq": 2, "ts": 1791747851.7977118, "session": "eval-covered_marker", "kind": "checkin"}
+{"type": "reach_complete", "id": 146, "t": 6.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 3, "ts": 1791747851.7979462, "session": "eval-covered_marker", "kind": "event"}
+{"type": "reach_complete", "id": 147, "t": 11.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 4, "ts": 1791747851.797997, "session": "eval-covered_marker", "kind": "event"}
+{"type": "reach_complete", "id": 148, "t": 16.0, "to_dot": 1, "verified": false, "reason": "marker_lost", "arc": 1, "seq": 5, "ts": 1791747851.7980402, "session": "eval-covered_marker", "kind": "event"}
+{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 6, "ts": 1791747851.7980878, "session": "eval-covered_marker", "kind": "stop_rule"}
+{"rule": "failed_reps", "detail": "3 consecutive unverified reps (marker_lost)", "seq": 7, "ts": 1791747851.798124, "session": "eval-covered_marker", "kind": "flag"}

@@ -356,7 +356,7 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
     finally:
         ms = round((time.perf_counter() - t0) * 1000.0, 1)
         summary = json.dumps(result if ok else {"error": str(err), "kind": getattr(err, "kind", "error")}, default=str)[:240]
-        safe_args = {k: (v[:120] if isinstance(v, str) else v) for k, v in args.items() if k != "session_id"}
+        safe_args = {k: (v[:SPEAK_MAX_CHARS] if isinstance(v, str) else v) for k, v in args.items() if k != "session_id"}
         extra = {}
         if ok and isinstance(result, dict) and name in OPENCV_TOOLS:
             extra["opencv"] = opencv_digest(name, result)

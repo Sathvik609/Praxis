@@ -90,8 +90,8 @@
   "guardrail_violations": 0,
   "fallback_correct": "3/3",
   "human_approval_respected": "8/8",
-  "first_action_ms_p50": 61.2,
-  "first_action_ms_p95": 82.9,
+  "first_action_ms_p50": 6.7,
+  "first_action_ms_p95": 24.5,
   "tokens_per_session": 0,
   "cost_usd": 0.0,
   "cost_usd_per_session": 0.0,
@@ -118,8 +118,8 @@
       "runs": 3,
       "tool_calls": 4,
       "first_action_ms": [
-        64.8,
-        10.1
+        27.0,
+        4.2
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -179,7 +179,7 @@
       "runs": 1,
       "tool_calls": 4,
       "first_action_ms": [
-        14.6
+        4.7
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -231,9 +231,9 @@
       "runs": 3,
       "tool_calls": 8,
       "first_action_ms": [
-        75.6,
-        57.2,
-        46.5
+        9.4,
+        4.9,
+        4.2
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -254,7 +254,7 @@
     },
     {
       "id": "covered_marker",
-      "title": "Covered marker: three unverified reaches, marker 2 under the hand",
+      "title": "Covered markers: the forearm rests across the two bottom corners, three reaches unverified",
       "success": true,
       "checks": {
         "triggers": true,
@@ -287,8 +287,8 @@
       "runs": 2,
       "tool_calls": 7,
       "first_action_ms": [
-        46.1,
-        66.8
+        4.3,
+        6.9
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -303,7 +303,7 @@
       "errors_detail": [],
       "agent_said": [
         "Slow arcs today, one dot at a time.",
-        "Markers missing: bottom-right corner (2). Flatten the sheet and keep it in view.",
+        "The markers in the bottom-right corner (2), bottom-left corner (3) are covered or creased: clear and flatten them.",
         "I re-checked the setup with the camera. Ready to carry on?",
         "Thanks. Carrying on from where we stopped."
       ]
@@ -343,7 +343,7 @@
       "runs": 1,
       "tool_calls": 6,
       "first_action_ms": [
-        68.2
+        11.7
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -395,8 +395,8 @@
       "runs": 2,
       "tool_calls": 7,
       "first_action_ms": [
-        76.3,
-        71.8
+        6.7,
+        6.0
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -452,8 +452,8 @@
       "runs": 2,
       "tool_calls": 7,
       "first_action_ms": [
-        47.6,
-        82.9
+        4.3,
+        13.0
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -495,7 +495,7 @@
       "runs": 1,
       "tool_calls": 2,
       "first_action_ms": [
-        54.3
+        24.5
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -590,7 +590,7 @@
       "runs": 1,
       "tool_calls": 2,
       "first_action_ms": [
-        59.2
+        5.1
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -640,7 +640,7 @@
       "runs": 1,
       "tool_calls": 4,
       "first_action_ms": [
-        62.5
+        8.5
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -730,8 +730,8 @@
       "runs": 2,
       "tool_calls": 5,
       "first_action_ms": [
-        61.2,
-        19.7
+        7.0,
+        5.2
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -783,7 +783,7 @@
       "runs": 1,
       "tool_calls": 3,
       "first_action_ms": [
-        13.9
+        4.5
       ],
       "tokens": 0,
       "input_tokens": 0,
@@ -835,7 +835,7 @@
       "runs": 1,
       "tool_calls": 5,
       "first_action_ms": [
-        88.9
+        10.1
       ],
       "tokens": 0,
       "input_tokens": 0,

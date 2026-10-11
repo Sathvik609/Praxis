@@ -307,3 +307,17 @@ def test_every_tool_result_is_pixel_free(reg, tmp_path):
         T.assert_no_pixels(call(reg, name, session_id="s1"))
     for row in h.session.trace.tail(50):
         T.assert_no_pixels(row)
+
+
+def test_trace_row_keeps_the_whole_spoken_line(reg, tmp_path):
+    """The trace's copy of a tool's args used to be cut at 120 characters, so a judge saw half
+    of a caption the patient saw whole (up to 160)."""
+    h = handle(reg, tmp_path)
+    h.session.on_events([unverified(1.0)], snapshot={}, t=1.0)
+    ev = h.session.recent_events()[-1].id
+    h.begin_run("arc_complete")
+    line = "Please clear and flatten the bottom-right and bottom-left corner markers on the sheet, " + "x" * (T.SPEAK_MAX_CHARS - 87)
+    assert len(line) == T.SPEAK_MAX_CHARS
+    call(reg, "speak", session_id="s1", text=line, cue="correct", evidence=[ev])
+    row = next(r for r in reversed(h.session.trace.tail(50)) if r.get("kind") == "tool" and r.get("name") == "speak")
+    assert row["args"]["text"] == line
