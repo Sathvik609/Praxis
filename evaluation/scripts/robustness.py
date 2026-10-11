@@ -133,6 +133,7 @@ class Condition:
     render: dict[str, Any] = field(default_factory=dict)  # overrides of BASE / scene options
     photometric: list[Callable[[np.ndarray, np.random.Generator], np.ndarray]] = field(default_factory=list)
     expect_rows: dict[str, str] = field(default_factory=dict)  # row id -> keyword its hint must contain
+    alt_rows: dict[str, str] | None = None  # an equally right outcome (e.g. blur: still calibrates, or "can be read")
     note: str = ""
     sheets: tuple[str, ...] = ("nhpt", "cup")
 
@@ -381,6 +382,12 @@ def expected_rows(spec: SheetSpec, H_true: np.ndarray, cond: Condition) -> dict[
     if true_tilt(r) > MAX_TILT_DEG and not r.get("squash_to"):
         exp.setdefault("angle", "tilt")
     w, h = r.get("squash_to") or r.get("size", SIZE)
+    for i in spec.marker_centres_mm:  # a marker (with its white margin) truly outside the frame
+        c = spec.marker_corners_mm(i)
+        q = (c.mean(axis=0) + (c - c.mean(axis=0)) * 1.25).reshape(-1, 1, 2).astype(np.float32)
+        px = cv2.perspectiveTransform(q, H_true).reshape(-1, 2)
+        if np.any((px < 0) | (px >= np.array([w, h]))):
+            exp.setdefault("markers", "outside")
     t = cv2.perspectiveTransform(np.array(spec.targets_mm, np.float32).reshape(-1, 1, 2), H_true).reshape(-1, 2)
     if np.any((t < 16) | (t > np.array([w - 16, h - 16]))):
         exp.setdefault("task_area", "back")
@@ -392,15 +399,19 @@ def expected_rows(spec: SheetSpec, H_true: np.ndarray, cond: Condition) -> dict[
 def rows_block(spec: SheetSpec, frame: np.ndarray, cal, cond: Condition, H_true: np.ndarray) -> dict[str, Any]:
     light = lighting(frame)
     area = task_area_in_view(cal, spec, frame.shape)
-    rows = build_checks(cal, light, {"jitter_px": 0.0, "ok": True}, area, {"present": None}, spec=spec)
+    rows = build_checks(cal, light, {"jitter_px": 0.0, "ok": True}, area, {"present": None}, spec=spec, frame_shape=frame.shape)
     fired = {r["id"]: r["hint"] for r in rows if r["status"] == "check"}
     if "markers" in fired and not cal.calibrated:
         fired.pop("task_area", None)  # "Show all four corner markers first." follows from the markers row
     exp = expected_rows(spec, H_true, cond)
-    if "markers" in exp and "markers" in fired:
+    if "markers" in fired and not cal.calibrated:
         exp.pop("task_area", None)  # judged only once the sheet is found
         exp.pop("angle", None)
-    ok = set(fired) == set(exp) and all(kw.lower() in (fired.get(rid) or "").lower() for rid, kw in exp.items())
+
+    def match(e: dict[str, str]) -> bool:
+        return set(fired) == set(e) and all(kw.lower() in (fired.get(rid) or "").lower() for rid, kw in e.items())
+
+    ok = match(exp) or (cond.alt_rows is not None and match(cond.alt_rows))
     return {
         "rows_fired": fired,
         "rows_expected": sorted(exp),
@@ -516,16 +527,16 @@ def conditions() -> list[Condition]:
     for s in (6, 12, 20):
         C.append(Condition(f"Gaussian noise σ{s}", "noise", {"noise": float(s)}))
     for n in (5, 9, 15):
-        C.append(Condition(f"motion blur {n} px", "blur", photometric=[motion_blur(n)]))
+        C.append(Condition(f"motion blur {n} px", "blur", photometric=[motion_blur(n)], alt_rows={"markers": "be read"}))
     for rr in (2, 3, 5):
-        C.append(Condition(f"defocus r{rr}", "blur", photometric=[defocus(rr)]))
+        C.append(Condition(f"defocus r{rr}", "blur", photometric=[defocus(rr)], alt_rows={"markers": "be read", "lighting": "blurry"}))
     for q in (40, 60, 80, 90):
         C.append(Condition(f"JPEG q{q}", "jpeg", {"jpeg": q}))
     # occlusion (hand over markers): first fix needs all four, a running session tolerates one
     C.append(Condition("hand over marker 2 (one marker)", "occlusion",
-                       {"hand_marker": [2]}, expect_rows={"markers": "bottom-right"}))
+                       {"hand_marker": [2]}, expect_rows={"markers": "bottom-right corner (2) is covered"}))
     C.append(Condition("hand over markers 1+2 (two markers)", "occlusion",
-                       {"hand_marker": [1, 2]}, expect_rows={"markers": "bottom-right"}))
+                       {"hand_marker": [1, 2]}, expect_rows={"markers": "bottom-right corner (2) are covered"}))
     for tone, bgr in SKIN_TONES.items():
         C.append(Condition(f"{tone} skin hand over hole grid", "hand", {"hand_nhpt": hand_blobs(150.0, 135.0, -150.0), "skin_bgr": bgr}, sheets=("nhpt",)))
         C.append(Condition(f"{tone} skin fingers across cup (~55% visible)", "hand", {"hand_cup": finger_bars(2, 12.0, 22.0, 138.0), "skin_bgr": bgr}, sheets=("cup",)))

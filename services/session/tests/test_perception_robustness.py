@@ -188,3 +188,83 @@ def test_small_blue_stickers_are_not_a_cup_even_together():
     cal = Calibrator(CUP_TARGETS).run(f, 0.0)
     sheet = CupSheetState(CUP_TARGETS)
     assert sheet.cup_mm(sheet.warp(f, cal)) is None
+
+
+# ---- mirrored video: some cameras / virtual cameras flip the picture ---------------------------
+@pytest.mark.parametrize("spec", [NHPT_BOARD, CUP_TARGETS])
+def test_a_mirrored_frame_calibrates_and_maps_to_the_right_millimetres(spec):
+    f, Hm = camera_frame(spec, tilt_deg=40, noise_sigma=3)
+    plain = Calibrator(spec).run(f, 0.0)
+    m = cv2.flip(f, 1)
+    res = Calibrator(spec).run(m, 0.0)
+    assert res.calibrated and res.mirrored and not plain.mirrored
+    assert res.to_dict()["mirrored"] is True
+    # a target seen at x in the plain frame is at (w-1-x) in the mirrored one
+    t = np.array(spec.targets_mm, np.float32)
+    px = cv2.perspectiveTransform(t.reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    px[:, 0] = m.shape[1] - 1 - px[:, 0]
+    assert np.allclose(res.to_mm(px), t, atol=1.0)
+    assert abs(res.tilt_deg - plain.tilt_deg) < 1.0
+
+
+def test_pegs_read_through_a_mirrored_frame():
+    e, _ = camera_frame(NHPT_BOARD, tilt_deg=40)
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, pegs_mm=[H[0], H[4], H[8]])
+    board, canon = _board(cv2.flip(_photo(e, seed=1), 1), cv2.flip(_photo(f, seed=2), 1))
+    assert _occupied(board, canon) == {0, 4, 8}
+
+
+def _markers_hint(spec, frame):
+    from praxis_session.perception.quality import build_checks, lighting, task_area_in_view
+
+    cal = Calibrator(spec).run(frame, 0.0)
+    rows = build_checks(cal, lighting(frame), {"ok": True}, task_area_in_view(cal, spec, frame.shape),
+                        {"present": None}, spec=spec, frame_shape=frame.shape)
+    return {r["id"]: r for r in rows}["markers"]["hint"]
+
+
+def test_marker_hint_says_outside_the_picture_when_the_sheet_is_cut_off():
+    f, _ = camera_frame(CUP_TARGETS, tilt_deg=40, scale=1.25)  # marker 0 falls off the frame
+    hint = _markers_hint(CUP_TARGETS, f)
+    assert "top-left corner (0)" in hint and "outside the picture" in hint
+    assert "covered" not in hint
+
+
+def test_marker_hint_says_covered_when_a_hand_is_on_the_corner():
+    cx, cy = NHPT_BOARD.marker_centres_mm[2]
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, skin_blobs_mm=[(cx, cy, 30.0)])
+    hint = _markers_hint(NHPT_BOARD, f)
+    assert "bottom-right corner (2)" in hint and "covered" in hint
+    assert "outside the picture" not in hint
+
+
+def test_marker_hint_says_unreadable_when_squares_are_seen_but_not_decoded():
+    f, _ = camera_frame(NHPT_BOARD, tilt_deg=40, noise_sigma=3)
+    k = np.zeros((15, 15), np.float32)
+    k[7, :] = 1 / 15  # 15 px motion blur: the camera moved
+    hint = _markers_hint(NHPT_BOARD, cv2.filter2D(f, -1, k))
+    assert "No corner marker can be read" in hint
+
+
+def test_marker_hint_says_unreadable_for_one_blurred_corner():
+    f, Hm = camera_frame(CUP_TARGETS, tilt_deg=40, noise_sigma=3)
+    c = cv2.perspectiveTransform(CUP_TARGETS.marker_corners_mm(2).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+    x0, y0 = np.floor(c.min(axis=0)).astype(int) - 12
+    x1, y1 = np.ceil(c.max(axis=0)).astype(int) + 12
+    k = np.zeros((15, 15), np.float32)
+    k[7, :] = 1 / 15
+    f[y0:y1, x0:x1] = cv2.filter2D(f, -1, k)[y0:y1, x0:x1]  # glare / smear on one corner only
+    hint = _markers_hint(CUP_TARGETS, f)
+    assert "bottom-right corner (2)" in hint and "cannot be read" in hint and "covered" not in hint
+
+
+def test_marker_hint_asks_for_the_sheet_when_nothing_is_there():
+    hint = _markers_hint(NHPT_BOARD, np.full((480, 640, 3), 90, np.uint8))
+    assert "Markers missing" in hint and "in view" in hint and "can be read" not in hint
+
+
+def test_mirror_fallback_finds_nothing_on_a_frame_without_a_sheet():
+    rng = np.random.default_rng(0)
+    noise = rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)
+    res = Calibrator(NHPT_BOARD).run(noise, 0.0)
+    assert not res.calibrated and res.marker_corners_px == {} and not res.mirrored
