@@ -3,7 +3,8 @@ import { SESSION_API_URL } from './config'
 
 export type Patient = { id: string; name: string; initial: string; side: string; goal: string; goal_attempts: number; program_code: string; program: { label: string; short: string; clinician: string; next_visit: string | null; level: number; version: number } }
 /** Practice days live in the prescription (screen 12, 28 Sep): weekdays 0 = Mon … 6 = Sun. */
-export type NextVisit = { at: string; with: string }
+/** `sample`: the seed's visit, served relative to today until the therapist books one. */
+export type NextVisit = { at: string; with: string; sample?: boolean }
 export type Schedule = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null; minutes_per_day: number }
 export type Prescription = { program: string; version: number; level: number; side: string; clinician: string; exercises: Record<string, Record<string, unknown>>; allowed_adaptations: Record<string, Record<string, unknown>>; stop_rules: { pain_max: number; lean_deg: number; lean_events: number; failed_reps: number; exertion_high_s: number; new_symptoms: boolean }; schedule?: Schedule; edited?: { by: string; at: string; what: string; from_version: number } | null }
 /** `GET /api/calendar` (service `calendar_view.py`). `done` only from live sessions; replays are
@@ -13,7 +14,7 @@ export type CalendarSession = { id: string; title: string | null; exercise: stri
 export type ClinicVisit = { at: string; with: string; with_short: string; time: string }
 export type CalendarDay = { date: string; weekday: number; is_today: boolean; status: CalendarStatus; planned: boolean; nhpt_due: boolean; minutes: number; minutes_done: number; exercises: { id: string; name: string }[]; sessions: CalendarSession[]; sample: boolean; clinic_visit: ClinicVisit | null }
 export type CalendarWeek = { from: string; to: string; done_days: number; planned_days: number; minutes_done: number; minutes_planned: number; nhpt_done: boolean }
-export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean }) | null; tracking_since: string | null }
+export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean; sample?: boolean }) | null; tracking_since: string | null }
 export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null }
 /** `cat` (6 Oct, Task 17) is the report's note eyebrow; older stored notes have none. */
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }
@@ -25,7 +26,7 @@ export type AgentNote = { text: string; evidence?: number[]; label?: string }
  *  `t` is on the session's own clock (wall or clip). */
 export type ReportedPain = { pain: number; t: number }
 export type SessionCoach ={ label: string; notes: CoachNote[]; decisions: number; agent?: string; agent_decisions?: number; note?: AgentNote }
-export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[]; side?: string; wrong_dot?: number; lean_cues?: number; hiking_cues?: number }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: SessionCoach; reported_pain?: ReportedPain | null; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
+export type SessionSummary = { mode: string; camera: Record<string, unknown> & { reps_total?: number; verified?: number; unverified?: number; corrections?: number; coverage_pct?: number; posture_cues?: number; active_s?: number; nhpt_total_s?: number; splits_s?: number[]; reach_ms?: number[]; reach_verified?: boolean[]; peak_deg?: number[]; peak_verified?: boolean[]; side?: string; wrong_dot?: number; lean_cues?: number; hiking_cues?: number; above_ceiling?: number; above_ceiling_by_set?: Record<string, number>; ceiling_deg?: number }; told_us: Record<string, unknown>; exertion: { level: string; reasons: string[]; method: string }; coach: SessionCoach; reported_pain?: ReportedPain | null; flags: { t: number; rule: string; detail: string }[]; stopped: boolean; delivery: string; source?: string; replay_clip?: string | null }
 export type SessionRecord = { id: string; mode: string; date: string; started_at: string; ended_at: string; status: string; tracking: string; title: string; checkin: Record<string, unknown>; feedback: Record<string, unknown>; summary: SessionSummary; next_practice: { text: string; proposal: string; level_change: boolean }; delivery: string; events?: unknown[]; live?: boolean; exercise?: string | null; illustrative?: boolean; source?: SessionSource; replay?: boolean }
 /** Screen 08's post-session answers, sent with `{cmd:'feedback'}` and stored as the session's
  *  `feedback` (design v2, 6 Oct). `effort` is derived from the `difficulty` choice (2 / 4 / 7 / 9),

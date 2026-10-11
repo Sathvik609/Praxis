@@ -46,8 +46,9 @@ from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
 from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, tier_reason
-from praxis_session.prescription import SEED_PRESCRIPTION
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 from praxis_session.session import CoachSession
+import praxis_session.store as store_module
 from praxis_session.store import DEFAULT_PATH, Store
 from praxis_session.trace import Trace
 from praxis_session.web import mount_web
@@ -280,6 +281,11 @@ def _clock() -> datetime:
     return datetime.now()
 
 
+# The store serves the sample next visit relative to today: the same clock (looked up per call,
+# so a test that pins `_clock` pins it too).
+store_module.local_today = lambda: _clock().date()
+
+
 @app.get("/api/calendar")
 def api_calendar(start: date | None = Query(None, alias="from"), end: date | None = Query(None, alias="to")) -> dict[str, object]:
     """Screen 12. Days `from..to` (inclusive, at most 62) from the prescription's practice
@@ -294,7 +300,11 @@ def api_calendar(start: date | None = Query(None, alias="from"), end: date | Non
         end = start + timedelta(days=6)
     if end < start or (end - start).days + 1 > MAX_DAYS:
         raise HTTPException(400, f"from must not be after to, and the range is at most {MAX_DAYS} days")
-    return build_calendar(store.rx().schedule, store.sessions(10_000), start, end, today, now=now)
+    rx = store.prescription()
+    cal = build_calendar(Prescription.model_validate(rx).schedule, store.sessions(10_000), start, end, today, now=now)
+    if cal["next_visit"] is not None:  # the seed's visit is a sample (served relative to today)
+        cal["next_visit"]["sample"] = bool((rx["schedule"].get("next_visit") or {}).get("sample"))
+    return cal
 
 
 @app.get("/api/plan")

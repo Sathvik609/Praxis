@@ -1,7 +1,7 @@
 """Therapist prescription: dose, allowed adaptations and stop rules. Clamps live here, in code."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -75,6 +75,22 @@ SEED_SCHEDULE = Schedule(
     next_visit=NextVisit(at="2026-10-01T14:30", with_="Dr. Anita Rao, OT"),
     minutes_per_day=SCHEDULE_MINUTES,
 )
+
+
+SAMPLE_VISIT_DAYS = 3  # the sample visit is the next weekday at least this many days ahead
+
+
+def sample_next_visit(today: date) -> NextVisit:
+    """The seed's next visit as served (10 Oct walkthrough: a fixed "Thu 1 Oct" read as a past
+    date on 10 Oct). It is a sample, so it moves with today: the next weekday at least
+    `SAMPLE_VISIT_DAYS` ahead, at the seed's time and clinician. `Store.prescription` serves it
+    (marked `sample`) only while the seed's visit is unedited."""
+    seed = SEED_SCHEDULE.next_visit
+    assert seed is not None
+    d = today + timedelta(days=SAMPLE_VISIT_DAYS)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return NextVisit(at=f"{d.isoformat()}T{seed.when():%H:%M}", with_=seed.with_)
 
 
 def visit_text(v: NextVisit | None) -> str | None:

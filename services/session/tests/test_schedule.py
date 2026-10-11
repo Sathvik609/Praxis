@@ -1,10 +1,12 @@
 """Practice schedule in the prescription (screen 12 · Calendar, 28 Sep 2026)."""
 import json
+from datetime import date, timedelta
 
 import pytest
 from pydantic import ValidationError
 
-from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, visit_text
+import praxis_session.store as store_module
+from praxis_session.prescription import SEED_PRESCRIPTION, Prescription, Schedule, sample_next_visit, visit_text
 from praxis_session.store import Store
 
 
@@ -65,11 +67,50 @@ def test_visit_text_reads_like_the_old_patient_label():
 # ---- store -----------------------------------------------------------------------------------
 
 
-def test_store_serves_the_schedule_and_a_patient_next_visit_derived_from_it(tmp_path):
+def test_store_serves_the_schedule_and_a_patient_next_visit_derived_from_it(tmp_path, monkeypatch):
+    monkeypatch.setattr(store_module, "local_today", lambda: date(2026, 9, 28))
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()
     assert st.prescription()["schedule"]["practice_days"] == [0, 1, 2, 3, 4]
     assert st.patient()["program"]["next_visit"] == "Thu 1 Oct, 2:30 PM"  # the old seed said Thu 18 Sep (past on 28 Sep)
+
+
+@pytest.mark.parametrize(
+    ("today", "visit"),
+    [
+        (date(2026, 10, 10), "2026-10-13T14:30"),  # Sat -> Tue
+        (date(2026, 10, 9), "2026-10-12T14:30"),  # Fri -> Mon
+        (date(2026, 10, 8), "2026-10-12T14:30"),  # Thu -> Sun -> Mon
+        (date(2026, 10, 7), "2026-10-12T14:30"),  # Wed -> Sat -> Mon
+        (date(2026, 9, 28), "2026-10-01T14:30"),  # Mon -> Thu
+    ],
+)
+def test_the_sample_next_visit_is_the_next_weekday_at_least_three_days_ahead(today, visit):
+    v = sample_next_visit(today)
+    assert v.at == visit and v.with_ == "Dr. Anita Rao, OT"
+    assert v.when().date() >= today + timedelta(days=3) and v.when().weekday() < 5
+
+
+def test_the_seeded_next_visit_is_relative_to_today_and_labelled_sample(tmp_path, monkeypatch):
+    """10 Oct walkthrough: the therapist view said "Next visit · Thu 1 Oct" on 10 Oct. The
+    seed's visit is a sample, served relative to today so it is never in the past."""
+    monkeypatch.setattr(store_module, "local_today", lambda: date(2026, 10, 10))
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    assert st.prescription()["schedule"]["next_visit"] == {"at": "2026-10-13T14:30", "with": "Dr. Anita Rao, OT", "sample": True}
+    assert st.rx().schedule.next_visit is not None and st.rx().schedule.next_visit.at == "2026-10-13T14:30"
+    assert st.patient()["program"]["next_visit"] == "Tue 13 Oct, 2:30 PM"
+    # stored as the seed, untouched: only the served value moves
+    stored = json.loads(st._db.execute("SELECT json FROM prescriptions").fetchone()["json"])
+    assert stored["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
+
+
+def test_a_visit_the_therapist_booked_is_never_moved_or_called_a_sample(tmp_path, monkeypatch):
+    monkeypatch.setattr(store_module, "local_today", lambda: date(2026, 10, 10))
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.update_schedule({"practice_days": [0, 1, 2, 3, 4], "nhpt_day": 6, "next_visit": {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}}, by="therapist")
+    assert st.prescription()["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
 
 
 def test_an_old_database_without_a_schedule_is_brought_up_to_the_seed(tmp_path):

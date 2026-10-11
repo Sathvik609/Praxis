@@ -86,6 +86,16 @@ export function visitText(at: string): string {
   return `${shortDate(day)}, ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
 }
 
+/** The sample next visit (the seed's, before the therapist books one) as the service serves
+ *  it (`prescription.sample_next_visit`): the next weekday at least 3 days after `now`, 2:30 PM,
+ *  local time. Only the offline fallback uses it; online the service's value is shown. */
+export function sampleVisitAt(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3)
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T14:30`
+}
+
 /** "Mon–Fri", "Mon, Wed, Fri", "Every day". */
 export function daysLabel(days: number[]): string {
   const s = [...days].sort((a, b) => a - b)

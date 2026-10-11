@@ -351,3 +351,47 @@ def test_coach_note_categories_from_the_real_rule_coach(tmp_path):
     s.on_events([make_event("compensation_lean", t=1.0, lean_deg=14, count=1)], snapshot={}, t=1.0)
     notes = s.summary(1.0)["coach"]["notes"]
     assert notes and notes[0]["cat"] == "Posture"
+
+
+def test_coach_notes_read_as_plain_sentences_for_a_clinician(tmp_path):
+    """10 Oct walkthrough: notes read like code ("progress: patient accepted progression")."""
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.decisions += [
+        {"action": "progress", "cue_id": "cup_progress", "reason": "two clean slow arcs, mean reach 1.2 s, 0 unverified", "evidence": [1], "source": "rule"},
+        {"action": "progress", "cue_id": "cup_fast", "reason": "patient accepted progression", "evidence": [], "source": "rule"},
+        {"action": "correct", "cue_id": "cup_unverified", "reason": "unverified reach (cup_occluded)", "evidence": [2], "source": "rule"},
+        {"action": "correct", "cue_id": "cup_wrong_dot", "reason": "wrong dot", "evidence": [3], "source": "rule"},
+        {"action": "rest", "cue_id": "rest_exertion", "reason": "behavioural exertion high: rep time rising, tremor", "evidence": [4], "source": "rule"},
+    ]
+    notes = s.summary(1.0)["coach"]["notes"]
+    assert [n["text"] for n in notes] == [
+        "Progression offered: two clean slow arcs, mean reach 1.2 s, 0 unverified.",
+        "Patient accepted the faster arcs.",
+        "Reach not verified by the camera: cup occluded.",
+        "Correction: the cup went to a different dot than the next one.",
+        "Rest suggested: exertion high from behaviour (rep time rising, tremor).",
+    ]
+    assert [n["cat"] for n in notes] == ["Performance", "Performance", "Data quality", "Performance", "Safety"]  # chips unchanged
+    arm = make(mode="arm", tmp_path=tmp_path)
+    arm.decisions += [
+        {"action": "correct", "cue_id": "arm_lean", "reason": "trunk lean 14°", "evidence": [1], "source": "rule"},
+        {"action": "correct", "cue_id": "arm_hike", "reason": "shoulder hiking", "evidence": [2], "source": "rule"},
+        {"action": "correct", "cue_id": "arm_above_ceiling", "reason": "lift 97° past the 90° ceiling (rep 3)", "evidence": [3], "source": "rule"},
+        {"action": "correct", "cue_id": "arm_short_hold", "reason": "hold too short", "evidence": [4], "source": "rule"},
+        {"action": "correct", "cue_id": "arm_missed", "reason": "target missed", "evidence": [5], "source": "rule"},
+        {"action": "regress", "cue_id": "arm_regress_hold", "reason": "2 lean events in Arm out to the side; hold_s 3 → 2, clamped to abduction.hold_s within the prescription", "evidence": [6], "source": "rule"},
+    ]
+    assert [n["text"] for n in arm.summary(1.0)["coach"]["notes"]] == [
+        "Posture correction: trunk lean 14°.",
+        "Posture correction: shoulder hiking.",
+        "Range correction: lift 97° past the 90° ceiling (rep 3).",
+        "Correction: the hold at the top was too short.",
+        "Correction: the lift stopped short of the target.",
+        "Made easier after 2 lean events in Arm out to the side: hold 3 s → 2 s, within the prescription.",
+    ]
+
+
+def test_an_agent_decision_note_keeps_its_reason_in_a_sentence(tmp_path):
+    s = make(mode="cup", tmp_path=tmp_path)
+    s.decisions.append({"action": "progress", "cue_id": "agent_progress", "reason": "Reach times fell 15% over two arcs", "evidence": [1], "source": "agent"})
+    assert s.summary(1.0)["coach"]["notes"][0]["text"] == "Progression offered: reach times fell 15% over two arcs."

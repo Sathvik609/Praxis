@@ -97,6 +97,12 @@ export function LiveNhpt() {
     if (complete) finish(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete?.id])
+  // A replay clip that ran out before the session finished by itself goes to the feedback
+  // (10 Oct walkthrough: it froze on its last frame); a finished one keeps its own ending.
+  useEffect(() => {
+    if (flow.replayOver && !complete) finish(false, 'replay_end')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow.replayOver])
 
   const pegsDone = frame?.nhpt?.pegs_done ?? 0
   // Occupancy is the peg test's verification; a peg is unverified only when the service says so
@@ -205,7 +211,7 @@ export function LiveNhpt() {
         />
       </main>
 
-      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} onSave={flow.save} onSkip={flow.skip} />
+      <FeedbackOverlay open={flow.feedbackOpen} early={flow.early} reportedPain={reportedPain} notice={flow.recordingEnded ? 'The recording has ended.' : null} onSave={flow.save} onSkip={flow.skip} />
       <SessionOverlay overlay={stopped && !flow.feedbackOpen ? coach.overlay : null} onResume={() => { send({ cmd: 'resume' }); coach.clearOverlay() }} onEnd={() => finish(true, overlayEndReason(coach.overlay))} />
       <PainCheck open={painOpen} onSubmit={(p) => { send({ cmd: 'pain', pain: p }); setReportedPain(p); setPainOpen(false) }} onCancel={() => setPainOpen(false)} />
       <SxBar

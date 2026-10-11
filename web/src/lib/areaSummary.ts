@@ -110,7 +110,9 @@ function shoulder(d: AreaSources): AreaView {
   const reps = lastArm ? num(lastArm.summary.camera.reps_total) : undefined
   return {
     ...base('lShoulder', d),
-    headline: !last ? 'No arm session yet' : last.best >= ceiling - 3 ? "At today's safe limit" : 'Building range',
+    // An arm session whose lifts carry no verified angle is still a session: the card never says
+    // "No arm session yet" beside that session's own lift counts (10 Oct walkthrough).
+    headline: !last ? (lastArm ? 'No lift angle yet' : 'No arm session yet') : last.best >= ceiling - 3 ? "At today's safe limit" : 'Building range',
     now: last && {
       label: 'Best lift',
       value: String(last.best),
@@ -119,7 +121,7 @@ function shoulder(d: AreaSources): AreaView {
       detail: `Best verified lift in your last arm session, ${dayMonth(last.s.date)} · limit ${ceiling}°`,
       ring: { now: last.best, max: ceiling },
     },
-    empty: last ? undefined : 'Starts after your next arm session.',
+    empty: last ? undefined : lastArm ? 'No verified lift angle in your last arm session.' : 'Starts after your next arm session.',
     trend: measured.length ? { label: 'Best lift per session · degrees', points: measured.map(({ s, best }) => ({ date: s.date, value: best, sample: isSample(s) })), better: 'up', ref: ceiling } : undefined,
     tiles: [
       { k: 'Lifts with a posture cue', v: inWeek.length ? String(cues) : '—', u: inWeek.length ? `of ${lifts} · this week` : 'No arm session this week' },

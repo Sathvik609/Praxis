@@ -151,6 +151,25 @@ test('navigates to the report when the test completes', () => {
   expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
+test('a peg test finished at the 9th peg is not finished again when the recording ends', () => {
+  const send = mockStream([frame, { type: 'nhpt_complete', t: 12, id: 3, total_s: 41.2, splits_s: [4, 5], pegs: [] }, { type: 'replay_end', t: 13, id: 4, clip: 'synthetic_nhpt_01', frames: 130 }])
+  renderAt('/session?hand=left&replay=synthetic_nhpt_01')
+  const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
+  expect(dlg).not.toHaveTextContent('The recording has ended.')
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  expect(send.mock.calls.filter(([c]) => c.cmd === 'feedback')).toHaveLength(1)
+  expect(send).toHaveBeenLastCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: null }))
+})
+
+test('a peg-test replay that ends before the 9th peg moves to the feedback as the recording ending', () => {
+  const send = mockStream([frame, { type: 'replay_end', t: 13, id: 4, clip: 'synthetic_nhpt_01', frames: 130 }])
+  renderAt('/session?hand=left&replay=synthetic_nhpt_01')
+  const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
+  expect(dlg).toHaveTextContent('The recording has ended.')
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  expect(send).toHaveBeenLastCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: 'replay_end' }))
+})
+
 test('feedback acknowledgement navigates to the persisted report', () => {
   mockStream([frame, { type: 'command', t: 13, id: 4, cmd: 'feedback', ok: true, summary: { session_id: 'sid42' } }])
   render(

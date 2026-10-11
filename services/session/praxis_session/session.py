@@ -45,6 +45,46 @@ def note_category(d: dict[str, Any]) -> str:
     return "Performance"
 
 
+# Report coach notes are read by a clinician (10 Oct walkthrough: "progress: patient accepted
+# progression" read like code). The decision's own reason stays verbatim in the trace; the note
+# says it as a sentence. Rule cues whose reason is fixed text get a whole sentence.
+NOTE_LEAD = {"progress": "Progression offered", "regress": "Made easier", "rest": "Rest suggested", "stop": "Session stopped", "correct": "Correction"}
+NOTE_CUE_LEAD = {"arm_lean": "Posture correction", "arm_hike": "Posture correction", "arm_above_ceiling": "Range correction"}
+NOTE_FIXED = {
+    "cup_fast": "Patient accepted the faster arcs.",
+    "cup_wrong_dot": "Correction: the cup went to a different dot than the next one.",
+    "nhpt_drop": "Correction: a peg was dropped.",
+    "arm_short_hold": "Correction: the hold at the top was too short.",
+    "arm_missed": "Correction: the lift stopped short of the target.",
+}
+
+
+def _sentence(lead: str, body: str) -> str:
+    body = body.strip()
+    if len(body) > 1 and body[0].isupper() and body[1].islower():
+        body = body[0].lower() + body[1:]  # "Reach times…" -> "reach times…", never "NHPT" -> "nHPT"
+    return f"{lead}: {body}" + ("" if body.endswith((".", "!", "?")) else ".")
+
+
+def note_text(d: dict[str, Any]) -> str:
+    """A coach decision as a plain sentence for the report's "Coach notes" (category chips come
+    from `note_category`, unchanged)."""
+    action, cue, reason = str(d.get("action") or ""), str(d.get("cue_id") or ""), str(d.get("reason") or "")
+    if d.get("source") != "agent":
+        if cue in NOTE_FIXED:
+            return NOTE_FIXED[cue]
+        m = re.fullmatch(r"unverified (reach|rep) \((.*)\)", reason)
+        if m:
+            return _sentence(f"{m.group(1).capitalize()} not verified by the camera", m.group(2).replace("_", " "))
+        m = re.fullmatch(r"behavioural exertion high: (.*)", reason)
+        if m:
+            return _sentence("Rest suggested", f"exertion high from behaviour ({m.group(1)})" if m.group(1) else "exertion high from behaviour")
+        m = re.fullmatch(r"(\d+) lean events in (.+); hold_s (\S+) → (\S+), clamped .*", reason)
+        if m:
+            return f"Made easier after {m.group(1)} lean events in {m.group(2)}: hold {m.group(3)} s → {m.group(4)} s, within the prescription."
+    return _sentence(NOTE_CUE_LEAD.get(cue) or NOTE_LEAD.get(action, action.capitalize()), reason)
+
+
 class CoachSession:
     def __init__(self, mode: str, prescription: Prescription, trace_dir: Path | str | None = None, session_id: str | None = None, coach: Any | None = None, exercise: str | None = None, username: str | None = None, replay_clip: str | None = None, rule_label: str = LABEL) -> None:
         self.mode = mode
@@ -387,7 +427,7 @@ class CoachSession:
         for d in self.decisions:
             if d["action"] in ("progress", "regress", "rest", "correct"):
                 conf = "high" if d["evidence"] else "medium"
-                notes.append({"text": f"{d['action']}: {d['reason']}", "confidence": conf, "evidence": d["evidence"], "cat": note_category(d)})
+                notes.append({"text": note_text(d), "confidence": conf, "evidence": d["evidence"], "cat": note_category(d)})
         seen = set()
         notes = [n for n in notes if not (n["text"] in seen or seen.add(n["text"]))][:6]
         t_end = t if t is not None else self.t_end

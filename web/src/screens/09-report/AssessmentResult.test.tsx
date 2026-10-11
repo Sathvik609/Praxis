@@ -70,3 +70,9 @@ test('arm variant shows sets, verified reps, lean events and the ceiling as targ
   expect(chart.getAttribute('aria-label')).toMatch(/2 70 ° unverified/)
   expect(screen.getByText(/target 90 °/)).toBeInTheDocument()
 })
+
+test('arm variant shows lifts above the ceiling beside the posture counts, in words', () => {
+  renderWith({ kind: 'arm', side: 'left', sets: 2, ended_early: false, lean_count: 0, hike_count: 0, above_ceiling: 3, ceiling_deg: 90, reps: [] })
+  expect(screen.getByText('lifts above 90°')).toBeInTheDocument()
+  expect(screen.getByText('lifts above 90°').closest('div.min-w-0')).toHaveTextContent(/^3\s*lifts above 90°$/)
+})

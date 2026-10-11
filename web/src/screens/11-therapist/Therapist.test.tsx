@@ -170,3 +170,22 @@ test('cancel changes nothing', async () => {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/prescription/schedule'))).toBe(false)
 })
+
+test('a sample next visit (the seed, served relative to today) says Sample beside it', async () => {
+  mockApi({ ...ROUTES, '/api/prescription': { ...PRESCRIPTION, schedule: { ...PRESCRIPTION.schedule, next_visit: { at: '2099-01-05T14:30', with: 'Dr. Anita Rao, OT', sample: true } } } })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  const rx = screen.getByRole('region', { name: 'Prescription' })
+  await within(rx).findByText(/Next visit · Mon 5 Jan, 2:30 PM · Dr. Anita Rao, OT/)
+  expect(within(rx).getByText('Sample')).toBeInTheDocument()
+  expect(screen.getByText(/next visit Mon 5 Jan, 2:30 PM \(sample\)/)).toBeInTheDocument()
+})
+
+test('a booked next visit carries no Sample label', async () => {
+  mockApi({ ...ROUTES, '/api/prescription': { ...PRESCRIPTION, schedule: { ...PRESCRIPTION.schedule, next_visit: { at: '2099-01-05T14:30', with: 'Dr. Anita Rao, OT' } } } })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  const rx = screen.getByRole('region', { name: 'Prescription' })
+  await within(rx).findByText(/Next visit · Mon 5 Jan, 2:30 PM/)
+  expect(within(rx).queryByText('Sample')).not.toBeInTheDocument()
+})

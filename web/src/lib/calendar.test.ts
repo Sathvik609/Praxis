@@ -1,5 +1,5 @@
 import type { CalendarDay } from './api'
-import { addDays, dayLines, daysLabel, visitText, longDate, monthLabel, monthRange, rangeLabel, shift, shortDate, weekRange, weekday } from './calendar'
+import { addDays, dayLines, daysLabel, sampleVisitAt, visitText, longDate, monthLabel, monthRange, rangeLabel, shift, shortDate, weekRange, weekday } from './calendar'
 
 const day = (over: Partial<CalendarDay>): CalendarDay => ({ date: '2026-09-29', weekday: 1, is_today: false, status: 'planned', planned: true, nhpt_due: false, minutes: 10, minutes_done: 0, exercises: [{ id: 'abduction', name: 'Arm out to the side' }, { id: 'cup', name: 'Waiter – cup' }], sessions: [], sample: false, clinic_visit: null, ...over })
 
@@ -65,4 +65,11 @@ test('a sample day is labelled Sample and never says done', () => {
   expect(lines.join(' ')).not.toMatch(/✓|Done/)
   // 12 Sep 2026 was a Saturday: sample history on a rest day is still shown, labelled
   expect(dayLines(day({ status: 'rest', planned: false, exercises: [], sample: true, sessions: sample }))[0]).toBe('Sample')
+})
+
+test('the sample next visit is the next weekday at least three days ahead (as the service), never in the past', () => {
+  expect(sampleVisitAt(new Date(2026, 9, 10, 9))).toBe('2026-10-13T14:30') // Sat -> Tue
+  expect(sampleVisitAt(new Date(2026, 9, 9, 9))).toBe('2026-10-12T14:30') // Fri -> Mon
+  expect(sampleVisitAt(new Date(2026, 9, 8, 23))).toBe('2026-10-12T14:30') // Thu -> Sun -> Mon
+  expect(sampleVisitAt(new Date(2026, 8, 28, 9))).toBe('2026-10-01T14:30') // Mon -> Thu
 })

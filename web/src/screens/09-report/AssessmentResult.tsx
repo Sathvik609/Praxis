@@ -19,7 +19,7 @@ type NhptResult = {
 type Reach = { rep: number; from_dot: number; to_dot: number; reach_ms: number; verified: boolean; reason: string | null; arc: number; phase: string }
 type CupResult = { kind: 'cup'; side: string; arcs: number; reaches: Reach[]; ended_early: boolean }
 type ArmRep = { set: number; rep: number; peak_deg: number; hold_s: number; verified: boolean; reason: string | null; lean: boolean; hike: boolean }
-type ArmResult = { kind: 'arm'; name?: string; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; ceiling_deg: number }
+type ArmResult = { kind: 'arm'; name?: string; side: string; sets: number; reps: ArmRep[]; ended_early: boolean; lean_count: number; hike_count: number; above_ceiling?: number; ceiling_deg: number }
 type Result = NhptResult | CupResult | ArmResult
 
 const tenth = (v: number) => Math.round(v * 10) / 10
@@ -48,11 +48,12 @@ function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
   return (
     <Frame title={`${r.name ?? 'Arm out to the side'} · ${r.side} side`} endedEarly={r.ended_early} caveat={`Camera-relative angles, not goniometry. Ceiling ${r.ceiling_deg}° enforced in code.`} onDone={onDone}>
       <Card>
-        <div className="grid grid-cols-4 gap-4">
+        <div className={`grid ${r.above_ceiling !== undefined ? 'grid-cols-5' : 'grid-cols-4'} gap-4`}>
           <Stat value={r.sets} label={plural(r.sets, 'set')} />
           <Stat value={verified} label={`verified ${plural(verified, 'lift')}`} />
           <Stat value={unverified} label="unverified · missed target or short hold" tone="amber" />
           <Stat value={r.lean_count} label={`${plural(r.lean_count, 'lean event')} · ${r.hike_count} ${plural(r.hike_count, 'shoulder-hike event')}`} tone={r.lean_count > 0 ? 'amber' : 'default'} />
+          {r.above_ceiling !== undefined && <Stat value={r.above_ceiling} label={`${plural(r.above_ceiling, 'lift')} above ${r.ceiling_deg}°`} tone={r.above_ceiling > 0 ? 'amber' : 'default'} />}
         </div>
       </Card>
       {r.reps.length > 0 && (

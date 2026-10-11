@@ -255,3 +255,20 @@ test('ending from a stop rule records the stop rule as the end reason, never nul
   fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
   expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
 })
+
+test('a replay whose last arc never completes moves to the feedback when the recording ends, with honest copy', () => {
+  mockStream([frame, { type: 'replay_end', t: 31, id: 90, clip: 'synthetic_cup_01', frames: 310 }])
+  renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
+  const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
+  expect(dlg).toHaveTextContent('The recording has ended.')
+  expect(dlg).not.toHaveTextContent(/ended early|What got in the way/)
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: 'replay_end' }))
+})
+
+test('a replay that completed keeps its done modal when the recording ends; nothing finishes twice', () => {
+  mockStream([frame, { type: 'cup_complete', t: 12, id: 3, arcs: 4, reaches: [] }, { type: 'replay_end', t: 31, id: 90, clip: 'synthetic_cup_01', frames: 310 }])
+  renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
+  expect(screen.getByRole('dialog', { name: 'Waiter – cup, done' })).toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'How was your practice?' })).not.toBeInTheDocument()
+})

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ME, SESSION, mockApi } from '../../test/api-mock'
 import { SessionReport } from './SessionReport'
@@ -66,6 +66,19 @@ test('coach note eyebrows come from the note category, and a note without one ha
   expect(lean.querySelector('small')).toHaveTextContent('Posture')
   const reach = screen.getByText(/reach time fell/).closest('li')!
   expect(reach.querySelector('small')).toBeNull()
+})
+
+test('coach notes stored in the old "action: reason" form read as sentences; the category chip stays', async () => {
+  const notes = [
+    { text: 'progress: patient accepted progression', confidence: 'high', evidence: [], cat: 'Performance' },
+    { text: 'progress: two clean slow arcs, mean reach 1.2 s, 0 unverified', confidence: 'high', evidence: [22], cat: 'Performance' },
+  ]
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: { ...SESSION.summary.coach, notes } } }, '/api/patients/me': ME })
+  renderReport()
+  const accepted = (await screen.findByText('Patient accepted the faster arcs.')).closest('li')!
+  expect(accepted.querySelector('small')).toHaveTextContent('Performance')
+  expect(screen.getByText('Progression offered: two clean slow arcs, mean reach 1.2 s, 0 unverified.')).toBeInTheDocument()
+  expect(screen.queryByText(/^progress:/)).not.toBeInTheDocument()
 })
 
 test('the authority line names the clinician from data and guesses no pronoun', async () => {
@@ -302,4 +315,74 @@ test('no in-session report: no extra pain line', async () => {
   renderReport()
   expect(await screen.findByText('2 → 2')).toBeInTheDocument()
   expect(screen.queryByText(/during the session/)).toBeNull()
+})
+
+test('an Arm out to the side report shows the lifts above 90° next to the posture cues', async () => {
+  const arm = { ...SESSION, mode: 'arm', exercise: 'abduction', title: 'Arm out to the side', summary: { ...SESSION.summary, mode: 'arm', camera: { reps_total: 16, verified: 15, unverified: 1, posture_cues: 2, coverage_pct: 95, active_s: 300, above_ceiling: 2, above_ceiling_by_set: { '1': 2 } } } }
+  mockApi({ '/api/sessions/abc': arm, '/api/patients/me': ME })
+  renderReport()
+  const stat = await screen.findByText('lifts above 90°')
+  expect(stat.closest('.rp-stats')).toHaveTextContent(/2\s*posture cues/)
+  expect(stat.closest('div.min-w-0')).toHaveTextContent(/^2\s*lifts above 90°$/)
+})
+
+test('a cup report has no above-90° count', async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, above_ceiling: 0 } } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText('tracking coverage')
+  expect(screen.queryByText(/above 90°/)).not.toBeInTheDocument()
+})
+
+// 10 Oct walkthrough: the agent writes its note after the session is saved, so a report opened
+// right away missed it until a reload.
+describe('a late agent note', () => {
+  const noNote = { ...AGENT_COACH, note: undefined }
+  function serve(notes: (typeof AGENT_COACH.note | undefined)[], agent = true) {
+    let n = 0
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/api/sessions/abc')) {
+        const note = notes[Math.min(n++, notes.length - 1)]
+        const coach = agent ? { ...noNote, ...(note ? { note } : {}) } : { label: 'Rule-based coach', notes: [], decisions: 2 }
+        return { ok: true, status: 200, json: async () => ({ ...SESSION, summary: { ...SESSION.summary, coach } }) } as Response
+      }
+      if (url.includes('/api/patients/me')) return { ok: true, status: 200, json: async () => ME } as Response
+      return { ok: false, status: 404, json: async () => ({ error: 'unmocked' }) } as Response
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return () => fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/sessions/abc')).length
+  }
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  test('is fetched again every 2 s and shown when it lands, with no loading text', async () => {
+    const calls = serve([undefined, undefined, AGENT_COACH.note])
+    renderReport()
+    await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+    expect(screen.getByRole('heading', { name: 'What the camera measured' })).toBeInTheDocument()
+    expect(screen.queryByText(AGENT_COACH.note.text)).toBeNull()
+    expect(document.body.textContent).not.toMatch(/waiting|loading/i)
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(2)
+    expect(screen.queryByText(AGENT_COACH.note.text)).toBeNull()
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.getByText(AGENT_COACH.note.text)).toBeInTheDocument()
+    for (let i = 0; i < 10; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(3)
+  })
+
+  test('stops asking after 20 s when no note comes', async () => {
+    const calls = serve([undefined])
+    renderReport()
+    for (let i = 0; i < 30; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(11)
+    expect(screen.getByText(/No coach notes/)).toBeInTheDocument()
+  })
+
+  test('a session without an agent is fetched once', async () => {
+    const calls = serve([undefined], false)
+    renderReport()
+    for (let i = 0; i < 5; i++) await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(calls()).toBe(1)
+  })
 })
