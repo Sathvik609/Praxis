@@ -66,7 +66,13 @@ def test_setup_recovery_loop(tmp_path):
     assert s.agent.pending and s.agent.pending[0][0] == "pause:failed_reps"
 
     async def patient_fixes_the_sheet():
-        # the patient uncovers marker 2 while the agent recalibrates: frames keep coming
+        # the patient uncovers marker 2 while the agent recalibrates: frames keep coming.
+        # Only after the agent's own check_setup has looked at the covered frame, so a loaded
+        # machine cannot let the fix land first (the check would then pass and name nothing).
+        for _ in range(1000):
+            if any(r.get("name") == "check_setup" for r in rows(s, "tool")):
+                break
+            await asyncio.sleep(0.01)
         for i in range(40):
             await asyncio.sleep(0.02)
             p.process(clean, 3.1 + i * 0.1, i + 1)
