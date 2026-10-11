@@ -21,9 +21,9 @@ What is measured and what is not, in one place:
 
 | Area | Status (11 Oct 2026) |
 |---|---|
-| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 636 service tests + 945 web tests green; CI on every push |
+| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 760 service tests + 960 web tests green; CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 15 scenarios × 3: 45/45 passed, **0 guardrail violations** (§8.3) |
-| AWS: Graviton4 + COOL + CloudFront | **live** (stopped between work sessions); 634/636 tests pass on COOL; benchmark re-measured 11 Oct (§7) |
+| AWS: Graviton4 + COOL + CloudFront | **live** (stopped between work sessions); the 636-test suite of 11 Oct morning passed 634/636 on COOL; benchmark re-measured 11 Oct (§7) |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 4.1°, rep F1 **0.94** (§8.4). Two pose defects it exposed are fixed. NHPT and Waiter – cup: synthetic only (§8.1); our own-recordings protocol is built, not run (§8.6). |
 | Usability (SUS), patient or therapist pilots | not run (§8.7) |
 | Bedrock, S3, CloudWatch shipping, CDK | not built (§7.4) |
@@ -338,8 +338,8 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise conc
 
 | What | Command |
 |---|---|
-| Service tests (636) | `cd services/session && uv sync && uv run pytest -q` |
-| Web tests (945), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
+| Service tests (760) | `cd services/session && uv sync && uv run pytest -q` |
+| Web tests (960), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
 | Run locally | `uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000`; `pnpm dev` |
 | Replay without a webcam | app: Settings → Demo and judging → Replay; or `uv run python -m praxis_session.replay` |
 | Pipeline numbers (§8.1) | `uv run python ../../evaluation/scripts/eval.py` |
