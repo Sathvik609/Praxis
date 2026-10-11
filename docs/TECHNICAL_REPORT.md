@@ -24,8 +24,8 @@ What is measured and what is not, in one place:
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 636 service tests + 945 web tests green; CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 15 scenarios × 3: 44/45 passed, **0 guardrail violations** (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live**; 634/636 tests pass on COOL; benchmark measured (§7) |
-| Accuracy on real people | **not measured yet.** Every perception number so far is on synthetic renders (§8.1). Recording protocol and scorer are built (§8.4). |
-| Usability (SUS), patient or therapist pilots | not run yet (§8.5) |
+| Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 4.1°, rep F1 **0.94** (§8.4). Two pose defects it exposed are fixed. NHPT and Waiter – cup: synthetic only (§8.1); our own recordings protocol is built, not run (§8.5). |
+| Usability (SUS), patient or therapist pilots | not run yet (§8.6) |
 | Bedrock, S3, CloudWatch shipping, CDK | not built (§7.4) |
 
 ---
@@ -263,10 +263,30 @@ The one miss: in one `covered_marker` repeat the agent named the right fix (the 
 
 The scenarios are synthetic, and no patient has used the agent. This shows the tools, guardrails and the model's tool choice working; it does not show clinical judgement.
 
-### 8.4 Real recordings: protocol built, data not yet collected
-`evaluation/PROTOCOL.md` defines **dataset v1**: ≥ 5 healthy adult volunteers, consent on paper, pseudonyms, clips deleted after 30 days. Each participant does 99 reps: clean sets plus scripted errors (lean, hike, past 90°, short hold, cup hidden at set-down, markers covered, dim light, a deliberately too-flat camera), with a phone goniometer reading at the top of each lift. That gives 495 reps planned against a target of 300+. The tooling is built and tested end to end on stand-in clips: `record_session.py` refuses to write anywhere git would commit, `label_clip.py` labels on the replay clock, and `eval.py` scores rep F1, NHPT MAE, reach-time MAE, angle error vs the goniometer, lean and hike detection and false-alarm rates, and saves frames from every miss as a failure case, with consent. **No real-data number exists yet; this is the largest open item.**
+### 8.4 Arm angle on real video (REHAB24-6) (`evaluation/results/rehab24_v0.md`)
+REHAB24-6 [12] is a public rehabilitation dataset: RGB video from two synchronised 30 fps cameras, a 26-joint motion-capture skeleton and segmented, physiotherapist-labelled repetitions. Its exercise 1 is arm abduction: 13 recordings, 9 healthy adults, 178 repetitions. `evaluation/scripts/rehab24_eval.py` plays every video through the **unchanged `SessionPipeline`** (Arm out to the side, right arm, every threshold at its product default; 15 fps, frames scaled to 640 px and JPEG-encoded like the browser's) and compares the product's angle with **anatomical abduction from motion capture**, measured in the subject's frontal plane. Only the dose is lifted so counting does not stop at 16 reps. The licence is CC BY-NC 4.0: evaluation only, nothing redistributed.
 
-### 8.5 Usability
+| Subject facing Camera17 (our front view): 88 reps, 8 subjects | |
+|---|---|
+| Angle error per frame (6,766 frames) | MAE **3.8°**, bias +0.6°, 95 % limits −9.2° to +10.4° |
+| … inside the prescribed range (≤ 100°) | MAE 3.7° |
+| Peak angle per rep | MAE **4.1°**, bias −1.4° |
+| Reps counted by the state machine (verified or not) | F1 **0.94** (precision 0.88, recall 1.00) |
+| Lifts found in the angle with the hold rule removed | F1 0.97 |
+| Pose found / view gate open | 100 % / 96.6 % of frames |
+
+Off-axis, the gate does its job: side-on, it stays closed and asks the patient to turn (nothing is scored); at ~45° it is closed on 95 % of frames, and where it opened the angle read 10° low. One-Euro smoothing adds no measurable lag at 15 fps.
+
+**What the real video changed.** It exposed two defects in the pose stage, both fixed test-first (`perception/pose.py`). The OpenCV Zoo port ran the person detector on every frame; when the arm went overhead, the detector put the mid-hip on the chest and the skeleton collapsed onto the face. It also cropped 1.25× tighter than MediaPipe does. Praxis now tracks the region from the previous landmarks, as MediaPipe does, and crops at 1.25×. Before the fix, the same front-view data gave an angle MAE of 10.0° (limits −40° to +33°), a rep-peak MAE of 16.4° and a lift F1 of 0.38. A third defect was a crash: a region wholly off the frame raised `cv2.error`, which would have ended a live session.
+
+**Measured but not changed.** The shoulder-hike flag fired below 90° on 47 of 88 healthy reps. Its limit (0.08 trunk lengths) is about the normal shoulder rise at 80–95° of abduction, which motion capture confirms. The dataset does not say which of its incorrect reps were shrugs, so the limit was not retuned on it. The front-view gate separates the views (front-on shoulder separation 0.61–0.70 against a 0.6 line), but it leaves little room for a patient sitting turned. **The head must be in frame**: masked, the pose was found on 51 % of frames and was wrong (MAE 26°); cropped out, on none. Our code never reads the face, but the MediaPipe detector anchors on it.
+
+**Caveats.** These are healthy adults standing in a motion-capture lab, filmed by corner cameras several metres away, in black suits. That is not a patient seated 2 m from a laptop. The dataset's lifts go overhead and never hold for 3 s, so only 16 of 100 counted reps were *verified*, which is correct behaviour on this data. The reference is motion capture in the frontal plane, not a goniometer. NHPT and Waiter – cup have no real-data number yet.
+
+### 8.5 Our own recordings: protocol built, data not yet collected
+`evaluation/PROTOCOL.md` defines **dataset v1**: ≥ 5 healthy adult volunteers, consent on paper, pseudonyms, clips deleted after 30 days. Each participant does 99 reps: clean sets plus scripted errors (lean, hike, past 90°, short hold, cup hidden at set-down, markers covered, dim light, a deliberately too-flat camera), with a phone goniometer reading at the top of each lift. That gives 495 reps planned against a target of 300+. The tooling is built and tested end to end on stand-in clips: `record_session.py` refuses to write anywhere git would commit, `label_clip.py` labels on the replay clock, and `eval.py` scores rep F1, NHPT MAE, reach-time MAE, angle error vs the goniometer, lean and hike detection and false-alarm rates, and saves frames from every miss as a failure case, with consent. **No number from our own recordings exists yet (NHPT and Waiter – cup have no real-data number at all); this is the largest open item.**
+
+### 8.6 Usability
 The standard 10-item SUS (`evaluation/sus/`, scored by `evaluation/scripts/sus.py`) will be given after one default day per participant, with a target mean ≥ 75. No responses have been collected yet. Accessibility was audited against WCAG 2.1 AA (§9.4).
 
 ## 9. Responsible use
@@ -290,12 +310,13 @@ Pause · Take a rest · Pain / feel unwell · End session are on every live scre
 We audited against WCAG 2.1 AA (`docs/ACCESSIBILITY.md`). axe-core runs over every screen, dialog and in-session state in the test suite and in headless Chrome in both themes. A keyboard-only test walks the whole critical path. The audit fixed 18 issues (landmarks, focus traps, alert roles, radio and tab keyboard behaviour, reduced motion). Colour is never the only carrier of meaning. Known gaps: some designer palette pairs miss 4.5:1 (listed); the coach is caption-only, so patients who cannot read captions are not served; and no session with a screen-reader user has been run.
 
 ### 9.5 Attribution
-GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise concepts only, with paraphrased instructions and its own illustrations. The OpenCV Zoo models are Apache-2.0. Avatar motion derives from UI-PRMD (ODC PDDL) and IntelliRehabDS (CC BY 4.0). All are recorded in `docs/LICENSES.md`, each entered before integration.
+GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise concepts only, with paraphrased instructions and its own illustrations. The OpenCV Zoo models are Apache-2.0. Avatar motion derives from UI-PRMD (ODC PDDL) and IntelliRehabDS (CC BY 4.0). REHAB24-6 (CC BY-NC 4.0) is used for evaluation only and never redistributed. All are recorded in `docs/LICENSES.md`, each entered before integration.
 
 ## 10. Limitations and next steps
 
-- **No real-world accuracy yet.** HSV ranges, Hough parameters, hand and pose thresholds and the state machines are tuned on synthetic renders. Dataset v1 is next (§8.4).
-- **Angles are camera-relative.** Abduction from the front view is an image-plane estimate, not goniometry, and its error against a goniometer is unmeasured.
+- **Real-world accuracy is partial.** Arm out to the side is measured on a public lab dataset of healthy adults (§8.4), not on patients or a laptop camera. NHPT and Waiter – cup are synthetic-only: HSV ranges, Hough parameters, hand thresholds and their state machines are tuned on renders. Dataset v1 is next (§8.5).
+- **Angles are camera-relative.** Abduction from the front view is an image-plane estimate, not goniometry. It agrees with motion capture to 3.8° MAE when the subject faces the camera (§8.4) and reads ~10° low at 45°. It has not been compared with a goniometer.
+- **Shoulder-hike flag.** On healthy lifts it fires below 90° on about half the reps, because normal shoulder elevation reaches its limit (§8.4). An angle-aware allowance needs labelled shrugs (dataset v1). The head must also be in frame for the pose stage to work.
 - **Parallax.** The sheet homography assumes a flat plane. Peg tops and hands above the sheet project off, and the 50° tilt advice is geometric, not measured.
 - **The printed NHPT is a timing aid.** Flat printed rings are not a physical board's recessed holes, so the times are not the standardized clinical instrument's.
 - **Exertion is behavioural**; hesitation is not yet computed, and the thresholds are unvalidated.
@@ -316,6 +337,7 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise conc
 | Replay without a webcam | app: Settings → Demo and judging → Replay; or `uv run python -m praxis_session.replay` |
 | Pipeline numbers (§8.1) | `uv run python ../../evaluation/scripts/eval.py` |
 | Latency (§8.2) | `uv run python ../../evaluation/scripts/latency.py --replay` |
+| Real-video arm angle (§8.4) | `uv run python tools/fetch_rehab24.py` (≈ 0.55 GB, git-ignored), then `uv run python ../../evaluation/scripts/rehab24_eval.py` (~15 min on 4 cores) |
 | Agent evaluation (§8.3) | `uv run python ../../evaluation/scripts/agent_eval.py --planner scripted` (free, CI); `--planner rule` (ablation); `--planner anthropic --repeat 3 --yes` (paid, needs a key) |
 | COOL benchmark (§7.2) | `benchmark/cool_bench.py` on the c8g instance, once under COOL's Python and once in a venv with the stock wheel (method in `benchmark/results/cool_vs_stock_c8g.md`) |
 | AWS deploy | `infra/ec2/deploy.sh <host> --agent` (`infra/ec2/README.md`) |
@@ -336,5 +358,6 @@ Figures were checked against the PubMed abstract or the WHO page cited.
 9. Mathiowetz V, Weber K, Kashman N, Volland G. Adult norms for the Nine Hole Peg Test of finger dexterity. *Occup Ther J Res* 1985;5:24–33.
 10. Oxford Grice K et al. Adult norms for a commercially available Nine Hole Peg Test for finger dexterity. *Am J Occup Ther* 2003;57(5):570–3. https://pubmed.ncbi.nlm.nih.gov/14527120/
 11. Chen HM et al. Test-retest reproducibility and smallest real difference of 5 hand function tests in patients with stroke. *Neurorehabil Neural Repair* 2009;23(5):435–40. https://pubmed.ncbi.nlm.nih.gov/19261767/
+12. Černek A, Sedmidubsky J, Budikova P. REHAB24-6: Physical Therapy Dataset for Analyzing Pose Estimation Methods. In: *Similarity Search and Applications (SISAP 2024)*, Springer LNCS, 2024. https://doi.org/10.1007/978-3-031-75823-2_2. Data: Černek A et al., REHAB24-6, Zenodo 2024, https://doi.org/10.5281/zenodo.13305826 (CC BY-NC 4.0).
 
-Software, models and datasets (OpenCV 5, OpenCV Zoo, Strands Agents, FastMCP, UI-PRMD, IntelliRehabDS, GRASP materials) with licences: `docs/LICENSES.md`.
+Software, models and datasets (OpenCV 5, OpenCV Zoo, Strands Agents, FastMCP, UI-PRMD, IntelliRehabDS, REHAB24-6, GRASP materials) with licences: `docs/LICENSES.md`.

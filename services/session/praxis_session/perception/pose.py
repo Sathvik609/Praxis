@@ -4,6 +4,12 @@ OpenCV Zoo MediaPipe pair (Apache-2.0, docs/LICENSES.md): person detection (224x
 BlazePose landmarks (256x256) -> 33 points in frame px with visibility. Angles are computed in
 the image plane and are camera-relative progress, never clinical goniometry. Side view
 (practising side toward the camera) is the documented assumption; `view_ok` reports it.
+
+Region of interest (11 Oct, from real video, `evaluation/results/rehab24_v0.md`): MediaPipe's
+policy, not a detector call per frame. The landmark region is tracked from the previous frame's
+alignment points and enlarged 1.25x like MediaPipe's; the person detector runs only on the first
+frame or after the pose is lost; a region wholly off the frame is no pose, never an exception.
+The detector, and so the whole pose stage, needs the head in view.
 """
 
 from __future__ import annotations
@@ -13,6 +19,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import cv2
 import numpy as np
 
 MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
@@ -72,29 +79,108 @@ class PoseTracker:
                 )
                 self._pose = MPPose(str(pose), confThreshold=conf_threshold)
             self.available = True
+        # Region tracking state (see `detect`); `last_source` says what placed the last pose.
+        self._track: np.ndarray | None = None
+        self.last_source: str | None = None
+
+    def reset(self) -> None:
+        """Forget the tracked region: the next frame runs the person detector."""
+        self._track = None
+        self.last_source = None
+
+    def _infer(self, frame_bgr: np.ndarray, person: np.ndarray):
+        """Landmarks for one region, or None when the region misses the frame or the landmark
+        confidence is below the threshold. A region wholly outside the image used to reach
+        `cv2.copyMakeBorder` with negative padding and raise (seen on REHAB24-6 with the head
+        masked), which would have ended a live session; now that frame simply has no pose."""
+        person = scale_roi(person)
+        if not _roi_in_frame(person, frame_bgr.shape):
+            return None
+        try:
+            return self._pose.infer(frame_bgr, person)
+        except cv2.error:
+            return None
 
     def detect(self, frame_bgr: np.ndarray) -> PoseResult | None:
+        """One frame. MediaPipe's tracking policy (REHAB24-6 finding, 11 Oct): the region comes
+        from the previous frame's landmark alignment points while that pose was confident, and
+        the person detector runs only for the first frame or when tracking is lost. On real
+        video the detector misplaces its mid-hip keypoint when the arm goes overhead, so a
+        detector region on every frame shrank onto the face and the landmarks collapsed."""
         if not self.available:
             return None
         t0 = time.perf_counter()
+        out, source = None, None
         try:
-            persons = self._person.infer(frame_bgr)
-            if persons is None or len(persons) == 0:
-                return None
-            best = persons[np.argmax(persons[:, -1])]
-            out = self._pose.infer(frame_bgr, best)
+            if self._track is not None:
+                out, source = self._infer(frame_bgr, self._track), "track"
+            if out is None:
+                persons = self._person.infer(frame_bgr)
+                if persons is not None and len(persons) > 0:
+                    best = persons[np.argmax(persons[:, -1])]
+                    out, source = self._infer(frame_bgr, best), "detector"
         finally:
             self.last_ms = (time.perf_counter() - t0) * 1000.0
         if out is None:
+            self.reset()
             return None
         _bbox, landmarks, world, _mask, _heatmap, conf = out
-        lm = np.asarray(landmarks)[:33]
+        lm_all = np.asarray(landmarks)
+        self._track = roi_from_landmarks(lm_all)
+        self.last_source = source
+        lm = lm_all[:33]
         return PoseResult(
             landmarks_px=lm[:, :2].astype(np.float32),
             visibility=lm[:, 3].astype(np.float32),
             world=np.asarray(world)[:33].astype(np.float32),
             conf=float(conf),
         )
+
+
+# BlazePose's landmark model returns 39 points: the 33 body landmarks, then two alignment points
+# (33 = mid-hip centre, 34 = full-body size/rotation point) that MediaPipe uses to place the next
+# frame's region, in the same layout as the person detector's first two keypoints.
+ALIGN_HIP, ALIGN_FULL = 33, 34
+MIN_TRACK_PX = 8.0  # alignment points closer than this cannot define a body-sized region
+# MediaPipe enlarges the alignment-point rectangle 1.25x before cropping, for the detector's
+# region and the tracked one alike (`pose_detection_to_roi` / `pose_landmarks_to_roi`, scale
+# 1.25); the OpenCV Zoo port crops at 1.0x, which cut off an arm raised overhead. On REHAB24-6
+# (front camera) tracking plus this scale removed every hip estimate > 100 px off (was up to 44 %
+# of a dim recording's frames).
+ROI_SCALE = 1.25
+
+
+def scale_roi(person: np.ndarray, scale: float = ROI_SCALE) -> np.ndarray:
+    """A copy of a person row with the full-body keypoint pushed away from the mid-hip centre by
+    `scale` (the vendored MPPose crop's half-size is their distance)."""
+    row = np.array(person, np.float32, copy=True)
+    row[6:8] = row[4:6] + scale * (row[6:8] - row[4:6])
+    return row
+
+
+def roi_from_landmarks(lm: np.ndarray) -> np.ndarray | None:
+    """A person-detector-shaped row (box, 4 keypoints, score) whose first two keypoints are the
+    landmarks' alignment points, for `MPPose.infer`; None if the points are missing or too close."""
+    if lm.shape[0] <= ALIGN_FULL:
+        return None
+    hip, full = lm[ALIGN_HIP, :2].astype(np.float32), lm[ALIGN_FULL, :2].astype(np.float32)
+    if not (np.all(np.isfinite(hip)) and np.all(np.isfinite(full))) or float(np.linalg.norm(full - hip)) < MIN_TRACK_PX:
+        return None
+    row = np.zeros(13, np.float32)
+    row[4:6], row[6:8], row[8:10], row[10:12] = hip, full, hip, full
+    row[12] = 1.0
+    return row
+
+
+def _roi_in_frame(person: np.ndarray, shape: tuple[int, ...]) -> bool:
+    """Whether the square region `MPPose` builds from the first two keypoints (centre = mid-hip,
+    half-size = hip-to-full-body distance) overlaps the image at all."""
+    hip, full = np.asarray(person[4:6], np.float64), np.asarray(person[6:8], np.float64)
+    r = float(np.linalg.norm(full - hip))
+    h, w = shape[:2]
+    if not np.isfinite(r) or r < 1.0:
+        return False
+    return hip[0] + r > 0 and hip[0] - r < w and hip[1] + r > 0 and hip[1] - r < h
 
 
 class OneEuro:

@@ -1,0 +1,9581 @@
+{
+ "name": "rehab24_v0_before_pose_fix",
+ "pipeline_fingerprint": "89b5ebc3219c",
+ "dataset": "REHAB24-6 Ex1 (arm abduction)",
+ "version": "v0",
+ "citation": "\u010cernek, A., Sedmidubsky, J., Budikova, P.: REHAB24-6: Physical Therapy Dataset for Analyzing Pose Estimation Methods. 17th International Conference on Similarity Search and Applications (SISAP 2024), Springer LNCS. Data: Zenodo, doi:10.5281/zenodo.13305826, CC BY-NC 4.0.",
+ "licence": "CC BY-NC 4.0, evaluation only, never redistributed",
+ "generated_on": "2026-10-11",
+ "cv2_version": "5.0.0",
+ "python": "3.12.14",
+ "host": "Darwin arm64",
+ "wall_s": 3866.1,
+ "settings": {
+  "stride": 2,
+  "fps_in": 30.0,
+  "max_size": [
+   640,
+   480
+  ],
+  "jpeg_quality": 80,
+  "side": "right",
+  "exercise": "abduction",
+  "dose_override": {
+   "sets": 1,
+   "reps": 999
+  },
+  "peak_min_deg": 40.0,
+  "peak_hyst_deg": 20.0,
+  "overlap_min": 0.5
+ },
+ "conditions": {
+  "front": {
+   "recordings": 9,
+   "subjects": 8,
+   "labelled_reps": 88,
+   "frames_in_reps": 7001,
+   "pose_rate": 0.9437,
+   "gate_open_rate": 0.8822,
+   "gate_frames": {
+    "open": 6176,
+    "turn_front": 352,
+    "hips_out_of_view": 79
+   },
+   "frame": {
+    "ref_cam": {
+     "n": 6176,
+     "mae": 15.39,
+     "bias": -14.31,
+     "rmse": 24.03,
+     "p95_abs": 54.6,
+     "sd": 19.31,
+     "loa_low": -52.14,
+     "loa_high": 23.53
+    },
+    "ref_frontal": {
+     "n": 6176,
+     "mae": 9.97,
+     "bias": -3.58,
+     "rmse": 18.8,
+     "p95_abs": 44.5,
+     "sd": 18.46,
+     "loa_low": -39.76,
+     "loa_high": 32.59
+    },
+    "ref_3d": {
+     "n": 6176,
+     "mae": 9.68,
+     "bias": -3.53,
+     "rmse": 18.18,
+     "p95_abs": 43.09,
+     "sd": 17.83,
+     "loa_low": -38.49,
+     "loa_high": 31.42
+    }
+   },
+   "frame_in_range": {
+    "ref_cam": {
+     "n": 4505,
+     "mae": 11.43,
+     "bias": -11.04,
+     "rmse": 15.58,
+     "p95_abs": 32.68,
+     "sd": 10.99,
+     "loa_low": -32.58,
+     "loa_high": 10.51
+    },
+    "ref_frontal": {
+     "n": 4505,
+     "mae": 6.27,
+     "bias": 0.05,
+     "rmse": 10.18,
+     "p95_abs": 19.7,
+     "sd": 10.18,
+     "loa_low": -19.9,
+     "loa_high": 20.0
+    }
+   },
+   "frame_overhead": {
+    "ref_cam": {
+     "n": 1671,
+     "mae": 26.08,
+     "bias": -23.11,
+     "rmse": 38.46,
+     "p95_abs": 87.44,
+     "sd": 30.75,
+     "loa_low": -83.39,
+     "loa_high": 37.17
+    },
+    "ref_frontal": {
+     "n": 1671,
+     "mae": 19.94,
+     "bias": -13.38,
+     "rmse": 32.04,
+     "p95_abs": 74.4,
+     "sd": 29.13,
+     "loa_low": -70.47,
+     "loa_high": 43.72
+    }
+   },
+   "frame_raw_in_range": {
+    "ref_cam": {
+     "n": 4505,
+     "mae": 11.47,
+     "bias": -11.02,
+     "rmse": 15.77,
+     "p95_abs": 33.87,
+     "sd": 11.29,
+     "loa_low": -33.14,
+     "loa_high": 11.11
+    },
+    "ref_frontal": {
+     "n": 4505,
+     "mae": 6.23,
+     "bias": 0.07,
+     "rmse": 10.5,
+     "p95_abs": 20.6,
+     "sd": 10.5,
+     "loa_low": -20.52,
+     "loa_high": 20.66
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 6176,
+     "mae": 15.37,
+     "bias": -14.17,
+     "rmse": 24.26,
+     "p95_abs": 54.94,
+     "sd": 19.7,
+     "loa_low": -52.77,
+     "loa_high": 24.44
+    },
+    "ref_frontal": {
+     "n": 6176,
+     "mae": 9.95,
+     "bias": -3.45,
+     "rmse": 19.19,
+     "p95_abs": 45.04,
+     "sd": 18.88,
+     "loa_low": -40.45,
+     "loa_high": 33.56
+    }
+   },
+   "rep_peak": {
+    "ref_cam": {
+     "n": 87,
+     "mae": 18.82,
+     "bias": -4.71,
+     "rmse": 24.35,
+     "p95_abs": 51.84,
+     "sd": 24.03,
+     "loa_low": -51.81,
+     "loa_high": 42.39
+    },
+    "ref_frontal": {
+     "n": 87,
+     "mae": 16.42,
+     "bias": 4.59,
+     "rmse": 23.61,
+     "p95_abs": 54.64,
+     "sd": 23.3,
+     "loa_low": -41.07,
+     "loa_high": 50.25
+    },
+    "ref_3d": {
+     "n": 87,
+     "mae": 16.87,
+     "bias": 7.54,
+     "rmse": 23.49,
+     "p95_abs": 55.34,
+     "sd": 22.37,
+     "loa_low": -36.31,
+     "loa_high": 51.39
+    }
+   },
+   "rep_peak_n": 87,
+   "peak_range": {
+    "min": 79.1,
+    "max": 161.8,
+    "p50": 124.2,
+    "correct_min": 100.4
+   },
+   "fsm": {
+    "tp": 88,
+    "fp": 61,
+    "fn": 0,
+    "precision": 0.5906,
+    "recall": 1.0,
+    "f1": 0.7426
+   },
+   "fsm_verified": 11,
+   "fsm_reasons": {
+    "hold_too_short": 99,
+    "target_missed": 39,
+    "verified": 11
+   },
+   "fsm_peak_err": {
+    "ref_cam": {
+     "n": 87,
+     "mae": 24.03,
+     "bias": -18.22,
+     "rmse": 30.73,
+     "p95_abs": 56.94,
+     "sd": 24.89,
+     "loa_low": -67.0,
+     "loa_high": 30.55
+    },
+    "ref_frontal": {
+     "n": 87,
+     "mae": 18.4,
+     "bias": -8.92,
+     "rmse": 25.2,
+     "p95_abs": 52.13,
+     "sd": 23.71,
+     "loa_low": -55.39,
+     "loa_high": 37.55
+    }
+   },
+   "movement": {
+    "tp": 88,
+    "fp": 292,
+    "fn": 0,
+    "precision": 0.2316,
+    "recall": 1.0,
+    "f1": 0.3761
+   },
+   "movement_gated": {
+    "tp": 88,
+    "fp": 183,
+    "fn": 0,
+    "precision": 0.3247,
+    "recall": 1.0,
+    "f1": 0.4903
+   },
+   "lag_s_median": 0.067,
+   "lag_raw_s_median": 0.067,
+   "ref_cam_minus_frontal": {
+    "n": 6176,
+    "mae": 10.72,
+    "bias": 10.72,
+    "rmse": 11.17,
+    "p95_abs": 16.39,
+    "sd": 3.14,
+    "loa_low": 4.56,
+    "loa_high": 16.88
+   },
+   "shoulder_sep": {
+    "n": 0
+   },
+   "hike_bands": [],
+   "hike_first_deg": {
+    "n": 0
+   },
+   "hike_first_below_90": 0,
+   "hike_reps": 88,
+   "events": {
+    "compensation_lean": 4,
+    "shoulder_hiking": 129,
+    "above_ceiling": 59,
+    "perception_lost": 3,
+    "setup_blocked": 2,
+    "target_missed": 39,
+    "hold_too_short": 99
+   }
+  },
+  "side": {
+   "recordings": 9,
+   "subjects": 8,
+   "labelled_reps": 88,
+   "frames_in_reps": 7001,
+   "pose_rate": 0.9999,
+   "gate_open_rate": 0.0,
+   "gate_frames": {
+    "turn_front": 7000,
+    "open": 0
+   },
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_in_range": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_overhead": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw_in_range": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "rep_peak": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "rep_peak_n": 0,
+   "peak_range": {},
+   "fsm": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 88,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "fsm_verified": 0,
+   "fsm_reasons": {
+    "target_missed": 1
+   },
+   "fsm_peak_err": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "movement": {
+    "tp": 22,
+    "fp": 48,
+    "fn": 66,
+    "precision": 0.3143,
+    "recall": 0.25,
+    "f1": 0.2785
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 2,
+    "fn": 88,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "lag_s_median": null,
+   "lag_raw_s_median": null,
+   "ref_cam_minus_frontal": {
+    "n": 0,
+    "mae": null,
+    "bias": null,
+    "rmse": null,
+    "p95_abs": null,
+    "loa_low": null,
+    "loa_high": null,
+    "sd": null
+   },
+   "shoulder_sep": {
+    "n": 0
+   },
+   "hike_bands": [],
+   "hike_first_deg": {
+    "n": 0
+   },
+   "hike_first_below_90": 0,
+   "hike_reps": 88,
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 1,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 10,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  "half-profile": {
+   "recordings": 18,
+   "subjects": 9,
+   "labelled_reps": 180,
+   "frames_in_reps": 13458,
+   "pose_rate": 0.9513,
+   "gate_open_rate": 0.1345,
+   "gate_frames": {
+    "open": 1810,
+    "turn_front": 10969,
+    "hips_out_of_view": 24
+   },
+   "frame": {
+    "ref_cam": {
+     "n": 1810,
+     "mae": 18.28,
+     "bias": -17.05,
+     "rmse": 26.52,
+     "p95_abs": 51.52,
+     "sd": 20.32,
+     "loa_low": -56.87,
+     "loa_high": 22.77
+    },
+    "ref_frontal": {
+     "n": 1810,
+     "mae": 13.04,
+     "bias": -11.03,
+     "rmse": 19.8,
+     "p95_abs": 37.64,
+     "sd": 16.45,
+     "loa_low": -43.27,
+     "loa_high": 21.21
+    },
+    "ref_3d": {
+     "n": 1810,
+     "mae": 13.64,
+     "bias": -11.66,
+     "rmse": 19.93,
+     "p95_abs": 38.15,
+     "sd": 16.17,
+     "loa_low": -43.36,
+     "loa_high": 20.04
+    }
+   },
+   "frame_in_range": {
+    "ref_cam": {
+     "n": 1560,
+     "mae": 15.24,
+     "bias": -14.39,
+     "rmse": 18.14,
+     "p95_abs": 24.91,
+     "sd": 11.05,
+     "loa_low": -36.04,
+     "loa_high": 7.26
+    },
+    "ref_frontal": {
+     "n": 1560,
+     "mae": 11.15,
+     "bias": -9.89,
+     "rmse": 14.68,
+     "p95_abs": 27.36,
+     "sd": 10.85,
+     "loa_low": -31.15,
+     "loa_high": 11.37
+    }
+   },
+   "frame_overhead": {
+    "ref_cam": {
+     "n": 250,
+     "mae": 37.21,
+     "bias": -33.63,
+     "rmse": 55.12,
+     "p95_abs": 124.07,
+     "sd": 43.75,
+     "loa_low": -119.39,
+     "loa_high": 52.12
+    },
+    "ref_frontal": {
+     "n": 250,
+     "mae": 24.81,
+     "bias": -18.12,
+     "rmse": 38.65,
+     "p95_abs": 92.55,
+     "sd": 34.21,
+     "loa_low": -85.17,
+     "loa_high": 48.93
+    }
+   },
+   "frame_raw_in_range": {
+    "ref_cam": {
+     "n": 1560,
+     "mae": 15.21,
+     "bias": -14.25,
+     "rmse": 18.05,
+     "p95_abs": 24.37,
+     "sd": 11.08,
+     "loa_low": -35.97,
+     "loa_high": 7.46
+    },
+    "ref_frontal": {
+     "n": 1560,
+     "mae": 11.06,
+     "bias": -9.75,
+     "rmse": 14.61,
+     "p95_abs": 27.04,
+     "sd": 10.88,
+     "loa_low": -31.08,
+     "loa_high": 11.58
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 1810,
+     "mae": 18.29,
+     "bias": -16.94,
+     "rmse": 26.79,
+     "p95_abs": 48.73,
+     "sd": 20.76,
+     "loa_low": -57.62,
+     "loa_high": 23.75
+    },
+    "ref_frontal": {
+     "n": 1810,
+     "mae": 13.04,
+     "bias": -10.92,
+     "rmse": 20.08,
+     "p95_abs": 38.13,
+     "sd": 16.86,
+     "loa_low": -43.95,
+     "loa_high": 22.12
+    }
+   },
+   "rep_peak": {
+    "ref_cam": {
+     "n": 17,
+     "mae": 39.33,
+     "bias": -39.33,
+     "rmse": 46.94,
+     "p95_abs": 80.04,
+     "sd": 26.42,
+     "loa_low": -91.12,
+     "loa_high": 12.46
+    },
+    "ref_frontal": {
+     "n": 17,
+     "mae": 34.42,
+     "bias": -34.42,
+     "rmse": 43.09,
+     "p95_abs": 75.1,
+     "sd": 26.73,
+     "loa_low": -86.81,
+     "loa_high": 17.98
+    },
+    "ref_3d": {
+     "n": 17,
+     "mae": 32.39,
+     "bias": -32.37,
+     "rmse": 41.76,
+     "p95_abs": 73.98,
+     "sd": 27.2,
+     "loa_low": -85.68,
+     "loa_high": 20.93
+    }
+   },
+   "rep_peak_n": 17,
+   "peak_range": {
+    "min": 81.9,
+    "max": 133.1,
+    "p50": 118.1,
+    "correct_min": 126.4
+   },
+   "fsm": {
+    "tp": 85,
+    "fp": 19,
+    "fn": 95,
+    "precision": 0.8173,
+    "recall": 0.4722,
+    "f1": 0.5986
+   },
+   "fsm_verified": 7,
+   "fsm_reasons": {
+    "hold_too_short": 28,
+    "target_missed": 69,
+    "verified": 7
+   },
+   "fsm_peak_err": {
+    "ref_cam": {
+     "n": 17,
+     "mae": 39.33,
+     "bias": -39.33,
+     "rmse": 46.94,
+     "p95_abs": 80.04,
+     "sd": 26.42,
+     "loa_low": -91.12,
+     "loa_high": 12.46
+    },
+    "ref_frontal": {
+     "n": 17,
+     "mae": 34.42,
+     "bias": -34.42,
+     "rmse": 43.09,
+     "p95_abs": 75.1,
+     "sd": 26.73,
+     "loa_low": -86.81,
+     "loa_high": 17.98
+    }
+   },
+   "movement": {
+    "tp": 180,
+    "fp": 268,
+    "fn": 0,
+    "precision": 0.4018,
+    "recall": 1.0,
+    "f1": 0.5732
+   },
+   "movement_gated": {
+    "tp": 85,
+    "fp": 24,
+    "fn": 95,
+    "precision": 0.7798,
+    "recall": 0.4722,
+    "f1": 0.5882
+   },
+   "lag_s_median": 0.0,
+   "lag_raw_s_median": 0.0,
+   "ref_cam_minus_frontal": {
+    "n": 1810,
+    "mae": 8.53,
+    "bias": 6.02,
+    "rmse": 12.12,
+    "p95_abs": 24.2,
+    "sd": 10.52,
+    "loa_low": -14.61,
+    "loa_high": 26.65
+   },
+   "shoulder_sep": {
+    "n": 0
+   },
+   "hike_bands": [],
+   "hike_first_deg": {
+    "n": 0
+   },
+   "hike_first_below_90": 0,
+   "hike_reps": 180,
+   "events": {
+    "compensation_lean": 1,
+    "shoulder_hiking": 43,
+    "above_ceiling": 14,
+    "perception_lost": 6,
+    "setup_blocked": 52,
+    "target_missed": 70,
+    "hold_too_short": 29
+   }
+  }
+ },
+ "lighting": {
+  "lights on": {
+   "recordings": 5,
+   "subjects": 5,
+   "labelled_reps": 53,
+   "frames_in_reps": 4009,
+   "pose_rate": 0.9726,
+   "gate_open_rate": 0.9414,
+   "gate_frames": {
+    "open": 3774,
+    "turn_front": 83,
+    "hips_out_of_view": 42
+   },
+   "frame": {
+    "ref_cam": {
+     "n": 3774,
+     "mae": 10.68,
+     "bias": -9.85,
+     "rmse": 14.53,
+     "p95_abs": 27.64,
+     "sd": 10.68,
+     "loa_low": -30.79,
+     "loa_high": 11.08
+    },
+    "ref_frontal": {
+     "n": 3774,
+     "mae": 6.5,
+     "bias": 0.09,
+     "rmse": 10.88,
+     "p95_abs": 19.89,
+     "sd": 10.88,
+     "loa_low": -21.23,
+     "loa_high": 21.41
+    },
+    "ref_3d": {
+     "n": 3774,
+     "mae": 6.42,
+     "bias": 0.11,
+     "rmse": 10.82,
+     "p95_abs": 19.77,
+     "sd": 10.82,
+     "loa_low": -21.1,
+     "loa_high": 21.32
+    }
+   },
+   "frame_in_range": {
+    "ref_cam": {
+     "n": 2653,
+     "mae": 9.08,
+     "bias": -8.9,
+     "rmse": 11.08,
+     "p95_abs": 19.82,
+     "sd": 6.59,
+     "loa_low": -21.83,
+     "loa_high": 4.02
+    },
+    "ref_frontal": {
+     "n": 2653,
+     "mae": 5.01,
+     "bias": 1.62,
+     "rmse": 6.86,
+     "p95_abs": 12.09,
+     "sd": 6.67,
+     "loa_low": -11.46,
+     "loa_high": 14.69
+    }
+   },
+   "frame_overhead": {
+    "ref_cam": {
+     "n": 1121,
+     "mae": 14.48,
+     "bias": -12.1,
+     "rmse": 20.51,
+     "p95_abs": 40.08,
+     "sd": 16.56,
+     "loa_low": -44.56,
+     "loa_high": 20.36
+    },
+    "ref_frontal": {
+     "n": 1121,
+     "mae": 10.04,
+     "bias": -3.52,
+     "rmse": 16.94,
+     "p95_abs": 37.68,
+     "sd": 16.57,
+     "loa_low": -36.01,
+     "loa_high": 28.97
+    }
+   },
+   "frame_raw_in_range": {
+    "ref_cam": {
+     "n": 2653,
+     "mae": 9.03,
+     "bias": -8.84,
+     "rmse": 11.06,
+     "p95_abs": 19.69,
+     "sd": 6.63,
+     "loa_low": -21.85,
+     "loa_high": 4.16
+    },
+    "ref_frontal": {
+     "n": 2653,
+     "mae": 4.92,
+     "bias": 1.68,
+     "rmse": 6.92,
+     "p95_abs": 12.15,
+     "sd": 6.71,
+     "loa_low": -11.48,
+     "loa_high": 14.84
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 3774,
+     "mae": 10.63,
+     "bias": -9.72,
+     "rmse": 14.72,
+     "p95_abs": 27.35,
+     "sd": 11.06,
+     "loa_low": -31.4,
+     "loa_high": 11.96
+    },
+    "ref_frontal": {
+     "n": 3774,
+     "mae": 6.49,
+     "bias": 0.23,
+     "rmse": 11.24,
+     "p95_abs": 20.29,
+     "sd": 11.24,
+     "loa_low": -21.81,
+     "loa_high": 22.26
+    }
+   },
+   "rep_peak": {
+    "ref_cam": {
+     "n": 53,
+     "mae": 13.76,
+     "bias": 0.5,
+     "rmse": 17.89,
+     "p95_abs": 37.61,
+     "sd": 18.06,
+     "loa_low": -34.89,
+     "loa_high": 35.89
+    },
+    "ref_frontal": {
+     "n": 53,
+     "mae": 13.42,
+     "bias": 8.83,
+     "rmse": 20.93,
+     "p95_abs": 49.24,
+     "sd": 19.15,
+     "loa_low": -28.71,
+     "loa_high": 46.37
+    },
+    "ref_3d": {
+     "n": 53,
+     "mae": 15.15,
+     "bias": 11.24,
+     "rmse": 21.92,
+     "p95_abs": 49.72,
+     "sd": 19.0,
+     "loa_low": -26.0,
+     "loa_high": 48.49
+    }
+   },
+   "rep_peak_n": 53,
+   "peak_range": {
+    "min": 79.1,
+    "max": 155.5,
+    "p50": 124.2,
+    "correct_min": 100.4
+   },
+   "fsm": {
+    "tp": 53,
+    "fp": 12,
+    "fn": 0,
+    "precision": 0.8154,
+    "recall": 1.0,
+    "f1": 0.8983
+   },
+   "fsm_verified": 11,
+   "fsm_reasons": {
+    "hold_too_short": 46,
+    "target_missed": 8,
+    "verified": 11
+   },
+   "fsm_peak_err": {
+    "ref_cam": {
+     "n": 53,
+     "mae": 16.69,
+     "bias": -9.29,
+     "rmse": 21.87,
+     "p95_abs": 44.39,
+     "sd": 19.99,
+     "loa_low": -48.47,
+     "loa_high": 29.89
+    },
+    "ref_frontal": {
+     "n": 53,
+     "mae": 13.16,
+     "bias": -0.96,
+     "rmse": 19.8,
+     "p95_abs": 44.91,
+     "sd": 19.97,
+     "loa_low": -40.1,
+     "loa_high": 38.17
+    }
+   },
+   "movement": {
+    "tp": 53,
+    "fp": 79,
+    "fn": 0,
+    "precision": 0.4015,
+    "recall": 1.0,
+    "f1": 0.573
+   },
+   "movement_gated": {
+    "tp": 53,
+    "fp": 45,
+    "fn": 0,
+    "precision": 0.5408,
+    "recall": 1.0,
+    "f1": 0.702
+   },
+   "lag_s_median": 0.067,
+   "lag_raw_s_median": 0.0,
+   "ref_cam_minus_frontal": {
+    "n": 3774,
+    "mae": 9.94,
+    "bias": 9.94,
+    "rmse": 10.31,
+    "p95_abs": 14.63,
+    "sd": 2.73,
+    "loa_low": 4.6,
+    "loa_high": 15.29
+   },
+   "shoulder_sep": {
+    "n": 0
+   },
+   "hike_bands": [],
+   "hike_first_deg": {
+    "n": 0
+   },
+   "hike_first_below_90": 0,
+   "hike_reps": 53,
+   "events": {
+    "compensation_lean": 1,
+    "shoulder_hiking": 55,
+    "above_ceiling": 44,
+    "perception_lost": 0,
+    "setup_blocked": 2,
+    "target_missed": 8,
+    "hold_too_short": 46
+   }
+  },
+  "lights off (evening light)": {
+   "recordings": 4,
+   "subjects": 3,
+   "labelled_reps": 35,
+   "frames_in_reps": 2992,
+   "pose_rate": 0.9051,
+   "gate_open_rate": 0.8028,
+   "gate_frames": {
+    "open": 2402,
+    "turn_front": 269,
+    "hips_out_of_view": 37
+   },
+   "frame": {
+    "ref_cam": {
+     "n": 2402,
+     "mae": 22.79,
+     "bias": -21.3,
+     "rmse": 33.95,
+     "p95_abs": 78.63,
+     "sd": 26.44,
+     "loa_low": -73.12,
+     "loa_high": 30.53
+    },
+    "ref_frontal": {
+     "n": 2402,
+     "mae": 15.41,
+     "bias": -9.36,
+     "rmse": 26.88,
+     "p95_abs": 65.56,
+     "sd": 25.21,
+     "loa_low": -58.77,
+     "loa_high": 40.05
+    },
+    "ref_3d": {
+     "n": 2402,
+     "mae": 14.81,
+     "bias": -9.25,
+     "rmse": 25.8,
+     "p95_abs": 63.02,
+     "sd": 24.09,
+     "loa_low": -56.47,
+     "loa_high": 37.97
+    }
+   },
+   "frame_in_range": {
+    "ref_cam": {
+     "n": 1852,
+     "mae": 14.79,
+     "bias": -14.1,
+     "rmse": 20.36,
+     "p95_abs": 45.07,
+     "sd": 14.69,
+     "loa_low": -42.89,
+     "loa_high": 14.7
+    },
+    "ref_frontal": {
+     "n": 1852,
+     "mae": 8.07,
+     "bias": -2.2,
+     "rmse": 13.59,
+     "p95_abs": 31.25,
+     "sd": 13.41,
+     "loa_low": -28.48,
+     "loa_high": 24.09
+    }
+   },
+   "frame_overhead": {
+    "ref_cam": {
+     "n": 550,
+     "mae": 49.73,
+     "bias": -45.55,
+     "rmse": 60.31,
+     "p95_abs": 110.83,
+     "sd": 39.57,
+     "loa_low": -123.11,
+     "loa_high": 32.0
+    },
+    "ref_frontal": {
+     "n": 550,
+     "mae": 40.12,
+     "bias": -33.46,
+     "rmse": 50.35,
+     "p95_abs": 97.26,
+     "sd": 37.65,
+     "loa_low": -107.27,
+     "loa_high": 40.34
+    }
+   },
+   "frame_raw_in_range": {
+    "ref_cam": {
+     "n": 1852,
+     "mae": 14.95,
+     "bias": -14.13,
+     "rmse": 20.74,
+     "p95_abs": 46.93,
+     "sd": 15.18,
+     "loa_low": -43.89,
+     "loa_high": 15.63
+    },
+    "ref_frontal": {
+     "n": 1852,
+     "mae": 8.1,
+     "bias": -2.23,
+     "rmse": 14.13,
+     "p95_abs": 34.36,
+     "sd": 13.96,
+     "loa_low": -29.59,
+     "loa_high": 25.14
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 2402,
+     "mae": 22.82,
+     "bias": -21.16,
+     "rmse": 34.25,
+     "p95_abs": 77.88,
+     "sd": 26.94,
+     "loa_low": -73.95,
+     "loa_high": 31.63
+    },
+    "ref_frontal": {
+     "n": 2402,
+     "mae": 15.38,
+     "bias": -9.21,
+     "rmse": 27.35,
+     "p95_abs": 65.65,
+     "sd": 25.76,
+     "loa_low": -59.7,
+     "loa_high": 41.27
+    }
+   },
+   "rep_peak": {
+    "ref_cam": {
+     "n": 34,
+     "mae": 26.7,
+     "bias": -12.83,
+     "rmse": 31.91,
+     "p95_abs": 54.14,
+     "sd": 29.66,
+     "loa_low": -70.96,
+     "loa_high": 45.3
+    },
+    "ref_frontal": {
+     "n": 34,
+     "mae": 21.09,
+     "bias": -2.02,
+     "rmse": 27.28,
+     "p95_abs": 53.1,
+     "sd": 27.61,
+     "loa_low": -56.14,
+     "loa_high": 52.1
+    },
+    "ref_3d": {
+     "n": 34,
+     "mae": 19.56,
+     "bias": 1.77,
+     "rmse": 25.74,
+     "p95_abs": 54.14,
+     "sd": 26.06,
+     "loa_low": -49.31,
+     "loa_high": 52.86
+    }
+   },
+   "rep_peak_n": 34,
+   "peak_range": {
+    "min": 111.8,
+    "max": 161.8,
+    "p50": 124.6,
+    "correct_min": 112.8
+   },
+   "fsm": {
+    "tp": 35,
+    "fp": 49,
+    "fn": 0,
+    "precision": 0.4167,
+    "recall": 1.0,
+    "f1": 0.5882
+   },
+   "fsm_verified": 0,
+   "fsm_reasons": {
+    "hold_too_short": 53,
+    "target_missed": 31
+   },
+   "fsm_peak_err": {
+    "ref_cam": {
+     "n": 34,
+     "mae": 35.47,
+     "bias": -32.14,
+     "rmse": 40.87,
+     "p95_abs": 59.15,
+     "sd": 25.62,
+     "loa_low": -82.36,
+     "loa_high": 18.08
+    },
+    "ref_frontal": {
+     "n": 34,
+     "mae": 26.57,
+     "bias": -21.33,
+     "rmse": 31.85,
+     "p95_abs": 54.33,
+     "sd": 24.01,
+     "loa_low": -68.38,
+     "loa_high": 25.72
+    }
+   },
+   "movement": {
+    "tp": 35,
+    "fp": 213,
+    "fn": 0,
+    "precision": 0.1411,
+    "recall": 1.0,
+    "f1": 0.2473
+   },
+   "movement_gated": {
+    "tp": 35,
+    "fp": 138,
+    "fn": 0,
+    "precision": 0.2023,
+    "recall": 1.0,
+    "f1": 0.3365
+   },
+   "lag_s_median": 0.067,
+   "lag_raw_s_median": 0.067,
+   "ref_cam_minus_frontal": {
+    "n": 2402,
+    "mae": 11.94,
+    "bias": 11.94,
+    "rmse": 12.41,
+    "p95_abs": 18.03,
+    "sd": 3.36,
+    "loa_low": 5.36,
+    "loa_high": 18.53
+   },
+   "shoulder_sep": {
+    "n": 0
+   },
+   "hike_bands": [],
+   "hike_first_deg": {
+    "n": 0
+   },
+   "hike_first_below_90": 0,
+   "hike_reps": 35,
+   "events": {
+    "compensation_lean": 3,
+    "shoulder_hiking": 74,
+    "above_ceiling": 15,
+    "perception_lost": 3,
+    "setup_blocked": 0,
+    "target_missed": 31,
+    "hold_too_short": 53
+   }
+  }
+ },
+ "compensation_front": {
+  "correct": {
+   "flagged": 46,
+   "not_flagged": 1,
+   "no_rep": 0
+  },
+  "incorrect": {
+   "flagged": 40,
+   "not_flagged": 1,
+   "no_rep": 0
+  }
+ },
+ "head": null,
+ "rows": [
+  {
+   "video": "PM_000",
+   "person": 1,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": false,
+   "labelled_reps": 5,
+   "frames_in_reps": 543,
+   "pose_rate": 0.9042,
+   "gate_open_rate": 0.7735,
+   "gates": {
+    "open": 420,
+    "turn_front": 62,
+    "hips_out_of_view": 9
+   },
+   "no_pose_frames": 52,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 420,
+     "mae": 34.36,
+     "bias": -34.27,
+     "rmse": 47.78,
+     "p95_abs": 101.1,
+     "sd": 33.34,
+     "loa_low": -99.62,
+     "loa_high": 31.08
+    },
+    "ref_frontal": {
+     "n": 420,
+     "mae": 23.39,
+     "bias": -20.19,
+     "rmse": 38.19,
+     "p95_abs": 88.24,
+     "sd": 32.46,
+     "loa_low": -83.81,
+     "loa_high": 43.44
+    },
+    "ref_3d": {
+     "n": 420,
+     "mae": 21.3,
+     "bias": -18.5,
+     "rmse": 34.98,
+     "p95_abs": 79.35,
+     "sd": 29.72,
+     "loa_low": -76.76,
+     "loa_high": 39.76
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 420,
+     "mae": 33.78,
+     "bias": -33.48,
+     "rmse": 47.39,
+     "p95_abs": 96.53,
+     "sd": 33.58,
+     "loa_low": -99.29,
+     "loa_high": 32.33
+    },
+    "ref_frontal": {
+     "n": 420,
+     "mae": 22.79,
+     "bias": -19.4,
+     "rmse": 38.03,
+     "p95_abs": 80.86,
+     "sd": 32.75,
+     "loa_low": -83.58,
+     "loa_high": 44.79
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": 0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 101.7,
+     "ref_cam": 145.84087932667197,
+     "ref_frontal": 130.0949192511139,
+     "ref_3d": 125.23691510403069
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 139.0,
+     "ref_cam": 174.43452286773334,
+     "ref_frontal": 161.79257228175564,
+     "ref_3d": 145.53431459895464
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 122.7,
+     "ref_cam": 170.72227934571708,
+     "ref_frontal": 158.68723191336164,
+     "ref_3d": 144.04756408756583
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 130.1,
+     "ref_cam": 170.27484096254642,
+     "ref_frontal": 159.17106922990396,
+     "ref_3d": 145.08994520970722
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 131.0,
+     "ref_cam": 168.60629823014736,
+     "ref_frontal": 157.95484700899377,
+     "ref_3d": 146.07226584041874
+    }
+   ],
+   "fsm": {
+    "tp": 5,
+    "fp": 12,
+    "fn": 0,
+    "precision": 0.2941,
+    "recall": 1.0,
+    "f1": 0.4545,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 13,
+     "target_missed": 4
+    },
+    "above_ceiling": 5
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -57.54087932667197,
+     -85.43452286773334,
+     -53.722279345717084,
+     -61.57484096254642,
+     -37.60629823014736
+    ],
+    "ref_frontal": [
+     -41.79491925111391,
+     -72.79257228175564,
+     -41.68723191336164,
+     -50.47106922990396,
+     -26.954847008993767
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 5,
+    "fp": 50,
+    "fn": 0,
+    "precision": 0.0909,
+    "recall": 1.0,
+    "f1": 0.1667
+   },
+   "movement_gated": {
+    "tp": 5,
+    "fp": 36,
+    "fn": 0,
+    "precision": 0.122,
+    "recall": 1.0,
+    "f1": 0.2174
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 16,
+    "above_ceiling": 5,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 4,
+    "hold_too_short": 13
+   }
+  },
+  {
+   "video": "PM_000",
+   "person": 1,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": false,
+   "labelled_reps": 5,
+   "frames_in_reps": 543,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 543
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 1,
+    "fp": 1,
+    "fn": 4,
+    "precision": 0.5,
+    "recall": 0.2,
+    "f1": 0.2857
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_001",
+   "person": 1,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 1058,
+   "pose_rate": 0.9159,
+   "gate_open_rate": 0.8526,
+   "gates": {
+    "open": 902,
+    "turn_front": 65,
+    "hips_out_of_view": 2
+   },
+   "no_pose_frames": 89,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 902,
+     "mae": 23.43,
+     "bias": -23.2,
+     "rmse": 32.32,
+     "p95_abs": 69.62,
+     "sd": 22.51,
+     "loa_low": -67.33,
+     "loa_high": 20.92
+    },
+    "ref_frontal": {
+     "n": 902,
+     "mae": 13.96,
+     "bias": -9.82,
+     "rmse": 23.6,
+     "p95_abs": 55.14,
+     "sd": 21.48,
+     "loa_low": -51.91,
+     "loa_high": 32.27
+    },
+    "ref_3d": {
+     "n": 902,
+     "mae": 13.46,
+     "bias": -9.99,
+     "rmse": 22.96,
+     "p95_abs": 53.5,
+     "sd": 20.68,
+     "loa_low": -50.53,
+     "loa_high": 30.55
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 902,
+     "mae": 23.42,
+     "bias": -23.06,
+     "rmse": 32.7,
+     "p95_abs": 66.98,
+     "sd": 23.19,
+     "loa_low": -68.52,
+     "loa_high": 22.4
+    },
+    "ref_frontal": {
+     "n": 902,
+     "mae": 14.06,
+     "bias": -9.68,
+     "rmse": 24.21,
+     "p95_abs": 51.85,
+     "sd": 22.21,
+     "loa_low": -53.21,
+     "loa_high": 33.86
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": 0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 127.1,
+     "ref_cam": 143.18710001693825,
+     "ref_frontal": 128.02861109801734,
+     "ref_3d": 123.85978866499659
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 116.7,
+     "ref_cam": 135.89454341178916,
+     "ref_frontal": 121.029302703441,
+     "ref_3d": 118.09657191125672
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 91.3,
+     "ref_cam": 140.69115607962118,
+     "ref_frontal": 126.41773747524103,
+     "ref_3d": 122.85106897587089
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 131.8,
+     "ref_cam": 138.6688044596441,
+     "ref_frontal": 124.07580205935824,
+     "ref_3d": 121.24375406436519
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 114.8,
+     "ref_cam": 139.07247449938393,
+     "ref_frontal": 125.02987821371227,
+     "ref_3d": 122.0252053220254
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 105.2,
+     "ref_cam": 129.39511021606262,
+     "ref_frontal": 117.14820556883686,
+     "ref_3d": 115.13547551882685
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 102.2,
+     "ref_cam": 130.04698999713256,
+     "ref_frontal": 117.94102847200885,
+     "ref_3d": 115.67628984211963
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 117.5,
+     "ref_cam": 123.74748082795202,
+     "ref_frontal": 111.98508507203424,
+     "ref_3d": 110.83927603882358
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 145.1,
+     "ref_cam": 124.91383897299536,
+     "ref_frontal": 111.75887876876199,
+     "ref_3d": 110.24415469589549
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 107.3,
+     "ref_cam": 126.99184982135988,
+     "ref_frontal": 115.30909202569883,
+     "ref_3d": 113.77105919280034
+    }
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 14,
+    "fn": 0,
+    "precision": 0.4167,
+    "recall": 1.0,
+    "f1": 0.5882,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 16,
+     "target_missed": 8
+    },
+    "above_ceiling": 2
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -29.28710001693824,
+     -40.694543411789155,
+     -49.39115607962118,
+     -47.26880445964409,
+     -52.07247449938393,
+     -38.59511021606262,
+     -27.846989997132553,
+     -43.047480827952015,
+     -25.21383897299536,
+     -19.69184982135988
+    ],
+    "ref_frontal": [
+     -14.12861109801733,
+     -25.829302703441,
+     -35.11773747524103,
+     -32.67580205935823,
+     -38.029878213712266,
+     -26.34820556883686,
+     -15.74102847200885,
+     -31.285085072034235,
+     -12.058878768761986,
+     -8.009092025698834
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": true,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": true,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 67,
+    "fn": 0,
+    "precision": 0.1299,
+    "recall": 1.0,
+    "f1": 0.2299
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 50,
+    "fn": 0,
+    "precision": 0.1667,
+    "recall": 1.0,
+    "f1": 0.2857
+   },
+   "events": {
+    "compensation_lean": 3,
+    "shoulder_hiking": 18,
+    "above_ceiling": 2,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 8,
+    "hold_too_short": 16
+   }
+  },
+  {
+   "video": "PM_001",
+   "person": 1,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 1058,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 1058
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_002",
+   "person": 1,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 9,
+   "frames_in_reps": 864,
+   "pose_rate": 0.7894,
+   "gate_open_rate": 0.1308,
+   "gates": {
+    "open": 113,
+    "turn_front": 568,
+    "hips_out_of_view": 1
+   },
+   "no_pose_frames": 182,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 113,
+     "mae": 31.68,
+     "bias": -24.44,
+     "rmse": 46.08,
+     "p95_abs": 113.71,
+     "sd": 39.24,
+     "loa_low": -101.35,
+     "loa_high": 52.48
+    },
+    "ref_frontal": {
+     "n": 113,
+     "mae": 20.18,
+     "bias": -13.82,
+     "rmse": 28.47,
+     "p95_abs": 65.78,
+     "sd": 25.0,
+     "loa_low": -62.82,
+     "loa_high": 35.18
+    },
+    "ref_3d": {
+     "n": 113,
+     "mae": 20.29,
+     "bias": -14.01,
+     "rmse": 28.28,
+     "p95_abs": 64.76,
+     "sd": 24.67,
+     "loa_low": -62.37,
+     "loa_high": 34.34
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 113,
+     "mae": 32.67,
+     "bias": -24.53,
+     "rmse": 47.85,
+     "p95_abs": 123.47,
+     "sd": 41.27,
+     "loa_low": -105.42,
+     "loa_high": 56.35
+    },
+    "ref_frontal": {
+     "n": 113,
+     "mae": 21.42,
+     "bias": -13.91,
+     "rmse": 30.53,
+     "p95_abs": 76.48,
+     "sd": 27.3,
+     "loa_low": -67.41,
+     "loa_high": 39.58
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 6,
+    "fp": 4,
+    "fn": 3,
+    "precision": 0.6,
+    "recall": 0.6667,
+    "f1": 0.6316,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 2,
+     "target_missed": 8
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 9,
+    "fp": 40,
+    "fn": 0,
+    "precision": 0.1837,
+    "recall": 1.0,
+    "f1": 0.3103
+   },
+   "movement_gated": {
+    "tp": 7,
+    "fp": 8,
+    "fn": 2,
+    "precision": 0.4667,
+    "recall": 0.7778,
+    "f1": 0.5833
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 5,
+    "above_ceiling": 0,
+    "perception_lost": 3,
+    "setup_blocked": 4,
+    "target_missed": 8,
+    "hold_too_short": 2
+   }
+  },
+  {
+   "video": "PM_002",
+   "person": 1,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 9,
+   "frames_in_reps": 864,
+   "pose_rate": 0.9977,
+   "gate_open_rate": 0.0278,
+   "gates": {
+    "open": 24,
+    "turn_front": 838
+   },
+   "no_pose_frames": 2,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 24,
+     "mae": 11.24,
+     "bias": -11.13,
+     "rmse": 13.34,
+     "p95_abs": 26.28,
+     "sd": 7.5,
+     "loa_low": -25.84,
+     "loa_high": 3.57
+    },
+    "ref_frontal": {
+     "n": 24,
+     "mae": 9.21,
+     "bias": -7.67,
+     "rmse": 11.07,
+     "p95_abs": 20.36,
+     "sd": 8.16,
+     "loa_low": -23.66,
+     "loa_high": 8.32
+    },
+    "ref_3d": {
+     "n": 24,
+     "mae": 9.56,
+     "bias": -8.45,
+     "rmse": 11.6,
+     "p95_abs": 22.18,
+     "sd": 8.11,
+     "loa_low": -24.35,
+     "loa_high": 7.45
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 24,
+     "mae": 10.37,
+     "bias": -10.18,
+     "rmse": 12.32,
+     "p95_abs": 23.94,
+     "sd": 7.09,
+     "loa_low": -24.08,
+     "loa_high": 3.72
+    },
+    "ref_frontal": {
+     "n": 24,
+     "mae": 8.34,
+     "bias": -6.71,
+     "rmse": 9.92,
+     "p95_abs": 17.75,
+     "sd": 7.47,
+     "loa_low": -21.35,
+     "loa_high": 7.92
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 8,
+    "precision": 1.0,
+    "recall": 0.1111,
+    "f1": 0.2,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 9,
+    "fp": 11,
+    "fn": 0,
+    "precision": 0.45,
+    "recall": 1.0,
+    "f1": 0.6207
+   },
+   "movement_gated": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 6,
+    "precision": 1.0,
+    "recall": 0.3333,
+    "f1": 0.5
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 4,
+    "target_missed": 0,
+    "hold_too_short": 2
+   }
+  },
+  {
+   "video": "PM_012",
+   "person": 2,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 751,
+   "pose_rate": 0.9654,
+   "gate_open_rate": 0.8855,
+   "gates": {
+    "open": 665,
+    "turn_front": 52,
+    "hips_out_of_view": 8
+   },
+   "no_pose_frames": 26,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 665,
+     "mae": 13.49,
+     "bias": -9.77,
+     "rmse": 21.89,
+     "p95_abs": 56.42,
+     "sd": 19.6,
+     "loa_low": -48.2,
+     "loa_high": 28.66
+    },
+    "ref_frontal": {
+     "n": 665,
+     "mae": 10.66,
+     "bias": -1.94,
+     "rmse": 19.9,
+     "p95_abs": 53.62,
+     "sd": 19.82,
+     "loa_low": -40.78,
+     "loa_high": 36.9
+    },
+    "ref_3d": {
+     "n": 665,
+     "mae": 10.67,
+     "bias": -2.07,
+     "rmse": 19.88,
+     "p95_abs": 54.19,
+     "sd": 19.79,
+     "loa_low": -40.86,
+     "loa_high": 36.71
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 665,
+     "mae": 13.75,
+     "bias": -9.84,
+     "rmse": 22.59,
+     "p95_abs": 59.17,
+     "sd": 20.35,
+     "loa_low": -49.73,
+     "loa_high": 30.05
+    },
+    "ref_frontal": {
+     "n": 665,
+     "mae": 10.77,
+     "bias": -2.01,
+     "rmse": 20.64,
+     "p95_abs": 57.03,
+     "sd": 20.56,
+     "loa_low": -42.3,
+     "loa_high": 38.28
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": -0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 142.9,
+     "ref_cam": 122.6916792862963,
+     "ref_frontal": 116.35814648506997,
+     "ref_3d": 115.78960381630809
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 160.3,
+     "ref_cam": 119.11834493034533,
+     "ref_frontal": 112.83668120778118,
+     "ref_3d": 112.21754039724031
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 175.5,
+     "ref_cam": 119.95783840387632,
+     "ref_frontal": 113.99069021935385,
+     "ref_3d": 113.04138381941077
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 172.5,
+     "ref_cam": 119.60495944711501,
+     "ref_frontal": 113.81335349182947,
+     "ref_3d": 113.01077452699832
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 168.9,
+     "ref_cam": 124.11370063422167,
+     "ref_frontal": 118.80485815510002,
+     "ref_3d": 117.63779502616413
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 126.2,
+     "ref_cam": 140.74962375172862,
+     "ref_frontal": 136.87288893577656,
+     "ref_3d": 136.61895738736698
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 136.5,
+     "ref_cam": 137.07103447785568,
+     "ref_frontal": 132.14944062771013,
+     "ref_3d": 132.13503197197858
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 126.9,
+     "ref_cam": 134.08804640195925,
+     "ref_frontal": 128.641784397429,
+     "ref_3d": 128.29917050549818
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 136.3,
+     "ref_cam": 135.34312856978195,
+     "ref_frontal": 129.40376870400002,
+     "ref_3d": 127.20287068913277
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 120.7,
+     "ref_cam": 121.08492796147755,
+     "ref_frontal": 113.07842167420257,
+     "ref_3d": 111.45791894327796
+    }
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 11,
+    "fn": 0,
+    "precision": 0.4762,
+    "recall": 1.0,
+    "f1": 0.6452,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 14,
+     "target_missed": 7
+    },
+    "above_ceiling": 6
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -2.6916792862963064,
+     -38.91834493034533,
+     55.54216159612368,
+     -38.80495944711501,
+     -43.813700634221675,
+     -14.549623751728618,
+     -0.571034477855676,
+     -7.188046401959241,
+     0.9568714302180581,
+     -0.38492796147754405
+    ],
+    "ref_frontal": [
+     3.641853514930034,
+     -32.63668120778118,
+     61.50930978064615,
+     -33.01335349182948,
+     -38.504858155100024,
+     -10.672888935776555,
+     4.350559372289865,
+     -1.7417843974290008,
+     6.896231295999996,
+     7.621578325797429
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 45,
+    "fn": 0,
+    "precision": 0.1818,
+    "recall": 1.0,
+    "f1": 0.3077
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 26,
+    "fn": 0,
+    "precision": 0.2778,
+    "recall": 1.0,
+    "f1": 0.4348
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 18,
+    "above_ceiling": 6,
+    "perception_lost": 1,
+    "setup_blocked": 0,
+    "target_missed": 7,
+    "hold_too_short": 14
+   }
+  },
+  {
+   "video": "PM_012",
+   "person": 2,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 751,
+   "pose_rate": 0.9987,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "open": 0,
+    "turn_front": 750
+   },
+   "no_pose_frames": 1,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 5,
+    "fp": 23,
+    "fn": 5,
+    "precision": 0.1786,
+    "recall": 0.5,
+    "f1": 0.2632
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_016",
+   "person": 2,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 815,
+   "pose_rate": 0.7975,
+   "gate_open_rate": 0.1215,
+   "gates": {
+    "open": 99,
+    "turn_front": 543,
+    "hips_out_of_view": 8
+   },
+   "no_pose_frames": 165,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 99,
+     "mae": 31.88,
+     "bias": -22.55,
+     "rmse": 42.81,
+     "p95_abs": 101.7,
+     "sd": 36.58,
+     "loa_low": -94.25,
+     "loa_high": 49.15
+    },
+    "ref_frontal": {
+     "n": 99,
+     "mae": 30.78,
+     "bias": -16.41,
+     "rmse": 38.37,
+     "p95_abs": 80.55,
+     "sd": 34.86,
+     "loa_low": -84.73,
+     "loa_high": 51.91
+    },
+    "ref_3d": {
+     "n": 99,
+     "mae": 31.15,
+     "bias": -16.25,
+     "rmse": 38.55,
+     "p95_abs": 80.53,
+     "sd": 35.14,
+     "loa_low": -85.13,
+     "loa_high": 52.62
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 99,
+     "mae": 32.29,
+     "bias": -22.17,
+     "rmse": 43.3,
+     "p95_abs": 93.64,
+     "sd": 37.38,
+     "loa_low": -95.45,
+     "loa_high": 51.1
+    },
+    "ref_frontal": {
+     "n": 99,
+     "mae": 31.14,
+     "bias": -16.03,
+     "rmse": 39.09,
+     "p95_abs": 80.63,
+     "sd": 35.83,
+     "loa_low": -86.26,
+     "loa_high": 54.2
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 8,
+    "fp": 5,
+    "fn": 2,
+    "precision": 0.6154,
+    "recall": 0.8,
+    "f1": 0.6957,
+    "verified": 1,
+    "reasons": {
+     "target_missed": 9,
+     "hold_too_short": 3,
+     "verified": 1
+    },
+    "above_ceiling": 1
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": true,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 36,
+    "fn": 0,
+    "precision": 0.2174,
+    "recall": 1.0,
+    "f1": 0.3571
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 6,
+    "fn": 0,
+    "precision": 0.625,
+    "recall": 1.0,
+    "f1": 0.7692
+   },
+   "events": {
+    "compensation_lean": 1,
+    "shoulder_hiking": 7,
+    "above_ceiling": 1,
+    "perception_lost": 0,
+    "setup_blocked": 3,
+    "target_missed": 9,
+    "hold_too_short": 3
+   }
+  },
+  {
+   "video": "PM_016",
+   "person": 2,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 815,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0442,
+   "gates": {
+    "open": 36,
+    "turn_front": 779
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 36,
+     "mae": 10.09,
+     "bias": -6.31,
+     "rmse": 10.64,
+     "p95_abs": 14.13,
+     "sd": 8.69,
+     "loa_low": -23.34,
+     "loa_high": 10.73
+    },
+    "ref_frontal": {
+     "n": 36,
+     "mae": 13.8,
+     "bias": -9.58,
+     "rmse": 14.32,
+     "p95_abs": 19.45,
+     "sd": 10.79,
+     "loa_low": -30.73,
+     "loa_high": 11.58
+    },
+    "ref_3d": {
+     "n": 36,
+     "mae": 16.05,
+     "bias": -11.8,
+     "rmse": 16.6,
+     "p95_abs": 19.91,
+     "sd": 11.84,
+     "loa_low": -35.01,
+     "loa_high": 11.42
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 36,
+     "mae": 9.68,
+     "bias": -6.21,
+     "rmse": 10.29,
+     "p95_abs": 14.12,
+     "sd": 8.32,
+     "loa_low": -22.52,
+     "loa_high": 10.11
+    },
+    "ref_frontal": {
+     "n": 36,
+     "mae": 13.39,
+     "bias": -9.47,
+     "rmse": 14.01,
+     "p95_abs": 18.58,
+     "sd": 10.47,
+     "loa_low": -29.99,
+     "loa_high": 11.05
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 4,
+    "fp": 1,
+    "fn": 6,
+    "precision": 0.8,
+    "recall": 0.4,
+    "f1": 0.5333,
+    "verified": 1,
+    "reasons": {
+     "target_missed": 3,
+     "hold_too_short": 1,
+     "verified": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 7,
+    "fn": 0,
+    "precision": 0.5882,
+    "recall": 1.0,
+    "f1": 0.7407
+   },
+   "movement_gated": {
+    "tp": 4,
+    "fp": 0,
+    "fn": 6,
+    "precision": 1.0,
+    "recall": 0.4,
+    "f1": 0.5714
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 5,
+    "target_missed": 3,
+    "hold_too_short": 1
+   }
+  },
+  {
+   "video": "PM_023",
+   "person": 3,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 640,
+   "pose_rate": 0.8172,
+   "gate_open_rate": 0.6484,
+   "gates": {
+    "open": 415,
+    "turn_front": 90,
+    "hips_out_of_view": 18
+   },
+   "no_pose_frames": 117,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 415,
+     "mae": 24.62,
+     "bias": -22.51,
+     "rmse": 36.35,
+     "p95_abs": 83.91,
+     "sd": 28.58,
+     "loa_low": -78.53,
+     "loa_high": 33.5
+    },
+    "ref_frontal": {
+     "n": 415,
+     "mae": 18.09,
+     "bias": -9.27,
+     "rmse": 29.35,
+     "p95_abs": 71.6,
+     "sd": 27.88,
+     "loa_low": -63.92,
+     "loa_high": 45.38
+    },
+    "ref_3d": {
+     "n": 415,
+     "mae": 17.81,
+     "bias": -9.79,
+     "rmse": 28.91,
+     "p95_abs": 69.31,
+     "sd": 27.24,
+     "loa_low": -63.17,
+     "loa_high": 43.6
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 415,
+     "mae": 24.93,
+     "bias": -22.7,
+     "rmse": 37.08,
+     "p95_abs": 86.67,
+     "sd": 29.36,
+     "loa_low": -80.23,
+     "loa_high": 34.84
+    },
+    "ref_frontal": {
+     "n": 415,
+     "mae": 18.15,
+     "bias": -9.46,
+     "rmse": 30.16,
+     "p95_abs": 76.23,
+     "sd": 28.67,
+     "loa_low": -65.65,
+     "loa_high": 46.73
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": 0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 78.6,
+     "ref_cam": 133.01487242679084,
+     "ref_frontal": 122.3713120376517,
+     "ref_3d": 122.02155562493577
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 132.3,
+     "ref_cam": 138.3487476479652,
+     "ref_frontal": 127.67955505956532,
+     "ref_3d": 126.82162423399068
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 103.9,
+     "ref_cam": 132.05983979257107,
+     "ref_frontal": 121.13070549552462,
+     "ref_3d": 120.52729977384134
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 95.0,
+     "ref_cam": 135.39212983912108,
+     "ref_frontal": 124.14429905749668,
+     "ref_3d": 123.33707176815992
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 124.5,
+     "ref_cam": 133.65686519112884,
+     "ref_frontal": 122.1671132829104,
+     "ref_3d": 121.23361284351562
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 87.2,
+     "ref_cam": 141.1866001432097,
+     "ref_frontal": 127.37124029782427,
+     "ref_3d": 122.19292679533548
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 145.7,
+     "ref_cam": 155.28220808152636,
+     "ref_frontal": 140.87825308547409,
+     "ref_3d": 130.72055963545213
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 139.3,
+     "ref_cam": 152.38656641701144,
+     "ref_frontal": 136.6470973862348,
+     "ref_3d": 126.8408892734811
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 111.0,
+     "ref_cam": 146.25141512736485,
+     "ref_frontal": 131.55296079883016,
+     "ref_3d": 126.62512819289401
+    },
+    null
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 12,
+    "fn": 0,
+    "precision": 0.4545,
+    "recall": 1.0,
+    "f1": 0.625,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 12,
+     "hold_too_short": 10
+    },
+    "above_ceiling": 2
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -54.41487242679085,
+     -57.84874764796521,
+     -34.459839792571074,
+     -40.39212983912108,
+     -9.156865191128844,
+     -53.986600143209685,
+     -34.88220808152636,
+     -13.086566417011426,
+     -35.25141512736485
+    ],
+    "ref_frontal": [
+     -43.77131203765171,
+     -47.17955505956532,
+     -23.53070549552463,
+     -29.14429905749668,
+     2.3328867170895933,
+     -40.17124029782427,
+     -20.47825308547408,
+     2.6529026137652068,
+     -20.552960798830156
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 51,
+    "fn": 0,
+    "precision": 0.1639,
+    "recall": 1.0,
+    "f1": 0.2817
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 26,
+    "fn": 0,
+    "precision": 0.2778,
+    "recall": 1.0,
+    "f1": 0.4348
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 22,
+    "above_ceiling": 2,
+    "perception_lost": 2,
+    "setup_blocked": 0,
+    "target_missed": 12,
+    "hold_too_short": 10
+   }
+  },
+  {
+   "video": "PM_023",
+   "person": 3,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 640,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 640
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 8,
+    "fp": 10,
+    "fn": 2,
+    "precision": 0.4444,
+    "recall": 0.8,
+    "f1": 0.5714
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 1,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_024",
+   "person": 3,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 827,
+   "pose_rate": 0.6723,
+   "gate_open_rate": 0.0447,
+   "gates": {
+    "open": 37,
+    "turn_front": 508,
+    "hips_out_of_view": 11
+   },
+   "no_pose_frames": 271,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 37,
+     "mae": 48.73,
+     "bias": -44.05,
+     "rmse": 79.62,
+     "p95_abs": 168.02,
+     "sd": 67.23,
+     "loa_low": -175.83,
+     "loa_high": 87.72
+    },
+    "ref_frontal": {
+     "n": 37,
+     "mae": 35.83,
+     "bias": -33.33,
+     "rmse": 50.01,
+     "p95_abs": 110.7,
+     "sd": 37.8,
+     "loa_low": -107.41,
+     "loa_high": 40.75
+    },
+    "ref_3d": {
+     "n": 37,
+     "mae": 36.25,
+     "bias": -33.77,
+     "rmse": 49.04,
+     "p95_abs": 106.17,
+     "sd": 36.04,
+     "loa_low": -104.41,
+     "loa_high": 36.87
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 37,
+     "mae": 49.25,
+     "bias": -44.71,
+     "rmse": 80.74,
+     "p95_abs": 171.74,
+     "sd": 68.15,
+     "loa_low": -178.29,
+     "loa_high": 88.87
+    },
+    "ref_frontal": {
+     "n": 37,
+     "mae": 36.69,
+     "bias": -33.98,
+     "rmse": 51.57,
+     "p95_abs": 114.21,
+     "sd": 39.33,
+     "loa_low": -111.06,
+     "loa_high": 43.1
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 4,
+    "fp": 2,
+    "fn": 6,
+    "precision": 0.6667,
+    "recall": 0.4,
+    "f1": 0.5,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 6
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 22,
+    "fn": 0,
+    "precision": 0.3125,
+    "recall": 1.0,
+    "f1": 0.4762
+   },
+   "movement_gated": {
+    "tp": 3,
+    "fp": 1,
+    "fn": 7,
+    "precision": 0.75,
+    "recall": 0.3,
+    "f1": 0.4286
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 3,
+    "setup_blocked": 6,
+    "target_missed": 6,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_024",
+   "person": 3,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": false,
+   "labelled_reps": 10,
+   "frames_in_reps": 827,
+   "pose_rate": 0.9891,
+   "gate_open_rate": 0.1596,
+   "gates": {
+    "open": 132,
+    "turn_front": 686
+   },
+   "no_pose_frames": 9,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 132,
+     "mae": 9.72,
+     "bias": -8.72,
+     "rmse": 16.48,
+     "p95_abs": 31.8,
+     "sd": 14.04,
+     "loa_low": -36.24,
+     "loa_high": 18.8
+    },
+    "ref_frontal": {
+     "n": 132,
+     "mae": 9.27,
+     "bias": -2.6,
+     "rmse": 16.02,
+     "p95_abs": 31.64,
+     "sd": 15.86,
+     "loa_low": -33.7,
+     "loa_high": 28.49
+    },
+    "ref_3d": {
+     "n": 132,
+     "mae": 8.89,
+     "bias": -2.13,
+     "rmse": 15.1,
+     "p95_abs": 28.41,
+     "sd": 15.01,
+     "loa_low": -31.54,
+     "loa_high": 27.29
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 132,
+     "mae": 9.49,
+     "bias": -8.22,
+     "rmse": 16.17,
+     "p95_abs": 35.65,
+     "sd": 13.98,
+     "loa_low": -35.62,
+     "loa_high": 19.18
+    },
+    "ref_frontal": {
+     "n": 132,
+     "mae": 9.15,
+     "bias": -2.1,
+     "rmse": 15.84,
+     "p95_abs": 35.03,
+     "sd": 15.76,
+     "loa_low": -33.0,
+     "loa_high": 28.8
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 7,
+    "fp": 2,
+    "fn": 3,
+    "precision": 0.7778,
+    "recall": 0.7,
+    "f1": 0.7368,
+    "verified": 2,
+    "reasons": {
+     "verified": 2,
+     "hold_too_short": 5,
+     "target_missed": 2
+    },
+    "above_ceiling": 6
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 30,
+    "fn": 0,
+    "precision": 0.25,
+    "recall": 1.0,
+    "f1": 0.4
+   },
+   "movement_gated": {
+    "tp": 9,
+    "fp": 5,
+    "fn": 1,
+    "precision": 0.6429,
+    "recall": 0.9,
+    "f1": 0.75
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 7,
+    "above_ceiling": 6,
+    "perception_lost": 0,
+    "setup_blocked": 2,
+    "target_missed": 2,
+    "hold_too_short": 5
+   }
+  },
+  {
+   "video": "PM_032",
+   "person": 4,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 561,
+   "pose_rate": 0.9875,
+   "gate_open_rate": 0.9269,
+   "gates": {
+    "open": 520,
+    "turn_front": 24,
+    "hips_out_of_view": 10
+   },
+   "no_pose_frames": 7,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 520,
+     "mae": 12.13,
+     "bias": -9.74,
+     "rmse": 16.95,
+     "p95_abs": 32.42,
+     "sd": 13.89,
+     "loa_low": -36.95,
+     "loa_high": 17.48
+    },
+    "ref_frontal": {
+     "n": 520,
+     "mae": 8.67,
+     "bias": -3.68,
+     "rmse": 14.29,
+     "p95_abs": 29.63,
+     "sd": 13.82,
+     "loa_low": -30.77,
+     "loa_high": 23.41
+    },
+    "ref_3d": {
+     "n": 520,
+     "mae": 8.74,
+     "bias": -3.85,
+     "rmse": 14.3,
+     "p95_abs": 29.59,
+     "sd": 13.79,
+     "loa_low": -30.88,
+     "loa_high": 23.18
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 520,
+     "mae": 12.07,
+     "bias": -9.43,
+     "rmse": 17.49,
+     "p95_abs": 33.59,
+     "sd": 14.75,
+     "loa_low": -38.33,
+     "loa_high": 19.47
+    },
+    "ref_frontal": {
+     "n": 520,
+     "mae": 8.75,
+     "bias": -3.37,
+     "rmse": 15.06,
+     "p95_abs": 30.77,
+     "sd": 14.69,
+     "loa_low": -32.17,
+     "loa_high": 25.43
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": -0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 105.4,
+     "ref_cam": 109.2638593335723,
+     "ref_frontal": 102.1571338103578,
+     "ref_3d": 102.0647430581171
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 104.1,
+     "ref_cam": 111.02185610437886,
+     "ref_frontal": 104.19692141543807,
+     "ref_3d": 104.1534582393924
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 95.6,
+     "ref_cam": 110.24060410526808,
+     "ref_frontal": 103.3128307678612,
+     "ref_3d": 103.16195636464877
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 100.0,
+     "ref_cam": 107.98529503647083,
+     "ref_frontal": 101.05861685994505,
+     "ref_3d": 100.95560047467316
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 105.4,
+     "ref_cam": 121.32213990225705,
+     "ref_frontal": 114.38566021633063,
+     "ref_3d": 114.23957675158361
+    },
+    {
+     "rep": 6,
+     "correct": true,
+     "pred": 109.6,
+     "ref_cam": 130.70406347248783,
+     "ref_frontal": 124.12344280739008,
+     "ref_3d": 123.98023809328708
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 154.0,
+     "ref_cam": 142.001768313179,
+     "ref_frontal": 136.39514962124554,
+     "ref_3d": 136.39257031835925
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 147.6,
+     "ref_cam": 137.9527636930571,
+     "ref_frontal": 132.206129298477,
+     "ref_3d": 132.180813443327
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 123.7,
+     "ref_cam": 134.09616044615316,
+     "ref_frontal": 128.1681522775204,
+     "ref_3d": 128.15378756533008
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 163.7,
+     "ref_cam": 137.2447442589142,
+     "ref_frontal": 131.4232905057004,
+     "ref_3d": 131.42283655231125
+    },
+    {
+     "rep": 11,
+     "correct": false,
+     "pred": 175.2,
+     "ref_cam": 140.94463044602205,
+     "ref_frontal": 135.5799701073552,
+     "ref_3d": 135.51595849145943
+    }
+   ],
+   "fsm": {
+    "tp": 11,
+    "fp": 2,
+    "fn": 0,
+    "precision": 0.8462,
+    "recall": 1.0,
+    "f1": 0.9167,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 12,
+     "target_missed": 1
+    },
+    "above_ceiling": 9
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -3.863859333572293,
+     -6.921856104378861,
+     -14.640604105268082,
+     -7.985295036470831,
+     -15.922139902257044,
+     -29.70406347248783,
+     11.998231686820986,
+     -18.252763693057105,
+     -35.69616044615316,
+     -26.544744258914207,
+     34.25536955397794
+    ],
+    "ref_frontal": [
+     3.2428661896422,
+     -0.09692141543807509,
+     -7.712830767861206,
+     -1.0586168599450474,
+     -8.98566021633063,
+     -23.123442807390077,
+     17.604850378754463,
+     -12.506129298477006,
+     -29.768152277520386,
+     -20.723290505700405,
+     39.620029892644794
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 11,
+    "fp": 21,
+    "fn": 0,
+    "precision": 0.3438,
+    "recall": 1.0,
+    "f1": 0.5116
+   },
+   "movement_gated": {
+    "tp": 11,
+    "fp": 13,
+    "fn": 0,
+    "precision": 0.4583,
+    "recall": 1.0,
+    "f1": 0.6286
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 9,
+    "above_ceiling": 9,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 1,
+    "hold_too_short": 12
+   }
+  },
+  {
+   "video": "PM_032",
+   "person": 4,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 594,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 594
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 12,
+    "fn": 0,
+    "precision": 0.4545,
+    "recall": 1.0,
+    "f1": 0.625
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_032",
+   "person": 4,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 594,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 594
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_032",
+   "person": 4,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 561,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 561
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 1,
+    "fp": 6,
+    "fn": 10,
+    "precision": 0.1429,
+    "recall": 0.0909,
+    "f1": 0.1111
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_039",
+   "person": 5,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 706,
+   "pose_rate": 0.9221,
+   "gate_open_rate": 0.8598,
+   "gates": {
+    "open": 607,
+    "turn_front": 27,
+    "hips_out_of_view": 17
+   },
+   "no_pose_frames": 55,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 607,
+     "mae": 13.06,
+     "bias": -10.92,
+     "rmse": 17.31,
+     "p95_abs": 37.34,
+     "sd": 13.44,
+     "loa_low": -37.26,
+     "loa_high": 15.42
+    },
+    "ref_frontal": {
+     "n": 607,
+     "mae": 8.34,
+     "bias": 0.26,
+     "rmse": 13.31,
+     "p95_abs": 29.79,
+     "sd": 13.32,
+     "loa_low": -25.85,
+     "loa_high": 26.37
+    },
+    "ref_3d": {
+     "n": 607,
+     "mae": 8.12,
+     "bias": 0.17,
+     "rmse": 13.35,
+     "p95_abs": 29.45,
+     "sd": 13.36,
+     "loa_low": -26.01,
+     "loa_high": 26.36
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 607,
+     "mae": 13.07,
+     "bias": -10.69,
+     "rmse": 17.79,
+     "p95_abs": 38.47,
+     "sd": 14.23,
+     "loa_low": -38.58,
+     "loa_high": 17.2
+    },
+    "ref_frontal": {
+     "n": 607,
+     "mae": 8.52,
+     "bias": 0.49,
+     "rmse": 14.13,
+     "p95_abs": 32.87,
+     "sd": 14.14,
+     "loa_low": -27.22,
+     "loa_high": 28.2
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": 0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": false,
+     "pred": 93.4,
+     "ref_cam": 103.44182101985821,
+     "ref_frontal": 94.26375483191373,
+     "ref_3d": 94.26128854500175
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 166.5,
+     "ref_cam": 139.74818942329517,
+     "ref_frontal": 129.95734377346514,
+     "ref_3d": 129.5006772572251
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 157.1,
+     "ref_cam": 151.14064731584378,
+     "ref_frontal": 141.7125715287382,
+     "ref_3d": 140.8258721498155
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 134.6,
+     "ref_cam": 145.80299335601353,
+     "ref_frontal": 136.4408683770226,
+     "ref_3d": 135.96641413322357
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 136.8,
+     "ref_cam": 134.6430763324367,
+     "ref_frontal": 125.27403223949862,
+     "ref_3d": 125.09573264517111
+    },
+    {
+     "rep": 6,
+     "correct": true,
+     "pred": 148.7,
+     "ref_cam": 133.5541763546506,
+     "ref_frontal": 125.4699350000632,
+     "ref_3d": 125.46922418734644
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 150.1,
+     "ref_cam": 138.80797163234584,
+     "ref_frontal": 124.23056719314242,
+     "ref_3d": 121.19613401655165
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 117.9,
+     "ref_cam": 137.1255467177422,
+     "ref_frontal": 124.18280826424746,
+     "ref_3d": 120.53716713479517
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 174.7,
+     "ref_cam": 132.06665775951916,
+     "ref_frontal": 117.43457476104457,
+     "ref_3d": 113.69921973463094
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 138.0,
+     "ref_cam": 122.06991948145308,
+     "ref_frontal": 107.27502766978824,
+     "ref_3d": 105.50099647167796
+    },
+    {
+     "rep": 11,
+     "correct": false,
+     "pred": 178.6,
+     "ref_cam": 125.22261800313773,
+     "ref_frontal": 110.6593826464841,
+     "ref_3d": 108.40338492456968
+    }
+   ],
+   "fsm": {
+    "tp": 11,
+    "fp": 3,
+    "fn": 0,
+    "precision": 0.7857,
+    "recall": 1.0,
+    "f1": 0.88,
+    "verified": 0,
+    "reasons": {
+     "hold_too_short": 12,
+     "target_missed": 2
+    },
+    "above_ceiling": 9
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -10.041821019858205,
+     26.751810576704827,
+     5.959352684156215,
+     -11.202993356013536,
+     2.156923667563319,
+     -23.554176354650593,
+     -25.30797163234584,
+     -19.22554671774219,
+     42.63334224048083,
+     -26.16991948145308,
+     -41.42261800313773
+    ],
+    "ref_frontal": [
+     -0.8637548319137238,
+     36.54265622653486,
+     15.387428471261785,
+     -1.8408683770226162,
+     11.525967760501388,
+     -15.469935000063202,
+     -10.73056719314242,
+     -6.28280826424745,
+     57.265425238955416,
+     -11.375027669788238,
+     -26.859382646484107
+    ]
+   },
+   "compensation": [
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": true,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 11,
+    "fp": 23,
+    "fn": 0,
+    "precision": 0.3235,
+    "recall": 1.0,
+    "f1": 0.4889
+   },
+   "movement_gated": {
+    "tp": 11,
+    "fp": 11,
+    "fn": 0,
+    "precision": 0.5,
+    "recall": 1.0,
+    "f1": 0.6667
+   },
+   "events": {
+    "compensation_lean": 1,
+    "shoulder_hiking": 11,
+    "above_ceiling": 9,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 2,
+    "hold_too_short": 12
+   }
+  },
+  {
+   "video": "PM_039",
+   "person": 5,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 565,
+   "pose_rate": 0.954,
+   "gate_open_rate": 0.1009,
+   "gates": {
+    "open": 57,
+    "turn_front": 480,
+    "hips_out_of_view": 2
+   },
+   "no_pose_frames": 26,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 57,
+     "mae": 60.31,
+     "bias": -59.62,
+     "rmse": 67.84,
+     "p95_abs": 118.41,
+     "sd": 32.66,
+     "loa_low": -123.63,
+     "loa_high": 4.4
+    },
+    "ref_frontal": {
+     "n": 57,
+     "mae": 37.28,
+     "bias": -35.01,
+     "rmse": 47.34,
+     "p95_abs": 94.03,
+     "sd": 32.15,
+     "loa_low": -98.03,
+     "loa_high": 28.01
+    },
+    "ref_3d": {
+     "n": 57,
+     "mae": 37.25,
+     "bias": -34.97,
+     "rmse": 47.3,
+     "p95_abs": 93.97,
+     "sd": 32.12,
+     "loa_low": -97.93,
+     "loa_high": 27.99
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 57,
+     "mae": 60.2,
+     "bias": -59.22,
+     "rmse": 67.83,
+     "p95_abs": 122.21,
+     "sd": 33.38,
+     "loa_low": -124.64,
+     "loa_high": 6.2
+    },
+    "ref_frontal": {
+     "n": 57,
+     "mae": 36.87,
+     "bias": -34.61,
+     "rmse": 47.58,
+     "p95_abs": 97.75,
+     "sd": 32.94,
+     "loa_low": -99.17,
+     "loa_high": 29.95
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 7,
+    "precision": 1.0,
+    "recall": 0.3,
+    "f1": 0.4615,
+    "verified": 2,
+    "reasons": {
+     "verified": 2,
+     "hold_too_short": 1
+    },
+    "above_ceiling": 1
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 24,
+    "fn": 0,
+    "precision": 0.2941,
+    "recall": 1.0,
+    "f1": 0.4545
+   },
+   "movement_gated": {
+    "tp": 5,
+    "fp": 2,
+    "fn": 5,
+    "precision": 0.7143,
+    "recall": 0.5,
+    "f1": 0.5882
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 3,
+    "above_ceiling": 1,
+    "perception_lost": 0,
+    "setup_blocked": 2,
+    "target_missed": 0,
+    "hold_too_short": 1
+   }
+  },
+  {
+   "video": "PM_039",
+   "person": 5,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 565,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.4743,
+   "gates": {
+    "open": 268,
+    "turn_front": 297
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 268,
+     "mae": 12.31,
+     "bias": -12.31,
+     "rmse": 12.87,
+     "p95_abs": 18.86,
+     "sd": 3.78,
+     "loa_low": -19.72,
+     "loa_high": -4.89
+    },
+    "ref_frontal": {
+     "n": 268,
+     "mae": 8.65,
+     "bias": -8.46,
+     "rmse": 10.74,
+     "p95_abs": 20.6,
+     "sd": 6.64,
+     "loa_low": -21.47,
+     "loa_high": 4.56
+    },
+    "ref_3d": {
+     "n": 268,
+     "mae": 8.64,
+     "bias": -8.44,
+     "rmse": 10.89,
+     "p95_abs": 21.13,
+     "sd": 6.9,
+     "loa_low": -21.97,
+     "loa_high": 5.09
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 268,
+     "mae": 12.17,
+     "bias": -12.17,
+     "rmse": 12.59,
+     "p95_abs": 18.16,
+     "sd": 3.25,
+     "loa_low": -18.54,
+     "loa_high": -5.79
+    },
+    "ref_frontal": {
+     "n": 268,
+     "mae": 8.37,
+     "bias": -8.32,
+     "rmse": 10.44,
+     "p95_abs": 20.78,
+     "sd": 6.32,
+     "loa_low": -20.71,
+     "loa_high": 4.08
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+     "rep": 17,
+     "correct": false,
+     "pred": 107.6,
+     "ref_cam": 114.11485764849486,
+     "ref_frontal": 109.14949437091356,
+     "ref_3d": 107.94781316053695
+    },
+    {
+     "rep": 18,
+     "correct": false,
+     "pred": 107.4,
+     "ref_cam": 115.95452056747568,
+     "ref_frontal": 109.2790846093319,
+     "ref_3d": 107.20856145414635
+    },
+    {
+     "rep": 19,
+     "correct": false,
+     "pred": 109.6,
+     "ref_cam": 121.25663367591441,
+     "ref_frontal": 115.73771160315987,
+     "ref_3d": 112.62721623207425
+    },
+    {
+     "rep": 20,
+     "correct": false,
+     "pred": 112.0,
+     "ref_cam": 123.29327067472691,
+     "ref_frontal": 117.68361437071678,
+     "ref_3d": 114.08895645395326
+    },
+    {
+     "rep": 21,
+     "correct": false,
+     "pred": 113.0,
+     "ref_cam": 123.06869767252087,
+     "ref_frontal": 118.08782894144797,
+     "ref_3d": 115.18938483816522
+    }
+   ],
+   "fsm": {
+    "tp": 9,
+    "fp": 2,
+    "fn": 1,
+    "precision": 0.8182,
+    "recall": 0.9,
+    "f1": 0.8571,
+    "verified": 1,
+    "reasons": {
+     "verified": 1,
+     "hold_too_short": 9,
+     "target_missed": 1
+    },
+    "above_ceiling": 6
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -6.514857648494868,
+     -8.554520567475677,
+     -11.65663367591442,
+     -11.293270674726912,
+     -10.06869767252087
+    ],
+    "ref_frontal": [
+     -1.549494370913564,
+     -1.8790846093318976,
+     -6.137711603159872,
+     -5.683614370716782,
+     -5.087828941447967
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 9,
+    "above_ceiling": 6,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 1,
+    "hold_too_short": 9
+   }
+  },
+  {
+   "video": "PM_039",
+   "person": 5,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 706,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 706
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 1,
+    "fp": 1,
+    "fn": 10,
+    "precision": 0.5,
+    "recall": 0.0909,
+    "f1": 0.1538
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_101",
+   "person": 6,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 612,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 612
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 12,
+    "fn": 0,
+    "precision": 0.4545,
+    "recall": 1.0,
+    "f1": 0.625
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_101",
+   "person": 6,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 612,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.549,
+   "gates": {
+    "open": 336,
+    "turn_front": 276
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 336,
+     "mae": 12.79,
+     "bias": -12.79,
+     "rmse": 13.12,
+     "p95_abs": 18.56,
+     "sd": 2.94,
+     "loa_low": -18.56,
+     "loa_high": -7.02
+    },
+    "ref_frontal": {
+     "n": 336,
+     "mae": 3.91,
+     "bias": -3.63,
+     "rmse": 5.14,
+     "p95_abs": 10.69,
+     "sd": 3.65,
+     "loa_low": -10.77,
+     "loa_high": 3.52
+    },
+    "ref_3d": {
+     "n": 336,
+     "mae": 4.35,
+     "bias": -4.19,
+     "rmse": 5.59,
+     "p95_abs": 11.5,
+     "sd": 3.7,
+     "loa_low": -11.45,
+     "loa_high": 3.08
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 336,
+     "mae": 12.75,
+     "bias": -12.75,
+     "rmse": 13.04,
+     "p95_abs": 18.51,
+     "sd": 2.76,
+     "loa_low": -18.16,
+     "loa_high": -7.34
+    },
+    "ref_frontal": {
+     "n": 336,
+     "mae": 3.76,
+     "bias": -3.59,
+     "rmse": 5.01,
+     "p95_abs": 11.27,
+     "sd": 3.51,
+     "loa_low": -10.46,
+     "loa_high": 3.28
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 51.3,
+     "ref_cam": 134.74315670937216,
+     "ref_frontal": 130.0542535530362,
+     "ref_3d": 129.11860416071508
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 56.4,
+     "ref_cam": 135.58539315055026,
+     "ref_frontal": 130.58099553559944,
+     "ref_3d": 129.41880689607245
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 68.5,
+     "ref_cam": 131.30963087208565,
+     "ref_frontal": 126.38708706905682,
+     "ref_3d": 125.45330476829604
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 67.4,
+     "ref_cam": 133.83474373429462,
+     "ref_frontal": 129.28880979395424,
+     "ref_3d": 127.76529990031517
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 61.2,
+     "ref_cam": 137.88391329792773,
+     "ref_frontal": 133.09199378667162,
+     "ref_3d": 131.1402599259922
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 88.2,
+     "ref_cam": 130.48160664839972,
+     "ref_frontal": 124.83693397677962,
+     "ref_3d": 120.70502736528066
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 92.3,
+     "ref_cam": 122.5041969202002,
+     "ref_frontal": 113.13734685628161,
+     "ref_3d": 110.89401725430913
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 86.2,
+     "ref_cam": 120.99620075044757,
+     "ref_frontal": 112.11725617859999,
+     "ref_3d": 110.02569155433959
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 92.1,
+     "ref_cam": 127.56730801831243,
+     "ref_frontal": 119.82493675982933,
+     "ref_3d": 116.80684666721507
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 80.3,
+     "ref_cam": 129.60237979309196,
+     "ref_frontal": 122.45787000678388,
+     "ref_3d": 118.52383851648278
+    }
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 5,
+     "hold_too_short": 5
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -83.44315670937216,
+     -79.18539315055025,
+     -62.80963087208565,
+     -66.43474373429461,
+     -76.68391329792773,
+     -42.281606648399716,
+     -30.204196920200204,
+     -34.79620075044757,
+     -35.46730801831244,
+     -49.30237979309196
+    ],
+    "ref_frontal": [
+     -78.75425355303621,
+     -74.18099553559944,
+     -57.88708706905682,
+     -61.88880979395424,
+     -71.89199378667162,
+     -36.636933976779616,
+     -20.837346856281613,
+     -25.917256178599985,
+     -27.724936759829333,
+     -42.15787000678388
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 5,
+    "hold_too_short": 5
+   }
+  },
+  {
+   "video": "PM_122",
+   "person": 7,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 767,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.9987,
+   "gates": {
+    "open": 766,
+    "turn_front": 1
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 766,
+     "mae": 7.73,
+     "bias": -7.47,
+     "rmse": 10.97,
+     "p95_abs": 14.53,
+     "sd": 8.04,
+     "loa_low": -23.23,
+     "loa_high": 8.29
+    },
+    "ref_frontal": {
+     "n": 766,
+     "mae": 4.86,
+     "bias": 1.11,
+     "rmse": 8.76,
+     "p95_abs": 11.17,
+     "sd": 8.7,
+     "loa_low": -15.94,
+     "loa_high": 18.16
+    },
+    "ref_3d": {
+     "n": 766,
+     "mae": 4.96,
+     "bias": 2.28,
+     "rmse": 8.65,
+     "p95_abs": 12.42,
+     "sd": 8.34,
+     "loa_low": -14.07,
+     "loa_high": 18.64
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 766,
+     "mae": 7.62,
+     "bias": -7.43,
+     "rmse": 10.71,
+     "p95_abs": 14.77,
+     "sd": 7.72,
+     "loa_low": -22.56,
+     "loa_high": 7.71
+    },
+    "ref_frontal": {
+     "n": 766,
+     "mae": 4.75,
+     "bias": 1.15,
+     "rmse": 8.46,
+     "p95_abs": 10.62,
+     "sd": 8.38,
+     "loa_low": -15.28,
+     "loa_high": 17.59
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 164.3,
+     "ref_cam": 160.14251746406023,
+     "ref_frontal": 155.1375629808663,
+     "ref_3d": 149.22382519043197
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 153.3,
+     "ref_cam": 159.8012036364137,
+     "ref_frontal": 155.51244700252366,
+     "ref_3d": 149.87971651753566
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 161.2,
+     "ref_cam": 158.45348837583865,
+     "ref_frontal": 154.64106021231484,
+     "ref_3d": 150.21730740461106
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 154.8,
+     "ref_cam": 158.33095414839383,
+     "ref_frontal": 154.26163303453757,
+     "ref_3d": 150.30271828829868
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 153.9,
+     "ref_cam": 157.67822350874627,
+     "ref_frontal": 153.97322938441923,
+     "ref_3d": 149.61115880776893
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 121.6,
+     "ref_cam": 129.68390934444395,
+     "ref_frontal": 122.87339051408958,
+     "ref_3d": 122.54229026649391
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 138.0,
+     "ref_cam": 142.67633260785712,
+     "ref_frontal": 136.95093907703895,
+     "ref_3d": 131.628018066792
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 145.6,
+     "ref_cam": 150.0110047193884,
+     "ref_frontal": 146.27513715006174,
+     "ref_3d": 130.58138646982698
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 136.8,
+     "ref_cam": 145.9168496900276,
+     "ref_frontal": 137.70845057288446,
+     "ref_3d": 128.86589052775957
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 142.9,
+     "ref_cam": 148.9892100481693,
+     "ref_frontal": 143.40730233949773,
+     "ref_3d": 136.27168429958124
+    }
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524,
+    "verified": 3,
+    "reasons": {
+     "hold_too_short": 8,
+     "verified": 3
+    },
+    "above_ceiling": 11
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     4.157482535939778,
+     -6.501203636413692,
+     2.746511624161343,
+     -12.230954148393835,
+     -3.7782235087462652,
+     -8.083909344443953,
+     -4.67633260785712,
+     -4.411004719388416,
+     -9.116849690027578,
+     -6.089210048169292
+    ],
+    "ref_frontal": [
+     9.162437019133705,
+     -2.2124470025236462,
+     6.558939787685148,
+     -8.161633034537573,
+     -0.07322938441922133,
+     -1.2733905140895843,
+     1.049060922961047,
+     -0.6751371500617438,
+     -0.9084505728844476,
+     -0.507302339497727
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 3,
+    "fn": 0,
+    "precision": 0.7692,
+    "recall": 1.0,
+    "f1": 0.8696
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 3,
+    "fn": 0,
+    "precision": 0.7692,
+    "recall": 1.0,
+    "f1": 0.8696
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 10,
+    "above_ceiling": 11,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 0,
+    "hold_too_short": 8
+   }
+  },
+  {
+   "video": "PM_122",
+   "person": 7,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 773,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0052,
+   "gates": {
+    "open": 4,
+    "turn_front": 767,
+    "hips_out_of_view": 2
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 4,
+     "mae": 54.41,
+     "bias": -54.41,
+     "rmse": 55.15,
+     "p95_abs": 65.84,
+     "sd": 10.4,
+     "loa_low": -74.78,
+     "loa_high": -34.03
+    },
+    "ref_frontal": {
+     "n": 4,
+     "mae": 27.23,
+     "bias": -27.23,
+     "rmse": 29.38,
+     "p95_abs": 40.73,
+     "sd": 12.73,
+     "loa_low": -52.18,
+     "loa_high": -2.29
+    },
+    "ref_3d": {
+     "n": 4,
+     "mae": 26.79,
+     "bias": -26.79,
+     "rmse": 29.02,
+     "p95_abs": 40.38,
+     "sd": 12.86,
+     "loa_low": -52.01,
+     "loa_high": -1.58
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 4,
+     "mae": 62.81,
+     "bias": -62.81,
+     "rmse": 64.76,
+     "p95_abs": 80.55,
+     "sd": 18.23,
+     "loa_low": -98.54,
+     "loa_high": -27.07
+    },
+    "ref_frontal": {
+     "n": 4,
+     "mae": 35.63,
+     "bias": -35.63,
+     "rmse": 39.95,
+     "p95_abs": 55.44,
+     "sd": 20.87,
+     "loa_low": -76.53,
+     "loa_high": 5.26
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 45,
+    "fn": 0,
+    "precision": 0.1818,
+    "recall": 1.0,
+    "f1": 0.3077
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 1,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 5,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_122",
+   "person": 7,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 773,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.229,
+   "gates": {
+    "open": 177,
+    "turn_front": 596
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 177,
+     "mae": 13.57,
+     "bias": -13.57,
+     "rmse": 13.76,
+     "p95_abs": 17.25,
+     "sd": 2.29,
+     "loa_low": -18.06,
+     "loa_high": -9.07
+    },
+    "ref_frontal": {
+     "n": 177,
+     "mae": 9.12,
+     "bias": -9.12,
+     "rmse": 10.7,
+     "p95_abs": 19.94,
+     "sd": 5.62,
+     "loa_low": -20.14,
+     "loa_high": 1.9
+    },
+    "ref_3d": {
+     "n": 177,
+     "mae": 10.52,
+     "bias": -10.52,
+     "rmse": 11.48,
+     "p95_abs": 19.97,
+     "sd": 4.63,
+     "loa_low": -19.59,
+     "loa_high": -1.45
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 177,
+     "mae": 13.55,
+     "bias": -13.55,
+     "rmse": 13.68,
+     "p95_abs": 16.78,
+     "sd": 1.86,
+     "loa_low": -17.19,
+     "loa_high": -9.91
+    },
+    "ref_frontal": {
+     "n": 177,
+     "mae": 9.13,
+     "bias": -9.11,
+     "rmse": 10.66,
+     "p95_abs": 19.54,
+     "sd": 5.55,
+     "loa_low": -19.99,
+     "loa_high": 1.78
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 10,
+     "hold_too_short": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 6,
+    "fn": 0,
+    "precision": 0.625,
+    "recall": 1.0,
+    "f1": 0.7692
+   },
+   "movement_gated": {
+    "tp": 7,
+    "fp": 0,
+    "fn": 3,
+    "precision": 1.0,
+    "recall": 0.7,
+    "f1": 0.8235
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 2,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 4,
+    "target_missed": 10,
+    "hold_too_short": 1
+   }
+  },
+  {
+   "video": "PM_122",
+   "person": 7,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 767,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 767
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 9,
+    "precision": 1.0,
+    "recall": 0.1,
+    "f1": 0.1818
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_109",
+   "person": 8,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 1065,
+   "pose_rate": 1.0,
+   "gate_open_rate": 1.0,
+   "gates": {
+    "open": 1065
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 1065,
+     "mae": 6.96,
+     "bias": -6.96,
+     "rmse": 8.26,
+     "p95_abs": 14.62,
+     "sd": 4.44,
+     "loa_low": -15.67,
+     "loa_high": 1.75
+    },
+    "ref_frontal": {
+     "n": 1065,
+     "mae": 5.09,
+     "bias": 4.13,
+     "rmse": 6.04,
+     "p95_abs": 9.98,
+     "sd": 4.4,
+     "loa_low": -4.5,
+     "loa_high": 12.76
+    },
+    "ref_3d": {
+     "n": 1065,
+     "mae": 4.89,
+     "bias": 3.56,
+     "rmse": 5.86,
+     "p95_abs": 10.11,
+     "sd": 4.66,
+     "loa_low": -5.58,
+     "loa_high": 12.69
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 1065,
+     "mae": 6.97,
+     "bias": -6.95,
+     "rmse": 8.36,
+     "p95_abs": 14.4,
+     "sd": 4.64,
+     "loa_low": -16.04,
+     "loa_high": 2.14
+    },
+    "ref_frontal": {
+     "n": 1065,
+     "mae": 5.14,
+     "bias": 4.14,
+     "rmse": 6.19,
+     "p95_abs": 10.11,
+     "sd": 4.6,
+     "loa_low": -4.88,
+     "loa_high": 13.16
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 125.7,
+     "ref_cam": 129.8832278272782,
+     "ref_frontal": 122.1483869515161,
+     "ref_3d": 121.38676782524236
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 126.8,
+     "ref_cam": 130.5533578544922,
+     "ref_frontal": 122.49008836629484,
+     "ref_3d": 121.4158831704948
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 127.8,
+     "ref_cam": 130.8754504651671,
+     "ref_frontal": 122.51818461590595,
+     "ref_3d": 121.08847462362006
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 122.7,
+     "ref_cam": 125.1386961168716,
+     "ref_frontal": 116.35517928684632,
+     "ref_3d": 115.64345711685021
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 126.0,
+     "ref_cam": 128.75984720934395,
+     "ref_frontal": 120.31921822281028,
+     "ref_3d": 119.26374181286481
+    },
+    {
+     "rep": 6,
+     "correct": false,
+     "pred": 102.0,
+     "ref_cam": 108.69590302638552,
+     "ref_frontal": 97.1556842965848,
+     "ref_3d": 95.41712815094182
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 128.8,
+     "ref_cam": 132.39306569180468,
+     "ref_frontal": 123.38859588034074,
+     "ref_3d": 116.35881502553225
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 130.0,
+     "ref_cam": 136.64132842418994,
+     "ref_frontal": 129.1442171387429,
+     "ref_3d": 118.5090947639948
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 128.6,
+     "ref_cam": 138.06430427907958,
+     "ref_frontal": 129.56118905115534,
+     "ref_3d": 118.52654577798722
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 130.4,
+     "ref_cam": 143.52372619492658,
+     "ref_frontal": 136.6171276139243,
+     "ref_3d": 127.78330435508465
+    }
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 2,
+    "fn": 0,
+    "precision": 0.8333,
+    "recall": 1.0,
+    "f1": 0.9091,
+    "verified": 7,
+    "reasons": {
+     "hold_too_short": 4,
+     "target_missed": 1,
+     "verified": 7
+    },
+    "above_ceiling": 11
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -4.183227827278202,
+     -3.7533578544921937,
+     -3.075450465167094,
+     -2.438696116871597,
+     -2.7598472093439455,
+     -6.695903026385523,
+     -3.593065691804668,
+     -6.641328424189936,
+     -9.464304279079585,
+     -13.123726194926576
+    ],
+    "ref_frontal": [
+     3.551613048483901,
+     4.3099116337051555,
+     5.281815384094045,
+     6.3448207131536805,
+     5.680781777189722,
+     4.844315703415205,
+     5.411404119659267,
+     0.8557828612570972,
+     -0.961189051155344,
+     -6.217127613924305
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 2,
+    "fn": 0,
+    "precision": 0.8333,
+    "recall": 1.0,
+    "f1": 0.9091
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 2,
+    "fn": 0,
+    "precision": 0.8333,
+    "recall": 1.0,
+    "f1": 0.9091
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 10,
+    "above_ceiling": 11,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 1,
+    "hold_too_short": 4
+   }
+  },
+  {
+   "video": "PM_109",
+   "person": 8,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 934,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 934
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 9,
+    "precision": 1.0,
+    "recall": 0.1,
+    "f1": 0.1818,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 8,
+    "fn": 0,
+    "precision": 0.5556,
+    "recall": 1.0,
+    "f1": 0.7143
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 2,
+    "target_missed": 1,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_109",
+   "person": 8,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 934,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.2612,
+   "gates": {
+    "open": 244,
+    "turn_front": 690
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 244,
+     "mae": 16.34,
+     "bias": -16.34,
+     "rmse": 16.47,
+     "p95_abs": 20.46,
+     "sd": 2.06,
+     "loa_low": -20.37,
+     "loa_high": -12.31
+    },
+    "ref_frontal": {
+     "n": 244,
+     "mae": 10.32,
+     "bias": -10.08,
+     "rmse": 12.62,
+     "p95_abs": 20.9,
+     "sd": 7.61,
+     "loa_low": -25.0,
+     "loa_high": 4.83
+    },
+    "ref_3d": {
+     "n": 244,
+     "mae": 12.51,
+     "bias": -12.51,
+     "rmse": 13.66,
+     "p95_abs": 21.33,
+     "sd": 5.51,
+     "loa_low": -23.3,
+     "loa_high": -1.71
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 244,
+     "mae": 16.6,
+     "bias": -16.6,
+     "rmse": 16.76,
+     "p95_abs": 20.51,
+     "sd": 2.32,
+     "loa_low": -21.15,
+     "loa_high": -12.05
+    },
+    "ref_frontal": {
+     "n": 244,
+     "mae": 10.67,
+     "bias": -10.34,
+     "rmse": 12.89,
+     "p95_abs": 21.65,
+     "sd": 7.7,
+     "loa_low": -25.43,
+     "loa_high": 4.75
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 10,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 11
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+   },
+   "movement_gated": {
+    "tp": 10,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 8,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 8,
+    "target_missed": 11,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_109",
+   "person": 8,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": true,
+   "labelled_reps": 10,
+   "frames_in_reps": 1065,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 1065
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {},
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 5,
+    "fp": 3,
+    "fn": 5,
+    "precision": 0.625,
+    "recall": 0.5,
+    "f1": 0.5556
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 2,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_114",
+   "person": 9,
+   "camera": "c17",
+   "view": "front",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 910,
+   "pose_rate": 0.9473,
+   "gate_open_rate": 0.8967,
+   "gates": {
+    "open": 816,
+    "turn_front": 31,
+    "hips_out_of_view": 15
+   },
+   "no_pose_frames": 48,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 816,
+     "mae": 15.62,
+     "bias": -15.15,
+     "rmse": 19.21,
+     "p95_abs": 34.23,
+     "sd": 11.81,
+     "loa_low": -38.3,
+     "loa_high": 8.0
+    },
+    "ref_frontal": {
+     "n": 816,
+     "mae": 7.12,
+     "bias": -3.87,
+     "rmse": 12.86,
+     "p95_abs": 26.0,
+     "sd": 12.28,
+     "loa_low": -27.93,
+     "loa_high": 20.19
+    },
+    "ref_3d": {
+     "n": 816,
+     "mae": 7.04,
+     "bias": -3.95,
+     "rmse": 12.79,
+     "p95_abs": 26.14,
+     "sd": 12.17,
+     "loa_low": -27.8,
+     "loa_high": 19.9
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 816,
+     "mae": 15.5,
+     "bias": -14.95,
+     "rmse": 19.32,
+     "p95_abs": 35.43,
+     "sd": 12.25,
+     "loa_low": -38.96,
+     "loa_high": 9.07
+    },
+    "ref_frontal": {
+     "n": 816,
+     "mae": 6.95,
+     "bias": -3.67,
+     "rmse": 13.21,
+     "p95_abs": 27.77,
+     "sd": 12.7,
+     "loa_low": -28.55,
+     "loa_high": 21.22
+    }
+   },
+   "lag_s": 0.067,
+   "lag_raw_s": 0.067,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    {
+     "rep": 1,
+     "correct": true,
+     "pred": 178.0,
+     "ref_cam": 132.52152023200796,
+     "ref_frontal": 121.41564920816889,
+     "ref_3d": 120.90645458769426
+    },
+    {
+     "rep": 2,
+     "correct": true,
+     "pred": 168.8,
+     "ref_cam": 134.95770393613333,
+     "ref_frontal": 124.46003534498358,
+     "ref_3d": 123.99321365145244
+    },
+    {
+     "rep": 3,
+     "correct": true,
+     "pred": 157.2,
+     "ref_cam": 141.0328407258388,
+     "ref_frontal": 131.0592191545749,
+     "ref_3d": 130.32864343776458
+    },
+    {
+     "rep": 4,
+     "correct": true,
+     "pred": 124.1,
+     "ref_cam": 150.0167166457725,
+     "ref_frontal": 140.3399607490355,
+     "ref_3d": 138.84250328388742
+    },
+    {
+     "rep": 5,
+     "correct": true,
+     "pred": 156.4,
+     "ref_cam": 136.6177676767506,
+     "ref_frontal": 125.90546633119392,
+     "ref_3d": 124.70846501372561
+    },
+    {
+     "rep": 6,
+     "correct": true,
+     "pred": 102.2,
+     "ref_cam": 114.18656815998055,
+     "ref_frontal": 100.43258255233548,
+     "ref_3d": 99.97960549162377
+    },
+    {
+     "rep": 7,
+     "correct": false,
+     "pred": 85.2,
+     "ref_cam": 103.71560814948124,
+     "ref_frontal": 92.75905086726188,
+     "ref_3d": 92.74922340301943
+    },
+    {
+     "rep": 8,
+     "correct": false,
+     "pred": 91.9,
+     "ref_cam": 110.77984507439358,
+     "ref_frontal": 101.59655799557532,
+     "ref_3d": 101.5965537329574
+    },
+    {
+     "rep": 9,
+     "correct": false,
+     "pred": 101.5,
+     "ref_cam": 121.52678543322692,
+     "ref_frontal": 113.4056836319901,
+     "ref_3d": 113.39474315421751
+    },
+    {
+     "rep": 10,
+     "correct": false,
+     "pred": 72.7,
+     "ref_cam": 86.2835504684865,
+     "ref_frontal": 79.06188767672744,
+     "ref_3d": 79.14427692728452
+    },
+    {
+     "rep": 11,
+     "correct": false,
+     "pred": 70.6,
+     "ref_cam": 89.89685125669884,
+     "ref_frontal": 81.87066832241796,
+     "ref_3d": 81.8955333784041
+    }
+   ],
+   "fsm": {
+    "tp": 11,
+    "fp": 4,
+    "fn": 0,
+    "precision": 0.7333,
+    "recall": 1.0,
+    "f1": 0.8462,
+    "verified": 1,
+    "reasons": {
+     "verified": 1,
+     "hold_too_short": 10,
+     "target_missed": 4
+    },
+    "above_ceiling": 4
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     45.47847976799204,
+     -43.65770393613333,
+     -48.132840725838804,
+     -62.516716645772505,
+     19.782232323249417,
+     -11.98656815998055,
+     -18.51560814948124,
+     -18.87984507439357,
+     -24.826785433226917,
+     -13.583550468486493,
+     -19.296851256698844
+    ],
+    "ref_frontal": [
+     56.58435079183111,
+     -33.160035344983584,
+     -38.159219154574885,
+     -52.8399607490355,
+     30.494533668806085,
+     1.7674174476645277,
+     -7.559050867261874,
+     -9.696557995575319,
+     -16.705683631990098,
+     -6.361887676727434,
+     -11.270668322417961
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    }
+   ],
+   "movement": {
+    "tp": 11,
+    "fp": 30,
+    "fn": 0,
+    "precision": 0.2683,
+    "recall": 1.0,
+    "f1": 0.4231
+   },
+   "movement_gated": {
+    "tp": 11,
+    "fp": 16,
+    "fn": 0,
+    "precision": 0.4074,
+    "recall": 1.0,
+    "f1": 0.5789
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 15,
+    "above_ceiling": 4,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 4,
+    "hold_too_short": 10
+   }
+  },
+  {
+   "video": "PM_114",
+   "person": 9,
+   "camera": "c17",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 745,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 745
+   },
+   "no_pose_frames": 0,
+   "size": [
+    640,
+    360
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 10,
+    "precision": 1.0,
+    "recall": 0.0909,
+    "f1": 0.1667,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 11,
+    "fp": 8,
+    "fn": 0,
+    "precision": 0.5789,
+    "recall": 1.0,
+    "f1": 0.7333
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 0,
+    "target_missed": 1,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_114",
+   "person": 9,
+   "camera": "c18",
+   "view": "half-profile",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 745,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.3799,
+   "gates": {
+    "open": 283,
+    "turn_front": 462
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 283,
+     "mae": 17.63,
+     "bias": -17.63,
+     "rmse": 18.43,
+     "p95_abs": 23.28,
+     "sd": 5.41,
+     "loa_low": -28.22,
+     "loa_high": -7.03
+    },
+    "ref_frontal": {
+     "n": 283,
+     "mae": 17.68,
+     "bias": -17.68,
+     "rmse": 19.29,
+     "p95_abs": 28.49,
+     "sd": 7.74,
+     "loa_low": -32.85,
+     "loa_high": -2.51
+    },
+    "ref_3d": {
+     "n": 283,
+     "mae": 17.91,
+     "bias": -17.91,
+     "rmse": 19.48,
+     "p95_abs": 28.54,
+     "sd": 7.67,
+     "loa_low": -32.94,
+     "loa_high": -2.88
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 283,
+     "mae": 17.18,
+     "bias": -17.18,
+     "rmse": 17.9,
+     "p95_abs": 22.06,
+     "sd": 5.05,
+     "loa_low": -27.07,
+     "loa_high": -7.29
+    },
+    "ref_frontal": {
+     "n": 283,
+     "mae": 17.23,
+     "bias": -17.23,
+     "rmse": 18.65,
+     "p95_abs": 27.54,
+     "sd": 7.15,
+     "loa_low": -31.25,
+     "loa_high": -3.21
+    }
+   },
+   "lag_s": 0.0,
+   "lag_raw_s": 0.0,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+     "rep": 18,
+     "correct": false,
+     "pred": 58.1,
+     "ref_cam": 80.31779561677861,
+     "ref_frontal": 81.91323601320038,
+     "ref_3d": 81.95229292082563
+    },
+    null,
+    {
+     "rep": 20,
+     "correct": false,
+     "pred": 42.2,
+     "ref_cam": 79.8542557566371,
+     "ref_frontal": 85.23246279194613,
+     "ref_3d": 85.23776177735834
+    },
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 11,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.9167,
+    "recall": 1.0,
+    "f1": 0.9565,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 12
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [
+     -22.21779561677861,
+     -37.6542557566371
+    ],
+    "ref_frontal": [
+     -23.813236013200374,
+     -43.03246279194613
+    ]
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": true
+    },
+    {
+     "correct": false,
+     "matched": true,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 11,
+    "fp": 7,
+    "fn": 0,
+    "precision": 0.6111,
+    "recall": 1.0,
+    "f1": 0.7586
+   },
+   "movement_gated": {
+    "tp": 7,
+    "fp": 0,
+    "fn": 4,
+    "precision": 1.0,
+    "recall": 0.6364,
+    "f1": 0.7778
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 1,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 3,
+    "target_missed": 13,
+    "hold_too_short": 0
+   }
+  },
+  {
+   "video": "PM_114",
+   "person": 9,
+   "camera": "c18",
+   "view": "side",
+   "lights_on": true,
+   "labelled_reps": 11,
+   "frames_in_reps": 910,
+   "pose_rate": 1.0,
+   "gate_open_rate": 0.0,
+   "gates": {
+    "turn_front": 910
+   },
+   "no_pose_frames": 0,
+   "size": [
+    270,
+    480
+   ],
+   "frame": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_3d": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "frame_raw": {
+    "ref_cam": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    },
+    "ref_frontal": {
+     "n": 0,
+     "mae": null,
+     "bias": null,
+     "rmse": null,
+     "p95_abs": null,
+     "loa_low": null,
+     "loa_high": null,
+     "sd": null
+    }
+   },
+   "lag_s": null,
+   "lag_raw_s": null,
+   "hike_first_deg": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "rep_peaks": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "fsm": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "verified": 0,
+    "reasons": {
+     "target_missed": 1
+    },
+    "above_ceiling": 0
+   },
+   "fsm_peak_err": {
+    "ref_cam": [],
+    "ref_frontal": []
+   },
+   "compensation": [
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": true,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    },
+    {
+     "correct": false,
+     "matched": false,
+     "lean": false,
+     "hike": false
+    }
+   ],
+   "movement": {
+    "tp": 0,
+    "fp": 3,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "movement_gated": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 11,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+   },
+   "events": {
+    "compensation_lean": 0,
+    "shoulder_hiking": 0,
+    "above_ceiling": 0,
+    "perception_lost": 0,
+    "setup_blocked": 1,
+    "target_missed": 0,
+    "hold_too_short": 0
+   }
+  }
+ ],
+ "compare": null
+}
