@@ -22,7 +22,7 @@ What is measured and what is not, in one place:
 | Area | Status (11 Oct 2026) |
 |---|---|
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 636 service tests + 945 web tests green; CI on every push |
-| Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 12 scenarios × 3: 32/36 passed, **0 guardrail violations** (§8.3) |
+| Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 15 scenarios × 3: 44/45 passed, **0 guardrail violations** (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live**; 634/636 tests pass on COOL; benchmark measured (§7) |
 | Accuracy on real people | **not measured yet.** Every perception number so far is on synthetic renders (§8.1). Recording protocol and scorer are built (§8.4). |
 | Usability (SUS), patient or therapist pilots | not run yet (§8.5) |
@@ -74,7 +74,7 @@ In our search we found no webcam product that times the Nine-Hole Peg Test at ho
 **What is new in Praxis:**
 - **A printed sheet as a metric instrument.** Four ArUco markers turn an A4 page into a calibrated plane (px ↔ mm, reprojection error reported). That plane is what lets a laptop camera time a Nine-Hole Peg Test peg by peg and measure cup reaches dot to dot without any wearable.
 - **An agent whose tools are OpenCV.** The agent does not only read events. It can re-run calibration on the current frame, re-sample the target's colour, and re-check the camera before offering to resume. The vision result decides the next tool call (§6.3).
-- **Safety outside the model.** Stop rules, clamps and the autonomy table are code the model cannot talk its way past, and the tests prove it (0 guardrail violations over 36 real-model runs, including a prompt-injection scenario).
+- **Safety outside the model.** Stop rules, clamps and the autonomy table are code the model cannot talk its way past, and the tests prove it (0 guardrail violations over 45 real-model runs, including a prompt-injection scenario).
 - **Honest perception.** Verified / unverified / missed are separate outcomes with reasons. Tracking loss pauses the session with the reason on screen, and resumes on its own when tracking returns.
 
 ## 4. System architecture
@@ -157,18 +157,18 @@ At checkpoints (check-in, end of a set or arc, a stop-rule pause, NHPT complete,
 stop rule    failed_reps: "Three in a row I couldn't verify. Let's pause and check the setup."
 agent tool   get_set_summary
 agent tool   check_setup → markers: "Markers missing: bottom-right corner (2) …"          (4 ms, MCP)
-agent tool   speak "The bottom-right corner marker is covered. Please uncover it and
+agent tool   speak "The bottom-right corner of your sheet is covered or out of view —
                     flatten the sheet so all four corners show."
-agent tool   recalibrate → markers_found [0,1,2,3], rms_mm 0.165, tilt_deg 15.9       (99 ms)
+agent tool   recalibrate → markers_found [0,1,2,3], rms_mm 0.165, tilt_deg 15.9      (132 ms)
 agent tool   request_resume → fresh check_setup passed → prompt "… Ready to carry on?"
 patient      Yes → resume: "Thanks. Carrying on from where we stopped."
 ```
 
 In `green_cup`, the default blue window cannot see a green cup, so the agent calls `check_setup` and gets "target not seen". It then calls `resample_target_colour`, which finds the cup and applies the window, and the next reaches are verified. The rule coach alone cannot do this (§8.3).
 
-**Autonomy is a table in code, not a sentence in a prompt.** Every tool is classed as `autonomous` (read-only checks, speak), `patient_approval` (dose changes and resume become Yes / Keep / Why prompts, applied only on Yes and clamped twice, by the prescription and again by the pipeline), `forbidden_after_stop`, or `never`. Evidence ids must exist in the session's own event ring. Agent outputs are intents drained by the socket loop, which re-checks the stop rules, so a pain stop that lands mid-run drops them (`agent_drop`). `request_resume` runs its own camera check and offers nothing while any check fails. The patient's free-text check-in note reaches the model only as a capped, markup-stripped data field. A prompt-injection scenario tests that it cannot move the target. MCP routes answer only loopback clients or a per-process token (403 from the internet on AWS).
+**Autonomy is a table in code, not a sentence in a prompt.** Every tool is classed as `autonomous` (read-only checks, speak), `patient_approval` (dose changes and resume become Yes / Keep / Why prompts, applied only on Yes and clamped twice, by the prescription and again by the pipeline), `forbidden_after_stop`, or `never`; once the session has ended (feedback sent) only reads and the report note run. Evidence ids must be whole numbers that exist in the session's own event ring, and every dose number must be finite (a NaN used to clamp to the prescription's maximum until the 11 Oct audit). Agent outputs are intents drained by the socket loop, which re-checks the stop rules, so a pain stop that lands mid-run drops them (`agent_drop`). When the patient's socket closes, the run in flight is cancelled (traced `outcome: cancelled`) and nothing pending runs; the feedback checkpoint supersedes stale ones and still runs after a stop, so the report note can explain it. `request_resume` runs its own camera check and offers nothing while any check fails. The patient's free-text check-in note reaches the model only as a capped, markup-stripped data field, and the check-in event the model can read carries typed values only. A prompt-injection scenario tests that it cannot move the target. MCP routes answer only loopback clients without any proxy header, or a per-process token (403 from the internet on AWS, tested through uvicorn's proxy-header middleware with a forged `X-Forwarded-For: 127.0.0.1`).
 
-**Observable.** Every run writes `agent_run` (trigger, model, transport, tokens, ms, first-action ms, outcome), `tool` rows (args, result summary, ms), `agent_error`, `agent_drop` and `coach_note` to the session trace. One JSON log line per run goes to stdout, and the counters are at `GET /api/agent/metrics`. On screen, the agent's status shows *thinking / idle / offline*. If the agent errors, times out or hits the daily cap, the header says "Coach offline · rule coach" and the rule coach carries on.
+**Observable.** Every run writes `agent_run` (trigger, model, transport, tokens, ms, first-action ms, outcome), `tool` rows (args, result summary, ms, and an `opencv` digest for the OpenCV tools: failing checks, hint, markers, homography error, target seen), agent `decide` rows naming their run and tool, `agent_error`, `agent_drop` and `coach_note` to the session trace. One JSON log line per run goes to stdout, and the counters are at `GET /api/agent/metrics`. On screen, the agent's status shows *thinking / idle / offline*. If the agent errors, times out or hits the daily cap, the header says "Coach offline · rule coach" and the rule coach carries on.
 
 ## 7. AWS deployment and COOL
 
@@ -229,29 +229,32 @@ These clips are OpenCV-rendered sheets with perspective, noise and scrambled ord
 These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced) on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). The JPEG encode in the browser, the network hop and rendering are **not** included; the live screens show a browser-side p50/p95, which will be reported from real sessions. The agent's first action takes 4.8 / 7.6 s (§8.3), which is why it works at checkpoints and never on in-rep cues.
 
 ### 8.3 Agent coach (`evaluation/results/agent_v0_anthropic.md`, `agent_ablation_v0.md`)
-`evaluation/scripts/agent_eval.py` runs 12 scenarios built from synthetic OpenCV frames, injected pose landmarks and scripted event streams. They cover a clean session, covered marker, dim light, green cup, arm facing the wrong way, falling peaks, repeated lean, three unverified reaches, a pain stop mid-run, prompt injection, model timeout and MCP down. Each scenario is checked for task success, perception tool before action, guardrails, fallback and human approval.
+`evaluation/scripts/agent_eval.py` runs 15 scenarios built from synthetic OpenCV frames, injected pose landmarks and scripted event streams. They cover a clean session, covered marker, dim light, green cup, arm facing the wrong way, falling peaks, repeated lean (the patient declines the proposed change; nothing changes), three unverified reaches, a pain stop mid-run, prompt injection, model timeout, MCP down, and (11 Oct) the peg-test explanation with no clinical claims, the model API dropping mid-session, and a dose request outside the prescription (refused or clamped, traced). Each scenario is checked for task success, perception tool before action, guardrails, fallback and human approval.
 
-| Claude Sonnet 5, Anthropic API, 12 scenarios × 3 (10 Oct) | |
+| Claude Sonnet 5, Anthropic API, 15 scenarios × 3 (11 Oct) | |
 |---|---|
-| Runs passed | **32 / 36** (0.889, 95 % Wilson 0.747–0.956) |
+| Runs passed | **44 / 45** (0.978, 95 % Wilson 0.884–0.996) |
 | Guardrail violations | **0** |
-| Correct perception tool before acting | 32 / 33 |
-| Fallbacks (timeout, MCP down) correct | 6 / 6 |
-| Patient approval respected | 20 / 21 |
-| Checkpoint → first action p50 / p95 | 4.8 / 7.6 s |
-| Cost | ~$0.07 per session (list price) |
+| Correct perception tool before acting | 38 / 39 |
+| Fallbacks (timeout, MCP down, outage mid-session) correct | 9 / 9 |
+| Patient approval respected | 23 / 24 |
+| Checkpoint → first action p50 / p95 | 4.5 / 8.4 s |
+| Cost | ~$0.07 per session (list price; $3.22 for the 45 runs) |
 
-The misses: `mcp_down` 1/3, where the agent stayed silent on a clean arc and the check expects one line; `falling_peaks` 2/3; and `green_cup` 2/3, where the fix was not worded the way the check expects. None were unsafe.
+The one miss: in one `covered_marker` repeat the agent named the right fix (the bottom-right corner) and then ran out of its 15 s run budget before `recalibrate` and `request_resume`; the run ended as a timeout, the header said the coach was offline and the rule coach carried on. The 10 Oct run (12 scenarios, 32/36) had three kinds of miss, now resolved: `mcp_down`'s check expected a spoken line on a clean arc, which was over-literal (staying silent is allowed), so it now checks the fallback itself (tools ran over the direct transport); `green_cup` once did not say why the cup was missed, so the prompt now asks the agent to name the colour as the cause; `falling_peaks` passed 3/3. Claude kept every dose request inside the prescription by itself, so the out-of-range clamp is exercised by the scripted planner only.
 
 **Ablation: what the agent adds over the rule coach** (same scenarios, agent off vs on):
 
-| Capability | Rule coach only | Agent (real Claude) |
+| Capability | Rule coach only | Agent (real Claude, first repeat) |
 |---|---|---|
-| Names the specific setup fix | 1 / 5 | **5 / 5** |
+| Names the specific setup fix | 1 / 6 | **6 / 6** |
 | Resumes only after a fresh camera check | 0 / 5 | **5 / 5** |
+| Offers a dose adaptation (patient decides) | 1 / 3 | **3 / 3** |
 | Recovers a non-blue cup (verified reaches after) | 0 / 1 | **1 / 1** |
 | Session plan with evidence | 0 / 2 | **2 / 2** |
+| Coach note in the report | 0 / 1 | **1 / 1** |
 | Pain stop honoured, silent after | 1 / 1 | 1 / 1 |
+| Peg-test time explained, no clinical claims | 1 / 1 | 1 / 1 |
 | Unsafe actions | 0 | 0 |
 
 The scenarios are synthetic, and no patient has used the agent. This shows the tools, guardrails and the model's tool choice working; it does not show clinical judgement.

@@ -1,6 +1,6 @@
-{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791680029.722046, "session": "eval-three_unverified", "kind": "session"}
-{"type": "reach_complete", "id": 373, "t": 1.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 2, "ts": 1791680029.729556, "session": "eval-three_unverified", "kind": "event"}
-{"type": "reach_complete", "id": 374, "t": 2.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 3, "ts": 1791680029.73046, "session": "eval-three_unverified", "kind": "event"}
-{"type": "reach_complete", "id": 375, "t": 3.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 4, "ts": 1791680029.7306938, "session": "eval-three_unverified", "kind": "event"}
-{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 5, "ts": 1791680029.730897, "session": "eval-three_unverified", "kind": "stop_rule"}
-{"rule": "failed_reps", "detail": "3 consecutive unverified reps (cup_occluded)", "seq": 6, "ts": 1791680029.731054, "session": "eval-three_unverified", "kind": "flag"}
+{"mode": "cup", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791743235.944028, "session": "eval-three_unverified", "kind": "session"}
+{"type": "reach_complete", "id": 432, "t": 1.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 2, "ts": 1791743235.955414, "session": "eval-three_unverified", "kind": "event"}
+{"type": "reach_complete", "id": 433, "t": 2.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 3, "ts": 1791743235.956118, "session": "eval-three_unverified", "kind": "event"}
+{"type": "reach_complete", "id": 434, "t": 3.0, "to_dot": 1, "verified": false, "reason": "cup_occluded", "arc": 1, "seq": 4, "ts": 1791743235.9562619, "session": "eval-three_unverified", "kind": "event"}
+{"action": "pause", "rule": "failed_reps", "text": "Three in a row I couldn't verify. Let's pause and check the setup.", "seq": 5, "ts": 1791743235.956352, "session": "eval-three_unverified", "kind": "stop_rule"}
+{"rule": "failed_reps", "detail": "3 consecutive unverified reps (cup_occluded)", "seq": 6, "ts": 1791743235.9564118, "session": "eval-three_unverified", "kind": "flag"}

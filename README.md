@@ -79,15 +79,15 @@ cp .env.example .env              # set ANTHROPIC_API_KEY and PRAXIS_AGENT=anthr
 uv run uvicorn praxis_session.main:app --port 8000 --env-file .env
 curl -s localhost:8000/health     # "agent": {"mode": "anthropic", "model": "claude-sonnet-5", "mcp": true, "ready": true, "runs_today": 0, "daily_runs_limit": 100}
 PRAXIS_AGENT=scripted uv run uvicorn praxis_session.main:app --port 8000   # no key: canned tool calls, for UI work
-uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # 12 scenarios, free (CI)
+uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # 15 scenarios, free (CI)
 uv run python ../../evaluation/scripts/agent_eval.py --planner rule        # baseline: agent off; writes the ablation table
 uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes   # real model, prints the cost first (add --repeat N)
 curl -s localhost:8000/api/agent/metrics   # runs today, outcomes, errors, first-action p50/p95, cap
 ```
 
-10 Oct (later): the agent re-samples a non-blue cup's colour with OpenCV (`resample_target_colour`), offers a resume only after a fresh passing camera check, rate-limits praise, keeps a session plan revised only on new evidence, follows one enforced autonomy table, logs one JSON line per run, and its MCP routes answer only loopback or the per-process token; scored with the scripted planner (12/12) and against the rule-only coach in `evaluation/results/agent_ablation_v0.md`. Not yet re-run on the real model. Details: `docs/AGENT.md`.
+10 Oct (later): the agent re-samples a non-blue cup's colour with OpenCV (`resample_target_colour`), offers a resume only after a fresh passing camera check, rate-limits praise, keeps a session plan revised only on new evidence, follows one enforced autonomy table, logs one JSON line per run, and its MCP routes answer only loopback or the per-process token; 11 Oct: audit hardening (socket close cancels the agent, feedback note after a stop, ended sessions read-only, finite-number and evidence-id checks, OpenCV digest in every perception tool trace row) and three new scenarios (peg-test explanation, outage mid-session, out-of-range clamp); scripted 15/15. Details: `docs/AGENT.md`.
 
-Status 10 Oct: 12 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, 10 Oct): 32/36 runs passed (0.889, 95 % Wilson CI 0.747–0.956), 0 guardrail violations, fallbacks 6/6, patient approval respected 20/21, first action p50/p95 4.8/7.6 s, ~$0.07 per session; misses: mcp_down 1/3 (stayed silent on a clean arc, the check expects one line), falling_peaks 2/3, green_cup 2/3 (fix not worded as expected). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`. Bedrock not run.
+Status 11 Oct: 15 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, 11 Oct, after the 11 Oct hardening): 44/45 runs passed (0.978, 95 % Wilson CI 0.884–0.996), 0 guardrail violations, fallbacks 9/9, patient approval respected 23/24, correct perception tool before acting 38/39, first action p50/p95 4.5/8.4 s, ~$0.07 per session ($3.22 for the run); the one miss: covered_marker 1 of 3 named the right fix (bottom-right corner) and then hit the 15 s run budget before recalibrate + request_resume (timeout → offline header, rule coach on, the patient can still tap Resume). The 10 Oct run on 12 scenarios was 32/36; its misses are resolved (mcp_down: the check was over-literal and now tests the fallback itself; green_cup: prompt now has the agent name the cup's colour as the cause; falling_peaks: 3/3). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`. Bedrock not run.
 
 ## One-container deploy (Railway / any Docker host)
 

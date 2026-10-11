@@ -1,0 +1,4 @@
+{"mode": "nhpt", "exercise": null, "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791743235.865771, "session": "eval-nhpt_checkpoint", "kind": "session"}
+{"type": "nhpt_complete", "id": 341, "t": 30.0, "seq": 2, "ts": 1791743235.8659148, "session": "eval-nhpt_checkpoint", "kind": "event"}
+{"action": "instruct", "cue_id": "nhpt_done", "reason": "ninth peg seated", "evidence": [341], "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 3, "ts": 1791743235.866216, "session": "eval-nhpt_checkpoint", "kind": "decide"}
+{"tool": "speak", "text": "All nine seated in 24.6 seconds. Nicely done.", "ui": {}, "label": "Rule-based coach \u00b7 LLM agent pending", "source": "rule", "seq": 4, "ts": 1791743235.866272, "session": "eval-nhpt_checkpoint", "kind": "action"}
