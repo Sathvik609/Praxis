@@ -243,7 +243,7 @@ def test_marker_hint_says_unreadable_when_squares_are_seen_but_not_decoded():
     k = np.zeros((15, 15), np.float32)
     k[7, :] = 1 / 15  # 15 px motion blur: the camera moved
     hint = _markers_hint(NHPT_BOARD, cv2.filter2D(f, -1, k))
-    assert "No corner marker can be read" in hint
+    assert "markers cannot be read" in hint
 
 
 def test_marker_hint_says_unreadable_for_one_blurred_corner():
@@ -256,6 +256,30 @@ def test_marker_hint_says_unreadable_for_one_blurred_corner():
     f[y0:y1, x0:x1] = cv2.filter2D(f, -1, k)[y0:y1, x0:x1]  # glare / smear on one corner only
     hint = _markers_hint(CUP_TARGETS, f)
     assert "bottom-right corner (2)" in hint and "cannot be read" in hint and "covered" not in hint
+
+
+def test_marker_hints_fit_a_setup_row_and_the_agents_speak_limit():
+    # the agent may speak a hint verbatim (speak: <= 160 characters), and the row is one line
+    from praxis_session.agent.tools import SPEAK_MAX_CHARS
+
+    hints = []
+    for spec in (NHPT_BOARD, CUP_TARGETS):
+        f, Hm = camera_frame(spec, tilt_deg=40, noise_sigma=3)
+        hints.append(_markers_hint(spec, f))  # None: all found
+        for ids in ([1, 2], [0, 1, 2]):
+            g = f.copy()
+            for k in ids:
+                c = cv2.perspectiveTransform(spec.marker_corners_mm(k).reshape(-1, 1, 2), Hm).reshape(-1, 2)
+                ctr = c.mean(axis=0)
+                cv2.fillPoly(g, [np.round(ctr + (c - ctr) * 1.4).astype(np.int32)], (120, 160, 220))
+            hints.append(_markers_hint(spec, g))
+        k = np.zeros((15, 15), np.float32)
+        k[7, :] = 1 / 15
+        hints.append(_markers_hint(spec, cv2.filter2D(f, -1, k)))
+        big, _ = camera_frame(spec, tilt_deg=40, scale=1.4)
+        hints.append(_markers_hint(spec, big))
+    for h in hints[1:]:
+        assert h is None or len(h) <= SPEAK_MAX_CHARS, (len(h), h)
 
 
 def test_marker_hint_asks_for_the_sheet_when_nothing_is_there():

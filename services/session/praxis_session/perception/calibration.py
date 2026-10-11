@@ -60,8 +60,8 @@ class CalibrationResult:
     tilt_deg: float | None = None
     mirrored: bool = False
     rejected: int = 0
-    # centres (frame px) of the undecoded candidate squares; not serialised (numbers only)
-    rejected_px: np.ndarray = field(default_factory=lambda: np.zeros((0, 2), np.float32))
+    # corners (N x 4 x 2, frame px) of the undecoded candidate squares; not serialised
+    rejected_px: np.ndarray = field(default_factory=lambda: np.zeros((0, 4, 2), np.float32))
 
     def to_mm(self, pts_px: np.ndarray) -> np.ndarray:
         assert self.H_px_to_mm is not None
@@ -156,7 +156,7 @@ class Calibrator:
         pnp = found
         if mirrored:
             found = {k: np.column_stack([w - 1 - c[:, 0], c[:, 1]]).astype(np.float32) for k, c in pnp.items()}
-            rej_px = np.column_stack([w - 1 - rej_px[:, 0], rej_px[:, 1]]).astype(np.float32)
+            rej_px = np.stack([w - 1 - rej_px[..., 0], rej_px[..., 1]], axis=-1).astype(np.float32)
         rejected = len(rej_px)
         missing = sorted(set(self.spec.marker_centres_mm) - set(found))
 
@@ -196,15 +196,15 @@ class Calibrator:
         )
 
     def _detect(self, gray: np.ndarray) -> tuple[dict[int, np.ndarray], np.ndarray]:
-        """This sheet's markers (id -> 4x2 corners) and the centres of undecoded candidates."""
+        """This sheet's markers (id -> 4x2 corners) and the corners of undecoded candidates."""
         corners, ids, rejected = self._det.detectMarkers(gray)
         found: dict[int, np.ndarray] = {}
         if ids is not None:
             for c, i in zip(corners, ids.ravel().tolist(), strict=True):
                 if i in self.spec.marker_centres_mm:
                     found[i] = c.reshape(4, 2)
-        centres = np.array([r.reshape(4, 2).mean(axis=0) for r in rejected], np.float32).reshape(-1, 2)
-        return found, centres
+        quads = np.array([r.reshape(4, 2) for r in rejected], np.float32).reshape(-1, 4, 2)
+        return found, quads
 
     def _fit(
         self,

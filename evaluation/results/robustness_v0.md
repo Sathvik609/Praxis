@@ -73,17 +73,17 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | Gaussian noise σ12 | yes | fresh | 0.358 | 0.24 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | Gaussian noise σ20 | yes | fresh | 0.335 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | motion blur 5 px | yes | fresh | 0.591 | 0.38 | 40.4 (40.3) | hough | ok | yes | 0 | none (right) |
-| motion blur 9 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
-| motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
+| motion blur 9 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
+| motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | defocus r2 | yes | fresh | 0.462 | 0.25 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | defocus r3 | yes | fresh | 1.172 | 0.35 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| defocus r5 | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
+| defocus r5 | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
 | JPEG q40 | yes | fresh | 0.345 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q60 | yes | fresh | 0.355 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q80 | yes | fresh | 0.337 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q90 | yes | fresh | 0.317 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
-| hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
+| hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | – | markers: “The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
+| hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
 | light skin hand over hole grid | yes | fresh | 0.341 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | medium skin hand over hole grid | yes | fresh | 0.35 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | dark skin hand over hole grid | yes | fresh | 0.349 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -104,8 +104,8 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | wood table + objects around the sheet | yes | fresh | 0.34 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | objects around + blue/red pens on the sheet | yes | fresh | 0.349 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | sheet PDF (210 × 279.4 page, 11 Oct) on US Letter, any alignment | yes | fresh | 0.341 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| old full-A4 PDF on US Letter, top-aligned | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: bottom-right corner (2), bottom-left corner (3). The markers in the bottom-right corner (2), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
-| old full-A4 PDF on US Letter, bottom-aligned | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “Markers missing: top-left corner (0), top-right corner (1). The markers in the top-left corner (0), top-right corner (1) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
+| old full-A4 PDF on US Letter, top-aligned | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The markers in the bottom-right corner (2), bottom-left corner (3) are covered or creased: clear and flatten them.” (right) |
+| old full-A4 PDF on US Letter, bottom-aligned | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The markers in the top-left corner (0), top-right corner (1) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
 | barrel lens distortion k1=-0.1 (f 0.8 w, tilt 45°) | yes | fresh | 0.554 | 0.52 | 45.1 (45.2) | hough | ok | yes | 0 | none (right) |
 | barrel lens distortion k1=-0.25 (f 0.8 w, tilt 45°) | yes | fresh | 0.988 | 1.12 | 45.0 (45.2) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 5 mm | yes | fresh | 0.809 | 1.88 | 40.2 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -145,7 +145,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | sheet fills 40% of frame | yes | fresh | 0.617 | 0.39 | 40.5 (40.3) | yes | 0.5 | ok | none (right) |
 | sheet fills 50% of frame | yes | fresh | 0.446 | 0.3 | 40.2 (40.3) | yes | 0.5 | ok | none (right) |
 | sheet fills 60% of frame | yes | fresh | 0.39 | 0.41 | 40.3 (40.3) | yes | 0.6 | ok | none (right) |
-| sheet fills 100% of frame | **no** | partial | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-left corner (0). The top-left corner (0) is outside the picture: move the sheet into the middle of the view, or tilt the screen.” (right) |
+| sheet fills 100% of frame | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The top-left corner (0) is outside the picture: move the sheet into the middle of the view, or tilt the screen.” (right) |
 | dim, mean luma 30 | yes | fresh | 0.22 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | lighting: “Too dark. Add light in front of you, not behind.” (right) |
 | dim, mean luma 45 | yes | fresh | 0.233 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | lighting: “Too dark. Add light in front of you, not behind.” (right) |
 | dim, mean luma 65 | yes | fresh | 0.226 | 0.25 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
@@ -159,17 +159,17 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | Gaussian noise σ12 | yes | fresh | 0.225 | 0.25 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | Gaussian noise σ20 | yes | fresh | 0.248 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | motion blur 5 px | yes | fresh | 0.264 | 0.24 | 40.3 (40.3) | yes | 0.5 | ok | none (right) |
-| motion blur 9 px | **no** | partial | – | – | – (40.3) | – | – | – | markers: “Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
-| motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
+| motion blur 9 px | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The marker in the bottom-right corner (2) is in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
+| motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | defocus r2 | yes | fresh | 0.286 | 0.25 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | defocus r3 | yes | fresh | 0.462 | 0.26 | 40.4 (40.3) | yes | 0.5 | ok | none (right) |
-| defocus r5 | **no** | partial | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-left corner (0). The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
+| defocus r5 | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
 | JPEG q40 | yes | fresh | 0.215 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | JPEG q60 | yes | fresh | 0.218 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | JPEG q80 | yes | fresh | 0.218 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | JPEG q90 | yes | fresh | 0.214 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
-| hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | markers: “Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
-| hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
+| hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
+| hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | markers: “The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
 | light skin fingers across cup (~55% visible) | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | yes | 0.3 | ok | none (right) |
 | light skin hand gripping cup (~22% visible) | yes | fresh | 0.214 | 0.23 | 40.3 (40.3) | **no** | – | **miss** | none (right) |
 | light skin hand on sheet, no cup | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
@@ -200,8 +200,8 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | objects around + blue/red pens on the sheet | yes | fresh | 0.216 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | no cup, pens on the sheet | yes | fresh | 0.213 | 0.23 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
 | sheet PDF (210 × 279.4 page, 11 Oct) on US Letter, any alignment | yes | fresh | 0.214 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
-| old full-A4 PDF on US Letter, top-aligned | **no** | held | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
-| old full-A4 PDF on US Letter, bottom-aligned | **no** | held | – | – | – (40.3) | – | – | – | markers: “Markers missing: top-left corner (0), bottom-left corner (3). The markers in the top-left corner (0), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
+| old full-A4 PDF on US Letter, top-aligned | **no** | held | – | – | – (40.3) | – | – | – | markers: “The markers in the top-right corner (1), bottom-right corner (2) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
+| old full-A4 PDF on US Letter, bottom-aligned | **no** | held | – | – | – (40.3) | – | – | – | markers: “The markers in the top-left corner (0), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light.” (right) |
 | barrel lens distortion k1=-0.1 (f 0.8 w, tilt 45°) | yes | fresh | 0.793 | 1.0 | 45.1 (45.2) | yes | 0.2 | ok | none (right) |
 | barrel lens distortion k1=-0.25 (f 0.8 w, tilt 45°) | yes | fresh | 1.905 | 2.42 | 45.0 (45.2) | yes | 0.4 | ok | none (right) |
 | paper curl, ends up 5 mm | yes | fresh | 0.927 | 2.7 | 40.3 (40.3) | yes | 1.9 | ok | none (right) |

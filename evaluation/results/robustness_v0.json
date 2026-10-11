@@ -1286,7 +1286,7 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0). The top-left corner (0) is outside the picture: move the sheet into the middle of the view, or tilt the screen."
+     "markers": "The top-left corner (0) is outside the picture: move the sheet into the middle of the view, or tilt the screen."
     },
     "rows_expected": [
      "markers"
@@ -2104,7 +2104,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light."
+     "markers": "The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [],
     "hint_ok": true,
@@ -2128,7 +2128,7 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is in view but cannot be read: hold the laptop still, wipe the lens and add light."
+     "markers": "The marker in the bottom-right corner (2) is in view but cannot be read: hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [],
     "hint_ok": true,
@@ -2153,7 +2153,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light."
+     "markers": "The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [],
     "hint_ok": true,
@@ -2173,7 +2173,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light."
+     "markers": "The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [],
     "hint_ok": true,
@@ -2316,7 +2316,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), top-right corner (1), bottom-right corner (2), bottom-left corner (3). No corner marker can be read: if the sheet is in view, hold the laptop still, wipe the lens and add light.",
+     "markers": "The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.",
      "lighting": "Image is blurry. Clean the lens or hold the camera still."
     },
     "rows_expected": [],
@@ -2341,7 +2341,7 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0). The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.",
+     "markers": "The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.",
      "lighting": "Image is blurry. Clean the lens or hold the camera still."
     },
     "rows_expected": [],
@@ -2607,7 +2607,7 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is covered or creased: clear and flatten it."
+     "markers": "The marker in the bottom-right corner (2) is covered or creased: clear and flatten it."
     },
     "rows_expected": [
      "markers"
@@ -2633,7 +2633,7 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "Markers missing: bottom-right corner (2). The marker in the bottom-right corner (2) is covered or creased: clear and flatten it."
+     "markers": "The marker in the bottom-right corner (2) is covered or creased: clear and flatten it."
     },
     "rows_expected": [
      "markers"
@@ -2663,7 +2663,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them."
+     "markers": "The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them."
     },
     "rows_expected": [
      "markers"
@@ -2688,7 +2688,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them."
+     "markers": "The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them."
     },
     "rows_expected": [
      "markers"
@@ -4316,7 +4316,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: bottom-right corner (2), bottom-left corner (3). The markers in the bottom-right corner (2), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
+     "markers": "The markers in the bottom-right corner (2), bottom-left corner (3) are covered or creased: clear and flatten them."
     },
     "rows_expected": [
      "markers"
@@ -4341,7 +4341,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-right corner (1), bottom-right corner (2). The markers in the top-right corner (1), bottom-right corner (2) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
+     "markers": "The markers in the top-right corner (1), bottom-right corner (2) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [
      "markers"
@@ -4371,7 +4371,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), top-right corner (1). The markers in the top-left corner (0), top-right corner (1) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
+     "markers": "The markers in the top-left corner (0), top-right corner (1) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [
      "markers"
@@ -4396,7 +4396,7 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "Markers missing: top-left corner (0), bottom-left corner (3). The markers in the top-left corner (0), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
+     "markers": "The markers in the top-left corner (0), bottom-left corner (3) are in view but cannot be read: hold the laptop still, wipe the lens and add light."
     },
     "rows_expected": [
      "markers"

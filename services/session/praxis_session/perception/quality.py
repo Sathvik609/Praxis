@@ -156,8 +156,10 @@ def missing_marker_causes(
     cal: CalibrationResult, spec: SheetSpec, frame_shape: tuple
 ) -> dict[int, str]:
     """Why each missing marker is missing: "outside" when its predicted square (with the white
-    margin around it) leaves the frame; "unreadable" when ArUco found a candidate square there
-    that did not decode (blur, glare); else "covered". The prediction is the homography of the
+    margin around it) leaves the frame; "unreadable" when ArUco found an undecoded candidate
+    square of about the marker's size where the marker should be (blur, glare: centre within a
+    quarter side, area 0.6-1.6x); else "covered" (a hand, a cup or a fold over it, which is not
+    a marker-sized square in the right place). The prediction is the homography of the
     markers that ARE visible (cv2.findHomography on their corners, sheet mm -> frame px); with
     no marker visible there is nothing to predict from and the result is empty."""
     if not cal.missing or not cal.marker_corners_px:
@@ -176,9 +178,13 @@ def missing_marker_causes(
         quad = (ctr + (c - ctr) * 1.5).reshape(-1, 1, 2).astype(np.float32)
         px = cv2.perspectiveTransform(quad, H).reshape(-1, 2)
         inside = bool(np.all((px[:, 0] >= 0) & (px[:, 0] < w) & (px[:, 1] >= 0) & (px[:, 1] < h)))
+        m = cv2.perspectiveTransform(c.reshape(-1, 1, 2).astype(np.float32), H).reshape(-1, 2)
+        m_area = abs(cv2.contourArea(m))
+        m_ctr, side = m.mean(axis=0), float(np.sqrt(max(m_area, 1.0)))
         seen = any(
-            cv2.pointPolygonTest(px.reshape(-1, 1, 2), (float(x), float(y)), False) >= 0
-            for x, y in np.asarray(cal.rejected_px, np.float32).reshape(-1, 2)
+            float(np.linalg.norm(q.mean(axis=0) - m_ctr)) <= 0.25 * side
+            and 0.6 <= abs(cv2.contourArea(q)) / max(m_area, 1.0) <= 1.6
+            for q in np.asarray(cal.rejected_px, np.float32).reshape(-1, 4, 2)
         )
         out[i] = "outside" if not inside else ("unreadable" if seen else "covered")
     return out
@@ -229,7 +235,9 @@ def build_checks(
         out = [i for i in cal.missing if causes.get(i) == "outside"]
         unread = [i for i in cal.missing if causes.get(i) == "unreadable"]
         cov = [i for i in cal.missing if causes.get(i) not in ("outside", "unreadable")]
-        parts = [] if cal.calibrated else [f"Markers missing: {_markers_named(spec, cal.missing)}."]
+        # The cause sentences name every missing corner; no "Markers missing:" list in front, so
+        # the hint fits one setup row and the agent's 160-character speak line.
+        parts: list[str] = []
         if out:
             parts.append(
                 f"The {_markers_named(spec, out)} {'are' if len(out) > 1 else 'is'} outside the picture: "
@@ -259,8 +267,8 @@ def build_checks(
         )
     elif cal.rejected >= UNREADABLE_MIN_REJECTED and not cal.marker_corners_px:
         markers_hint = (
-            f"Markers missing: {_markers_named(spec, cal.missing)}. No corner marker can be read: "
-            "if the sheet is in view, hold the laptop still, wipe the lens and add light."
+            "The corner markers cannot be read. If the sheet is in view, hold the laptop still, "
+            "wipe the lens and add light."
         )
     else:
         markers_hint = (
