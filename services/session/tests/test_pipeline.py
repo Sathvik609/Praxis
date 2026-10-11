@@ -174,6 +174,24 @@ def test_nhpt_mode_runs_a_full_test_from_synthetic_frames():
     assert snap["nhpt"]["total_s"] > 0
 
 
+def test_nhpt_sheet_gone_during_the_hold_never_counts_a_peg_twice():
+    """e2e 11 Oct (fake camera, sheet out of view ~4 s after peg 4): during the 1.5 s hold the
+    last homography warped an empty table, every hole read empty, and on regain an already
+    seated hole was counted as a new peg, so the test 'finished' one peg early. With no marker
+    in view the held fix must not feed the board to the peg FSM."""
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", debounce_frames=1, clear_frames=1)
+    frames = _nhpt_frames()
+    table = np.full_like(frames[0], 90)
+    seq = frames[:9] + [table, table] + frames[9:]  # the sheet leaves after peg 2, for 1 s
+    evs = []
+    for i, f in enumerate(seq):
+        evs += p.process(f, t=i * 0.5, frame_index=i)
+    seated = [e.payload["hole"] for e in evs if e.type == "rep_complete"]
+    assert sorted(seated) == list(range(9)), seated
+    done = [e for e in evs if e.type == "nhpt_complete"]
+    assert len(done) == 1 and sorted(pg["hole"] for pg in done[0].payload["pegs"]) == list(range(9))
+
+
 def test_nhpt_mode_freezes_fsm_when_uncalibrated():
     p = SessionPipeline(mode="nhpt", sheet="nhpt_board", debounce_frames=1, clear_frames=1)
     bad, _ = camera_frame(NHPT_BOARD, hide_marker=0)
@@ -233,6 +251,19 @@ def test_cup_mode_emits_reach_events_and_frame_block():
     assert [r.payload["to_dot"] for r in reaches] == [1, 2]
     assert all(r.payload["verified"] for r in reaches)
     assert p.snapshot()["cup"]["reaches_total"] == 2
+
+
+def test_cup_sheet_gone_during_the_hold_never_counts_a_reach():
+    """The same e2e finding for Waiter - cup: an empty table warped through the held fix reads
+    as 'cup lifted', and the cup still on its dot on regain would be a phantom reach."""
+    p = SessionPipeline(mode="cup", sheet="cup_targets", clear_frames=2, use_hand=False)
+    frames = _cup_frames([1])
+    table = np.full_like(frames[0], 90)
+    seq = frames + [table] * 3 + [frames[-1]] * 6  # sheet gone 0.3 s, back with the cup on dot 2
+    evs = []
+    for i, f in enumerate(seq):
+        evs += p.process(f, t=i * 0.1, frame_index=i)
+    assert [e.payload["to_dot"] for e in evs if e.type == "reach_complete"] == [1]
 
 
 def test_cup_command_switches_phase():
