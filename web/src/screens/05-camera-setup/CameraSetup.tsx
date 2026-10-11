@@ -11,7 +11,7 @@ import { cameraBlockedCopy } from '../../session/CameraBlocked'
 import { OverlayCanvas, type CalibrationEvent } from '../../session/OverlayCanvas'
 import { useWebcamStream } from '../../session/useWebcamStream'
 import { SETUP_TIPS, SetupDiagram, placementCopy } from './SetupDiagram'
-import { resolveChecks, setupViewFor, type Check } from './setupView'
+import { currentStepIndex, resolveChecks, setupViewFor, type Check } from './setupView'
 
 const SHEET: Record<string, string> = { nhpt: 'nhpt_board', cup: 'cup_targets', arm: 'nhpt_board' }
 
@@ -152,7 +152,8 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
     ...rows.map((r) => ({ ...r, short: short(r.id) })),
     { id: 'still', short: 'Still pose', label: 'Hold still in your starting pose', status: stillLeft === 0 ? 'pass' : 'pending', hint: null, source: 'camera' },
   ]
-  const firstOpen = rows.findIndex((r) => r.status !== 'pass')
+  // the specific camera fix first, then the open self-checks; advice rows never hold the walk
+  const firstOpen = currentStepIndex(rows)
   const currentIdx = !camOn ? 0 : ready ? (stillLeft === 0 ? -1 : steps.length - 1) : Math.max(0, firstOpen)
   const cur = currentIdx >= 0 ? steps[currentIdx] : null
   type Coach = { tone: 'amber' | 'mint'; icon?: string; num?: number; text: string; self?: Step | null }

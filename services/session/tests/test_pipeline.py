@@ -25,6 +25,24 @@ def test_calibrate_mode_emits_three_validated_events():
     assert checks["all_required_pass"] is True  # 'person' is not required
 
 
+def test_setup_rows_say_which_checks_gate_the_start():
+    """e2e 11 Oct: the camera-setup screen walks the rows in order, so it has to know that the
+    frame-difference 'person' row is advice, not a gate (it never passes for a still patient)."""
+    frame, _ = camera_frame(NHPT_BOARD)
+    rows = SessionPipeline(mode="calibrate", sheet="nhpt_board").process(frame, 0.0, 0)[2].to_dict()["checks"]
+    assert {r["id"]: r["required"] for r in rows} == {
+        "camera": True,
+        "person": False,
+        "task_area": True,
+        "markers": True,
+        "angle": True,
+        "lighting": True,
+    }
+    arm = SessionPipeline(mode="calibrate", sheet="nhpt_board", for_mode="arm")
+    rows = arm.process(frame, 0.0, 0)[2].to_dict()["checks"]
+    assert {r["id"] for r in rows if r["required"]} == {"camera", "lighting"}
+
+
 def test_perception_lost_and_regained():
     """Two markers gone: the homography is held 1.5 s, then LOSS_FRAMES (20) uncalibrated
     frames are needed before `perception_lost` (D-CAL-1). At 0.5 s steps: 15 bad frames

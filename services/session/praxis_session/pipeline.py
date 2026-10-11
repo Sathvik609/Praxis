@@ -584,7 +584,9 @@ class SessionPipeline:
         area = task_area_in_view(cal, self.spec, frame_bgr.shape)
         checks = build_checks(cal, light, steady, area, pres, needs_sheet=needs_sheet, spec=self.spec)
         required = REQUIRED_BY_MODE.get(self.for_mode, REQUIRED_BY_MODE["default"])
-        required_ok = all(c["status"] == "pass" for c in checks if c["id"] in required)
+        # `required` tells the setup screen which rows gate the start; the others are advice
+        checks = [c | {"required": c["id"] in required} for c in checks]
+        required_ok = all(c["status"] == "pass" for c in checks if c["required"])
         self._emit(
             out,
             make_event(
