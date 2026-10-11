@@ -57,9 +57,8 @@
     "errors": [
       "mcp"
     ],
-    "actions": [
-      "instruct"
-    ],
+    "direct_tools_ok": true,
+    "outcome": "done",
     "stopped": false
   }
 }

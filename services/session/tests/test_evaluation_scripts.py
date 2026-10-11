@@ -80,9 +80,26 @@ def test_agent_eval_scripted_passes_all_scenarios_without_violations(tmp_path: P
     ag = _load("agent_eval")
     assert ag.main(["--planner", "scripted", "--out", str(tmp_path / "res"), "--traces", str(tmp_path / "tr")]) == 0
     res = json.loads((tmp_path / "res" / "agent_v0.json").read_text())
-    assert res["scenarios"] == 12 and res["task_success"] == 12 and res["guardrail_violations"] == 0
-    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 12
+    assert res["scenarios"] == 15 and res["task_success"] == 15 and res["guardrail_violations"] == 0
+    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 15
     assert "Scripted planner" in (tmp_path / "res" / "agent_v0.md").read_text()
+    rows = {r["id"]: r for r in res["rows"]}
+    # 11 Oct scenarios: the peg-test explanation, an outage mid-session, the clamp outside the range
+    assert rows["nhpt_checkpoint"]["checks"]["no_clinical_claims"] is True
+    assert rows["agent_offline_mid_session"]["checks"]["recovered"] is True
+    assert rows["outside_range_clamp"]["checks"]["clamp_traced"] is True
+    assert rows["mcp_down"]["checks"]["direct_tools_ok"] is True
+    assert all("errors_detail" in r for r in res["rows"])
+
+
+def test_agent_eval_clinical_claims_and_clamp_checks_catch_bad_output():
+    ag = _load("agent_eval")
+    assert ag.clinical_claims("All nine pegs in 24.6 seconds; peg 7 took longest.") == []
+    assert ag.clinical_claims("24.6 s is within the normal range for your age, a mild impairment.")
+    rows = [{"name": "propose_adjustment", "ok": True, "args": {"field": "target_deg", "value": 45}, "result_summary": '{"ok": true, "value": 60.0, "clamped": true}'}]
+    assert ag.clamp_traced(rows) is True
+    rows[0]["result_summary"] = '{"ok": true, "value": 45.0, "clamped": false}'
+    assert ag.clamp_traced(rows) is False
 
 
 def test_agent_eval_rule_baseline_and_ablation(tmp_path: Path):

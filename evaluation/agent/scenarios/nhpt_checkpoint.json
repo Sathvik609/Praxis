@@ -1,0 +1,64 @@
+{
+  "id": "nhpt_checkpoint",
+  "title": "Peg test finished: the agent explains time and splits, with no clinical claims",
+  "mode": "nhpt",
+  "steps": [
+    {
+      "events": [
+        {
+          "type": "nhpt_complete",
+          "t": 30.0,
+          "total_s": 24.6,
+          "splits_s": [
+            2.4,
+            2.6,
+            2.5,
+            2.9,
+            2.7,
+            2.6,
+            3.4,
+            2.8,
+            2.7
+          ],
+          "pegs": []
+        }
+      ]
+    },
+    {
+      "run": {}
+    }
+  ],
+  "script": {
+    "nhpt_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "speak",
+        "args": {
+          "text": "All nine pegs in {get_set_summary.nhpt.total_s} seconds; peg {get_set_summary.nhpt.slowest_peg} took the longest. Your therapist will see each peg's time.",
+          "cue": "instruct",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "nhpt_complete"
+    ],
+    "perceive_before": {
+      "speak": [
+        "get_set_summary"
+      ]
+    },
+    "speak_mentions": [
+      "2(4\\.6|5)\\b",
+      "peg"
+    ],
+    "no_clinical_claims": true,
+    "prompt_kinds": [],
+    "stopped": false,
+    "errors": []
+  }
+}
