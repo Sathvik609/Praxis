@@ -109,7 +109,7 @@ export function LiveArm() {
   const finish = (endedEarly: boolean, reason?: EndReason | StopEnd) => {
     flow.finish(endedEarly, reason, {
       kind: 'arm', name: ex.name, side, sets: complete?.sets ?? a?.set ?? 0, reps, ended_early: endedEarly,
-      lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, ceiling_deg: a?.ceiling_deg ?? 90,
+      lean_count: a?.flags.lean_count ?? 0, hike_count: a?.flags.hike_count ?? 0, above_ceiling: a?.flags.above_ceiling_count ?? events.filter((e) => e.type === 'above_ceiling').length, ceiling_deg: a?.ceiling_deg ?? 90,
     })
   }
   useEffect(() => {

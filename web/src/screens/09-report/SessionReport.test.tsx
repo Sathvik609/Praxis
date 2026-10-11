@@ -316,3 +316,19 @@ test('no in-session report: no extra pain line', async () => {
   expect(await screen.findByText('2 → 2')).toBeInTheDocument()
   expect(screen.queryByText(/during the session/)).toBeNull()
 })
+
+test('an Arm out to the side report shows the lifts above 90° next to the posture cues', async () => {
+  const arm = { ...SESSION, mode: 'arm', exercise: 'abduction', title: 'Arm out to the side', summary: { ...SESSION.summary, mode: 'arm', camera: { reps_total: 16, verified: 15, unverified: 1, posture_cues: 2, coverage_pct: 95, active_s: 300, above_ceiling: 2, above_ceiling_by_set: { '1': 2 } } } }
+  mockApi({ '/api/sessions/abc': arm, '/api/patients/me': ME })
+  renderReport()
+  const stat = await screen.findByText('lifts above 90°')
+  expect(stat.closest('.rp-stats')).toHaveTextContent(/2\s*posture cues/)
+  expect(stat.closest('div.min-w-0')).toHaveTextContent(/^2\s*lifts above 90°$/)
+})
+
+test('a cup report has no above-90° count', async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, above_ceiling: 0 } } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText('tracking coverage')
+  expect(screen.queryByText(/above 90°/)).not.toBeInTheDocument()
+})

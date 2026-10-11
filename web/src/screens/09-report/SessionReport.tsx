@@ -59,6 +59,7 @@ function prettyDate(date: string): string {
 type Camera = SessionSummary['camera']
 const coverageOf = (c: Camera) => c.coverage_pct ?? Math.round((100 * (c.verified ?? 0)) / Math.max(1, c.reps_total ?? 1))
 const postureOf = (c: Camera) => c.posture_cues ?? c.corrections ?? 0
+const ceilingOf = (c: Camera) => (typeof c.ceiling_deg === 'number' ? c.ceiling_deg : 90)
 
 const DIFF: Record<string, string> = { too_easy: 'Too easy', just_right: 'Just right', hard: 'Hard', couldnt_finish: "Couldn't finish" }
 const AGAIN: Record<string, string> = { yes_easily: 'Yes, easily', yes_probably: 'Yes, probably', not_sure: 'Not sure', no: 'No' }
@@ -143,6 +144,9 @@ export function SessionReport() {
   const ck = s.checkin ?? {}
   const side = typeof cam.side === 'string' && cam.side ? cam.side : null
   const isCupSession = s.summary.mode === 'cup'
+  // Arm out to the side: lifts past the in-code ceiling (`camera.above_ceiling`, service 10 Oct),
+  // beside the posture cues; summaries saved before 10 Oct carry none and show nothing.
+  const aboveCeiling = s.summary.mode === 'arm' && typeof cam.above_ceiling === 'number' ? cam.above_ceiling : undefined
   const dl = () => {
     const blob = new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -352,6 +356,7 @@ export function SessionReport() {
               <Stat value={String(cam.unverified ?? 0)} label={isCupSession ? 'unverified (hand hid cup)' : 'unverified'} tone={cam.unverified ? 'amber' : 'default'} />
               <Stat value={String(coverageOf(cam))} unit="%" label="tracking coverage" />
               <Stat value={String(postureOf(cam))} label={plural(postureOf(cam), 'posture cue')} />
+              {aboveCeiling !== undefined && <Stat value={String(aboveCeiling)} label={`${plural(aboveCeiling, 'lift')} above ${ceilingOf(cam)}°`} tone={aboveCeiling ? 'amber' : 'default'} />}
               {isCupSession && cam.wrong_dot != null && <Stat value={String(cam.wrong_dot)} label="wrong dot" />}
             </>
           )}
