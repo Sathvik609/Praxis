@@ -674,6 +674,9 @@ def write_results(summary: dict[str, Any], out_dir: Path, stem: str) -> Path:
         cap = r["capability"]
         lines.append(f"| {r['id']} | " + " | ".join(_cell(cap.get(k)) for k in CAPABILITIES) + f" | {cap.get('unsafe_actions', 0)} |")
     lines.append("")
+    notes = [sc for sc in load_scenarios() if sc.get("check_note") and sc["id"] in seen]
+    if notes:
+        lines += ["## Check notes (changes to a scenario's checks, and why)", ""] + [f"- **{sc['id']}**: {sc['check_note']}" for sc in notes] + [""]
     if planner not in ("scripted", "rule"):
         lines += ["## What the agent said (captions and prompts the patient saw)", ""]
         seen = set()
@@ -791,6 +794,18 @@ async def _run_all(jobs: list[dict[str, Any]], planner: str, trace_dir: Path, re
     return out
 
 
+def rerender(out_dir: Path = RESULTS) -> list[Path]:
+    """Rewrite the .md result files (and the ablation) from their .json, no scenario re-run:
+    for a change in how results are presented, never in their numbers."""
+    paths = []
+    for stem in STEMS.values():
+        f = out_dir / f"{stem}.json"
+        if f.exists():
+            paths.append(write_results(json.loads(f.read_text()), out_dir, stem))
+    abl = write_ablation(out_dir)
+    return paths + ([abl] if abl else [])
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--planner", choices=("scripted", "rule", "anthropic", "bedrock"), default="scripted")
@@ -800,7 +815,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--yes", action="store_true", help="confirm a paid model run")
     ap.add_argument("--out", type=Path, default=RESULTS)
     ap.add_argument("--traces", type=Path, default=TRACES, help="where sample traces are copied")
+    ap.add_argument("--rerender", action="store_true", help="rewrite the .md files from the existing .json (no run, no cost)")
     args = ap.parse_args(argv)
+    if args.rerender:
+        for p in rerender(args.out):
+            print(f"rewrote {p}")
+        return 0
     repeat = max(1, int(args.repeat))
     # Guardrail refusals are expected here; FastMCP would log each one as a server error.
     logging.getLogger("fastmcp").setLevel(logging.CRITICAL)

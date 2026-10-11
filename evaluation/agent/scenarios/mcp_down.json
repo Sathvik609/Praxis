@@ -49,6 +49,7 @@
       }
     ]
   },
+  "check_note": "11 Oct: `direct_tools_ok` replaced `actions: [instruct]`. The old check was over-literal: it failed Claude (1/3 on 10 Oct) for staying silent on a clean first arc, which the system prompt allows; the scenario tests the MCP -> direct fallback, not praise.",
   "expect": {
     "triggers": [
       "arc_complete"

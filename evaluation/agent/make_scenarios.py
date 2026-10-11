@@ -181,6 +181,7 @@ scenarios = [
         # replaces `actions: ["instruct"]`, which was over-literal: it failed Claude for staying
         # silent on a clean first arc, which the system prompt allows; this scenario tests the
         # MCP -> direct fallback, not whether a clean arc gets praise.
+        "check_note": "11 Oct: `direct_tools_ok` replaced `actions: [instruct]`. The old check was over-literal: it failed Claude (1/3 on 10 Oct) for staying silent on a clean first arc, which the system prompt allows; the scenario tests the MCP -> direct fallback, not praise.",
         "expect": {"triggers": ["arc_complete"], "transport": "direct", "errors": ["mcp"], "direct_tools_ok": True, "outcome": "done", "stopped": False},
     },
     {

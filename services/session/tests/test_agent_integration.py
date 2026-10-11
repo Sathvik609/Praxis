@@ -223,6 +223,9 @@ def test_planner_failure_goes_offline_and_the_rule_coach_carries_on(tmp_path, st
     rule = s.on_events([ok], snapshot={"cup": {"phase": "slow"}}, t=2.0)
     assert coach_events(rule, "rule") and coach_events(rule, "rule")[0].payload["label"] == "Rule-based coach"
     # the next checkpoint succeeds and clears offline
+    # a normal run budget for the recovery run: 0.05 s was only for the failing one, and an
+    # in-process MCP start can take longer than that on a loaded machine (flaked 11 Oct)
+    s.agent.timeout_s = 5.0
     s.on_checkin(2, "ok", 10, False, t=3.0)
     asyncio.run(s.agent.run_pending())
     out = h.drain(3.0)

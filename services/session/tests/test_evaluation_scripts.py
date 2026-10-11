@@ -116,6 +116,11 @@ def test_agent_eval_rule_baseline_and_ablation(tmp_path: Path):
     assert caps["pain_stop_mid_run"]["stop_honoured"] is True
     abl = (out / "agent_ablation_v0.md").read_text()
     assert "Rule coach only (agent off)" in abl and "Agent (scripted planner)" in abl
+    # --rerender rewrites the .md files from the .json with no run; numbers unchanged
+    before = (out / "agent_v0.json").read_text()
+    assert ag.main(["--rerender", "--out", str(out)]) == 0
+    assert (out / "agent_v0.json").read_text() == before
+    assert "Check notes" in (out / "agent_v0.md").read_text() and "over-literal" in (out / "agent_v0.md").read_text()
     assert "| Resume gated by a fresh camera check | 5/5 | 0/5 |" in abl
 
 
