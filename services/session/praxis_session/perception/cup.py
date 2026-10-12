@@ -23,10 +23,25 @@ stays the default), and a placement that was inferred from the hand while the ba
 still counts as verified when the base was seen within `dot_radius_mm` of the destination at
 any time in the last `rest_window_s` (0.6 s) before hand-clear - a hand from above hides the
 base at the moment of release, but the cup is visible again as soon as the fingers open.
+
+A real cup from a laptop angle (12 Oct 2026, found by the 3-D renders,
+evaluation/results/synthetic3d_v0.md): the blue ring is a vertical band round the cup's bottom,
+so the camera sees only its near half and, in this sheet-plane view, a crescent - well under the
+30 mm disc gate (the first render found no cup at all: 0 of 32 reaches), and its centroid sits
+~20 mm towards the camera from the true base. The crescent's camera-side edge is the bottom edge
+of the cup, which lies on the paper, so it is a true circle arc in this view: `_base_circle`
+takes, across the blob, the points furthest towards the camera (the direction comes from the
+calibration's camera model, cv2.solvePnP + the camera centre; without one, from the blob's
+area-vs-hull centroid), fits a circle (least squares, one outlier-trimmed refit) and returns the
+base centre and diameter when the radius is cup-sized (15-50 mm), the arc spans at least one
+radius and the fit is tight (RMS <= 1.5 mm). A full disc (the flat 2-D renders, or a camera
+straight overhead) still takes the old centroid path; a lifted cup's edge leaves the paper and
+reads as moved, which is the lift.
 """
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -45,6 +60,22 @@ STATES = ("at_dot", "lifted", "in_transit", "over_dot", "placed", "hand_clear")
 
 def _d(a, b) -> float:
     return float(np.hypot(a[0] - b[0], a[1] - b[1]))
+
+
+def _fixed_radius_centre(pts: np.ndarray, r: float, start: np.ndarray, iters: int = 15) -> np.ndarray | None:
+    """Centre of a circle of known radius through `pts` (Gauss-Newton on |p - c| - r)."""
+    c = np.asarray(start, np.float64).copy()
+    for _ in range(iters):
+        d = pts - c
+        n = np.hypot(d[:, 0], d[:, 1])
+        if np.any(n < 1e-6):
+            return None
+        J = -d / n[:, None]
+        step, *_ = np.linalg.lstsq(J, -(n - r), rcond=None)
+        c += step
+        if float(np.hypot(*step)) < 1e-3:
+            break
+    return c
 
 
 class CupSheetState:
@@ -76,11 +107,17 @@ class CupSheetState:
         self.min_diameter_mm = min_diameter_mm
         self.colour_range: dict[str, Any] | None = None  # set by sample_cup_colour
         self._S = np.diag([px_per_mm, px_per_mm, 1.0])
+        self._cal: CalibrationResult | None = None
+        self.full_disc_solidity = 0.8  # area / convex hull area of a base seen as a disc
+        self.circle_rms_mm = 1.5
+        self._radii: deque[float] = deque(maxlen=31)  # base radii (mm) of tight fits this session
+        self.learn_radius_after = 5
 
     def warp(self, frame_bgr: np.ndarray, cal: CalibrationResult) -> np.ndarray:
         if not cal.calibrated or cal.H_px_to_mm is None:
             raise RuntimeError("warp requires a calibrated frame")
         canon = cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
+        self._cal = cal
         if self.normalise:
             # Paper-referenced white balance + flat field (board.normalise_to_paper); the kernel
             # is wider than the cup base so the base itself is never taken for shading.
@@ -111,7 +148,7 @@ class CupSheetState:
 
     def cup_mm(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> tuple[float, float, float] | None:
         contours, _ = cv2.findContours(
-            self.cup_mask(canonical_bgr, colour_range), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            self.cup_mask(canonical_bgr, colour_range), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE  # every edge pixel: the base-edge fit needs them
         )
         ppm = self.px_per_mm
         # Fingers gripping the cup split its base band into pieces, none cup-sized on its own
@@ -132,13 +169,89 @@ class CupSheetState:
             group = [b for b in blobs if float(np.linalg.norm(b[1] - seed)) <= self.group_mm * ppm]
             area = sum(b[0] for b in group)
             diameter_mm = 2 * np.sqrt(area / np.pi) / ppm
-            if diameter_mm < self.min_diameter_mm:
-                continue
-            if not self._cup_shaped(np.concatenate([b[2] for b in group])):
-                continue
+            pts = np.concatenate([b[2] for b in group])
+            hull_area = float(cv2.contourArea(cv2.convexHull(pts)))
             centre = sum(b[0] * b[1] for b in group) / area
-            return (float(centre[0]) / ppm, float(centre[1]) / ppm, float(diameter_mm))
+            full_disc = hull_area > 0 and area / hull_area >= self.full_disc_solidity
+            disc_ok = diameter_mm >= self.min_diameter_mm and self._cup_shaped(pts)
+            if disc_ok and (full_disc or len(group) > 1 and self._cal is None):
+                return (float(centre[0]) / ppm, float(centre[1]) / ppm, float(diameter_mm))
+            # a crescent, or a piece of one too small to be a disc: fit the base edge
+            fit = self._base_circle(group, centre)
+            if fit is not None:
+                return fit
+            if disc_ok:
+                return (float(centre[0]) / ppm, float(centre[1]) / ppm, float(diameter_mm))
         return None
+
+    def _towards_camera(self, centre_px: np.ndarray, group: list) -> np.ndarray | None:
+        """Unit vector (canonical px) from the blob towards the camera's foot point on the sheet."""
+        cam = self._cal.camera if self._cal is not None else None
+        if cam is not None:
+            R, _ = cv2.Rodrigues(cam.rvec)
+            c = (-R.T @ cam.tvec).ravel()  # camera centre in sheet mm (+z into the table)
+            d = np.array([c[0], c[1]]) * self.px_per_mm - centre_px
+        else:  # a crescent bulges towards the camera: its area centroid leads its hull's
+            hull = cv2.convexHull(np.concatenate([b[2] for b in group]))
+            m = cv2.moments(hull)
+            if m["m00"] <= 0:
+                return None
+            d = centre_px - np.array([m["m10"] / m["m00"], m["m01"] / m["m00"]])
+        n = float(np.linalg.norm(d))
+        return None if n < 1e-6 else d / n
+
+    def _base_circle(self, group: list, centre_px: np.ndarray) -> tuple[float, float, float] | None:
+        """Circle through the camera-side edge of the base band (see the module docstring)."""
+        ppm = self.px_per_mm
+        u = self._towards_camera(centre_px, group)
+        if u is None:
+            return None
+        lat = np.array([-u[1], u[0]])
+        pts = np.concatenate([b[2].reshape(-1, 2) for b in group]).astype(np.float64)
+        rel = pts - centre_px
+        s, along = rel @ lat, rel @ u
+        bins = np.floor(s / (1.5 * ppm)).astype(int)
+        edge = []
+        for b in np.unique(bins):
+            k = np.flatnonzero(bins == b)
+            edge.append(pts[k[np.argmax(along[k])]])
+        edge_a = np.array(edge)
+        if len(edge_a) < 6:
+            return None
+        fit = None
+        keep = np.ones(len(edge_a), bool)
+        for _ in range(2):
+            e = edge_a[keep]
+            A = np.column_stack([2 * e[:, 0], 2 * e[:, 1], np.ones(len(e))])
+            sol, *_ = np.linalg.lstsq(A, (e ** 2).sum(axis=1), rcond=None)
+            cx, cy = sol[0], sol[1]
+            r = float(np.sqrt(max(sol[2] + cx * cx + cy * cy, 0.0)))
+            res = np.abs(np.hypot(edge_a[:, 0] - cx, edge_a[:, 1] - cy) - r)
+            fit = (cx, cy, r, float(np.sqrt(np.mean(res[keep] ** 2))))
+            keep = res <= max(2.0 * ppm, 2.5 * np.median(res))
+            if keep.sum() < 6:
+                return None
+        cx, cy, r, rms = fit
+        kept = edge_a[keep]
+        span = float(np.ptp(kept @ lat))
+        ahead = float((np.array([cx, cy]) - kept.mean(axis=0)) @ u)  # centre behind the arc
+        r_mm = r / ppm
+        tol = self.circle_rms_mm * ppm
+        free_ok = self.min_diameter_mm / 2 <= r_mm <= self.max_cup_mm / 2 and span >= r and rms <= tol and ahead < 0
+        if free_ok and rms <= 0.7 * tol and span >= 1.4 * r:
+            self._radii.append(r_mm)  # a tight fit over a long arc: this session's cup size
+        if len(self._radii) >= self.learn_radius_after:
+            R = float(np.median(self._radii)) * ppm
+            start = np.array([cx, cy]) if free_ok else kept.mean(axis=0) - u * 0.8 * R
+            c = _fixed_radius_centre(kept, R, start)
+            if c is not None:
+                res = np.abs(np.hypot(kept[:, 0] - c[0], kept[:, 1] - c[1]) - R)
+                behind = float((c - kept.mean(axis=0)) @ u) < 0
+                if float(np.sqrt(np.mean(res ** 2))) <= tol and span >= 0.5 * R and behind:
+                    return (float(c[0]) / ppm, float(c[1]) / ppm, float(2 * R / ppm))
+        if not free_ok:
+            return None
+        return (float(cx) / ppm, float(cy) / ppm, float(2 * r_mm))
 
     def _cup_shaped(self, contour: np.ndarray) -> bool:
         (_, _), (a, b), _ = cv2.minAreaRect(contour)

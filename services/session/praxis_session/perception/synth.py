@@ -90,8 +90,15 @@ def camera_frame(
     roll_deg: float = 0.0,
     focal_per_width: float = 1.4,
     border_bgr: tuple[int, int, int] = (90, 90, 90),
+    pegs_3d: list[tuple[float, float, float, float, float]] | None = None,
+    cup_3d: tuple[float, float, float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return (BGR frame, H_true mm->px). Optional coloured peg discs and a blue cup base disc.
+
+    `pegs_3d` draws upright cylinders (x, y, z_bottom, z_top, diameter; mm, z = height above the
+    paper) through the true 3x4 camera (`view_camera`), so their tops project off the sheet
+    plane the way a real peg standing in a board does (parallax); `peg_bgr` colours them.
+    `cup_3d` (x, y, lift mm) draws a tapered cup (`draw_cup`) whose bottom ring is `cup_bgr`.
 
     `board_bgr` tints the sheet's white background (a wooden or coloured board under the
     print); `skin_blobs_mm` draws skin-coloured discs (x, y, radius) after the pegs, so they
@@ -105,11 +112,78 @@ def camera_frame(
     H_mm_px = view_homography(spec, size, tilt_deg, yaw_deg, scale, roll_deg, focal_per_width)
     S = np.diag([1 / CANON_PX_PER_MM, 1 / CANON_PX_PER_MM, 1.0])  # canonical px -> mm
     frame = cv2.warpPerspective(canon_bgr, H_mm_px @ S, size, borderValue=border_bgr)
+    if pegs_3d or cup_3d:
+        P = view_camera(spec, size, tilt_deg, yaw_deg, scale, roll_deg, focal_per_width)
+        for x, y, z0, z1, d in pegs_3d or []:
+            draw_cylinder(frame, P, (x, y), z0, z1, d / 2.0, peg_bgr)
+        if cup_3d:
+            draw_cup(frame, P, (cup_3d[0], cup_3d[1]), cup_3d[2], band_bgr=cup_bgr)
     if noise_sigma > 0:
         rng = np.random.default_rng(seed)
         noise = rng.normal(0, noise_sigma, frame.shape)
         frame = np.clip(frame.astype(np.float32) + noise, 0, 255).astype(np.uint8)
     return frame, H_mm_px
+
+
+def project(P: np.ndarray, pts_xyz: np.ndarray) -> np.ndarray:
+    """Sheet mm (x, y, height above the paper) -> frame px through a 3x4 `view_camera`."""
+    pts = np.asarray(pts_xyz, np.float64).reshape(-1, 3)
+    h = (P @ np.hstack([pts, np.ones((len(pts), 1))]).T).T
+    return h[:, :2] / h[:, 2:3]
+
+
+def draw_cylinder(
+    frame: np.ndarray, P: np.ndarray, xy: tuple[float, float], z0: float, z1: float, r: float,
+    bgr: tuple[int, int, int],
+) -> None:
+    """An upright cylinder as the camera sees it: the convex hull of its two end circles, the side
+    a little darker than the lit top (enough shading for HSV segmentation to see one object)."""
+    a = np.linspace(0, 2 * np.pi, 32, endpoint=False)
+    ring = np.stack([xy[0] + r * np.cos(a), xy[1] + r * np.sin(a)], axis=1)
+    lo = project(P, np.hstack([ring, np.full((32, 1), z0)]))
+    hi = project(P, np.hstack([ring, np.full((32, 1), z1)]))
+    hull = cv2.convexHull(np.vstack([lo, hi]).astype(np.float32))
+    side = tuple(int(c * 0.8) for c in bgr)
+    cv2.fillConvexPoly(frame, np.round(hull).astype(np.int32), side, cv2.LINE_AA)
+    cv2.fillConvexPoly(frame, np.round(hi).astype(np.int32), bgr, cv2.LINE_AA)
+
+
+def draw_cup(
+    frame: np.ndarray, P: np.ndarray, xy: tuple[float, float], lift_mm: float = 0.0,
+    r_base: float = 29.0, r_top: float = 39.0, height: float = 95.0, band_mm: float = 19.0,
+    band_bgr: tuple[int, int, int] = (200, 90, 30), body_bgr: tuple[int, int, int] = (225, 228, 230),
+) -> None:
+    """A tapered cup standing (or lifted `lift_mm`) at `xy`: a blue tape ring round the bottom
+    `band_mm`, a white body above, the inside visible through the rim. Side quads are painted
+    far to near (camera depth from P's third row), so the camera-facing half of the ring is what
+    shows: a crescent from a laptop angle, not a disc."""
+    n = 48
+    a = np.linspace(0, 2 * np.pi, n, endpoint=False)
+
+    def ring(z: float) -> np.ndarray:
+        r = r_base + (r_top - r_base) * z / height
+        return np.stack([xy[0] + r * np.cos(a), xy[1] + r * np.sin(a), np.full(n, z + lift_mm)], axis=1)
+
+    levels = [0.0, band_mm, height]
+    centre = np.linalg.svd(P)[2][-1]
+    centre = centre[:3] / centre[3]  # camera centre in the same (x, y, height) frame
+    inner = tuple(int(c * 0.75) for c in body_bgr)
+    quads = []
+    for z0, z1, col in ((levels[0], levels[1], band_bgr), (levels[1], levels[2], body_bgr)):
+        lo, hi = ring(z0), ring(z1)
+        for i in range(n):
+            j = (i + 1) % n
+            q = np.array([lo[i], lo[j], hi[j], hi[i]])
+            mid = q.mean(axis=0)
+            normal = np.array([mid[0] - xy[0], mid[1] - xy[1], 0.0])
+            facing = float(normal @ (centre - mid)) > 0
+            depth = float((P[2] @ np.append(mid, 1.0)))
+            quads.append((not facing, depth, q, col if facing else inner))
+    # the inside of the far wall (seen through the rim) first, then the outside far to near
+    rim = project(P, ring(height))
+    cv2.fillConvexPoly(frame, np.round(rim).astype(np.int32), inner, cv2.LINE_AA)
+    for _, _, q, col in sorted(quads, key=lambda t: (not t[0], -t[1])):
+        cv2.fillConvexPoly(frame, np.round(project(P, q)).astype(np.int32), col, cv2.LINE_AA)
 
 
 def scene_canonical(

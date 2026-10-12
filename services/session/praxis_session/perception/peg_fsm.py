@@ -17,6 +17,12 @@ Sprint D-SEG-2:
   still counted but its rep_complete carries verified=False, reason="no_hand_near_hole"
   (unverified is not failed: CLAUDE.md §1). Without any hand data reps stay verified=True.
 
+A seat whose grasp was never seen (12 Oct 2026, found by the 3-D renders): pegs come from a
+dish off the board, so the lift is visible only as the hand model's pinch; when the hand model
+misses it, a hole that fills while the FSM is still `at_source` used to be ignored - the peg was
+lost and the NHPT never started. It is now a rep with verified=False, reason="grasp_not_seen"
+(`state_change.grasp` = "unseen", t_grasp = the seat time).
+
 Event times (11 Oct 2026): the debounce decides *whether* a hole filled; the seat time is the
 first frame of the confirmed run (`t_seated` in the `seated` state_change and in rep_complete),
 and a pinch grasp is timed from the first pinched frame (`t_grasp`). Stamping the confirming
@@ -247,6 +253,17 @@ class PegFSM:
     # ---- state handlers ------------------------------------------------------------------
     def _in_at_source(self, obs: Observation, newly_occupied: list[int]) -> list[Event]:
         ev: list[Event] = []
+        hole = self._seat_hole(newly_occupied)
+        if hole is not None:
+            # A peg is in a hole and its lift was never seen (hand model missed the pinch, the
+            # dish is off the board): counted, but unverified.
+            self._source_pos = None
+            self._baseline_free = len(obs.free_pegs_mm)
+            self._t_grasp = self._flip_t.get(hole, obs.t)
+            self._still_since, self._still_pos = None, None
+            self._pinch_streak = 0
+            ev.append(self._go("grasped", obs.t, grasp="unseen", t_grasp=self._t_grasp))
+            return ev + self._seat(obs, hole, grasp_seen=False)
         if self._last_free and len(obs.free_pegs_mm) < len(self._last_free):
             # The peg that disappeared is the one with no close match in the current set.
             gone = [p for p in self._last_free if all(_dist(p, q) > 5.0 for q in obs.free_pegs_mm)]
@@ -306,12 +323,12 @@ class PegFSM:
             ev.append(self._go("in_transit", obs.t))
         return ev
 
-    def _seat(self, obs: Observation, hole: int) -> list[Event]:
+    def _seat(self, obs: Observation, hole: int, grasp_seen: bool = True) -> list[Event]:
         self._seated_hole = hole
         self._t_seated = self._flip_t.get(hole, obs.t)  # first frame the hole read occupied
         self._clear_streak = 0
-        self._seat_verified = self._hand_verifies(hole, obs.t)
-        self._seat_reason = None if self._seat_verified else "no_hand_near_hole"
+        self._seat_verified = grasp_seen and self._hand_verifies(hole, obs.t)
+        self._seat_reason = None if self._seat_verified else ("no_hand_near_hole" if grasp_seen else "grasp_not_seen")
         return [
             self._go(
                 "seated", obs.t, verified=self._seat_verified, reason=self._seat_reason,

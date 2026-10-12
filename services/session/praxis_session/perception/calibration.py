@@ -24,6 +24,18 @@ lets the setup hint say "cannot read" rather than "missing".
 (f = 1.2 x frame width, principal point at the centre, no distortion); it is a setup gate,
 not a measurement.
 
+``camera`` (12 Oct 2026, found by the 3-D renders in evaluation/blender): a pinhole model of
+the camera in sheet coordinates, so anything with height above the paper (a 32 mm peg standing
+in its board) can be placed where the camera sees it on the sheet plane
+(``lift_to_sheet_mm``). The laptop's focal length is not known, and the nominal 1.2 x width
+puts a peg top 3-11 mm off at 35-50° for a typical 0.75-0.85 x width laptop lens. So while the
+camera looks at the sheet at >= 15° (where one view constrains it), ``cv2.calibrateCamera`` is
+run on the single view of the visible marker corners with the principal point, aspect ratio and
+zero distortion fixed, which leaves the focal length and the pose (renders: within 2 % of the
+true focal, peg top within 0.3 mm); the median of the first fits is kept for the session. Below
+15° (or if the fit is implausible) the nominal focal is used, and the parallax is small there
+anyway. The pose then comes from ``cv2.solvePnP`` (IPPE) with that focal.
+
 OpenCV cv2.__version__ == 5.0.0 (cv2.aruco.ArucoDetector, cv2.findHomography, cv2.solvePnP).
 """
 
@@ -43,8 +55,38 @@ HOLD_S = 1.5
 MIN_PARTIAL_MARKERS = 3
 RANSAC_PX = 3.0
 NOMINAL_F_PER_WIDTH = 1.2
+FOCAL_FIT_MIN_TILT_DEG = 15.0  # one planar view constrains f only when it is seen at an angle
+FOCAL_FIT_RANGE = (0.35, 3.0)  # plausible f / width; outside it the fit is discarded
+FOCAL_FIT_MAX_RMS_PX = 2.0
+FOCAL_SAMPLES = 15  # fits kept per session (the median is used)
 
 Source = Literal["fresh", "held", "partial"]
+
+
+@dataclass(frozen=True)
+class CameraModel:
+    """Pinhole camera in sheet coordinates (the sheet frame's +z points into the table)."""
+
+    K: np.ndarray
+    rvec: np.ndarray
+    tvec: np.ndarray
+    source: Literal["fit", "nominal"]
+    mirrored: bool = False
+    width: int = 640
+
+    @property
+    def focal_px(self) -> float:
+        return float(self.K[0, 0])
+
+    def project_px(self, pts_xyz_mm: np.ndarray) -> np.ndarray:
+        """(x, y, height above the paper) mm -> frame px, in the frame as received."""
+        pts = np.asarray(pts_xyz_mm, np.float64).reshape(-1, 3).copy()
+        pts[:, 2] = -pts[:, 2]  # up off the paper is -z in the sheet frame
+        px, _ = cv2.projectPoints(pts, self.rvec, self.tvec, self.K, None)
+        px = px.reshape(-1, 2)
+        if self.mirrored:
+            px[:, 0] = self.width - 1 - px[:, 0]
+        return px
 
 
 @dataclass
@@ -62,6 +104,17 @@ class CalibrationResult:
     rejected: int = 0
     # corners (N x 4 x 2, frame px) of the undecoded candidate squares; not serialised
     rejected_px: np.ndarray = field(default_factory=lambda: np.zeros((0, 4, 2), np.float32))
+    camera: CameraModel | None = None  # not serialised
+
+    def lift_to_sheet_mm(self, pts_mm: np.ndarray, height_mm: float) -> np.ndarray | None:
+        """Where the camera sees sheet points raised `height_mm` above the paper, in sheet-plane
+        mm (the coordinates of the canonical view): cv2.projectPoints through the camera model,
+        then the measured homography. None without a camera model."""
+        if self.camera is None or self.H_px_to_mm is None:
+            return None
+        pts = np.asarray(pts_mm, np.float64).reshape(-1, 2)
+        xyz = np.hstack([pts, np.full((len(pts), 1), float(height_mm))])
+        return self.to_mm(self.camera.project_px(xyz))
 
     def to_mm(self, pts_px: np.ndarray) -> np.ndarray:
         assert self.H_px_to_mm is not None
@@ -123,6 +176,33 @@ def sheet_tilt_deg(
     return float(np.degrees(np.arccos(cos)))
 
 
+def fit_focal_px(found: dict[int, np.ndarray], spec: SheetSpec, frame_shape: tuple) -> float | None:
+    """Focal length (px) from ONE view of the visible marker corners: cv2.calibrateCamera with
+    the principal point, aspect ratio and zero distortion fixed, so only f and the pose are
+    free. None when the fit fails or is implausible (the caller also skips near-overhead views,
+    where f is unobservable)."""
+    if len(found) < MIN_PARTIAL_MARKERS:
+        return None
+    h, w = frame_shape[:2]
+    order = sorted(found)
+    obj = np.concatenate([spec.marker_corners_mm(i) for i in order]).astype(np.float32)
+    obj = np.hstack([obj, np.zeros((len(obj), 1), np.float32)])
+    img = np.concatenate([found[i] for i in order]).astype(np.float32)
+    flags = (
+        cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_FIX_PRINCIPAL_POINT | cv2.CALIB_FIX_ASPECT_RATIO
+        | cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3
+    )
+    K0 = np.array([[1.0 * w, 0.0, w / 2.0], [0.0, 1.0 * w, h / 2.0], [0.0, 0.0, 1.0]], np.float64)
+    try:
+        rms, K, *_ = cv2.calibrateCamera([obj], [img], (w, h), K0, np.zeros(5), flags=flags)
+    except cv2.error:
+        return None
+    f = float(K[0, 0])
+    if not (FOCAL_FIT_RANGE[0] * w <= f <= FOCAL_FIT_RANGE[1] * w) or rms > FOCAL_FIT_MAX_RMS_PX:
+        return None
+    return f
+
+
 class Calibrator:
     def __init__(self, spec: SheetSpec, hold_s: float = HOLD_S) -> None:
         self.spec = spec
@@ -133,6 +213,7 @@ class Calibrator:
         self._last_good: CalibrationResult | None = None  # last fresh or partial result
         self._last_good_t: float = 0.0
         self._prefer_mirrored = False  # the orientation that decoded last time is tried first
+        self._focals: list[float] = []  # single-view focal fits this session (median used)
 
     @property
     def ever_calibrated(self) -> bool:
@@ -189,6 +270,7 @@ class Calibrator:
                 mirrored=prev.mirrored,
                 rejected=rejected,
                 rejected_px=rej_px,
+                camera=prev.camera,
             )
         return CalibrationResult(
             self.spec.name, False, missing, None, None, found,
@@ -232,6 +314,33 @@ class Calibrator:
         proj = cv2.perspectiveTransform(src.reshape(-1, 1, 2), H).reshape(-1, 2)
         rms = float(np.sqrt(np.mean(np.sum((proj - dst) ** 2, axis=1))))
         tilt = sheet_tilt_deg(found if pnp is None else pnp, self.spec, frame_shape)
+        camera = self._camera(found if pnp is None else pnp, frame_shape, tilt, mirrored=pnp is not None and pnp is not found)
         return CalibrationResult(
-            self.spec.name, True, missing, H, rms, found, source=source, age_s=0.0, tilt_deg=tilt
+            self.spec.name, True, missing, H, rms, found, source=source, age_s=0.0, tilt_deg=tilt,
+            camera=camera,
         )
+
+    def _camera(
+        self, pnp: dict[int, np.ndarray], frame_shape: tuple, tilt: float | None, mirrored: bool
+    ) -> CameraModel | None:
+        """The camera model for this fix: the session's fitted focal (median of the first
+        FOCAL_SAMPLES fits, made while the view is tilted enough) or the nominal one, and the
+        pose from cv2.solvePnP (IPPE) on the corners as the camera saw them (un-mirrored)."""
+        h, w = frame_shape[:2]
+        if len(self._focals) < FOCAL_SAMPLES and tilt is not None and tilt >= FOCAL_FIT_MIN_TILT_DEG:
+            f = fit_focal_px(pnp, self.spec, frame_shape)
+            if f is not None:
+                self._focals.append(f)
+        if self._focals:
+            f, src = float(np.median(self._focals)), "fit"
+        else:
+            f, src = NOMINAL_F_PER_WIDTH * w, "nominal"
+        K = np.array([[f, 0.0, w / 2.0], [0.0, f, h / 2.0], [0.0, 0.0, 1.0]], np.float64)
+        order = sorted(pnp)
+        obj = np.concatenate([self.spec.marker_corners_mm(i) for i in order]).astype(np.float64)
+        obj = np.hstack([obj, np.zeros((len(obj), 1))])
+        img = np.concatenate([pnp[i] for i in order]).astype(np.float64)
+        ok, rvec, tvec = cv2.solvePnP(obj, img, K, None, flags=cv2.SOLVEPNP_IPPE)
+        if not ok:
+            return None
+        return CameraModel(K, rvec, tvec, src, mirrored=mirrored, width=w)

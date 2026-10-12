@@ -37,6 +37,32 @@
                    longer than 45 mm (cv2.minAreaRect: a pen is not a peg). The hand
                    box (from the hand tracker, expanded by 15 mm) is excluded here only - never
                    from hole occupancy, because the hand covers a hole right after seating a peg.
+5. Height (12 Oct 2026, found by the 3-D renders, evaluation/results/synthetic3d_v0.md). A real
+                   peg is 32 mm tall and stands in a board on the sheet; from a laptop camera
+                   20-50 deg off vertical its body lands on the sheet plane as a streak that
+                   starts a few mm past the hole (the board's thickness) and ends 10-40 mm past
+                   it, away from the camera. On the hole disc alone a seated peg read empty, its
+                   streak was a "free peg", and at ~50 deg it lit the next row's hole. With the
+                   calibration's camera model (calibration.CameraModel, focal from a single-view
+                   cv2.calibrateCamera) each hole gets two regions in the canonical view, drawn
+                   with cv2.line between cv2.projectPoints of the hole raised to two heights:
+                     - the **seat column**: z = 10..24 mm above the hole, 3 mm half-width - only a
+                       peg standing in that hole covers it, whatever the board thickness;
+                     - the **footprint**: z = 0..32 mm, 5 mm half-width - all a seated peg covers.
+                   A hole is occupied when its column is >= 50 % peg-coloured; otherwise the disc
+                   rule above decides, unless the disc lies in the footprint of a hole whose
+                   column shows a standing peg (>= 15 % peg colour, so a peg only partly
+                   segmented in dim light counts): then the disc is that peg's streak.
+                   Free pegs exclude blobs centred inside any footprint. Without a camera model,
+                   or for the flat discs of the 2-D renders (which never fill a column), the
+                   rules above are unchanged (tests/test_parallax.py).
+                   Hidden is not empty: a hole keeps its last decision while something covers
+                   it - its region (column + disc) is >= 50 % more skin-coloured than on the empty
+                   board; or it no longer looks like its empty template (score < 0.5) and no peg
+                   colour explains it (a large hand is normalised to "paper" in this view); or its
+                   column is only partly peg-coloured (25-50 %: fingers over a seated peg). On the
+                   renders the forearm passing over seated pegs flipped them empty and they were
+                   counted again when it left.
 """
 
 from __future__ import annotations
@@ -164,8 +190,28 @@ class BoardState:
         normalise: bool = True,
         paper_kernel_mm: float = 30.0,
         max_peg_len_mm: float = 45.0,
+        column_z_mm: tuple[float, float] = (10.0, 24.0),
+        column_r_mm: float = 3.0,
+        column_occupied_fraction: float = 0.5,
+        footprint_z_mm: tuple[float, float] = (0.0, 32.0),
+        footprint_r_mm: float = 5.0,
+        disc_in_footprint: float = 0.25,
     ) -> None:
         self.spec = spec
+        self.column_z_mm = column_z_mm
+        self.column_r_mm = column_r_mm
+        self.column_occupied_fraction = column_occupied_fraction
+        self.footprint_z_mm = footprint_z_mm
+        self.footprint_r_mm = footprint_r_mm
+        self.disc_in_footprint = disc_in_footprint
+        self._cal: CalibrationResult | None = None  # the fix of the last warp (camera model)
+        self._geom: dict[str, Any] | None = None
+        self.occluded_skin = 0.5  # extra skin share of a hole's region that means "hidden"
+        self.hidden_template_score = 0.5  # below this (and no peg colour) the hole is covered
+        self.column_seen_fraction = 0.15  # a column this peg-coloured is a standing peg, seen or not in full
+        self._skin_base: list[float] = []  # skin share per hole on the empty board
+        self._disc_cache: dict[tuple, np.ndarray] = {}
+        self._last_occ: list[bool] | None = None
         self.normalise = normalise
         self.paper_kernel_mm = paper_kernel_mm
         self.max_peg_len_mm = max_peg_len_mm
@@ -225,6 +271,7 @@ class BoardState:
         canon = cv2.warpPerspective(
             frame_bgr, H, (self.canonical_w, self.canonical_h), flags=cv2.INTER_LINEAR
         )
+        self._cal = cal
         if self.normalise:
             canon = normalise_to_paper(canon, self.px_per_mm, self.paper_kernel_mm)
         return canon
@@ -287,6 +334,57 @@ class BoardState:
         self._holes = None
         self.hole_source = None
         self._templates = []
+        self._geom = None
+        self._skin_base = []
+        self._last_occ = None
+
+    # ---- height-aware regions (section 5 of the module docstring) ---------------------------
+    def seat_geometry(self) -> dict[str, Any] | None:
+        """Per hole: seat-column and footprint masks (canonical px) and, for every pair, the share
+        of hole k's disc inside hole j's footprint. Recomputed only when a projected end moves by
+        more than half a pixel (the camera model changes slowly)."""
+        cal = self._cal
+        if cal is None or cal.camera is None or self._holes is None:
+            return None
+        centres = np.array([self.canonical_to_mm((h.x, h.y)) for h in self._holes], np.float64)
+        zs = (*self.column_z_mm, *self.footprint_z_mm)
+        ends = [cal.lift_to_sheet_mm(centres, z) for z in zs]  # 4 x (n, 2) mm
+        ends_px = np.array([[self.mm_to_canonical((float(p[0]), float(p[1]))) for p in e] for e in ends])
+        if self._geom is not None and np.abs(self._geom["ends_px"] - ends_px).max() <= 1.0:
+            return self._geom  # within 1 px (1/3 mm): the regions have not moved
+        shape = (self.canonical_h, self.canonical_w)
+        n = len(self._holes)
+
+        def capsule(a: np.ndarray, b: np.ndarray, r_mm: float) -> np.ndarray:
+            m = np.zeros(shape, np.uint8)
+            t = max(1, int(round(2 * r_mm * self.px_per_mm)))
+            cv2.line(m, (int(round(a[0])), int(round(a[1]))), (int(round(b[0])), int(round(b[1]))), 255, t, cv2.LINE_8)
+            return np.flatnonzero(m)
+
+        columns = [capsule(ends_px[0, k], ends_px[1, k], self.column_r_mm) for k in range(n)]
+        footprints = [capsule(ends_px[2, k], ends_px[3, k], self.footprint_r_mm) for k in range(n)]
+        any_foot = np.zeros(shape[0] * shape[1], bool)
+        overlap = np.zeros((n, n))
+        for j in range(n):
+            foot = np.zeros(shape[0] * shape[1], bool)
+            foot[footprints[j]] = True
+            any_foot |= foot
+            for k, h in enumerate(self._holes):
+                if j != k:
+                    overlap[k, j] = float(foot[self._disc_idx(h)].mean())
+        self._geom = {"ends_px": ends_px, "columns": columns, "footprints": footprints,
+                      "any_footprint": any_foot.reshape(shape), "disc_in_footprint": overlap}
+        return self._geom
+
+    def _disc_idx(self, h: Hole) -> np.ndarray:
+        """Flat canonical indices of hole h's disc (cached per hole position)."""
+        key = (h.index, round(h.x, 2), round(h.y, 2))
+        idx = self._disc_cache.get(key)
+        if idx is None:
+            d = np.zeros((self.canonical_h, self.canonical_w), np.uint8)
+            cv2.circle(d, (int(round(h.x)), int(round(h.y))), int(round(self.hole_radius_px)), 255, -1)
+            idx = self._disc_cache[key] = np.flatnonzero(d)
+        return idx
 
     def _capture_empty_templates(self, canonical_bgr: np.ndarray) -> None:
         """Per-hole grey templates from the view the holes were detected on, plus a disc mask
@@ -306,6 +404,8 @@ class BoardState:
             frac = self._disc_fraction(peg, h)
             clearly_empty = frac < max(0.0, self.occupied_fraction - self.tie_zone)
             self._templates.append(patch.copy() if patch is not None and clearly_empty else None)
+        skin = self.skin_mask(canonical_bgr)
+        self._skin_base = [self._disc_fraction(skin, h) for h in self._holes]
 
     def _patch(self, gray: np.ndarray, h: Hole) -> np.ndarray | None:
         m = self.template_half_px
@@ -315,6 +415,9 @@ class BoardState:
         return gray[y0 : y0 + 2 * m + 1, x0 : x0 + 2 * m + 1]
 
     def _disc_fraction(self, mask: np.ndarray, h: Hole) -> float:
+        if mask.shape[:2] == (self.canonical_h, self.canonical_w):
+            idx = self._disc_idx(h)
+            return float(mask.ravel()[idx].mean() / 255.0) if idx.size else 0.0
         disc = np.zeros(mask.shape, np.uint8)
         cv2.circle(disc, (int(round(h.x)), int(round(h.y))), int(round(self.hole_radius_px)), 255, -1)
         inside = disc > 0
@@ -327,6 +430,10 @@ class BoardState:
         rng = hsv_window_from_patch(canonical_bgr, self.mm_to_canonical(xy_mm), 3.0 * self.px_per_mm)
         self.colour_range = rng
         return rng
+
+    def skin_mask(self, canonical_bgr: np.ndarray) -> np.ndarray:
+        hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
+        return cv2.inRange(hsv, np.array(SKIN_HSV_LO, np.uint8), np.array(SKIN_HSV_HI, np.uint8))
 
     # ---- pegs -----------------------------------------------------------------------------
     def peg_mask(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> np.ndarray:
@@ -380,6 +487,8 @@ class BoardState:
         mask = self.peg_mask(canonical_bgr)
         gray = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2GRAY)
         assert self._template_mask is not None
+        geom = self.seat_geometry()
+        skin = self.skin_mask(canonical_bgr)
         out = []
         for h in holes:
             frac = self._disc_fraction(mask, h)
@@ -389,12 +498,60 @@ class BoardState:
             if tpl is not None and patch is not None and patch.shape == tpl.shape:
                 res = cv2.matchTemplate(patch, tpl, cv2.TM_CCOEFF_NORMED, mask=self._template_mask)
                 score = float(np.nan_to_num(res[0, 0]))
+            col = None
+            skin_frac = self._disc_fraction(skin, h)
+            if geom is not None and geom["columns"][h.index].size:
+                region = geom["columns"][h.index]
+                col = float(mask.ravel()[region].mean() / 255.0)
+                skin_frac = max(skin_frac, float(skin.ravel()[region].mean() / 255.0))
+            base = self._skin_base[h.index] if h.index < len(self._skin_base) else 0.0
+            # Covered, not empty: the hole no longer looks like its empty template and no peg
+            # colour explains it (a large hand is normalised to "paper" in this view, so the
+            # skin share alone misses it).
+            half = self.column_occupied_fraction / 2
+            covered = (
+                score is not None and score < self.hidden_template_score
+                and frac < max(0.0, self.occupied_fraction - self.tie_zone)
+                and (col is None or col < half)
+            )
+            # A column only partly peg-coloured (fingers over a seated peg, or a peg going in)
+            # cannot say either way: hold the last decision rather than flip.
+            # A disc clearly full of peg colour (a flat or near-overhead peg) is evidence enough.
+            covered = covered or (
+                col is not None and half <= col < self.column_occupied_fraction
+                and frac < self.occupied_fraction + self.tie_zone
+            )
             out.append(
                 {
                     "peg_fraction": round(frac, 4),
                     "empty_template_score": None if score is None else round(score, 4),
+                    "column_fraction": None if col is None else round(col, 4),
+                    "hidden": bool(skin_frac - base >= self.occluded_skin or covered),
                 }
             )
+        return out
+
+    def decide(self, scores: list[dict[str, Any]]) -> list[bool]:
+        """Occupied per hole: the seat column first, then the disc rule unless the disc is
+        explained by another hole's standing peg (module docstring, section 5)."""
+        col_occ = [s.get("column_fraction") is not None and s["column_fraction"] >= self.column_occupied_fraction for s in scores]
+        # a standing peg, even one only partly segmented (dim light), casts its streak forwards
+        col_seen = [s.get("column_fraction") is not None and s["column_fraction"] >= self.column_seen_fraction for s in scores]
+        geom = self._geom if self._cal is not None and self._cal.camera is not None else None
+        out = []
+        for k, s in enumerate(scores):
+            if col_occ[k]:
+                out.append(True)
+            elif s.get("hidden") and self._last_occ is not None and k < len(self._last_occ):
+                out.append(self._last_occ[k])  # a hand over the hole: hidden is not a change
+            elif geom is not None and any(
+                col_seen[j] and geom["disc_in_footprint"][k, j] >= self.disc_in_footprint
+                for j in range(len(scores)) if j != k
+            ):
+                out.append(False)  # another peg's streak, not a peg in this hole
+            else:
+                out.append(self._occupied(s))
+        self._last_occ = list(out)
         return out
 
     def _occupied(self, s: dict[str, float]) -> bool:
@@ -412,8 +569,8 @@ class BoardState:
     ) -> dict[str, str]:
         # exclude_mm is accepted for symmetry with free_pegs_mm; holes are never blanked.
         return {
-            f"hole_{k}": "occupied" if self._occupied(s) else "empty"
-            for k, s in enumerate(self.hole_scores(canonical_bgr))
+            f"hole_{k}": "occupied" if occ else "empty"
+            for k, occ in enumerate(self.decide(self.hole_scores(canonical_bgr)))
         }
 
     def free_pegs_mm(
@@ -421,10 +578,16 @@ class BoardState:
     ) -> list[tuple[float, float]]:
         holes = self.detect_holes(canonical_bgr)
         near = self.hole_radius_px * 1.5
+        geom = self.seat_geometry()
         out = []
         for x, y, _ in self.peg_blobs(canonical_bgr, exclude_mm):
-            if all(np.hypot(x - h.x, y - h.y) > near for h in holes):
-                out.append(self.canonical_to_mm((x, y)))
+            if not all(np.hypot(x - h.x, y - h.y) > near for h in holes):
+                continue
+            if geom is not None:
+                xi, yi = int(round(x)), int(round(y))
+                if 0 <= yi < self.canonical_h and 0 <= xi < self.canonical_w and geom["any_footprint"][yi, xi]:
+                    continue  # a peg standing in a hole, seen from an angle
+            out.append(self.canonical_to_mm((x, y)))
         return out
 
     def to_event_payload(
@@ -434,8 +597,8 @@ class BoardState:
         scores = self.hole_scores(canonical_bgr)
         return {
             "occupancy": {
-                f"hole_{k}": "occupied" if self._occupied(s) else "empty"
-                for k, s in enumerate(scores)
+                f"hole_{k}": "occupied" if occ else "empty"
+                for k, occ in enumerate(self.decide(scores))
             },
             "scores": scores,
             "hole_source": self.hole_source,

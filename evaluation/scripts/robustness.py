@@ -717,6 +717,14 @@ def summary(res: dict[str, Any]) -> list[str]:
         "|---|---|---|",
         *[f"| {a} | {b} | {c} |" for a, b, c in FIXES],
         "",
+        "**12 Oct 2026, after the 3-D renders (`synthetic3d_v0.md`).** Hole occupancy now looks first at a height-aware "
+        "seat column projected from the calibrated camera, because real 32 mm pegs stand in a board and project off "
+        "their holes. This sweep's pegs are flat discs, which real pegs are not: past the 50° setup advice a flat disc on "
+        "the next row lies where a standing peg's column is, so at 50–65° one or two flat pegs now read empty (all holes "
+        "correct 69 → 65 of 74; one fewer phantom on the curled sheet). Real pegs at those angles are measured in "
+        "`synthetic3d_v0.md`. The two defocus-r5 setup rows changed with an earlier commit, not this one (the pre-12 Oct "
+        "code gives the same rows).",
+        "",
     ]
 
 def _yn(v: Any) -> str:
