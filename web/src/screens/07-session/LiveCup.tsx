@@ -23,6 +23,7 @@ import { cupActiveS, cupArc, cupBand, cupDots, cupProgressFacts, paceVsArc1 } fr
 import { LivePrompt } from './LivePrompt'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxStats, sxClock, sxHold, useHoldSeconds, useSxSession, type DotState } from './SessionChrome'
 import { ExertionChip, PainCheck, SessionOverlay, overlayEndReason } from './SessionOverlays'
+import { TapToSample, sampleBand, useTapToSample } from './TapToSample'
 import { TracePanel } from './TracePanel'
 
 type CupComplete = PraxisEvent & { arcs: number; reaches: { verified?: boolean }[] }
@@ -137,7 +138,13 @@ export function LiveCup() {
 
   const arc = cupArc(events, frame)
   const dots = cupDots(events, frame)
-  const band = cupBand(events, frame)
+  // Tap-to-sample (12 Oct): a non-blue cup band is sampled from the patient's tap; while it runs
+  // (and for a few seconds after) the feed band shows its instruction or the service's answer.
+  const sampling = useTapToSample(recent, send)
+  const band = sampleBand('cup', sampling) ?? cupBand(events, frame)
+  const canSample = live && !replay && !!frame?.calibrated && !hold.open && !complete && !flow.feedbackOpen
+  const sampleDot = cup?.dot ?? 0
+  const sampleKeyPx = (frame?.overlay.dots_px?.[sampleDot] as [number, number] | undefined) ?? null
   const unverified = cup?.unverified_total ?? 0
   const reaches = cup?.reaches_total ?? 0
   const verifiedReaches = Math.max(0, reaches - unverified)
@@ -235,6 +242,7 @@ export function LiveCup() {
             prompt={hold.prompt ? <LivePrompt state={cp} running={{ phase: cup?.phase }} /> : null}
             resumeByPrompt={hold.resumeByPrompt}
           />
+          {canSample && <TapToSample target="cup" state={sampling} mirrored={!replay} keyboardPx={sampleKeyPx} keyboardLabel={`the cup on dot ${sampleDot + 1}`} />}
         </SxFeed>
 
         {traceOpen ? (

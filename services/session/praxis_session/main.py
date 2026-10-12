@@ -788,6 +788,9 @@ def _handle_command_unchecked(cmd: dict, pipeline: SessionPipeline | None, coach
         store.save_session(summary, coach.checkin, coach.feedback, [r for r in coach.trace.tail(2000) if r.get("kind") == "event"])
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, summary=summary)]
     result = pipeline.command(cmd)
+    if name == "sample_colour" and pipeline.mode in ("cup", "nhpt"):
+        # The patient's tap on the live screen: a traced `ui` action they initiated (12 Oct).
+        coach.on_colour_sample(result, now)
     return [make_event("command", cmd=name, session_id=coach.session_id, **result)]
 
 

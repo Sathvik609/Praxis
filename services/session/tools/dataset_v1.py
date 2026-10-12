@@ -467,6 +467,9 @@ def manifest_entry(c: Clip, dataset_dir: Path, today: dt.date | None = None) -> 
         "delete_after": (c.meta.get("consent") or {}).get("delete_after"),
         "clip_deleted_on": c.meta.get("clip_deleted_on"),
         "planned_errors": list(c.meta.get("planned_errors") or []),
+        # Optional (12 Oct): the patient's tap-to-sample for a non-default cup/peg colour,
+        # {"t", "x_mm", "y_mm"} (or x_px/y_px, hole), replayed by eval.py through run_replay.
+        **({"colour_sample": dict(c.meta["colour_sample"])} if c.meta.get("colour_sample") else {}),
     }
 
 

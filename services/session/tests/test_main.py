@@ -721,3 +721,36 @@ def test_patch_feedback_accepts_only_the_editable_answers_and_never_how_the_sess
     for body in bad:
         assert client.patch(f"/api/sessions/{sid}/feedback", json=body).status_code == 422, body
     assert client.get(f"/api/sessions/{sid}").json()["feedback"]["effort"] == 7
+
+
+def test_patient_tap_to_sample_is_traced_as_a_ui_action_and_kept_in_the_summary(tmp_path):
+    """07b's "Cup not found?" tap: the command reply carries the caption text, the trace logs a
+    patient-initiated `ui` row, and the session summary keeps the sample so a recording of the
+    session can be replayed with the same colour (RISKS 10 Oct)."""
+    import cv2
+
+    import praxis_session.main as main
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+    from praxis_session.perception.synth import camera_frame
+    from praxis_session.pipeline import SessionPipeline
+    from praxis_session.prescription import SEED_PRESCRIPTION
+    from praxis_session.session import CoachSession
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    s = CoachSession(mode="cup", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="tap1")
+    frame, H = camera_frame(C, cup_mm=C.targets_mm[2], cup_bgr=(30, 200, 60))
+    p.process(frame, 0.0, 0)
+    x, y = cv2.perspectiveTransform(np.array([[C.targets_mm[2]]], np.float32), H)[0, 0]
+    out = main._handle_command({"cmd": "sample_colour", "x_px": float(x), "y_px": float(y)}, p, s, now=5.0)
+    reply = out[0].payload
+    assert out[0].type == "command" and reply["cmd"] == "sample_colour" and reply["ok"] and reply["detected"]
+    assert reply["message"] == "Cup colour set. I can see the cup now."
+    rows = [r for r in s.trace.tail(20) if r["kind"] == "ui"]
+    assert rows and rows[-1]["action"] == "sample_colour" and rows[-1]["initiated_by"] == "patient"
+    assert rows[-1]["ok"] is True and rows[-1]["target"] == "cup" and rows[-1]["colour"]["h"] == reply["colour"]["h"]
+    refused = main._handle_command({"cmd": "sample_colour", "x_px": 1.0, "y_px": 1.0}, p, s, now=6.0)[0].payload
+    assert refused["ok"] is False and refused["reason"] == "off_sheet"
+    assert [r for r in s.trace.tail(20) if r["kind"] == "ui"][-1]["reason"] == "off_sheet"
+    samples = s.summary()["colour_samples"]
+    assert [x["ok"] for x in samples] == [True, False]
+    assert samples[0]["at_mm"] == reply["at_mm"] and samples[0]["colour"]["h"] == reply["colour"]["h"]

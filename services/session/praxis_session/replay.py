@@ -43,6 +43,7 @@ class ReplayResult:
     events: list[Event] = field(default_factory=list)
     snapshot: dict[str, Any] = field(default_factory=dict)
     models: dict[str, bool] = field(default_factory=dict)
+    colour_sample: dict[str, Any] | None = None  # the replayed tap-to-sample result, if any
 
     def summary(self) -> dict[str, Any]:
         counts: dict[str, int] = {}
@@ -197,8 +198,13 @@ def run_replay(
     fps_override: float | None = None,
     ring: EventRing | None = None,
     on_event: Any = None,
+    colour_sample: dict[str, Any] | None = None,
     **fsm_kwargs: Any,
 ) -> ReplayResult:
+    """`colour_sample` (sheet tasks): replay a patient's tap-to-sample, e.g. from a clip's
+    sidecar: {"t": s, "x_mm", "y_mm"} (or "x_px"/"y_px", or "hole"). The `sample_colour`
+    command is sent after the first frame at or after `t` that has a calibrated sheet, exactly
+    as the live socket would, so the clip is scored with the colour the patient chose."""
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(p)
@@ -208,6 +214,8 @@ def run_replay(
     fps = fps_override or float(cap.get(cv2.CAP_PROP_FPS)) or 10.0
     pipeline = SessionPipeline(mode=mode, sheet=sheet, ring=ring, **fsm_kwargs)
     events: list[Event] = []
+    pending = dict(colour_sample) if colour_sample else None
+    sampled: dict[str, Any] | None = None
     i = 0
     while True:
         ok, frame = cap.read()
@@ -218,6 +226,11 @@ def run_replay(
         if on_event:
             for e in evs:
                 on_event(e)
+        if pending is not None and i / fps >= float(pending.get("t", 0.0)):
+            point = {k: pending[k] for k in ("x_mm", "y_mm", "x_px", "y_px", "hole") if k in pending}
+            res = pipeline.command({"cmd": "sample_colour", **point})
+            if res.get("reason") != "not_calibrated":  # else try again on the next frame
+                sampled, pending = {**res, "t": round(i / fps, 3)}, None
         i += 1
     cap.release()
     snap = pipeline.snapshot((i - 1) / fps if i else 0.0)
@@ -231,6 +244,7 @@ def run_replay(
         events=events,
         snapshot=snap,
         models={"hand": pipeline._hand is not None, "pose": pipeline._pose is not None},
+        colour_sample=sampled,
     )
 
 

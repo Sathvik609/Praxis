@@ -18,6 +18,7 @@ import { BoardView } from './BoardView'
 import { LivePrompt } from './LivePrompt'
 import { SessionHeader, SxBar, SxCoach, SxEndDialog, SxFeed, SxHold, SxRef, SxStats, sxHold, useHoldSeconds, useSxSession } from './SessionChrome'
 import { ExertionChip, PainCheck, SessionOverlay, overlayEndReason } from './SessionOverlays'
+import { TapToSample, sampleBand, useTapToSample } from './TapToSample'
 import { TracePanel } from './TracePanel'
 
 type NhptComplete = PraxisEvent & { total_s: number; splits_s: number[]; pegs: unknown[] }
@@ -117,6 +118,11 @@ export function LiveNhpt() {
   const handSeen = frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null
   const hold = sxHold(coach, rest, stopped, flow.feedbackOpen, finish, send, cp)
   const holdSeconds = useHoldSeconds(hold, lastT)
+  // Tap-to-sample (12 Oct): wooden or unsaturated pegs; a tap on the picture or a seated hole on
+  // the board inset, answered in the feed band.
+  const sampling = useTapToSample(recent, send)
+  const sampleNow = sampleBand('pegs', sampling)
+  const canSample = live && !replay && !!frame?.calibrated && !hold.open && !complete && !flow.feedbackOpen
   const pipe = `OpenCV 5 · findContours + HoughCircles occupancy${frame?.board?.hole_source ? ` · holes: ${frame.board.hole_source}` : ''}${frame?.models?.hand ? ' · dnn hand' : ' · hand model off'}${frame?.proc_ms ? ` · ${Math.min(99, Math.round(1000 / Math.max(frame.proc_ms, 1)))} fps max` : ''}`
 
   const coachCard = (
@@ -147,6 +153,8 @@ export function LiveNhpt() {
           videoRef={videoRef}
           frame={frame}
           note={live ? [`${hand} hand`, 'board tracking', handSeen].filter(Boolean).join(' · ') : label.feed}
+          band={live && sampleNow ? sampleNow.text : null}
+          bandTone={sampleNow?.tone}
           mono={pipe}
           onRetry={() => { stop(); void start() }}
         >
@@ -162,6 +170,7 @@ export function LiveNhpt() {
             prompt={hold.prompt ? <LivePrompt state={cp} running={{}} /> : null}
             resumeByPrompt={hold.resumeByPrompt}
           />
+          {canSample && <TapToSample target="pegs" state={sampling} mirrored={!replay} />}
         </SxFeed>
 
         {traceOpen ? (
@@ -177,7 +186,7 @@ export function LiveNhpt() {
                 <BoardView
                   occupancy={frame?.board?.occupancy ?? {}}
                   nextHole={nextHole}
-                  onSampleHole={replay ? undefined : (k) => send({ cmd: 'sample_colour', hole: k })}
+                  onSampleHole={replay ? undefined : sampling.sampleHole}
                   sampled={!!frame?.board?.colour}
                 />
               </div>

@@ -272,3 +272,57 @@ test('a replay that completed keeps its done modal when the recording ends; noth
   expect(screen.getByRole('dialog', { name: 'Waiter – cup, done' })).toBeInTheDocument()
   expect(screen.queryByRole('dialog', { name: 'How was your practice?' })).not.toBeInTheDocument()
 })
+
+// ---- tap-to-sample (12 Oct): a non-blue cup band ------------------------------------------
+const dotsFrame = { ...frame, overlay: { ...frame.overlay, dots_px: [[100, 300], [200, 200], [320, 150], [440, 200], [540, 300]] } }
+
+test('"Cup not found?" enters sample mode; a tap on the mirrored picture sends the point in frame pixels', () => {
+  mockStream([dotsFrame])
+  renderAt('/session?exercise=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Cup not found? Tap the cup base on the picture' }))
+  const layer = screen.getByRole('button', { name: 'Camera picture: tap the cup base. Press Enter to use the cup on dot 3. Escape cancels.' })
+  expect(layer).toHaveFocus()
+  expect(screen.getByText('Tap the cup base on the picture · Esc to cancel', { selector: '.sx-band' })).toHaveClass('sx-band-amber')
+  expect(document.querySelector('.sx-feed [role="status"].sr-only')).toHaveTextContent('Tap the cup base on the picture')
+  const pic = document.querySelector('.sx-frame') as HTMLElement
+  pic.getBoundingClientRect = () => ({ left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) })
+  fireEvent.click(layer, { detail: 1, clientX: 80, clientY: 60 })
+  expect(send).toHaveBeenCalledWith({ cmd: 'sample_colour', x_px: 576, y_px: 48 })
+  expect(screen.queryByRole('button', { name: /Camera picture/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Cup not found? Tap the cup base on the picture' })).toHaveFocus()
+  expect(screen.getByText('Checking that colour…', { selector: '.sx-band' })).toBeInTheDocument()
+})
+
+test('keyboard: Enter on the picture samples the cup on its dot; Escape cancels without sending', () => {
+  mockStream([dotsFrame])
+  renderAt('/session?exercise=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: /^Cup not found\?/ }))
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(screen.queryByRole('button', { name: /Camera picture/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Cup not found\?/ })).toHaveFocus()
+  expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'sample_colour' }))
+  fireEvent.click(screen.getByRole('button', { name: /^Cup not found\?/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Camera picture/ }), { detail: 0 })
+  expect(send).toHaveBeenCalledWith({ cmd: 'sample_colour', x_px: 320, y_px: 150 })
+})
+
+test("the service's answer is the feed band and the status line; a refusal says why", () => {
+  mockStream([dotsFrame])
+  const { rerender } = renderAt('/session?exercise=cup&side=left')
+  fireEvent.click(screen.getByRole('button', { name: /^Cup not found\?/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Camera picture/ }), { detail: 0 })
+  const refused = "That spot has almost no colour, so it can't be told apart from the sheet (black, grey and white can't be tracked). Tap the coloured part of the cup base, or use a cup with the blue tape ring."
+  mockStream([dotsFrame, { type: 'command', t: 11, id: 7, cmd: 'sample_colour', ok: false, applied: false, reason: 'no_colour', message: refused }])
+  rerender(tree('/session?exercise=cup&side=left'))
+  expect(screen.getByText(refused, { selector: '.sx-band' })).toHaveClass('sx-band-amber')
+  expect(document.querySelector('.sx-feed [role="status"].sr-only')).toHaveTextContent('almost no colour')
+  mockStream([dotsFrame, { type: 'command', t: 12, id: 9, cmd: 'sample_colour', ok: true, applied: true, detected: true, message: 'Cup colour set. I can see the cup now.' }])
+  rerender(tree('/session?exercise=cup&side=left'))
+  expect(screen.getByText('Cup colour set. I can see the cup now.', { selector: '.sx-band' })).toHaveClass('sx-band-mint')
+})
+
+test('no tap-to-sample in a replay', () => {
+  mockStream([dotsFrame])
+  renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
+  expect(screen.queryByRole('button', { name: /^Cup not found\?/ })).not.toBeInTheDocument()
+})

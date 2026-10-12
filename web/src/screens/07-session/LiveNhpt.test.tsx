@@ -103,6 +103,21 @@ test('replay has no tap-to-sample buttons', () => {
   mockStream([frame])
   renderAt('/session?hand=left&replay=synthetic_nhpt_01')
   expect(screen.queryByRole('button', { name: /tap to sample/ })).toBeNull()
+  expect(screen.queryByRole('button', { name: /^Pegs not found\?/ })).toBeNull()
+})
+
+test('"Pegs not found?" samples a tapped peg on the picture; the answer shows in the feed band', () => {
+  const send = mockStream([frame])
+  const { rerender } = renderAt('/session?hand=left')
+  fireEvent.click(screen.getByRole('button', { name: 'Pegs not found? Tap a peg on the picture' }))
+  const layer = screen.getByRole('button', { name: /Camera picture: tap a peg\. With a keyboard, use the hole buttons/ })
+  const pic = document.querySelector('.sx-frame') as HTMLElement
+  pic.getBoundingClientRect = () => ({ left: 0, top: 0, width: 640, height: 480, right: 640, bottom: 480, x: 0, y: 0, toJSON: () => ({}) })
+  fireEvent.click(layer, { detail: 1, clientX: 600, clientY: 400 })
+  expect(send).toHaveBeenCalledWith({ cmd: 'sample_colour', x_px: 40, y_px: 400 })
+  mockStream([frame, { type: 'command', t: 11, id: 4, cmd: 'sample_colour', ok: true, applied: true, detected: true, message: 'Peg colour set. I can see 3 pegs now.' }], send)
+  rerender(tree('/session?hand=left'))
+  expect(screen.getByText('Peg colour set. I can see 3 pegs now.', { selector: '.sx-band' })).toHaveClass('sx-band-mint')
 })
 
 test('tracking lost badge after perception_lost', () => {

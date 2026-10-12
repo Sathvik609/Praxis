@@ -18,6 +18,10 @@ cup or peg colour from the latest frame (cv2.warpPerspective to the canonical sh
 patch sampler of the tap-to-sample path, cv2.inRange + cv2.findContours to test it) and applies
 the new window only if detection then succeeds where the current window failed. In arm mode a
 view gate held for SETUP_BLOCK_S emits `setup_blocked` (the stop rules pause with the fix).
+
+Patient tap-to-sample (12 Oct): `sample_colour` also takes a tap in frame px (the live screen's
+"Cup not found?" control), mapped to sheet mm with the last homography; a colourless patch
+(black, grey, white, paper) is refused with the reason and the window in use is kept.
 """
 
 from __future__ import annotations
@@ -243,29 +247,79 @@ class SessionPipeline:
                 return {"ok": False, "error": str(e)}
             return {"ok": True, "phase": self._cup.phase}
         if name == "sample_colour" and self.mode in ("nhpt", "cup"):
-            # Tap-to-sample: {"x_mm", "y_mm"} on the sheet, or {"hole": k} for a peg seated in
-            # hole k. Samples the last calibrated canonical view (D-SEG-1 / D-SEG-3).
-            if self._last_canon is None:
-                return {"ok": False, "error": "no calibrated frame seen yet"}
+            return self._sample_colour(cmd)
+        return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
+
+    def _sample_colour(self, cmd: dict[str, Any]) -> dict[str, Any]:
+        """Tap-to-sample (D-SEG-1 / D-SEG-3; live-screen tap 12 Oct). The point is one of
+        {"x_px", "y_px"} in the frame as the service received it (the web undoes its mirrored,
+        letterboxed preview first), {"x_mm", "y_mm"} on the sheet, or {"hole": k}. Frame px go
+        to sheet mm through the last calibration homography (cv2.perspectiveTransform); the 6 mm
+        patch is read on the last warped (canonical) sheet, never stored. A patch with median
+        saturation below MIN_SAMPLE_S (black, grey, white, the paper) is refused with the reason
+        and the window in use is kept; otherwise it is applied and `detected` says whether the
+        cup / a peg is then found. `message` is the patient-facing caption."""
+        target = "pegs" if self._board is not None else "cup"
+        thing = "the cup base" if target == "cup" else "a peg"
+
+        def refuse(reason: str, message: str, **extra: Any) -> dict[str, Any]:
+            return {"ok": False, "applied": False, "mode": self.mode, "target": target, "reason": reason,
+                    "message": message, "error": message, **extra}
+
+        canon, cal = self._last_canon, self._last_cal
+        if canon is None:
+            return refuse("not_calibrated", "I can't see the sheet yet. Show all four corner squares, then tap again.")
+        try:
             if "hole" in cmd:
-                try:
-                    xy = self.spec.targets_mm[int(cmd["hole"])]
-                except (ValueError, TypeError, IndexError):
-                    return {"ok": False, "error": f"bad hole {cmd.get('hole')!r}"}
+                xy = self.spec.targets_mm[int(cmd["hole"])]
+            elif "x_px" in cmd and "y_px" in cmd:
+                px = (float(cmd["x_px"]), float(cmd["y_px"]))
+                if not all(math.isfinite(v) for v in px):
+                    raise ValueError("not a number")
+                if cal is None or cal.H_px_to_mm is None:
+                    return refuse("not_calibrated", "I can't see the sheet yet. Show all four corner squares, then tap again.")
+                mm = cal.to_mm(np.array([px], np.float32))[0]
+                xy = (float(mm[0]), float(mm[1]))
             elif "x_mm" in cmd and "y_mm" in cmd:
                 xy = (float(cmd["x_mm"]), float(cmd["y_mm"]))
             else:
-                return {"ok": False, "error": "sample_colour needs x_mm/y_mm or hole"}
-            try:
-                if self._board is not None:
-                    rng = self._board.sample_peg_colour(self._last_canon, xy)
-                else:
-                    assert self._cup_sheet is not None
-                    rng = self._cup_sheet.sample_cup_colour(self._last_canon, xy)
-            except ValueError as e:
-                return {"ok": False, "error": str(e)}
-            return {"ok": True, "mode": self.mode, "colour": rng, "at_mm": [xy[0], xy[1]]}
-        return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
+                return refuse("bad_point", "sample_colour needs x_px/y_px, x_mm/y_mm or hole")
+        except (ValueError, TypeError, IndexError, OverflowError):
+            return refuse("bad_point", f"bad sample point {({k: cmd.get(k) for k in ('hole', 'x_px', 'y_px', 'x_mm', 'y_mm') if k in cmd})!r}")
+        if not (math.isfinite(xy[0]) and math.isfinite(xy[1])) or not (0.0 <= xy[0] <= self.spec.width_mm and 0.0 <= xy[1] <= self.spec.height_mm):
+            return refuse("off_sheet", f"That spot is off the printed sheet. Tap {thing} where it sits on the sheet.")
+        at_mm = [round(xy[0], 1), round(xy[1], 1)]
+        try:
+            if self._board is not None:
+                centre, ppm = self._board.mm_to_canonical(xy), self._board.px_per_mm
+            else:
+                assert self._cup_sheet is not None
+                ppm = self._cup_sheet.px_per_mm
+                centre = (xy[0] * ppm, xy[1] * ppm)
+            rng = hsv_window_from_patch(canon, centre, 3.0 * ppm)
+        except ValueError:
+            return refuse("off_sheet", f"That spot is off the printed sheet. Tap {thing} where it sits on the sheet.", at_mm=at_mm)
+        if rng["s"] < MIN_SAMPLE_S:
+            return refuse(
+                "no_colour",
+                f"That spot has almost no colour, so it can't be told apart from the sheet (black, grey and white can't be "
+                f"tracked). Tap the coloured part of {thing}, or use {'a cup with the blue tape ring' if target == 'cup' else 'coloured pegs'}.",
+                at_mm=at_mm, s=rng["s"],
+            )
+        if self._board is not None:
+            self._board.colour_range = rng
+            n = len(self._board.peg_blobs(canon))
+            detected = n > 0
+            message = (f"Peg colour set. I can see {n} peg{'s' if n != 1 else ''} now." if detected
+                       else "Peg colour set, but I can't find a peg of that colour yet. Tap the middle of a peg.")
+        else:
+            assert self._cup_sheet is not None
+            self._cup_sheet.colour_range = rng
+            detected = self._cup_sheet.cup_mm(canon) is not None
+            message = ("Cup colour set. I can see the cup now." if detected
+                       else "Colour set, but I can't find a cup-sized patch of it yet. Tap the middle of the cup base.")
+        return {"ok": True, "applied": True, "mode": self.mode, "target": target, "colour": self._window(rng),
+                "at_mm": at_mm, "detected": detected, "message": message}
 
     def _set_hold(self, cmd: dict[str, Any]) -> dict[str, Any]:
         """The coach's regress, applied: change the hold the arm FSM needs, clamped **in code**
@@ -527,6 +581,7 @@ class SessionPipeline:
     _last_t: float = 0.0
     _detect_ms: float = 0.0
     _last_canon: np.ndarray | None = None  # last calibrated canonical view (sample_colour)
+    _last_cal: CalibrationResult | None = None  # its calibration (a tap's frame px -> sheet mm)
 
     def _note_calibration(self, cal: CalibrationResult) -> None:
         """Numbers-only summary of this frame's calibration for the agent's tools."""
@@ -645,7 +700,7 @@ class SessionPipeline:
         # seated peg on regain (e2e 11 Oct), so the peg FSM gets no board until a marker is back.
         if cal.calibrated and (cal.source != "held" or cal.marker_corners_px):
             canon = self._board.warp(frame_bgr, cal)
-            self._last_canon = canon
+            self._last_canon, self._last_cal = canon, cal
             board_d = self._board.to_event_payload(
                 canon, exclude_mm=[hand_rect] if hand_rect is not None else None
             )
@@ -716,7 +771,7 @@ class SessionPipeline:
         cup_px = None
         if cal.calibrated:
             canon = self._cup_sheet.warp(frame_bgr, cal)
-            self._last_canon = canon
+            self._last_canon, self._last_cal = canon, cal
             cup_mm = self._cup_sheet.cup_mm(canon)
             dots_px = self._cup_sheet.dots_frame_px(cal)
             if cup_mm is not None:
@@ -816,6 +871,7 @@ class SessionPipeline:
             trunk_lean_deg=0.0 if angles is None else angles["trunk_lean_deg"],
             shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
             view_ok=bool(angles and angles["view_ok"]),
+            front_view_ok=None if angles is None else bool(angles["front_view_ok"]),
             visibility=1.0 if angles is None else angles["visibility"],
             hip_visibility=1.0 if angles is None else angles["hip_visibility"],
             shoulders_visibility=1.0 if angles is None else angles["shoulders_visibility"],
