@@ -23,8 +23,12 @@ Scored by `evaluation/scripts/usability.py` (tasks + SEQ) and `evaluation/script
 
 ## Setup (before the participant arrives)
 
-- A laptop with a built-in camera, Chrome, the app open at `/details` (local `pnpm dev`, the
-  review link, or the AWS link once it is up). Settings › reset today's check-in if you used it.
+- **Two screens.** The participant's laptop (built-in camera, Chrome) shows the app at the review
+  link https://team-test.example in a **fresh Incognito window per participant**
+  (the day's check-in lives in browser storage, so a new window starts a clean day). The moderator's
+  own phone or laptop shows the online form (link in `README.md`), out of the participant's sight:
+  it shows the success criteria and hints. The review link runs the rule coach (agent off) and its
+  database is shared and wiped on each redeploy, so Progress (T8) shows sample history.
 - Printed sheet `docs/sheets/cup_targets.pdf` at 100 %, a mug with a blue band on its base (tape),
   on a table with the laptop tilted as in the setup guide. If you have no kit, run T5 in **Replay**
   mode instead and write `replay` in the task's `mode` column.
