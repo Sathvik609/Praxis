@@ -6,7 +6,7 @@
   "sessions": 20,
   "generated": "2026-10-12",
   "opencv": "5.0.0",
-  "pipeline_fingerprint": "09885101b2f4",
+  "pipeline_fingerprint": "68a03c2a4fa5",
   "set_reviews": 22,
   "faulty_sets": 22,
   "fault_addressed": {
@@ -99,12 +99,12 @@
     ]
   },
   "fix_named_induced": {
-    "k": 2,
+    "k": 3,
     "n": 3,
-    "rate": 0.667,
+    "rate": 1.0,
     "ci95": [
-      0.208,
-      0.939
+      0.438,
+      1.0
     ]
   },
   "resumed_after_fix_induced": {
@@ -119,8 +119,8 @@
   "guardrail_violations": 0,
   "errors": {},
   "runs": 80,
-  "first_action_ms_p50": 128.4,
-  "first_action_ms_p95": 266.6,
+  "first_action_ms_p50": 34.8,
+  "first_action_ms_p95": 67.4,
   "cost_usd": 0.0,
   "cost_usd_per_session": 0.0,
   "cache_read_share": null,
@@ -139,16 +139,16 @@
           "verified": 4,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 1,
             "target_missed": 0,
             "peaks": [
               99.8,
               131.3,
-              156.0,
-              156.1,
-              152.5
+              172.1,
+              162.5,
+              161.7
             ]
           },
           "truth": {
@@ -157,7 +157,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": true,
@@ -199,9 +199,9 @@
       ],
       "tool_calls": 7,
       "first_action_ms": [
-        529.2,
-        152.4,
-        99.5
+        136.3,
+        33.4,
+        30.9
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -213,10 +213,10 @@
         "verified": 5,
         "unverified": 0,
         "missed": 1,
-        "corrections": 11,
-        "posture_cues": 6,
+        "corrections": 5,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 6,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 5
       },
@@ -241,7 +241,7 @@
           "verified": 1,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 0,
@@ -259,7 +259,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -292,7 +292,7 @@
           "verified": 2,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 3,
             "target_missed": 0,
@@ -310,7 +310,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -354,10 +354,10 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        145.9,
-        186.1,
-        151.1,
-        102.7
+        38.7,
+        34.9,
+        34.7,
+        33.0
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -369,10 +369,10 @@
         "verified": 3,
         "unverified": 0,
         "missed": 7,
-        "corrections": 30,
-        "posture_cues": 10,
+        "corrections": 20,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 10,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 10
       },
@@ -398,7 +398,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
@@ -416,7 +416,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -449,15 +449,15 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
             "peaks": [
               123.8,
               30.5,
-              135.0,
-              132.1,
+              139.8,
+              139.4,
               135.1
             ]
           },
@@ -467,7 +467,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -511,10 +511,10 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        234.9,
-        283.5,
-        179.0,
-        131.3
+        41.4,
+        68.8,
+        34.5,
+        34.3
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -526,10 +526,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 33,
-        "posture_cues": 8,
+        "corrections": 25,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 8,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 9
       },
@@ -555,7 +555,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
@@ -573,7 +573,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -606,7 +606,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
@@ -624,7 +624,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": true,
@@ -668,10 +668,10 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        266.6,
-        146.7,
-        169.3,
-        130.5
+        44.7,
+        34.9,
+        35.6,
+        36.9
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -683,10 +683,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 33,
-        "posture_cues": 9,
+        "corrections": 24,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 9,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 9
       },
@@ -712,7 +712,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
@@ -763,16 +763,16 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
             "peaks": [
               116.3,
-              127.8,
-              129.1,
-              122.8,
-              128.7
+              128.4,
+              140.8,
+              132.7,
+              129.9
             ]
           },
           "truth": {
@@ -781,7 +781,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -810,7 +810,7 @@
       ],
       "pauses": [
         {
-          "t": 47.0,
+          "t": 47.1,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -853,11 +853,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        296.8,
-        181.4,
-        126.2,
-        150.9,
-        118.4
+        44.5,
+        34.0,
+        34.5,
+        34.8,
+        36.0
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -869,10 +869,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 34,
-        "posture_cues": 9,
+        "corrections": 25,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 9,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 10
       },
@@ -899,7 +899,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 3,
-            "hike": 3,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
@@ -917,7 +917,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -950,7 +950,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
@@ -968,7 +968,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -997,7 +997,7 @@
       ],
       "pauses": [
         {
-          "t": 74.1,
+          "t": 74.6,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -1040,11 +1040,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        260.8,
-        142.8,
-        101.4,
-        120.2,
-        124.7
+        42.5,
+        34.4,
+        34.5,
+        34.3,
+        34.0
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1056,10 +1056,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 34,
-        "posture_cues": 8,
+        "corrections": 26,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 8,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 8
       },
@@ -1086,16 +1086,16 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
             "peaks": [
               95.2,
-              154.5,
-              148.8,
-              146.6,
-              149.4
+              155.5,
+              153.8,
+              156.9,
+              155.7
             ]
           },
           "truth": {
@@ -1104,7 +1104,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": true,
@@ -1137,7 +1137,7 @@
           "verified": 1,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 0,
@@ -1155,7 +1155,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": true,
@@ -1184,7 +1184,7 @@
       ],
       "pauses": [
         {
-          "t": 64.3,
+          "t": 64.8,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -1227,11 +1227,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        296.6,
-        156.7,
-        154.8,
-        86.8,
-        113.6
+        42.5,
+        34.2,
+        33.4,
+        34.9,
+        35.3
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1243,10 +1243,10 @@
         "verified": 1,
         "unverified": 0,
         "missed": 9,
-        "corrections": 33,
-        "posture_cues": 9,
+        "corrections": 24,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 9,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 9
       },
@@ -1273,7 +1273,7 @@
           "verified": 3,
           "opencv": {
             "above_ceiling": 3,
-            "hike": 3,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 1,
             "target_missed": 1,
@@ -1291,7 +1291,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -1324,7 +1324,7 @@
           "verified": 1,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 5,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 0,
@@ -1371,7 +1371,7 @@
       ],
       "pauses": [
         {
-          "t": 96.5,
+          "t": 100.6,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -1414,11 +1414,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        171.0,
-        138.1,
-        128.4,
-        80.7,
-        81.3
+        42.7,
+        34.2,
+        34.4,
+        35.3,
+        33.5
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1430,10 +1430,10 @@
         "verified": 4,
         "unverified": 0,
         "missed": 6,
-        "corrections": 26,
-        "posture_cues": 8,
+        "corrections": 18,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 8,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 7
       },
@@ -1460,7 +1460,7 @@
           "verified": 2,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 3,
             "target_missed": 0,
@@ -1478,7 +1478,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -1511,7 +1511,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 3,
-            "hike": 5,
+            "hike": 2,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
@@ -1529,7 +1529,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": true,
             "forward": false,
@@ -1558,7 +1558,7 @@
       ],
       "pauses": [
         {
-          "t": 96.3,
+          "t": 96.4,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -1601,11 +1601,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        173.0,
-        92.2,
-        57.4,
-        42.5,
-        55.0
+        42.7,
+        34.3,
+        34.0,
+        33.4,
+        35.7
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1617,10 +1617,10 @@
         "verified": 2,
         "unverified": 0,
         "missed": 8,
-        "corrections": 31,
-        "posture_cues": 9,
+        "corrections": 24,
+        "posture_cues": 2,
         "lean_cues": 0,
-        "hiking_cues": 9,
+        "hiking_cues": 2,
         "wrong_dot": 0,
         "above_ceiling": 7
       },
@@ -1681,9 +1681,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        82.5,
-        39.9,
-        49.1
+        81.5,
+        33.9,
+        35.4
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1757,9 +1757,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        55.1,
-        111.0,
-        78.0
+        42.6,
+        33.7,
+        34.0
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1794,7 +1794,7 @@
       "sets": [],
       "pauses": [
         {
-          "t": 7.3,
+          "t": 7.5,
           "truth": "subject half-profile to the camera (labelled)",
           "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
           "hint": "Face the camera with both shoulders in view.",
@@ -1835,10 +1835,10 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        112.0,
-        63.1,
-        104.8,
-        76.2
+        42.9,
+        35.2,
+        34.5,
+        33.8
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1913,9 +1913,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        175.9,
-        96.1,
-        93.0
+        44.7,
+        34.1,
+        33.7
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -1989,9 +1989,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        144.6,
-        139.4,
-        83.3
+        42.8,
+        35.1,
+        33.5
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2065,9 +2065,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        232.7,
-        126.0,
-        70.8
+        42.8,
+        71.0,
+        33.1
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2141,9 +2141,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        150.4,
-        114.2,
-        96.2
+        41.2,
+        35.4,
+        33.9
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2217,9 +2217,9 @@
       ],
       "tool_calls": 9,
       "first_action_ms": [
-        218.4,
-        194.9,
-        92.2
+        40.9,
+        34.7,
+        34.5
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2259,7 +2259,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 5,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 5,
             "target_missed": 0,
@@ -2277,7 +2277,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -2305,21 +2305,21 @@
         },
         {
           "set": 2,
-          "t": 68.3,
+          "t": 68.4,
           "reps_counted": 5,
           "verified": 0,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
             "peaks": [
               123.8,
-              30.2,
-              136.4,
-              132.1,
-              134.8
+              30.5,
+              140.0,
+              139.4,
+              134.1
             ]
           },
           "truth": {
@@ -2328,7 +2328,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -2400,11 +2400,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        180.6,
-        92.4,
-        148.9,
-        91.8,
-        94.4
+        42.3,
+        35.9,
+        35.0,
+        34.7,
+        33.6
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2416,10 +2416,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 34,
-        "posture_cues": 8,
+        "corrections": 26,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 8,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 9
       },
@@ -2446,7 +2446,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 4,
             "target_missed": 1,
@@ -2464,7 +2464,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -2497,7 +2497,7 @@
           "verified": 0,
           "opencv": {
             "above_ceiling": 1,
-            "hike": 4,
+            "hike": 1,
             "lean": 0,
             "hold_too_short": 1,
             "target_missed": 4,
@@ -2506,7 +2506,7 @@
               45.7,
               46.2,
               45.9,
-              38.8
+              37.2
             ]
           },
           "truth": {
@@ -2515,7 +2515,7 @@
             "overshoot": true,
             "hold": true,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -2554,8 +2554,8 @@
             "recalibrate",
             "request_resume"
           ],
-          "said": "Too dark. Add light in front of you, not behind. ",
-          "fix_named": false,
+          "said": "Move the camera back or down so your shoulder, elbow and hips are in view. ",
+          "fix_named": true,
           "fix_named_by": "agent",
           "check_setup_called": true,
           "resume_prompt": false,
@@ -2585,10 +2585,10 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        157.5,
-        168.9,
-        116.2,
-        104.9
+        43.5,
+        34.0,
+        33.0,
+        67.4
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2600,10 +2600,10 @@
         "verified": 0,
         "unverified": 0,
         "missed": 10,
-        "corrections": 29,
-        "posture_cues": 8,
+        "corrections": 22,
+        "posture_cues": 1,
         "lean_cues": 0,
-        "hiking_cues": 8,
+        "hiking_cues": 1,
         "wrong_dot": 0,
         "above_ceiling": 5
       },
@@ -2611,7 +2611,7 @@
       "agent_said": [
         "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
         "Set done:  of 5 verified. Rest the arm a moment.",
-        "Too dark. Add light in front of you, not behind."
+        "Move the camera back or down so your shoulder, elbow and hips are in view."
       ],
       "repeat": 0
     },
@@ -2629,7 +2629,7 @@
           "verified": 3,
           "opencv": {
             "above_ceiling": 3,
-            "hike": 3,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 1,
             "target_missed": 1,
@@ -2647,7 +2647,7 @@
             "overshoot": true,
             "hold": false,
             "short": false,
-            "hike": true,
+            "hike": false,
             "lean": false,
             "elbow": false,
             "forward": false,
@@ -2680,7 +2680,7 @@
           "verified": 1,
           "opencv": {
             "above_ceiling": 4,
-            "hike": 4,
+            "hike": 0,
             "lean": 0,
             "hold_too_short": 3,
             "target_missed": 1,
@@ -2689,7 +2689,7 @@
               122.4,
               56.4,
               123.4,
-              126.4
+              126.6
             ]
           },
           "truth": {
@@ -2757,7 +2757,7 @@
       "outcomes": [
         "done",
         "done",
-        "stale",
+        "done",
         "done",
         "done"
       ],
@@ -2770,11 +2770,11 @@
       ],
       "tool_calls": 13,
       "first_action_ms": [
-        216.9,
-        167.0,
-        156.8,
-        170.5,
-        113.6
+        41.8,
+        33.4,
+        34.4,
+        34.8,
+        33.9
       ],
       "input_tokens": 0,
       "output_tokens": 0,
@@ -2786,10 +2786,10 @@
         "verified": 4,
         "unverified": 0,
         "missed": 6,
-        "corrections": 25,
-        "posture_cues": 7,
+        "corrections": 18,
+        "posture_cues": 0,
         "lean_cues": 0,
-        "hiking_cues": 7,
+        "hiking_cues": 0,
         "wrong_dot": 0,
         "above_ceiling": 7
       },
@@ -2804,6 +2804,5 @@
       ],
       "repeat": 0
     }
-  ],
-  "rescored": "2026-10-12"
+  ]
 }
