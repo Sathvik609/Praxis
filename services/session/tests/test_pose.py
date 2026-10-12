@@ -20,6 +20,7 @@ def figure(
     hike: float = 0.0,
     side: str = "left",
     frontal: bool = False,
+    sep_px: float | None = None,
 ):
     """33x2 landmarks (px, y down) for a side-view figure: torso 200 px, upper arm 120 px, forearm 100 px.
     arm_deg = 0 arm hanging down, 90 = horizontal forward (+x). lean_deg tilts the trunk (shoulders back, -x).
@@ -29,6 +30,8 @@ def figure(
     lean = np.radians(lean_deg)
     sh_mid = hip_mid + 200.0 * np.array([-np.sin(lean), -np.cos(lean)])
     sep = 160.0 if frontal else 20.0  # frontal: shoulders ~0.8 torso lengths apart
+    if sep_px is not None:  # a patient turned part-way: shoulders closer in the image
+        sep = sep_px
     li, ri = (0, 1) if side == "left" else (1, 0)
     lm[SHOULDER[li]] = sh_mid + [0, -hike * 200.0]
     lm[SHOULDER[ri]] = sh_mid + [sep, 0]
@@ -68,6 +71,23 @@ def test_trunk_lean_and_shoulder_hike():
     assert abs(arm_angles(_res(figure(30)), "left")["trunk_lean_deg"]) < 0.5
     assert abs(arm_angles(_res(figure(30, hike=0.1)), "left")["shoulder_hike_norm"] - 0.1) < 0.02
     assert abs(arm_angles(_res(figure(30)), "left")["shoulder_hike_norm"]) < 0.01
+
+
+def test_front_view_gate_tolerates_a_partly_turned_patient():
+    """12 Oct (REHAB24-6, subject yaw from the mocap, evaluation/results/rehab24_thresholds_v0.md):
+    the front gate moved from 0.6 to FRONT_SEP_MIN trunk lengths of shoulder separation so a
+    patient turned up to ~20 deg is scored; side-on and most 45 deg turns still gate. The
+    side-view gate of the hidden exercises stays at 0.6."""
+    from praxis_session.perception.pose import FRONT_SEP_MIN, SIDE_SEP_MAX
+
+    assert FRONT_SEP_MIN == 0.55 and SIDE_SEP_MAX == 0.6
+    # torso is 200 px, so sep_px / 200 is the separation in trunk lengths
+    turned = arm_angles(_res(figure(30, sep_px=0.57 * 200)), "left")
+    assert turned["front_view_ok"] and turned["shoulder_sep_norm"] == pytest.approx(0.57, abs=0.01)
+    assert not arm_angles(_res(figure(30, sep_px=0.50 * 200)), "left")["front_view_ok"]
+    side_on = arm_angles(_res(figure(30)), "left")
+    assert side_on["view_ok"] and not side_on["front_view_ok"]
+    assert arm_angles(_res(figure(30, sep_px=0.61 * 200)), "left")["view_ok"] is False
 
 
 def test_right_side_mirrors_left():

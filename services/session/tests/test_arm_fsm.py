@@ -1,3 +1,5 @@
+import pytest
+
 from praxis_session.perception.arm_fsm import ArmFSM, ArmObservation
 
 FPS = 15.0
@@ -386,3 +388,97 @@ def test_above_ceiling_events_validate_against_the_schema():
     for e in evs:
         if e.type in ("above_ceiling", "rep_complete", "set_complete"):
             validate_event(e.to_dict())
+
+
+# ---- angle-aware shoulder hike (12 Oct, REHAB24-6 finding) --------------------------------
+# Healthy abduction raises the shoulder with the arm (scapulohumeral rhythm), so the old fixed
+# 0.08 limit flagged correct lifts near 90 deg. The default FSM now flags only elevation in
+# excess of the healthy curve at the same arm angle (`hike_allowance`), fitted by
+# evaluation/scripts/rehab24_thresholds.py on held-in REHAB24-6 subjects.
+def _abduction(**kw):
+    return ArmFSM("abduction", hold_s=1.0, sets=1, reps_per_set=1, **kw)
+
+
+def _with_hike(peak: float, hike_at):
+    """1 s at rest (the FSM's hike baseline), then rep_profile with the hike a function of the
+    current angle."""
+    return [(5.0, 0.0, 0.0)] * 15 + [(a, 0.0, hike_at(a)) for a, _l, _h in rep_profile(peak, 1.2)]
+
+
+def test_hike_allowance_grows_with_the_arm_angle_and_is_monotone():
+    from praxis_session.perception.arm_fsm import HEALTHY_HIKE_CURVE, HIKE_MARGIN, hike_allowance
+
+    vals = [hike_allowance(a) for a in range(0, 181, 5)]
+    assert all(b >= a for a, b in zip(vals, vals[1:]))
+    assert hike_allowance(90) > hike_allowance(20) + 0.04
+    assert hike_allowance(0) == pytest.approx(HEALTHY_HIKE_CURVE[0][1] + HIKE_MARGIN)
+    assert 0.03 <= HIKE_MARGIN <= 0.08
+
+
+def test_healthy_elevation_with_the_arm_is_not_a_hike():
+    from praxis_session.perception.arm_fsm import hike_allowance
+
+    # rises with the arm, just under the allowance at every angle: the old fixed 0.08 limit
+    # fires on this near 90 deg, the angle-aware one does not
+    fsm = _abduction()
+    evs, _ = front(fsm, _with_hike(90, lambda a: hike_allowance(a) - 0.01))
+    assert "shoulder_hiking" not in types(evs) and types(evs).count("rep_complete") == 1
+    legacy = _abduction(hike_limit=0.08)
+    evs, _ = front(legacy, _with_hike(90, lambda a: hike_allowance(a) - 0.01))
+    assert "shoulder_hiking" in types(evs)
+
+
+def test_a_shrug_early_in_the_lift_is_still_a_hike():
+    from praxis_session.perception.arm_fsm import hike_allowance
+
+    fsm = _abduction()
+    shrug = hike_allowance(60) + 0.03  # well under the healthy elevation at 90 deg
+    assert shrug < hike_allowance(90)
+    evs, _ = front(fsm, _with_hike(90, lambda a: shrug if 20 <= a <= 60 else 0.0))
+    hikes = [e.payload for e in evs if e.type == "shoulder_hiking"]
+    assert len(hikes) == 1
+    assert hikes[0]["limit"] == pytest.approx(hike_allowance(hikes[0]["angle_deg"]), abs=2e-3)
+    assert [e.payload for e in evs if e.type == "rep_complete"][0]["hike"] is True
+
+
+def test_a_shrug_at_shoulder_height_is_still_a_hike():
+    from praxis_session.perception.arm_fsm import hike_allowance
+
+    fsm = _abduction()
+    evs, _ = front(fsm, _with_hike(90, lambda a: hike_allowance(90) + 0.04 if a >= 85 else 0.0))
+    assert types(evs).count("shoulder_hiking") == 1
+
+
+def test_one_noisy_frame_over_the_allowance_is_not_a_hike():
+    from praxis_session.perception.arm_fsm import HIKE_PERSIST_FRAMES, hike_allowance
+
+    assert HIKE_PERSIST_FRAMES >= 2
+    samples = rep_profile(90, 1.2)
+    i = next(k for k, (a, _l, _h) in enumerate(samples) if a >= 60)
+    spike = [(a, 0.0, hike_allowance(a) + 0.1 if k == i else 0.0) for k, (a, _l, _h) in enumerate(samples)]
+    evs, _ = front(_abduction(), spike)
+    assert "shoulder_hiking" not in types(evs)
+
+
+def test_hike_events_validate_against_the_schema():
+    from praxis_session.perception.arm_fsm import hike_allowance
+    from praxis_session.schema import validate_event
+
+    evs, _ = front(_abduction(), _with_hike(90, lambda a: hike_allowance(a) + 0.05))
+    hikes = [e for e in evs if e.type == "shoulder_hiking"]
+    assert hikes
+    for e in hikes:
+        validate_event(e.to_dict())
+
+
+def test_the_shipped_curve_is_the_one_the_script_fitted():
+    """The constants in arm_fsm.py are copied from the committed fit; a refit must update both."""
+    import json
+    from pathlib import Path
+
+    from praxis_session.perception.arm_fsm import HEALTHY_HIKE_CURVE, HIKE_MARGIN, HIKE_PERSIST_FRAMES
+
+    res = Path(__file__).resolve().parents[3] / "evaluation" / "results" / "rehab24_thresholds_v0.json"
+    fit = json.loads(res.read_text())["hike"]
+    assert [tuple(k) for k in fit["shipped_curve"]] == [tuple(k) for k in HEALTHY_HIKE_CURVE]
+    assert fit["margin"] == HIKE_MARGIN and fit["persist_frames"] == HIKE_PERSIST_FRAMES

@@ -75,6 +75,9 @@ ROOT = HERE.parents[2]
 sys.path.insert(0, str(ROOT / "services" / "session"))
 import cv2  # noqa: E402
 
+from praxis_session.perception.arm_fsm import hike_allowance  # noqa: E402
+from praxis_session.perception.pose import FRONT_SEP_MIN  # noqa: E402
+
 DATA_DIR = ROOT / "evaluation" / "external" / "rehab24_6"
 OUT_DIR = ROOT / "evaluation" / "results"
 VERSION = "v0"
@@ -94,7 +97,10 @@ GATE_NAMES = {v: k for k, v in GATE_CODES.items()}
 PEAK_MIN_DEG = 40.0
 PEAK_HYST_DEG = 20.0
 OVERLAP_MIN = 0.5
-HIKE_LIMIT = 0.08  # ArmFSM's default shoulder-hike limit (fraction of trunk length over the rest baseline)
+# ArmFSM's fixed shoulder-hike limit until 11 Oct (fraction of trunk length over the rest
+# baseline); kept as the 'before' column. Since 12 Oct the product's limit is
+# `hike_allowance(angle)` (evaluation/scripts/rehab24_thresholds.py).
+HIKE_LIMIT = 0.08
 IN_RANGE_DEG = 100.0  # the abduction ceiling (90°) plus a 10° margin, on the anatomical reference
 DATASET_CITATION = (
     "Černek, A., Sedmidubsky, J., Budikova, P.: REHAB24-6: Physical Therapy Dataset for Analyzing Pose "
@@ -526,10 +532,16 @@ def score_run(rec: Recording, cam: str, run: dict[str, Any], refs: dict[str, np.
         row["frame_raw"] = {ref: err_stats(np.where(m, pred_raw, np.nan), r[ref]) for ref in ("ref_cam", "ref_frontal")}
         row["lag_s"] = lag_s(t, np.where(m, pred, np.nan), r["ref_cam"])
         row["lag_raw_s"] = lag_s(t, np.where(m, pred_raw, np.nan), r["ref_cam"])
-        row["hike_first_deg"] = []
+        # first frame over the old fixed limit / over the product's angle-aware allowance (one
+        # frame, rest-median baseline: a frame-level view; the FSM's own flags are in `events`)
+        allow = np.array([hike_allowance(x) if np.isfinite(x) else np.inf for x in pred])
+        row["hike_first_deg"], row["hike_allow_first_deg"] = [], []
         for rp in reps:
-            w = np.where(m & (fi >= rp["first"]) & (fi <= rp["last"]) & (hike_rel > HIKE_LIMIT))[0]
+            inside = m & (fi >= rp["first"]) & (fi <= rp["last"])
+            w = np.where(inside & (hike_rel > HIKE_LIMIT))[0]
             row["hike_first_deg"].append(float(r["ref_frontal"][w[0]]) if len(w) else None)
+            w = np.where(inside & (hike_rel > allow))[0]
+            row["hike_allow_first_deg"].append(float(r["ref_frontal"][w[0]]) if len(w) else None)
         row["_pairs"] = {"pred": pred[m].tolist(), "pred_raw": pred_raw[m].tolist(), "sep": sep[present & span].tolist(),
                          "hike": hike_rel[m].tolist(), "rise": rise_rel[m].tolist(),
                          **{ref: r[ref][m].tolist() for ref in ("ref_cam", "ref_frontal", "ref_3d")}}
@@ -628,6 +640,11 @@ def aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "hike_first_deg": _pcts([x for r in rows for x in r["hike_first_deg"] if x is not None]),
         "hike_first_below_90": sum(1 for r in rows for x in r["hike_first_deg"] if x is not None and x < 90.0),
         "hike_reps": sum(len(r["hike_first_deg"]) for r in rows),
+        "hike_allow_first_deg": _pcts([x for r in rows for x in r.get("hike_allow_first_deg", []) if x is not None]),
+        "hike_allow_first_below_90": sum(1 for r in rows for x in r.get("hike_allow_first_deg", []) if x is not None and x < 90.0),
+        "hike_flagged_reps": sum(1 for r in rows for c in r["compensation"] if c["hike"]),
+        "hike_flagged_correct": sum(1 for r in rows for c in r["compensation"] if c["hike"] and c["correct"]),
+        "correct_matched": sum(1 for r in rows for c in r["compensation"] if c["matched"] and c["correct"]),
         "events": _sum_dicts([r["events"] for r in rows]),
     }
     return out
@@ -650,6 +667,8 @@ def _hike_bands(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     a = np.asarray([x for r in rows for x in r["_pairs"]["ref_frontal"]], np.float64)
     h = np.asarray([x for r in rows for x in r["_pairs"]["hike"]], np.float64)
     m = np.asarray([x for r in rows for x in r["_pairs"]["rise"]], np.float64)
+    p = np.asarray([x for r in rows for x in r["_pairs"]["pred"]], np.float64)
+    allow = np.array([hike_allowance(x) if np.isfinite(x) else np.inf for x in p])
     out = []
     for lo, hi in HIKE_BANDS:
         b = (a >= lo) & (a < hi) & np.isfinite(h) & np.isfinite(m)
@@ -658,7 +677,8 @@ def _hike_bands(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         out.append({"band": f"{lo}–{hi}°", "n": int(b.sum()), "product_p50": round(float(np.median(h[b])), 3),
                     "product_p90": round(float(np.percentile(h[b], 90)), 3), "mocap_p50": round(float(np.median(m[b])), 3),
                     "mocap_p90": round(float(np.percentile(m[b], 90)), 3),
-                    "frac_over_limit": round(float(np.mean(h[b] > HIKE_LIMIT)), 3)})
+                    "frac_over_limit": round(float(np.mean(h[b] > HIKE_LIMIT)), 3),
+                    "frac_over_allowance": round(float(np.mean(h[b] > allow[b])), 3)})
     return out
 
 
@@ -729,10 +749,13 @@ def write_report(res: dict[str, Any], out: Path) -> None:
         f"{_f(a.get('peak_range', {}).get('min'))}–{_f(a.get('peak_range', {}).get('max'))}°, median {_f(a.get('peak_range', {}).get('p50'))}°; "
         f"every rep labelled correct ≥ {_f(a.get('peak_range', {}).get('correct_min'))}°), past "
         "the 90° the product prescribes, and no repetition holds for 3 s. So the product counts the reps but marks most of them "
-        "**unverified (`hold_too_short`) by design**, raises `above_ceiling`, and its shoulder-hike flag fires on almost every rep "
-        "(see below). The rep F1 counts every rep the product reported, verified or not; the movement F1 drops the hold rule.",
-        ("- Thresholds were **not** tuned on this data. Two pose-stage defects it exposed were fixed (below), and the numbers in this "
-         "file are after those fixes; the before/after table shows what they changed."
+        "**unverified (`hold_too_short`) by design** and raises `above_ceiling`. The rep F1 counts every rep the product reported, "
+        "verified or not; the movement F1 drops the hold rule.",
+        ("- The angle, rep logic and lean thresholds were **not** tuned on this data. Two pose-stage defects it exposed were fixed "
+         "(below), and two thresholds were set from it on 12 Oct (`rehab24_thresholds_v0.md`): the shoulder-hike limit became an "
+         "angle-aware allowance fitted on four subjects and checked on four held-out ones, and the front-view gate moved from 0.6 to "
+         f"{FRONT_SEP_MIN} trunk lengths using each subject's yaw recovered from the mocap. Those two are **in-sample here** (the gate "
+         "and half of the hike subjects); the before/after tables show what each change did."
          if res["pipeline_fingerprint"] == FINGERPRINT else
          "- These are the numbers **before** the pose fixes; separation and shoulder-hike data were not cached by that run."),
         "",
@@ -755,6 +778,27 @@ def write_report(res: dict[str, Any], out: Path) -> None:
             md.append(f"| {label} | {_pct(x['pose_rate'])} | {_pct(x['gate_open_rate'])} | {_f(fr['mae'], '°')} | {_f(fr['loa_low'])}° to {_f(fr['loa_high'])}° | "
                       f"{_f(pk['mae'], '°')} (n={pk['n']}) | {x['fsm']['f1']} | {x['movement']['f1']} |")
         md += [""]
+    ct = res.get("compare_thresholds")
+    if ct and ct.get("before") and ct.get("after"):
+        b0 = ct["before"]
+        md += ["## Before and after the 12 Oct thresholds", "",
+               f"Before = `{b0['name']}` at pipeline `{b0['pipeline_fingerprint']}` (fixed hike limit 0.08, front gate 0.6); after = this "
+               f"file (angle-aware hike allowance, front gate {FRONT_SEP_MIN}). Same videos, same scoring. Both thresholds were set from "
+               "this dataset (hike curve on subjects 1, 3, 5, 8), so these rows are partly in-sample; the held-out hike numbers are in "
+               "`rehab24_thresholds_v0.md`.", "",
+               "| view | | gate open | frames scored | frame MAE vs `ref_frontal` | reps counted | rep F1 | `shoulder_hiking` events | correct reps flagged | incorrect reps flagged |",
+               "|---|---|---|---|---|---|---|---|---|---|"]
+        for key, label in (("front", "front"), ("half-profile", "half-profile (~45°)"), ("side", "side")):
+            for when in ("before", "after"):
+                x = (ct[when].get("views") or {}).get(key)
+                if not x:
+                    continue
+                cf = f"{x['correct_flagged']} / {x['correct_matched']}" if "correct_flagged" in x else ""
+                inf = f"{x['incorrect_flagged']} / {x['incorrect_matched']}" if "incorrect_flagged" in x else ""
+                md.append(f"| {label} | {when} | {_pct(x['gate_open_rate'])} | {x['frames_scored']} | {_f(x['frame_mae'], '°')} | {x['reps_counted']} | "
+                          f"{x['fsm_f1']} | {x['hike_events']} | {cf} | {inf} |")
+        md += ["", "At half-profile the wider gate lets more frames through, and those read low (the angle error grows past ~20° of "
+               "turn; `rehab24_thresholds_v0.md` §2): that is the price of not asking a slightly turned patient to turn.", ""]
     md += [
         "## Headline by camera view", "",
         "Angle error = product angle (One-Euro smoothed, what the state machine scores) minus `ref_frontal`, over frames inside labelled "
@@ -767,7 +811,8 @@ def write_report(res: dict[str, Any], out: Path) -> None:
         if c.get(key):
             md.append(_headline_line(name, c[key]))
     md += ["", "Side-on, the product's front-view gate stays closed (it asks the patient to turn), so nothing is scored: that is the "
-           "intended behaviour, not a miss. At ~45° the gate is closed on most frames; where it opened, the angle reads low.", ""]
+           f"intended behaviour, not a miss. At half-profile (labelled ~45°) the gate is open on "
+           f"{_pct((c.get('half-profile') or {}).get('gate_open_rate'))} of frames; where it opens, the angle reads low.", ""]
     if a:
         md += ["## Front view in detail", "",
                "| comparison | n | MAE | bias | RMSE | p95 abs | 95 % limits of agreement |", "|---|---|---|---|---|---|---|"]
@@ -799,28 +844,36 @@ def write_report(res: dict[str, Any], out: Path) -> None:
             f"{_pct(a['gate_open_rate'])} ({json.dumps(a['gate_frames'])} frames). Events: {json.dumps(a['events'])}.",
             "",
             "### The front-view gate on real people", "",
-            "The gate closes (`turn_front`) when the shoulder separation is below 0.6 × the trunk length. Measured separation:", "",
+            f"The gate closes (`turn_front`) when the shoulder separation is below {FRONT_SEP_MIN} × the trunk length (0.6 until 11 Oct). "
+            "Measured separation:", "",
             "| subject facing the camera | frames | p5 | p25 | median | p75 | p95 |", "|---|---|---|---|---|---|---|"]
         for key, label in (("front", "front"), ("half-profile", "half-profile (~45°)"), ("side", "side / profile")):
             s = c.get(key, {}).get("shoulder_sep", {})
             if s.get("n"):
                 md.append(f"| {label} | {s['n']} | {s['p5']} | {s['p25']} | {s['p50']} | {s['p75']} | {s['p95']} |")
     if a and a["hike_first_deg"].get("n"):
-        md += ["", "It separates the three views on this data, but a front-on standing adult sits only just above the line "
-               "(p5 ≈ 0.61): a patient turned ~15–25° from the camera would be asked to turn. Left unchanged (no yaw-labelled data to "
-               "set it from); noted in `docs/RISKS.md`.", "",
+        md += ["", "A front-on standing adult sits only just above 0.6 (p5 ≈ 0.61), so until 11 Oct a patient turned ~15–25° was asked "
+               f"to turn. With each subject's yaw recovered from the mocap (`rehab24_thresholds_v0.md` §2), {FRONT_SEP_MIN} passes every "
+               "frame up to 20° of turn and ~93 % at 20–30°, and still closes on ~97 % of frames at 45–60° and all side-on frames.", "",
                "### Shoulder hike on normal movement", "",
                f"The product's hike number (practising shoulder height above the other, / trunk length, over the rest baseline) tracks the "
-               f"mocap shoulder-joint rise closely, but healthy abduction raises the shoulder by about the flag's limit ({HIKE_LIMIT}) by 90°:", "",
-               "| anatomical angle | frames | product hike p50 / p90 | mocap shoulder rise p50 / p90 | frames over the limit |", "|---|---|---|---|---|"]
+               f"mocap shoulder-joint rise closely, and healthy abduction raises the shoulder by about the old fixed limit ({HIKE_LIMIT}) by "
+               "90°. Since 12 Oct the flag uses an angle-aware allowance (healthy p95 at the same scored angle + a margin, "
+               "`HEALTHY_HIKE_CURVE` in `perception/arm_fsm.py`, held for 3 frames):", "",
+               "| anatomical angle | frames | product hike p50 / p90 | mocap shoulder rise p50 / p90 | frames over the old 0.08 | frames over the allowance |",
+               "|---|---|---|---|---|---|"]
         for hb in a["hike_bands"]:
-            md.append(f"| {hb['band']} | {hb['n']} | {hb['product_p50']} / {hb['product_p90']} | {hb['mocap_p50']} / {hb['mocap_p90']} | {_pct(hb['frac_over_limit'])} |")
-        hf = a["hike_first_deg"]
-        md += ["", f"The flag first crossed the limit at a median {hf.get('p50', 0):.0f}° (p5–p95 {hf.get('p5', 0):.0f}–{hf.get('p95', 0):.0f}°); on "
-               f"{a['hike_first_below_90']} of {a['hike_reps']} front-view reps it crossed **below 90°**, i.e. inside the prescribed range, on "
-               "healthy movement. The dataset does not say which incorrect reps were shrugs, so the flag's sensitivity cannot be measured "
-               "here and the limit is **not** retuned on it: a fixed limit cannot tell a shrug from normal scapular elevation; an "
-               "angle-aware allowance needs labelled hikes (dataset v1). Noted in `docs/RISKS.md`.", ""]
+            md.append(f"| {hb['band']} | {hb['n']} | {hb['product_p50']} / {hb['product_p90']} | {hb['mocap_p50']} / {hb['mocap_p90']} | "
+                      f"{_pct(hb['frac_over_limit'])} | {_pct(hb.get('frac_over_allowance'))} |")
+        hf, ha = a["hike_first_deg"], a.get("hike_allow_first_deg") or {}
+        md += ["", f"Frame level (rest-median baseline, no persistence): the old limit was first crossed at a median {hf.get('p50', 0):.0f}° "
+               f"(p5–p95 {hf.get('p5', 0):.0f}–{hf.get('p95', 0):.0f}°) and **below 90° on {a['hike_first_below_90']} of {a['hike_reps']}** "
+               f"front-view reps; the allowance is crossed below 90° on {a.get('hike_allow_first_below_90', '–')} of {a['hike_reps']}"
+               + (f" (first crossing median {ha['p50']:.0f}°)." if ha.get("n") else ".")
+               + f" The state machine itself (persistence, its own baseline) flagged {a.get('hike_flagged_correct', '–')} of "
+               f"{a.get('correct_matched', '–')} matched **correct** reps and {a.get('hike_flagged_reps', '–')} reps in all. "
+               "The dataset does not say which incorrect reps were shrugs, so the flag's sensitivity on real shrugs is not measured; a "
+               "synthetic shrug still fires (`tests/test_pipeline.py`). Held-out false alarms: `rehab24_thresholds_v0.md` §1.", ""]
     md += ["## Lighting (front view)", "", "| lights | recordings | pose found | frame MAE vs `ref_frontal` | rep-peak MAE | rep F1 | movement F1 |", "|---|---|---|---|---|---|---|"]
     for k, g in res["lighting"].items():
         if g:
@@ -829,8 +882,8 @@ def write_report(res: dict[str, Any], out: Path) -> None:
     md += ["", "The lights-off recordings are subjects 1–3 only, so lighting and subject are confounded.", ""]
     md += ["## Correct / incorrect repetitions vs the product's compensation flags (front view)", "",
            "REHAB24-6 labels each repetition correct or incorrect; the physiotherapist chose a different mistake per subject and the "
-           "mistake is not labelled. The product flags trunk lean and shoulder hike only. Because the hike flag fires on almost every "
-           "overhead lift (above), this table cannot show discrimination; it is here because the brief asked for it.", "",
+           "mistake is not labelled. The product flags trunk lean and shoulder hike only, so an unflagged incorrect rep is expected "
+           "whenever the chosen mistake was something else (elbow bent, arm forward of the frontal plane, speed).", "",
            "| label | flagged (lean or hike) | not flagged | no matching rep |", "|---|---|---|---|"]
     for k, v in res["compensation_front"].items():
         md.append(f"| {k} | {v['flagged']} | {v['not_flagged']} | {v['no_rep']} |")
@@ -924,6 +977,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--fingerprint", default=None, help="score cached runs of another pipeline fingerprint (implies --rescore)")
     ap.add_argument("--compare", default=None, help="a previous results JSON to show as 'before' (front view)")
     ap.add_argument("--only", default=None, help="comma-separated video ids (debugging)")
+    ap.add_argument("--compare-thresholds", default=None,
+                    help="results JSON from before the 12 Oct threshold changes (e.g. `git show 38b7ec9:evaluation/results/rehab24_v0.json`); "
+                         "without it the block already in the output JSON is kept")
     args = ap.parse_args(argv)
     if args.fingerprint:
         args.rescore = True
@@ -998,12 +1054,37 @@ def main(argv: list[str] | None = None) -> int:
         "head": head, "rows": rows,
         "compare": _compare(args.compare),
     }
+    prev = out / f"{args.name}.json"
+    if args.compare_thresholds:
+        res["compare_thresholds"] = {"before": thresholds_summary(json.loads(Path(args.compare_thresholds).read_text()))}
+    elif prev.exists():
+        res["compare_thresholds"] = json.loads(prev.read_text()).get("compare_thresholds")
+    if res.get("compare_thresholds"):
+        res["compare_thresholds"]["after"] = thresholds_summary(res)
     out.mkdir(parents=True, exist_ok=True)
     (out / f"{args.name}.json").write_text(json.dumps(res, indent=1, default=_json_default) + "\n")
     write_report(res, out)
     print(json.dumps({k: {kk: c.get(kk) for kk in ("pose_rate", "gate_open_rate", "fsm", "movement")} | {"frame_cam": c["frame"]["ref_cam"], "frame_frontal": c["frame"]["ref_frontal"], "peak_frontal": c["rep_peak"]["ref_frontal"]}
                       for k, c in conds.items() if c}, indent=1, default=_json_default))
     return 0
+
+
+def _thr_summary(c: dict[str, Any] | None, comp: dict[str, dict[str, int]] | None = None) -> dict[str, Any] | None:
+    """The numbers the 12 Oct threshold changes move, for one view."""
+    if not c:
+        return None
+    out = {"gate_open_rate": c["gate_open_rate"], "frame_mae": c["frame"]["ref_frontal"]["mae"], "frames_scored": c["frame"]["ref_frontal"]["n"],
+           "fsm_f1": c["fsm"]["f1"], "reps_counted": c["fsm"]["tp"] + c["fsm"]["fp"], "hike_events": c["events"].get("shoulder_hiking", 0)}
+    if comp:
+        out |= {"correct_flagged": comp["correct"]["flagged"], "correct_matched": comp["correct"]["flagged"] + comp["correct"]["not_flagged"],
+                "incorrect_flagged": comp["incorrect"]["flagged"], "incorrect_matched": comp["incorrect"]["flagged"] + comp["incorrect"]["not_flagged"]}
+    return out
+
+
+def thresholds_summary(res: dict[str, Any]) -> dict[str, Any]:
+    return {"name": res["name"], "pipeline_fingerprint": res["pipeline_fingerprint"],
+            "views": {k: _thr_summary(res["conditions"].get(k), res.get("compensation_front") if k == "front" else None)
+                      for k in ("front", "half-profile", "side")}}
 
 
 def _compare(path: str | None) -> dict[str, Any] | None:

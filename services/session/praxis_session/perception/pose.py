@@ -33,6 +33,16 @@ WRIST = (15, 16)
 HIP = (23, 24)
 SKELETON = [(11, 13), (13, 15), (12, 14), (14, 16), (11, 12), (11, 23), (12, 24), (23, 24)]
 
+# View gates from the shoulder separation in trunk lengths (|L-R shoulder| / |shoulder mid - hip
+# mid|). Front (Arm out to the side): ≥ FRONT_SEP_MIN. Set 12 Oct from REHAB24-6 with the
+# subject's yaw to each camera recovered from the mocap (`evaluation/scripts/rehab24_thresholds.py`,
+# `evaluation/results/rehab24_thresholds_v0.md`): 0.55 passes ~all frames up to 20 deg of turn
+# and ~90 % at 20-30 deg, where the angle error is still 6-8 deg; it rejects ~90 % at 45-50 deg
+# and every side-on frame. Until 11 Oct it was 0.6, which front-on adults clear only just
+# (p5 0.61). Side (the hidden side-view exercises): < SIDE_SEP_MAX, unchanged.
+FRONT_SEP_MIN = 0.55
+SIDE_SEP_MAX = 0.6
+
 
 @dataclass
 class PoseResult:
@@ -283,10 +293,10 @@ def arm_angles(res: PoseResult, side: str) -> dict:
         "elbow_deg": round(elbow_deg, 1),
         "trunk_lean_deg": round(lean, 1),
         "shoulder_hike_norm": round(hike, 3),
-        "view_ok": sep < 0.6,
-        # Sprint E: front-view exercises want the opposite of `view_ok` (shoulders separated,
-        # not stacked); both come from the same shoulder separation.
-        "front_view_ok": sep >= 0.6,
+        "view_ok": sep < SIDE_SEP_MAX,
+        # Sprint E: front-view exercises want shoulders separated, not stacked; both flags come
+        # from the same separation (12 Oct: separate thresholds, see FRONT_SEP_MIN).
+        "front_view_ok": sep >= FRONT_SEP_MIN,
         "shoulder_sep_norm": round(sep, 3),
         "visibility": round(float(np.min(vis[angle_joints])), 2),
         "hip_visibility": round(float(np.min(vis[[HIP[i], HIP[j]]])), 2),
