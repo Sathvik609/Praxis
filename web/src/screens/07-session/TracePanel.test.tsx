@@ -148,3 +148,9 @@ test('agent runs whose trigger event scrolled out of the 40-event window still s
   expect(screen.getAllByRole('button', { name: /agent run/ }).length).toBeGreaterThanOrEqual(1)
   expect(screen.getAllByRole('button', { name: /agent run/ })[0]).toHaveTextContent('trigger set_complete')
 })
+
+test('with the agent on and no rule-coach line in the window, the header never says "LLM agent pending"', () => {
+  render(<TracePanel events={agentEvents} agentRows={agentRows()} />)
+  expect(screen.getByText(new RegExp(`${esc(AGENT)} at checkpoints · Rule-based coach between them`))).toBeInTheDocument()
+  expect(screen.queryByText(/LLM agent pending/)).toBeNull()
+})

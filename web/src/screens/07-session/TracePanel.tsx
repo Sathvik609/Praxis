@@ -2,7 +2,7 @@ import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from 'r
 import { Button } from '../../design/Button'
 import { Chip } from '../../design/Chip'
 import type { PraxisEvent } from '../../lib/events'
-import { coachLabel, coachSource, modelName } from '../../session/agent'
+import { coachLabel, coachSource, modelName, RULE_LABEL_WITH_AGENT } from '../../session/agent'
 import { agentRuns, toolLine, useAgentTrace, type AgentRun, type TraceRow } from '../../session/agentTrace'
 
 /** Trace rows: every non-frame event, newest 40. */
@@ -138,7 +138,9 @@ export function TracePanel({ events, replay = false, pipeline = [], agentRows, s
   const lastAgent = [...events].reverse().find((e) => e.type === 'coach' && coachSource(e) === 'agent')
   const lastRule = [...events].reverse().find((e) => e.type === 'coach' && coachSource(e) === 'rule')
   const agentLabel = lastAgent ? coachLabel(lastAgent) : runs.length ? 'Claude agent' : null
-  const ruleLabel = coachLabel(lastRule)
+  // With the agent on, the rule coach is plain "Rule-based coach" even when none of its lines
+  // are left in the 40-event window (never the agent-off "LLM agent pending" default).
+  const ruleLabel = lastRule ? coachLabel(lastRule) : agentLabel ? RULE_LABEL_WITH_AGENT : coachLabel(lastRule)
   const [copied, setCopied] = useState(false)
   useEffect(() => {
     if (!copied) return
