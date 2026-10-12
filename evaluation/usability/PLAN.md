@@ -28,7 +28,7 @@ Scored by `evaluation/scripts/usability.py` (tasks + SEQ) and `evaluation/script
 - Printed sheet `docs/sheets/cup_targets.pdf` at 100 %, a mug with a blue band on its base (tape),
   on a table with the laptop tilted as in the setup guide. If you have no kit, run T5 in **Replay**
   mode instead and write `replay` in the task's `mode` column.
-- `observer_sheet.md` printed, or the online study form open on a phone (see the README).
+- `observer_sheet.md` printed, or the online study form (link in `README.md`) open on a phone.
 - Consent (verbal is enough; read it out): *"We are testing the app, not you. Nothing is recorded:
   the camera picture is processed and thrown away. You can stop at any time. We'll write down what
   you do and say, under a code name like p03, never your name. Is that OK?"* Mark yes/no on the sheet.
