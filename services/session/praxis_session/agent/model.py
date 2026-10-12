@@ -39,6 +39,10 @@ DEFAULT_MODEL = "claude-sonnet-5-5"  # 12 Oct model comparison: docs/AGENT.md "M
 MAX_TOKENS = 2048  # 12 Oct: room for adaptive thinking + parallel tool calls (800 truncated runs)
 EFFORT = "low"
 RUN_TIMEOUT_S = 15.0
+# Pause checkpoints (12 Oct recheck): the session is already paused, and a fix there can take
+# several tool calls (check_setup, resample_target_colour, request_resume); a green_cup run hit
+# 15 s with Claude and the rule coach took over. Waiting longer costs no movement time.
+PAUSE_RUN_TIMEOUT_S = 25.0
 MCP_STARTUP_TIMEOUT_S = 3
 # Anthropic API list prices per million tokens (claude-api skill, cached 2026-10-06): input,
 # output, cache read (0.1x input) and 5-minute cache write (1.25x input).

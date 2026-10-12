@@ -99,3 +99,21 @@ def test_metrics_endpoint(client):
     assert r.status_code == 200
     body = r.json()
     assert {"runs_today", "by_outcome", "errors_by_kind", "first_action_ms_p50", "first_action_ms_p95", "mean_tool_calls", "fallbacks", "cap", "mode", "policy_version"} <= set(body)
+
+
+def test_a_pause_checkpoint_gets_the_longer_pause_timeout(tmp_path):
+    """12 Oct recheck: a green_cup pause run (check_setup, resample, resume) hit the 15 s run
+    limit with Claude. The session is already paused there, so pause checkpoints get
+    `pause_timeout_s`; other checkpoints keep `timeout_s`."""
+    from praxis_session.agent.model import PAUSE_RUN_TIMEOUT_S, RUN_TIMEOUT_S
+
+    assert PAUSE_RUN_TIMEOUT_S > RUN_TIMEOUT_S
+    s = coach(tmp_path, {"pause": [{"sleep": 0.2}], "arc_complete": [{"sleep": 0.2}]}, AgentMetrics(emit=False), timeout_s=0.05)
+    s.agent.pause_timeout_s = 1.0
+    assert asyncio.run(s.agent.run_once("pause:failed_reps", [1], 1.0))["outcome"] == "done"
+    assert asyncio.run(s.agent.run_once("arc_complete", [1], 2.0))["outcome"] == "error"
+
+
+def test_without_a_pause_timeout_every_checkpoint_uses_timeout_s(tmp_path):
+    s = coach(tmp_path, {"pause": [{"sleep": 0.2}]}, AgentMetrics(emit=False), timeout_s=0.05)
+    assert asyncio.run(s.agent.run_once("pause:failed_reps", [1], 1.0))["outcome"] == "error"

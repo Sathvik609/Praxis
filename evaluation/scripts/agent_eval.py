@@ -61,7 +61,7 @@ import numpy as np  # noqa: E402
 from praxis_session.agent import mcp_server  # noqa: E402
 from praxis_session.agent import tools as T  # noqa: E402
 from praxis_session.agent.metrics import AgentMetrics  # noqa: E402
-from praxis_session.agent.model import AGENT_LABELS, DEFAULT_MODEL, ScriptedPlanner, StrandsPlanner, base_model, build_prompt, cost_usd, load_config, price_for  # noqa: E402
+from praxis_session.agent.model import AGENT_LABELS, DEFAULT_MODEL, PAUSE_RUN_TIMEOUT_S, ScriptedPlanner, StrandsPlanner, base_model, build_prompt, cost_usd, load_config, price_for  # noqa: E402
 from praxis_session.coach.agent import AgentCoach  # noqa: E402
 from praxis_session.events import Event, make_event  # noqa: E402
 from praxis_session.perception.board_spec import CUP_TARGETS  # noqa: E402
@@ -144,7 +144,10 @@ async def run_scenario(sc: dict[str, Any], planner_kind: str, trace_dir: Path, r
         else:
             cfg = load_config()
             planner = StrandsPlanner(dataclasses.replace(cfg, mcp_url=mcp_url or cfg.mcp_url))
-        s.agent = AgentCoach(planner, h, registry=registry, label=label, timeout_s=float(sc.get("timeout_s", 15.0)), metrics=metrics)
+        # As the service runs it (main.py): pause checkpoints get PAUSE_RUN_TIMEOUT_S, unless a
+        # scenario pins its own timeout (model_timeout).
+        pause_t = sc.get("pause_timeout_s", sc.get("timeout_s", PAUSE_RUN_TIMEOUT_S))
+        s.agent = AgentCoach(planner, h, registry=registry, label=label, timeout_s=float(sc.get("timeout_s", 15.0)), metrics=metrics, pause_timeout_s=float(pause_t))
     log = Log()
     t, frame_i = 0.0, 0
     answers: list[dict[str, Any]] = []
@@ -418,9 +421,13 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
     if ex.get("paused_at_end"):
         checks["paused_at_end"] = s.paused
     if ex.get("resume_blocked"):
-        # the fresh setup check refused the resume: no resume prompt was shown
+        # No resume prompt while the setup still fails. Either the agent asked and the fresh
+        # setup check refused it, or (12 Oct) it never asked: before, a Claude run that said the
+        # fix and waited failed for not attempting the resume, which was over-literal. The gate
+        # itself is exercised by the scripted planner, which always attempts it.
         resume_prompts = [e for e in agent_lines if ((e.get("ui") or {}).get("prompt") or {}).get("kind") == "resume"]
-        checks["resume_blocked"] = bool(_rows(s, "resume_blocked")) and not resume_prompts
+        resume_ok = [r for r in _rows(s, "tool") if r.get("name") == "request_resume" and r.get("ok")]
+        checks["resume_blocked"] = not resume_prompts and (bool(_rows(s, "resume_blocked")) or not resume_ok)
     if "applied_only_after_accept" in ex:
         spec = ex["applied_only_after_accept"]
         ok = True

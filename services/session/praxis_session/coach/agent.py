@@ -4,7 +4,8 @@ The rule coach keeps the instant in-rep cues. At a checkpoint (`checkin`, `set_c
 `arc_complete`, a stop-rule `pause:failed_reps` / `pause:perception`, `nhpt_complete`,
 `feedback`) `CoachSession` calls `on_checkpoint`; the agent then runs **in a background asyncio
 task**: one run per session at a time (later checkpoints coalesce into the next run), at most
-`SESSION_RUNS` runs per session, `RUN_TIMEOUT_S` per run, never while the session is stopped.
+`SESSION_RUNS` runs per session, `RUN_TIMEOUT_S` per run (`PAUSE_RUN_TIMEOUT_S` for a `pause:*`
+checkpoint, as the service sets it, 12 Oct), never while the session is stopped.
 
 A run is: `agent_status thinking` → trace `agent_run {phase: start}` → the planner (Strands +
 Claude, or scripted) calls tools (agent/tools.py, over MCP or direct) → trace `agent_run
@@ -58,12 +59,13 @@ def _rank(trigger: str) -> int:
 class AgentCoach:
     name = "agent"
 
-    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS, daily: DailyRunBudget | None = None, metrics: AgentMetrics | None = None) -> None:
+    def __init__(self, planner: Any, handle: T.SessionHandle, registry: T.Registry | None = None, label: str | None = None, timeout_s: float = RUN_TIMEOUT_S, max_runs: int = T.SESSION_RUNS, daily: DailyRunBudget | None = None, metrics: AgentMetrics | None = None, pause_timeout_s: float | None = None) -> None:
         self.planner = planner
         self.handle = handle
         self.registry = registry
         self.label = label or handle.label
         self.timeout_s = timeout_s
+        self.pause_timeout_s = pause_timeout_s  # `pause:*` checkpoints; None = timeout_s
         self.max_runs = max_runs
         self.daily = daily  # None: no daily cap (evaluation, tests); main.py passes AGENT_CFG.budget
         self._cap_notified = False
@@ -189,6 +191,11 @@ class AgentCoach:
             reg.remove(self.handle.session_id)
 
     # ---- one run -------------------------------------------------------------------------
+    def _timeout_for(self, trigger: str) -> float:
+        if self.pause_timeout_s is not None and trigger.startswith("pause:"):
+            return self.pause_timeout_s
+        return self.timeout_s
+
     async def run_once(self, trigger: str, evidence: list[int], t: float, also: list[str] | None = None) -> dict[str, Any]:
         h, s = self.handle, self.handle.session
         also = list(also or [])
@@ -206,7 +213,7 @@ class AgentCoach:
         cancelled = False
         try:
             ctx = RunContext(handle=h, trigger=trigger, evidence=evidence, prompt=build_prompt(h, trigger, evidence, also), also=also, registry=self.registry)
-            res = await asyncio.wait_for(self.planner.run(ctx), timeout=self.timeout_s)
+            res = await asyncio.wait_for(self.planner.run(ctx), timeout=self._timeout_for(trigger))
         except asyncio.CancelledError:  # the socket closed: still write the end row, then stop
             cancelled = True
         except Exception as e:  # model / transport failure: the rule coach carries on
