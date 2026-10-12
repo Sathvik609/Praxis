@@ -34,7 +34,7 @@ Scored by `evaluation/scripts/usability.py` (tasks + SEQ) and `evaluation/script
   mode instead and write `replay` in the task's `mode` column.
 - `observer_sheet.md` printed, or the online study form (link in `README.md`) open on a phone.
 - Consent (verbal is enough; read it out): *"We are testing the app, not you. Nothing is recorded:
-  the camera picture is processed and thrown away. You can stop at any time. We'll write down what
+  the camera picture goes to our server, is processed in memory and thrown away. You can stop at any time. We'll write down what
   you do and say, under a code name like p03, never your name. Is that OK?"* Mark yes/no on the sheet.
 
 ## Script
