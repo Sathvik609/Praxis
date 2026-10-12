@@ -84,6 +84,18 @@ def test_hike_truth_uses_the_products_angle_aware_allowance_with_persistence():
     assert V.rep_hiked(np.array([]), np.array([])) == (False, None)
 
 
+def test_markdown_states_truth_counts_and_the_hike_limit(tmp_path):
+    truth = {"labelled_reps": 4, "overshoot": True, "hold": False, "hike": True}
+    small = {"labelled_reps": 2, "overshoot": True, "hold": True, "hike": True}
+    d = {"rows": [{"id": "a", "sets": [{"truth": truth}, {"truth": small}]}, {"id": "a", "sets": [{"truth": truth}]}]}
+    assert V._truth_counts(d) == "overshoot in 1/1 scored sets, no hold in 0/1 scored sets, shoulder hike in 1/1 scored sets"
+    src = (ROOT / "evaluation" / "scripts" / "agent_video_eval.py").read_text()
+    assert "re-tuned" not in src and "{_truth_counts(main)}" in src
+    i = src.index("{_truth_counts(main)}")
+    line_start = src.rindex("\n", 0, i)
+    assert src[line_start:i].lstrip().startswith('f"')  # rendered, not printed literally
+
+
 def test_eval_prescription_is_the_seed_with_five_rep_sets_for_the_right_arm():
     rx = V.EVAL_RX
     assert rx.side == "right" and rx.exercises["abduction"]["reps"] == 5 and rx.exercises["abduction"]["sets"] == 2
