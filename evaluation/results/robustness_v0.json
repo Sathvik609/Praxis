@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-11",
+ "generated": "2026-10-12",
  "opencv": "5.0.0",
  "synthetic": true,
  "base": {
@@ -277,8 +277,10 @@
     "sharpness": 849.3,
     "px_per_mm": 1.06,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     8
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -344,8 +346,11 @@
     "sharpness": 827.1,
     "px_per_mm": 1.01,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     4,
+     8
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -411,8 +416,11 @@
     "sharpness": 808.1,
     "px_per_mm": 0.97,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     4,
+     8
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -478,8 +486,11 @@
     "sharpness": 830.5,
     "px_per_mm": 0.92,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     4,
+     8
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -2316,11 +2327,10 @@
     "target_err_mm": null,
     "session_source": "held",
     "rows_fired": {
-     "markers": "The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.",
      "lighting": "Image is blurry. Clean the lens or hold the camera still."
     },
     "rows_expected": [],
-    "hint_ok": true,
+    "hint_ok": false,
     "mean_luma": 127.3,
     "sharpness": 10.6,
     "px_per_mm": null,
@@ -2341,11 +2351,10 @@
     "target_err_mm": null,
     "session_source": "partial",
     "rows_fired": {
-     "markers": "The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.",
      "lighting": "Image is blurry. Clean the lens or hold the camera still."
     },
     "rows_expected": [],
-    "hint_ok": true,
+    "hint_ok": false,
     "mean_luma": 152.1,
     "sharpness": 13.0,
     "px_per_mm": null,
@@ -4676,9 +4685,9 @@
      8
     ],
     "phantom_holes": [],
-    "free_pegs": 2,
+    "free_pegs": 1,
     "free_peg_found": false,
-    "phantom_free": 2,
+    "phantom_free": 1,
     "colour": "default"
    },
    "cup": {

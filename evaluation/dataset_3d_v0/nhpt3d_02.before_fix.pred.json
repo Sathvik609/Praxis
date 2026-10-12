@@ -1,0 +1,131 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "nhpt3d_02",
+ "mode": "nhpt",
+ "exercise": "nhpt",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 312,
+ "nhpt_total_s": null,
+ "coverage": {
+  "frames": 312,
+  "hand": 54,
+  "calibrated": 312,
+  "four_markers": 199,
+  "three_markers": 90,
+  "held": 23
+ },
+ "events": [
+  {
+   "type": "nhpt_start",
+   "t": 3.0,
+   "id": 439,
+   "t_start": 3.0
+  },
+  {
+   "type": "rep_complete",
+   "t": 3.25,
+   "id": 447,
+   "rep": 1,
+   "hole": 5,
+   "target": null,
+   "duration_s": 0.0,
+   "t_grasp": 3.0,
+   "t_seated": 3.0,
+   "t_clear": 3.25,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "drop",
+   "t": 7.5,
+   "id": 502,
+   "free_pegs_mm": [
+    [
+     143.09,
+     206.13
+    ]
+   ]
+  },
+  {
+   "type": "rep_complete",
+   "t": 9.166666666666666,
+   "id": 531,
+   "rep": 2,
+   "hole": 3,
+   "target": null,
+   "duration_s": 0.5,
+   "t_grasp": 8.25,
+   "t_seated": 8.75,
+   "t_clear": 9.166666666666666,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 11.916666666666666,
+   "id": 571,
+   "rep": 3,
+   "hole": 6,
+   "target": null,
+   "duration_s": 0.1667,
+   "t_grasp": 11.333333333333334,
+   "t_seated": 11.5,
+   "t_clear": 11.916666666666666,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "drop",
+   "t": 14.916666666666666,
+   "id": 611,
+   "free_pegs_mm": [
+    [
+     143.03,
+     205.97
+    ],
+    [
+     107.84,
+     205.85
+    ]
+   ]
+  },
+  {
+   "type": "rep_complete",
+   "t": 17.083333333333332,
+   "id": 644,
+   "rep": 4,
+   "hole": 7,
+   "target": null,
+   "duration_s": 0.4167,
+   "t_grasp": 16.25,
+   "t_seated": 16.666666666666668,
+   "t_clear": 17.083333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 19.833333333333332,
+   "id": 684,
+   "rep": 5,
+   "hole": 4,
+   "target": null,
+   "duration_s": 0.5833,
+   "t_grasp": 18.5,
+   "t_seated": 19.083333333333332,
+   "t_clear": 19.833333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  }
+ ]
+}

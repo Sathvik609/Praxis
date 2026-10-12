@@ -1,0 +1,28 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "cup3d_01",
+ "mode": "cup",
+ "exercise": "cup",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 990,
+ "nhpt_total_s": null,
+ "coverage": {
+  "frames": 990,
+  "hand": 119,
+  "calibrated": 924,
+  "four_markers": 94,
+  "three_markers": 742,
+  "held": 88
+ },
+ "events": []
+}

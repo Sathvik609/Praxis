@@ -2,7 +2,7 @@
 
 **Synthetic renders, not real-camera evidence.** Every frame is an OpenCV render of the printed sheet (`perception/synth.py`, flat discs for pegs, cup base and hand) perturbed in image space; the REAL product code is measured on it (`Calibrator`, `quality.build_checks`, `BoardState`, `CupSheetState`). Real lenses, 3-D pegs and cups, specular paper, auto-exposure and motion are not in it. Regenerate with `cd services/session && uv run python ../../evaluation/scripts/robustness.py`.
 
-OpenCV 5.0.0 · generated 2026-10-11 · baseline: tilt 40.0°, yaw 5.0°, sheet fills ~80 % of 640×480, lens f = 1.4·w, noise σ3.0, JPEG q70 (what the browser sends). Each row changes one thing from the baseline unless it is in the *combined* group.
+OpenCV 5.0.0 · generated 2026-10-12 · baseline: tilt 40.0°, yaw 5.0°, sheet fills ~80 % of 640×480, lens f = 1.4·w, noise σ3.0, JPEG q70 (what the browser sends). Each row changes one thing from the baseline unless it is in the *combined* group.
 
 Columns: **cal** = first fix (all four markers, fresh calibrator); **session** = running session primed with a clean frame (fresh / partial = three markers / held = fewer, 1.5 s); **RMS** = the homography's reprojection RMS on the marker corners; **err** = worst true target position error after the round trip frame → mm; **tilt** = measured (true); **setup rows** = rows of screen 05 that fire, and whether that is the right advice for the condition.
 
@@ -13,9 +13,9 @@ Columns: **cal** = first fix (all four markers, fresh calibrator); **session** =
 | conditions | 81 | 91 |
 | first fix (all four markers) | 74 | 83 |
 | running session still calibrated (fresh / partial / held ≤ 1.5 s) | 81 | 91 |
-| occupancy all correct / cup found within 10 mm (when calibrated) | 69 of 74 | 67 of 77 |
-| phantoms (empty hole read occupied, extra free peg / cup where none) | 2 | 0 |
-| setup rows right for the condition | 81 of 81 | 91 of 91 |
+| occupancy all correct / cup found within 10 mm (when calibrated) | 65 of 74 | 67 of 77 |
+| phantoms (empty hole read occupied, extra free peg / cup where none) | 1 | 0 |
+| setup rows right for the condition | 80 of 81 | 90 of 91 |
 
 Worst target round-trip error over all calibrated frames: 10.64 mm (paper curl, ends up 20 mm, cup); median 0.23 mm. Remaining misses are physics or by design: blur that destroys the marker codes (the hint says so), a hand hiding ~80 % of the cup base (the FSM infers the placement and marks it unverified), cup and peg colours outside the default windows until the patient taps to sample, black pegs and a black cup band (no colour to segment, even sampled), a peg on a 45 %-filled far frame with defocus (the setup row asks to come closer), and a sheet curled 20 mm (8–11 mm target error; nothing flags it, see below).
 
@@ -35,6 +35,8 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | A4 PDF printed on US Letter | top- or bottom-aligned by the viewer, two corner markers were cut off: never calibrated | the page is cut to 210 × 279.4 mm (what A4 and Letter share); geometry unchanged |
 | 16:9 camera squashed to 640×480 | camera-angle row read 45° as ~23° (square-pixel model broken) | the web centre-crops to 4:3 before encoding (web/src/session/useWebcamStream.ts); the row below is the server on a squashed frame |
 
+**12 Oct 2026, after the 3-D renders (`synthetic3d_v0.md`).** Hole occupancy now looks first at a height-aware seat column projected from the calibrated camera, because real 32 mm pegs stand in a board and project off their holes. This sweep's pegs are flat discs, which real pegs are not: past the 50° setup advice a flat disc on the next row lies where a standing peg's column is, so at 50–65° one or two flat pegs now read empty (all holes correct 69 → 65 of 74; one fewer phantom on the curled sheet). Real pegs at those angles are measured in `synthetic3d_v0.md`. The two defocus-r5 setup rows changed with an earlier commit, not this one (the pre-12 Oct code gives the same rows).
+
 ## NHPT board sheet
 
 | condition | cal | session | RMS mm | err mm | tilt ° | holes | occupancy (pegs 0,4,8) | free peg | phantoms | setup rows |
@@ -43,10 +45,10 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | tilt 0° | yes | fresh | 0.145 | 0.23 | 5.3 (5.0) | hough | ok | yes | 0 | none (right) |
 | tilt 20° | yes | fresh | 0.259 | 0.26 | 20.6 (20.6) | hough | ok | yes | 0 | none (right) |
 | tilt 45° | yes | fresh | 0.322 | 0.36 | 45.2 (45.2) | hough | ok | yes | 0 | none (right) |
-| tilt 50° | yes | fresh | 0.399 | 0.3 | 50.1 (50.2) | hough | ok | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
-| tilt 55° | yes | fresh | 0.446 | 0.17 | 55.2 (55.2) | hough | ok | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
-| tilt 60° | yes | fresh | 0.496 | 0.42 | 60.2 (60.1) | hough | ok | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
-| tilt 65° | yes | fresh | 1.089 | 0.53 | 65.0 (65.1) | hough | ok | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
+| tilt 50° | yes | fresh | 0.399 | 0.3 | 50.1 (50.2) | hough | **wrong [8]** | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
+| tilt 55° | yes | fresh | 0.446 | 0.17 | 55.2 (55.2) | hough | **wrong [4, 8]** | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
+| tilt 60° | yes | fresh | 0.496 | 0.42 | 60.2 (60.1) | hough | **wrong [4, 8]** | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
+| tilt 65° | yes | fresh | 1.089 | 0.53 | 65.0 (65.1) | hough | **wrong [4, 8]** | yes | 0 | angle: “Tilt the laptop screen forward and move the sheet closer, so the camera looks down at it.” (right) |
 | lens f=0.7·w, tilt 45° | yes | fresh | 0.37 | 0.18 | 45.2 (45.2) | hough | ok | yes | 0 | none (right) |
 | lens f=0.9·w, tilt 45° | yes | fresh | 0.392 | 0.29 | 45.1 (45.2) | hough | ok | yes | 0 | none (right) |
 | lens f=1.1·w, tilt 45° | yes | fresh | 0.277 | 0.27 | 45.2 (45.2) | hough | ok | yes | 0 | none (right) |
@@ -77,7 +79,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | defocus r2 | yes | fresh | 0.462 | 0.25 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | defocus r3 | yes | fresh | 1.172 | 0.35 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| defocus r5 | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
+| defocus r5 | **no** | held | – | – | – (40.3) | – | – | – | – | lighting: “Image is blurry. Clean the lens or hold the camera still.” (**wrong**) |
 | JPEG q40 | yes | fresh | 0.345 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q60 | yes | fresh | 0.355 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q80 | yes | fresh | 0.337 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -110,7 +112,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | barrel lens distortion k1=-0.25 (f 0.8 w, tilt 45°) | yes | fresh | 0.988 | 1.12 | 45.0 (45.2) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 5 mm | yes | fresh | 0.809 | 1.88 | 40.2 (40.3) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 10 mm | yes | fresh | 1.466 | 3.88 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [4, 8]** | **no** | **2** | none (right) |
+| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [4, 8]** | **no** | **1** | none (right) |
 | folded crease, ridge 4 mm | yes | fresh | 0.56 | 1.17 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | folded crease, ridge 8 mm | yes | fresh | 1.005 | 2.38 | 40.3 (40.3) | mixed | ok | yes | 0 | none (right) |
 | mirrored frame | yes | fresh | 0.336 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -163,7 +165,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | defocus r2 | yes | fresh | 0.286 | 0.25 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | defocus r3 | yes | fresh | 0.462 | 0.26 | 40.4 (40.3) | yes | 0.5 | ok | none (right) |
-| defocus r5 | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The marker in the top-left corner (0) is in view but cannot be read: hold the laptop still, wipe the lens and add light.”, lighting: “Image is blurry. Clean the lens or hold the camera still.” (right) |
+| defocus r5 | **no** | partial | – | – | – (40.3) | – | – | – | lighting: “Image is blurry. Clean the lens or hold the camera still.” (**wrong**) |
 | JPEG q40 | yes | fresh | 0.215 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | JPEG q60 | yes | fresh | 0.218 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | JPEG q80 | yes | fresh | 0.218 | 0.24 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |

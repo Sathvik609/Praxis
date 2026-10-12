@@ -1,0 +1,241 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "nhpt3d_09",
+ "mode": "nhpt",
+ "exercise": "nhpt",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 272,
+ "nhpt_total_s": 16.1667,
+ "coverage": {
+  "frames": 272,
+  "hand": 15,
+  "calibrated": 272,
+  "four_markers": 147,
+  "three_markers": 95,
+  "held": 30
+ },
+ "events": [
+  {
+   "type": "nhpt_start",
+   "t": 4.916666666666667,
+   "id": 3187,
+   "t_start": 4.916666666666667
+  },
+  {
+   "type": "rep_complete",
+   "t": 5.666666666666667,
+   "id": 3201,
+   "rep": 1,
+   "hole": 2,
+   "target": null,
+   "duration_s": 0.3333,
+   "t_grasp": 4.916666666666667,
+   "t_seated": 5.25,
+   "t_clear": 5.666666666666667,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 8.25,
+   "id": 3241,
+   "rep": 2,
+   "hole": 1,
+   "target": null,
+   "duration_s": 1.0,
+   "t_grasp": 6.833333333333333,
+   "t_seated": 7.833333333333333,
+   "t_clear": 8.25,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 11.083333333333334,
+   "id": 3284,
+   "rep": 3,
+   "hole": 1,
+   "target": null,
+   "duration_s": 1.25,
+   "t_grasp": 9.416666666666666,
+   "t_seated": 10.666666666666666,
+   "t_clear": 11.083333333333334,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 12.416666666666666,
+   "id": 3307,
+   "rep": 4,
+   "hole": 8,
+   "target": null,
+   "duration_s": 0.6667,
+   "t_grasp": 11.333333333333334,
+   "t_seated": 12.0,
+   "t_clear": 12.416666666666666,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 15.333333333333334,
+   "id": 3351,
+   "rep": 5,
+   "hole": 1,
+   "target": null,
+   "duration_s": 0.9167,
+   "t_grasp": 14.0,
+   "t_seated": 14.916666666666666,
+   "t_clear": 15.333333333333334,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 17.666666666666668,
+   "id": 3386,
+   "rep": 6,
+   "hole": 1,
+   "target": null,
+   "duration_s": 0.6667,
+   "t_grasp": 16.083333333333332,
+   "t_seated": 16.75,
+   "t_clear": 17.666666666666668,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 20.083333333333332,
+   "id": 3427,
+   "rep": 7,
+   "hole": 5,
+   "target": null,
+   "duration_s": 1.25,
+   "t_grasp": 18.416666666666668,
+   "t_seated": 19.666666666666668,
+   "t_clear": 20.083333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "nhpt_complete",
+   "t": 21.25,
+   "id": 3449,
+   "total_s": 16.1667,
+   "splits_s": [
+    0.3333,
+    2.5833,
+    2.8333,
+    1.3333,
+    2.9167,
+    1.8333,
+    2.0,
+    0.9167,
+    1.4167
+   ],
+   "pegs": [
+    {
+     "peg": 1,
+     "hole": 2,
+     "t": 5.25,
+     "split_s": 0.3333
+    },
+    {
+     "peg": 2,
+     "hole": 1,
+     "t": 7.833333333333333,
+     "split_s": 2.5833
+    },
+    {
+     "peg": 3,
+     "hole": 1,
+     "t": 10.666666666666666,
+     "split_s": 2.8333
+    },
+    {
+     "peg": 4,
+     "hole": 8,
+     "t": 12.0,
+     "split_s": 1.3333
+    },
+    {
+     "peg": 5,
+     "hole": 1,
+     "t": 14.916666666666666,
+     "split_s": 2.9167
+    },
+    {
+     "peg": 6,
+     "hole": 1,
+     "t": 16.75,
+     "split_s": 1.8333
+    },
+    {
+     "peg": 7,
+     "hole": 5,
+     "t": 18.75,
+     "split_s": 2.0
+    },
+    {
+     "peg": 8,
+     "hole": 5,
+     "t": 19.666666666666668,
+     "split_s": 0.9167
+    },
+    {
+     "peg": 9,
+     "hole": 5,
+     "t": 21.083333333333332,
+     "split_s": 1.4167
+    }
+   ]
+  },
+  {
+   "type": "drop",
+   "t": 22.583333333333332,
+   "id": 3467,
+   "free_pegs_mm": [
+    [
+     64.48,
+     200.82
+    ],
+    [
+     99.12,
+     200.89
+    ],
+    [
+     64.35,
+     166.31
+    ],
+    [
+     99.18,
+     166.77
+    ],
+    [
+     64.21,
+     132.45
+    ],
+    [
+     133.67,
+     132.91
+    ],
+    [
+     98.99,
+     131.38
+    ]
+   ]
+  }
+ ]
+}

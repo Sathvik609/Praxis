@@ -65,3 +65,32 @@ def test_no_debounce_s_keeps_frame_count_fixed():
     n = NHPT(debounce_frames=1, clear_frames=1)
     run(n, [(i / 30, EMPTY, []) for i in range(10)])
     assert n.fsm.debounce_frames == 1
+
+
+def _occ(*k):
+    return {f"hole_{i}": "occupied" if i in k else "empty" for i in range(9)}
+
+
+def test_a_seat_whose_grasp_was_not_seen_is_counted_unverified_and_the_start_is_inferred():
+    # 12 Oct (3-D renders): pegs come from a dish off the board, so the lift is seen only through
+    # the hand model's pinch. When the hand model missed it, a peg that appeared in a hole was
+    # silently dropped and the test never started. It is now counted, unverified, and the timer
+    # start says it was inferred from the first seat.
+    n = NHPT(debounce_frames=1, clear_frames=1)
+    seq = [(0.0, _occ(), []), (0.5, _occ(), []), (1.0, _occ(4), []), (1.2, _occ(4), []), (1.4, _occ(4), []),
+           (3.0, _occ(4, 0), []), (3.2, _occ(4, 0), []), (3.4, _occ(4, 0), [])]
+    evs = run(n, seq)
+    reps = [e for e in evs if e.type == "rep_complete"]
+    assert [r.payload["hole"] for r in reps] == [4, 0]
+    assert all(r.payload["verified"] is False and r.payload["reason"] == "grasp_not_seen" for r in reps)
+    start = next(e for e in evs if e.type == "nhpt_start")
+    assert start.payload["inferred"] is True and n.t_start == 1.0
+    split = [e for e in evs if e.type == "nhpt_split"]
+    assert [s.payload["split_s"] for s in split] == [0.0, 2.0]
+
+
+def test_a_seen_grasp_still_starts_the_timer_at_the_lift():
+    n = NHPT(debounce_frames=1, clear_frames=1)
+    evs = run(n, transfer(0.0, 4))
+    start = next(e for e in evs if e.type == "nhpt_start")
+    assert start.payload.get("inferred", False) is False and n.t_start == 0.2

@@ -1,0 +1,5241 @@
+{
+ "dataset": "3d_v0",
+ "synthetic": true,
+ "banner": "Synthetic 3-D renders, not real-camera evidence.",
+ "generated_on": "2026-10-12",
+ "cv2_version": "5.0.0",
+ "tol_s": 1.0,
+ "debounce_frames": 2,
+ "clear_frames": 3,
+ "n_clips": 16,
+ "n_frames": 9167,
+ "summary": {
+  "cup": {
+   "entries": 6,
+   "participants": 1,
+   "labeled_reps": 192,
+   "pred_reps": 23,
+   "tp": 23,
+   "fp": 0,
+   "fn": 169,
+   "rep_precision": 1.0,
+   "rep_recall": 0.1198,
+   "rep_f1": 0.214,
+   "verified_agreement": 1.0,
+   "verified_n": 23,
+   "reach_mae_ms": 1267.7,
+   "reach_n": 23,
+   "verified": 23,
+   "unverified": 0,
+   "unverified_reasons": {},
+   "expected_unverified": 0,
+   "event_time_mae_s": 0.395,
+   "event_time_bias_s": 0.395,
+   "hand_model_frames_pct": 3.1,
+   "calibrated_frames_pct": 79.7,
+   "three_or_held_frames_pct": 74.7,
+   "reach_bias_ms": 1267.674
+  },
+  "nhpt": {
+   "entries": 10,
+   "participants": 1,
+   "labeled_reps": 90,
+   "pred_reps": 48,
+   "tp": 28,
+   "fp": 20,
+   "fn": 62,
+   "rep_precision": 0.5833,
+   "rep_recall": 0.3111,
+   "rep_f1": 0.4058,
+   "verified_agreement": 0.0714,
+   "verified_n": 28,
+   "nhpt_mae_s": 4.518,
+   "nhpt_n": 2,
+   "verified": 3,
+   "unverified": 45,
+   "unverified_reasons": {
+    "no_hand_near_hole": 45
+   },
+   "expected_unverified": 0,
+   "event_time_mae_s": 0.363,
+   "event_time_bias_s": 0.359,
+   "hand_model_frames_pct": 8.9,
+   "calibrated_frames_pct": 100.0,
+   "three_or_held_frames_pct": 42.4,
+   "split_mae_s": 0.406,
+   "split_n": 16,
+   "completed": 2,
+   "timer_start_inferred": 0
+  }
+ },
+ "entries": [
+  {
+   "id": "nhpt3d_01",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 345,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 6,
+   "tp": 5,
+   "fp": 1,
+   "fn": 4,
+   "status_agree": 0,
+   "status_n": 5,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 24.8587,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 15.583333333333334,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 3.1507,
+      "t_start": 1.8158,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 6.1595,
+      "t_start": 4.7631,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 15.2036,
+      "t_start": 13.7613,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 20.9187,
+      "t_start": 19.5716,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 2,
+      "t": 9.161,
+      "t_start": 7.7559,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     },
+     "pred": {
+      "key": 2,
+      "t": 9.583333333333334,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 2
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 1,
+      "t": 12.172,
+      "t_start": 10.7786,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     },
+     "pred": {
+      "key": 1,
+      "t": 12.583333333333334,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 3
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 0,
+      "t": 18.0511,
+      "t_start": 16.8345,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 0,
+      "t": 18.416666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 5,
+      "t": 23.8481,
+      "t_start": 22.3908,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     },
+     "pred": {
+      "key": 5,
+      "t": 24.25,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 7
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 3,
+      "t": 26.6745,
+      "t_start": 25.3202,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     },
+     "pred": {
+      "key": 3,
+      "t": 27.083333333333332,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 8
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 26.6745,
+      "total_s": 24.8587
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_01",
+    "exercise": "nhpt",
+    "seed": 101,
+    "tilt_deg": 40,
+    "yaw_deg": 4,
+    "dist_mm": 330,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.0,
+    "light": "daylight",
+    "side": "right",
+    "skin": "light",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 1.0,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 6,
+    "unverified_reasons": {
+     "no_hand_near_hole": 6
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 345,
+     "hand": 22,
+     "calibrated": 345,
+     "four_markers": 202,
+     "three_markers": 116,
+     "held": 27
+    },
+    "event_time_bias_s": 0.402,
+    "event_time_mae_s": 0.402,
+    "event_time_signed_s": [
+     0.4223,
+     0.4113,
+     0.3656,
+     0.4019,
+     0.4088
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.268,
+    "completed": false,
+    "split_errors_s": [
+     -0.011,
+     0.007
+    ],
+    "split_mae_s": 0.009
+   }
+  },
+  {
+   "id": "nhpt3d_02",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 312,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 5,
+   "tp": 2,
+   "fp": 3,
+   "fn": 7,
+   "status_agree": 0,
+   "status_n": 2,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 22.2054,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 5,
+      "t": 3.0,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 7,
+      "t": 16.666666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 4,
+      "t": 19.083333333333332,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 2.9046,
+      "t_start": 1.736,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 5.6502,
+      "t_start": 4.303,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 13.7606,
+      "t_start": 12.5457,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 16.3227,
+      "t_start": 15.1649,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 18.7152,
+      "t_start": 17.5973,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 21.3076,
+      "t_start": 20.0716,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 23.9414,
+      "t_start": 22.7916,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 3,
+      "t": 8.4015,
+      "t_start": 7.1155,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     },
+     "pred": {
+      "key": 3,
+      "t": 8.75,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 2
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 6,
+      "t": 11.1498,
+      "t_start": 9.8864,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     },
+     "pred": {
+      "key": 6,
+      "t": 11.5,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 3
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 23.9414,
+      "total_s": 22.2054
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_02",
+    "exercise": "nhpt",
+    "seed": 102,
+    "tilt_deg": 50,
+    "yaw_deg": -8,
+    "dist_mm": 360,
+    "focal_per_width": 0.8,
+    "roll_deg": 1.5,
+    "light": "warm_bulb",
+    "side": "right",
+    "skin": "medium",
+    "sleeve": true,
+    "noise_sigma": 4.0,
+    "speed": 1.1,
+    "peg_colour": "blue",
+    "peg_d_mm": 7.0,
+    "board_mm": 12.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 5,
+    "unverified_reasons": {
+     "no_hand_near_hole": 5
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 312,
+     "hand": 54,
+     "calibrated": 312,
+     "four_markers": 199,
+     "three_markers": 90,
+     "held": 23
+    },
+    "event_time_bias_s": 0.349,
+    "event_time_mae_s": 0.349,
+    "event_time_signed_s": [
+     0.3485,
+     0.3502
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.264,
+    "completed": false,
+    "split_errors_s": [
+     0.002
+    ],
+    "split_mae_s": 0.002
+   }
+  },
+  {
+   "id": "nhpt3d_03",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 372,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 4,
+   "tp": 3,
+   "fp": 1,
+   "fn": 6,
+   "status_agree": 0,
+   "status_n": 3,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 26.7934,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 10.416666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 10.0847,
+      "t_start": 8.4924,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 13.1866,
+      "t_start": 11.665,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 16.2548,
+      "t_start": 14.8951,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 22.318,
+      "t_start": 20.8799,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 25.5686,
+      "t_start": 23.9985,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 28.8024,
+      "t_start": 27.2958,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 8,
+      "t": 3.4986,
+      "t_start": 2.009,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     },
+     "pred": {
+      "key": 8,
+      "t": 3.9166666666666665,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 0
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 1,
+      "t": 6.6997,
+      "t_start": 5.1776,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     },
+     "pred": {
+      "key": 1,
+      "t": 7.166666666666667,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 1
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 0,
+      "t": 19.3022,
+      "t_start": 17.9019,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 0,
+      "t": 19.416666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 28.8024,
+      "total_s": 26.7934
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_03",
+    "exercise": "nhpt",
+    "seed": 103,
+    "tilt_deg": 30,
+    "yaw_deg": 10,
+    "dist_mm": 380.0,
+    "focal_per_width": 0.9,
+    "roll_deg": -1.0,
+    "light": "window",
+    "side": "left",
+    "skin": "deep",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 0.9,
+    "peg_colour": "green",
+    "peg_d_mm": 9.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": "camera moved back from 310 to 380 mm so all four markers are in view (setup)"
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 4,
+    "unverified_reasons": {
+     "no_hand_near_hole": 4
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 372,
+     "hand": 13,
+     "calibrated": 372,
+     "four_markers": 212,
+     "three_markers": 127,
+     "held": 33
+    },
+    "event_time_bias_s": 0.333,
+    "event_time_mae_s": 0.333,
+    "event_time_signed_s": [
+     0.4181,
+     0.467,
+     0.1145
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.324,
+    "completed": false,
+    "split_errors_s": [
+     -0.906,
+     0.049
+    ],
+    "split_mae_s": 0.478
+   }
+  },
+  {
+   "id": "nhpt3d_04",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 334,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 5,
+   "tp": 0,
+   "fp": 5,
+   "fn": 9,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 24.0133,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 7,
+      "t": 6.083333333333333,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 5,
+      "t": 14.416666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 4,
+      "t": 17.5,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 8,
+      "t": 20.833333333333332,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 4,
+      "t": 23.5,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 3.0866,
+      "t_start": 1.7941,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 6.0056,
+      "t_start": 4.7208,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 8.6569,
+      "t_start": 7.4201,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 11.5541,
+      "t_start": 10.1723,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 14.579,
+      "t_start": 13.1921,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 17.3665,
+      "t_start": 16.0653,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 20.4302,
+      "t_start": 18.9587,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 23.1419,
+      "t_start": 21.9168,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 25.8074,
+      "t_start": 24.584,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 25.8074,
+      "total_s": 24.0133
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_04",
+    "exercise": "nhpt",
+    "seed": 104,
+    "tilt_deg": 45,
+    "yaw_deg": 0,
+    "dist_mm": 345,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.5,
+    "light": "dim",
+    "side": "right",
+    "skin": "medium",
+    "sleeve": false,
+    "noise_sigma": 7.0,
+    "speed": 1.0,
+    "peg_colour": "yellow",
+    "peg_d_mm": 6.0,
+    "board_mm": 12.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 5,
+    "unverified_reasons": {
+     "no_hand_near_hole": 5
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 334,
+     "hand": 9,
+     "calibrated": 334,
+     "four_markers": 199,
+     "three_markers": 102,
+     "held": 33
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.373,
+    "completed": false,
+    "split_errors_s": [],
+    "split_mae_s": null
+   }
+  },
+  {
+   "id": "nhpt3d_05",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 291,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 9,
+   "tp": 7,
+   "fp": 2,
+   "fn": 2,
+   "status_agree": 1,
+   "status_n": 7,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 20.566,
+   "nhpt_pred_s": 14.5,
+   "nhpt_abs_err_s": 6.066,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 6,
+      "t": 17.833333333333332,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 7,
+      "t": 19.916666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 17.2976,
+      "t_start": 16.2226,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 19.7314,
+      "t_start": 18.652,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 3,
+      "t": 2.9038,
+      "t_start": 1.7279,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     },
+     "pred": {
+      "key": 3,
+      "t": 3.25,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 0
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 6,
+      "t": 5.3612,
+      "t_start": 4.1781,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     },
+     "pred": {
+      "key": 6,
+      "t": 5.666666666666667,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 1
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 7,
+      "t": 7.8671,
+      "t_start": 6.6803,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     },
+     "pred": {
+      "key": 7,
+      "t": 8.166666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 2
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 8,
+      "t": 10.2848,
+      "t_start": 9.1911,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     },
+     "pred": {
+      "key": 8,
+      "t": 11.833333333333334,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 3
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 4,
+      "t": 12.603,
+      "t_start": 11.5374,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     },
+     "pred": {
+      "key": 4,
+      "t": 12.916666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 4
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 2,
+      "t": 14.9356,
+      "t_start": 13.8854,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 2,
+      "t": 15.0,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "nhpt_timer_error",
+     "label": {
+      "t": 22.2939,
+      "total_s": 20.566
+     },
+     "pred": {
+      "t": 22.2939,
+      "total_s": 14.5
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_05",
+    "exercise": "nhpt",
+    "seed": 105,
+    "tilt_deg": 20,
+    "yaw_deg": -5,
+    "dist_mm": 380,
+    "focal_per_width": 0.95,
+    "roll_deg": 0.0,
+    "light": "daylight",
+    "side": "right",
+    "skin": "deep",
+    "sleeve": true,
+    "noise_sigma": 3.0,
+    "speed": 1.2,
+    "peg_colour": "red",
+    "peg_d_mm": 8.0,
+    "board_mm": 8.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 1,
+    "unverified": 8,
+    "unverified_reasons": {
+     "no_hand_near_hole": 8
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 291,
+     "hand": 8,
+     "calibrated": 291,
+     "four_markers": 162,
+     "three_markers": 102,
+     "held": 27
+    },
+    "event_time_bias_s": 0.464,
+    "event_time_mae_s": 0.464,
+    "event_time_signed_s": [
+     0.3462,
+     0.3055,
+     0.2996,
+     1.5485,
+     0.3137,
+     0.0644,
+     0.3728
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.605,
+    "completed": true,
+    "split_errors_s": [
+     -1.259,
+     -0.041,
+     -0.006,
+     1.249,
+     -1.235,
+     -0.249
+    ],
+    "split_mae_s": 0.673
+   }
+  },
+  {
+   "id": "nhpt3d_06",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 333,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 6,
+   "tp": 3,
+   "fp": 3,
+   "fn": 6,
+   "status_agree": 1,
+   "status_n": 3,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 23.9032,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 5,
+      "t": 11.916666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 3,
+      "t": 20.416666666666668,
+      "verified": true,
+      "reason": null
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 3,
+      "t": 26.0,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 3.0203,
+      "t_start": 1.6982,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 11.5357,
+      "t_start": 10.3165,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 14.4549,
+      "t_start": 13.1099,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 17.2006,
+      "t_start": 15.9142,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 20.0157,
+      "t_start": 18.6817,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 25.6014,
+      "t_start": 24.2359,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 1,
+      "t": 8.7885,
+      "t_start": 7.446,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     },
+     "pred": {
+      "key": 1,
+      "t": 9.25,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 2
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 0,
+      "t": 22.7263,
+      "t_start": 21.4609,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     },
+     "pred": {
+      "key": 0,
+      "t": 22.666666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 7
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 25.6014,
+      "total_s": 23.9032
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_06",
+    "exercise": "nhpt",
+    "seed": 106,
+    "tilt_deg": 35,
+    "yaw_deg": 14,
+    "dist_mm": 350.0,
+    "focal_per_width": 0.8,
+    "roll_deg": -2.0,
+    "light": "warm_bulb",
+    "side": "left",
+    "skin": "light",
+    "sleeve": true,
+    "noise_sigma": 4.0,
+    "speed": 1.0,
+    "peg_colour": "green",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": "camera moved back from 320 to 350 mm so all four markers are in view (setup)"
+   },
+   "x": {
+    "verified": 2,
+    "unverified": 4,
+    "unverified_reasons": {
+     "no_hand_near_hole": 4
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 333,
+     "hand": 32,
+     "calibrated": 333,
+     "four_markers": 197,
+     "three_markers": 111,
+     "held": 25
+    },
+    "event_time_bias_s": 0.181,
+    "event_time_mae_s": 0.221,
+    "event_time_signed_s": [
+     0.1418,
+     0.4615,
+     -0.0596
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 4.135,
+    "completed": false,
+    "split_errors_s": [
+     0.32
+    ],
+    "split_mae_s": 0.32
+   }
+  },
+  {
+   "id": "nhpt3d_07",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 316,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 6,
+   "tp": 6,
+   "fp": 0,
+   "fn": 3,
+   "status_agree": 0,
+   "status_n": 6,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 22.4514,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 11.1021,
+      "t_start": 9.9447,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 19.195,
+      "t_start": 18.1128,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 24.2343,
+      "t_start": 23.0673,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 4,
+      "t": 2.9447,
+      "t_start": 1.7829,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     },
+     "pred": {
+      "key": 4,
+      "t": 3.25,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 0
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 0,
+      "t": 5.7787,
+      "t_start": 4.4754,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     },
+     "pred": {
+      "key": 0,
+      "t": 6.166666666666667,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 1
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 5,
+      "t": 8.4925,
+      "t_start": 7.2465,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     },
+     "pred": {
+      "key": 5,
+      "t": 8.666666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 2
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 1,
+      "t": 13.8259,
+      "t_start": 12.5033,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     },
+     "pred": {
+      "key": 1,
+      "t": 14.166666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 4
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 2,
+      "t": 16.6195,
+      "t_start": 15.3823,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 2,
+      "t": 17.0,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 6,
+      "t": 21.6653,
+      "t_start": 20.5171,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     },
+     "pred": {
+      "key": 6,
+      "t": 22.083333333333332,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 7
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 24.2343,
+      "total_s": 22.4514
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_07",
+    "exercise": "nhpt",
+    "seed": 107,
+    "tilt_deg": 50,
+    "yaw_deg": 0,
+    "dist_mm": 350,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.0,
+    "light": "window",
+    "side": "right",
+    "skin": "medium",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 1.1,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 3.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 6,
+    "unverified_reasons": {
+     "no_hand_near_hole": 6
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 316,
+     "hand": 53,
+     "calibrated": 316,
+     "four_markers": 205,
+     "three_markers": 91,
+     "held": 20
+    },
+    "event_time_bias_s": 0.334,
+    "event_time_mae_s": 0.334,
+    "event_time_signed_s": [
+     0.3053,
+     0.388,
+     0.1742,
+     0.3408,
+     0.3805,
+     0.418
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.134,
+    "completed": false,
+    "split_errors_s": [
+     -0.828,
+     0.083,
+     -0.214,
+     0.04
+    ],
+    "split_mae_s": 0.291
+   }
+  },
+  {
+   "id": "nhpt3d_08",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 339,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 9,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 24.356,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 3.2128,
+      "t_start": 1.7763,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 6.075,
+      "t_start": 4.7736,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 8.8784,
+      "t_start": 7.5714,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 11.7901,
+      "t_start": 10.3688,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 14.5308,
+      "t_start": 13.2739,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 17.2453,
+      "t_start": 15.9848,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 20.1369,
+      "t_start": 18.8043,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 23.0902,
+      "t_start": 21.6069,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 26.1323,
+      "t_start": 24.6616,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 26.1323,
+      "total_s": 24.356
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_08",
+    "exercise": "nhpt",
+    "seed": 108,
+    "tilt_deg": 25,
+    "yaw_deg": -12,
+    "dist_mm": 390.0,
+    "focal_per_width": 0.9,
+    "roll_deg": 1.0,
+    "light": "dim",
+    "side": "left",
+    "skin": "light",
+    "sleeve": true,
+    "noise_sigma": 7.0,
+    "speed": 1.0,
+    "peg_colour": "blue",
+    "peg_d_mm": 8.0,
+    "board_mm": 12.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": "camera moved back from 360 to 390 mm so all four markers are in view (setup)"
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 339,
+     "hand": 11,
+     "calibrated": 339,
+     "four_markers": 144,
+     "three_markers": 145,
+     "held": 50
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "timer_start_inferred": false,
+    "timer_start_err_s": -0.026,
+    "completed": false,
+    "split_errors_s": [],
+    "split_mae_s": null
+   }
+  },
+  {
+   "id": "nhpt3d_09",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 272,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 7,
+   "tp": 2,
+   "fp": 5,
+   "fn": 7,
+   "status_agree": 0,
+   "status_n": 2,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 19.1353,
+   "nhpt_pred_s": 16.1667,
+   "nhpt_abs_err_s": 2.969,
+   "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 7.833333333333333,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 10.666666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 14.916666666666666,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 1,
+      "t": 16.75,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 5,
+      "t": 19.666666666666668,
+      "verified": false,
+      "reason": "no_hand_near_hole"
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.7672,
+      "t_start": 1.6175,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 7.3349,
+      "t_start": 6.2316,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 9.5735,
+      "t_start": 8.5193,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 14.039,
+      "t_start": 12.9907,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 16.3536,
+      "t_start": 15.2278,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 18.4893,
+      "t_start": 17.4425,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 20.7528,
+      "t_start": 19.6615,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 2,
+      "t": 4.9699,
+      "t_start": 4.0005,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     },
+     "pred": {
+      "key": 2,
+      "t": 5.25,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 1
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 8,
+      "t": 11.7374,
+      "t_start": 10.7871,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     },
+     "pred": {
+      "key": 8,
+      "t": 12.0,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 4
+     }
+    },
+    {
+     "kind": "nhpt_timer_error",
+     "label": {
+      "t": 20.7528,
+      "total_s": 19.1353
+     },
+     "pred": {
+      "t": 20.7528,
+      "total_s": 16.1667
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_09",
+    "exercise": "nhpt",
+    "seed": 109,
+    "tilt_deg": 42,
+    "yaw_deg": 18,
+    "dist_mm": 345.0,
+    "focal_per_width": 0.8,
+    "roll_deg": -1.0,
+    "light": "daylight",
+    "side": "right",
+    "skin": "deep",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 1.3,
+    "peg_colour": "yellow",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": "camera moved back from 335 to 345 mm so all four markers are in view (setup)"
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 7,
+    "unverified_reasons": {
+     "no_hand_near_hole": 7
+    },
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 272,
+     "hand": 15,
+     "calibrated": 272,
+     "four_markers": 147,
+     "three_markers": 95,
+     "held": 30
+    },
+    "event_time_bias_s": 0.271,
+    "event_time_mae_s": 0.271,
+    "event_time_signed_s": [
+     0.2801,
+     0.2626
+    ],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 3.299,
+    "completed": true,
+    "split_errors_s": [],
+    "split_mae_s": null
+   }
+  },
+  {
+   "id": "nhpt3d_10",
+   "exercise": "nhpt",
+   "mode": "nhpt",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 417,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 9,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 9,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "nhpt_labeled_s": 30.6242,
+   "nhpt_pred_s": null,
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 5,
+      "t": 3.5778,
+      "t_start": 1.9578,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 7.0606,
+      "t_start": 5.3972,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 10.5058,
+      "t_start": 8.9382,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 13.992,
+      "t_start": 12.4595,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 17.7543,
+      "t_start": 15.9122,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 8,
+      "t": 21.463,
+      "t_start": 19.7236,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 7,
+      "t": 25.0851,
+      "t_start": 23.3427,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 28.8589,
+      "t_start": 27.0661,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 6,
+      "t": 32.582,
+      "t_start": 30.7954,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     }
+    },
+    {
+     "kind": "nhpt_no_time",
+     "label": {
+      "t": 32.582,
+      "total_s": 30.6242
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "nhpt3d_10",
+    "exercise": "nhpt",
+    "seed": 110,
+    "tilt_deg": 38,
+    "yaw_deg": -15,
+    "dist_mm": 365.0,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.5,
+    "light": "warm_bulb",
+    "side": "right",
+    "skin": "light",
+    "sleeve": false,
+    "noise_sigma": 4.0,
+    "speed": 0.8,
+    "peg_colour": "green",
+    "peg_d_mm": 6.0,
+    "board_mm": 8.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": "camera moved back from 325 to 365 mm so all four markers are in view (setup)"
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 417,
+     "hand": 79,
+     "calibrated": 417,
+     "four_markers": 250,
+     "three_markers": 155,
+     "held": 12
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "timer_start_inferred": false,
+    "timer_start_err_s": 1.376,
+    "completed": false,
+    "split_errors_s": [],
+    "split_mae_s": null
+   }
+  },
+  {
+   "id": "cup3d_01",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 990,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 32,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.7884,
+      "t_start": 1.6035,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1184.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 6.0029,
+      "t_start": 4.7199,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 1283.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 8.9815,
+      "t_start": 7.8248,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3,
+      "reach_ms": 1156.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 11.86,
+      "t_start": 10.7508,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4,
+      "reach_ms": 1109.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 15.0153,
+      "t_start": 13.6817,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5,
+      "reach_ms": 1333.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 18.2055,
+      "t_start": 16.841,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6,
+      "reach_ms": 1364.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 21.2814,
+      "t_start": 20.0573,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1224.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 24.4819,
+      "t_start": 23.173,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8,
+      "reach_ms": 1308.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 27.6058,
+      "t_start": 26.3346,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1271.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 30.8352,
+      "t_start": 29.4488,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 10,
+      "reach_ms": 1386.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 33.8293,
+      "t_start": 32.5909,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 11,
+      "reach_ms": 1238.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 36.9122,
+      "t_start": 35.7637,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 12,
+      "reach_ms": 1148.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 39.8435,
+      "t_start": 38.7421,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 13,
+      "reach_ms": 1101.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 42.8986,
+      "t_start": 41.7838,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 14,
+      "reach_ms": 1114.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 46.0138,
+      "t_start": 44.7131,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 1300.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 49.1582,
+      "t_start": 47.8983,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 16,
+      "reach_ms": 1259.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 51.3308,
+      "t_start": 50.7102,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 620.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 53.2112,
+      "t_start": 52.6184,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 18,
+      "reach_ms": 592.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 55.2644,
+      "t_start": 54.554,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 19,
+      "reach_ms": 710.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 57.1799,
+      "t_start": 56.5252,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 20,
+      "reach_ms": 654.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 58.9798,
+      "t_start": 58.3725,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 21,
+      "reach_ms": 607.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 60.8795,
+      "t_start": 60.2438,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 22,
+      "reach_ms": 635.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 62.8436,
+      "t_start": 62.1524,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 691.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 64.7582,
+      "t_start": 64.1281,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 24,
+      "reach_ms": 630.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 66.6383,
+      "t_start": 65.9882,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 650.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 68.6275,
+      "t_start": 67.9848,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 26,
+      "reach_ms": 642.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 70.5538,
+      "t_start": 69.9797,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 27,
+      "reach_ms": 574.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 72.574,
+      "t_start": 71.8593,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 28,
+      "reach_ms": 714.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 74.625,
+      "t_start": 73.9404,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 29,
+      "reach_ms": 684.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 76.5982,
+      "t_start": 75.9242,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 30,
+      "reach_ms": 674.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 78.6737,
+      "t_start": 77.9531,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 720.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 80.5687,
+      "t_start": 79.9317,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 32,
+      "reach_ms": 637.0
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_01",
+    "exercise": "cup",
+    "seed": 201,
+    "tilt_deg": 40,
+    "yaw_deg": 4,
+    "dist_mm": 380,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.0,
+    "light": "daylight",
+    "side": "right",
+    "skin": "light",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 1.0,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 990,
+     "hand": 119,
+     "calibrated": 924,
+     "four_markers": 94,
+     "three_markers": 742,
+     "held": 88
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "reach_bias_ms": null,
+    "reach_signed_ms": [],
+    "arcs_completed": 0
+   }
+  },
+  {
+   "id": "cup3d_02",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 904,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 23,
+   "tp": 23,
+   "fp": 0,
+   "fn": 9,
+   "status_agree": 23,
+   "status_n": 23,
+   "abs_err": [
+    715.0,
+    704.7,
+    572.8,
+    1117.6000000000001,
+    3441.2000000000003,
+    3804.7000000000003,
+    738.3,
+    662.5,
+    512.5,
+    998.3,
+    3418.7000000000003,
+    2260.1000000000004,
+    394.5,
+    426.9,
+    438.9,
+    568.4000000000001,
+    2250.5,
+    2210.2,
+    439.70000000000005,
+    254.79999999999995,
+    474.29999999999995,
+    431.9,
+    2320.0
+   ],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.7127,
+      "t_start": 1.6587,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1054.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 5.5097,
+      "t_start": 4.4547,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 1055.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 19.5179,
+      "t_start": 18.2819,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1236.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 25.1327,
+      "t_start": 23.8673,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1265.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 41.665,
+      "t_start": 40.5177,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 1147.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 46.5072,
+      "t_start": 45.9279,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 579.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 57.4998,
+      "t_start": 56.8473,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 652.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 60.9872,
+      "t_start": 60.4472,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 540.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 71.6241,
+      "t_start": 71.0804,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 543.7
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_02",
+    "exercise": "cup",
+    "seed": 202,
+    "tilt_deg": 50,
+    "yaw_deg": -8,
+    "dist_mm": 410,
+    "focal_per_width": 0.8,
+    "roll_deg": 1.5,
+    "light": "warm_bulb",
+    "side": "right",
+    "skin": "medium",
+    "sleeve": true,
+    "noise_sigma": 4.0,
+    "speed": 1.1,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "cream",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 23,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 904,
+     "hand": 12,
+     "calibrated": 844,
+     "four_markers": 61,
+     "three_markers": 574,
+     "held": 209
+    },
+    "event_time_bias_s": 0.395,
+    "event_time_mae_s": 0.395,
+    "event_time_signed_s": [
+     0.3685,
+     0.4374,
+     0.3702,
+     0.9859,
+     0.4243,
+     0.5931,
+     0.4102,
+     0.3952,
+     0.3467,
+     0.7208,
+     0.3843,
+     0.3243,
+     0.3017,
+     0.2811,
+     0.3127,
+     0.3906,
+     0.3469,
+     0.3942,
+     0.2833,
+     0.0979,
+     0.3407,
+     0.2736,
+     0.3011
+    ],
+    "reach_bias_ms": 1267.674,
+    "reach_signed_ms": [
+     715.0,
+     704.7,
+     572.8,
+     1117.6,
+     3441.2,
+     3804.7,
+     738.3,
+     662.5,
+     512.5,
+     998.3,
+     3418.7,
+     2260.1,
+     394.5,
+     426.9,
+     438.9,
+     568.4,
+     2250.5,
+     2210.2,
+     439.7,
+     254.8,
+     474.3,
+     431.9,
+     2320.0
+    ],
+    "arcs_completed": 4
+   }
+  },
+  {
+   "id": "cup3d_03",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 1105,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 32,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 3.0709,
+      "t_start": 1.7778,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1293.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 6.5858,
+      "t_start": 5.2489,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 1336.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 9.9824,
+      "t_start": 8.673,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3,
+      "reach_ms": 1309.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 13.26,
+      "t_start": 11.9513,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4,
+      "reach_ms": 1308.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 16.7719,
+      "t_start": 15.2599,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5,
+      "reach_ms": 1512.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 20.1376,
+      "t_start": 18.8074,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6,
+      "reach_ms": 1330.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 23.6386,
+      "t_start": 22.1532,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1485.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 26.8323,
+      "t_start": 25.5948,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8,
+      "reach_ms": 1237.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 30.4526,
+      "t_start": 28.915,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1537.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 34.1735,
+      "t_start": 32.7568,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 10,
+      "reach_ms": 1416.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 37.7888,
+      "t_start": 36.284,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 11,
+      "reach_ms": 1504.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 41.1725,
+      "t_start": 39.8944,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 12,
+      "reach_ms": 1278.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 44.746,
+      "t_start": 43.1993,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 13,
+      "reach_ms": 1546.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 48.3197,
+      "t_start": 46.8072,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 14,
+      "reach_ms": 1512.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 51.771,
+      "t_start": 50.4123,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 1358.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 55.1337,
+      "t_start": 53.7877,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 16,
+      "reach_ms": 1346.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 57.5581,
+      "t_start": 56.8699,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 688.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 59.868,
+      "t_start": 59.0674,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 18,
+      "reach_ms": 800.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 61.9465,
+      "t_start": 61.291,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 19,
+      "reach_ms": 655.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 64.2043,
+      "t_start": 63.4359,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 20,
+      "reach_ms": 768.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 66.379,
+      "t_start": 65.7135,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 21,
+      "reach_ms": 665.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 68.4814,
+      "t_start": 67.7675,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 22,
+      "reach_ms": 713.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 70.6509,
+      "t_start": 69.9871,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 663.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 72.8301,
+      "t_start": 72.1487,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 24,
+      "reach_ms": 681.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 75.0149,
+      "t_start": 74.3015,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 713.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 77.1166,
+      "t_start": 76.3983,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 26,
+      "reach_ms": 718.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 79.2615,
+      "t_start": 78.5626,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 27,
+      "reach_ms": 698.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 81.4627,
+      "t_start": 80.6559,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 28,
+      "reach_ms": 806.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 83.6077,
+      "t_start": 82.8708,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 29,
+      "reach_ms": 736.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 85.7845,
+      "t_start": 84.9769,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 30,
+      "reach_ms": 807.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 87.9295,
+      "t_start": 87.2585,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 671.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 90.1233,
+      "t_start": 89.3899,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 32,
+      "reach_ms": 733.4
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_03",
+    "exercise": "cup",
+    "seed": 203,
+    "tilt_deg": 30,
+    "yaw_deg": 10,
+    "dist_mm": 370,
+    "focal_per_width": 0.9,
+    "roll_deg": -1.0,
+    "light": "window",
+    "side": "left",
+    "skin": "deep",
+    "sleeve": false,
+    "noise_sigma": 3.0,
+    "speed": 0.9,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 1105,
+     "hand": 21,
+     "calibrated": 1019,
+     "four_markers": 56,
+     "three_markers": 770,
+     "held": 193
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "reach_bias_ms": null,
+    "reach_signed_ms": [],
+    "arcs_completed": 0
+   }
+  },
+  {
+   "id": "cup3d_04",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 1008,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 32,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.7924,
+      "t_start": 1.6525,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1139.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 5.7388,
+      "t_start": 4.6184,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 1120.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 8.8823,
+      "t_start": 7.6941,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3,
+      "reach_ms": 1188.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 11.9881,
+      "t_start": 10.6378,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4,
+      "reach_ms": 1350.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 15.0576,
+      "t_start": 13.8231,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5,
+      "reach_ms": 1234.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 18.2108,
+      "t_start": 16.9715,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6,
+      "reach_ms": 1239.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 21.4316,
+      "t_start": 20.18,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1251.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 24.6984,
+      "t_start": 23.3826,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8,
+      "reach_ms": 1315.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 27.8295,
+      "t_start": 26.5559,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1273.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 31.1089,
+      "t_start": 29.7888,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 10,
+      "reach_ms": 1320.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 34.335,
+      "t_start": 33.1139,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 11,
+      "reach_ms": 1221.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 37.5331,
+      "t_start": 36.2049,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 12,
+      "reach_ms": 1328.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 40.4927,
+      "t_start": 39.3595,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 13,
+      "reach_ms": 1133.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 43.809,
+      "t_start": 42.4277,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 14,
+      "reach_ms": 1381.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 46.982,
+      "t_start": 45.6975,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 1284.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 50.1501,
+      "t_start": 48.9763,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 16,
+      "reach_ms": 1173.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 52.5246,
+      "t_start": 51.8075,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 717.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 54.5795,
+      "t_start": 53.8731,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 18,
+      "reach_ms": 706.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 56.5276,
+      "t_start": 55.9294,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 19,
+      "reach_ms": 598.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 58.4717,
+      "t_start": 57.8592,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 20,
+      "reach_ms": 612.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 60.3476,
+      "t_start": 59.693,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 21,
+      "reach_ms": 654.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 62.2779,
+      "t_start": 61.6105,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 22,
+      "reach_ms": 667.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 64.3269,
+      "t_start": 63.6192,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 707.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 66.3295,
+      "t_start": 65.6486,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 24,
+      "reach_ms": 680.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 68.4691,
+      "t_start": 67.7825,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 686.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 70.427,
+      "t_start": 69.7702,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 26,
+      "reach_ms": 656.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 72.3833,
+      "t_start": 71.7816,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 27,
+      "reach_ms": 601.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 74.3984,
+      "t_start": 73.684,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 28,
+      "reach_ms": 714.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 76.3649,
+      "t_start": 75.6885,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 29,
+      "reach_ms": 676.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 78.2637,
+      "t_start": 77.6856,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 30,
+      "reach_ms": 578.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 80.1376,
+      "t_start": 79.5276,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 610.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 82.0842,
+      "t_start": 81.5005,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 32,
+      "reach_ms": 583.7
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_04",
+    "exercise": "cup",
+    "seed": 204,
+    "tilt_deg": 45,
+    "yaw_deg": 0,
+    "dist_mm": 400,
+    "focal_per_width": 0.85,
+    "roll_deg": 0.5,
+    "light": "dim",
+    "side": "right",
+    "skin": "medium",
+    "sleeve": false,
+    "noise_sigma": 7.0,
+    "speed": 1.0,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "grey",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 1008,
+     "hand": 0,
+     "calibrated": 943,
+     "four_markers": 22,
+     "three_markers": 488,
+     "held": 433
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "reach_bias_ms": null,
+    "reach_signed_ms": [],
+    "arcs_completed": 0
+   }
+  },
+  {
+   "id": "cup3d_05",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 831,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 32,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.6017,
+      "t_start": 1.5608,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1040.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 5.1286,
+      "t_start": 4.1548,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 973.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 7.6602,
+      "t_start": 6.742,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3,
+      "reach_ms": 918.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 10.269,
+      "t_start": 9.1406,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4,
+      "reach_ms": 1128.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 12.8897,
+      "t_start": 11.8819,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5,
+      "reach_ms": 1007.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 15.6732,
+      "t_start": 14.5196,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6,
+      "reach_ms": 1153.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 18.2278,
+      "t_start": 17.2213,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1006.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 20.8381,
+      "t_start": 19.732,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8,
+      "reach_ms": 1106.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 23.4727,
+      "t_start": 22.4103,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1062.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 26.0271,
+      "t_start": 25.0087,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 10,
+      "reach_ms": 1018.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 28.4589,
+      "t_start": 27.4995,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 11,
+      "reach_ms": 959.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 31.0182,
+      "t_start": 30.052,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 12,
+      "reach_ms": 966.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 33.6515,
+      "t_start": 32.5425,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 13,
+      "reach_ms": 1109.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 36.2212,
+      "t_start": 35.2122,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 14,
+      "reach_ms": 1009.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 38.7055,
+      "t_start": 37.7596,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 945.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 41.2704,
+      "t_start": 40.2593,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 16,
+      "reach_ms": 1011.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 43.1488,
+      "t_start": 42.6295,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 519.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 44.7788,
+      "t_start": 44.2752,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 18,
+      "reach_ms": 503.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 46.332,
+      "t_start": 45.8044,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 19,
+      "reach_ms": 527.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 47.8333,
+      "t_start": 47.3257,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 20,
+      "reach_ms": 507.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 49.5084,
+      "t_start": 48.9594,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 21,
+      "reach_ms": 549.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 51.1266,
+      "t_start": 50.6043,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 22,
+      "reach_ms": 522.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 52.736,
+      "t_start": 52.2276,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 508.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 54.3355,
+      "t_start": 53.7977,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 24,
+      "reach_ms": 537.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 55.9725,
+      "t_start": 55.4345,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 538.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 57.664,
+      "t_start": 57.0622,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 26,
+      "reach_ms": 601.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 59.1834,
+      "t_start": 58.6873,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 27,
+      "reach_ms": 496.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 60.9017,
+      "t_start": 60.3174,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 28,
+      "reach_ms": 584.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 62.4825,
+      "t_start": 61.9153,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 29,
+      "reach_ms": 567.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 64.2247,
+      "t_start": 63.6319,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 30,
+      "reach_ms": 592.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 65.8207,
+      "t_start": 65.3277,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 493.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 67.4381,
+      "t_start": 66.9022,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 32,
+      "reach_ms": 535.9
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_05",
+    "exercise": "cup",
+    "seed": 205,
+    "tilt_deg": 20,
+    "yaw_deg": -5,
+    "dist_mm": 430,
+    "focal_per_width": 0.95,
+    "roll_deg": 0.0,
+    "light": "daylight",
+    "side": "right",
+    "skin": "deep",
+    "sleeve": true,
+    "noise_sigma": 3.0,
+    "speed": 1.2,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 831,
+     "hand": 0,
+     "calibrated": 0,
+     "four_markers": 0,
+     "three_markers": 0,
+     "held": 0
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "reach_bias_ms": null,
+    "reach_signed_ms": [],
+    "arcs_completed": 0
+   }
+  },
+  {
+   "id": "cup3d_06",
+   "exercise": "cup",
+   "mode": "cup",
+   "synthetic": true,
+   "participant": "render3d",
+   "source": "video",
+   "from_cache": false,
+   "frames": 998,
+   "models": {
+    "hand": true,
+    "pose": false
+   },
+   "labeled_reps": 32,
+   "pred_reps": 0,
+   "tp": 0,
+   "fp": 0,
+   "fn": 32,
+   "status_agree": 0,
+   "status_n": 0,
+   "abs_err": [],
+   "signed_err": [],
+   "lean": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "hike": {
+    "labelled": 0,
+    "detected": 0,
+    "clean": 0,
+    "false_alarm": 0
+   },
+   "misses": [
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 2.9794,
+      "t_start": 1.6267,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 1,
+      "reach_ms": 1352.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 6.0113,
+      "t_start": 4.8534,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 2,
+      "reach_ms": 1157.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 9.1715,
+      "t_start": 7.8661,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 3,
+      "reach_ms": 1305.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 12.3762,
+      "t_start": 10.9917,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 4,
+      "reach_ms": 1384.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 15.5208,
+      "t_start": 14.1756,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5,
+      "reach_ms": 1345.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 18.5306,
+      "t_start": 17.228,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6,
+      "reach_ms": 1302.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 21.5454,
+      "t_start": 20.4281,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7,
+      "reach_ms": 1117.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 24.6139,
+      "t_start": 23.3531,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8,
+      "reach_ms": 1260.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 27.6476,
+      "t_start": 26.4126,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9,
+      "reach_ms": 1235.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 30.8452,
+      "t_start": 29.5653,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 10,
+      "reach_ms": 1279.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 34.0628,
+      "t_start": 32.7436,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 11,
+      "reach_ms": 1319.2
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 37.0147,
+      "t_start": 35.8409,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 12,
+      "reach_ms": 1173.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 40.0485,
+      "t_start": 38.8266,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 13,
+      "reach_ms": 1221.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 43.068,
+      "t_start": 41.8921,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 14,
+      "reach_ms": 1175.9
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 46.1617,
+      "t_start": 44.9102,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 15,
+      "reach_ms": 1251.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 49.1605,
+      "t_start": 47.9182,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 16,
+      "reach_ms": 1242.3
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 51.4012,
+      "t_start": 50.7247,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 17,
+      "reach_ms": 676.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 53.4462,
+      "t_start": 52.7802,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 18,
+      "reach_ms": 666.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 55.5502,
+      "t_start": 54.8478,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 19,
+      "reach_ms": 702.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 57.5758,
+      "t_start": 56.8998,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 20,
+      "reach_ms": 676.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 59.5112,
+      "t_start": 58.9322,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 21,
+      "reach_ms": 579.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 61.4052,
+      "t_start": 60.7355,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 22,
+      "reach_ms": 669.7
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 63.4044,
+      "t_start": 62.7433,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 23,
+      "reach_ms": 661.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 65.4389,
+      "t_start": 64.7768,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 24,
+      "reach_ms": 662.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 67.4003,
+      "t_start": 66.7402,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 25,
+      "reach_ms": 660.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 69.2881,
+      "t_start": 68.6887,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 26,
+      "reach_ms": 599.4
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 71.2881,
+      "t_start": 70.6483,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 27,
+      "reach_ms": 639.8
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 4,
+      "t": 73.2451,
+      "t_start": 72.56,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 28,
+      "reach_ms": 685.1
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 3,
+      "t": 75.2131,
+      "t_start": 74.5646,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 29,
+      "reach_ms": 648.5
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 2,
+      "t": 77.1845,
+      "t_start": 76.5105,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 30,
+      "reach_ms": 674.0
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 1,
+      "t": 79.2376,
+      "t_start": 78.59,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 31,
+      "reach_ms": 647.6
+     }
+    },
+    {
+     "kind": "false_negative",
+     "label": {
+      "key": 0,
+      "t": 81.1745,
+      "t_start": 80.5648,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 32,
+      "reach_ms": 609.7
+     }
+    }
+   ],
+   "tol": 1.0,
+   "condition": {
+    "id": "cup3d_06",
+    "exercise": "cup",
+    "seed": 206,
+    "tilt_deg": 35,
+    "yaw_deg": 14,
+    "dist_mm": 375,
+    "focal_per_width": 0.8,
+    "roll_deg": -2.0,
+    "light": "warm_bulb",
+    "side": "left",
+    "skin": "light",
+    "sleeve": true,
+    "noise_sigma": 4.0,
+    "speed": 1.0,
+    "peg_colour": "red",
+    "peg_d_mm": 7.0,
+    "board_mm": 5.0,
+    "cup_colour": "white",
+    "fps": 12.0,
+    "notes": ""
+   },
+   "x": {
+    "verified": 0,
+    "unverified": 0,
+    "unverified_reasons": {},
+    "expected_unverified": 0,
+    "coverage": {
+     "frames": 998,
+     "hand": 26,
+     "calibrated": 920,
+     "four_markers": 58,
+     "three_markers": 658,
+     "held": 204
+    },
+    "event_time_bias_s": null,
+    "event_time_mae_s": null,
+    "event_time_signed_s": [],
+    "reach_bias_ms": null,
+    "reach_signed_ms": [],
+    "arcs_completed": 0
+   }
+  }
+ ],
+ "skipped": [],
+ "limits": [
+  "Renders, not recordings: no real webcam auto-exposure, rolling shutter, lens distortion, real skin, real plastic or real paper.",
+  "The hand is a proxy built from primitives (palm box, capsule fingers): the OpenCV Zoo hand model rarely detects it (see the hand-model coverage above), so pinch grasps, hand-near-hole verification and the cup's hand-based placement are under-exercised and the verified/unverified split mostly reflects the proxy, not the product. Real hands are expected to be detected far more often; that is unmeasured until real recordings exist.",
+  "Labels come from the animation script (the instant the peg reaches the bottom of its hole, the cup touches down), not a human labeller; the product times events when it can see them, so a constant lag is expected.",
+  "One motion script per exercise, varied by seed and speed; no tremor, hesitation, drops or wrong holes."
+ ],
+ "fix_note": "Fixes (12 Oct, test-first, tests/test_parallax.py and tests/test_nhpt.py): height-aware hole occupancy from a single-view cv2.calibrateCamera focal + cv2.projectPoints seat column (a seated 32 mm peg read empty and its streak was a free peg); a hole covered by the hand keeps its state (the forearm flipped seated pegs empty and they were re-counted); a seat whose grasp was not seen is counted unverified (grasp_not_seen) instead of being dropped, and an inferred timer start is labelled. No threshold was loosened."
+}

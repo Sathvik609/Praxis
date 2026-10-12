@@ -4,6 +4,10 @@ Any-hole targets, timer from the first peg lift (first at_source -> grasped) to 
 seated, per-peg splits (seated-to-seated). Emits nhpt_start, nhpt_split, nhpt_complete on top
 of the FSM's own events. This is a timing aid, not a clinical instrument (CLAUDE.md §1).
 
+A first peg whose lift was never seen (12 Oct 2026; peg_fsm "grasp_not_seen") starts the timer
+at its seat: `nhpt_start.inferred` / `nhpt_complete.start_inferred` say so, and the total then
+misses that peg's transfer time.
+
 The timer uses the FSM's own event times (`t_grasp`, `t_seated`: the first frame of the confirmed
 run), not the frame on which the debounce confirmed it (11 Oct 2026; the total was late by
 (debounce - 1) frame periods before).
@@ -40,6 +44,7 @@ class NHPT:
         self._last_t: float | None = None
         self.t_start: float | None = None
         self.t_end: float | None = None
+        self.start_inferred = False
         self.pegs: list[dict[str, Any]] = []
         self._last_seat_t: float | None = None
 
@@ -90,8 +95,9 @@ class NHPT:
             out.append(ev)
             if ev.type == "state_change" and ev.payload["to"] == "grasped" and self.t_start is None:
                 self.t_start = float(ev.payload.get("t_grasp", ev.t))
+                self.start_inferred = ev.payload.get("grasp") == "unseen"
                 self._last_seat_t = self.t_start
-                out.append(make_event("nhpt_start", t=ev.t, t_start=self.t_start))
+                out.append(make_event("nhpt_start", t=ev.t, t_start=self.t_start, inferred=self.start_inferred))
             elif (
                 ev.type == "state_change"
                 and ev.payload["to"] == "seated"
@@ -122,6 +128,7 @@ class NHPT:
                             "nhpt_complete",
                             t=ev.t,
                             total_s=self.total_s,
+                            start_inferred=self.start_inferred,
                             splits_s=[p["split_s"] for p in self.pegs],
                             pegs=list(self.pegs),
                         )

@@ -62,6 +62,8 @@ uv run python ../../evaluation/scripts/latency.py --replay          # results/la
 uv run python tools/fetch_rehab24.py                                 # REHAB24-6 arm abduction, ~0.55 GB, git-ignored, CC BY-NC (evaluation only)
 uv run python ../../evaluation/scripts/rehab24_eval.py               # real video vs motion capture: results/rehab24_v0.{md,json}
 uv run python ../../evaluation/scripts/rehab24_thresholds.py         # hike allowance + front-gate fit/held-out: results/rehab24_thresholds_v0.{md,json}
+uv run python ../../evaluation/blender/make_dataset_3d.py            # 3-D Blender renders of NHPT + Waiter – cup (~35 min, Blender 5.2; clips git-ignored)
+uv run python ../../evaluation/scripts/eval_3d.py                    # synthetic 3-D results: results/synthetic3d_v0.{md,json} (--use-cache: no clips needed)
 
 # 5. Real recordings (step by step for the whole team: evaluation/PROTOCOL.md)
 uv run python tools/record_session.py record                         # consented clip, git-ignored, 30-day deletion

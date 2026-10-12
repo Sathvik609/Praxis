@@ -1,0 +1,78 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "nhpt3d_04",
+ "mode": "nhpt",
+ "exercise": "nhpt",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 334,
+ "nhpt_total_s": null,
+ "coverage": {
+  "frames": 334,
+  "hand": 9,
+  "calibrated": 334,
+  "four_markers": 199,
+  "three_markers": 102,
+  "held": 33
+ },
+ "events": [
+  {
+   "type": "nhpt_start",
+   "t": 3.1666666666666665,
+   "id": 1251,
+   "t_start": 3.1666666666666665,
+   "inferred": false
+  },
+  {
+   "type": "rep_complete",
+   "t": 14.833333333333334,
+   "id": 1398,
+   "rep": 1,
+   "hole": 8,
+   "target": null,
+   "duration_s": 11.4167,
+   "t_grasp": 3.1666666666666665,
+   "t_seated": 14.583333333333334,
+   "t_clear": 14.833333333333334,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 23.333333333333332,
+   "id": 1507,
+   "rep": 2,
+   "hole": 4,
+   "target": null,
+   "duration_s": 6.0,
+   "t_grasp": 17.0,
+   "t_seated": 23.0,
+   "t_clear": 23.333333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 26.083333333333332,
+   "id": 1546,
+   "rep": 3,
+   "hole": 6,
+   "target": null,
+   "duration_s": -0.0833,
+   "t_grasp": 25.666666666666668,
+   "t_seated": 25.583333333333332,
+   "t_clear": 26.083333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  }
+ ]
+}
