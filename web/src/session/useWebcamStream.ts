@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseEvent, type PraxisEvent } from '../lib/events'
 import { ACK_TIMEOUT_MS, ACK_TYPES, nowEpochMs, withCaptureTime } from './latency'
+import { testerParams } from '../lib/tester'
 
 /** Plain-language camera failure, prefixed so screens can tell it from a service error. */
 export function describeCameraError(e: unknown): string {
@@ -126,7 +127,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
     const gen = ++genRef.current
     if (replay) {
       // Replay mode: no camera; the service streams the recorded clip through the same pipeline.
-      const q = new URLSearchParams({ mode, ...params, replay }).toString()
+      const q = new URLSearchParams({ mode, ...params, ...testerParams(), replay }).toString()
       const ws = new WebSocket(`${wsUrl}?${q}`)
       wsRef.current = ws
       attach(ws)
@@ -151,7 +152,7 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
         }
       }
       setCamActive(true)
-      const q = new URLSearchParams({ mode, ...params }).toString()
+      const q = new URLSearchParams({ mode, ...params, ...testerParams() }).toString()
       const ws = new WebSocket(`${wsUrl}?${q}`)
       ws.binaryType = 'arraybuffer'
       wsRef.current = ws

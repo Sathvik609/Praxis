@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './app/routes'
+import { TesterGate } from './app/TesterGate'
 import { applyTheme, getTheme } from './app/theme'
 import { applyPrefs, readPrefs } from './lib/prefs'
 import { applyGuidance } from './session/guidance'
@@ -12,5 +13,10 @@ export default function App() {
     applyPrefs(readPrefs())
     applyGuidance()
   }, [])
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <TesterGate />
+    </>
+  )
 }

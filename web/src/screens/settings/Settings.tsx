@@ -14,6 +14,7 @@ import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
 import { healthLines } from '../../session/agent'
 import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
 import { SettingsRow } from './SettingsRow'
+import { readTester, writeTester } from '../../lib/tester'
 
 const THEMES: [Theme, string][] = [
   ['light', 'Light'],
@@ -117,6 +118,19 @@ export function Settings() {
                 onClick={resetToday}
                 disabled={!!day.stopped || !day.checkin}
               />
+              {health?.team_test && (
+                <>
+                  <SettingsRow
+                    title="Tester name"
+                    sub={readTester() ? `Sessions are saved as “${readTester()}” · tap to change` : 'Not set · tap to enter one'}
+                    onClick={() => {
+                      writeTester('')
+                      location.reload() // the name box opens again on load
+                    }}
+                  />
+                  <SettingsRow title="Team test report" sub="Where sessions went wrong, per exercise and tester" onClick={() => window.open('/api/review?format=md', '_blank', 'noopener')} />
+                </>
+              )}
               <CoachRow health={health} error={healthError} />
               <SettingsRow {...deploymentLabel(health)} />
             </ul>

@@ -37,6 +37,7 @@ from pydantic import BaseModel, Field, ValidationError
 import cv2
 import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import PlainTextResponse
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.metrics import METRICS as AGENT_METRICS
@@ -52,6 +53,7 @@ from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, R
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
+from praxis_session.review import build_review, clean_tester, render_md
 from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 from praxis_session.session import CoachSession
@@ -63,6 +65,9 @@ from praxis_session.web import mount_web
 POSE_MODELS = ("person_detection_mediapipe_2023mar.onnx", "pose_estimation_mediapipe_2023mar.onnx")
 
 CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
+# Team test (12 Oct): the hosted review build asks each browser for a tester name once and tags
+# that browser's sessions with it; /api/review reads them back. Off on the judge build.
+TEAM_TEST = os.environ.get("PRAXIS_TEAM_TEST", "0") == "1"
 MODES = {"heartbeat", *PIPELINE_MODES}
 COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no coach session or trace
 
@@ -134,6 +139,7 @@ def health() -> dict[str, object]:
         "opencv_version": cv2.__version__,
         "opencv_build": opencv_build(),
         "mode": "cloud" if CLOUD_ENABLED else "edge",
+        "team_test": TEAM_TEST,
         "models": {
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
@@ -293,6 +299,17 @@ def api_patch_feedback(session_id: str, body: dict[str, Any] = Body(...)) -> dic
     if added is not None:
         tr.log("flag", rule=added["rule"], detail=added["detail"])
     return row
+
+
+@app.get("/api/review", response_model=None)
+def api_review(format: str = "json", limit: int = 1000) -> dict[str, object] | PlainTextResponse:
+    """Team test review: per exercise and tester, where the stored live sessions went wrong
+    (review.py). `?format=md` gives the same as readable text for a browser tab."""
+    rows = [store.session(s["id"]) for s in store.sessions(limit)]
+    review = build_review([r for r in rows if r is not None])
+    if format == "md":
+        return PlainTextResponse(render_md(review), media_type="text/plain; charset=utf-8")
+    return review
 
 
 @app.get("/api/flags")
@@ -472,6 +489,7 @@ async def session_ws(
     reps: int | None = None,
     replay: str | None = None,
     for_mode: str = Query("", alias="for"),
+    tester: str | None = None,
 ) -> None:
     """Frame ingest. mode=heartbeat echoes frame info; other modes run the perception pipeline.
 
@@ -532,6 +550,7 @@ async def session_ws(
             prescription=SEED_PRESCRIPTION,
             exercise=exercise if mode == "arm" else None,
             replay_clip=replay or None,  # saved as `source: replay`, never counted as practice
+            username=clean_tester(tester),  # team test name (review.py), saved with the session
             **({"rule_label": RULE_LABEL_WITH_AGENT} if AGENT_CFG.enabled else {}),
         )
         sessions[coach.session_id] = coach

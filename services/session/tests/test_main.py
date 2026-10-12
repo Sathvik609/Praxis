@@ -754,3 +754,23 @@ def test_patient_tap_to_sample_is_traced_as_a_ui_action_and_kept_in_the_summary(
     samples = s.summary()["colour_samples"]
     assert [x["ok"] for x in samples] == [True, False]
     assert samples[0]["at_mm"] == reply["at_mm"] and samples[0]["colour"]["h"] == reply["colour"]["h"]
+
+
+def test_ws_tester_name_is_saved_with_the_session_and_review_reads_it(client):
+    """12 Oct team test: the socket's `tester` becomes the stored session's username."""
+    with client.websocket_connect("/session?mode=cup&sheet=cup_targets&replay=synthetic_cup_01&clear=1&tester=Ravi%20K!") as ws:
+        assert ws.receive_json()["type"] == "replay_start"
+        ws.send_text('{"cmd":"feedback","pain_after":2,"effort":4,"compared":"same"}')
+        ack = None
+        for _ in range(4000):
+            e = ws.receive_json()
+            if e["type"] == "command" and e.get("cmd") == "feedback":
+                ack = e
+                break
+    assert ack is not None
+    assert client.get(f"/api/sessions/{ack['summary']['session_id']}").json()["username"] == "ravi k"
+    review = client.get("/api/review").json()
+    assert review["replay_sessions"] >= 1 and review["live_sessions"] == 0  # seed history is sample
+    md = client.get("/api/review?format=md")
+    assert md.headers["content-type"].startswith("text/plain") and "No live sessions yet" in md.text
+    assert client.get("/health").json()["team_test"] is False

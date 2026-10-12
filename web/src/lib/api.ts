@@ -75,7 +75,7 @@ export type SelfReport = { ok: boolean; exercise: string; verified?: false; sour
 
 /** `GET /health`. `agent` is absent on a service from before the agent coach (29 Sep). */
 export type OpenCVBuild = { version: string; cool: boolean; arch?: string; dnn?: boolean; path?: string }
-export type Health = { status: string; service?: string; opencv_version?: string; opencv_build?: OpenCVBuild; mode?: string; models?: Record<string, boolean>; agent?: AgentHealth }
+export type Health = { status: string; service?: string; opencv_version?: string; opencv_build?: OpenCVBuild; mode?: string; models?: Record<string, boolean>; agent?: AgentHealth; team_test?: boolean }
 
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(`${SESSION_API_URL}${path}`)

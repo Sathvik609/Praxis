@@ -119,6 +119,8 @@ uv run --env-file .env python ../../evaluation/scripts/agent_video_eval.py --pla
 
 The image builds the web app and serves it from the session service, so the browser talks to **one origin** for the page, `/api`, `/health`, `/events` and the WebSocket (`/ws/session`). Build context is the repo root; models are fetched (SHA256-pinned) at build time; the SQLite store lives in `/app/data` (ephemeral unless a volume is mounted). `PORT` is honoured; `railway.json` points Railway at the Dockerfile and the `/health` check.
 
+**Team test (review build only).** With `PRAXIS_TEAM_TEST=1` the app asks each browser once "Who's testing?" (a name, no password) and saves every session under it. `GET /api/review?format=md` (also Settings › Demo and judging › Team test report) lists, per exercise and tester, verified/unverified reps and why, tracking losses and which marker or body part went missing, stop rules that fired, coach corrections and the screen-08 answers, with the most widespread problems first (`praxis_session/review.py`). Live sessions only; replays and the sample history are not counted. On Railway the store sits on a volume at `/app/data`, so it survives redeploys. The flag is off by default and on the judge build.
+
 ```bash
 docker build -f services/session/Dockerfile -t praxis .
 docker run -p 8000:8000 praxis            # → http://127.0.0.1:8000/
