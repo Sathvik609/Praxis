@@ -205,7 +205,7 @@ sequenceDiagram
     T-->>CS: intent queued: prompt kind resume
     Note over CS: socket loop drains intents and re-checks stop:<br/>a pain stop mid-run drops them (agent_drop)
     CS->>B: prompt "Setup looks good — resume?" (Yes, resume · Not yet)
-    B->>P: caption + spoken cue
+    B->>P: caption on screen (caption-only coach, no voice)
     P->>B: taps "Yes, resume"   (human approval)
     B->>CS: answer resume-1 choice Yes
     CS->>B: resume · "Thanks. Carrying on from where we stopped."
