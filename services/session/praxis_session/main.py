@@ -13,11 +13,16 @@ safety timeout), so the queue normally holds at most one frame. Every `frame`/`h
 event carries `t_capture`, `dropped` and `latency = {capture_to_event_ms, proc_ms}`; every
 `coach` event that follows perception events carries `latency = {event_to_cue_ms,
 capture_to_cue_ms}`; the session summary carries the percentiles (`LatencyStats`).
+
+Ops logs (12 Oct, `ops.py`): one JSON line per session start/end, stop-rule action, therapist
+flag, perception loss and socket error, plus a 60 s heartbeat when `PRAXIS_EMF=1`; with EMF
+on, those lines carry CloudWatch metrics. Per session, never per frame; no frames, no PII.
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import platform
@@ -41,6 +46,7 @@ from praxis_session.coach.agent import AgentCoach
 from praxis_session.session import RULE_LABEL_WITH_AGENT
 from praxis_session.events import Event, EventRing, make_event
 from praxis_session.latency import LatencyStats, split_capture_prefix
+from praxis_session import ops
 import praxis_session.trace as trace_mod
 from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, RUNNABLE_TIERS
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
@@ -74,10 +80,32 @@ if AGENT_CFG.mcp_enabled:
     _mcp_subs = mcp_server.mount(app)
     app.router.lifespan_context = mcp_server.lifespan_for(_mcp_subs)
 MCP_MOUNTED = bool(_mcp_subs)
+STARTED_AT = time.time()
+
+
+def _with_heartbeat(inner):  # type: ignore[no-untyped-def]
+    """Wrap whatever lifespan the app has (default, or the MCP servers') with the ops heartbeat:
+    one line every `ops.HEARTBEAT_S` while `PRAXIS_EMF=1`, so CloudWatch alarms on missing data."""
+
+    @contextlib.asynccontextmanager
+    async def lifespan(a):  # type: ignore[no-untyped-def]
+        task = asyncio.ensure_future(ops.heartbeat_loop(lambda: len(ops_sessions), started_at=STARTED_AT)) if ops.emf_enabled() else None
+        try:
+            async with inner(a) as state:
+                yield state
+        finally:
+            if task is not None:
+                task.cancel()
+
+    return lifespan
+
+
+app.router.lifespan_context = _with_heartbeat(app.router.lifespan_context)
 
 ring = EventRing()
 sessions: dict[str, CoachSession] = {}
 latency_stats: dict[str, LatencyStats] = {}  # per session id; summary().latency comes from here
+ops_sessions: dict[str, ops.SessionOps] = {}  # open coach sockets only (ops logs; heartbeat count)
 store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
 store.seed_if_empty()
 _HERE = Path(__file__).resolve()
@@ -455,11 +483,13 @@ async def session_ws(
     if mode == "arm" and (not exercise or exercise not in EXERCISES):
         exercise = DEFAULT_VISIBLE_ID  # never fall back to a hidden exercise
     if mode not in MODES:
+        ops.ws_error("bad_mode", mode)
         await ws.send_text(make_event("error", code="bad_mode", mode=mode).to_json())
         await ws.close()
         return
     refusal = _refuse_exercise(mode, exercise, tier)
     if refusal is not None:
+        ops.ws_error(str(refusal.payload.get("code")), mode, exercise=exercise)
         await ws.send_text(refusal.to_json())
         await ws.close()
         return
@@ -482,6 +512,7 @@ async def session_ws(
                 tier=tier,
             )
         except ValueError:
+            ops.ws_error("bad_sheet", mode, sheet=sheet)
             await ws.send_text(make_event("error", code="bad_sheet", sheet=sheet).to_json())
             await ws.close()
             return
@@ -499,6 +530,8 @@ async def session_ws(
         if AGENT_CFG.enabled:
             await _start_agent(ws, coach, pipeline)
         latency_stats[coach.session_id] = stats
+        ops_sessions[coach.session_id] = ops.SessionOps(coach.session_id, mode, coach.exercise, "replay" if replay else "live")
+        ops_sessions[coach.session_id].start(agent=AGENT_CFG.mode if AGENT_CFG.enabled else None)
         while len(sessions) > 50:
             old = sessions.pop(next(iter(sessions)))
             latency_stats.pop(old.session_id, None)
@@ -507,6 +540,9 @@ async def session_ws(
             await _replay_loop(ws, replay, pipeline, coach, stats)
             return
         await _live_loop(ws, pipeline, coach, stats)
+    except Exception as exc:
+        ops.ws_error("exception", mode, error=type(exc).__name__)
+        raise
     finally:
         # 11 Oct audit: the socket is gone, so the agent must not keep running (model spend,
         # tools on a dead pipeline): pending checkpoints dropped, the run in flight cancelled
@@ -515,6 +551,25 @@ async def session_ws(
             coach.agent.close("socket closed")
         elif coach is not None:
             agent_tools.REGISTRY.remove(coach.session_id)
+        if coach is not None:
+            _end_ops(coach)
+
+
+def _end_ops(coach: CoachSession) -> None:
+    """The session_end ops line; never raises (the socket is already closing)."""
+    so = ops_sessions.pop(coach.session_id, None)
+    if so is None:
+        return
+    try:
+        so.end(coach.summary(), latency_stats[coach.session_id].summary() if coach.session_id in latency_stats else None)
+    except Exception as exc:  # noqa: BLE001
+        ops.ws_error("session_end_log", coach.mode, error=type(exc).__name__)
+
+
+def _observe(coach: CoachSession | None, events: list) -> None:
+    so = ops_sessions.get(coach.session_id) if coach is not None else None
+    if so is not None:
+        so.observe(events)
 
 
 async def _start_agent(ws: WebSocket, coach: CoachSession, pipeline: SessionPipeline) -> None:
@@ -617,6 +672,8 @@ async def _live_loop(ws: WebSocket, pipeline: SessionPipeline | None, coach: Coa
             t_capture, jpeg = split_capture_prefix(data)
             frame = decode_jpeg(jpeg)
             if frame is None:
+                if coach is not None and coach.session_id in ops_sessions:
+                    ops_sessions[coach.session_id].bad_frames += 1
                 await ws.send_text(make_event("error", code="bad_frame", frame_index=index).to_json())
                 continue
             if pipeline is None:
@@ -675,7 +732,9 @@ async def _run_frame(
         await ws.send_text(e.to_json())
     if coach is None:
         return
-    for e in coach.on_events(evs, pipeline.snapshot(t), t):
+    coach_evs = coach.on_events(evs, pipeline.snapshot(t), t)
+    _observe(coach, [e for e in evs if e.type == "perception_lost"] + coach_evs)
+    for e in coach_evs:
         if e.type == "coach":
             now = time.time()
             cue_lat = {"event_to_cue_ms": round((now - t_events) * 1000.0, 1), "capture_to_cue_ms": _since_ms(t_capture, now)}
@@ -706,7 +765,9 @@ async def _run_command(ws: WebSocket, text: str, pipeline: SessionPipeline | Non
         cmd = _as_command(json.loads(text))
     except json.JSONDecodeError:
         cmd = {}
-    for e in _handle_command(cmd, pipeline, coach, now=now):
+    out = _handle_command(cmd, pipeline, coach, now=now)
+    _observe(coach, out)
+    for e in out:
         ring.append(e)
         await ws.send_text(e.to_json())
     await _deliver_agent(ws, coach, time.time() if now is None else now)
@@ -802,6 +863,7 @@ async def _replay_loop(ws: WebSocket, clip_id: str, pipeline: SessionPipeline, c
     Frames keep clip time and carry `latency.proc_ms` only (no capture time, nothing dropped)."""
     path = _find_clip(clip_id)
     if path is None:
+        ops.ws_error("bad_replay", "replay", clip=clip_id)
         await ws.send_text(make_event("error", code="bad_replay", clip=clip_id).to_json())
         await ws.close()
         return
