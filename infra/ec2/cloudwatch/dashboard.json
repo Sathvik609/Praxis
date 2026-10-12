@@ -1,0 +1,149 @@
+{
+  "start": "-PT24H",
+  "periodOverride": "inherit",
+  "widgets": [
+    {
+      "type": "text", "x": 0, "y": 0, "width": 24, "height": 2,
+      "properties": {
+        "markdown": "## Praxis session service · c8g.large COOL (Graviton4)\nMetrics come from the service's own JSON log lines (CloudWatch Embedded Metric Format, namespace `Praxis`) shipped by the CloudWatch agent to `/praxis/session`. Per-session metrics are split by **Exercise** and **Mode** (live | replay). No frames and no patient data are logged. Coach: rule coach always; Claude agent only when enabled."
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "Sessions ended (by exercise, live/replay)", "region": "${REGION}", "view": "timeSeries", "stacked": true, "stat": "Sum", "period": 3600,
+        "metrics": [[{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"Sessions\"', 'Sum', 3600)", "id": "sessions", "label": ""}]]
+      }
+    },
+    {
+      "type": "metric", "x": 8, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "Reps: camera-verified vs unverified", "region": "${REGION}", "view": "timeSeries", "stacked": false, "stat": "Sum", "period": 3600,
+        "metrics": [
+          [{"expression": "SUM(SEARCH('{Praxis,Exercise,Mode} MetricName=\"RepsVerified\"', 'Sum', 3600))", "id": "verified", "label": "verified"}],
+          [{"expression": "SUM(SEARCH('{Praxis,Exercise,Mode} MetricName=\"RepsUnverified\"', 'Sum', 3600))", "id": "unverified", "label": "unverified"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 16, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "Service heartbeat and open sessions", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 300,
+        "metrics": [
+          ["Praxis", "Heartbeat", "Service", "session", {"stat": "Sum", "label": "heartbeats / 5 min (expect 5)"}],
+          ["Praxis", "ActiveSessions", "Service", "session", {"stat": "Maximum", "label": "open sessions (max)"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 8, "width": 8, "height": 6,
+      "properties": {
+        "title": "Per-frame OpenCV processing, ms (session p50 / p95)", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 3600,
+        "metrics": [
+          [{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"FrameProcP50Ms\"', 'Average', 3600)", "id": "p50", "label": "p50"}],
+          [{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"FrameProcP95Ms\"', 'Maximum', 3600)", "id": "p95", "label": "p95"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 8, "y": 8, "width": 8, "height": 6,
+      "properties": {
+        "title": "Frames processed per second (per session)", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 3600,
+        "metrics": [[{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"Fps\"', 'Average', 3600)", "id": "fps", "label": ""}]]
+      }
+    },
+    {
+      "type": "metric", "x": 16, "y": 8, "width": 8, "height": 6,
+      "properties": {
+        "title": "Event-to-cue latency, ms (session p50 / p95)", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 3600,
+        "metrics": [
+          [{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"EventToCueP50Ms\"', 'Average', 3600)", "id": "cue50", "label": "p50"}],
+          [{"expression": "SEARCH('{Praxis,Exercise,Mode} MetricName=\"EventToCueP95Ms\"', 'Maximum', 3600)", "id": "cue95", "label": "p95"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 14, "width": 8, "height": 6,
+      "properties": {
+        "title": "Claude agent: runs, rule-coach fallbacks, errors", "region": "${REGION}", "view": "timeSeries", "stacked": false, "stat": "Sum", "period": 3600,
+        "metrics": [
+          ["Praxis", "AgentRuns", "Service", "session", {"label": "runs"}],
+          ["Praxis", "AgentFallbacks", "Service", "session", {"label": "fallbacks to rule coach"}],
+          ["Praxis", "AgentErrors", "Service", "session", {"label": "errors"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 8, "y": 14, "width": 8, "height": 6,
+      "properties": {
+        "title": "Claude agent: estimated cost (USD) and first action (ms)", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 3600,
+        "metrics": [
+          ["Praxis", "AgentCostUSD", "Service", "session", {"stat": "Sum", "label": "cost USD (estimate)"}],
+          ["Praxis", "AgentFirstActionMs", "Service", "session", {"stat": "p95", "label": "first action p95 ms", "yAxis": "right"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 16, "y": 14, "width": 8, "height": 6,
+      "properties": {
+        "title": "Safety and tracking: stop-rule actions, perception lost, socket errors", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 3600,
+        "metrics": [
+          [{"expression": "SUM(SEARCH('{Praxis,Exercise,Mode} MetricName=\"StopRuleActions\"', 'Sum', 3600))", "id": "stops", "label": "stop-rule pause/rest/stop"}],
+          [{"expression": "SUM(SEARCH('{Praxis,Exercise,Mode} MetricName=\"PerceptionLost\"', 'Sum', 3600))", "id": "lost", "label": "perception lost"}],
+          ["Praxis", "WsErrors", "Service", "session", {"stat": "Sum", "label": "socket errors"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 20, "width": 8, "height": 6,
+      "properties": {
+        "title": "Host CPU %", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 300,
+        "metrics": [
+          ["AWS/EC2", "CPUUtilization", "InstanceId", "${INSTANCE_ID}", {"stat": "Average", "label": "EC2 CPUUtilization"}],
+          ["CWAgent", "cpu_usage_active", "cpu", "cpu-total", "InstanceId", "${INSTANCE_ID}", {"stat": "Average", "label": "agent cpu_usage_active"}]
+        ],
+        "yAxis": {"left": {"min": 0, "max": 100}}
+      }
+    },
+    {
+      "type": "metric", "x": 8, "y": 20, "width": 8, "height": 6,
+      "properties": {
+        "title": "Host memory and root disk used %", "region": "${REGION}", "view": "timeSeries", "stacked": false, "period": 300,
+        "metrics": [
+          ["CWAgent", "mem_used_percent", "InstanceId", "${INSTANCE_ID}", {"stat": "Average", "label": "memory"}],
+          [{"expression": "SEARCH('{CWAgent,InstanceId,fstype,path} MetricName=\"disk_used_percent\" InstanceId=\"${INSTANCE_ID}\"', 'Average', 300)", "id": "disk", "label": "disk /"}]
+        ],
+        "yAxis": {"left": {"min": 0, "max": 100}}
+      }
+    },
+    {
+      "type": "metric", "x": 16, "y": 20, "width": 8, "height": 6,
+      "properties": {
+        "title": "CloudFront (HTTPS front door): requests and 5xx %", "region": "us-east-1", "view": "timeSeries", "stacked": false, "period": 300,
+        "metrics": [
+          ["AWS/CloudFront", "Requests", "DistributionId", "${DISTRIBUTION_ID}", "Region", "Global", {"stat": "Sum", "label": "requests"}],
+          ["AWS/CloudFront", "5xxErrorRate", "DistributionId", "${DISTRIBUTION_ID}", "Region", "Global", {"stat": "Average", "label": "5xx %", "yAxis": "right"}]
+        ]
+      }
+    },
+    {
+      "type": "alarm", "x": 0, "y": 26, "width": 8, "height": 6,
+      "properties": {
+        "title": "Alarms",
+        "alarms": [
+          "arn:aws:cloudwatch:${REGION}:${ACCOUNT_ID}:alarm:praxis-heartbeat-missing",
+          "arn:aws:cloudwatch:${REGION}:${ACCOUNT_ID}:alarm:praxis-cpu-high",
+          "arn:aws:cloudwatch:${REGION}:${ACCOUNT_ID}:alarm:praxis-status-check-failed",
+          "arn:aws:cloudwatch:${REGION}:${ACCOUNT_ID}:alarm:praxis-agent-fallbacks"
+        ]
+      }
+    },
+    {
+      "type": "log", "x": 8, "y": 26, "width": 16, "height": 6,
+      "properties": {
+        "title": "Recent sessions (session_end lines)", "region": "${REGION}", "view": "table",
+        "query": "SOURCE '/praxis/session' | fields @timestamp, mode, exercise, source, duration_s, verified, unverified, fps, proc_p95_ms, event_to_cue_p95_ms, stopped, perception_lost | filter evt = 'session_end' | sort @timestamp desc | limit 20"
+      }
+    }
+  ]
+}

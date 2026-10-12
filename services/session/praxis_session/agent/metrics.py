@@ -1,6 +1,12 @@
 """Agent observability (10 Oct): one structured JSON line per agent run and per agent error on
 stdout, and an in-process aggregate behind `GET /api/agent/metrics`.
 
+12 Oct: with `PRAXIS_EMF=1` (the systemd unit) each line also carries a CloudWatch Embedded
+Metric Format block (`ops.emf_fields`, namespace `Praxis`, dimension Service=session only):
+AgentRuns, AgentFallbacks (rule coach took over: error or daily cap), AgentErrors,
+AgentCostUSD (estimate) and AgentFirstActionMs. The provider (`PRAXIS_AGENT`) and model are
+plain fields, never dimensions, so they add no custom metrics.
+
 Each line is a single JSON object (`{"evt": "agent_run", ...}` / `{"evt": "agent_error", ...}`),
 so CloudWatch Logs (the systemd journal on the EC2 box, or any log driver) can index and filter
 it without a parser (e.g. a metric filter on `{ $.evt = "agent_run" && $.outcome = "error" }`).
@@ -11,6 +17,7 @@ the last `MAX_ROWS` events.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import threading
 import time
@@ -18,6 +25,7 @@ from collections import Counter, deque
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+from praxis_session import ops
 from praxis_session.agent.model import PRICE_PER_MTOK  # Sonnet 5 list price
 
 MAX_ROWS = 5000
@@ -34,6 +42,11 @@ def _pct(xs: list[float], q: float) -> float | None:
     return round(xs[max(0, min(len(xs) - 1, round(q * (len(xs) - 1))))], 1)
 
 
+def _provider() -> str:
+    """The agent provider this process runs (PRAXIS_AGENT: off | anthropic | bedrock | ...)."""
+    return os.environ.get("PRAXIS_AGENT", "off") or "off"
+
+
 class AgentMetrics:
     def __init__(self, now: Callable[[], float] = time.time, emit: bool = True) -> None:
         self._now = now
@@ -44,25 +57,36 @@ class AgentMetrics:
     def _day(self, ts: float) -> str:
         return datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
 
-    def _log(self, row: dict[str, Any]) -> dict[str, Any]:
-        row = {"ts": round(self._now(), 3), **row}
+    def _log(self, row: dict[str, Any], metrics: dict[str, float | int | None] | None = None) -> dict[str, Any]:
+        ts = self._now()
+        row = {"ts": round(ts, 3), **row}
         with self._lock:
             self._rows.append(row)
         if self._emit:
-            print(json.dumps(row, separators=(",", ":"), default=str), file=sys.stdout, flush=True)
+            line = row
+            if metrics and ops.emf_enabled():
+                line = {**row, **ops.emf_fields(metrics, {"Service": ops.SERVICE}, int(ts * 1000))}
+            print(json.dumps(line, separators=(",", ":"), default=str), file=sys.stdout, flush=True)
         return row
 
-    def run(self, *, session: str, trigger: str, outcome: str, ms: float | None = None, first_action_ms: float | None = None, tool_calls: int = 0, actions: int = 0, input_tokens: int | None = None, output_tokens: int | None = None, transport: str | None = None, model: str | None = None, policy_version: str | None = None) -> dict[str, Any]:
+    def run(self, *, session: str, trigger: str, outcome: str, ms: float | None = None, first_action_ms: float | None = None, tool_calls: int = 0, actions: int = 0, input_tokens: int | None = None, output_tokens: int | None = None, transport: str | None = None, model: str | None = None, policy_version: str | None = None, provider: str | None = None) -> dict[str, Any]:
         tokens = (input_tokens or 0) + (output_tokens or 0)
+        cost = cost_usd(input_tokens, output_tokens)
+        emf = {
+            "AgentRuns": None if outcome == "daily_cap" else 1,
+            "AgentFallbacks": 1 if outcome in ("error", "daily_cap") else None,
+            "AgentCostUSD": cost if tokens else None,
+            "AgentFirstActionMs": first_action_ms,
+        }
         return self._log({
             "evt": "agent_run", "session": session, "trigger": trigger, "outcome": outcome, "ms": ms,
             "first_action_ms": first_action_ms, "tool_calls": tool_calls, "actions": actions, "tokens": tokens,
             "input_tokens": input_tokens, "output_tokens": output_tokens, "transport": transport, "model": model,
-            "cost_usd_est": cost_usd(input_tokens, output_tokens), "policy_version": policy_version,
-        })
+            "cost_usd_est": cost, "policy_version": policy_version, "provider": provider or _provider(),
+        }, emf)
 
     def error(self, *, session: str, error_kind: str, message: str, trigger: str | None = None, fallback: str | None = None) -> dict[str, Any]:
-        return self._log({"evt": "agent_error", "session": session, "trigger": trigger, "error_kind": error_kind, "message": str(message)[:200], "fallback": fallback})
+        return self._log({"evt": "agent_error", "session": session, "trigger": trigger, "error_kind": error_kind, "message": str(message)[:200], "fallback": fallback, "provider": _provider()}, {"AgentErrors": 1})
 
     def summary(self, budget: Any | None = None) -> dict[str, Any]:
         today = self._day(self._now())
