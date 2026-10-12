@@ -2,7 +2,7 @@
 
 Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per exercise, (3) one concrete agent loop where OpenCV output changes what the agent does next. Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
 
-**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CloudWatch log shipping, CDK, and the `services/tools-lambda/` folder. The agent uses Claude via the Anthropic API; Bedrock is not used.
+**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CDK and the `services/tools-lambda/` folder. CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
