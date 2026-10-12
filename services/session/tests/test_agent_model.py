@@ -21,9 +21,9 @@ def test_config_defaults_to_off():
     assert c.health(False) == {"mode": "off", "model": None, "mcp": False, "ready": False, "reason": "PRAXIS_AGENT=off", "runs_today": 0, "daily_runs_limit": 100}
 
 
-def test_config_anthropic_needs_a_key_and_defaults_to_sonnet_5():
+def test_config_anthropic_needs_a_key_and_defaults_to_the_default_model():
     c = M.load_config({"PRAXIS_AGENT": "anthropic"})
-    assert c.mode == "anthropic" and c.model == "claude-sonnet-5" and c.ready is False
+    assert c.mode == "anthropic" and c.model == M.DEFAULT_MODEL and c.ready is False
     assert c.reason == "ANTHROPIC_API_KEY is not set"
     c = M.load_config({"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": "sk-test", "PRAXIS_AGENT_MODEL": "claude-sonnet-5", "PORT": "9001"})
     assert c.ready and c.label == "Claude agent · Anthropic API (dev)" and c.mcp_url == "http://127.0.0.1:9001/mcp"
@@ -44,13 +44,13 @@ def test_mcp_url_follows_the_port_the_service_listens_on():
     assert M.with_listening_port(M.load_config(port), ("0.0.0.0", 9001), port).mcp_url == "http://127.0.0.1:9001/mcp"
 
 
-def test_config_bedrock_only_with_cloud_enabled():
-    c = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_BEDROCK_MODEL_ID": "m", "AWS_REGION": "us-west-2"})
-    assert not c.ready and "PRAXIS_CLOUD_ENABLED" in c.reason
-    c = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_CLOUD_ENABLED": "1", "AWS_REGION": "us-west-2"})
-    assert not c.ready and "PRAXIS_BEDROCK_MODEL_ID" in c.reason
-    c = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_CLOUD_ENABLED": "1", "PRAXIS_BEDROCK_MODEL_ID": "anthropic.claude-sonnet-5", "AWS_REGION": "us-west-2"})
-    assert c.ready and c.label == "Claude agent · Amazon Bedrock" and c.region == "us-west-2"
+def test_bedrock_is_not_a_provider():
+    """12 Oct: the agent runs on Claude via the Anthropic API only; `bedrock` is refused with a
+    clear reason and the coach stays rule-based (no agent, no MCP routes)."""
+    c = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_CLOUD_ENABLED": "1", "PRAXIS_BEDROCK_MODEL_ID": "anthropic.claude-sonnet-5", "AWS_REGION": "us-east-2"})
+    assert c.mode == "off" and not c.enabled and not c.ready and not c.mcp_enabled
+    assert c.reason == "bedrock is not supported; use anthropic" and c.label is None
+    assert "bedrock" not in M.AGENT_LABELS and "bedrock" not in M.PROVIDERS
 
 
 def test_config_scripted_and_unknown():
@@ -63,20 +63,18 @@ def test_anthropic_model_is_low_effort_without_a_thinking_budget():
     cfg = M.load_config({"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": "sk-test"})
     m = M.build_model(cfg, {"ANTHROPIC_API_KEY": "sk-test"})
     conf = m.get_config()
-    assert conf["model_id"] == "claude-sonnet-5" and conf["max_tokens"] == M.MAX_TOKENS
+    assert conf["model_id"] == M.DEFAULT_MODEL and conf["max_tokens"] == M.MAX_TOKENS
     assert conf["params"] == {"output_config": {"effort": "low"}}
     flat = json.dumps(conf, default=str)
     assert "budget_tokens" not in flat and "temperature" not in flat
     assert m.client.api_key == "sk-test" and m.client.max_retries == 0
 
 
-def test_bedrock_model_construction():
-    cfg = M.load_config({"PRAXIS_AGENT": "bedrock", "PRAXIS_CLOUD_ENABLED": "1", "PRAXIS_BEDROCK_MODEL_ID": "anthropic.claude-sonnet-5", "AWS_REGION": "us-west-2"})
-    m = M.build_model(cfg, {})
-    conf = m.get_config()
-    assert conf["model_id"] == "anthropic.claude-sonnet-5" and conf["max_tokens"] == M.MAX_TOKENS
+def test_no_model_without_the_anthropic_mode():
     with pytest.raises(ValueError):
         M.build_model(M.load_config({}), {})
+    with pytest.raises(ValueError):
+        M.build_model(M.load_config({"PRAXIS_AGENT": "bedrock"}), {})
 
 
 def _resp(code):

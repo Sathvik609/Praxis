@@ -1,4 +1,4 @@
-"""Coach interface shared by the rule coach and the (W6) Strands/Bedrock agent.
+"""Coach interface shared by the rule coach and the Strands agent (Claude via the Anthropic API).
 
 Actions are restricted to instruct | correct | progress | regress | rest | stop. Every
 Decision must cite the perception event ids it was made from (CLAUDE.md rule 5). Tools carry
