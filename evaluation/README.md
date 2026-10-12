@@ -44,6 +44,11 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
   `--store` lists browser-measured live sessions. Writes `results/latency_v0.{json,md}`.
 - `sus.py` — scores `sus/responses.csv` (standard SUS, Brooke 1996; `sus/questionnaire.md`,
   `sus/responses_template.csv`) into `results/sus_v0.{json,md}`: n, mean, SD, min, max.
+- `usability.py` — scores the moderated usability test (`usability/PLAN.md`: nine tasks, observer
+  sheet, therapist interview guide; no video recorded) from `usability/tasks.csv` (+ optional
+  `issues.csv`, `therapist.csv`) into `results/usability_v0.{json,md}`: unaided and completion
+  rates with Wilson 95 % intervals, median time, errors, SEQ per task, issues by severity, and the
+  therapist table (our own six items, labelled as not a validated scale).
 - `agent_eval.py` + `agent/scenarios/*.json` — the agent coach's nine scenarios (covered marker,
   dim light, three unverified, falling peaks + exertion, repeated lean, pain stop mid-run, model
   timeout, MCP down, clean session) through the real session, OpenCV setup checks on synthetic
@@ -67,6 +72,7 @@ uv run python tools/dataset_v1.py manifest
 uv run python ../../evaluation/scripts/eval.py --dataset ../../evaluation/dataset_v1  # real
 uv run python ../../evaluation/scripts/latency.py --replay
 uv run python ../../evaluation/scripts/sus.py
+uv run python ../../evaluation/scripts/usability.py
 ```
 
 Synthetic numbers validate the pipeline only; they are not evidence about real-world accuracy.
