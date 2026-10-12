@@ -140,6 +140,14 @@ def predictions(events: list[dict[str, Any]], mode: str) -> list[dict[str, Any]]
     return out
 
 
+def entry_settings(e: dict[str, Any], debounce: int, clear: int) -> dict[str, Any]:
+    """What a cached prediction depends on: the pipeline settings and any replayed colour sample."""
+    s: dict[str, Any] = {"debounce_frames": debounce, "clear_frames": clear}
+    if e.get("colour_sample") and e.get("mode") != "arm":
+        s["colour_sample"] = e["colour_sample"]
+    return s
+
+
 def replay_entry(e: dict[str, Any], ds_dir: Path, args: argparse.Namespace) -> dict[str, Any]:
     """Run the entry through the pipeline; returns the cache document (events without frames)."""
     mode = e["mode"]
@@ -153,8 +161,11 @@ def replay_entry(e: dict[str, Any], ds_dir: Path, args: argparse.Namespace) -> d
                          clear_frames=args.clear, side=e.get("side", "left"), exercise=exercise)
         source = "video"
     else:
+        # A sidecar's `colour_sample` (the patient's tap-to-sample) is replayed as the same
+        # `sample_colour` command, so a non-blue cup band or wooden pegs are scored as the app ran.
         res = run_replay(ds_dir / e["video"], mode=mode, sheet=e.get("sheet", "nhpt_board"),
-                         debounce_frames=args.debounce, clear_frames=args.clear)
+                         debounce_frames=args.debounce, clear_frames=args.clear,
+                         **({"colour_sample": e["colour_sample"]} if e.get("colour_sample") else {}))
         source = "video"
     events = []
     for ev in res.events:
@@ -165,7 +176,7 @@ def replay_entry(e: dict[str, Any], ds_dir: Path, args: argparse.Namespace) -> d
         events.append(d)
     return {
         "schema": PRED_SCHEMA, "clip_id": e["id"], "mode": mode, "exercise": exercise, "source": source,
-        "cv2_version": cv2.__version__, "settings": {"debounce_frames": args.debounce, "clear_frames": args.clear},
+        "cv2_version": cv2.__version__, "settings": entry_settings(e, args.debounce, args.clear),
         "models": res.models, "fps": res.fps, "frames": res.frames, "nhpt_total_s": res.nhpt_total_s,
         "events": events,
     }
@@ -414,7 +425,7 @@ def main(argv=None) -> int:
         readable, why = clip_readable(e, ds_dir, today)
         pred_path = ds_dir / e["pred"] if real and e.get("pred") else None
         cached = json.loads(pred_path.read_text()) if pred_path is not None and pred_path.exists() else None
-        cache_ok = cached is not None and cached.get("settings") == pipe_settings
+        cache_ok = cached is not None and cached.get("settings") == entry_settings(e, pipe_settings["debounce_frames"], pipe_settings["clear_frames"])
         if readable and not (args.use_cache and cache_ok):
             pred_doc = replay_entry(e, ds_dir, args)
             need = "pose" if e["mode"] == "arm" else "hand"

@@ -127,6 +127,8 @@ class CoachSession:
         self.feedback: dict[str, Any] = {}
         # Last in-session pain report ({"pain", "t"}) from the Pain / feel unwell dialog.
         self.reported_pain: dict[str, Any] | None = None
+        # Patient tap-to-sample results (on_colour_sample), last 20.
+        self.colour_samples: list[dict[str, Any]] = []
         self.decisions: list[dict[str, Any]] = []
         self.pending_prompt: dict[str, Any] | None = None
         # Pipeline commands a coach decision asked for (a regress's `ui.apply`), drained by
@@ -190,6 +192,20 @@ class CoachSession:
         self.trace.log("pain", pain=pain)
         self.reported_pain = {"pain": pain, "t": t}
         return self._log_stop(self.stop_rules.on_pain(pain, t))
+
+    def on_colour_sample(self, result: dict[str, Any], t: float) -> None:
+        """The patient tapped the cup base / a peg on the live screen (07b / 07, 12 Oct). A `ui`
+        action the patient initiated, not a coach action: traced with the outcome and kept for
+        the summary (`colour_samples`) so a recording can be replayed with the same colour."""
+        self._tick(t)
+        colour = result.get("colour") or None
+        row = {
+            "t": t, "ok": bool(result.get("ok")), "target": result.get("target"), "reason": result.get("reason"),
+            "at_mm": result.get("at_mm"), "detected": result.get("detected"),
+            "colour": {k: colour[k] for k in ("h", "s", "v", "h_lo", "h_hi", "s_min", "v_min") if k in colour} if colour else None,
+        }
+        self.colour_samples = [*self.colour_samples[-19:], row]
+        self.trace.log("ui", action="sample_colour", initiated_by="patient", **{k: v for k, v in row.items() if k != "t"})
 
     def on_rpe(self, rpe: int, t: float) -> list[Event]:
         state = self.exertion.update([], rpe=rpe, t=t)
@@ -499,5 +515,8 @@ class CoachSession:
             # The last "Pain / feel unwell" answer of this session (None when none was given), so
             # the report has it even when the patient skips the feedback screen.
             "reported_pain": dict(self.reported_pain) if self.reported_pain else None,
+            # The patient's tap-to-sample colours (sheet tasks), so a recording of this session
+            # can be replayed with the same colour (`replay.run_replay(colour_sample=...)`).
+            "colour_samples": [dict(x) for x in self.colour_samples[-20:]],
             "delivery": "queued · not yet delivered",
         }

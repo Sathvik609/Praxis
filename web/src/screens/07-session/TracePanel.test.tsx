@@ -154,3 +154,18 @@ test('with the agent on and no rule-coach line in the window, the header never s
   expect(screen.getByText(new RegExp(`${esc(AGENT)} at checkpoints · Rule-based coach between them`))).toBeInTheDocument()
   expect(screen.queryByText(/LLM agent pending/)).toBeNull()
 })
+
+test("the patient's tap-to-sample is a ui line, applied or refused with the reason", () => {
+  render(
+    <TracePanel
+      agentRows={[]}
+      events={[
+        { type: 'command', t: 3, id: 7, cmd: 'sample_colour', ok: false, applied: false, target: 'cup', reason: 'no_colour', at_mm: [40.2, 60.1], message: 'x' },
+        { type: 'command', t: 4, id: 8, cmd: 'sample_colour', ok: true, applied: true, target: 'cup', detected: true, at_mm: [100, 120] },
+      ]}
+    />,
+  )
+  const rows = screen.getByTestId('trace-rows')
+  expect(rows).toHaveTextContent('ui#7 patient tap → sample_colour(cup) at 40.2, 60.1 mm · refused · no_colour')
+  expect(rows).toHaveTextContent('ui#8 patient tap → sample_colour(cup) at 100, 120 mm · applied · target found')
+})

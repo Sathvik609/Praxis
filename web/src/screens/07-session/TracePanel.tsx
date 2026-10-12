@@ -209,6 +209,17 @@ function eventLine(e: PraxisEvent) {
       </div>
     )
   }
+  if (e.type === 'command' && e.cmd === 'sample_colour' && e.source !== 'agent') {
+    // The patient's tap on the picture (12 Oct): a UI action they initiated, not a coach action.
+    const at = Array.isArray(e.at_mm) ? ` at ${(e.at_mm as number[]).join(', ')} mm` : ''
+    const outcome = e.ok ? `applied · ${e.detected ? 'target found' : 'target not found yet'}` : `refused · ${String(e.reason ?? e.error ?? 'error')}`
+    return (
+      <div className="mt-1.5 flex gap-2">
+        <Time t={e.t} /><Kind k="action">ui</Kind>
+        <span className="min-w-0 break-words">#{e.id} patient tap → sample_colour({String(e.target ?? '')}){at} · {outcome}</span>
+      </div>
+    )
+  }
   return (
     <div className="mt-1.5 flex gap-2">
       <Time t={e.t} /><Kind k="event">event</Kind>

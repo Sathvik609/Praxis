@@ -206,6 +206,35 @@ def test_synthetic_and_real_entries_are_never_pooled(first_run, real_ds, tmp_pat
     assert mixed["real"]["nhpt"]["labeled_reps"] == 9 and mixed["synthetic"]["nhpt"]["labeled_reps"] == 9
 
 
+def test_a_sidecar_colour_sample_reaches_the_replay_and_keys_the_cache(tmp_path, monkeypatch):
+    """RISKS 10 Oct: a clip recorded with a tap-sampled colour (non-blue cup band, wooden pegs)
+    is replayed with that sample, not the default colours; the cache is keyed by it."""
+    raw = tmp_path / "raw"
+    c = _sidecar(raw, "p04", "cup", "20261012T130000", False, 0)
+    meta = {**c.meta, "colour_sample": {"t": 0.5, "x_mm": 105.0, "y_mm": 60.0}}
+    c.sidecar_path.write_text(json.dumps(meta))
+    c = ds.Clip(c.sidecar_path, meta)
+    entry = ds.manifest_entry(c, tmp_path, today=TODAY)
+    assert entry["colour_sample"] == {"t": 0.5, "x_mm": 105.0, "y_mm": 60.0}
+    plain = ds.manifest_entry(_sidecar(raw, "p05", "cup", "20261012T140000", False, 0), tmp_path, today=TODAY)
+    assert "colour_sample" not in plain
+    ev = _load_eval()
+    seen = {}
+
+    def fake_run_replay(path, **kw):
+        seen.update(kw)
+        from praxis_session.replay import ReplayResult
+
+        return ReplayResult(path=str(path), mode=kw["mode"], fps=15.0, frames=0, reps=0, nhpt_total_s=None)
+
+    monkeypatch.setattr(ev, "run_replay", fake_run_replay)
+    import argparse
+
+    doc = ev.replay_entry(entry, tmp_path, argparse.Namespace(debounce=2, clear=3))
+    assert seen["colour_sample"] == entry["colour_sample"]
+    assert doc["settings"] == {"debounce_frames": 2, "clear_frames": 3, "colour_sample": entry["colour_sample"]}
+
+
 def test_no_manifest_says_how_to_make_one(tmp_path, capsys):
     assert _load_eval().main(["--dataset", str(tmp_path), "--out", str(tmp_path)]) == 2
     assert "dataset_v1.py manifest" in capsys.readouterr().out

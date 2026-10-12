@@ -35,6 +35,18 @@ so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
 `shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
 therefore gets no lean flags.
 
+Shoulder hike is angle-aware (12 Oct): healthy abduction raises the shoulder with the arm
+(scapulohumeral rhythm), so the fixed limit used until 11 Oct (0.08 trunk lengths over the rest
+baseline) fired on most correct REHAB24-6 lifts near 90 deg. The default limit is now
+`hike_allowance(angle)` = the healthy curve (p95 of the product's own hike number per 10 deg bin
+of the scored angle, correct repetitions of held-in REHAB24-6 subjects, made monotone) plus
+`HIKE_MARGIN`, and the excess must persist for `HIKE_PERSIST_FRAMES` consecutive scored frames.
+Fitted and tested on held-out subjects by `evaluation/scripts/rehab24_thresholds.py`
+(`evaluation/results/rehab24_thresholds_v0.md`). The subjects are healthy adults standing in a
+lab, so the allowance is a population p95, not a patient norm, and shrug sensitivity is checked
+on synthetic streams only (no labelled real shrugs). An explicit `hike_limit` keeps the old
+fixed, single-frame behaviour (tests, comparisons).
+
 `above_ceiling` (10 Oct, `kind="hold"` only): the smoothed metric (One-Euro in the pipeline) above
 `ceiling_deg + ABOVE_CEILING_TOL_DEG` (90 + 5 for Arm out to the side) for
 `ABOVE_CEILING_FRAMES` consecutive scored frames while lifting or holding; at most once per rep.
@@ -59,6 +71,36 @@ GATES = ("turn_side", "turn_front", "hips_out_of_view")
 # consecutive scored frames (~0.2-0.3 s at 10-15 fps) before `above_ceiling` fires.
 ABOVE_CEILING_TOL_DEG = 5.0
 ABOVE_CEILING_FRAMES = 3
+# Healthy shoulder elevation by arm angle: (scored angle deg, p95 hike over the rest baseline in
+# trunk lengths), copied from evaluation/results/rehab24_thresholds_v0.json ("shipped_curve");
+# tests/test_arm_fsm.py checks the two agree. Linear between knots, flat outside them.
+HEALTHY_HIKE_CURVE: tuple[tuple[float, float], ...] = (
+    (5.0, 0.028), (15.0, 0.028), (25.0, 0.028), (35.0, 0.028), (45.0, 0.042), (55.0, 0.058),
+    (65.0, 0.083), (75.0, 0.098), (85.0, 0.112), (95.0, 0.12), (105.0, 0.137), (115.0, 0.166),
+    (125.0, 0.178), (135.0, 0.189), (145.0, 0.205), (155.0, 0.21), (165.0, 0.21),
+)
+HIKE_MARGIN = 0.05  # trunk lengths (~2.5 cm on a 50 cm trunk) above the healthy p95
+HIKE_PERSIST_FRAMES = 3  # consecutive scored frames over the allowance (~0.2-0.3 s)
+
+
+def hike_allowance(
+    angle_deg: float,
+    curve: tuple[tuple[float, float], ...] = HEALTHY_HIKE_CURVE,
+    margin: float = HIKE_MARGIN,
+) -> float:
+    """Shoulder elevation (trunk lengths over the rest baseline) allowed at this arm angle."""
+    xs, ys = [k[0] for k in curve], [k[1] for k in curve]
+    a = float(angle_deg)
+    if a <= xs[0]:
+        y = ys[0]
+    elif a >= xs[-1]:
+        y = ys[-1]
+    else:
+        i = next(k for k in range(1, len(xs)) if a <= xs[k])
+        y = ys[i - 1] + (a - xs[i - 1]) / (xs[i] - xs[i - 1]) * (ys[i] - ys[i - 1])
+    return round(y + margin, 4)
+
+
 # FSM state -> the phase the avatar and the big count follow (Sprint E contract).
 PHASES = {
     "start_pose": "start",
@@ -79,6 +121,9 @@ class ArmObservation:
     visibility: float = 1.0  # min over the practising-side shoulder, elbow, hip
     hip_visibility: float = 1.0  # min over both hips (lean)
     shoulders_visibility: float = 1.0  # min over both shoulders (hike)
+    # Front-view exercises: shoulders far enough apart (pose.FRONT_SEP_MIN). None = derive it
+    # from `view_ok` (not side-on), as before 12 Oct.
+    front_view_ok: bool | None = None
 
 
 def gate_for(obs: ArmObservation, view: str = "side") -> str | None:
@@ -87,7 +132,8 @@ def gate_for(obs: ArmObservation, view: str = "side") -> str | None:
     if obs.shoulder_deg is None:
         return None
     if view == "front":
-        if obs.view_ok:  # shoulders stacked: the patient is side-on to the camera
+        front_ok = (not obs.view_ok) if obs.front_view_ok is None else obs.front_view_ok
+        if not front_ok:  # shoulders (nearly) stacked: the patient is turned from the camera
             return "turn_front"
     elif not obs.view_ok:
         return "turn_side"
@@ -110,7 +156,10 @@ class ArmFSM:
         tolerance_deg: float | None = None,
         lean_limit_deg: float | None = None,
         lean_events_to_flag: int | None = None,
-        hike_limit: float = 0.08,
+        hike_limit: float | None = None,
+        hike_persist_frames: int | None = None,
+        hike_curve: tuple[tuple[float, float], ...] = HEALTHY_HIKE_CURVE,
+        hike_margin: float = HIKE_MARGIN,
         baseline_frames: int = 10,
         lean_persist_s: float = 0.5,
         prescription: Prescription | None = None,
@@ -138,7 +187,13 @@ class ArmFSM:
         self.start_below_deg = ex.start_below_deg if start_below_deg is None else start_below_deg
         self.tolerance_deg = ex.tolerance_deg if tolerance_deg is None else tolerance_deg
         self.lean_limit_deg, self.lean_events_to_flag = lean_limit_deg, lean_events_to_flag
+        # hike_limit None = angle-aware (`hike_allowance`); a number = the old fixed limit
         self.hike_limit, self.baseline_frames = hike_limit, baseline_frames
+        if hike_persist_frames is None:
+            hike_persist_frames = 1 if hike_limit is not None else HIKE_PERSIST_FRAMES
+        self.hike_persist_frames = max(1, int(hike_persist_frames))
+        self.hike_curve, self.hike_margin = tuple(hike_curve), float(hike_margin)
+        self._hike_frames = 0
         self.lean_persist_s = lean_persist_s
         self.gate: str | None = None
         self._lean_since: float | None = None
@@ -332,11 +387,25 @@ class ArmFSM:
             )
         hike = obs.shoulder_hike_norm - self._hike_baseline
         shoulders_seen = obs.shoulders_visibility >= MIN_VISIBILITY
-        if hike > self.hike_limit and shoulders_seen and not self._hike_this_rep:
+        angle = float(obs.shoulder_deg or 0.0)
+        limit = (
+            self.hike_limit
+            if self.hike_limit is not None
+            else hike_allowance(angle, self.hike_curve, self.hike_margin)
+        )
+        self._hike_frames = self._hike_frames + 1 if hike > limit and shoulders_seen else 0
+        if self._hike_frames >= self.hike_persist_frames and not self._hike_this_rep:
             self._hike_this_rep = True
             self.hike_count += 1
             evs.append(
-                make_event("shoulder_hiking", t=obs.t, hike=round(hike, 3), count=self.hike_count)
+                make_event(
+                    "shoulder_hiking",
+                    t=obs.t,
+                    hike=round(hike, 3),
+                    limit=round(limit, 3),
+                    angle_deg=round(angle, 1),
+                    count=self.hike_count,
+                )
             )
         return evs
 
@@ -465,7 +534,7 @@ class ArmFSM:
             self._peak, self._t_move, self._held, self._reason = obs.shoulder_deg, obs.t, 0.0, None
             self._lean_this_rep = self._hike_this_rep = False
             self._above_this_rep, self._above_frames = False, 0
-            self._lean_since = None
+            self._lean_since, self._hike_frames = None, 0
             return [self._go("moving", obs.t)]
         return []
 

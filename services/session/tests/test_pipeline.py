@@ -466,6 +466,90 @@ def test_sample_colour_command_in_cup_mode():
     validate_event(d)
 
 
+# ---- tap-to-sample from the live screen (12 Oct) ---------------------------------------------
+def _frame_px(H_mm_to_px: np.ndarray, xy_mm) -> tuple[float, float]:
+    import cv2
+
+    p = cv2.perspectiveTransform(np.array([[xy_mm]], np.float32), H_mm_to_px)[0, 0]
+    return float(p[0]), float(p[1])
+
+
+def test_a_tap_in_frame_pixels_samples_the_cup_on_the_warped_sheet():
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    assert p.command({"cmd": "sample_colour", "x_px": 10, "y_px": 10})["reason"] == "not_calibrated"
+    frame, H = camera_frame(C, cup_mm=C.targets_mm[2], cup_bgr=(30, 200, 60))  # a green base
+    assert p.process(frame, 0.0, 0)[0].to_dict()["cup"]["cup_mm"] is None
+    x, y = _frame_px(H, C.targets_mm[2])
+    r = p.command({"cmd": "sample_colour", "x_px": x, "y_px": y})
+    assert r["ok"] and r["applied"] and r["detected"] is True and r["target"] == "cup"
+    assert abs(r["at_mm"][0] - C.targets_mm[2][0]) < 3 and abs(r["at_mm"][1] - C.targets_mm[2][1]) < 3
+    assert "cup" in r["message"].lower()
+    d = p.process(frame, 0.1, 1)[0].to_dict()
+    assert d["cup"]["cup_mm"] is not None and d["cup"]["colour"]["h"] == r["colour"]["h"]
+
+
+def test_a_tap_on_paper_or_a_black_band_is_refused_and_says_why():
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    frame, H = camera_frame(C, cup_mm=C.targets_mm[2], cup_bgr=(25, 25, 25))  # a black base
+    p.process(frame, 0.0, 0)
+    r = p.command({"cmd": "sample_colour", **dict(zip(("x_px", "y_px"), _frame_px(H, C.targets_mm[2])))})
+    assert r["ok"] is False and r["reason"] == "no_colour" and r["applied"] is False
+    assert "colour" in r["message"].lower()
+    # blank paper between the dots: also no colour; the window in use is untouched
+    r = p.command({"cmd": "sample_colour", **dict(zip(("x_px", "y_px"), _frame_px(H, (20.0, 20.0))))})
+    assert r["reason"] == "no_colour" and p._cup_sheet.colour_range is None
+
+
+def test_a_tap_off_the_sheet_is_refused():
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    frame, H = camera_frame(C, cup_mm=C.targets_mm[0])
+    p.process(frame, 0.0, 0)
+    r = p.command({"cmd": "sample_colour", "x_px": 1.0, "y_px": 1.0})
+    assert r["ok"] is False and r["reason"] == "off_sheet" and "sheet" in r["message"].lower()
+    assert p.command({"cmd": "sample_colour", "x_px": "nan", "y_px": 3})["ok"] is False
+
+
+def test_a_tap_on_a_wooden_peg_samples_the_peg_colour():
+    from praxis_session.perception.synth import WOOD_BGR
+
+    B = NHPT_BOARD
+    p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=False)
+    frame, H = camera_frame(B, pegs_mm=[B.targets_mm[4]], peg_bgr=WOOD_BGR)
+    assert p.process(frame, 0.0, 0)[0].to_dict()["board"]["occupancy"]["hole_4"] == "empty"
+    x, y = _frame_px(H, B.targets_mm[4])
+    r = p.command({"cmd": "sample_colour", "x_px": x, "y_px": y})
+    assert r["ok"] and r["target"] == "pegs" and r["detected"] is True
+    assert p.process(frame, 0.1, 1)[0].to_dict()["board"]["occupancy"]["hole_4"] == "occupied"
+
+
+def test_replay_reuses_a_colour_sample_from_the_sidecar(tmp_path):
+    """eval.py replays a clip with the colour the patient sampled (sidecar `colour_sample`)."""
+    import cv2
+
+    from praxis_session.perception.board_spec import CUP_TARGETS as C
+    from praxis_session.replay import run_replay
+
+    frame, _ = camera_frame(C, cup_mm=C.targets_mm[2], cup_bgr=(30, 200, 60))
+    path = tmp_path / "green.mp4"
+    w = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (frame.shape[1], frame.shape[0]))
+    for _ in range(5):
+        w.write(frame)
+    w.release()
+    plain = run_replay(path, mode="cup", sheet="cup_targets", use_hand=False)
+    assert all(e.payload["cup"]["cup_mm"] is None for e in plain.events if e.type == "frame")
+    x, y = C.targets_mm[2]
+    res = run_replay(path, mode="cup", sheet="cup_targets", use_hand=False, colour_sample={"t": 0.1, "x_mm": x, "y_mm": y})
+    frames = [e.payload for e in res.events if e.type == "frame"]
+    assert frames[0]["cup"]["cup_mm"] is None and frames[-1]["cup"]["cup_mm"] is not None
+    assert res.colour_sample and res.colour_sample["ok"]
+
+
 def test_nhpt_next_hole_is_null_in_any_hole_mode():
     p = SessionPipeline(mode="nhpt", sheet="nhpt_board", use_hand=False)
     frame, _ = camera_frame(NHPT_BOARD)
@@ -523,6 +607,46 @@ def test_front_view_exercise_gates_when_the_patient_is_side_on():
         evs += p.process_pose(_pose_res(figure(ang)), t=i / 15.0, frame_index=i)  # side view
     assert [e for e in evs if e.type in ("state_change", "rep_complete")] == []
     assert [e.to_dict() for e in evs if e.type == "frame"][10]["arm"]["gate"] == "turn_front"
+
+
+def _abduction_stream(sep_px: float | None = None, hike_at=lambda a: 0.0):
+    """One Arm out to the side lift from synthetic landmarks (front view), through the pipeline."""
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left",
+        exercise="abduction", sets=1, reps=1,
+    )
+    profile = [5.0] * 12 + [5 + 85 * i / 15 for i in range(16)] + [90] * 50 + [90 - 85 * i / 15 for i in range(16)] + [5] * 8
+    evs = []
+    for i, ang in enumerate(profile):
+        lm = figure(ang, frontal=True, sep_px=sep_px, hike=hike_at(ang))
+        evs += p.process_pose(_pose_res(lm), t=i / 15.0, frame_index=i)
+    return evs
+
+
+def test_a_patient_turned_about_20_degrees_is_still_scored_from_the_front():
+    """sep 0.57 trunk lengths (REHAB24-6: ~10-25 deg turned) gated as turn_front before 12 Oct."""
+    evs = _abduction_stream(sep_px=0.57 * 200)
+    assert [e.type for e in evs].count("rep_complete") == 1
+    assert all(e.payload["arm"]["gate"] is None for e in evs if e.type == "frame")
+    evs = _abduction_stream(sep_px=0.45 * 200)  # ~45 deg or more: asked to turn
+    assert [e.type for e in evs].count("rep_complete") == 0
+    assert [e.to_dict() for e in evs if e.type == "frame"][20]["arm"]["gate"] == "turn_front"
+
+
+def test_synthetic_shrug_fires_and_healthy_rhythm_does_not():
+    """Landmark streams: the practising shoulder rising with the arm at the healthy rate (scaled
+    from the REHAB24-6 median, ~0.085 trunk lengths at 90 deg) is not a hike; the same lift with
+    a shrug of 0.15 trunk lengths (~7 cm) from 30 deg on is."""
+    from praxis_session.perception.arm_fsm import hike_allowance
+
+    healthy = _abduction_stream(hike_at=lambda a: 0.085 * max(0.0, a - 5) / 85)
+    assert "shoulder_hiking" not in [e.type for e in healthy]
+    shrug = _abduction_stream(hike_at=lambda a: 0.085 * max(0.0, a - 5) / 85 + (0.15 if a >= 30 else 0.0))
+    hikes = [e.payload for e in shrug if e.type == "shoulder_hiking"]
+    assert len(hikes) == 1 and hikes[0]["hike"] > hike_allowance(hikes[0]["angle_deg"])
+    assert [e.payload for e in shrug if e.type == "rep_complete"][0]["hike"] is True
 
 
 def test_pendulum_mode_counts_swings_without_a_hold():
