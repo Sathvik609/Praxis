@@ -14,6 +14,15 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
   ground truth, cached pipeline events), `consent/<participant>_<date>.json` and `manifest.json`.
   Clips (`.mp4`) are git-ignored and deleted after 30 days; everything else is committed and
   keeps the numbers regenerable after deletion. Pseudonyms only.
+- `dataset_3d_v0/` — synthetic 3-D renders (`"synthetic": true`, **not real-camera evidence**):
+  headless Blender (Eevee) clips of the NHPT and Waiter – cup from a laptop-camera angle, built
+  by `blender/make_dataset_3d.py` from `blender/scenario.py` (script + ground truth, pure Python)
+  and `blender/render_tasks.py` (scene: printed sheet from the product's own sheet code, 32 mm
+  pegs in a perforated board, a cup with a blue tape ring and handle, a primitive hand/forearm
+  proxy, four lighting presets, motion blur, noise, JPEG q70). `manifest.json`,
+  `<id>.labels.json` (`praxis.labels/1`), `<id>.truth.json` (condition, splits, marker
+  visibility from ray casts) and `<id>.pred.json` (cached events, no pixels) are committed;
+  the `.avi` clips and `work/` are git-ignored and regenerate deterministically.
 - `labels.schema.json` — the ground-truth schema (`praxis.labels/1`): reps with start/end time,
   hole (NHPT) or dot (cup), expected verified/unverified + reason, scripted error, and for Arm
   out to the side the goniometer-app angle (`peak_deg_goniometer`) and trunk lean / shoulder hike.
@@ -39,6 +48,11 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
   false-alarm rates. Writes `results/dataset_<version>.{json,md}`; real clips also get
   `<clip>.pred.json` (events, no pixels; `--use-cache` re-scores from it, and an expired or
   deleted clip is scored from it without being read) and failure cases (below).
+- `eval_3d.py [--use-cache] [--tag before_fix]` — scores `dataset_3d_v0` with `eval.py`'s
+  matching plus what the 3-D renders add (verified/unverified with reasons, NHPT seat-time and
+  per-peg split error, timer start, hand-model and calibration coverage, one row per rendered
+  condition, every miss). Writes `results/synthetic3d_v0.{json,md}`, banner "Synthetic 3-D
+  renders, not real-camera evidence".
 - `latency.py [--replay] [--video CLIP --mode arm] [--store praxis.db]` — capture→event, proc,
   event→cue and round trip p50/p95 through the real WebSocket handler, driven like the browser;
   `--store` lists browser-measured live sessions. Writes `results/latency_v0.{json,md}`.

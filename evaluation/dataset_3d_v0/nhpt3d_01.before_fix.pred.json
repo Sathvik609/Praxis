@@ -1,0 +1,172 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "nhpt3d_01",
+ "mode": "nhpt",
+ "exercise": "nhpt",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 345,
+ "nhpt_total_s": null,
+ "coverage": {
+  "frames": 345,
+  "hand": 22,
+  "calibrated": 345,
+  "four_markers": 202,
+  "three_markers": 116,
+  "held": 27
+ },
+ "events": [
+  {
+   "type": "nhpt_start",
+   "t": 3.0833333333333335,
+   "id": 40,
+   "t_start": 3.0833333333333335
+  },
+  {
+   "type": "drop",
+   "t": 5.166666666666667,
+   "id": 67,
+   "free_pegs_mm": [
+    [
+     69.17,
+     199.64
+    ]
+   ]
+  },
+  {
+   "type": "drop",
+   "t": 8.083333333333334,
+   "id": 106,
+   "free_pegs_mm": [
+    [
+     103.8,
+     199.09
+    ],
+    [
+     69.09,
+     200.66
+    ]
+   ]
+  },
+  {
+   "type": "rep_complete",
+   "t": 12.25,
+   "id": 163,
+   "rep": 1,
+   "hole": 2,
+   "target": null,
+   "duration_s": 0.75,
+   "t_grasp": 8.833333333333334,
+   "t_seated": 9.583333333333334,
+   "t_clear": 12.25,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 13.916666666666666,
+   "id": 190,
+   "rep": 2,
+   "hole": 1,
+   "target": null,
+   "duration_s": 0.25,
+   "t_grasp": 12.333333333333334,
+   "t_seated": 12.583333333333334,
+   "t_clear": 13.916666666666666,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 18.083333333333332,
+   "id": 247,
+   "rep": 3,
+   "hole": 1,
+   "target": null,
+   "duration_s": 0.8333,
+   "t_grasp": 14.75,
+   "t_seated": 15.583333333333334,
+   "t_clear": 18.083333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 19.25,
+   "id": 268,
+   "rep": 4,
+   "hole": 0,
+   "target": null,
+   "duration_s": 0.1667,
+   "t_grasp": 18.25,
+   "t_seated": 18.416666666666668,
+   "t_clear": 19.25,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "drop",
+   "t": 22.75,
+   "id": 314,
+   "free_pegs_mm": [
+    [
+     69.25,
+     199.99
+    ],
+    [
+     138.35,
+     200.72
+    ],
+    [
+     69.48,
+     130.11
+    ],
+    [
+     103.86,
+     130.3
+    ],
+    [
+     138.44,
+     130.25
+    ]
+   ]
+  },
+  {
+   "type": "rep_complete",
+   "t": 24.666666666666668,
+   "id": 344,
+   "rep": 5,
+   "hole": 5,
+   "target": null,
+   "duration_s": 0.75,
+   "t_grasp": 23.5,
+   "t_seated": 24.25,
+   "t_clear": 24.666666666666668,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 27.5,
+   "id": 385,
+   "rep": 6,
+   "hole": 3,
+   "target": null,
+   "duration_s": 0.8333,
+   "t_grasp": 26.25,
+   "t_seated": 27.083333333333332,
+   "t_clear": 27.5,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  }
+ ]
+}

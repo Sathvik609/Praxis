@@ -1,0 +1,300 @@
+{
+ "schema": "praxis.labels/1",
+ "clip_id": "cup3d_06",
+ "exercise": "cup",
+ "labeller": "render",
+ "labelled_at": "generated",
+ "fps": 12.0,
+ "complete": true,
+ "notes": "Synthetic 3-D render (evaluation/blender); times from the script, not a human labeller.",
+ "reps": [
+  {
+   "rep": 1,
+   "t_start": 1.6267,
+   "t_end": 2.9794,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 2,
+   "t_start": 4.8534,
+   "t_end": 6.0113,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 3,
+   "t_start": 7.8661,
+   "t_end": 9.1715,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 4,
+   "t_start": 10.9917,
+   "t_end": 12.3762,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 4
+  },
+  {
+   "rep": 5,
+   "t_start": 14.1756,
+   "t_end": 15.5208,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 6,
+   "t_start": 17.228,
+   "t_end": 18.5306,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 7,
+   "t_start": 20.4281,
+   "t_end": 21.5454,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 8,
+   "t_start": 23.3531,
+   "t_end": 24.6139,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 0
+  },
+  {
+   "rep": 9,
+   "t_start": 26.4126,
+   "t_end": 27.6476,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 10,
+   "t_start": 29.5653,
+   "t_end": 30.8452,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 11,
+   "t_start": 32.7436,
+   "t_end": 34.0628,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 12,
+   "t_start": 35.8409,
+   "t_end": 37.0147,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 4
+  },
+  {
+   "rep": 13,
+   "t_start": 38.8266,
+   "t_end": 40.0485,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 14,
+   "t_start": 41.8921,
+   "t_end": 43.068,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 15,
+   "t_start": 44.9102,
+   "t_end": 46.1617,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 16,
+   "t_start": 47.9182,
+   "t_end": 49.1605,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 0
+  },
+  {
+   "rep": 17,
+   "t_start": 50.7247,
+   "t_end": 51.4012,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 18,
+   "t_start": 52.7802,
+   "t_end": 53.4462,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 19,
+   "t_start": 54.8478,
+   "t_end": 55.5502,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 20,
+   "t_start": 56.8998,
+   "t_end": 57.5758,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 4
+  },
+  {
+   "rep": 21,
+   "t_start": 58.9322,
+   "t_end": 59.5112,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 22,
+   "t_start": 60.7355,
+   "t_end": 61.4052,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 23,
+   "t_start": 62.7433,
+   "t_end": 63.4044,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 24,
+   "t_start": 64.7768,
+   "t_end": 65.4389,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 0
+  },
+  {
+   "rep": 25,
+   "t_start": 66.7402,
+   "t_end": 67.4003,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 26,
+   "t_start": 68.6887,
+   "t_end": 69.2881,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 27,
+   "t_start": 70.6483,
+   "t_end": 71.2881,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 28,
+   "t_start": 72.56,
+   "t_end": 73.2451,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 4
+  },
+  {
+   "rep": 29,
+   "t_start": 74.5646,
+   "t_end": 75.2131,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 3
+  },
+  {
+   "rep": 30,
+   "t_start": 76.5105,
+   "t_end": 77.1845,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 2
+  },
+  {
+   "rep": 31,
+   "t_start": 78.59,
+   "t_end": 79.2376,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 1
+  },
+  {
+   "rep": 32,
+   "t_start": 80.5648,
+   "t_end": 81.1745,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "to_dot": 0
+  }
+ ]
+}

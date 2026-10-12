@@ -1,0 +1,292 @@
+{
+ "schema": "praxis.truth3d/1",
+ "clip_id": "cup3d_03",
+ "condition": {
+  "id": "cup3d_03",
+  "exercise": "cup",
+  "seed": 203,
+  "tilt_deg": 30,
+  "yaw_deg": 10,
+  "dist_mm": 370,
+  "focal_per_width": 0.9,
+  "roll_deg": -1.0,
+  "light": "window",
+  "side": "left",
+  "skin": "deep",
+  "sleeve": false,
+  "noise_sigma": 3.0,
+  "speed": 0.9,
+  "peg_colour": "red",
+  "peg_d_mm": 7.0,
+  "board_mm": 5.0,
+  "cup_colour": "white",
+  "fps": 12.0,
+  "notes": ""
+ },
+ "duration_s": 92.013,
+ "frames": 1105,
+ "reaches": [
+  {
+   "rep": 1,
+   "from_dot": 0,
+   "to_dot": 1,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1293.1
+  },
+  {
+   "rep": 2,
+   "from_dot": 1,
+   "to_dot": 2,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1336.9
+  },
+  {
+   "rep": 3,
+   "from_dot": 2,
+   "to_dot": 3,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1309.4
+  },
+  {
+   "rep": 4,
+   "from_dot": 3,
+   "to_dot": 4,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1308.7
+  },
+  {
+   "rep": 5,
+   "from_dot": 4,
+   "to_dot": 3,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1512.0
+  },
+  {
+   "rep": 6,
+   "from_dot": 3,
+   "to_dot": 2,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1330.2
+  },
+  {
+   "rep": 7,
+   "from_dot": 2,
+   "to_dot": 1,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1485.4
+  },
+  {
+   "rep": 8,
+   "from_dot": 1,
+   "to_dot": 0,
+   "arc": 1,
+   "phase": "slow",
+   "reach_ms": 1237.5
+  },
+  {
+   "rep": 9,
+   "from_dot": 0,
+   "to_dot": 1,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1537.6
+  },
+  {
+   "rep": 10,
+   "from_dot": 1,
+   "to_dot": 2,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1416.7
+  },
+  {
+   "rep": 11,
+   "from_dot": 2,
+   "to_dot": 3,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1504.8
+  },
+  {
+   "rep": 12,
+   "from_dot": 3,
+   "to_dot": 4,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1278.1
+  },
+  {
+   "rep": 13,
+   "from_dot": 4,
+   "to_dot": 3,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1546.7
+  },
+  {
+   "rep": 14,
+   "from_dot": 3,
+   "to_dot": 2,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1512.5
+  },
+  {
+   "rep": 15,
+   "from_dot": 2,
+   "to_dot": 1,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1358.7
+  },
+  {
+   "rep": 16,
+   "from_dot": 1,
+   "to_dot": 0,
+   "arc": 2,
+   "phase": "slow",
+   "reach_ms": 1346.0
+  },
+  {
+   "rep": 17,
+   "from_dot": 0,
+   "to_dot": 1,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 688.2
+  },
+  {
+   "rep": 18,
+   "from_dot": 1,
+   "to_dot": 2,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 800.6
+  },
+  {
+   "rep": 19,
+   "from_dot": 2,
+   "to_dot": 3,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 655.5
+  },
+  {
+   "rep": 20,
+   "from_dot": 3,
+   "to_dot": 4,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 768.4
+  },
+  {
+   "rep": 21,
+   "from_dot": 4,
+   "to_dot": 3,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 665.5
+  },
+  {
+   "rep": 22,
+   "from_dot": 3,
+   "to_dot": 2,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 713.9
+  },
+  {
+   "rep": 23,
+   "from_dot": 2,
+   "to_dot": 1,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 663.8
+  },
+  {
+   "rep": 24,
+   "from_dot": 1,
+   "to_dot": 0,
+   "arc": 3,
+   "phase": "fast",
+   "reach_ms": 681.4
+  },
+  {
+   "rep": 25,
+   "from_dot": 0,
+   "to_dot": 1,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 713.4
+  },
+  {
+   "rep": 26,
+   "from_dot": 1,
+   "to_dot": 2,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 718.3
+  },
+  {
+   "rep": 27,
+   "from_dot": 2,
+   "to_dot": 3,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 698.9
+  },
+  {
+   "rep": 28,
+   "from_dot": 3,
+   "to_dot": 4,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 806.8
+  },
+  {
+   "rep": 29,
+   "from_dot": 4,
+   "to_dot": 3,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 736.9
+  },
+  {
+   "rep": 30,
+   "from_dot": 3,
+   "to_dot": 2,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 807.6
+  },
+  {
+   "rep": 31,
+   "from_dot": 2,
+   "to_dot": 1,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 671.0
+  },
+  {
+   "rep": 32,
+   "from_dot": 1,
+   "to_dot": 0,
+   "arc": 4,
+   "phase": "fast",
+   "reach_ms": 733.4
+  }
+ ],
+ "markers_visible_min": 2,
+ "frames_below_4_markers": 1047,
+ "frames_below_3_markers": 263,
+ "marker_loss_spans": [],
+ "hand_in_view_frames": 1045,
+ "render_s": 372.0
+}

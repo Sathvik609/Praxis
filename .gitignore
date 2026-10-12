@@ -29,6 +29,10 @@ evaluation/dataset_v*/**/*.webm
 evaluation/dataset_v*/**/*.m4v
 evaluation/dataset_v*/**/*.jpg
 evaluation/dataset_v*/**/*.png
+# 3-D synthetic renders (evaluation/blender/make_dataset_3d.py): clips and Blender work files are
+# regenerable; manifest, labels, truth and cached events (no pixels) are committed
+evaluation/dataset_3d_v*/*.avi
+evaluation/dataset_3d_v*/work/
 !evaluation/dataset_v0/synthetic_*.mp4
 # Failure-case frames (pixels from consented real clips): local only, deleted with the clip
 evaluation/failure_cases/*

@@ -1,0 +1,98 @@
+{
+ "schema": "praxis.labels/1",
+ "clip_id": "nhpt3d_02",
+ "exercise": "nhpt",
+ "labeller": "render",
+ "labelled_at": "generated",
+ "fps": 12.0,
+ "complete": true,
+ "notes": "Synthetic 3-D render (evaluation/blender); times from the script, not a human labeller.",
+ "reps": [
+  {
+   "rep": 1,
+   "t_start": 1.736,
+   "t_end": 2.9046,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 0
+  },
+  {
+   "rep": 2,
+   "t_start": 4.303,
+   "t_end": 5.6502,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 8
+  },
+  {
+   "rep": 3,
+   "t_start": 7.1155,
+   "t_end": 8.4015,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 3
+  },
+  {
+   "rep": 4,
+   "t_start": 9.8864,
+   "t_end": 11.1498,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 6
+  },
+  {
+   "rep": 5,
+   "t_start": 12.5457,
+   "t_end": 13.7606,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 7
+  },
+  {
+   "rep": 6,
+   "t_start": 15.1649,
+   "t_end": 16.3227,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 4
+  },
+  {
+   "rep": 7,
+   "t_start": 17.5973,
+   "t_end": 18.7152,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 1
+  },
+  {
+   "rep": 8,
+   "t_start": 20.0716,
+   "t_end": 21.3076,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 5
+  },
+  {
+   "rep": 9,
+   "t_start": 22.7916,
+   "t_end": 23.9414,
+   "expected": "verified",
+   "reason": null,
+   "deliberate_error": null,
+   "hole": 2
+  }
+ ],
+ "nhpt": {
+  "t_start": 1.736,
+  "t_end": 23.9414,
+  "total_s": 22.2054
+ }
+}

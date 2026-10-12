@@ -1,0 +1,236 @@
+{
+ "schema": "praxis.pred/1",
+ "clip_id": "nhpt3d_03",
+ "mode": "nhpt",
+ "exercise": "nhpt",
+ "source": "video",
+ "cv2_version": "5.0.0",
+ "settings": {
+  "debounce_frames": 2,
+  "clear_frames": 3
+ },
+ "models": {
+  "hand": true,
+  "pose": false
+ },
+ "fps": 12.0,
+ "frames": 372,
+ "nhpt_total_s": 26.0833,
+ "coverage": {
+  "frames": 372,
+  "hand": 13,
+  "calibrated": 372,
+  "four_markers": 212,
+  "three_markers": 127,
+  "held": 33
+ },
+ "events": [
+  {
+   "type": "nhpt_start",
+   "t": 3.1666666666666665,
+   "id": 820,
+   "t_start": 3.1666666666666665,
+   "inferred": false
+  },
+  {
+   "type": "rep_complete",
+   "t": 4.0,
+   "id": 834,
+   "rep": 1,
+   "hole": 8,
+   "target": null,
+   "duration_s": 0.4167,
+   "t_grasp": 3.1666666666666665,
+   "t_seated": 3.5833333333333335,
+   "t_clear": 4.0,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 7.583333333333333,
+   "id": 883,
+   "rep": 2,
+   "hole": 1,
+   "target": null,
+   "duration_s": 0.0,
+   "t_grasp": 7.166666666666667,
+   "t_seated": 7.166666666666667,
+   "t_clear": 7.583333333333333,
+   "verified": false,
+   "reason": "grasp_not_seen"
+  },
+  {
+   "type": "rep_complete",
+   "t": 10.833333333333334,
+   "id": 929,
+   "rep": 3,
+   "hole": 2,
+   "target": null,
+   "duration_s": 0.4167,
+   "t_grasp": 10.0,
+   "t_seated": 10.416666666666666,
+   "t_clear": 10.833333333333334,
+   "verified": true,
+   "reason": null
+  },
+  {
+   "type": "rep_complete",
+   "t": 14.0,
+   "id": 973,
+   "rep": 4,
+   "hole": 6,
+   "target": null,
+   "duration_s": 0.6667,
+   "t_grasp": 12.916666666666666,
+   "t_seated": 13.583333333333334,
+   "t_clear": 14.0,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 17.083333333333332,
+   "id": 1016,
+   "rep": 5,
+   "hole": 4,
+   "target": null,
+   "duration_s": 0.0,
+   "t_grasp": 16.666666666666668,
+   "t_seated": 16.666666666666668,
+   "t_clear": 17.083333333333332,
+   "verified": false,
+   "reason": "grasp_not_seen"
+  },
+  {
+   "type": "rep_complete",
+   "t": 19.833333333333332,
+   "id": 1055,
+   "rep": 6,
+   "hole": 0,
+   "target": null,
+   "duration_s": 0.3333,
+   "t_grasp": 19.083333333333332,
+   "t_seated": 19.416666666666668,
+   "t_clear": 19.833333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 23.0,
+   "id": 1101,
+   "rep": 7,
+   "hole": 5,
+   "target": null,
+   "duration_s": 0.5,
+   "t_grasp": 22.083333333333332,
+   "t_seated": 22.583333333333332,
+   "t_clear": 23.0,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 26.416666666666668,
+   "id": 1148,
+   "rep": 8,
+   "hole": 3,
+   "target": null,
+   "duration_s": 0.8333,
+   "t_grasp": 25.166666666666668,
+   "t_seated": 26.0,
+   "t_clear": 26.416666666666668,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "nhpt_complete",
+   "t": 29.416666666666668,
+   "id": 1189,
+   "total_s": 26.0833,
+   "start_inferred": false,
+   "splits_s": [
+    0.4167,
+    3.5833,
+    3.25,
+    3.1667,
+    3.0833,
+    2.75,
+    3.1667,
+    3.4167,
+    3.25
+   ],
+   "pegs": [
+    {
+     "peg": 1,
+     "hole": 8,
+     "t": 3.5833333333333335,
+     "split_s": 0.4167
+    },
+    {
+     "peg": 2,
+     "hole": 1,
+     "t": 7.166666666666667,
+     "split_s": 3.5833
+    },
+    {
+     "peg": 3,
+     "hole": 2,
+     "t": 10.416666666666666,
+     "split_s": 3.25
+    },
+    {
+     "peg": 4,
+     "hole": 6,
+     "t": 13.583333333333334,
+     "split_s": 3.1667
+    },
+    {
+     "peg": 5,
+     "hole": 4,
+     "t": 16.666666666666668,
+     "split_s": 3.0833
+    },
+    {
+     "peg": 6,
+     "hole": 0,
+     "t": 19.416666666666668,
+     "split_s": 2.75
+    },
+    {
+     "peg": 7,
+     "hole": 5,
+     "t": 22.583333333333332,
+     "split_s": 3.1667
+    },
+    {
+     "peg": 8,
+     "hole": 3,
+     "t": 26.0,
+     "split_s": 3.4167
+    },
+    {
+     "peg": 9,
+     "hole": 7,
+     "t": 29.25,
+     "split_s": 3.25
+    }
+   ]
+  },
+  {
+   "type": "rep_complete",
+   "t": 29.666666666666668,
+   "id": 1194,
+   "rep": 9,
+   "hole": 7,
+   "target": null,
+   "duration_s": 0.8333,
+   "t_grasp": 28.416666666666668,
+   "t_seated": 29.25,
+   "t_clear": 29.666666666666668,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  }
+ ]
+}
