@@ -130,7 +130,6 @@ EVAL_RX.allowed_adaptations["abduction"] = {**EVAL_RX.allowed_adaptations["abduc
 CLAIMS: dict[str, re.Pattern[str]] = {
     "overshoot": re.compile(r"shoulder (height|level)|no higher|not (go |lift |raise )?(any )?higher|above (your )?shoulder|too high|past (the |your )?(line|shoulder|target)|stop at|\b90\b|over the line|higher than", re.I),
     "hold": re.compile(r"\bhold", re.I),
-    "short": re.compile(r"(reach|lift|raise|go)[^.,;]{0,25}\b(higher|further|all the way)|fell short|didn'?t reach|short of|up to the line", re.I),
     "hike": re.compile(r"shrug|hik|shoulder (down|drop|relaxed|low)|drop (your|the) shoulder|relax (your|the) shoulder|let the shoulder", re.I),
     "lean": re.compile(r"\blean|\btilt", re.I),
     "elbow": re.compile(r"elbow|\bbend|\bbent|straight arm|arm straight", re.I),
@@ -142,10 +141,19 @@ FIX_TURN = re.compile(r"\bfac(e|ing)\b|turn|toward|towards|front", re.I)
 FIX_HIPS = re.compile(r"\bhips?\b|move (the )?camera|camera (back|down)|step back|further back|back a (little|bit)|lower the camera|tilt the camera", re.I)
 
 
+SHORT_EXPLICIT = re.compile(r"fell short|stopped short|didn'?t reach|short of (the )?(line|target|mark|90)|not (high|far) enough|below the (line|target)", re.I)
+SHORT_LIFT = re.compile(r"\b(reach|lift|rais|go|get)\w*\b[^.,;!?]{0,25}\b(higher|further|all the way)\b|up to the line", re.I)
+SHORT_NEGATED = re.compile(r"\b(no|not|don'?t|never|no need to)\b[^.,;!?]{0,20}\bhigher\b|higher than (needed|necessary|you need|the line|shoulder|90)", re.I)
+
+
 def claims_in(text: str) -> set[str]:
-    out = {k for k, rx in CLAIMS.items() if rx.search(text or "")}
-    if "short" in out and re.search(r"no higher|not (go |lift |raise )?(any )?higher", text or "", re.I) and not re.search(r"fell short|didn'?t reach|short of|all the way", text or "", re.I):
-        out.discard("short")
+    """Claim classes in what the coach said or proposed. "Short" (fell short of the target) is
+    read per sentence: "short of 3 seconds" is a hold claim, and "no need to go higher" or
+    "higher than needed" is the overshoot fix (12 Oct, corrected after the first real run)."""
+    out = {k for k, rx in CLAIMS.items() if k != "short" and rx.search(text or "")}
+    for sentence in re.split(r"(?<=[.!?])\s+", text or ""):
+        if SHORT_EXPLICIT.search(sentence) or (SHORT_LIFT.search(sentence) and not SHORT_NEGATED.search(sentence)):
+            out.add("short")
     return out
 
 
@@ -469,7 +477,7 @@ def score_sets(res: dict[str, Any], truth_reps: list[dict[str, Any]]) -> list[di
         faulty = any(truth[c] for c in ("overshoot", "hold", "short", "hike", "lean"))
         corrective = any(a in ("correct", "regress", "rest") for a in act["actions"])
         row |= {
-            "run": run_id, "actions": act["actions"], "said": act["text"][:400], "proposals": act["proposals"], "tools": act.get("tools", []),
+            "run": run_id, "actions": act["actions"], "said": act["text"], "proposals": act["proposals"], "tools": act.get("tools", []),
             "claims": sorted(claims),
             "faulty_truth": faulty,
             "fault_addressed": corrective and any(truth[c] for c in claims if c in OBSERVABLE),
@@ -680,7 +688,7 @@ def write_markdown(out_dir: Path) -> Path | None:
     if not cols:
         return None
     order = {"anthropic": 0, "scripted": 1, "rule": 2}
-    cols.sort(key=lambda d: (order.get(d["planner"], 9), d["model"]))
+    cols.sort(key=lambda d: (order.get(d["planner"], 9), d["model"] != DEFAULT_MODEL, d["model"]))  # the default model is the main column
     name = {"anthropic": lambda d: f"Claude agent ({d['model']}, ×{d['repeat']})", "scripted": lambda d: "Scripted agent (fixed script)", "rule": lambda d: "Rule coach only (agent off)"}
     head = [name[d["planner"]](d) for d in cols]
     main = next((d for d in cols if d["planner"] == "anthropic"), cols[0])
@@ -713,6 +721,12 @@ def write_markdown(out_dir: Path) -> Path | None:
     line("Claims supported by mocap / all claims", lambda d: f"{d['claim_precision']['supported']}/{d['claim_precision']['total']} ({d['claim_precision']['rate']})" if d["claim_precision"]["total"] else "—")
     line("Unsupported claims by class", lambda d: ", ".join(f"{k} {v}" for k, v in sorted(d["unsupported_claims"].items())) or "none")
     line("Progression proposed on a faulty set", lambda d: d["progress_on_faulty"])
+
+    def _sets(d: dict[str, Any]) -> list[dict[str, Any]]:
+        return [x for r in d["rows"] for x in r["sets"] if x["truth"]["labelled_reps"] >= 3 and x["faulty_truth"]]
+
+    line("Smaller dose offered on a faulty set (Yes / Keep prompt)", lambda d: _r(frac(["regress" in x["actions"] for x in _sets(d)])))
+    line("Session plan revised with this set as evidence", lambda d: _r(frac(["set_session_plan" in x["actions"] for x in _sets(d)])) if d["planner"] == "anthropic" else "—")
     line("Correction evidence from this set", lambda d: _r(d["evidence_in_set"]))
     line("Perception tool before every action", lambda d: _r(d["perception_before_action"]) if d["planner"] != "rule" else "n/a")
     line("Real wrong-view pause: fix named", lambda d: _r(d["fix_named_real_turn"]))
@@ -768,6 +782,33 @@ def write_markdown(out_dir: Path) -> Path | None:
     return path
 
 
+def rescore_set(x: dict[str, Any]) -> dict[str, Any]:
+    """Claims, unsupported claims and 'fault addressed' from a set row's stored text, actions
+    and truth: the same rules as `score_sets`, without re-running the session."""
+    truth = x["truth"]
+    claims = claims_in(x["said"])
+    corrective = any(a in ("correct", "regress", "rest") for a in x["actions"])
+    return x | {
+        "claims": sorted(claims),
+        "fault_addressed": corrective and any(truth[c] for c in claims if c in OBSERVABLE),
+        "unsupported_claims": sorted([c for c in claims if (c in OBSERVABLE and not truth[c]) or c in UNMEASURED]),
+    }
+
+
+def rescore_file(path: Path) -> Path | None:
+    """Re-apply the claim rules to a result file's stored text. The rule coach's text was cut at
+    400 characters before 12 Oct, so its file must be re-run instead (refused here)."""
+    d = json.loads(path.read_text())
+    if d["planner"] == "rule" and any(len(x["said"]) == 400 for r in d["rows"] for x in r["sets"]):
+        return None
+    for r in d["rows"]:
+        r["sets"] = [rescore_set(x) for x in r["sets"]]
+    keep = {k: d[k] for k in ("generated", "opencv", "pipeline_fingerprint")}
+    out = summarise(d["rows"], d["planner"], d["model"], d["repeat"]) | keep | {"rescored": time.strftime("%Y-%m-%d")}
+    path.write_text(json.dumps(out, indent=2, default=str) + "\n")
+    return path
+
+
 def _acts(actions: list[str]) -> str:
     """'correct ×17, instruct ×11' (the rule coach speaks in every rep); agent runs stay in order."""
     if not actions:
@@ -813,7 +854,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, default=RESULTS)
     ap.add_argument("--traces", type=Path, default=TRACES)
     ap.add_argument("--render", action="store_true", help="rewrite agent_video_v0.md from the .json files (no run)")
+    ap.add_argument("--rescore", action="store_true", help="re-apply the claim rules to the stored text of every .json (no run, no cost)")
     args = ap.parse_args(argv)
+    if args.rescore:
+        for f in sorted(args.out.glob("agent_video_v0*.json")):
+            done = rescore_file(f)
+            print(f"rescored {done}" if done else f"skipped {f.name}: its text was cut at 400 characters; re-run --planner rule")
+        args.render = True
     if args.render:
         print(write_markdown(args.out))
         return 0

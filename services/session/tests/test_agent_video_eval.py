@@ -29,6 +29,12 @@ def test_claim_classes_read_what_the_coach_said():
     assert V.claims_in("Keep your elbow straight and the arm out to the side, not forward.") == {"elbow", "forward"}
     assert V.claims_in("You leaned to the left.") == {"lean"}
     assert V.claims_in("") == set()
+    # 12 Oct, read off the first real run: these are not "fell short of the target" claims
+    assert "short" not in V.claims_in("Your holds came up a little short of 3 seconds.")
+    assert "short" not in V.claims_in("Stop at shoulder height. No need to go higher.")
+    assert "short" not in V.claims_in("Don't go higher than the line, and hold steady.")
+    assert "short" not in V.claims_in("You're lifting higher than needed.")
+    assert "short" in V.claims_in("Your arm stopped short of the line; reach a little higher next time.")
 
 
 def _rep(**kw):
