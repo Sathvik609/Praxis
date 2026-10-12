@@ -45,8 +45,10 @@ names the fix).
 **Ground truth** (never shown to the agent) per set, from the matched labelled repetitions:
 REHAB24-6's physiotherapist correct/incorrect label, and from motion capture: peak anatomical
 abduction (`ref_frontal`) above 100° (overshoot of the 90° ceiling), longest continuous time at
-≥ 85° (hold < 2.5 s = no hold), peak below 85° (short), shoulder rise over the rest baseline above
-0.08 of trunk length (the product's hike limit), trunk lean change above 12° (the lean stop
+≥ 85° (hold < 2.5 s = no hold), peak below 85° (short), shoulder hike by the product's own
+definition (`rep_hiked`: mocap shoulder rise over the rest baseline, in trunk lengths, above
+`arm_fsm.hike_allowance` of the mocap arm angle at the same frame, for the product's
+`HIKE_PERSIST_FRAMES` scored frames in a row), trunk lean change above 12° (the lean stop
 threshold), and two faults a front-view shoulder angle cannot see: elbow bent (< 150° at the
 peak) and arm lifted forward of the side (plane > 25°). Setup truth: the labelled orientation
 (half-profile / side needs "face the camera"), or the crop (hips out of view).
@@ -94,6 +96,7 @@ from praxis_session.agent.metrics import AgentMetrics  # noqa: E402
 from praxis_session.agent.model import AGENT_LABELS, DEFAULT_MODEL, ScriptedPlanner, StrandsPlanner, base_model, cost_usd, load_config, price_for  # noqa: E402
 from praxis_session.coach.agent import AgentCoach  # noqa: E402
 from praxis_session.events import Event, make_event  # noqa: E402
+from praxis_session.perception.arm_fsm import HIKE_MARGIN, HIKE_PERSIST_FRAMES, hike_allowance  # noqa: E402
 from praxis_session.pipeline import SessionPipeline  # noqa: E402
 from praxis_session.prescription import SEED_PRESCRIPTION  # noqa: E402
 from praxis_session.session import RULE_LABEL_WITH_AGENT, CoachSession  # noqa: E402
@@ -108,7 +111,6 @@ OVERSHOOT_DEG = 100.0  # 90° ceiling + 10° (rehab24_eval IN_RANGE_DEG)
 HOLD_MIN_S = 2.5  # 3 s prescribed hold, 0.5 s tolerance
 HOLD_LEVEL_DEG = 85.0
 SHORT_DEG = 85.0
-HIKE_LIMIT = R.HIKE_LIMIT
 ELBOW_BENT_DEG = 150.0
 PLANE_FORWARD_DEG = 25.0
 REVIEW = ("PM_000", "PM_001", "PM_012", "PM_023", "PM_032", "PM_039", "PM_122", "PM_109", "PM_114")
@@ -158,6 +160,32 @@ def claims_in(text: str) -> set[str]:
 
 
 # ---- ground truth from motion capture --------------------------------------------------------
+def rep_hiked(rise: np.ndarray, angle_deg: np.ndarray) -> tuple[bool, float | None]:
+    """Shoulder hike in one repetition by the product's definition, on motion capture.
+
+    The product (`ArmFSM`, 12 Oct) flags per scored frame: hike over its rest baseline above
+    `hike_allowance(angle)` at *that frame's* arm angle, and only after `HIKE_PERSIST_FRAMES`
+    consecutive frames over it. A per-rep form (peak rise against the allowance at the peak
+    angle) would not match: the shoulder can rise most on the way up or down, at a smaller angle
+    with a smaller allowance. So the truth is per frame too: `rise` (mocap shoulder rise over the
+    rest baseline, trunk lengths) against `hike_allowance` of the mocap anatomical angle
+    (`ref_frontal`, which the product's scored angle tracks) at the same 30 fps frame, persisting
+    `HIKE_PERSIST_FRAMES * STRIDE` mocap frames (the same ~0.2 s as 3 scored frames at 15 fps); a
+    missing mocap frame breaks the run. Returns (hiked, largest excess over the allowance)."""
+    rise, angle = np.asarray(rise, np.float64), np.asarray(angle_deg, np.float64)
+    ok = np.isfinite(rise) & np.isfinite(angle)
+    if not ok.any():
+        return False, None
+    allow = np.array([hike_allowance(a) if np.isfinite(a) else np.inf for a in angle])
+    over = ok & (rise > allow)
+    run = best = 0
+    for v in over:
+        run = run + 1 if v else 0
+        best = max(best, run)
+    excess = float(np.max(np.where(ok, rise - allow, -np.inf)))
+    return best >= HIKE_PERSIST_FRAMES * STRIDE, round(excess, 3)
+
+
 def rep_truth(vid: str) -> list[dict[str, Any]]:
     """Per labelled repetition: physio label, camera orientations, mocap peak, hold, rise,
     lean change, elbow and plane at the peak. Joint files are 30 fps, frame-indexed like video."""
@@ -196,6 +224,7 @@ def rep_truth(vid: str) -> list[dict[str, Any]]:
             "rep": rp["rep"], "t0": a / FPS, "t1": b / FPS, "correct": rp["correct"], "orientation_c17": rp["orientation"],
             "peak_deg": round(float(np.nanmax(seg)), 1), "hold_s": round(best / FPS, 2),
             "rise": round(float(np.nanmax(refs["shoulder_rise"][a: b + 1]) - rise0), 3),
+            **dict(zip(("hike", "hike_excess"), rep_hiked(refs["shoulder_rise"][a: b + 1] - rise0, seg))),
             "lean_change_deg": round(float(np.nanmax(np.abs(lean[a: b + 1] - lean0))), 1),
             "elbow_deg": round(float(elbow[k]), 1), "plane_deg": round(float(plane[k]), 1),
         })
@@ -215,7 +244,7 @@ def set_truth(reps: list[dict[str, Any]]) -> dict[str, Any]:
         "overshoot": most(lambda r: r["peak_deg"] > OVERSHOOT_DEG),
         "hold": most(lambda r: r["hold_s"] < HOLD_MIN_S),  # true = the hold fault is present
         "short": most(lambda r: r["peak_deg"] < SHORT_DEG),
-        "hike": most(lambda r: r["rise"] > HIKE_LIMIT),
+        "hike": most(lambda r: bool(r["hike"])),
         "lean": most(lambda r: r["lean_change_deg"] > EVAL_RX.stop_rules.lean_deg),
         "elbow": most(lambda r: r["elbow_deg"] < ELBOW_BENT_DEG),
         "forward": most(lambda r: r["plane_deg"] > PLANE_FORWARD_DEG),
@@ -681,6 +710,18 @@ def stem_for(planner: str, model: str | None) -> str:
     return f"agent_video_v0_{planner}"
 
 
+def _truth_counts(d: dict[str, Any]) -> str:
+    """'overshoot in a/n, no hold in b/n, hike in c/n' over the scored sets of the first repeat."""
+    seen: set[str] = set()
+    sets = []
+    for r in d["rows"]:
+        if r["id"] not in seen:
+            seen.add(r["id"])
+            sets += [x["truth"] for x in r["sets"] if x["truth"]["labelled_reps"] >= 3]
+    n = len(sets)
+    return ", ".join(f"{label} in {sum(1 for t in sets if t[k])}/{n} scored sets" for k, label in (("overshoot", "overshoot"), ("hold", "no hold"), ("hike", "shoulder hike")))
+
+
 def write_markdown(out_dir: Path) -> Path | None:
     """agent_video_v0.md from every agent_video_v0*.json (one column per planner/model)."""
     files = sorted(out_dir.glob("agent_video_v0*.json"))
@@ -701,9 +742,9 @@ def write_markdown(out_dir: Path) -> Path | None:
         "",
         "- **Real frames, real perception, real agent; simulated taps.** Every frame is REHAB24-6 RGB video (Camera17/18, 9 healthy adults in a mocap lab) through the product's `SessionPipeline` (OpenCV 5 decode, resize, JPEG round-trip, `cv2.dnn` pose), stop rules, rule coach and the agent (tools over MCP). The patient's taps are simulated and identical for every planner (declines dose prompts, accepts a resume prompt, taps Resume once the view gate has been open 3 s; induced cases: fixes the framing when told).",
         "- **Ground truth the agent never sees**: the physiotherapist's correct/incorrect label per repetition and motion-capture facts (peak abduction, hold, shoulder rise, trunk lean, elbow, plane), aggregated per set over the labelled repetitions matched to the set's counted reps.",
-        "- **The dataset is not our exercise.** Subjects lift overhead (median peak ≈ 124°) without a 3 s hold, so under the shipped prescription (90° ceiling, 3 s hold) nearly every set has true faults (overshoot, no hold, and a shoulder rise above the product's hike limit). There are no clean in-range sets, so *false corrections* are measured as **unsupported claims** (a fault named that mocap says is absent, or one a front-view shoulder angle cannot measure: bent elbow, arm forward), not as corrections of clean sets.",
+        "- **The dataset is not our exercise.** Subjects lift overhead (median peak ≈ 124°) without a 3 s hold, so under the shipped prescription (90° ceiling, 3 s hold) nearly every set has true faults ({_truth_counts(main)}). There are no clean in-range sets, so *false corrections* are measured as **unsupported claims** (a fault named that mocap says is absent, or one a front-view shoulder angle cannot measure: bent elbow, arm forward), not as corrections of clean sets.",
         "- **The physiotherapist's mistakes are mostly invisible to this camera angle**: arm lifted forward of the side (subjects 3, 5, 8), bent elbow (2, 9), smaller range (1, 9). The agent can only act on what OpenCV reports, so the physio-label table measures perception + agent together and is reported, not optimised.",
-        "- The shoulder-hike limit is being re-tuned in parallel (another workstream); hike counts and the hike claim class depend on the threshold in the fingerprinted code above.",
+        f"- **Shoulder hike** is judged by the product's own limit on both sides: OpenCV's `shoulder_hiking` flag and the mocap truth both use the angle-aware `hike_allowance(angle)` (healthy p95 curve + {HIKE_MARGIN} trunk lengths, {HIKE_PERSIST_FRAMES} scored frames in a row; `arm_fsm.py`, 12 Oct), not the fixed 0.08 used until 11 Oct.",
         "- `setup_induced` frames are cropped on purpose (hips out of view): an induced perturbation of real video, labelled as such.",
         "",
         "## Headline",
