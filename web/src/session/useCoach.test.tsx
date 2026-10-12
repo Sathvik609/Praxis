@@ -50,9 +50,9 @@ test('an agent resume command (after the patient said yes) clears the paused ove
 
 test('caption carries its source; the latest rule label is kept for the screen-state captions', () => {
   const { result } = renderHook(() =>
-    useCoach([coach(1, { source: 'rule', label: 'Rule-based coach' }), coach(2, { source: 'agent', label: 'Claude agent · Amazon Bedrock' })]),
+    useCoach([coach(1, { source: 'rule', label: 'Rule-based coach' }), coach(2, { source: 'agent', label: 'Claude agent · Anthropic API (dev)' })]),
   )
-  expect(result.current.caption?.label).toBe('Claude agent · Amazon Bedrock')
+  expect(result.current.caption?.label).toBe('Claude agent · Anthropic API (dev)')
   expect(result.current.captionSource).toBe('agent')
   expect(result.current.ruleLabel).toBe('Rule-based coach')
 })

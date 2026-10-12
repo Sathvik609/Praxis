@@ -222,11 +222,11 @@ test('Coach row: Claude Sonnet 5 via the Anthropic API (dev) with MCP tools conn
   expect(screen.getByText('MCP tools connected')).toBeInTheDocument()
 })
 
-test('Coach row: Bedrock, not ready, says why and that the rule coach runs', async () => {
-  mockApi({ '/health': health({ mode: 'bedrock', model: 'us.anthropic.claude-sonnet-5-v1:0', mcp: false, ready: false, reason: 'PRAXIS_CLOUD_ENABLED is 0' }) })
+test('Coach row: Anthropic API not ready says why and that the rule coach runs', async () => {
+  mockApi({ '/health': health({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: false, reason: 'ANTHROPIC_API_KEY is not set' }) })
   await renderSettings()
-  expect(await screen.findByText('Claude Sonnet 5 via Amazon Bedrock')).toBeInTheDocument()
-  expect(screen.getByText(/Not ready: PRAXIS_CLOUD_ENABLED is 0 · the rule-based coach runs/)).toBeInTheDocument()
+  expect(await screen.findByText('Claude Haiku 5.5 via Anthropic API (dev)')).toBeInTheDocument()
+  expect(screen.getByText(/Not ready: ANTHROPIC_API_KEY is not set · the rule-based coach runs/)).toBeInTheDocument()
 })
 
 test('Coach row: off (or a service without the agent field) reads as the rule-based coach', async () => {

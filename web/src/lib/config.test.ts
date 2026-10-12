@@ -22,7 +22,7 @@ describe('deploymentLabel', () => {
   it('names AWS Graviton + COOL when the service reports the COOL build', () => {
     const d = deploymentLabel(cool, 'dl8xykmg8ki61.cloudfront.net')
     expect(d.title).toBe('Running on AWS Graviton · COOL OpenCV 5.1.0-dev')
-    expect(d.sub).toMatch(/Bedrock and other AWS cloud services are off/)
+    expect(d.sub).toMatch(/Other AWS cloud services are off/)
     expect(d.sub).toMatch(/processed on the Praxis service in memory, never stored/)
   })
   it('says the laptop edge build when the service runs locally', () => {
