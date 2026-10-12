@@ -35,7 +35,7 @@ AGENT_LABELS = {
     "scripted": "Claude agent · scripted (test)",
 }
 PROVIDERS = {"anthropic": "anthropic-api", "scripted": "scripted"}
-DEFAULT_MODEL = "claude-sonnet-5"
+DEFAULT_MODEL = "claude-sonnet-5-5"  # 12 Oct model comparison: docs/AGENT.md "Model choice"
 MAX_TOKENS = 2048  # 12 Oct: room for adaptive thinking + parallel tool calls (800 truncated runs)
 EFFORT = "low"
 RUN_TIMEOUT_S = 15.0
