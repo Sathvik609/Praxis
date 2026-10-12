@@ -22,11 +22,11 @@ What is measured and what is not, in one place:
 | Area | Status (11 Oct 2026) |
 |---|---|
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 760 service tests + 960 web tests green; CI on every push |
-| Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; **real Claude**, 15 scenarios × 3: 45/45 passed, **0 guardrail violations** (§8.3) |
+| Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; Claude Sonnet 5.5 via the Anthropic API. **On real video** (REHAB24-6 through the product pipeline, 40 sessions): a motion-capture-confirmed fault corrected in 43/44 set reviews, the fix named on 26/26 real wrong-view pauses, **0 guardrail violations**; synthetic 15 × 2: 28/30 (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live** (stopped between work sessions); the 636-test suite of 11 Oct morning passed 634/636 on COOL; benchmark re-measured 11 Oct (§7) |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 4.1°, rep F1 **0.94** (§8.4). Two pose defects it exposed are fixed. NHPT and Waiter – cup: synthetic only (§8.1); our own-recordings protocol is built, not run (§8.6). |
 | Usability (SUS), patient or therapist pilots | not run (§8.7) |
-| Bedrock, S3, CDK | not built (§7.4) |
+| S3, CDK | not built (§7.4); the agent runs on Claude via the Anthropic API, Bedrock is not used |
 | CloudWatch logs, EMF metrics, dashboard, alarms | built and tested locally, not yet run on AWS (§7.5) |
 
 ---
@@ -150,7 +150,7 @@ perception events → behavioural exertion → **stop rules** → coach → trac
 The rule coach is deterministic, rate-limited, and labelled "Rule-based coach" on screen and in every trace line. Its actions are `instruct | correct | progress | regress | rest | stop`, and each `Decision` must cite the event ids it came from. Its event→cue time is about 1 ms (§8.2), which is why in-rep cues stay with it.
 
 ### 6.3 Claude agent coach (checkpoints)
-At checkpoints (check-in, end of a set or arc, a stop-rule pause, NHPT complete, session end) `AgentCoach` runs one background task with Claude (Sonnet 5; Anthropic API today, Bedrock by configuration). The task is bounded: ≤ 6 tool calls, 15 s, 12 runs per session and a daily cap. The model reaches **17 tools on three FastMCP servers** (`perception`, `exertion`, `coach`) over streamable HTTP. If MCP is down, the same functions are bound directly and the trace says `transport: direct`.
+At checkpoints (check-in, end of a set or arc, a stop-rule pause, NHPT complete, session end) `AgentCoach` runs one background task with Claude (Sonnet 5.5 via the Anthropic API since 12 Oct, chosen in a measured comparison, §8.3; Amazon Bedrock is not used). The static system prompt and tool definitions are prompt-cached (91–94 % of input tokens read from cache). The task is bounded: ≤ 6 tool calls, 15 s, 12 runs per session and a daily cap. The model reaches **17 tools on three FastMCP servers** (`perception`, `exertion`, `coach`) over streamable HTTP. If MCP is down, the same functions are bound directly and the trace says `transport: direct`.
 
 **OpenCV tools, not just event readers.** `check_setup` runs a fresh `cv2.aruco` detection, `cv2.findHomography` (reprojection error in mm), `cv2.solvePnP` tilt, lighting, sharpness, marker steadiness and target visibility on the latest frame, held in memory by reference. `recalibrate` resets the calibrator or pose gate and reports the next frames. `resample_target_colour` warps the sheet, samples HSV where the target should be, and applies the new window **only if `inRange` + `findContours` then find the target where they failed before**.
 
@@ -215,7 +215,7 @@ Compute cost per 1,000 frames (hourly price over frames per hour at the measured
 A single container keeps raw frames inside one process: there is no queue, no object store and no second service that could leak video. Graviton matches the classical OpenCV workload (SIMD-heavy, no GPU needed), and COOL is OpenCV built for it. CloudFront supplies the HTTPS a browser needs before it will open the camera, with no certificate management on the instance.
 
 ### 7.4 Not on AWS yet
-The agent calls Claude through the Anthropic API. The Bedrock path (`PRAXIS_AGENT=bedrock`, Strands `BedrockModel`) is built and unit-tested but has not been run. Logs go to stdout as JSON (ready for CloudWatch) but are not shipped. The store is SQLite with the schema DynamoDB would mirror. There is no CDK app; the deploy is a script.
+The agent calls Claude through the Anthropic API, from the instance as from a laptop; Amazon Bedrock is not used (the rubric allows any model, and the `bedrock` mode was removed on 12 Oct). Logs go to stdout as JSON (ready for CloudWatch) but are not shipped. The store is SQLite with the schema DynamoDB would mirror. There is no CDK app; the deploy is a script.
 
 ### 7.5 Observability (built, not yet verified on AWS)
 The service writes one JSON line per session start and end (exercise, live or replay, duration, verified and unverified reps, per-frame processing p50/p95, fps, event-to-cue p50/p95), per stop-rule action, therapist flag, perception loss and socket error, plus a heartbeat every 60 s (`services/session/praxis_session/ops.py`). Agent runs already had their own lines. No frames, usernames, free text, pain scores or flag details are logged, and a test checks this. With `PRAXIS_EMF=1`, set in the systemd unit, the same lines carry CloudWatch Embedded Metric Format blocks (namespace `Praxis`, dimensions Exercise and Mode). CloudWatch therefore extracts metrics from the logs with no SDK and no new dependency. A pinned, checksummed CloudWatch agent (`deploy.sh --cloudwatch`) ships the log file to `/praxis/session` (30-day retention) and sends host memory, disk and CPU. A CloudShell script (`infra/ec2/cloudwatch_setup.sh`) creates the instance role, the log group, a `Praxis` dashboard, four alarms that email through SNS (heartbeat missing, CPU, status check, agent fallbacks) and saved Logs Insights queries. A test checks that the dashboard and alarms name only metrics the service emits. None of this has run on the AWS account yet. This section will be updated after the first live run. Expected cost is within the CloudWatch free tier, or under about $2 a month (`infra/ec2/README.md`).
@@ -250,12 +250,12 @@ The renders found four product defects, each fixed test-first (`tests/test_paral
 What still fails, and why: the primitive hand is found by the OpenCV Zoo hand model on 3–9 % of frames, so almost every peg is `unverified` (grasp or hand-near-hole not seen) and verified agreement is not meaningful here; most inferred timer starts miss the first transfer (≈1.5 s). Of 14 extra NHPT reports, 10 count an already seated hole again after the hand hid it, and 4 put a peg in another row's hole at 42–50°. One NHPT clip (dim light, 6 mm yellow pegs) confirms no seat: the default colour window covers only 20–30 % of a peg there and tap-to-sample is not replayed. Two cup clips fail: in dim light a grey cup's noise reads as blue band, and at 20° the cup on an outer dot or the resting hand always hides a corner marker, so the four-marker first fix never comes (`docs/RISKS.md`). Every other cup clip loses the first one or two reaches the same way: the cup standing on dot 1, as the instructions say, hides the corner marker behind it. Reach times run long because the gripping hand hides the band at grasp and release.
 
 ### 8.2 Latency (`evaluation/results/latency_v0.md`)
-These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced) on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). The JPEG encode in the browser, the network hop and rendering are **not** included; the live screens show a browser-side p50/p95, which will be reported from real sessions. The agent's first action takes 4.8 / 7.6 s (§8.3), which is why it works at checkpoints and never on in-rep cues.
+These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced) on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). The JPEG encode in the browser, the network hop and rendering are **not** included; the live screens show a browser-side p50/p95, which will be reported from real sessions. The agent's first action takes 4.2 / 6.5 s on the synthetic scenarios and 3.8 / 6.4 s on real video (§8.3), which is why it works at checkpoints and never on in-rep cues.
 
-### 8.3 Agent coach (`evaluation/results/agent_v0_anthropic.md`, `agent_ablation_v0.md`)
+### 8.3 Agent coach (`evaluation/results/agent_video_v0.md`, `agent_models_v0.md`, `agent_ablation_v0.md`)
 `evaluation/scripts/agent_eval.py` runs 15 scenarios built from synthetic OpenCV frames, injected pose landmarks and scripted event streams. They cover a clean session, covered marker, dim light, green cup, arm facing the wrong way, falling peaks, repeated lean (the patient declines the proposed change; nothing changes), three unverified reaches, a pain stop mid-run, prompt injection, model timeout, MCP down, and (11 Oct) the peg-test explanation with no clinical claims, the model API dropping mid-session, and a dose request outside the prescription (refused or clamped, traced). Each scenario is checked for task success, perception tool before action, guardrails, fallback and human approval.
 
-| Claude Sonnet 5, Anthropic API, 15 scenarios × 3 (11 Oct, final run after all audit fixes) | |
+| Claude Sonnet 5, Anthropic API, 15 scenarios × 3 (11 Oct, final run after all audit fixes; `agent_v0_anthropic_sonnet-5_2026-10-11.md`) | |
 |---|---|
 | Runs passed | **45 / 45** (1.0, 95 % Wilson 0.921–1.0) |
 | Guardrail violations | **0** |
@@ -282,6 +282,22 @@ An earlier run the same day (before the camera audit's fixes and before `covered
 | Unsafe actions | 0 | 0 |
 
 The scenarios are synthetic, and no patient has used the agent. This shows the tools, guardrails and the model's tool choice working; it does not show clinical judgement.
+
+**On real video** (`evaluation/results/agent_video_v0.md`, `evaluation/scripts/agent_video_eval.py`, 12 Oct). REHAB24-6 recordings (the dataset of §8.4) go frame by frame through the same pipeline, stop rules, rule coach and agent as the Replay socket; the patient's taps are simulated identically for every planner. Twenty cases: nine front-view sessions of two five-rep sets (the physiotherapist's correct block, then the deliberately wrong block), five of which run on into the subject's real turn to half-profile; eight recordings side-on or half-profile from the first frame; three induced perturbations (frames cropped so the hips leave the view). Ground truth the agent never sees: the physiotherapist's label and motion-capture facts per set.
+
+| Real video, 2 repeats (Wilson 95 %) | Claude Sonnet 5.5 | Claude Haiku 5.5 | Scripted agent | Rule coach only |
+|---|---|---|---|---|
+| Faulty set reviews where a mocap-true fault was named and corrected | **43/44** (0.88–1.00) | 44/44 | 0/22 (praise only) | 22/22 (in-rep cues) |
+| Claims supported by motion capture | 91/106 | 90/105 | — | 57/88 |
+| Smaller dose offered, patient decides | 24/44 | 41/44 | 0/22 | 0/22 |
+| Real wrong-view pause: fix named · no resume while still wrong | **26/26 · 26/26** | 26/26 · 26/26 | 13/13 · 13/13 | 13/13 · 13/13 (pause text) |
+| Induced hips-out: resumed after the fix (camera-checked for agents) | 6/6 | 6/6 | 3/3 | 3/3 |
+| Guardrail violations | **0** | 1 | 0 | n/a |
+| $ per session (list price) | 0.053 | 0.004 | 0 | 0 |
+
+Every set in this dataset is faulty under our prescription (the subjects lift overhead and rarely hold 3 s), so false corrections are measured as unsupported claims (14 of Sonnet 5.5's 15 are "hold for the full count" where motion capture measured ≥ 2.5 s); the agent never named a fault the camera cannot measure (bent elbow, arm forward), and those are most of the physiotherapist's deliberate mistakes, so physio-wrong and physio-right sets get the same response. The rule coach corrects the same faults in-rep, but fewer of its claims hold up (57/88: it says "a touch higher" in sets whose lifts motion capture puts at 85° or more); what the agent adds is the set-level dose proposal, the plan revision, corrections that cite the set's events (43/43 vs 10/22) and camera-checked setup recovery. Running real video found two product bugs, both fixed and tested: a same-rule pause re-triggered the agent every 3 s while the subject stayed turned, and a pause 3 s after the opening line swallowed the agent's spoken fix (4 s speak gap).
+
+**Model choice** (`evaluation/results/agent_models_v0.md`; criteria: task success, then cost, then latency; 0 guardrail violations required). Synthetic 15 × 2: Sonnet 5.5 28/30 (an earlier run 30/30), Haiku 5.5 30/30 (earlier 30/30), Sonnet 5 29/30; first action p50/p95 4.2/6.5 s, 3.2/5.3 s and 5.3/10.7 s; $0.019, $0.001 and $0.018 per session. Haiku 5.5 was as accurate and far cheaper but in both real-video runs once asked for a 100° target (refused by the clamp, counted as a violation), so the default is **Sonnet 5.5**. With caching an agent run costs ≈ $0.013; the daily cap of 100 runs bounds spend at ≈ $1.30 a day.
 
 ### 8.4 Arm angle on real video (REHAB24-6) (`evaluation/results/rehab24_v0.md`)
 REHAB24-6 [12] is a public rehabilitation dataset: RGB video from two synchronised 30 fps cameras, a 26-joint motion-capture skeleton and segmented, physiotherapist-labelled repetitions. Its exercise 1 is arm abduction: 13 recordings, 9 healthy adults, 178 repetitions. `evaluation/scripts/rehab24_eval.py` plays every video through the **unchanged `SessionPipeline`** (Arm out to the side, right arm, every threshold at its product default; 15 fps, frames scaled to 640 px and JPEG-encoded like the browser's) and compares the product's angle with **anatomical abduction from motion capture**, measured in the subject's frontal plane. Only the dose is lifted so counting does not stop at 16 reps. The licence is CC BY-NC 4.0: evaluation only, nothing redistributed.
@@ -345,12 +361,12 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise conc
 - **Session start on the cup sheet.** The cup standing on dot 1, as the instructions say, hides the corner marker behind it at laptop angles, and the first fix needs all four markers (locked), so the first reach or two are lost; at ~20° the cup and the resting hand can hide a corner for the whole run (§8.1.1).
 - **The printed NHPT is a timing aid.** Flat printed rings are not a physical board's recessed holes, so the times are not the standardized clinical instrument's.
 - **Exertion is behavioural**; hesitation is not yet computed, and the thresholds are unvalidated.
-- **The agent** is evaluated on synthetic scenarios only. It takes 4–8 s to act, and its judgement is not clinically validated.
-- **AWS** is EC2 + COOL + CloudFront. Bedrock, S3 and CDK are not built; CloudWatch shipping is built but not yet run on AWS (§7.5). COOL's gain is stage-dependent: 1.03× on a full NHPT frame, 0.94× on a cup frame (§7.2).
+- **The agent** is evaluated on synthetic scenarios and on real video of healthy adults in a lab (REHAB24-6, simulated taps), not with patients. It takes 4–7 s to act, and its judgement is not clinically validated.
+- **AWS** is EC2 + COOL + CloudFront. S3 and CDK are not built, and CloudWatch shipping is built but not yet run on AWS (§7.5); the agent model is Claude via the Anthropic API, not Bedrock. COOL's gain is stage-dependent: 1.03× on a full NHPT frame, 0.94× on a cup frame (§7.2).
 - **Scope.** Three exercises, by decision. Rotations and other shoulder exercises are dormant in the code because one webcam cannot measure them honestly.
 - **The pain stop level of 7** is a product decision and needs a clinician's sign-off before any pilot.
 
-**Next, in order:** real recordings and dataset v1 → retune on failure cases → SUS with ≥ 5 participants and one or two therapist interviews → Bedrock as the agent provider, CloudWatch logs → video.
+**Next, in order:** real recordings and dataset v1 → retune on failure cases → SUS with ≥ 5 participants and one or two therapist interviews → CloudWatch logs → video.
 
 ## 11. Reproducibility
 

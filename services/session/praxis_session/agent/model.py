@@ -2,17 +2,20 @@
 
 `PRAXIS_AGENT` picks the coach:
 - `off` (default): the rule coach only, exactly as before 29 Sep; no agent, no MCP routes.
-- `anthropic`: Strands `AnthropicModel`, `PRAXIS_AGENT_MODEL` (default `claude-sonnet-5`),
-  needs `ANTHROPIC_API_KEY`. Development path while AWS is deferred.
-- `bedrock`: Strands `BedrockModel`, model id `PRAXIS_BEDROCK_MODEL_ID`, region `AWS_REGION`;
-  only with `PRAXIS_CLOUD_ENABLED=1` (every cloud call is gated, CLAUDE.md §1).
+- `anthropic`: Strands `AnthropicModel`, Claude via the Anthropic API, `PRAXIS_AGENT_MODEL`
+  (default `DEFAULT_MODEL`), needs `ANTHROPIC_API_KEY`. The only model provider.
 - `scripted`: a fixed list of tool calls per checkpoint, no network (tests, CI, UI work).
+- anything else, including `bedrock` (removed 12 Oct: the agent never runs on Amazon Bedrock),
+  is the rule coach alone with the reason in `/health`.
 
 A **planner** runs one checkpoint: `StrandsPlanner` (the real model, tools over MCP to this
 service's own `/mcp/*` routes, or the same functions as direct Strands tools when the MCP
 connection fails) and `ScriptedPlanner` (executes given tool calls through the same dispatch,
 MCP or direct). Checkpoint latency is kept low: effort `low`, small `max_tokens`, no retries,
-no `thinking.budget_tokens` (Sonnet 5 rejects it with a 400), no sampling parameters.
+no `thinking.budget_tokens` (rejected by every current model), no sampling parameters.
+Prompt caching (12 Oct): the tool definitions, the static system prompt and the conversation so
+far carry cache points (Strands `CacheConfig`), so later model calls of a run, and the first
+call of the next run within 5 minutes, read the static prefix from cache.
 """
 from __future__ import annotations
 
@@ -29,25 +32,47 @@ from praxis_session.agent.budget import DailyRunBudget, parse_limit
 
 AGENT_LABELS = {
     "anthropic": "Claude agent · Anthropic API (dev)",
-    "bedrock": "Claude agent · Amazon Bedrock",
     "scripted": "Claude agent · scripted (test)",
 }
-DEFAULT_MODEL = "claude-sonnet-5"
-MAX_TOKENS = 800
+PROVIDERS = {"anthropic": "anthropic-api", "scripted": "scripted"}
+DEFAULT_MODEL = "claude-sonnet-5-5"  # 12 Oct model comparison: docs/AGENT.md "Model choice"
+MAX_TOKENS = 2048  # 12 Oct: room for adaptive thinking + parallel tool calls (800 truncated runs)
 EFFORT = "low"
 RUN_TIMEOUT_S = 15.0
 MCP_STARTUP_TIMEOUT_S = 3
-# Sonnet 5 list price per million tokens (Anthropic API, cached 2026-06-24); Bedrock differs.
-PRICE_PER_MTOK = {"input": 2.00, "output": 10.00}
+# Anthropic API list prices per million tokens (claude-api skill, cached 2026-10-06): input,
+# output, cache read (0.1x input) and 5-minute cache write (1.25x input).
+PRICES: dict[str, dict[str, float]] = {
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00, "cache_read": 0.20, "cache_write": 2.50},
+    "claude-sonnet-5-5": {"input": 2.00, "output": 10.00, "cache_read": 0.20, "cache_write": 2.50},
+    "claude-haiku-5-5": {"input": 0.10, "output": 0.50, "cache_read": 0.01, "cache_write": 0.125},
+}
+PRICE_PER_MTOK = PRICES[DEFAULT_MODEL]  # the default model's prices (older callers)
+
+
+def base_model(model: str | None) -> str:
+    """The model id (`None` -> the default)."""
+    return (model or DEFAULT_MODEL).strip()
+
+
+def price_for(model: str | None) -> dict[str, float]:
+    return PRICES.get(base_model(model), PRICES[DEFAULT_MODEL])
+
+
+def cost_usd(model: str | None, input_tokens: int | None, output_tokens: int | None, cache_read: int | None = 0, cache_write: int | None = 0) -> float:
+    """List-price cost. `input_tokens` is the uncached input: the API reports cache reads and
+    cache writes separately (`cache_read_input_tokens`, `cache_creation_input_tokens`)."""
+    p = price_for(model)
+    usd = (input_tokens or 0) * p["input"] + (output_tokens or 0) * p["output"] + (cache_read or 0) * p["cache_read"] + (cache_write or 0) * p["cache_write"]
+    return round(usd / 1e6, 6)
 
 
 @dataclass(frozen=True)
 class AgentConfig:
-    mode: str  # off | anthropic | bedrock | scripted
+    mode: str  # off | anthropic | scripted
     model: str | None = None
     ready: bool = False
     reason: str | None = None
-    region: str | None = None
     mcp_url: str = "http://127.0.0.1:8000/mcp"
     mcp_enabled: bool = False
     # Process-wide daily run cap (PRAXIS_AGENT_DAILY_RUNS); shared by every session's AgentCoach.
@@ -61,8 +86,14 @@ class AgentConfig:
     def label(self) -> str | None:
         return AGENT_LABELS.get(self.mode)
 
+    @property
+    def provider(self) -> str | None:
+        return PROVIDERS.get(self.mode)
+
     def health(self, mcp_mounted: bool) -> dict[str, Any]:
         out: dict[str, Any] = {"mode": self.mode, "model": self.model, "mcp": mcp_mounted, "ready": self.ready}
+        if self.provider:
+            out["provider"] = self.provider
         out |= self.budget.health()
         if self.reason:
             out["reason"] = self.reason
@@ -84,16 +115,7 @@ def load_config(env: Mapping[str, str] | None = None) -> AgentConfig:
         has_key = bool((env.get("ANTHROPIC_API_KEY") or "").strip())
         return AgentConfig("anthropic", model, has_key, None if has_key else "ANTHROPIC_API_KEY is not set", mcp_url=mcp_url, mcp_enabled=True, budget=budget)
     if mode == "bedrock":
-        model = env.get("PRAXIS_BEDROCK_MODEL_ID") or None
-        region = env.get("AWS_REGION") or env.get("AWS_DEFAULT_REGION") or None
-        reason = None
-        if env.get("PRAXIS_CLOUD_ENABLED", "0") != "1":
-            reason = "bedrock needs PRAXIS_CLOUD_ENABLED=1"
-        elif not model:
-            reason = "PRAXIS_BEDROCK_MODEL_ID is not set"
-        elif not region:
-            reason = "AWS_REGION is not set"
-        return AgentConfig("bedrock", model, reason is None, reason, region=region, mcp_url=mcp_url, mcp_enabled=True, budget=budget)
+        return AgentConfig("off", None, False, "bedrock is not supported; use anthropic", mcp_url=mcp_url, mcp_enabled=mcp_flag, budget=budget)
     if mode == "scripted":
         return AgentConfig("scripted", "scripted", True, None, mcp_url=mcp_url, mcp_enabled=True, budget=budget)
     return AgentConfig("off", None, False, f"unknown PRAXIS_AGENT={mode!r}; the coach stays rule-based", mcp_url=mcp_url, mcp_enabled=mcp_flag, budget=budget)
@@ -109,29 +131,27 @@ def with_listening_port(cfg: AgentConfig, server: tuple[str, int] | None, env: M
     return replace(cfg, mcp_url=f"http://127.0.0.1:{int(server[1])}/mcp")
 
 
+def model_config(model_id: str) -> dict[str, Any]:
+    """The Strands `AnthropicModel` settings: effort (not a thinking
+    budget: `budget_tokens` is a 400 on every current model), no sampling parameters, and prompt
+    caching of the tool definitions, the static system prompt and the conversation so far."""
+    from strands.models.model import CacheConfig
+
+    return {
+        "model_id": model_id,
+        "max_tokens": MAX_TOKENS,
+        "params": {"output_config": {"effort": EFFORT}},
+        "cache_config": CacheConfig(strategy="anthropic", tools_ttl=True, system_prompt_ttl=True),
+    }
+
+
 def build_model(cfg: AgentConfig, env: Mapping[str, str] | None = None) -> Any:
     """The Strands model for `cfg` (constructed only; no request is made here)."""
     env = os.environ if env is None else env
     if cfg.mode == "anthropic":
         from strands.models.anthropic import AnthropicModel
 
-        return AnthropicModel(
-            client_args={"api_key": env.get("ANTHROPIC_API_KEY", ""), "max_retries": 0, "timeout": RUN_TIMEOUT_S},
-            model_id=cfg.model or DEFAULT_MODEL,
-            max_tokens=MAX_TOKENS,
-            # Sonnet 5: effort, not a thinking budget (budget_tokens is a 400); no temperature.
-            params={"output_config": {"effort": EFFORT}},
-        )
-    if cfg.mode == "bedrock":
-        from botocore.config import Config as BotocoreConfig
-        from strands.models.bedrock import BedrockModel
-
-        return BedrockModel(
-            model_id=cfg.model,
-            region_name=cfg.region,
-            max_tokens=MAX_TOKENS,
-            boto_client_config=BotocoreConfig(read_timeout=RUN_TIMEOUT_S, connect_timeout=3, retries={"max_attempts": 1}),
-        )
+        return AnthropicModel(client_args={"api_key": env.get("ANTHROPIC_API_KEY", ""), "max_retries": 0, "timeout": RUN_TIMEOUT_S}, **model_config(cfg.model or DEFAULT_MODEL))
     raise ValueError(f"no model for PRAXIS_AGENT={cfg.mode}")
 
 
@@ -147,11 +167,11 @@ def classify_error(exc: BaseException) -> str:
             return "timeout"
         if name in ("AuthenticationError", "PermissionDeniedError") or status in (401, 403):
             return "auth"
-        if name in ("RateLimitError", "ModelThrottledException", "ThrottlingException") or status == 429:
+        if name in ("RateLimitError", "ModelThrottledException") or status == 429:
             return "rate_limit"
         if status in (500, 502, 503, 504, 529) or name in ("InternalServerError", "ServiceUnavailableError", "OverloadedError"):
             return "unavailable"
-        if name in ("APIConnectionError", "ConnectError", "EndpointConnectionError"):
+        if name in ("APIConnectionError", "ConnectError"):
             return "connection"
         if name in ("MCPClientInitializationError", "ToolProviderException"):
             return "mcp"
@@ -163,10 +183,7 @@ def classify_error(exc: BaseException) -> str:
             return "bad_request"
         if name in ("ValidationError", "JSONDecodeError", "ToolRejected"):
             return "malformed"
-        if name == "ClientError":  # botocore
-            code = str(getattr(e, "response", {}).get("Error", {}).get("Code", ""))
-            return {"ThrottlingException": "rate_limit", "AccessDeniedException": "auth", "ModelTimeoutException": "timeout"}.get(code, "bedrock")
-        e = e.__cause__ or e.__context__
+        e =e.__cause__ or e.__context__
     return "model_error"
 
 
@@ -210,6 +227,9 @@ class PlanResult:
     output_tokens: int | None = None
     text: str = ""
     mcp_error: str | None = None
+    # prompt caching: input tokens read from / written to the cache (not in `input_tokens`)
+    cache_read_tokens: int | None = None
+    cache_write_tokens: int | None = None
 
 
 class _Transport:
@@ -419,6 +439,9 @@ get_set_summary (never invent ids).
   propose_adjustment.
 - Falling peak angles, slower reps or moderate/high exertion: consider a smaller target or
   a shorter hold with propose_adjustment, or request_rest.
+- A proposed adjustment changes what the session aims for: in the same run, also revise the
+  plan with set_session_plan (the new aim if accepted, what to watch next, the set's event ids
+  as evidence, `because` = what the camera showed).
 - Peg test end: get_set_summary (its `nhpt` block has the total time and the nine per-peg
   splits), then one plain line with the time and which peg took longest. Never compare with
   norms, ages or other people, and never say what it means clinically: that is the therapist's.
@@ -590,7 +613,7 @@ class StrandsPlanner:
             if getattr(result, "stop_reason", None) == "refusal":
                 raise AgentRefusal("the model declined this checkpoint")
             usage = getattr(getattr(result, "metrics", None), "accumulated_usage", None) or {}
-            return PlanResult(transport, usage.get("inputTokens"), usage.get("outputTokens"), str(result)[:300], mcp_error)
+            return PlanResult(transport, usage.get("inputTokens"), usage.get("outputTokens"), str(result)[:300], mcp_error, usage.get("cacheReadInputTokens") or 0, usage.get("cacheWriteInputTokens") or 0)
         finally:
             if model is not None:
                 await self._close_model(model)

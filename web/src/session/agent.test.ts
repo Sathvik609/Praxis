@@ -6,7 +6,7 @@ test('the rule coach label follows the service: "· LLM agent pending" only whil
   expect(ruleCoachLabel({ mode: 'off', model: '', mcp: false, ready: false })).toBe(COACH_LABEL)
   expect(ruleCoachLabel(null)).toBe(COACH_LABEL)
   expect(ruleCoachLabel(undefined)).toBe(COACH_LABEL)
-  for (const mode of ['anthropic', 'bedrock', 'scripted'] as const) {
+  for (const mode of ['anthropic', 'scripted'] as const) {
     // same rule as the service (`AGENT_CFG.enabled`): the mode, not readiness
     expect(ruleCoachLabel({ mode, model: 'm', mcp: true, ready: true })).toBe('Rule-based coach')
     expect(ruleCoachLabel({ mode, model: 'm', mcp: false, ready: false })).toBe('Rule-based coach')
@@ -33,7 +33,7 @@ test('coach source: agent only when the event says so; legacy events without sou
 })
 
 test('coach label: the event label, else the pending rule label', () => {
-  expect(coachLabel(coach(1, { source: 'agent', label: 'Claude agent · Amazon Bedrock' }))).toBe('Claude agent · Amazon Bedrock')
+  expect(coachLabel(coach(1, { source: 'agent', label: 'Claude agent · Anthropic API (dev)' }))).toBe('Claude agent · Anthropic API (dev)')
   expect(coachLabel(coach(2))).toBe(COACH_LABEL)
   expect(coachLabel(null)).toBe('Rule-based coach · LLM agent pending')
 })
@@ -72,12 +72,12 @@ test('proposal in plain words, with the program range and the clamp note', () =>
   expect(describeProposal({ exercise: 'cup', field: 'phase', value: 'fast', requested: 'fast', clamped: false, unit: '' }, { from: 'slow' })).toBe('Pace slow → fast')
 })
 
-test('health lines: off, Anthropic dev, Bedrock with MCP, not ready with a reason', () => {
+test('health lines: off, Anthropic API with and without MCP, Haiku 5.5, not ready with a reason', () => {
   expect(healthLines(undefined)).toEqual({ title: 'Off — rule-based coach', details: [] })
   expect(healthLines({ mode: 'off', model: '', mcp: false, ready: false })).toEqual({ title: 'Off — rule-based coach', details: [] })
   expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true })).toEqual({ title: 'Claude Sonnet 5 via Anthropic API (dev)', details: ['MCP tools connected'] })
-  expect(healthLines({ mode: 'bedrock', model: 'us.anthropic.claude-sonnet-5-v1:0', mcp: false, ready: true }).title).toBe('Claude Sonnet 5 via Amazon Bedrock')
-  expect(healthLines({ mode: 'bedrock', model: 'x', mcp: false, ready: true }).details).toEqual(['Tools called directly (MCP not connected)'])
+  expect(healthLines({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: true }).title).toBe('Claude Haiku 5.5 via Anthropic API (dev)')
+  expect(healthLines({ mode: 'anthropic', model: 'x', mcp: false, ready: true }).details).toEqual(['Tools called directly (MCP not connected)'])
   expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: false, ready: false, reason: 'ANTHROPIC_API_KEY not set' }).details).toContain('Not ready: ANTHROPIC_API_KEY not set · the rule-based coach runs')
   expect(healthLines({ mode: 'scripted', model: 'scripted', mcp: true, ready: true }).title).toBe('Scripted agent (test) — no model calls')
 })

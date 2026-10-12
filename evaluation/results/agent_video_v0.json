@@ -1,0 +1,6031 @@
+{
+  "planner": "anthropic",
+  "model": "claude-sonnet-5-5",
+  "repeat": 2,
+  "cases": 20,
+  "sessions": 40,
+  "generated": "2026-10-12",
+  "opencv": "5.0.0",
+  "pipeline_fingerprint": "09885101b2f4",
+  "set_reviews": 44,
+  "faulty_sets": 44,
+  "fault_addressed": {
+    "k": 43,
+    "n": 44,
+    "rate": 0.977,
+    "ci95": [
+      0.882,
+      0.996
+    ]
+  },
+  "praise_only_on_faulty": {
+    "k": 0,
+    "n": 44,
+    "rate": 0.0,
+    "ci95": [
+      0.0,
+      0.08
+    ]
+  },
+  "silent_on_faulty": {
+    "k": 1,
+    "n": 44,
+    "rate": 0.023,
+    "ci95": [
+      0.004,
+      0.118
+    ]
+  },
+  "claims": {
+    "hike": 22,
+    "hold": 42,
+    "overshoot": 42
+  },
+  "unsupported_claims": {
+    "hold": 14,
+    "hike": 1
+  },
+  "claim_precision": {
+    "supported": 91,
+    "total": 106,
+    "rate": 0.858
+  },
+  "progress_on_faulty": 0,
+  "evidence_in_set": {
+    "k": 43,
+    "n": 43,
+    "rate": 1.0,
+    "ci95": [
+      0.918,
+      1.0
+    ]
+  },
+  "perception_before_action": {
+    "k": 76,
+    "n": 76,
+    "rate": 1.0,
+    "ci95": [
+      0.952,
+      1.0
+    ]
+  },
+  "physio": {
+    "incorrect_sets_corrective": {
+      "k": 18,
+      "n": 18,
+      "rate": 1.0,
+      "ci95": [
+        0.824,
+        1.0
+      ]
+    },
+    "correct_sets_corrective": {
+      "k": 21,
+      "n": 22,
+      "rate": 0.955,
+      "ci95": [
+        0.782,
+        0.992
+      ]
+    }
+  },
+  "setup_pauses": 32,
+  "fix_named_real_turn": {
+    "k": 26,
+    "n": 26,
+    "rate": 1.0,
+    "ci95": [
+      0.871,
+      1.0
+    ]
+  },
+  "no_resume_while_failing": {
+    "k": 26,
+    "n": 26,
+    "rate": 1.0,
+    "ci95": [
+      0.871,
+      1.0
+    ]
+  },
+  "fix_named_induced": {
+    "k": 5,
+    "n": 6,
+    "rate": 0.833,
+    "ci95": [
+      0.436,
+      0.97
+    ]
+  },
+  "resumed_after_fix_induced": {
+    "k": 6,
+    "n": 6,
+    "rate": 1.0,
+    "ci95": [
+      0.61,
+      1.0
+    ]
+  },
+  "guardrail_violations": 0,
+  "errors": {
+    "model_error": 1
+  },
+  "runs": 159,
+  "first_action_ms_p50": 3834.5,
+  "first_action_ms_p95": 6394.4,
+  "cost_usd": 2.0982,
+  "cost_usd_per_session": 0.0525,
+  "cache_read_share": 0.924,
+  "rows": [
+    {
+      "id": "review-PM_000",
+      "kind": "review",
+      "video": "PM_000",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 35.0,
+          "reps_counted": 5,
+          "verified": 4,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 0,
+            "peaks": [
+              99.8,
+              131.3,
+              156.0,
+              156.1,
+              152.5
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 158.95
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Nice steady holds. Stop at shoulder height, about 90 degrees, and keep your shoulders relaxed and down, not shrugged up. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "speak"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        6444.6,
+        5261.8,
+        2399.4
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1682,
+      "cache_read_tokens": 48941,
+      "cache_write_tokens": 3874,
+      "errors": [],
+      "counts": {
+        "reps_total": 6,
+        "verified": 5,
+        "unverified": 0,
+        "missed": 1,
+        "corrections": 12,
+        "posture_cues": 6,
+        "lean_cues": 0,
+        "hiking_cues": 6,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Session finished, not stopped. 6 reps: 5 verified, 1 missed, 0 unverified. 6 shoulder-hiking cues, no trunk lean cues. 5 reps went above the ceiling. Reps slowed about 7% per rep; exertion low. Pain before 2/10, no new symptoms.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Nice steady holds. Stop at shoulder height, about 90 degrees, and keep your shoulders relaxed and down, not shrugged up."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_001",
+      "kind": "review",
+      "video": "PM_001",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 29.5,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              107.5,
+              130.5,
+              126.7,
+              128.4,
+              127.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.25
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Keep your shoulder relaxed and down, and stop at shoulder height. Don't go higher. Hold steady for the full count.   Most holds came up a little short of 3 seconds, so a 2 second hold may let you count them with good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 90.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              129.3,
+              120.9,
+              122.9,
+              116.7,
+              116.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 117.2
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Your arm is going higher than needed and your shoulder is lifting. Stop at shoulder height, keep the shoulder down, and hold for the full count.   Several holds fell a little short of the full count and your reach is tiring, so a shorter hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        5999.6,
+        4902.9,
+        5132.0,
+        2376.0
+      ],
+      "input_tokens": 30,
+      "output_tokens": 2548,
+      "cache_read_tokens": 67788,
+      "cache_write_tokens": 6136,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 3,
+        "unverified": 0,
+        "missed": 7,
+        "corrections": 32,
+        "posture_cues": 10,
+        "lean_cues": 0,
+        "hiking_cues": 10,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Replay, arm abduction, ended normally. 10 reps: 3 verified, 7 missed (short of target). Shoulder hiking cued on 10 reps, all 10 above ceiling; no lean. Peak angle fell about 10\u00b0 over the set; exertion moderate. Pain before 2, no new symptoms. Therapist review of form and target suggested.",
+      "agent_said": [
+        "Stand tall, raise your arm out to the side to shoulder height, hold for 3 seconds, then lower slowly. Go at your own pace.",
+        "Good effort. Keep your shoulder relaxed and down, and stop at shoulder height. Don't go higher. Hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Good effort. Your arm is going higher than needed and your shoulder is lifting. Stop at shoulder height, keep the shoulder down, and hold for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_012",
+      "kind": "review",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "regress",
+            "correct",
+            "set_session_plan"
+          ],
+          "said": " Your holds were just under 3 seconds, so none counted. A 2 second hold may help them count while you keep the shoulder down. Good effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold steady a little longer. ",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "propose_adjustment",
+            "speak",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.3,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.5,
+              135.0,
+              132.1,
+              135.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "Stop at shoulder height, about 90 degrees, and keep your shoulders down. Hold about 3 seconds before lowering slowly. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 14,
+      "first_action_ms": [
+        6394.4,
+        5159.9,
+        3619.1,
+        2608.2
+      ],
+      "input_tokens": 32,
+      "output_tokens": 2646,
+      "cache_read_tokens": 75643,
+      "cache_write_tokens": 6103,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 35,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay of arm abduction, session ended normally (not stopped). 10 reps, 0 counted, 10 missed. 9 went above the 90 degree ceiling, 8 shoulder-hiking cues, 35 corrections in all. Exertion low. Pain before 2/10, no new symptoms. Therapist may want to review form and target.",
+      "agent_said": [
+        "Stand tall, raise your arm out to the side to shoulder height, hold for 3 seconds, then lower slowly. Go at your own pace.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Good effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold steady a little longer.",
+        "Keeping it as it is. That's fine.",
+        "Stop at shoulder height, about 90 degrees, and keep your shoulders down. Hold about 3 seconds before lowering slowly."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_023",
+      "kind": "review",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. Raise only to shoulder height, keep your shoulder down and relaxed, and hold steady a little longer.   Your holds were about 2 seconds, so a 2 second hold may feel more doable while you keep your shoulder down.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 47.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              124.8,
+              126.0,
+              134.3,
+              131.5,
+              131.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 131.6
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Stop at shoulder height, not higher, and keep your shoulder down while you hold for the full count. ",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        4546.5,
+        6595.1,
+        3875.8,
+        2017.9
+      ],
+      "input_tokens": 30,
+      "output_tokens": 2525,
+      "cache_read_tokens": 67810,
+      "cache_write_tokens": 6053,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 35,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay clip, session ended normally (not stopped). 10 reps, none counted (10 missed, 0 verified). Shoulder hiking cued 9 times, arm above shoulder height on 9 reps, holds short. Reps slowed ~7% per rep; exertion low. Pain before 2/10. Therapist review suggested.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for three seconds, and keep your body upright.",
+        "Good effort. Raise only to shoulder height, keep your shoulder down and relaxed, and hold steady a little longer.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Good effort. Stop at shoulder height, not higher, and keep your shoulder down while you hold for the full count."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_032",
+      "kind": "review",
+      "video": "PM_032",
+      "camera": "c17",
+      "person": 4,
+      "sets": [
+        {
+          "set": 1,
+          "t": 14.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              112.4,
+              101.1,
+              102.7,
+              102.8,
+              102.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": false,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 102.75
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Let's keep the arm at shoulder height, not higher, and keep your shoulder relaxed down. Hold it steady for the full count.   Holds were short and your shoulder lifted on most reps. A shorter hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hike"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 33.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              116.3,
+              127.8,
+              129.1,
+              122.8,
+              128.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 128.2
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "You're lifting higher than needed. Stop at shoulder height, keep your shoulders down and relaxed, and hold each lift for the full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 47.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "speak"
+          ],
+          "said": "Please turn to face the camera square-on, so both shoulders are in view. Then we'll carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 16,
+      "first_action_ms": [
+        3757.9,
+        5862.7,
+        3677.6,
+        3413.1,
+        2076.2
+      ],
+      "input_tokens": 40,
+      "output_tokens": 2971,
+      "cache_read_tokens": 94109,
+      "cache_write_tokens": 7553,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 36,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Replay session ended, not stopped. 10 reps seen, 0 verified, 10 missed; all 10 went above the ceiling. 9 shoulder-hiking cues, 36 corrections, no lean cues. Exertion low. Pain before 2/10. Setup pause was active. Therapist review advised.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for three, and keep your body upright.",
+        "Let's keep the arm at shoulder height, not higher, and keep your shoulder relaxed down. Hold it steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "You're lifting higher than needed. Stop at shoulder height, keep your shoulders down and relaxed, and hold each lift for the full 3 seconds.",
+        "Please turn to face the camera square-on, so both shoulders are in view. Then we'll carry on."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_039",
+      "kind": "review",
+      "video": "PM_039",
+      "camera": "c17",
+      "person": 5,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              99.5,
+              91.2,
+              36.8,
+              131.1,
+              144.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.0
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds each time. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.6,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              141.2,
+              129.8,
+              132.2,
+              126.1,
+              125.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 2,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.3
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds each time. ",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 74.1,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera square-on, with both shoulders in view. Raise to shoulder height, not higher, and keep the shoulders down. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 15,
+      "first_action_ms": [
+        4529.6,
+        3356.6,
+        4413.1,
+        4443.4,
+        2520.5
+      ],
+      "input_tokens": 38,
+      "output_tokens": 2495,
+      "cache_read_tokens": 86587,
+      "cache_write_tokens": 7087,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 36,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 8
+      },
+      "note": "Replay review, arm abduction. 10 reps seen, 0 verified, all 10 missed the target. 8 shoulder-hiking cues, 8 reps above ceiling, 36 corrections total. No trunk lean cues. Reps slowed ~8% per rep; exertion low. Pre-check pain 2, no new symptoms. Therapist review suggested.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, hold for 3 seconds, and keep your body upright. Go slowly.",
+        "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds each time.",
+        "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds each time.",
+        "Please turn to face the camera square-on, with both shoulders in view. Raise to shoulder height, not higher, and keep the shoulders down."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_122",
+      "kind": "review",
+      "video": "PM_122",
+      "camera": "c17",
+      "person": 7,
+      "sets": [
+        {
+          "set": 1,
+          "t": 21.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              95.2,
+              154.5,
+              148.8,
+              146.6,
+              149.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 154.85
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Raise only to shoulder height, keep your shoulders down and relaxed, and hold steady for the full count.   Your holds were a little short of 3 seconds, so a 2 second hold may let them count while you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              154.4,
+              118.1,
+              130.5,
+              133.6,
+              131.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 137.7
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Stop at shoulder height, about 90 degrees, and keep your shoulders down and relaxed. Don't lift past it.   Your holds were a little short and your shoulder crept up. A 2 second hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 64.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "speak"
+          ],
+          "said": "Please turn to face the camera squarely, with both shoulders in view. Then we'll carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 17,
+      "first_action_ms": [
+        3855.3,
+        4605.3,
+        4804.6,
+        3372.7,
+        2339.0
+      ],
+      "input_tokens": 40,
+      "output_tokens": 2874,
+      "cache_read_tokens": 94397,
+      "cache_write_tokens": 8163,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 1,
+        "unverified": 0,
+        "missed": 9,
+        "corrections": 35,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay clip, arm abduction. 10 reps seen: 1 verified, 9 missed. Shoulder hiking cued 9 times; 9 reps above the ceiling. Peak angle fell about 18\u00b0 over the set; exertion moderate. Check-in: pain 2, energy ok, no new symptoms. Therapist review advised.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Raise only to shoulder height, keep your shoulders down and relaxed, and hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Good effort. Stop at shoulder height, about 90 degrees, and keep your shoulders down and relaxed. Don't lift past it.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera squarely, with both shoulders in view. Then we'll carry on."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_109",
+      "kind": "review",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Stop at shoulder height, keep your shoulders relaxed and down, and hold each lift for a full three seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              117.5,
+              122.4,
+              87.9,
+              123.2,
+              126.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "set_session_plan"
+          ],
+          "said": "Nice effort. Keep your shoulder relaxed and down, stop around shoulder height, and hold each lift a full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.5,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera square-on, so both shoulders are in view. Then keep your shoulder down and stop at about shoulder height.  The camera still sees your side. Turn your chest to face it, with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 17,
+      "first_action_ms": [
+        3783.4,
+        3469.3,
+        5366.6,
+        3473.7,
+        2289.8
+      ],
+      "input_tokens": 42,
+      "output_tokens": 2876,
+      "cache_read_tokens": 101682,
+      "cache_write_tokens": 7455,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 29,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Replay, not stopped. 10 reps: 4 verified, 6 missed (holds or height fell short), 0 unverified. Shoulder hiking cued 8 times, 7 reps above the height ceiling. Exertion low. Check-in: pain 2/10, no new symptoms. Worth reviewing form and target height.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Stop at shoulder height, keep your shoulders relaxed and down, and hold each lift for a full three seconds.",
+        "Nice effort. Keep your shoulder relaxed and down, stop around shoulder height, and hold each lift a full 3 seconds.",
+        "Please turn to face the camera square-on, so both shoulders are in view. Then keep your shoulder down and stop at about shoulder height.",
+        "The camera still sees your side. Turn your chest to face it, with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_114",
+      "kind": "review",
+      "video": "PM_114",
+      "camera": "c17",
+      "person": 9,
+      "sets": [
+        {
+          "set": 1,
+          "t": 33.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              85.0,
+              122.3,
+              124.5,
+              130.7,
+              136.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 127.8
+          },
+          "run": 2,
+          "actions": [],
+          "said": "",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": false,
+          "silent": true,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              124.1,
+              98.2,
+              76.6,
+              81.8,
+              95.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": true,
+            "forward": false,
+            "peak_deg_median": 101.6
+          },
+          "run": 3,
+          "actions": [
+            "regress",
+            "correct",
+            "set_session_plan"
+          ],
+          "said": " Holds were cut short and your arm lifted less as the set went on. A shorter 2-second hold may help. Keep your shoulder down and relaxed as you lift, and stay steady at the top. Slow and smooth is fine. ",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_prescription",
+            "get_set_summary",
+            "propose_adjustment",
+            "speak",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera straight on, so both shoulders are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "error",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 16,
+      "first_action_ms": [
+        4734.2,
+        6013.8,
+        3727.3,
+        2404.8
+      ],
+      "input_tokens": 30,
+      "output_tokens": 2296,
+      "cache_read_tokens": 62511,
+      "cache_write_tokens": 12077,
+      "errors": [
+        {
+          "kind": "model_error",
+          "message": "EventLoopException"
+        }
+      ],
+      "counts": {
+        "reps_total": 10,
+        "verified": 2,
+        "unverified": 0,
+        "missed": 8,
+        "corrections": 32,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Arm abduction replay, not stopped. 10 reps: 2 verified, 8 missed (short of target). Shoulder hiking cued 9 times, 7 reps above ceiling, peak angle fell 29\u00b0 over the set; exertion moderate. Pain before 2/10, no new symptoms. Suggest therapist review target and form.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keep your shoulder down and relaxed as you lift, and stay steady at the top. Slow and smooth is fine.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera straight on, so both shoulders are in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_002-c17",
+      "kind": "setup_real",
+      "video": "PM_002",
+      "camera": "c17",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 4.9,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera with both shoulders in view, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 8,
+      "first_action_ms": [
+        4186.0,
+        3505.4,
+        3064.5
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1364,
+      "cache_read_tokens": 48754,
+      "cache_write_tokens": 3767,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, session ended while paused for camera setup. No reps counted (0 verified, 0 unverified, 0 missed); 2 setup corrections given. Exertion low. Check-in: pain 2, 10 min, no new symptoms, energy ok. Plan of 2x5 to 90 degrees not started.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera with both shoulders in view, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_016-c17",
+      "kind": "setup_real",
+      "video": "PM_016",
+      "camera": "c17",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 7,
+      "first_action_ms": [
+        3928.6,
+        4498.1,
+        2420.2
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1436,
+      "cache_read_tokens": 48747,
+      "cache_write_tokens": 3579,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps counted (0 verified, 0 missed, 0 unverified); one correction was given. Exertion low. Check-in: pain 2, 10 minutes, no new symptoms, energy ok. Camera setup needs a recheck before the next try.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, keep your body upright, hold for 3 seconds, then lower gently.",
+        "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_024-c17",
+      "kind": "setup_real",
+      "video": "PM_024",
+      "camera": "c17",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 7.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:perception",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 11,
+      "first_action_ms": [
+        4021.9,
+        3098.4,
+        2456.7
+      ],
+      "input_tokens": 30,
+      "output_tokens": 1785,
+      "cache_read_tokens": 67580,
+      "cache_write_tokens": 5269,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, not stopped. Paused on a setup rule; no reps counted (0 verified, 0 unverified, 0 missed), so there is no form or peak data. One correction was given. Exertion low. Check-in: pain 2, no new symptoms.",
+      "agent_said": [
+        "Let's begin. Stand tall, raise your arm out to the side slowly, hold for 3 seconds, then lower with control.",
+        "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_101-c17",
+      "kind": "setup_real",
+      "video": "PM_101",
+      "camera": "c17",
+      "person": 6,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "speak"
+          ],
+          "said": "Please turn to face the camera straight on, so both shoulders are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        6851.9,
+        5517.6,
+        2191.0
+      ],
+      "input_tokens": 24,
+      "output_tokens": 1522,
+      "cache_read_tokens": 56116,
+      "cache_write_tokens": 3942,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps counted (0 verified, 0 missed, 0 unverified) so the planned 2x5 to 90 degrees was not done. One setup correction was given. Check-in: pain 2, energy ok, no new symptoms. Exertion low.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera straight on, so both shoulders are in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_000-c18",
+      "kind": "setup_real",
+      "video": "PM_000",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "speak"
+          ],
+          "said": "Please turn to face the camera straight on, with both shoulders in view, and sit back a little so your arm is fully visible. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        4567.1,
+        3443.0,
+        2255.1
+      ],
+      "input_tokens": 24,
+      "output_tokens": 1624,
+      "cache_read_tokens": 56163,
+      "cache_write_tokens": 3967,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, arm abduction. Session ended paused on a setup rule: 0 reps counted (0 verified, 0 unverified, 0 missed), 1 correction given. No lean or hiking cues. Exertion low. Check-in: pain 2, energy ok, no new symptoms. Plan of 2x5 to 90 degrees not started.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, keep your body upright, hold for three seconds, then lower gently.",
+        "Please turn to face the camera straight on, with both shoulders in view, and sit back a little so your arm is fully visible."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_001-c18",
+      "kind": "setup_real",
+      "video": "PM_001",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera, with both shoulders in view, and sit back a little so your arm is visible. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        4209.7,
+        3611.2,
+        2312.3
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1425,
+      "cache_read_tokens": 48939,
+      "cache_write_tokens": 3942,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps were counted (0 verified, 0 unverified, 0 missed), so nothing was assessed against the 90 degree target. One setup correction was given. Check-in: pain 2, 10 minutes, no new symptoms, energy ok. Exertion low.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera, with both shoulders in view, and sit back a little so your arm is visible."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_012-c18",
+      "kind": "setup_real",
+      "video": "PM_012",
+      "camera": "c18",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera with both shoulders in view, and move back a little so your arm and hip are visible.  The camera still sees your side. Turn your chest to face it, with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 10,
+      "first_action_ms": [
+        5947.6,
+        3488.5,
+        2256.6
+      ],
+      "input_tokens": 26,
+      "output_tokens": 1669,
+      "cache_read_tokens": 63799,
+      "cache_write_tokens": 4148,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session, not stopped. Paused on setup rule; 0 reps counted (0 verified, 0 unverified, 0 missed). 2 corrections given. Check-in: pain 2, 10 min, no new symptoms, energy ok. Exertion low. Camera setup needs review before next attempt.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera with both shoulders in view, and move back a little so your arm and hip are visible.",
+        "The camera still sees your side. Turn your chest to face it, with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_023-c18",
+      "kind": "setup_real",
+      "video": "PM_023",
+      "camera": "c18",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera, with both shoulders in view, and sit back a little so your arm and hip show.  Face the camera so both shoulders are in view, then we can carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 10,
+      "first_action_ms": [
+        5337.0,
+        3424.0,
+        2230.2
+      ],
+      "input_tokens": 26,
+      "output_tokens": 1672,
+      "cache_read_tokens": 63758,
+      "cache_write_tokens": 4110,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, arm abduction. Session ended paused on a setup rule: 0 reps counted (0 verified, 0 unverified), 2 setup corrections given. Check-in: pain 2/10, energy ok, no new symptoms. Exertion low. No dose change.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, keep your body upright, hold for 3 seconds, then lower slowly.",
+        "Please turn to face the camera, with both shoulders in view, and sit back a little so your arm and hip show.",
+        "Face the camera so both shoulders are in view, then we can carry on."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_012",
+      "kind": "setup_induced",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Raise your arm only to shoulder height, keep your shoulders down and relaxed, and hold steady for the full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.4,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.7,
+              134.7,
+              134.2,
+              134.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 4,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Raise your arm only to shoulder height, keep your shoulder down and relaxed, and hold for the full count.   Your holds kept ending just short of 3 seconds and your shoulder was lifting, so a shorter hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 38.0,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view.  Nearly there. It's a bit dark, so add some light in front of you, not behind. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 18,
+      "first_action_ms": [
+        4297.3,
+        3512.4,
+        4119.2,
+        5775.9,
+        2198.7
+      ],
+      "input_tokens": 42,
+      "output_tokens": 3015,
+      "cache_read_tokens": 102158,
+      "cache_write_tokens": 7896,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 37,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay clip, not stopped. Abduction: 10 reps, none verified, all 10 missed. 9 went above the ceiling. 8 shoulder-hiking cues, 37 corrections in total. No lean cues, exertion low. Pain before 2/10, no new symptoms. Therapist to review form.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Raise your arm only to shoulder height, keep your shoulders down and relaxed, and hold steady for the full 3 seconds.",
+        "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view.",
+        "Nearly there. It's a bit dark, so add some light in front of you, not behind.",
+        "Good effort. Raise your arm only to shoulder height, keep your shoulder down and relaxed, and hold for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_023",
+      "kind": "setup_induced",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Stop at shoulder height and keep your shoulder down, away from your ear. Then hold steady for the full count.   Your holds were a little short, so a 2-second hold may be easier to finish with good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 34.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 1,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 4,
+            "peaks": [
+              124.8,
+              45.7,
+              46.2,
+              45.9,
+              38.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 2,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 124.85
+          },
+          "run": 4,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Let's ease off: keep your shoulders relaxed and down, and lift only as high as feels comfortable. I'll suggest a lower target.   Your lifts got lower through the set and your shoulder rose on every rep. A smaller target may help you keep good form.",
+          "proposals": [
+            {
+              "field": "target_deg",
+              "value": "70"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 33.9,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "I can't see your hips. Move the camera back or down so shoulder, elbow and hips show, and add some light in front of you.  Almost there. It's still too dark, so please add light in front of you, not behind. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 21,
+      "first_action_ms": [
+        6085.5,
+        5336.1,
+        3605.2,
+        5876.3,
+        2925.7
+      ],
+      "input_tokens": 42,
+      "output_tokens": 3620,
+      "cache_read_tokens": 102997,
+      "cache_write_tokens": 9185,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 32,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Replay clip, session ended normally. 10 reps, none counted (all missed target). Shoulder hiking cued 9 times, 5 reps above ceiling, 32 corrections. Peak angle fell over the set (86\u00b0 drop); exertion moderate. Pain before 2/10. Smaller target proposed.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, keep your body upright, hold for 3 seconds, then lower gently.",
+        "Good effort. Stop at shoulder height and keep your shoulder down, away from your ear. Then hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "I can't see your hips. Move the camera back or down so shoulder, elbow and hips show, and add some light in front of you.",
+        "Almost there. It's still too dark, so please add light in front of you, not behind.",
+        "Let's ease off: keep your shoulders relaxed and down, and lift only as high as feels comfortable. I'll suggest a lower target.",
+        "How about target 70\u00b0 instead of 90\u00b0? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_109",
+      "kind": "setup_induced",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Nice effort! Next set, stop the arm at shoulder height and keep your shoulders relaxed and down. No need to go higher. ",
+          "proposals": [],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 1,
+            "peaks": [
+              117.5,
+              122.4,
+              56.4,
+              123.1,
+              126.5
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 4,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. You're lifting higher than needed, and your shoulder is rising. Stop at shoulder height, keep shoulders low, and hold for the full count.   Several holds ended a little short of 3 seconds, so a 2-second hold may help you finish each rep with good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 65.5,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Camera view is fine. Some reps missed: hold a full 3 seconds, and keep your shoulder down as you lift to about shoulder height. ",
+          "fix_named": false,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": true,
+          "resume_prompt_camera_checked": true,
+          "resume_blocked": false,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 19,
+      "first_action_ms": [
+        4204.1,
+        3631.2,
+        5807.6,
+        4775.4,
+        4046.1
+      ],
+      "input_tokens": 44,
+      "output_tokens": 3388,
+      "cache_read_tokens": 108740,
+      "cache_write_tokens": 8718,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 24,
+        "posture_cues": 7,
+        "lean_cues": 0,
+        "hiking_cues": 7,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Replay, not stopped. 10 reps, 4 verified, 6 missed (short holds, one target miss). Shoulder hiking on 7 reps and 7 went above the 90 degree ceiling (peaks to about 126). No trunk lean. Exertion low. Pain 2 before. Worth a therapist look at form.",
+      "agent_said": [
+        "Let's start. Stand tall, raise your arm out to the side, hold for 3 seconds, and lower slowly. Keep your body upright.",
+        "Nice effort! Next set, stop the arm at shoulder height and keep your shoulders relaxed and down. No need to go higher.",
+        "Camera view is fine. Some reps missed: hold a full 3 seconds, and keep your shoulder down as you lift to about shoulder height.",
+        "Camera view looks good again. Ready to carry on?",
+        "Thanks. Carrying on from where we stopped.",
+        "Good effort. You're lifting higher than needed, and your shoulder is rising. Stop at shoulder height, keep shoulders low, and hold for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_000",
+      "kind": "review",
+      "video": "PM_000",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 35.0,
+          "reps_counted": 5,
+          "verified": 4,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 0,
+            "peaks": [
+              99.8,
+              131.3,
+              156.0,
+              156.1,
+              152.5
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 158.95
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good holds! But your shoulder crept up each rep and your arm went past 90. Next set, keep the shoulder low and stop at shoulder height.   Your shoulder lifted on every rep last set. A lower target can help you keep it relaxed and move cleanly.",
+          "proposals": [
+            {
+              "field": "target_deg",
+              "value": "60"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        4711.4,
+        7060.3,
+        2423.9
+      ],
+      "input_tokens": 22,
+      "output_tokens": 2051,
+      "cache_read_tokens": 48732,
+      "cache_write_tokens": 4304,
+      "errors": [],
+      "counts": {
+        "reps_total": 6,
+        "verified": 5,
+        "unverified": 0,
+        "missed": 1,
+        "corrections": 12,
+        "posture_cues": 6,
+        "lean_cues": 0,
+        "hiking_cues": 6,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Session ended normally (not stopped). 6 reps: 5 verified, 1 missed, 0 unverified. Shoulder hiking cued 6 times; 5 reps went above the 90 degree ceiling; no trunk lean. Reps slowed about 7% per rep; exertion low. Pain before 2/10, no new symptoms. Replay clip.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and stay tall without leaning.",
+        "Good holds! But your shoulder crept up each rep and your arm went past 90. Next set, keep the shoulder low and stop at shoulder height.",
+        "How about target 60\u00b0 instead of 90\u00b0? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_001",
+      "kind": "review",
+      "video": "PM_001",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 29.5,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              107.5,
+              130.5,
+              126.7,
+              128.4,
+              127.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.25
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. You're lifting higher than needed and shrugging your shoulder. Stop at shoulder height, keep shoulders low, and hold for a full 3 seconds.   Most holds came up a little short and your shoulder was rising. A 2 second hold lets you focus on keeping the shoulder down.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 90.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              129.3,
+              120.9,
+              122.9,
+              116.7,
+              116.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 117.2
+          },
+          "run": 3,
+          "actions": [
+            "regress",
+            "correct"
+          ],
+          "said": " Your shoulder is rising and your arm is going past the line each rep. A lower target may help you keep good form. Nice effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold the full count. ",
+          "proposals": [
+            {
+              "field": "target_deg",
+              "value": "75"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "propose_adjustment",
+            "speak"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 14,
+      "first_action_ms": [
+        4120.1,
+        5217.7,
+        5158.4,
+        2396.7
+      ],
+      "input_tokens": 32,
+      "output_tokens": 2717,
+      "cache_read_tokens": 75687,
+      "cache_write_tokens": 6455,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 3,
+        "unverified": 0,
+        "missed": 7,
+        "corrections": 32,
+        "posture_cues": 10,
+        "lean_cues": 0,
+        "hiking_cues": 10,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Replay, arm abduction, not stopped. 10 reps: 3 verified, 7 missed (holds too short). Shoulder hiking cued on all 10 reps and all 10 went above the 90\u00b0 ceiling. Peak angle fell about 10\u00b0 over the set; exertion moderate. Pain before 2/10, no new symptoms.",
+      "agent_said": [
+        "Let's begin. Stand tall, raise your arm out to the side to shoulder height, hold for 3 seconds, then lower slowly.",
+        "Good effort. You're lifting higher than needed and shrugging your shoulder. Stop at shoulder height, keep shoulders low, and hold for a full 3 seconds.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "How about target 75\u00b0 instead of 90\u00b0? Tap Yes to change it, or Keep.",
+        "Nice effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold the full count.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_012",
+      "kind": "review",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. Stop lifting at shoulder height, keep your shoulders relaxed and down, and hold a little longer at the top.   Your holds were a bit short of 3 seconds, so none counted. A 2 second hold may help you get them counted.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.3,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.5,
+              135.0,
+              132.1,
+              135.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Raise your arm only to shoulder height, keep shoulders relaxed and down, and hold steady for the full count. ",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        3590.8,
+        7766.8,
+        5803.1,
+        2328.3
+      ],
+      "input_tokens": 32,
+      "output_tokens": 2539,
+      "cache_read_tokens": 75491,
+      "cache_write_tokens": 5945,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 35,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay review, arm abduction, session ended normally. 10 reps, 0 verified, 10 missed (holds too short). Arm above the ceiling on 9 reps; shoulder hiking cued 8 times, no trunk lean. Exertion low. Pain before 2/10, no new symptoms. Therapist may review form and hold.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Stop lifting at shoulder height, keep your shoulders relaxed and down, and hold a little longer at the top.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Good effort. Raise your arm only to shoulder height, keep shoulders relaxed and down, and hold steady for the full count."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_023",
+      "kind": "review",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Lift only to shoulder height, keep your shoulders relaxed and down, and hold each lift for the full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 47.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              124.8,
+              126.0,
+              134.3,
+              131.5,
+              131.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 131.6
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. You're lifting higher than needed and your shoulder is rising. Stop at shoulder height, keep shoulders low, and hold for a full three seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 10,
+      "first_action_ms": [
+        3764.8,
+        3365.7,
+        4003.0,
+        2330.6
+      ],
+      "input_tokens": 30,
+      "output_tokens": 1965,
+      "cache_read_tokens": 67221,
+      "cache_write_tokens": 4884,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 35,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay session, arm abduction, ended normally. 10 reps seen, 0 verified, all 10 missed. Shoulder hiking cued 9 times, 9 reps above ceiling, 35 corrections total. No trunk lean. Reps slowed ~7% per rep; exertion low. Pain before 2/10. Therapist review advised.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for three, and keep your body upright.",
+        "Good effort. Lift only to shoulder height, keep your shoulders relaxed and down, and hold each lift for the full 3 seconds.",
+        "Good effort. You're lifting higher than needed and your shoulder is rising. Stop at shoulder height, keep shoulders low, and hold for a full three seconds."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_032",
+      "kind": "review",
+      "video": "PM_032",
+      "camera": "c17",
+      "person": 4,
+      "sets": [
+        {
+          "set": 1,
+          "t": 14.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              112.4,
+              101.1,
+              102.7,
+              102.8,
+              102.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": false,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 102.75
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Lift to about shoulder height, not higher, keep shoulders relaxed, and hold for the full count before lowering.   Holds were under 3 seconds and your shoulder crept up; a shorter hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 33.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              116.3,
+              127.8,
+              129.1,
+              122.8,
+              128.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 128.2
+          },
+          "run": 3,
+          "actions": [
+            "correct"
+          ],
+          "said": "You're lifting higher than needed. Stop at shoulder height, keep shoulders down and relaxed, and hold for a full three seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 47.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera square-on, so both shoulders are in view. Then we'll carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 15,
+      "first_action_ms": [
+        4002.1,
+        4696.4,
+        4724.3,
+        5004.7,
+        2554.2
+      ],
+      "input_tokens": 38,
+      "output_tokens": 2741,
+      "cache_read_tokens": 86635,
+      "cache_write_tokens": 7499,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 36,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Replay review, not stopped. 10 reps attempted, 0 verified, 10 missed; all 10 went above the ceiling. 9 shoulder-hiking cues, 36 corrections, no trunk lean cues. Exertion low. Check-in: pain 2, no new symptoms. Therapist may want to review form and target.",
+      "agent_said": [
+        "Let's begin. Stand tall, lift your arm out to the side to shoulder height, hold for 3 seconds, then lower slowly.",
+        "Good effort. Lift to about shoulder height, not higher, keep shoulders relaxed, and hold for the full count before lowering.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "You're lifting higher than needed. Stop at shoulder height, keep shoulders down and relaxed, and hold for a full three seconds.",
+        "Please turn to face the camera square-on, so both shoulders are in view. Then we'll carry on."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_039",
+      "kind": "review",
+      "video": "PM_039",
+      "camera": "c17",
+      "person": 5,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              99.5,
+              91.2,
+              36.8,
+              131.1,
+              144.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.0
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold for a full count of three before lowering. ",
+          "proposals": [],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.6,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              141.2,
+              129.8,
+              132.2,
+              126.1,
+              125.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 2,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.3
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Stop at shoulder height, relax your shoulders down, and hold a full 3 seconds. Let's try a 2 second hold.   Holds were cut short at about 2 seconds, so reps didn't count. A shorter hold may help you finish them with good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 74.1,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show. Also, lift only to shoulder height and keep each hold for the full count.  The camera still sees your side. Turn your chest toward it so both shoulders are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 18,
+      "first_action_ms": [
+        4071.7,
+        3624.5,
+        4351.6,
+        3351.9,
+        2301.4
+      ],
+      "input_tokens": 42,
+      "output_tokens": 3065,
+      "cache_read_tokens": 102361,
+      "cache_write_tokens": 8068,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 37,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 8
+      },
+      "note": "Replay clip, session ended (not stopped). 10 reps seen, 0 verified, all 10 missed (fell short of target). 8 shoulder-hiking cues, 8 reps above ceiling, 37 corrections. Exertion low, reps slowing ~8% per rep. Pain before 2/10. Therapist may review target and form.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Raise only to shoulder height, keep shoulders relaxed and down, and hold for a full count of three before lowering.",
+        "Good effort. Stop at shoulder height, relax your shoulders down, and hold a full 3 seconds. Let's try a 2 second hold.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera so both shoulders show. Also, lift only to shoulder height and keep each hold for the full count.",
+        "The camera still sees your side. Turn your chest toward it so both shoulders are in view."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_122",
+      "kind": "review",
+      "video": "PM_122",
+      "camera": "c17",
+      "person": 7,
+      "sets": [
+        {
+          "set": 1,
+          "t": 21.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              95.2,
+              154.5,
+              148.8,
+              146.6,
+              149.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 154.85
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Next set, lift only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds before lowering. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              154.4,
+              118.1,
+              130.5,
+              133.6,
+              131.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 137.7
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Nice effort! Stop at shoulder height and keep your shoulder down, away from your ear. Hold the full three seconds.   Your holds were a little short and your reach is tiring. A two-second hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 64.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera, so both shoulders are in view. Then we'll carry on.  Still seeing you from the side. Turn your chest toward the camera so both shoulders show. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 17,
+      "first_action_ms": [
+        3773.3,
+        3250.0,
+        4910.5,
+        3335.0,
+        2223.5
+      ],
+      "input_tokens": 42,
+      "output_tokens": 2969,
+      "cache_read_tokens": 101985,
+      "cache_write_tokens": 7807,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 1,
+        "unverified": 0,
+        "missed": 9,
+        "corrections": 36,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay, arm abduction, ended (not stopped). 10 reps: 1 verified, 9 missed. Shoulder hiking cued 9 times, 9 reps above ceiling, peak angle fell 18\u00b0 over set. Exertion moderate. Pain before 2/10, no new symptoms. Therapist review of form and target advised.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Next set, lift only to shoulder height, keep shoulders relaxed and down, and hold a full 3 seconds before lowering.",
+        "Nice effort! Stop at shoulder height and keep your shoulder down, away from your ear. Hold the full three seconds.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera, so both shoulders are in view. Then we'll carry on.",
+        "Still seeing you from the side. Turn your chest toward the camera so both shoulders show."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_109",
+      "kind": "review",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Stop at about shoulder height, keep your shoulder down and relaxed, and hold each lift for a full three seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              117.5,
+              122.4,
+              87.9,
+              123.2,
+              126.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Nice effort. Keep your shoulder down and relaxed, and stop around shoulder height. No need to lift higher. Hold steady for the full count.   Several holds ended just short of the full count and your shoulder crept up. A shorter hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.5,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera so both shoulders are in view. Then we'll carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 17,
+      "first_action_ms": [
+        3874.4,
+        3834.5,
+        6534.5,
+        3349.0,
+        2146.4
+      ],
+      "input_tokens": 38,
+      "output_tokens": 3030,
+      "cache_read_tokens": 86611,
+      "cache_write_tokens": 7795,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 28,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Replay, arm abduction. Session ended, not stopped. 10 reps: 4 verified, 6 missed. Shoulder hiking cued 8 times, 7 reps above the 90 degree ceiling, holds often short. Exertion low. Pain before 2/10, no new symptoms.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, keep your body upright, hold for three, then lower gently.",
+        "Good effort. Stop at about shoulder height, keep your shoulder down and relaxed, and hold each lift for a full three seconds.",
+        "Nice effort. Keep your shoulder down and relaxed, and stop around shoulder height. No need to lift higher. Hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera so both shoulders are in view. Then we'll carry on."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "review-PM_114",
+      "kind": "review",
+      "video": "PM_114",
+      "camera": "c17",
+      "person": 9,
+      "sets": [
+        {
+          "set": 1,
+          "t": 33.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              85.0,
+              122.3,
+              124.5,
+              130.7,
+              136.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 127.8
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold each lift a full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              124.1,
+              98.2,
+              76.6,
+              81.8,
+              95.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": true,
+            "forward": false,
+            "peak_deg_median": 101.6
+          },
+          "run": 3,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. Keep your shoulder down and relaxed, raise only to shoulder height, and hold steady. Let's try a shorter hold.   Your holds were cut short and your shoulder crept up on every rep, so a 2-second hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera squarely, so both shoulders are in view. Then we'll carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 18,
+      "first_action_ms": [
+        4458.5,
+        4213.0,
+        7449.5,
+        3383.6,
+        2390.8
+      ],
+      "input_tokens": 38,
+      "output_tokens": 3098,
+      "cache_read_tokens": 87026,
+      "cache_write_tokens": 8105,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 2,
+        "unverified": 0,
+        "missed": 8,
+        "corrections": 33,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Replay clip, not stopped. 10 reps: 2 verified, 8 missed (short of target). Shoulder hiking cued 9 times, 7 reps above ceiling, peak angle fell 29\u00b0 over the set; exertion moderate. Pain before 2/10, no new symptoms. Therapist may review target and form.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, hold for 3 seconds, and keep your body upright.",
+        "Good effort. Stop at shoulder height, keep your shoulder down and relaxed, and hold each lift a full 3 seconds.",
+        "Good effort. Keep your shoulder down and relaxed, raise only to shoulder height, and hold steady. Let's try a shorter hold.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "Please turn to face the camera squarely, so both shoulders are in view. Then we'll carry on."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_002-c17",
+      "kind": "setup_real",
+      "video": "PM_002",
+      "camera": "c17",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 4.9,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 7,
+      "first_action_ms": [
+        3943.0,
+        3805.4,
+        2331.9
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1351,
+      "cache_read_tokens": 48748,
+      "cache_write_tokens": 3589,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps were counted (0 verified, 0 unverified, 0 missed), so no form or exertion findings. Two setup corrections were given. Check-in: pain 2, 10 min, no new symptoms, energy ok. Camera setup needs a re-check.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_016-c17",
+      "kind": "setup_real",
+      "video": "PM_016",
+      "camera": "c17",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 8,
+      "first_action_ms": [
+        4513.7,
+        3199.1,
+        2198.5
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1426,
+      "cache_read_tokens": 48912,
+      "cache_write_tokens": 3736,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps were counted (0 verified, 0 unverified, 0 missed), so no form or effort findings. One correction was given. Check-in: pain 2, 10 minutes, energy ok, no new symptoms. Exertion low.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, hold for 3 seconds, and keep your body upright. Go slowly.",
+        "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_024-c17",
+      "kind": "setup_real",
+      "video": "PM_024",
+      "camera": "c17",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 7.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 7,
+      "first_action_ms": [
+        3846.1,
+        3189.5,
+        2088.8
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1348,
+      "cache_read_tokens": 48748,
+      "cache_write_tokens": 3583,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, session ended while paused for a camera setup problem. No reps were counted (0 verified, 0 missed), so there is no form or effort data. One correction was given. Check-in: pain 2, 10 minutes, no new symptoms. Setup needs a recheck before the next try.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, hold for 3 seconds, and keep your body upright. Go slowly.",
+        "Please turn to face the camera so both shoulders show, and add some light in front of you. It's a bit dark."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_101-c17",
+      "kind": "setup_real",
+      "video": "PM_101",
+      "camera": "c17",
+      "person": 6,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "Please turn to face the camera straight on, so both shoulders are in view.  The camera still sees your side. Turn your chest toward it so both shoulders show. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 10,
+      "first_action_ms": [
+        3969.4,
+        3184.4,
+        2151.2
+      ],
+      "input_tokens": 26,
+      "output_tokens": 1649,
+      "cache_read_tokens": 63737,
+      "cache_write_tokens": 4126,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps were counted (0 verified, 0 unverified, 0 missed), so the planned 2 sets of 5 side raises were not done. Two setup corrections were given. Pain before was 2/10, with no new symptoms. Exertion was low.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera straight on, so both shoulders are in view.",
+        "The camera still sees your side. Turn your chest toward it so both shoulders show."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_000-c18",
+      "kind": "setup_real",
+      "video": "PM_000",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "speak"
+          ],
+          "said": "Please turn to face the camera with both shoulders in view, and move back a little so your arm is fully visible. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        3913.4,
+        3329.4,
+        2153.2
+      ],
+      "input_tokens": 24,
+      "output_tokens": 1583,
+      "cache_read_tokens": 56154,
+      "cache_write_tokens": 3928,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session, not stopped by a rule. Paused on setup; no reps were counted (0 verified, 0 missed). One correction was given. Exertion low. Check-in: pain 2, 10 min, no new symptoms. Targets (90 deg, 3 s hold) were not tested.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for three, and keep your body upright.",
+        "Please turn to face the camera with both shoulders in view, and move back a little so your arm is fully visible."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_001-c18",
+      "kind": "setup_real",
+      "video": "PM_001",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera, and move back a little so your shoulder, elbow and hip are all in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 8,
+      "first_action_ms": [
+        3946.8,
+        3472.0,
+        2138.6
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1380,
+      "cache_read_tokens": 48741,
+      "cache_write_tokens": 3728,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended with no reps counted (0 verified, 0 missed). Paused on a camera setup rule; one correction was given. Check-in: pain 2, 10 min, energy ok, no new symptoms. Exertion low. Not stopped.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side, keep your body upright, hold for 3 seconds, then lower slowly.",
+        "Please turn to face the camera, and move back a little so your shoulder, elbow and hip are all in view."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_012-c18",
+      "kind": "setup_real",
+      "video": "PM_012",
+      "camera": "c18",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera so both shoulders show, and sit back a little so your arm and hip are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        3956.8,
+        3304.8,
+        2297.4
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1385,
+      "cache_read_tokens": 48891,
+      "cache_write_tokens": 3888,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay clip, session ended while paused for camera setup. No reps counted (0 verified, 0 missed, 0 unverified); one setup correction given. Exertion low. Check-in: pain 2, 10 min, no new symptoms, energy ok. Setup needs fixing before the next try.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for three seconds, and keep your body upright.",
+        "Please turn to face the camera so both shoulders show, and sit back a little so your arm and hip are in view."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "setup-PM_023-c18",
+      "kind": "setup_real",
+      "video": "PM_023",
+      "camera": "c18",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate"
+          ],
+          "said": "Please turn to face the camera with both shoulders in view, and move back a little so your arm and hip show. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": false,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 8,
+      "first_action_ms": [
+        5110.2,
+        3300.6,
+        2204.1
+      ],
+      "input_tokens": 22,
+      "output_tokens": 1359,
+      "cache_read_tokens": 48744,
+      "cache_write_tokens": 3737,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Replay session ended paused on a setup rule. No reps were counted (0 verified, 0 unverified, 0 missed), so no form or effort findings. One correction was given. Check-in: pain 2, 10 min, no new symptoms, energy ok. Exertion low.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side to shoulder height, hold for 3 seconds, and keep your body upright.",
+        "Please turn to face the camera with both shoulders in view, and move back a little so your arm and hip show."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "induced-hips-PM_012",
+      "kind": "setup_induced",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Good effort. Lift only to shoulder height, not higher, and keep your shoulders relaxed and down. Hold steady for the full count.   Your holds were a bit short and your shoulder crept up. A 2 second hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.4,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.7,
+              136.3,
+              133.4,
+              134.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 4,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Good effort. Lift only to shoulder height and stop there, keep your shoulders relaxed and down, and hold steady for the full count.   Your holds were just short of 3 seconds, so a 2 second hold may feel steadier while you work on stopping at shoulder height.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 38.0,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view.  It's a bit too dark. Add some light in front of you, not behind, and then we can carry on. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 21,
+      "first_action_ms": [
+        4079.9,
+        5037.2,
+        3653.5,
+        8050.5,
+        2584.8
+      ],
+      "input_tokens": 44,
+      "output_tokens": 3575,
+      "cache_read_tokens": 110836,
+      "cache_write_tokens": 9186,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 37,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Replay clip, session ended normally. 10 reps seen, none counted as good (10 missed, 0 verified). Arm went above the 90 degree ceiling on 9 reps. Shoulder hiking cued 8 times, no trunk lean. Effort stayed low. Pain before 2/10, no new symptoms.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold it, and keep your body upright. Stop if anything hurts.",
+        "Good effort. Lift only to shoulder height, not higher, and keep your shoulders relaxed and down. Hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view.",
+        "It's a bit too dark. Add some light in front of you, not behind, and then we can carry on.",
+        "Good effort. Lift only to shoulder height and stop there, keep your shoulders relaxed and down, and hold steady for the full count.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "induced-hips-PM_023",
+      "kind": "setup_induced",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "correct",
+            "regress",
+            "set_session_plan"
+          ],
+          "said": "Stop at shoulder height, no higher, and keep your shoulder down away from your ear. Then hold steady and count to three.   Your holds were a little under 3 seconds, so a 2 second hold may let you focus on keeping your shoulder down.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "get_prescription",
+            "speak",
+            "propose_adjustment",
+            "set_session_plan"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 34.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 1,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 4,
+            "peaks": [
+              124.8,
+              45.7,
+              46.2,
+              45.9,
+              38.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 2,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 124.85
+          },
+          "run": 4,
+          "actions": [
+            "regress",
+            "correct"
+          ],
+          "said": " Your arm height dropped a lot this set and your shoulder lifted on every rep. A lower target may keep the movement smooth. Good effort. Keep your shoulder down and relaxed as you lift, and take it slow. I suggest a lower target. ",
+          "proposals": [
+            {
+              "field": "target_deg",
+              "value": "70"
+            }
+          ],
+          "tools": [
+            "get_exertion_state",
+            "get_set_summary",
+            "propose_adjustment",
+            "speak"
+          ],
+          "claims": [
+            "hike"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 33.9,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume",
+            "speak"
+          ],
+          "said": "I can't see your hips. Move the camera back or down so shoulder, elbow and hips show, and add some light in front of you. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 20,
+      "first_action_ms": [
+        4116.0,
+        5665.6,
+        4646.8,
+        5112.0,
+        5238.8
+      ],
+      "input_tokens": 44,
+      "output_tokens": 3575,
+      "cache_read_tokens": 110742,
+      "cache_write_tokens": 8925,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 31,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Replay, arm abduction, ended normally. 10 reps seen, 0 verified, all 10 missed. Shoulder hiking cued 9 times, 5 reps above the 90\u00b0 ceiling. Peak angle fell over the set (86\u00b0), exertion moderate. Pain before 2/10. Therapist may review form and target.",
+      "agent_said": [
+        "Let's begin. Raise your arm out to the side slowly, hold for 3 seconds, and keep your body upright and still.",
+        "Stop at shoulder height, no higher, and keep your shoulder down away from your ear. Then hold steady and count to three.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine.",
+        "I can't see your hips. Move the camera back or down so shoulder, elbow and hips show, and add some light in front of you.",
+        "How about target 70\u00b0 instead of 90\u00b0? Tap Yes to change it, or Keep.",
+        "Good effort. Keep your shoulder down and relaxed as you lift, and take it slow. I suggest a lower target.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 1
+    },
+    {
+      "id": "induced-hips-PM_109",
+      "kind": "setup_induced",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "correct"
+          ],
+          "said": "Good set. Stop at shoulder height, about 90 degrees, and keep your shoulders down and relaxed. Hold each raise for a full 3 seconds. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "get_exertion_state",
+            "speak"
+          ],
+          "claims": [
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 1,
+            "peaks": [
+              117.5,
+              122.4,
+              56.4,
+              123.4,
+              126.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 4,
+          "actions": [
+            "correct",
+            "regress"
+          ],
+          "said": "Nice effort. You're lifting higher than needed and shrugging your shoulder. Stop at shoulder height, keep shoulders low and relaxed, and hold steady.   Several holds ended just short of 3 seconds, so a 2-second hold may help you keep good form.",
+          "proposals": [
+            {
+              "field": "hold_s",
+              "value": "2"
+            }
+          ],
+          "tools": [
+            "get_prescription",
+            "get_set_summary",
+            "speak",
+            "propose_adjustment"
+          ],
+          "claims": [
+            "hike",
+            "hold",
+            "overshoot"
+          ],
+          "faulty_truth": true,
+          "fault_addressed": true,
+          "praise_only_on_faulty": false,
+          "silent": false,
+          "unsupported_claims": [
+            "hold"
+          ],
+          "progress_on_faulty": false,
+          "evidence_in_set": true,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 65.5,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "get_set_summary",
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": true,
+          "resume_prompt_camera_checked": true,
+          "resume_blocked": false,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 16,
+      "first_action_ms": [
+        4639.9,
+        3318.0,
+        3248.5,
+        4703.8,
+        2301.5
+      ],
+      "input_tokens": 40,
+      "output_tokens": 2821,
+      "cache_read_tokens": 94098,
+      "cache_write_tokens": 7538,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 24,
+        "posture_cues": 7,
+        "lean_cues": 0,
+        "hiking_cues": 7,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Replay clip, abduction, ended normally. 10 reps: 4 verified, 6 missed (fell short of target), 0 unverified. 7 shoulder-hiking cues, 7 reps above ceiling, no trunk lean. Exertion low. Pain before 2, no new symptoms. Therapist may review target and shoulder form.",
+      "agent_said": [
+        "Stand tall, raise your arm out to the side to shoulder height, hold for 3 seconds, then lower slowly. Keep your body upright.",
+        "Good set. Stop at shoulder height, about 90 degrees, and keep your shoulders down and relaxed. Hold each raise for a full 3 seconds.",
+        "I can't see your hips. Move the camera back or down so your shoulder, elbow and hips are all in view.",
+        "Camera now sees your hips. Ready to carry on?",
+        "Thanks. Carrying on from where we stopped.",
+        "Nice effort. You're lifting higher than needed and shrugging your shoulder. Stop at shoulder height, keep shoulders low and relaxed, and hold steady.",
+        "How about hold 2 s instead of 3 s? Tap Yes to change it, or Keep.",
+        "Keeping it as it is. That's fine."
+      ],
+      "repeat": 1
+    }
+  ],
+  "rescored": "2026-10-12"
+}

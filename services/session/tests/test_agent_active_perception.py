@@ -184,6 +184,38 @@ def test_arm_gate_held_for_3_s_emits_setup_blocked_once_and_pauses_the_session(t
     assert not s.stop_rules.flags  # a setup pause is not a therapist flag
 
 
+def test_a_setup_pause_is_not_repeated_while_the_session_is_already_paused_for_it(tmp_path):
+    """Real video, 12 Oct (agent_video_eval, a subject who never turns): the agent's
+    `recalibrate` resets the pose gate, the gate stays closed, `setup_blocked` fires again 3 s
+    later and a second `pause:setup` (and a second agent checkpoint) followed, every 3 s until the
+    session's run budget ran out. The same pause while already paused for it is now dropped:
+    no new pause event, no new checkpoint, one trace row."""
+    p = arm_pipeline()
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="arm2", exercise="abduction")
+    checkpoints: list[str] = []
+    s._checkpoint = lambda trigger, ev, t: checkpoints.append(trigger)  # type: ignore[method-assign]
+    s.agent = object()  # the agent is on (only its checkpoint hook is used here)
+    paused = []
+    n = int(SETUP_BLOCK_S / 0.1) + 10
+    i = 0
+    for _ in range(3):  # three gate episodes, the pose gate reset (recalibrate) between them
+        for _ in range(n):
+            evs = p.process_pose(pose(frontal=False), 0.1 * i, i)
+            paused += [e for e in s.on_events(evs, snapshot=p.snapshot(), t=0.1 * i) if e.type == "pause"]
+            i += 1
+        p.command({"cmd": "recalibrate"})
+    assert len(paused) == 1 and s.paused and s.pause_rule == "setup"
+    assert checkpoints == ["pause:setup"]
+    assert len([r for r in s.trace.tail(500) if r["kind"] == "pause_repeat"]) == 2
+    # a resume, then the same problem again: a new pause (it is a new episode)
+    s.resume(0.1 * i)
+    for _ in range(n):
+        evs = p.process_pose(pose(frontal=False), 0.1 * i, i)
+        paused += [e for e in s.on_events(evs, snapshot=p.snapshot(), t=0.1 * i) if e.type == "pause"]
+        i += 1
+    assert len(paused) == 2 and checkpoints == ["pause:setup", "pause:setup"]
+
+
 def test_recalibrate_counts_landmark_frames_too():
     p = arm_pipeline()
     p.process_pose(pose(), 0.0, 0)

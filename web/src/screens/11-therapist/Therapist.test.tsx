@@ -74,7 +74,7 @@ test('review flags scrolls to its section; the trace panel has no disk paths', a
 })
 
 test('10 Oct: the empty trace line names the coach by the service\'s agent mode, never a stale "pending"', async () => {
-  mockApi({ ...ROUTES, '/health': { status: 'ok', agent: { mode: 'bedrock', model: 'm', mcp: true, ready: true } } })
+  mockApi({ ...ROUTES, '/health': { status: 'ok', agent: { mode: 'scripted', model: 'scripted', mcp: true, ready: true } } })
   Element.prototype.scrollIntoView = vi.fn()
   render(<MemoryRouter><Therapist /></MemoryRouter>)
   await screen.findByRole('heading', { name: 'Alex M.' })

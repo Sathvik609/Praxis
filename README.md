@@ -12,7 +12,7 @@ The locked exercise set (28 Sep 2026) is **three camera-coached exercises**: **A
 
 **Accessibility:** [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) — WCAG 2.1 AA audit of every screen and dialog (axe-core in vitest and in headless Chrome, a keyboard-only critical path, live regions, reduced motion): what was fixed, the three contrast exceptions kept by decision, and what is still not served (the coach is caption-only since 10 Oct).
 
-**Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system diagram (browser → OpenCV 5 session service → stop rules → rule / agent coach → trace + SQLite; AWS EC2 + COOL + CloudFront live, Bedrock / S3 / CloudWatch / CDK dashed as planned), the OpenCV 5 pipeline per exercise, and the agent's perception → decision → action loop with the patient's approval step.
+**Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system diagram (browser → OpenCV 5 session service → stop rules → rule / agent coach → trace + SQLite; AWS EC2 + COOL + CloudFront live, S3 / CloudWatch / CDK dashed as planned; the agent runs on Claude via the Anthropic API, Bedrock is not used), the OpenCV 5 pipeline per exercise, and the agent's perception → decision → action loop with the patient's approval step.
 
 ## 60-second quickstart (edge / laptop mode)
 
@@ -108,7 +108,12 @@ curl -s localhost:8000/api/agent/metrics   # runs today, outcomes, errors, first
 
 10 Oct (later): the agent re-samples a non-blue cup's colour with OpenCV (`resample_target_colour`), offers a resume only after a fresh passing camera check, rate-limits praise, keeps a session plan revised only on new evidence, follows one enforced autonomy table, logs one JSON line per run, and its MCP routes answer only loopback or the per-process token; 11 Oct: audit hardening (socket close cancels the agent, feedback note after a stop, ended sessions read-only, finite-number and evidence-id checks, OpenCV digest in every perception tool trace row) and three new scenarios (peg-test explanation, outage mid-session, out-of-range clamp); scripted 15/15. Details: `docs/AGENT.md`.
 
-Status 11 Oct: 15 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, final 11 Oct run after the agent, camera and browser audits): **45/45 runs passed** (1.0, 95 % Wilson CI 0.921–1.0), 0 guardrail violations, fallbacks 9/9, patient approval respected 24/24, correct perception tool before acting 39/39, first action p50/p95 4.8/8.2 s, ~$0.07 per session ($3.25 for the run). An earlier run that day was 44/45 (one covered_marker repeat hit the 15 s run budget after naming the fix and failed safe); covered_marker now covers two corners, the realistic case, since one covered corner is tolerated live. The 10 Oct run on 12 scenarios was 32/36; its misses are resolved (mcp_down: the check was over-literal and now tests the fallback itself; green_cup: prompt now has the agent name the cup's colour as the cause; falling_peaks: 3/3). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`. Bedrock not run.
+Status 12 Oct: the agent runs on **Claude Sonnet 5.5 via the Anthropic API** (Bedrock is not used), with prompt caching. **On real video** (REHAB24-6 through the product pipeline, `evaluation/scripts/agent_video_eval.py` → `evaluation/results/agent_video_v0.md`): 40 sessions, a motion-capture-confirmed fault corrected in 43/44 set reviews, the specific fix named on 26/26 real wrong-view pauses with no resume offered while still wrong, **0 guardrail violations**, $0.053 per session. Synthetic 15 × 2: 28/30, first action p50/p95 4.2/6.5 s, $0.019 per session. Model comparison (Sonnet 5 / Sonnet 5.5 / Haiku 5.5): `evaluation/results/agent_models_v0.md`, choice and cost cap in `docs/AGENT.md`. 11 Oct (Sonnet 5, 15 × 3): 45/45.
+
+```bash
+uv run python ../../evaluation/scripts/agent_video_eval.py --planner rule                    # real video, free (needs tools/fetch_rehab24.py)
+uv run --env-file .env python ../../evaluation/scripts/agent_video_eval.py --planner anthropic --repeat 2 --yes   # ~$2.10 on Sonnet 5.5
+```
 
 ## One-container deploy (Railway / any Docker host)
 

@@ -240,11 +240,13 @@ class AgentCoach:
         row = {
             "phase": "end", "trigger": trigger, "model": model, "transport": transport, "ms": ms,
             "input_tokens": res.input_tokens if res else None, "output_tokens": res.output_tokens if res else None,
+            "cache_read_tokens": getattr(res, "cache_read_tokens", None) if res else None,
+            "cache_write_tokens": getattr(res, "cache_write_tokens", None) if res else None,
             "outcome": outcome, "tool_calls": run.calls, "actions": run.actions, "first_action_ms": run.first_action_ms,
             "label": self.label, "run": run.id, "policy_version": T.POLICY_VERSION,
         }
         s.trace.log("agent_run", **row)
-        self.metrics.run(session=s.session_id, trigger=trigger, outcome=outcome, ms=ms, first_action_ms=run.first_action_ms, tool_calls=run.calls, actions=run.actions, input_tokens=row["input_tokens"], output_tokens=row["output_tokens"], transport=transport, model=model, policy_version=T.POLICY_VERSION)
+        self.metrics.run(session=s.session_id, trigger=trigger, outcome=outcome, ms=ms, first_action_ms=run.first_action_ms, tool_calls=run.calls, actions=run.actions, input_tokens=row["input_tokens"], output_tokens=row["output_tokens"], cache_read_tokens=row["cache_read_tokens"], cache_write_tokens=row["cache_write_tokens"], transport=transport, model=model, policy_version=T.POLICY_VERSION)
         if err is not None:
             row["error_kind"] = kind
         self.runs.append(row)

@@ -411,7 +411,16 @@ class CoachSession:
 
     # ---- internals ---------------------------------------------------------------------
     def _log_stop(self, evs: list[Event]) -> list[Event]:
+        out: list[Event] = []
         for e in evs:
+            if e.type == "pause" and self.paused and e.payload.get("rule") == self.pause_rule:
+                # Already paused for this very rule (12 Oct, real video): e.g. the agent's
+                # recalibrate reset the pose gate and the still-wrong view raised setup_blocked
+                # again 3 s later. The patient already sees this pause and the agent already has
+                # its checkpoint: no second pause event, no second agent run.
+                self.trace.log("pause_repeat", rule=self.pause_rule, t=e.t)
+                continue
+            out.append(e)
             self._ring.append(e)
             if e.type == "stop":
                 self.epoch += 1  # any agent run in flight is now stale
@@ -427,7 +436,7 @@ class CoachSession:
                         self._checkpoint(f"pause:{e.payload.get('rule')}", [e.id], e.t)
             elif e.type == "therapist_flag":
                 self.trace.log("flag", rule=e.payload.get("rule"), detail=e.payload.get("detail"))
-        return evs
+        return out
 
     def _coach_event(self, d: Decision, t: float) -> Event:
         if d.source == "rule":

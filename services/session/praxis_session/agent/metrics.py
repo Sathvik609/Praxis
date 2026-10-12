@@ -26,13 +26,15 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from praxis_session import ops
-from praxis_session.agent.model import PRICE_PER_MTOK  # Sonnet 5 list price
+from praxis_session.agent import model as _model
 
 MAX_ROWS = 5000
 
 
-def cost_usd(input_tokens: int | None, output_tokens: int | None) -> float:
-    return round((input_tokens or 0) / 1e6 * PRICE_PER_MTOK["input"] + (output_tokens or 0) / 1e6 * PRICE_PER_MTOK["output"], 5)
+def cost_usd(input_tokens: int | None, output_tokens: int | None, model: str | None = None, cache_read: int | None = 0, cache_write: int | None = 0) -> float:
+    """List-price estimate at the run's model's prices (agent/model.py `PRICES`; the default
+    model's prices when unknown), cache reads and writes included."""
+    return round(_model.cost_usd(model, input_tokens, output_tokens, cache_read, cache_write), 5)
 
 
 def _pct(xs: list[float], q: float) -> float | None:
@@ -43,7 +45,7 @@ def _pct(xs: list[float], q: float) -> float | None:
 
 
 def _provider() -> str:
-    """The agent provider this process runs (PRAXIS_AGENT: off | anthropic | bedrock | ...)."""
+    """The agent provider this process runs (PRAXIS_AGENT: off | anthropic | scripted)."""
     return os.environ.get("PRAXIS_AGENT", "off") or "off"
 
 
@@ -69,9 +71,9 @@ class AgentMetrics:
             print(json.dumps(line, separators=(",", ":"), default=str), file=sys.stdout, flush=True)
         return row
 
-    def run(self, *, session: str, trigger: str, outcome: str, ms: float | None = None, first_action_ms: float | None = None, tool_calls: int = 0, actions: int = 0, input_tokens: int | None = None, output_tokens: int | None = None, transport: str | None = None, model: str | None = None, policy_version: str | None = None, provider: str | None = None) -> dict[str, Any]:
-        tokens = (input_tokens or 0) + (output_tokens or 0)
-        cost = cost_usd(input_tokens, output_tokens)
+    def run(self, *, session: str, trigger: str, outcome: str, ms: float | None = None, first_action_ms: float | None = None, tool_calls: int = 0, actions: int = 0, input_tokens: int | None = None, output_tokens: int | None = None, transport: str | None = None, model: str | None = None, policy_version: str | None = None, provider: str | None = None, cache_read_tokens: int | None = None, cache_write_tokens: int | None = None) -> dict[str, Any]:
+        tokens = (input_tokens or 0) + (output_tokens or 0) + (cache_read_tokens or 0) + (cache_write_tokens or 0)
+        cost = cost_usd(input_tokens, output_tokens, model, cache_read_tokens, cache_write_tokens)
         emf = {
             "AgentRuns": None if outcome == "daily_cap" else 1,
             "AgentFallbacks": 1 if outcome in ("error", "daily_cap") else None,
@@ -81,9 +83,17 @@ class AgentMetrics:
         return self._log({
             "evt": "agent_run", "session": session, "trigger": trigger, "outcome": outcome, "ms": ms,
             "first_action_ms": first_action_ms, "tool_calls": tool_calls, "actions": actions, "tokens": tokens,
-            "input_tokens": input_tokens, "output_tokens": output_tokens, "transport": transport, "model": model,
+            "input_tokens": input_tokens, "output_tokens": output_tokens, "cache_read_tokens": cache_read_tokens,
+            "cache_write_tokens": cache_write_tokens, "transport": transport, "model": model,
             "cost_usd_est": cost, "policy_version": policy_version, "provider": provider or _provider(),
         }, emf)
+
+    def model_verified(self, model: str | None) -> bool:
+        """At least one run of `model` got its answer (`done`, or `stale`: the model answered
+        after the session moved on) since this process started: /health's evidence that the
+        configured provider really ran, not just that it is configured."""
+        with self._lock:
+            return any(r["evt"] == "agent_run" and r.get("model") == model and r["outcome"] in ("done", "stale") for r in self._rows)
 
     def error(self, *, session: str, error_kind: str, message: str, trigger: str | None = None, fallback: str | None = None) -> dict[str, Any]:
         return self._log({"evt": "agent_error", "session": session, "trigger": trigger, "error_kind": error_kind, "message": str(message)[:200], "fallback": fallback, "provider": _provider()}, {"AgentErrors": 1})

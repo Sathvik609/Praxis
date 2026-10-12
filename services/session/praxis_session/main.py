@@ -138,8 +138,16 @@ def health() -> dict[str, object]:
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
         },
-        "agent": AGENT_CFG.health(MCP_MOUNTED),
+        "agent": AGENT_CFG.health(MCP_MOUNTED) | agent_run_status(AGENT_CFG, AGENT_METRICS),
     }
+
+
+def agent_run_status(cfg: Any, metrics: Any) -> dict[str, object]:
+    """Configured is not verified (12 Oct): `model_verified` turns true only once a run of the
+    configured model got its answer in this process."""
+    if cfg.mode != "anthropic":
+        return {}
+    return {"model_verified": bool(metrics.model_verified(cfg.model))}
 
 
 

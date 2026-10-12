@@ -61,7 +61,7 @@ import numpy as np  # noqa: E402
 from praxis_session.agent import mcp_server  # noqa: E402
 from praxis_session.agent import tools as T  # noqa: E402
 from praxis_session.agent.metrics import AgentMetrics  # noqa: E402
-from praxis_session.agent.model import AGENT_LABELS, PRICE_PER_MTOK, ScriptedPlanner, StrandsPlanner, build_prompt, load_config  # noqa: E402
+from praxis_session.agent.model import AGENT_LABELS, DEFAULT_MODEL, ScriptedPlanner, StrandsPlanner, base_model, build_prompt, cost_usd, load_config, price_for  # noqa: E402
 from praxis_session.coach.agent import AgentCoach  # noqa: E402
 from praxis_session.events import Event, make_event  # noqa: E402
 from praxis_session.perception.board_spec import CUP_TARGETS  # noqa: E402
@@ -81,7 +81,7 @@ BLUE = (200, 90, 30)
 # Rough per-run token budget for the cost estimate (system + 17 tool schemas + up to 6 round trips).
 EST_INPUT_TOKENS_PER_RUN = 30_000
 EST_OUTPUT_TOKENS_PER_RUN = 1_200
-STEMS = {"scripted": "agent_v0", "rule": "agent_v0_rule", "anthropic": "agent_v0_anthropic", "bedrock": "agent_v0_bedrock"}
+STEMS = {"scripted": "agent_v0", "rule": "agent_v0_rule", "anthropic": "agent_v0_anthropic"}
 
 
 def load_scenarios(names: list[str] | None = None) -> list[dict[str, Any]]:
@@ -488,7 +488,7 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
         checks["no_target_above_ceiling"] = not _ceiling_attempts(s) and float(arm.get("target_deg", 0)) <= CEILING_DEG
     violations = guardrail_violations(res)
     first = [r["first_action_ms"] for r in res["runs"] if r.get("first_action_ms") is not None]
-    tokens = sum((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0) for r in res["runs"])
+    tokens = sum((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0) + (r.get("cache_read_tokens") or 0) + (r.get("cache_write_tokens") or 0) for r in res["runs"])
     fallback = None
     if ex.get("offline") or ex.get("transport") == "direct":
         fallback = all(checks.get(k, True) for k in ("offline_status", "rule_coach_after_error", "transport", "errors"))
@@ -511,6 +511,8 @@ def evaluate(sc: dict[str, Any], res: dict[str, Any]) -> dict[str, Any]:
         "tokens": tokens,
         "input_tokens": sum(r.get("input_tokens") or 0 for r in res["runs"]),
         "output_tokens": sum(r.get("output_tokens") or 0 for r in res["runs"]),
+        "cache_read_tokens": sum(r.get("cache_read_tokens") or 0 for r in res["runs"]),
+        "cache_write_tokens": sum(r.get("cache_write_tokens") or 0 for r in res["runs"]),
         "transport": sorted({r["transport"] for r in res["runs"]}),
         "outcomes": [r["outcome"] for r in res["runs"]],
         # every agent error with its message, so a miss can be diagnosed without the trace
@@ -595,12 +597,16 @@ def summarise(rows: list[dict[str, Any]], planner: str, model: str, repeat: int 
     ap = [r["approval_ok"] for r in rows if r["approval_ok"] is not None]
     tin = sum(r["input_tokens"] for r in rows)
     tout = sum(r["output_tokens"] for r in rows)
+    tcr = sum(r.get("cache_read_tokens") or 0 for r in rows)
+    tcw = sum(r.get("cache_write_tokens") or 0 for r in rows)
     ids = list(dict.fromkeys(r["id"] for r in rows))
     per = {i: {"passes": sum(r["success"] for r in rows if r["id"] == i), "runs": sum(1 for r in rows if r["id"] == i)} for i in ids}
     for v in per.values():
         v["rate"] = round(v["passes"] / v["runs"], 3) if v["runs"] else None
     passes = sum(r["success"] for r in rows)
-    cost = tin / 1e6 * PRICE_PER_MTOK["input"] + tout / 1e6 * PRICE_PER_MTOK["output"]
+    # 12 Oct: at the run's model's list prices, cache reads/writes included (agent/model.py PRICES)
+    cost = cost_usd(model if planner not in ("scripted", "rule") else None, tin, tout, tcr, tcw) if planner not in ("scripted", "rule") else 0.0
+    all_in = tin + tcr + tcw
     return {
         "planner": planner,
         "model": model,
@@ -616,7 +622,10 @@ def summarise(rows: list[dict[str, Any]], planner: str, model: str, repeat: int 
         "human_approval_respected": f"{sum(ap)}/{len(ap)}",
         "first_action_ms_p50": _pct(lat, 0.5),
         "first_action_ms_p95": _pct(lat, 0.95),
-        "tokens_per_session": round((tin + tout) / max(1, len(rows))),
+        "tokens_per_session": round((tin + tout + tcr + tcw) / max(1, len(rows))),
+        "cache_read_share": round(tcr / all_in, 3) if all_in else None,
+        "cache_read_tokens": tcr,
+        "cache_write_tokens": tcw,
         "cost_usd": round(cost, 4),
         "cost_usd_per_session": round(cost / max(1, len(rows)), 4),
         "rows": rows,
@@ -651,6 +660,7 @@ def write_results(summary: dict[str, Any], out_dir: Path, stem: str) -> Path:
             f"| Checkpoint → first action p50 / p95 (ms) | {summary['first_action_ms_p50']} / {summary['first_action_ms_p95']} |",
             f"| Tokens per session | {summary['tokens_per_session']} |",
             f"| Model cost (list price) | ${summary['cost_usd']} total, ${summary['cost_usd_per_session']} per session |",
+            f"| Input read from the prompt cache | {_cell(summary.get('cache_read_share'))} |",
             "",
             "| Scenario | Success | Pass rate | Runs | Tool calls | Transport | Outcomes | Failed checks | Violations |",
             "|---|---|---|---|---|---|---|---|---|",
@@ -705,7 +715,7 @@ def write_ablation(out_dir: Path) -> Path | None:
     """agent_ablation_v0.md from the result files that exist (scripted, rule, and the real
     model once its run has capability data)."""
     cols: list[tuple[str, dict[str, Any]]] = []
-    for planner, title in (("scripted", "Agent (scripted planner)"), ("anthropic", "Agent (Claude, Anthropic API)"), ("bedrock", "Agent (Claude, Bedrock)"), ("rule", "Rule coach only (agent off)")):
+    for planner, title in (("scripted", "Agent (scripted planner)"), ("anthropic", "Agent (Claude, Anthropic API)"), ("rule", "Rule coach only (agent off)")):
         f = out_dir / f"{STEMS[planner]}.json"
         if f.exists():
             data = json.loads(f.read_text())
@@ -778,10 +788,48 @@ def serve_mcp(registry: T.Registry) -> str:
     return f"http://127.0.0.1:{port}/mcp"
 
 
-def estimate_cost(scenarios: list[dict[str, Any]], repeat: int = 1) -> tuple[int, float]:
+def estimate_cost(scenarios: list[dict[str, Any]], repeat: int = 1, model: str | None = None) -> tuple[int, float]:
+    """Upper estimate: every input token at the uncached price (caching only lowers it)."""
     runs = repeat * sum(sum(1 for st in sc["steps"] if "run" in st) + (1 if any("feedback" in st for st in sc["steps"]) else 0) for sc in scenarios)
-    usd = runs * (EST_INPUT_TOKENS_PER_RUN / 1e6 * PRICE_PER_MTOK["input"] + EST_OUTPUT_TOKENS_PER_RUN / 1e6 * PRICE_PER_MTOK["output"])
+    p = price_for(model)
+    usd = runs * (EST_INPUT_TOKENS_PER_RUN / 1e6 * p["input"] + EST_OUTPUT_TOKENS_PER_RUN / 1e6 * p["output"])
     return runs, round(usd, 2)
+
+
+def stem_for(planner: str, model: str | None) -> str:
+    """Result file stem. `agent_v0_anthropic` stays the Claude Sonnet 5 run (11 Oct) that the
+    ablation reads; other models get their own file (12 Oct model comparison)."""
+    if planner == "anthropic" and model and base_model(model) != "claude-sonnet-5":
+        return f"{STEMS[planner]}_{base_model(model).removeprefix('claude-')}"
+    return STEMS[planner]
+
+
+def write_model_comparison(out_dir: Path) -> Path | None:
+    """agent_models_v0.md: every real-model result file side by side (pass rate, guardrails,
+    latency, cost), from the .json files alone."""
+    files = sorted(out_dir.glob("agent_v0_anthropic*.json"))
+    rows = []
+    for f in files:
+        d = json.loads(f.read_text())
+        n = d["scenarios"] * d["repeat"]
+        ci = d.get("pass_rate_ci95") or [None, None]
+        passes = sum(v["passes"] for v in d["per_scenario"].values())
+        rows.append((d["model"], f"{passes}/{n}", f"{d['pass_rate']} ({ci[0]}–{ci[1]})", d["guardrail_violations"], d["tool_before_action"], d["fallback_correct"], d["human_approval_respected"], d["first_action_ms_p50"], d["first_action_ms_p95"], d["tokens_per_session"], _cell(d.get("cache_read_share")), d["cost_usd_per_session"], d["cost_usd"], f.stem))
+    if len(rows) < 2:
+        return None
+    lines = [
+        "# Agent coach: model comparison (15 synthetic scenarios)",
+        "",
+        f"Generated by `evaluation/scripts/agent_eval.py` on {time.strftime('%Y-%m-%d')} from the real-model result files below (Anthropic API). Same scenarios, prompt, tools and guardrails; effort `low`, `max_tokens` 800, 15 s run budget. Prompt caching (tool definitions + system prompt + conversation) was added on 12 Oct: the Sonnet 5 file predates it (11 Oct, no caching). Cost = list price incl. cache reads/writes.",
+        "",
+        "| Model | Passed | Pass rate (95 % Wilson) | Guardrail violations | Tool before action | Fallbacks | Patient approval | First action p50 (ms) | p95 (ms) | Tokens / session | Input from cache | $ / session | $ total | File |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    lines += ["| " + " | ".join(str(c) for c in r[:-1]) + f" | `{r[-1]}.json` |" for r in rows]
+    lines.append("")
+    path = out_dir / "agent_models_v0.md"
+    path.write_text("\n".join(lines))
+    return path
 
 
 async def _run_all(jobs: list[dict[str, Any]], planner: str, trace_dir: Path, registry: T.Registry, http_url: str | None) -> list[dict[str, Any]]:
@@ -808,7 +856,7 @@ def rerender(out_dir: Path = RESULTS) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--planner", choices=("scripted", "rule", "anthropic", "bedrock"), default="scripted")
+    ap.add_argument("--planner", choices=("scripted", "rule", "anthropic"), default="scripted")
     ap.add_argument("--scenario", action="append", help="run only these scenario ids")
     ap.add_argument("--repeat", type=int, default=1, help="run each scenario N times (pass rate with a 95 %% interval)")
     ap.add_argument("--http", action="store_true", help="scripted: serve MCP over real streamable HTTP")
@@ -816,7 +864,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, default=RESULTS)
     ap.add_argument("--traces", type=Path, default=TRACES, help="where sample traces are copied")
     ap.add_argument("--rerender", action="store_true", help="rewrite the .md files from the existing .json (no run, no cost)")
+    ap.add_argument("--model", help=f"model for --planner anthropic (sets PRAXIS_AGENT_MODEL; default {DEFAULT_MODEL})")
     args = ap.parse_args(argv)
+    if args.model:
+        os.environ["PRAXIS_AGENT_MODEL"] = args.model
     if args.rerender:
         for p in rerender(args.out):
             print(f"rewrote {p}")
@@ -826,10 +877,11 @@ def main(argv: list[str] | None = None) -> int:
     logging.getLogger("fastmcp").setLevel(logging.CRITICAL)
     scenarios = load_scenarios(args.scenario)
     model = "scripted" if args.planner == "scripted" else ("none (agent off)" if args.planner == "rule" else "")
-    if args.planner in ("anthropic", "bedrock"):
+    if args.planner == "anthropic":
         cfg = load_config({**os.environ, "PRAXIS_AGENT": args.planner})
-        runs, usd = estimate_cost(scenarios, repeat)
-        print(f"{len(scenarios)} scenarios x {repeat}, about {runs} agent runs on {cfg.model}: estimated ${usd} at list price (Sonnet 5 $2/$10 per MTok).")
+        runs, usd = estimate_cost(scenarios, repeat, cfg.model)
+        p = price_for(cfg.model)
+        print(f"{len(scenarios)} scenarios x {repeat}, about {runs} agent runs on {cfg.model}: estimated ${usd} at list price, an upper bound (${p['input']}/${p['output']} per MTok, no cache discount assumed).")
         if not cfg.ready:
             print(f"agent not ready: {cfg.reason}")
             return 2
@@ -839,7 +891,7 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["PRAXIS_AGENT"] = args.planner
         model = cfg.model or ""
     registry = T.Registry()
-    http_url = serve_mcp(registry) if (args.planner in ("anthropic", "bedrock") or args.http) else None
+    http_url = serve_mcp(registry) if (args.planner == "anthropic" or args.http) else None
     rows = []
     jobs = [sc for _ in range(repeat) for sc in scenarios]
     with tempfile.TemporaryDirectory() as tmp:
@@ -851,7 +903,9 @@ def main(argv: list[str] | None = None) -> int:
             src = Path(tmp) / f"run{k}" / f"eval-{sc['id']}.jsonl"
             if k < len(scenarios) and src.exists():
                 # model runs keep their own traces (judge evidence); scripted ones stay the CI samples
-                dest = args.traces if args.planner == "scripted" else args.traces / args.planner
+                stem = stem_for(args.planner, model)
+                sub = args.planner if stem == STEMS.get(args.planner) else f"{args.planner}-{base_model(model).removeprefix('claude-')}"
+                dest = args.traces if args.planner == "scripted" else args.traces / sub
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dest / f"{sc['id']}.jsonl")
             r = rows[-1]
@@ -862,8 +916,11 @@ def main(argv: list[str] | None = None) -> int:
             # a session handle per scenario run; drop it so repeats do not collide
             registry.remove(f"eval-{sc['id']}")
     summary = summarise(rows, args.planner, model, repeat)
-    path = write_results(summary, args.out, STEMS[args.planner])
+    path = write_results(summary, args.out, stem_for(args.planner, model))
     abl = write_ablation(args.out)
+    cmp_path = write_model_comparison(args.out) if args.planner == "anthropic" else None
+    if cmp_path:
+        print(f"model comparison -> {cmp_path}")
     if args.planner == "rule":
         print(f"rule-only baseline, unsafe actions {summary['guardrail_violations']} -> {path}" + (f"; ablation -> {abl}" if abl else ""))
         return 0 if summary["guardrail_violations"] == 0 else 1

@@ -14,7 +14,7 @@ export type Proposal = { exercise: string; field: string; value: number | string
 export type Prompt = { id: string; kind?: PromptKind; title: string; text: string; options: string[]; within_prescription?: boolean; proposal?: Proposal }
 export type AgentState = 'thinking' | 'idle' | 'offline'
 export type AgentStatus = { state: AgentState; trigger?: string; reason?: string; label: string }
-export type AgentMode = 'off' | 'anthropic' | 'bedrock' | 'scripted'
+export type AgentMode = 'off' | 'anthropic' | 'scripted'
 /** `/health` → `agent`. */
 export type AgentHealth = { mode: AgentMode; model: string; mcp: boolean; ready: boolean; reason?: string }
 
@@ -50,7 +50,7 @@ export function latestAgentStatus(events: PraxisEvent[]): AgentStatus | null {
   return null
 }
 
-/** "claude-sonnet-5" → "Sonnet 5"; Bedrock ids and dated ids read the same way. */
+/** "claude-sonnet-5" → "Sonnet 5", "claude-haiku-5-5" → "Haiku 5.5"; dated ids read the same way. */
 export function modelName(id: string | undefined | null): string {
   if (!id) return ''
   const m = /(opus|sonnet|haiku|fable)-(\d+(?:[-.]\d+)?)/i.exec(id)
@@ -105,7 +105,7 @@ export function healthLines(h: AgentHealth | null | undefined): { title: string;
   if (!h || h.mode === 'off') return { title: 'Off — rule-based coach', details: [] }
   const model = modelName(h.model) || h.model
   const title =
-    h.mode === 'scripted' ? 'Scripted agent (test) — no model calls' : `Claude ${model} via ${h.mode === 'bedrock' ? 'Amazon Bedrock' : 'Anthropic API (dev)'}`
+    h.mode === 'scripted' ? 'Scripted agent (test) — no model calls' : `Claude ${model} via Anthropic API (dev)`
   const details = [h.mcp ? 'MCP tools connected' : 'Tools called directly (MCP not connected)']
   if (!h.ready) details.push(`Not ready${h.reason ? `: ${h.reason}` : ''} · the rule-based coach runs`)
   return { title, details }

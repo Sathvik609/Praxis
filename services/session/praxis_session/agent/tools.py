@@ -164,6 +164,7 @@ class RunState:
     transport: str = "direct"
     actions: int = 0
     first_action_ms: float | None = None
+    lines: int = 0  # speak lines said in this run
 
     def acted(self) -> None:
         self.actions += 1
@@ -692,10 +693,17 @@ def speak(session_id: str, text: str, cue: str, evidence: list[int]) -> dict[str
             return {"ok": True, "suppressed": True, "reason": why_not, "action": cue}
     # Session clock (wall time live, clip time in replay), the clock the rule coach paces on.
     now = float(h.session.clock)
+    run = h.run
+    # 12 Oct (real video): the first fix line of a pause run may break the gap: the session is
+    # paused, nothing else is being said, and a pause 3 s after the opening line used to lose it.
+    pause_fix = cue == "correct" and run is not None and run.trigger.startswith("pause") and run.lines == 0
     if now - h.last_speak_clock < SPEAK_MIN_GAP_S:
-        if not (cue == "correct" and h.fix_repeat_allowed):
+        if not (cue == "correct" and h.fix_repeat_allowed) and not pause_fix:
             raise ToolRejected(f"rate limited: one line every {SPEAK_MIN_GAP_S:g} s", "rate")
-        h.fix_repeat_allowed = False  # the one repeat after a refused resume
+        if not pause_fix:
+            h.fix_repeat_allowed = False  # the one repeat after a refused resume
+    if run is not None:
+        run.lines += 1
     h.last_speak_clock = now
     _acted(h)
     h._queue("decision", {"decision": _decision(cue, "agent_speak", line, "", ids, tool="speak")})

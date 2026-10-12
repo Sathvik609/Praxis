@@ -2,7 +2,7 @@
 
 Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per exercise, (3) one concrete agent loop where OpenCV output changes what the agent does next. Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
 
-**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: Bedrock as the agent's provider (the agent uses the Anthropic API), S3, CloudWatch log shipping, CDK, and the `services/tools-lambda/` folder.
+**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CloudWatch log shipping, CDK, and the `services/tools-lambda/` folder. The agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
@@ -32,7 +32,7 @@ flowchart LR
         RC["RuleCoach (coach/rules.py)<br/>every in-rep cue"]
         subgraph AG["Agent coach (built; off by default)"]
             AC["AgentCoach (coach/agent.py)<br/>at checkpoints only"]
-            PL["StrandsPlanner · Claude Sonnet 5<br/>Anthropic API (dev) today"]
+            PL["StrandsPlanner · Claude Sonnet 5.5<br/>Anthropic API (prompt-cached)"]
             MCP["FastMCP 3.4 servers in-app<br/>/mcp/perception · /mcp/exertion · /mcp/coach<br/>loopback or X-Praxis-MCP-Token, else 403"]
             TL["agent/tools.py<br/>17 tools, AUTONOMY policy,<br/>guardrails, clamps"]
             MET["agent/metrics.py<br/>JSON line per run / error → stdout<br/>GET /api/agent/metrics"]
@@ -67,29 +67,29 @@ flowchart LR
         CF["CloudFront HTTPS<br/>dl8xykmg8ki61.cloudfront.net<br/>WSS upgrade, caching off"]
         EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
         GRD["Guardrails: SG from CloudFront prefix list only,<br/>SCP (small Graviton, 2 regions), $50 budget<br/>action stops the instance"]
-        BR["Amazon Bedrock<br/>Claude via BedrockModel (planned)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]
         CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
     end
+    ANT["Anthropic API<br/>Claude (the agent's only model provider;<br/>Bedrock is not used)"]
 
     UI -->|"HTTPS / WSS"| CF --> EC2
     SVC ==>|"infra/ec2/deploy.sh: same code,<br/>cv2 = COOL"| EC2
     GRD --- EC2
-    PL -.->|"PRAXIS_AGENT=bedrock<br/>needs PRAXIS_CLOUD_ENABLED=1"| BR
+    PL -->|"HTTPS · numbers and short text only,<br/>never frames · prompt-cached prefix"| ANT
     TRC -.-> S3
     MET -.-> CW
     CDK -.-> EC2
 
     classDef planned stroke-dasharray: 6 4,stroke:#A15C00,fill:#FFF8EC,color:#5A3A00
-    class BR,S3,CW,CDK planned
+    class S3,CW,CDK planned
 ```
 
-**What runs where today.** Edge mode: everything above the AWS box runs on one laptop, and the same service runs on the c8g instance for the hosted judge endpoint (AWS box) (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call; the `bedrock` planner refuses to start without it (`agent/model.py` `load_config`).
+**What runs where today.** Edge mode: everything above the AWS box runs on one laptop, and the same service runs on the c8g instance for the hosted judge endpoint (AWS box) (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API from wherever the service runs (laptop or the c8g instance); Amazon Bedrock is not used, and `PRAXIS_AGENT=bedrock` resolves to the rule coach alone (12 Oct).
 
-**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API (dev key). The Bedrock path (`BedrockModel`) is constructed and unit-tested but has never been called. MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct) and the 11 Oct audit fixes (socket close cancels the agent run, feedback supersedes stale checkpoints, ended sessions read-only for the agent) are in the real-model run below (`docs/AGENT.md`).
+**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API. MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct) and the 11 Oct audit fixes (socket close cancels the agent run, feedback supersedes stale checkpoints, ended sessions read-only for the agent) are in the real-model run below (`docs/AGENT.md`).
 
-> **Real model:** 15 synthetic scenarios × 3 repeats with real Claude (Sonnet 5, Anthropic API, final 11 Oct run after the agent, camera and browser audits): **45/45 runs passed** (1.0, 95 % Wilson CI 0.921–1.0), 0 guardrail violations, fallbacks 9/9, patient approval respected 24/24, correct perception tool before acting 39/39, first action p50/p95 4.8/8.2 s, ~$0.07 per session ($3.25 for the run). An earlier run that day was 44/45 (one covered_marker repeat hit the 15 s run budget after naming the fix and failed safe); covered_marker now covers two corners, the realistic case, since one covered corner is tolerated live. The 10 Oct run on 12 scenarios was 32/36; its misses are resolved (mcp_down: the check was over-literal and now tests the fallback itself; green_cup: prompt now has the agent name the cup's colour as the cause; falling_peaks: 3/3). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
+> **Real model (12 Oct):** default Claude Sonnet 5.5 via the Anthropic API, chosen over Sonnet 5 and Haiku 5.5 in a measured comparison (`docs/AGENT.md` § Model choice). **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions, a motion-capture-confirmed fault corrected in 43/44 set reviews, the specific fix named on 26/26 real wrong-view pauses with no resume offered while the view stayed wrong, 0 guardrail violations, $0.053 per session. Synthetic, 15 scenarios × 2: 28/30, 0 guardrail violations, first action p50/p95 4.2/6.5 s. The 11 Oct Sonnet 5 run was 45/45 (15 × 3). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
 
 ## 2. OpenCV 5 pipeline per exercise
 

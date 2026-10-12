@@ -1,1 +1,1 @@
-"""Coach implementations behind one interface (rule coach now, Strands/Bedrock agent in W6)."""
+"""Coach implementations behind one interface: the rule coach and the Strands agent (Claude via the Anthropic API)."""

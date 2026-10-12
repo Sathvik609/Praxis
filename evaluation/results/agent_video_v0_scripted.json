@@ -1,0 +1,2809 @@
+{
+  "planner": "scripted",
+  "model": "scripted",
+  "repeat": 1,
+  "cases": 20,
+  "sessions": 20,
+  "generated": "2026-10-12",
+  "opencv": "5.0.0",
+  "pipeline_fingerprint": "09885101b2f4",
+  "set_reviews": 22,
+  "faulty_sets": 22,
+  "fault_addressed": {
+    "k": 0,
+    "n": 22,
+    "rate": 0.0,
+    "ci95": [
+      0.0,
+      0.149
+    ]
+  },
+  "praise_only_on_faulty": {
+    "k": 22,
+    "n": 22,
+    "rate": 1.0,
+    "ci95": [
+      0.851,
+      1.0
+    ]
+  },
+  "silent_on_faulty": {
+    "k": 0,
+    "n": 22,
+    "rate": 0.0,
+    "ci95": [
+      0.0,
+      0.149
+    ]
+  },
+  "claims": {},
+  "unsupported_claims": {},
+  "claim_precision": {
+    "supported": 0,
+    "total": 0,
+    "rate": null
+  },
+  "progress_on_faulty": 0,
+  "evidence_in_set": {
+    "k": 0,
+    "n": 0,
+    "rate": null,
+    "ci95": null
+  },
+  "perception_before_action": {
+    "k": 38,
+    "n": 38,
+    "rate": 1.0,
+    "ci95": [
+      0.908,
+      1.0
+    ]
+  },
+  "physio": {
+    "incorrect_sets_corrective": {
+      "k": 0,
+      "n": 9,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.299
+      ]
+    },
+    "correct_sets_corrective": {
+      "k": 0,
+      "n": 11,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.259
+      ]
+    }
+  },
+  "setup_pauses": 16,
+  "fix_named_real_turn": {
+    "k": 13,
+    "n": 13,
+    "rate": 1.0,
+    "ci95": [
+      0.772,
+      1.0
+    ]
+  },
+  "no_resume_while_failing": {
+    "k": 13,
+    "n": 13,
+    "rate": 1.0,
+    "ci95": [
+      0.772,
+      1.0
+    ]
+  },
+  "fix_named_induced": {
+    "k": 2,
+    "n": 3,
+    "rate": 0.667,
+    "ci95": [
+      0.208,
+      0.939
+    ]
+  },
+  "resumed_after_fix_induced": {
+    "k": 3,
+    "n": 3,
+    "rate": 1.0,
+    "ci95": [
+      0.438,
+      1.0
+    ]
+  },
+  "guardrail_violations": 0,
+  "errors": {},
+  "runs": 80,
+  "first_action_ms_p50": 128.4,
+  "first_action_ms_p95": 266.6,
+  "cost_usd": 0.0,
+  "cost_usd_per_session": 0.0,
+  "cache_read_share": null,
+  "rows": [
+    {
+      "id": "review-PM_000",
+      "kind": "review",
+      "video": "PM_000",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 35.0,
+          "reps_counted": 5,
+          "verified": 4,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 0,
+            "peaks": [
+              99.8,
+              131.3,
+              156.0,
+              156.1,
+              152.5
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 158.95
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 4 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 7,
+      "first_action_ms": [
+        529.2,
+        152.4,
+        99.5
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 6,
+        "verified": 5,
+        "unverified": 0,
+        "missed": 1,
+        "corrections": 11,
+        "posture_cues": 6,
+        "lean_cues": 0,
+        "hiking_cues": 6,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Session ended: 5 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done: 4 of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_001",
+      "kind": "review",
+      "video": "PM_001",
+      "camera": "c17",
+      "person": 1,
+      "sets": [
+        {
+          "set": 1,
+          "t": 29.5,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              107.5,
+              130.5,
+              126.7,
+              128.4,
+              127.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.25
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 1 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 90.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              129.3,
+              120.9,
+              122.9,
+              116.7,
+              116.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 117.2
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 2 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        145.9,
+        186.1,
+        151.1,
+        102.7
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 3,
+        "unverified": 0,
+        "missed": 7,
+        "corrections": 30,
+        "posture_cues": 10,
+        "lean_cues": 0,
+        "hiking_cues": 10,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Session ended: 3 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done: 1 of 5 verified. Rest the arm a moment.",
+        "Set done: 2 of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_012",
+      "kind": "review",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.3,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.5,
+              135.0,
+              132.1,
+              135.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        234.9,
+        283.5,
+        179.0,
+        131.3
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 33,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Set done:  of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_023",
+      "kind": "review",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 47.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              124.8,
+              126.0,
+              134.3,
+              131.5,
+              131.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 131.6
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        266.6,
+        146.7,
+        169.3,
+        130.5
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 33,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Set done:  of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_032",
+      "kind": "review",
+      "video": "PM_032",
+      "camera": "c17",
+      "person": 4,
+      "sets": [
+        {
+          "set": 1,
+          "t": 14.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              112.4,
+              101.1,
+              102.7,
+              102.8,
+              102.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": false,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 102.75
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 33.2,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              116.3,
+              127.8,
+              129.1,
+              122.8,
+              128.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 128.2
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 47.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        296.8,
+        181.4,
+        126.2,
+        150.9,
+        118.4
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 34,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 10
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_039",
+      "kind": "review",
+      "video": "PM_039",
+      "camera": "c17",
+      "person": 5,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              99.5,
+              91.2,
+              36.8,
+              131.1,
+              144.6
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.0
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.6,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              141.2,
+              129.8,
+              132.2,
+              126.1,
+              125.1
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 2,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 125.3
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 74.1,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        260.8,
+        142.8,
+        101.4,
+        120.2,
+        124.7
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 34,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 8
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_122",
+      "kind": "review",
+      "video": "PM_122",
+      "camera": "c17",
+      "person": 7,
+      "sets": [
+        {
+          "set": 1,
+          "t": 21.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              95.2,
+              154.5,
+              148.8,
+              146.6,
+              149.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 154.85
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 54.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              154.4,
+              118.1,
+              130.5,
+              133.6,
+              131.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 4,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 137.7
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 1 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 64.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        296.6,
+        156.7,
+        154.8,
+        86.8,
+        113.6
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 1,
+        "unverified": 0,
+        "missed": 9,
+        "corrections": 33,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Session ended: 1 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Set done: 1 of 5 verified. Rest the arm a moment.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_109",
+      "kind": "review",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 3 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 0,
+            "peaks": [
+              117.5,
+              122.4,
+              87.9,
+              123.2,
+              126.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 1 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.5,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        171.0,
+        138.1,
+        128.4,
+        80.7,
+        81.3
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 26,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Session ended: 4 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done: 3 of 5 verified. Rest the arm a moment.",
+        "Set done: 1 of 5 verified. Rest the arm a moment.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "review-PM_114",
+      "kind": "review",
+      "video": "PM_114",
+      "camera": "c17",
+      "person": 9,
+      "sets": [
+        {
+          "set": 1,
+          "t": 33.5,
+          "reps_counted": 5,
+          "verified": 2,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 0,
+            "peaks": [
+              85.0,
+              122.3,
+              124.5,
+              130.7,
+              136.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 127.8
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 2 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 5,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              124.1,
+              98.2,
+              76.6,
+              81.8,
+              95.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": true,
+            "forward": false,
+            "peak_deg_median": 101.6
+          },
+          "run": 3,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 96.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 4,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "set_complete",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        173.0,
+        92.2,
+        57.4,
+        42.5,
+        55.0
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 2,
+        "unverified": 0,
+        "missed": 8,
+        "corrections": 31,
+        "posture_cues": 9,
+        "lean_cues": 0,
+        "hiking_cues": 9,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Session ended: 2 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done: 2 of 5 verified. Rest the arm a moment.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_002-c17",
+      "kind": "setup_real",
+      "video": "PM_002",
+      "camera": "c17",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 4.9,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        82.5,
+        39.9,
+        49.1
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_016-c17",
+      "kind": "setup_real",
+      "video": "PM_016",
+      "camera": "c17",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        55.1,
+        111.0,
+        78.0
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_024-c17",
+      "kind": "setup_real",
+      "video": "PM_024",
+      "camera": "c17",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 7.3,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 3,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 4,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:perception",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        112.0,
+        63.1,
+        104.8,
+        76.2
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 2,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Sit so your upper body is in the picture.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_101-c17",
+      "kind": "setup_real",
+      "video": "PM_101",
+      "camera": "c17",
+      "person": 6,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject half-profile to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        175.9,
+        96.1,
+        93.0
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_000-c18",
+      "kind": "setup_real",
+      "video": "PM_000",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        144.6,
+        139.4,
+        83.3
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_001-c18",
+      "kind": "setup_real",
+      "video": "PM_001",
+      "camera": "c18",
+      "person": 1,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        232.7,
+        126.0,
+        70.8
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_012-c18",
+      "kind": "setup_real",
+      "video": "PM_012",
+      "camera": "c18",
+      "person": 2,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        150.4,
+        114.2,
+        96.2
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "setup-PM_023-c18",
+      "kind": "setup_real",
+      "video": "PM_023",
+      "camera": "c18",
+      "person": 3,
+      "sets": [],
+      "pauses": [
+        {
+          "t": 3.0,
+          "truth": "subject side to the camera (labelled)",
+          "pause_text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.",
+          "hint": "Face the camera with both shoulders in view.",
+          "reason": "turn_front",
+          "run": 2,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Face the camera with both shoulders in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": false,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": true
+        }
+      ],
+      "violations": [],
+      "runs": 3,
+      "outcomes": [
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "pause:setup",
+        "feedback"
+      ],
+      "tool_calls": 9,
+      "first_action_ms": [
+        218.4,
+        194.9,
+        92.2
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 0,
+        "corrections": 1,
+        "posture_cues": 0,
+        "lean_cues": 0,
+        "hiking_cues": 0,
+        "wrong_dot": 0,
+        "above_ceiling": 0
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Face the camera with both shoulders in view."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_012",
+      "kind": "setup_induced",
+      "video": "PM_012",
+      "camera": "c17",
+      "person": 2,
+      "sets": [
+        {
+          "set": 1,
+          "t": 28.7,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 5,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 5,
+            "target_missed": 0,
+            "peaks": [
+              101.7,
+              116.3,
+              114.6,
+              116.6,
+              118.7
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 113.9
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 68.3,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              123.8,
+              30.2,
+              136.4,
+              132.1,
+              134.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 130.39999999999998
+          },
+          "run": 4,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 38.0,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Move the camera back or down so your shoulder, elbow and hips are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        180.6,
+        92.4,
+        148.9,
+        91.8,
+        94.4
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 34,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 9
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Move the camera back or down so your shoulder, elbow and hips are in view.",
+        "Set done:  of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_023",
+      "kind": "setup_induced",
+      "video": "PM_023",
+      "camera": "c17",
+      "person": 3,
+      "sets": [
+        {
+          "set": 1,
+          "t": 17.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 4,
+            "target_missed": 1,
+            "peaks": [
+              51.3,
+              120.3,
+              125.2,
+              122.1,
+              124.9
+            ]
+          },
+          "truth": {
+            "labelled_reps": 4,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 123.35
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done:  of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 34.1,
+          "reps_counted": 5,
+          "verified": 0,
+          "opencv": {
+            "above_ceiling": 1,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 4,
+            "peaks": [
+              124.8,
+              45.7,
+              46.2,
+              45.9,
+              38.8
+            ]
+          },
+          "truth": {
+            "labelled_reps": 2,
+            "physio_incorrect": 1,
+            "overshoot": true,
+            "hold": true,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 124.85
+          },
+          "run": 4,
+          "actions": [],
+          "said": "",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": false,
+          "silent": true,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 33.9,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Too dark. Add light in front of you, not behind. ",
+          "fix_named": false,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": false,
+          "resume_prompt_camera_checked": null,
+          "resume_blocked": true,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        157.5,
+        168.9,
+        116.2,
+        104.9
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 0,
+        "unverified": 0,
+        "missed": 10,
+        "corrections": 29,
+        "posture_cues": 8,
+        "lean_cues": 0,
+        "hiking_cues": 8,
+        "wrong_dot": 0,
+        "above_ceiling": 5
+      },
+      "note": "Session ended:  verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done:  of 5 verified. Rest the arm a moment.",
+        "Too dark. Add light in front of you, not behind."
+      ],
+      "repeat": 0
+    },
+    {
+      "id": "induced-hips-PM_109",
+      "kind": "setup_induced",
+      "video": "PM_109",
+      "camera": "c17",
+      "person": 8,
+      "sets": [
+        {
+          "set": 1,
+          "t": 32.7,
+          "reps_counted": 5,
+          "verified": 3,
+          "opencv": {
+            "above_ceiling": 3,
+            "hike": 3,
+            "lean": 0,
+            "hold_too_short": 1,
+            "target_missed": 1,
+            "peaks": [
+              94.0,
+              31.8,
+              123.2,
+              124.3,
+              126.2
+            ]
+          },
+          "truth": {
+            "labelled_reps": 3,
+            "physio_incorrect": 0,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": false,
+            "peak_deg_median": 122.5
+          },
+          "run": 2,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 3 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        },
+        {
+          "set": 2,
+          "t": 80.0,
+          "reps_counted": 5,
+          "verified": 1,
+          "opencv": {
+            "above_ceiling": 4,
+            "hike": 4,
+            "lean": 0,
+            "hold_too_short": 3,
+            "target_missed": 1,
+            "peaks": [
+              117.5,
+              122.4,
+              56.4,
+              123.4,
+              126.4
+            ]
+          },
+          "truth": {
+            "labelled_reps": 5,
+            "physio_incorrect": 3,
+            "overshoot": true,
+            "hold": false,
+            "short": false,
+            "hike": true,
+            "lean": false,
+            "elbow": false,
+            "forward": true,
+            "peak_deg_median": 120.3
+          },
+          "run": 4,
+          "actions": [
+            "instruct"
+          ],
+          "said": "Set done: 1 of 5 verified. Rest the arm a moment. ",
+          "proposals": [],
+          "tools": [
+            "get_set_summary",
+            "speak"
+          ],
+          "claims": [],
+          "faulty_truth": true,
+          "fault_addressed": false,
+          "praise_only_on_faulty": true,
+          "silent": false,
+          "unsupported_claims": [],
+          "progress_on_faulty": false,
+          "evidence_in_set": null,
+          "perception_first": true
+        }
+      ],
+      "pauses": [
+        {
+          "t": 65.5,
+          "truth": "hips cropped (induced)",
+          "pause_text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+          "reason": "hips_out_of_view",
+          "run": 3,
+          "tools": [
+            "check_setup",
+            "speak",
+            "recalibrate",
+            "request_resume"
+          ],
+          "said": "Move the camera back or down so your shoulder, elbow and hips are in view. ",
+          "fix_named": true,
+          "fix_named_by": "agent",
+          "check_setup_called": true,
+          "resume_prompt": true,
+          "resume_prompt_camera_checked": true,
+          "resume_blocked": false,
+          "resumed": true,
+          "perception_first": true,
+          "resume_correct": true,
+          "still_failing_truth": false
+        }
+      ],
+      "violations": [],
+      "runs": 5,
+      "outcomes": [
+        "done",
+        "done",
+        "stale",
+        "done",
+        "done"
+      ],
+      "triggers": [
+        "checkin",
+        "set_complete",
+        "pause:setup",
+        "set_complete",
+        "feedback"
+      ],
+      "tool_calls": 13,
+      "first_action_ms": [
+        216.9,
+        167.0,
+        156.8,
+        170.5,
+        113.6
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "errors": [],
+      "counts": {
+        "reps_total": 10,
+        "verified": 4,
+        "unverified": 0,
+        "missed": 6,
+        "corrections": 25,
+        "posture_cues": 7,
+        "lean_cues": 0,
+        "hiking_cues": 7,
+        "wrong_dot": 0,
+        "above_ceiling": 7
+      },
+      "note": "Session ended: 4 verified,  unverified.",
+      "agent_said": [
+        "Thanks for checking in. We'll go at your program's pace; tell me if anything hurts.",
+        "Set done: 3 of 5 verified. Rest the arm a moment.",
+        "Move the camera back or down so your shoulder, elbow and hips are in view.",
+        "I've re-checked the camera setup. Ready to carry on?",
+        "Thanks. Carrying on from where we stopped.",
+        "Set done: 1 of 5 verified. Rest the arm a moment."
+      ],
+      "repeat": 0
+    }
+  ],
+  "rescored": "2026-10-12"
+}

@@ -82,6 +82,32 @@ def test_after_a_refused_resume_the_fix_may_be_said_again_once(tmp_path):
         call(reg, "speak", text="And again.", cue="correct", evidence=[pause.id])
 
 
+def test_a_pause_runs_first_fix_line_is_not_lost_to_the_4_s_gap(tmp_path):
+    """Real video, 12 Oct: a subject side-on from the first frame paused the session 3 s after
+    the check-in line, and the agent's spoken fix was refused by the 4 s gap (the patient heard
+    nothing from the agent). The first `correct` line of a pause run may break the gap (the
+    session is paused: nothing else is being said); a second line in the run may not."""
+    reg = T.Registry()
+    h = handle(reg, tmp_path)
+    h.pipeline.process(clean_frame(), 0.0, 0)
+    h.session.on_events([unverified(0.0)], snapshot={}, t=0.0)
+    first = h.session.recent_events(last_n=5)[-1]
+    h.begin_run("checkin")
+    assert call(reg, "speak", text="Let's begin.", cue="instruct", evidence=[first.id])["ok"]
+    h.end_run()
+    h.session.on_events([unverified(1.0), unverified(2.0)], snapshot={}, t=2.0)
+    pause = h.session.recent_events(types=["pause"])[-1]
+    h.begin_run("pause:failed_reps")
+    assert call(reg, "speak", text="Clear the bottom-right corner marker.", cue="correct", evidence=[pause.id])["ok"]
+    with pytest.raises(T.ToolRejected, match="rate"):
+        call(reg, "speak", text="And again.", cue="correct", evidence=[pause.id])
+    h.end_run()
+    # outside a pause run the gap holds as before
+    h.begin_run("set_complete")
+    with pytest.raises(T.ToolRejected, match="rate"):
+        call(reg, "speak", text="Watch the shoulder.", cue="correct", evidence=[pause.id])
+
+
 def test_resume_without_any_frame_is_refused(tmp_path):
     reg = T.Registry()
     h = handle(reg, tmp_path)
