@@ -12,6 +12,7 @@ are recorded clips, so they say nothing about how a person got on.
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter, defaultdict
 from typing import Any
@@ -90,8 +91,91 @@ def _one(s: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_review(sessions: list[dict[str, Any]]) -> dict[str, Any]:
-    """Sessions as `Store.session()` returns them (with events). Live ones are analysed."""
+def load_trace(directory: Any, sid: str) -> list[dict[str, Any]]:
+    """A session's trace lines (`trace.py`, `<dir>/<sid>.jsonl`); empty when there is none."""
+    from pathlib import Path
+
+    path = Path(directory) / f"{sid}.jsonl"
+    out: list[dict[str, Any]] = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    out.append(json.loads(line))
+                except ValueError:
+                    continue
+    except OSError:
+        return []
+    return out
+
+
+def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]], prices: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+    """How the Claude agent coach did across live sessions, from each session's trace:
+    runs and their outcomes, errors by kind, tools called (and failed), drops and skips,
+    checkpoint → first action time, tokens and an estimated cost at list price."""
+    with_agent = [s for s in sessions if (s.get("summary") or {}).get("coach", {}).get("agent")]
+    outcomes: Counter[str] = Counter()
+    triggers: Counter[str] = Counter()
+    errors: Counter[str] = Counter()
+    error_msgs: list[str] = []
+    tools: Counter[str] = Counter()
+    tool_fail: Counter[str] = Counter()
+    drops: Counter[str] = Counter()
+    skips: Counter[str] = Counter()
+    first_ms: list[float] = []
+    run_ms: list[float] = []
+    transports: Counter[str] = Counter()
+    tok = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
+    cost = 0.0
+    models: Counter[str] = Counter()
+    decisions = 0
+    for s in with_agent:
+        decisions += int((s.get("summary") or {}).get("coach", {}).get("agent_decisions") or 0)
+        for line in traces.get(s["id"], []):
+            kind = line.get("kind") or line.get("type")
+            if kind == "agent_run" and line.get("phase") == "end":
+                outcomes[str(line.get("outcome"))] += 1
+                triggers[str(line.get("trigger"))] += 1
+                transports[str(line.get("transport"))] += 1
+                models[str(line.get("model"))] += 1
+                if line.get("first_action_ms") is not None:
+                    first_ms.append(float(line["first_action_ms"]))
+                if line.get("ms") is not None:
+                    run_ms.append(float(line["ms"]))
+                row = {k: int(line.get(f"{k}_tokens") or 0) for k in tok}
+                for k, v in row.items():
+                    tok[k] += v
+                if prices:
+                    p = prices.get(str(line.get("model"))) or next(iter(prices.values()))
+                    cost += sum(row[k] * p.get(k, 0.0) for k in row) / 1e6
+            elif kind == "agent_error":
+                errors[str(line.get("error_kind"))] += 1
+                if line.get("message") and len(error_msgs) < 5:
+                    error_msgs.append(f"{line.get('error_kind')}: {str(line['message'])[:120]}")
+            elif kind == "tool":
+                name = str(line.get("name"))
+                tools[name] += 1
+                if line.get("ok") is False:
+                    tool_fail[name] += 1
+            elif kind == "agent_drop":
+                drops[str(line.get("reason"))] += 1
+            elif kind == "agent_skip":
+                skips[str(line.get("reason"))] += 1
+    runs = sum(outcomes.values())
+    return {
+        "sessions": len(with_agent), "runs": runs, "agent_decisions": decisions,
+        "outcomes": dict(outcomes), "triggers": dict(triggers.most_common()), "models": dict(models),
+        "transports": dict(transports), "errors": dict(errors.most_common()), "error_examples": error_msgs,
+        "tools": dict(tools.most_common()), "tool_failures": dict(tool_fail.most_common()),
+        "drops": dict(drops.most_common()), "skips": dict(skips.most_common()),
+        "first_action_ms_p50": _median(first_ms), "run_ms_p50": _median(run_ms),
+        "tokens": tok, "cost_usd": round(cost, 4) if prices else None,
+    }
+
+
+def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]] | None = None, prices: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+    """Sessions as `Store.session()` returns them (with events). Live ones are analysed;
+    `traces` (session id → trace lines) adds the agent coach section."""
     live = [s for s in sessions if s.get("source") == "live"]
     replays = sum(1 for s in sessions if s.get("source") == "replay")
     by_ex: dict[str, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
@@ -157,10 +241,18 @@ def build_review(sessions: list[dict[str, Any]]) -> dict[str, Any]:
         exercises.append(entry)
         issues.extend(_issues(entry))
 
+    agent = agent_review(live, traces or {}, prices)
+    if agent["sessions"]:
+        n = agent["sessions"]
+        for kind, count in agent["errors"].items():
+            issues.append({"exercise": "AI coach", "what": f"agent error: {kind} (rule coach took over)", "count": count, "sessions_hit": count, "of": n, "share": round(min(count, n) / n, 2)})
+        for name, count in agent["tool_failures"].items():
+            issues.append({"exercise": "AI coach", "what": f"tool call failed: {name}", "count": count, "sessions_hit": count, "of": n, "share": round(min(count, n) / n, 2)})
     issues.sort(key=lambda i: (-i["share"], -i["count"]))
     return {
         "live_sessions": len(live), "replay_sessions": replays,
         "testers": dict(testers.most_common()), "exercises": exercises, "issues": issues,
+        "agent": agent,
     }
 
 
@@ -210,6 +302,28 @@ def render_md(r: dict[str, Any]) -> str:
         lines += [f"| {i['exercise']} | {i['what']} | {i['count']} | {i['sessions_hit']}/{i['of']} |" for i in r["issues"]]
     else:
         lines.append("None seen.")
+    a = r.get("agent") or {}
+    lines += ["", "## AI coach (Claude agent)", ""]
+    if not a.get("sessions"):
+        lines.append("No live session ran with the agent on (rule coach only).")
+    else:
+        lines += [f"- {a['sessions']} sessions with the agent · {a['runs']} runs · {a['agent_decisions']} coach decisions came from the agent",
+                  "- run outcomes: " + (", ".join(f"{k} {v}" for k, v in a["outcomes"].items()) or "none"),
+                  "- runs by trigger: " + (", ".join(f"{k} {v}" for k, v in a["triggers"].items()) or "none"),
+                  "- tool calls: " + (", ".join(f"{k} {v}" for k, v in a["tools"].items()) or "none")
+                  + (" · failed: " + ", ".join(f"{k} {v}" for k, v in a["tool_failures"].items()) if a["tool_failures"] else ""),
+                  "- transport: " + (", ".join(f"{k} {v}" for k, v in a["transports"].items()) or "–") + " (direct = MCP fell back)"]
+        if a["first_action_ms_p50"] is not None:
+            lines.append(f"- checkpoint → first action, median: {a['first_action_ms_p50'] / 1000:.1f} s · whole run, median: {(a['run_ms_p50'] or 0) / 1000:.1f} s")
+        lines.append("- errors: " + (", ".join(f"{k} {v}" for k, v in a["errors"].items()) if a["errors"] else "none"))
+        lines += [f"  - {m}" for m in a["error_examples"]]
+        if a["drops"]:
+            lines.append("- agent output dropped: " + ", ".join(f"{k} {v}" for k, v in a["drops"].items()))
+        if a["skips"]:
+            lines.append("- runs skipped: " + ", ".join(f"{k} {v}" for k, v in a["skips"].items()))
+        t = a["tokens"]
+        cost = f" · est. ${a['cost_usd']:.2f} at list price" if a.get("cost_usd") is not None else ""
+        lines.append(f"- tokens: {t['input']} in, {t['output']} out, {t['cache_read']} read from cache{cost}")
     for e in r["exercises"]:
         lines += ["", f"## {e['exercise']}", "",
                   f"- {e['sessions']} sessions by {e['testers']} testers · reps verified {_pct(e['verified'], e['reps'])}, unverified {e['unverified']}, missed {e['missed']}",

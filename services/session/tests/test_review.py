@@ -49,3 +49,32 @@ def test_review_counts_live_sessions_per_tester_and_skips_samples_and_replays():
 def test_review_with_no_live_sessions_says_so():
     md = render_md(build_review([{"id": "r", "mode": "nhpt", "source": "replay", "summary": {}, "events": []}]))
     assert "No live sessions yet" in md and "1 replay" in md
+
+
+def test_agent_section_reads_runs_tools_errors_and_cost_from_traces():
+    s = _live("a", "ravi")
+    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API (dev)", "agent_decisions": 2}
+    trace = [
+        {"kind": "agent_run", "phase": "start", "trigger": "checkin"},
+        {"kind": "tool", "name": "get_events", "ok": True},
+        {"kind": "tool", "name": "speak", "ok": False},
+        {"kind": "agent_run", "phase": "end", "trigger": "checkin", "outcome": "done", "transport": "mcp", "model": "m",
+         "ms": 3000.0, "first_action_ms": 2000.0, "input_tokens": 1000, "output_tokens": 100, "cache_read_tokens": 9000, "cache_write_tokens": 0},
+        {"kind": "agent_error", "error_kind": "timeout", "message": "run took too long"},
+        {"kind": "agent_drop", "reason": "session stopped"},
+    ]
+    prices = {"m": {"input": 2.0, "output": 10.0, "cache_read": 0.2, "cache_write": 2.5}}
+    r = build_review([s, _live("b", "sam")], {"a": trace}, prices)
+    a = r["agent"]
+    assert a["sessions"] == 1 and a["runs"] == 1 and a["agent_decisions"] == 2
+    assert a["outcomes"] == {"done": 1} and a["tools"] == {"get_events": 1, "speak": 1} and a["tool_failures"] == {"speak": 1}
+    assert a["errors"] == {"timeout": 1} and a["drops"] == {"session stopped": 1}
+    assert a["first_action_ms_p50"] == 2000.0
+    assert a["cost_usd"] == round((1000 * 2 + 100 * 10 + 9000 * 0.2) / 1e6, 4)
+    assert any(i["exercise"] == "AI coach" and "timeout" in i["what"] for i in r["issues"])
+    md = render_md(r)
+    assert "## AI coach" in md and "speak 1" in md and "timeout" in md
+
+
+def test_agent_section_says_when_the_agent_was_off():
+    assert "rule coach only" in render_md(build_review([_live("a", "ravi")]))

@@ -41,7 +41,7 @@ from fastapi.responses import PlainTextResponse
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.metrics import METRICS as AGENT_METRICS
-from praxis_session.agent.model import load_config as load_agent_config, make_planner, with_listening_port
+from praxis_session.agent.model import PRICES as AGENT_PRICES, load_config as load_agent_config, make_planner, with_listening_port
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
 from praxis_session.session import RULE_LABEL_WITH_AGENT
@@ -53,7 +53,7 @@ from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, R
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
-from praxis_session.review import build_review, clean_tester, render_md
+from praxis_session.review import build_review, clean_tester, load_trace, render_md
 from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 from praxis_session.session import CoachSession
@@ -305,8 +305,9 @@ def api_patch_feedback(session_id: str, body: dict[str, Any] = Body(...)) -> dic
 def api_review(format: str = "json", limit: int = 1000) -> dict[str, object] | PlainTextResponse:
     """Team test review: per exercise and tester, where the stored live sessions went wrong
     (review.py). `?format=md` gives the same as readable text for a browser tab."""
-    rows = [store.session(s["id"]) for s in store.sessions(limit)]
-    review = build_review([r for r in rows if r is not None])
+    rows = [r for r in (store.session(s["id"]) for s in store.sessions(limit)) if r is not None]
+    traces = {r["id"]: load_trace(trace_mod.DEFAULT_DIR, r["id"]) for r in rows if r.get("source") == "live"}
+    review = build_review(rows, traces, AGENT_PRICES)
     if format == "md":
         return PlainTextResponse(render_md(review), media_type="text/plain; charset=utf-8")
     return review
