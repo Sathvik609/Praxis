@@ -36,3 +36,75 @@ Paid plan; budget `praxis-monthly-50` whose action stops this instance at 100 % 
 allow only small Graviton types in us-east-1/2; c8g.large $0.0798/h + COOL $0.01/h after the
 7-day trial + public IPv4 $0.005/h; stopped between work sessions; on 24/7 from submission to 9 Nov (~$40). The agent
 has a daily run cap (`PRAXIS_AGENT_DAILY_RUNS`) and an Anthropic console spend limit.
+
+## Observability: CloudWatch (built 12 Oct, **not yet verified on AWS**)
+What exists in the repo:
+- **Service** (`services/session/praxis_session/ops.py`): one JSON line per `session_start` /
+  `session_end` (mode, exercise, live|replay, duration, verified / unverified reps, per-frame
+  processing p50/p95, fps, event-to-cue p50/p95, stop-rule actions, perception losses), per
+  `stop_rule`, `therapist_flag`, `perception_lost`, `ws_error`, and a `heartbeat` every 60 s.
+  Agent runs keep their `agent_run` / `agent_error` lines (now with `provider`). No frames,
+  usernames, free text, pain scores or flag details (`ops.clean`, tested). With `PRAXIS_EMF=1`
+  (set in `praxis.service`) the lines carry **CloudWatch Embedded Metric Format** blocks:
+  namespace `Praxis`, per-session metrics by `Exercise` × `Mode`, service-wide ones by
+  `Service=session` (`ops.METRICS` lists every name).
+- **Host**: `praxis.service` appends stdout + stderr to `/var/log/praxis/session.log` (rotated
+  by `/etc/logrotate.d/praxis`, `copytruncate`; `journalctl -u praxis` now shows only start and
+  stop). `deploy.sh --cloudwatch` installs the pinned arm64 CloudWatch agent
+  (`1.300073.0b1828`, SHA-256 checked) with `cloudwatch/agent.json`: the log file goes to the
+  log group **`/praxis/session`** (one stream per instance id), and CPU / memory / root disk go
+  to `CWAgent` every 60 s.
+- **Account** (`cloudwatch_setup.sh`, AWS CLI only, idempotent): IAM role + instance profile
+  `praxis-ec2-role` (`CloudWatchAgentServerPolicy`) attached to the instance; the log group with
+  30-day retention; SNS topic `praxis-alarms` → your email; alarms `praxis-heartbeat-missing`,
+  `praxis-cpu-high` (> 80 % for 15 min), `praxis-status-check-failed`, `praxis-agent-fallbacks`
+  (≥ 5 rule-coach fallbacks in 15 min); dashboard **`Praxis`** (`cloudwatch/dashboard.json`:
+  sessions, verified vs unverified reps, frame-processing p50/p95, fps, event-to-cue, agent
+  runs / fallbacks / errors / cost / first action, stop-rule actions, perception losses, socket
+  errors, heartbeat, CPU / memory / disk, CloudFront requests and 5xx %, recent sessions);
+  Logs Insights queries `Praxis/Sessions`, `Praxis/Safety and errors`, `Praxis/Agent runs`.
+
+### Turn it on (in this order)
+```bash
+# 1. AWS CloudShell (us-east-2). The script needs only itself and cloudwatch/dashboard.json:
+#    Actions > Upload file for both, then: mkdir -p ec2/cloudwatch && mv cloudwatch_setup.sh ec2/ && mv dashboard.json ec2/cloudwatch/
+#    (and run bash ec2/cloudwatch_setup.sh ... below), or clone the repo.
+bash infra/ec2/cloudwatch_setup.sh <your-budget-alert-email>
+#    then click "Confirm subscription" in the AWS Notifications email.
+# 2. Start the instance (as usual), then on the laptop:
+infra/ec2/deploy.sh <instance-public-dns> --skip-web --cloudwatch   # add --agent as before if wanted
+```
+The setup script never starts or stops the instance; it can attach the profile while the
+instance is stopped. If the instance already has a different instance profile it stops and
+asks for `--replace-profile`. If an SCP refuses `iam:CreateRole` or `iam:PassRole`, run it
+from the management account or relax that SCP for this role.
+
+### Verify
+```bash
+aws logs tail /praxis/session --follow --region us-east-2           # heartbeat lines within ~1 min
+aws cloudwatch list-metrics --namespace Praxis --region us-east-2   # Heartbeat; Sessions... after a session
+aws cloudwatch get-metric-statistics --namespace AWS/Logs --metric-name EMFValidationErrors \
+  --dimensions Name=LogGroupName,Value=/praxis/session --statistics Sum --period 3600 \
+  --start-time "$(date -u -d '-1 hour' +%FT%TZ)" --end-time "$(date -u +%FT%TZ)" --region us-east-2  # expect none
+```
+Dashboard: CloudWatch console → Dashboards → `Praxis`
+(`https://us-east-2.console.aws.amazon.com/cloudwatch/home?region=us-east-2#dashboards/dashboard/Praxis`).
+On the box: `tail -f /var/log/praxis/session.log`;
+`sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status`; the agent's
+own log is `/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log`.
+
+While the instance is stopped the heartbeat alarm goes to ALARM (missing data counts as
+breaching, so a dead service is never silent). To stop the emails between work sessions:
+`aws cloudwatch disable-alarm-actions --alarm-names praxis-heartbeat-missing --region us-east-2`
+(and `enable-alarm-actions` once it runs 24/7).
+
+### Expected cost
+Close to $0 a month inside the CloudWatch always-free tier (10 custom metrics, 10 alarms,
+3 dashboards of up to 50 metrics, 5 GB log ingestion and storage, 1,000 SNS emails). Five custom
+metrics are always present: `Heartbeat`, `ActiveSessions`, `cpu_usage_active`,
+`mem_used_percent` and `disk_used_percent`. The per-session and agent metrics (10 names for each
+exercise/mode pair in use, plus 5 agent names) are billed pro rata only for the hours they get
+data. A judging month of a few dozen sessions therefore adds well under $1, even beyond the free
+tier ($0.30 per metric-month). Logs are about 1 MB a day (heartbeats plus access logs) at
+$0.50/GB. If nothing were free, the worst case would be about $3 a month for the dashboard plus
+$0.40 for the alarms. The CPU and status-check alarms use the free `AWS/EC2` metrics.

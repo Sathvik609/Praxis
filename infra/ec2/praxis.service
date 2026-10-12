@@ -17,9 +17,17 @@ Environment=PRAXIS_DB=/opt/praxis/data/praxis.db
 Environment=PRAXIS_TRACE_DIR=/opt/praxis/data/traces
 Environment=PORT=8000
 Environment=PRAXIS_AGENT=off
+# Observability (12 Oct): ops lines carry CloudWatch EMF metrics + a 60 s heartbeat (ops.py).
+Environment=PRAXIS_EMF=1
+Environment=PYTHONUNBUFFERED=1
 # Optional: ANTHROPIC_API_KEY and PRAXIS_AGENT=anthropic (deploy.sh --agent), root-only file.
 EnvironmentFile=-/etc/praxis/agent.env
 ExecStart=/opt/praxis/venv/bin/uvicorn praxis_session.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
+# JSON ops lines + uvicorn logs go to a plain file (rotated by /etc/logrotate.d/praxis) that the
+# CloudWatch agent tails into /praxis/session (deploy.sh --cloudwatch). `journalctl -u praxis`
+# keeps only start/stop; read the service with `tail -f /var/log/praxis/session.log`.
+StandardOutput=append:/var/log/praxis/session.log
+StandardError=append:/var/log/praxis/session.log
 Restart=always
 RestartSec=3
 

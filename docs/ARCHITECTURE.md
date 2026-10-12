@@ -69,7 +69,7 @@ flowchart LR
         GRD["Guardrails: SG from CloudFront prefix list only,<br/>SCP (small Graviton, 2 regions), $50 budget<br/>action stops the instance"]
         BR["Amazon Bedrock<br/>Claude via BedrockModel (planned)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]
-        CW["CloudWatch logs + metrics (planned)"]
+        CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
     end
 
@@ -224,7 +224,7 @@ Where control sits in this loop:
 | Budgets | ≤ 6 tool calls and ≤ 15 s per run, ≤ 60 calls and ≤ 12 runs per session; rest ≤ 120 s. | `agent/tools.py` constants, `agent/model.py` `RUN_TIMEOUT_S`, `coach/agent.py` |
 | Human approval | Resume and every dose change happen only on the patient's tap; a resume is offered only after a fresh passing `check_setup`. Decline changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt`; `agent/tools.py` `request_resume` |
 | Security | MCP routes: loopback without proxy headers, or the per-process `X-Praxis-MCP-Token`; patient text reaches the model only as capped, quoted data. | `agent/mcp_server.py` `MCPAccessGuard`; `agent/model.py` `quote_patient_text` |
-| Observability | One JSON log line per run end and per error (CloudWatch-ready); `/api/agent/metrics`. | `agent/metrics.py`, `main.py` |
+| Observability | One JSON log line per run end and per error, with CloudWatch EMF metrics (runs, fallbacks, errors, cost estimate, first action) when `PRAXIS_EMF=1`; `/api/agent/metrics`. Session/ops lines and the CloudWatch agent, dashboard and alarms: `infra/ec2/README.md` (built, not yet verified on AWS). | `agent/metrics.py`, `ops.py`, `main.py` |
 | Privacy | No tool result, trace row or model message holds pixels (`assert_no_pixels` on every result). | `agent/tools.py` |
 | Failure | Model error, timeout or refusal → `agent_error`, `agent_status offline`, the rule coach carries on. MCP down → same functions as direct tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
 

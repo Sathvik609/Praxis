@@ -2,24 +2,27 @@
 # One-command deploy of the Praxis session service to an AWS Graviton (c8g) instance launched
 # from the COOL AMI ("Cloud Optimized OpenCV For AWS Graviton4", Ubuntu, /opt/cool).
 #
-#   infra/ec2/deploy.sh <public-ip-or-dns> [--agent] [--skip-web] [--stock]
+#   infra/ec2/deploy.sh <public-ip-or-dns> [--agent] [--skip-web] [--stock] [--cloudwatch]
 #
 # --stock     allow a plain Graviton Ubuntu instance (no COOL AMI): cv2 from the pinned
 #             opencv-python-headless wheel. Without it the target must be the COOL AMI.
 # --agent     copy ANTHROPIC_API_KEY from services/session/.env to /etc/praxis/agent.env on the
 #             host (root-only, never printed) and turn the Claude agent coach on.
 # --skip-web  reuse the last web/dist build.
+# --cloudwatch install/refresh the pinned CloudWatch agent (logs -> /praxis/session, EMF
+#             metrics, CPU/mem/disk). Run infra/ec2/cloudwatch_setup.sh in CloudShell first.
 #
 # Idempotent: re-run it to ship a new version. Needs ssh key ~/.ssh/praxis-aws (user ubuntu).
 set -euo pipefail
 
-HOST="${1:?usage: deploy.sh <host> [--agent] [--skip-web]}"; shift || true
-AGENT=0; SKIP_WEB=0; STOCK=0
+HOST="${1:?usage: deploy.sh <host> [--agent] [--skip-web] [--cloudwatch]}"; shift || true
+AGENT=0; SKIP_WEB=0; STOCK=0; CLOUDWATCH=0
 for a in "$@"; do
   case "$a" in
     --agent) AGENT=1 ;;
     --skip-web) SKIP_WEB=1 ;;
     --stock) STOCK=1 ;;
+    --cloudwatch) CLOUDWATCH=1 ;;
     *) echo "unknown option $a" >&2; exit 2 ;;
   esac
 done
@@ -46,7 +49,8 @@ rsync -az --delete -e "$RSYNC_SSH" \
   "ubuntu@$HOST:/opt/praxis/app/"
 rsync -az --delete -e "$RSYNC_SSH" "$ROOT/web/dist/" "ubuntu@$HOST:/opt/praxis/app/web_dist/"
 rsync -az -e "$RSYNC_SSH" "$ROOT/evaluation/dataset_v0" "ubuntu@$HOST:/opt/praxis/app/evaluation/"
-rsync -az -e "$RSYNC_SSH" "$ROOT/infra/ec2/remote_setup.sh" "$ROOT/infra/ec2/praxis.service" "ubuntu@$HOST:/opt/praxis/"
+rsync -az -e "$RSYNC_SSH" "$ROOT/infra/ec2/remote_setup.sh" "$ROOT/infra/ec2/praxis.service" "$ROOT/infra/ec2/praxis.logrotate" "ubuntu@$HOST:/opt/praxis/"
+rsync -az --delete -e "$RSYNC_SSH" "$ROOT/infra/ec2/cloudwatch/" "ubuntu@$HOST:/opt/praxis/cloudwatch/"
 
 if [ "$AGENT" = 1 ]; then
   echo "== 3b agent key -> /etc/praxis/agent.env (not printed)"
@@ -57,7 +61,7 @@ if [ "$AGENT" = 1 ]; then
 fi
 
 echo "== 4/5 install on the host (COOL OpenCV, pinned deps, models, systemd)"
-"${SSH[@]}" 'bash /opt/praxis/remote_setup.sh'
+"${SSH[@]}" "PRAXIS_CLOUDWATCH=$CLOUDWATCH bash /opt/praxis/remote_setup.sh"
 
 echo "== 5/5 health"
 "${SSH[@]}" 'curl -fsS localhost:8000/health' | STOCK="$STOCK" python3 -c '

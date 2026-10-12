@@ -1,0 +1,41 @@
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+  },
+  "logs": {
+    "force_flush_interval": 15,
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/praxis/session.log",
+            "log_group_name": "/praxis/session",
+            "log_stream_name": "{instance_id}",
+            "timezone": "UTC"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "CWAgent",
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    },
+    "metrics_collected": {
+      "cpu": {
+        "measurement": ["usage_active"],
+        "totalcpu": true
+      },
+      "mem": {
+        "measurement": ["used_percent"]
+      },
+      "disk": {
+        "measurement": ["used_percent"],
+        "resources": ["/"],
+        "drop_device": true
+      }
+    }
+  }
+}

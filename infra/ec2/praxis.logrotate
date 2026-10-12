@@ -1,0 +1,13 @@
+# Installed by remote_setup.sh as /etc/logrotate.d/praxis. The service appends its stdout and
+# stderr here (praxis.service StandardOutput=append:); copytruncate keeps systemd's open file
+# handle valid, and the CloudWatch agent follows the truncation.
+/var/log/praxis/session.log {
+    daily
+    maxsize 50M
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
