@@ -243,3 +243,12 @@ test('a day stopped at check-in offers no Skip demo', async () => {
   await render(<DemoAt id="abduction" />)
   expect(screen.queryByRole('button', { name: 'Skip demo' })).toBeNull()
 })
+
+test('Skip demo when the check-in is old opens the quick pain check (not hidden behind the clip)', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': { ok: true, tier: 'full' } })
+  seedDay({ checkin: { pain: 2, at: Date.now() - 5 * HOUR } })
+  await render(<DemoAt id="abduction" />)
+  await userEvent.click(screen.getByRole('button', { name: 'Skip demo' }))
+  expect(screen.getByRole('dialog', { name: 'Quick pain check' })).toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Before you start' })).toBeNull()
+})

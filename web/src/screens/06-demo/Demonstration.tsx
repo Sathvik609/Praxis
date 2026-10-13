@@ -220,42 +220,6 @@ function DemonstrationFor() {
               ) : (
                 <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
               )}
-              <Overlay
-                open={painRe && !restResult}
-                title="Quick pain check"
-                description="One question before the camera setup."
-                onClose={saving ? undefined : () => setPainRe(false)}
-                className="w-[min(640px,92vw)]"
-              >
-                <p className="mt-1 text-muted">You checked in earlier today. Before this exercise, just the pain number.</p>
-                <div className="mt-5">
-                  <NumberScale label="Pain right now" value={painVal} onChange={setPainVal} leftAnchor="No pain" rightAnchor="Worst imaginable" />
-                </div>
-                <OverlayActions>
-                  <Button variant="secondary" disabled={saving} onClick={() => setPainRe(false)}>Back</Button>
-                  <Button disabled={painVal == null || saving} onClick={() => void painDone()}>Continue to setup</Button>
-                </OverlayActions>
-              </Overlay>
-              {/* The quick check stopped the day. No frame in the artifact: extends Check-in's
-                  stopped card inside the artifact's own overlay (docs/PLAN.md). */}
-              <Overlay open={!!restResult} title={restTitle} description="Today's practice has stopped." className="w-[min(640px,92vw)]">
-                {restResult && (
-                  <>
-                    <p className="mt-1">
-                      {restResult.stop === 'rest'
-                        ? `Pain ${restResult.checkin.pain} is at or above your stop level of ${stopAt}. Rest the arm today.`
-                        : restResult.stop === 'new_symptoms'
-                          ? "You told us something is new or worse. Rest the arm, and don't practise until your therapist has looked at it."
-                          : "A stop rule ended today's practice. Rest the arm today."}
-                    </p>
-                    {restResult.stop !== 'session' && <p className="mt-2">{therapistLine(restResult.checkin)}</p>}
-                    <p className="mt-2 text-muted">If it feels urgent, call your care team.</p>
-                    <OverlayActions className="justify-end">
-                      <Button onClick={() => nav('/details')}>Back to Home</Button>
-                    </OverlayActions>
-                  </>
-                )}
-              </Overlay>
             </div>
             {demo && (
               <div className="dth-links">
@@ -265,6 +229,44 @@ function DemonstrationFor() {
           </div>
         </div>
       )}
+      {/* The quick pain check and the stopped-day card open from Skip demo too (13 Oct),
+          so they live outside the end-of-clip "Before you start" box. */}
+      <Overlay
+        open={painRe && !restResult}
+        title="Quick pain check"
+        description="One question before the camera setup."
+        onClose={saving ? undefined : () => setPainRe(false)}
+        className="w-[min(640px,92vw)]"
+      >
+        <p className="mt-1 text-muted">You checked in earlier today. Before this exercise, just the pain number.</p>
+        <div className="mt-5">
+          <NumberScale label="Pain right now" value={painVal} onChange={setPainVal} leftAnchor="No pain" rightAnchor="Worst imaginable" />
+        </div>
+        <OverlayActions>
+          <Button variant="secondary" disabled={saving} onClick={() => setPainRe(false)}>Back</Button>
+          <Button disabled={painVal == null || saving} onClick={() => void painDone()}>Continue to setup</Button>
+        </OverlayActions>
+      </Overlay>
+      {/* The quick check stopped the day. No frame in the artifact: extends Check-in's
+          stopped card inside the artifact's own overlay (docs/PLAN.md). */}
+      <Overlay open={!!restResult} title={restTitle} description="Today's practice has stopped." className="w-[min(640px,92vw)]">
+        {restResult && (
+          <>
+            <p className="mt-1">
+              {restResult.stop === 'rest'
+                ? `Pain ${restResult.checkin.pain} is at or above your stop level of ${stopAt}. Rest the arm today.`
+                : restResult.stop === 'new_symptoms'
+                  ? "You told us something is new or worse. Rest the arm, and don't practise until your therapist has looked at it."
+                  : "A stop rule ended today's practice. Rest the arm today."}
+            </p>
+            {restResult.stop !== 'session' && <p className="mt-2">{therapistLine(restResult.checkin)}</p>}
+            <p className="mt-2 text-muted">If it feels urgent, call your care team.</p>
+            <OverlayActions className="justify-end">
+              <Button onClick={() => nav('/details')}>Back to Home</Button>
+            </OverlayActions>
+          </>
+        )}
+      </Overlay>
     </div>
   )
 }
