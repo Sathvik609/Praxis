@@ -56,8 +56,9 @@ def test_agent_section_reads_runs_tools_errors_and_cost_from_traces():
     s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API (dev)", "agent_decisions": 2}
     trace = [
         {"kind": "agent_run", "phase": "start", "trigger": "checkin"},
-        {"kind": "tool", "name": "get_events", "ok": True},
-        {"kind": "tool", "name": "speak", "ok": False},
+        {"kind": "tool", "server": "perception", "name": "get_events", "ok": True},
+        {"kind": "tool", "server": "coach", "name": "speak", "ok": False},
+        {"kind": "tool", "tool": "get_prescription"},  # a rule-coach decision's tool line: not counted
         {"kind": "agent_run", "phase": "end", "trigger": "checkin", "outcome": "done", "transport": "mcp", "model": "m",
          "ms": 3000.0, "first_action_ms": 2000.0, "input_tokens": 1000, "output_tokens": 100, "cache_read_tokens": 9000, "cache_write_tokens": 0},
         {"kind": "agent_error", "error_kind": "timeout", "message": "run took too long"},

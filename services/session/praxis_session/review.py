@@ -152,7 +152,7 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
                 errors[str(line.get("error_kind"))] += 1
                 if line.get("message") and len(error_msgs) < 5:
                     error_msgs.append(f"{line.get('error_kind')}: {str(line['message'])[:120]}")
-            elif kind == "tool":
+            elif kind == "tool" and "server" in line:  # the agent's tool calls; the rule coach's carry no server
                 name = str(line.get("name"))
                 tools[name] += 1
                 if line.get("ok") is False:
@@ -294,7 +294,7 @@ def render_md(r: dict[str, Any]) -> str:
             lines.append(f"({r['replay_sessions']} replay sessions are stored; replays are recorded clips and are not analysed.)")
         return "\n".join(lines) + "\n"
     who = ", ".join(f"{k} ({v})" for k, v in r["testers"].items())
-    lines += [f"{r['live_sessions']} live sessions · testers: {who} · {r['replay_sessions']} replays not counted.",
+    lines += [f"Live sessions: {r['live_sessions']} · testers: {who} · {r['replay_sessions']} replays not counted.",
               "Counts come from the OpenCV events and the screen-08 answers; small numbers, a guide to what to fix, not a score.", ""]
     lines += ["## Problem spots (most widespread first)", ""]
     if r["issues"]:
@@ -307,7 +307,7 @@ def render_md(r: dict[str, Any]) -> str:
     if not a.get("sessions"):
         lines.append("No live session ran with the agent on (rule coach only).")
     else:
-        lines += [f"- {a['sessions']} sessions with the agent · {a['runs']} runs · {a['agent_decisions']} coach decisions came from the agent",
+        lines += [f"- sessions with the agent: {a['sessions']} · runs: {a['runs']} · coach decisions from the agent: {a['agent_decisions']}",
                   "- run outcomes: " + (", ".join(f"{k} {v}" for k, v in a["outcomes"].items()) or "none"),
                   "- runs by trigger: " + (", ".join(f"{k} {v}" for k, v in a["triggers"].items()) or "none"),
                   "- tool calls: " + (", ".join(f"{k} {v}" for k, v in a["tools"].items()) or "none")
