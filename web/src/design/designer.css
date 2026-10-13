@@ -2146,3 +2146,5 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
   .th-grid li.py-3{padding-top:8px;padding-bottom:8px}
   .th-grid h1.text-4xl{font-size:30px;line-height:36px}
 }
+/* 13 Oct: Skip demo, top right of the theater (after the day count, or on its own) */
+.dth-skip{margin-left:auto}.dth-count+.dth-skip{margin-left:0}

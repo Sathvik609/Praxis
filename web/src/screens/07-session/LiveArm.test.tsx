@@ -280,3 +280,19 @@ test('10 Oct: the pain told in the Pain / feel unwell dialog is pre-selected in 
   const fb = screen.getByRole('dialog', { name: 'How was your practice?' })
   expect(within(fb).getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'true')
 })
+
+// 13 Oct team test: "hand raise is only 60°" — a gentle day (pain 4–6) lowers the target on
+// purpose; the live screen now says so instead of leaving a bare "target 60°".
+test('a gentle day says why the lift stops at 60°', () => {
+  sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 5 }))
+  mockStream([{ ...frame, arm: { ...frame.arm, target_deg: 60 } }])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.getByText(/Gentle day \(pain 5\) · lift to 60°/)).toBeInTheDocument()
+  sessionStorage.clear()
+})
+
+test('a full day shows no gentle-day note', () => {
+  mockStream([frame])
+  renderAt('/session?exercise=abduction&side=left')
+  expect(screen.queryByText(/Gentle day/)).toBeNull()
+})

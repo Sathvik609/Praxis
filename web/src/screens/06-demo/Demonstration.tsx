@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { AvatarPanel, type AvatarCtl } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
-import { Activity, AlertTriangle, Flag, RotateCcw, X } from '../../design/Icon'
+import { Activity, AlertTriangle, ChevronRight, Flag, RotateCcw, X } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { useModalFocus } from '../../design/useModalFocus'
@@ -143,6 +143,13 @@ function DemonstrationFor() {
           <p className="dth-sub">{`Demonstration · ${ex.category} · ${sideWord} arm`}</p>
         </div>
         {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
+        {/* 13 Oct team test: go on without watching (same way on as the clip's own Continue) */}
+        {!demo && !stopped && (
+          <button type="button" className="dth-exit dth-skip" onClick={practise}>
+            Skip demo
+            <ChevronRight aria-hidden size={18} />
+          </button>
+        )}
       </header>
       <div className="dth-main" aria-hidden={complete || undefined}>
         <AvatarPanel

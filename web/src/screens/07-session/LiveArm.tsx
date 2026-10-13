@@ -62,7 +62,8 @@ export function LiveArm() {
   const replay = sp.get('replay')
   const ex = exerciseById(sp.get('exercise')) ?? exerciseById('abduction')!
   const exId = ex.session === 'arm' ? ex.serviceId : 'abduction'
-  const tier = tierFor(readCheckinPain()) === 'gentle' ? 'gentle' : 'full'
+  const checkinPain = readCheckinPain()
+  const tier = tierFor(checkinPain) === 'gentle' ? 'gentle' : 'full'
   const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
   const { camActive, connected, events: recent, sessionId, error, start, stop, endCapture, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   // One-off events (reps, set ends, stops) outlive the socket's 200-event window here.
@@ -162,7 +163,7 @@ export function LiveArm() {
     <div className="sx-root">
       <SessionHeader
         title={`${ex.name} · ${side} side`}
-        sub={`${ex.category} · ${hold.open ? 'paused' : `set ${a?.set ?? 1} of ${a?.sets ?? 2}`}`}
+        sub={`${ex.category} · ${hold.open ? 'paused' : `set ${a?.set ?? 1} of ${a?.sets ?? 2}`}${tier === 'gentle' ? ` · Gentle day (pain ${checkinPain}) · lift to ${target}°` : ''}`}
         status={status}
         label={label}
         live={camActive && !replay}

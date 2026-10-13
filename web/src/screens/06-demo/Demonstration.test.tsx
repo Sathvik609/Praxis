@@ -219,3 +219,27 @@ test('a day stopped at check-in lets you watch but not start', async () => {
   expect(within(modal).getByText(/No exercises today/)).toBeInTheDocument()
   expect(within(modal).getByRole('button', { name: /^Continue/ })).toBeDisabled()
 })
+
+// 13 Oct team test: returning testers wanted to go straight on without watching the clip.
+test('Skip demo goes straight on to camera setup without waiting for the clip', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  seedDay({ checkin: { pain: 2, at: Date.now() - 0.5 * HOUR } })
+  await render(<DemoAt id="abduction" />)
+  await userEvent.click(screen.getByRole('button', { name: 'Skip demo' }))
+  expect(screen.getByTestId('where')).toHaveTextContent('/details/setup?exercise=abduction&side=left')
+  expect(readDay().demosSeen).toContain('abduction')
+})
+
+test('Skip demo without a check-in today still goes through the check-in', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  await render(<DemoAt id="cup" side="right" />)
+  await userEvent.click(screen.getByRole('button', { name: 'Skip demo' }))
+  expect(screen.getByTestId('where')).toHaveTextContent('/details/checkin?next=cup&side=right')
+})
+
+test('a day stopped at check-in offers no Skip demo', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  seedDay({ checkin: { pain: 8 }, stopped: 'rest' })
+  await render(<DemoAt id="abduction" />)
+  expect(screen.queryByRole('button', { name: 'Skip demo' })).toBeNull()
+})

@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { ACK_TIMEOUT_MS, readCaptureTime } from './latency'
+import { ACK_TIMEOUT_MS, MAX_IN_FLIGHT, readCaptureTime } from './latency'
 import { useWebcamStream } from './useWebcamStream'
 
 /** A WebSocket double that records what the hook sends and lets the test deliver events. */
@@ -56,7 +56,7 @@ async function tick(ms: number) {
   })
 }
 
-test('the hook sends one capture-stamped frame, then waits for the frame ack before the next', async () => {
+test('the hook keeps up to MAX_IN_FLIGHT capture-stamped frames in flight, and each ack frees a slot', async () => {
   const video = document.createElement('video')
   const { result } = renderHook(() => useWebcamStream({ wsUrl: 'ws://test/session', mode: 'nhpt', fps: 100 }))
   result.current.videoRef.current = video
@@ -75,23 +75,31 @@ test('the hook sends one capture-stamped frame, then waits for the frame ack bef
   expect(Math.abs(tCapture - realNow)).toBeLessThan(60 * 60 * 1000) // epoch ms on the performance clock
   expect(new Uint8Array(first).slice(8, 11)).toEqual(new Uint8Array([0xff, 0xd8, 0xff]))
 
-  // several ticks without an ack: nothing more goes out
+  // 13 Oct: a far service (one round trip ~230 ms) capped one-at-a-time at ~4 fps, so frames
+  // are pipelined: without an ack the hook fills MAX_IN_FLIGHT, then waits
   await tick(100)
-  expect(ws.sent).toHaveLength(1)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT)
 
-  // the frame event acks; the next tick sends again
+  // the frame event acks one; the next tick sends one more
   act(() => ws.deliver({ type: 'frame', t: 1, id: 1 }))
   await tick(10)
-  expect(ws.sent).toHaveLength(2)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT + 1)
+  await tick(50)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT + 1)
 
   // a coach event is not an ack
   act(() => ws.deliver({ type: 'coach', t: 2, id: 2 }))
   await tick(50)
-  expect(ws.sent).toHaveLength(2)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT + 1)
 
-  // safety: after ACK_TIMEOUT_MS with no ack the hook sends anyway
+  // frames the service dropped (drop-oldest) are answered by the next frame's `dropped`
+  act(() => ws.deliver({ type: 'frame', t: 3, id: 3, dropped: 1 }))
+  await tick(50)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT + 3)
+
+  // safety: an ack that never comes frees its slot after ACK_TIMEOUT_MS
   await tick(ACK_TIMEOUT_MS)
-  expect(ws.sent).toHaveLength(3)
+  expect(ws.sent.length).toBeGreaterThan(MAX_IN_FLIGHT + 3)
 
   act(() => result.current.stop())
 })
@@ -104,15 +112,15 @@ test('setup_checks acks a calibrate-mode frame (that mode never emits a frame ev
     await result.current.start()
   })
   const ws = FakeSocket.instances[0]
-  await tick(10)
-  expect(ws.sent).toHaveLength(1)
+  await tick(100)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT)
   act(() => ws.deliver({ type: 'calibration', t: 1, id: 1 }))
   act(() => ws.deliver({ type: 'quality', t: 1, id: 2 }))
   await tick(10)
-  expect(ws.sent).toHaveLength(1)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT)
   act(() => ws.deliver({ type: 'setup_checks', t: 1, id: 3 }))
   await tick(10)
-  expect(ws.sent).toHaveLength(2)
+  expect(ws.sent).toHaveLength(MAX_IN_FLIGHT + 1)
   act(() => result.current.stop())
 })
 

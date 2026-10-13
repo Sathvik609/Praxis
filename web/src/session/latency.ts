@@ -18,9 +18,14 @@ export const PREFIX_BYTES = 8
  *  a bad frame answers with `error`). */
 export const ACK_TYPES: ReadonlySet<string> = new Set(['frame', 'setup_checks', 'heartbeat', 'error'])
 
-/** Safety valve: if no ack arrives in this long, send anyway (the service drops the oldest
- *  queued frame if it is still busy). */
-export const ACK_TIMEOUT_MS = 250
+/** Frames sent but not yet answered. One at a time capped a far service at one frame per
+ *  round trip (13 Oct team test: ~230 ms to the Railway region, ~4 fps), so up to this many are
+ *  pipelined; the service still drops the oldest queued frame when it falls behind, so the
+ *  newest frame is always the one processed. */
+export const MAX_IN_FLIGHT = 3
+
+/** Safety valve: a frame unanswered this long frees its slot (an ack lost or never sent). */
+export const ACK_TIMEOUT_MS = 1000
 
 export function nowEpochMs(): number {
   return performance.timeOrigin + performance.now()
