@@ -57,7 +57,7 @@ beforeEach(() => {
   // camera on and connected; Camera setup and the session read the same recorded cup streams
   vi.spyOn(hook, 'useWebcamStream').mockImplementation(({ mode }) => {
     const events = (mode === 'calibrate' ? calibrate : [...cup, ...stream]).slice(-200)
-    return { camActive: true, connected: true, lastEvent: events[events.length - 1] as never, events: events as never, sessionId: 'kb', error: null, start: vi.fn(async () => {}), stop: vi.fn(), send, videoRef: { current: null } }
+    return { camActive: true, connected: true, lastEvent: events[events.length - 1] as never, events: events as never, sessionId: 'kb', error: null, start: vi.fn(async () => {}), stop: vi.fn(), endCapture: vi.fn(), send, videoRef: { current: null } }
   })
 })
 afterEach(() => vi.restoreAllMocks())

@@ -17,7 +17,7 @@ import { LiveNhpt } from './LiveNhpt'
 function renderAt(path: string) {
   vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive: true, connected: true, lastEvent: null, events: [] as never, sessionId: null, error: null,
-    start: vi.fn(async () => {}), stop: vi.fn(), send: vi.fn(), videoRef: { current: null },
+    start: vi.fn(async () => {}), stop: vi.fn(), endCapture: vi.fn(), send: vi.fn(), videoRef: { current: null },
   })
   h.props = []
   render(

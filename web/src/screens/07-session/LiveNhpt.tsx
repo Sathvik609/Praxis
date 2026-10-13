@@ -45,7 +45,7 @@ export function LiveNhpt() {
   const avSide = testHand === 'left' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'nhpt_board' }), [])
-  const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({
+  const { camActive, connected, events: recent, sessionId, error, start, stop, endCapture, send, videoRef } = useWebcamStream({
     wsUrl: SESSION_WS_URL,
     mode: 'nhpt',
     params,
@@ -62,7 +62,7 @@ export function LiveNhpt() {
   const coach = useCoach(events)
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
-  const flow = useSessionFlow(events, send, stop, connected)
+  const flow = useSessionFlow(events, send, stop, connected, endCapture)
   const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
 
@@ -77,7 +77,7 @@ export function LiveNhpt() {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
   })()
-  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
+  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.ended })
   const label = statusLabel(status, 'nhpt')
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined

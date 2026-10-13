@@ -24,7 +24,7 @@ function mockStream(events: Record<string, unknown>[], send = vi.fn()) {
     events: events as never,
     sessionId: null, error: null,
     start: vi.fn(async () => {}),
-    stop: vi.fn(),
+    stop: vi.fn(), endCapture: vi.fn(),
     send,
     videoRef: { current: null },
   })

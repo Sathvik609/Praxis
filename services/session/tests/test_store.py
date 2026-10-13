@@ -374,3 +374,13 @@ def test_save_session_after_a_feedback_flag_keeps_it(tmp_path):
     st.seed_if_empty()
     st.save_session(_summary(session_id="fb3", flags=[{"t": 5.0, "rule": "pain_after", "detail": "pain 8/10 after the session (stop level 7)"}]), {}, {"pain_after": 8}, [])
     assert [f["rule"] for f in st.flags() if f["session_id"] == "fb3"] == ["pain_after"]
+
+
+def test_a_session_the_patient_ended_is_stored_as_ended_early(tmp_path):
+    """13 Oct team test: End session (no stop rule) was reported as "Complete"."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="e1"), checkin={}, feedback={"ended_early": True, "end_reason": "tired"}, events=[])
+    st.save_session(_summary(session_id="c1"), checkin={}, feedback={"ended_early": False, "end_reason": None}, events=[])
+    assert st.session("e1")["status"] == "ended_early"
+    assert st.session("c1")["status"] == "complete"

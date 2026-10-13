@@ -20,18 +20,27 @@ export type StopEnd = `stop:${string}`
 /** Where to go after the feedback is stored instead of the report (`mode` = the live screen). */
 export type Then = { url: string; mode: 'arm' | 'cup' | 'nhpt' }
 
+/** How long the screen waits for the service to acknowledge the feedback before it leaves for
+ *  the report on its own (13 Oct team test: a dropped socket left the patient on the live screen
+ *  with End session doing nothing). */
+export const ACK_WAIT_MS = 5000
+
 /** `replayOver` (10 Oct walkthrough): the service sent `replay_end` (the clip ran out; the socket
  *  stays open for the feedback) and the session has not been finished yet. The screen then
  *  finishes with `finish(false, 'replay_end', …)` and its own fallback state, unless it already
  *  finished by itself (e.g. the cup's done modal is open); before this a replay that never
  *  completed froze on its last frame. */
-export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, unknown>) => void, stop: () => void, connected: boolean) {
+/** `endCapture` (optional) stops the camera the moment the session is ended, keeping the socket
+ *  open for the feedback: nothing is measured behind the feedback form. */
+export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, unknown>) => void, stop: () => void, connected: boolean, endCapture?: () => void) {
   const nav = useNavigate()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [early, setEarly] = useState(false)
   const [recordingEnded, setRecordingEnded] = useState(false)
   const [done, setDone] = useState(false)
   const finished = useRef(false)
+  const left = useRef(false)
+  const [awaitingAck, setAwaitingAck] = useState(false)
   const fallback = useRef<unknown>(null)
   const then = useRef<Then | null>(null)
   const ending = useRef<{ ended_early: boolean; end_reason: EndReason | StopEnd | null }>({ ended_early: false, end_reason: null })
@@ -52,8 +61,19 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
   }, [connected, send])
 
   const ack = [...events].reverse().find((e) => e.type === 'command' && e.cmd === 'feedback') as (PraxisEvent & { summary?: { session_id?: string } }) | undefined
+  /** Leave for the report with the screen's own state (no stored report to open). Once. */
+  function leave() {
+    if (left.current) return
+    left.current = true
+    setAwaitingAck(false)
+    stop()
+    nav('/report', { state: fallback.current })
+  }
+
   useEffect(() => {
-    if (!ack) return
+    if (!ack || left.current) return
+    left.current = true
+    setAwaitingAck(false)
     const sid = ack.summary?.session_id
     stop()
     const next = then.current
@@ -67,7 +87,30 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ack?.id])
 
+  // The feedback was sent but the service never answered, or the socket closed meanwhile: leave
+  // anyway, so ending a session can never strand the patient on the live screen.
+  useEffect(() => {
+    if (!awaitingAck) return
+    if (!connected) {
+      leave()
+      return
+    }
+    const id = window.setTimeout(leave, ACK_WAIT_MS)
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingAck, connected])
+
   const replayOver = !done && events.some((e) => e.type === 'replay_end')
+
+  function sendFeedback(f: Partial<Feedback>) {
+    setFeedbackOpen(false)
+    if (!connected) {
+      leave() // the socket is gone: nothing can store it, go to the report
+      return
+    }
+    send({ cmd: 'feedback', ...f, ...ending.current })
+    setAwaitingAck(true)
+  }
 
   /** `fallbackState` is the report's state when the service never answers (offline).
    *  `next` ("Next exercise"): after the feedback is stored, bind the report to today's run
@@ -82,10 +125,10 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     setEarly(endedEarly)
     setRecordingEnded(reason === 'replay_end')
     if (!connected) {
-      stop()
-      nav('/report', { state: fallback.current })
+      leave()
       return
     }
+    endCapture?.()
     setFeedbackOpen(true)
   }
 
@@ -97,16 +140,14 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     recordingEnded,
     /** The replay clip ran out and nothing has finished the session yet. */
     replayOver,
+    /** The session has been ended (feedback open, or waiting to open the report). */
+    ended: done,
     finish,
     /** `ended_early` / `end_reason` come from `finish()` and override the form's. */
     save: (f: Partial<Feedback>) => {
       recordPainAfter(f.pain_after)
-      send({ cmd: 'feedback', ...f, ...ending.current })
-      setFeedbackOpen(false)
+      sendFeedback(f)
     },
-    skip: () => {
-      send({ cmd: 'feedback', ...ending.current })
-      setFeedbackOpen(false)
-    },
+    skip: () => sendFeedback({}),
   }
 }

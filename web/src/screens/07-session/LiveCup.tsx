@@ -90,7 +90,7 @@ export function LiveCup() {
   const side = sp.get('side') === 'right' ? 'right' : 'left'
   const replay = sp.get('replay')
   const params = useMemo(() => ({ sheet: 'cup_targets' }), [])
-  const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
+  const { camActive, connected, events: recent, sessionId, error, start, stop, endCapture, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'cup', params, replay })
   // One-off events (reaches, completion, stops) outlive the socket's 200-event window here.
   const events = useEventHistory(recent)
   // The last Pain / feel unwell answer, pre-selected in the feedback (10 Oct walkthrough).
@@ -102,7 +102,7 @@ export function LiveCup() {
   const coach = useCoach(events)
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
-  const flow = useSessionFlow(events, send, stop, connected)
+  const flow = useSessionFlow(events, send, stop, connected, endCapture)
   const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
   const [doneClosed, setDoneClosed] = useState(false)
@@ -119,7 +119,7 @@ export function LiveCup() {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
   })()
-  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
+  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.ended })
   const label = statusLabel(status, 'cup')
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'cup_complete') as CupComplete | undefined

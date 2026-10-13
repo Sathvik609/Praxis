@@ -99,6 +99,17 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
     setConnected(false)
   }, [])
 
+  /** The session was ended: stop the camera and the frame timer but keep the socket open, so the
+   *  feedback still reaches the service and its answer comes back. */
+  const endCapture = useCallback(() => {
+    if (timerRef.current) window.clearInterval(timerRef.current)
+    timerRef.current = null
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    if (videoRef.current) videoRef.current.srcObject = null
+    setCamActive(false)
+  }, [])
+
   const attach = useCallback((ws: WebSocket) => {
     const mine = () => wsRef.current === ws
     ws.onopen = () => mine() && setConnected(true)
@@ -202,5 +213,5 @@ export function useWebcamStream({ wsUrl, mode, fps = 12, params = {}, replay = n
   }, [])
 
   useEffect(() => stop, [stop])
-  return { camActive, connected, lastEvent, events, sessionId, error, start, stop, send, videoRef }
+  return { camActive, connected, lastEvent, events, sessionId, error, start, stop, endCapture, send, videoRef }
 }

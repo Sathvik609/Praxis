@@ -350,7 +350,8 @@ class Store:
             t_start, t_end = now, now + duration
         started = datetime.fromtimestamp(t_start or now).isoformat(timespec="seconds")
         ended = datetime.fromtimestamp(t_end or now).isoformat(timespec="seconds")
-        status = "ended_early" if summary.get("stopped") else "complete"
+        # a stop rule ended it, or the patient did (End session: `ended_early` in the feedback)
+        status = "ended_early" if summary.get("stopped") or (feedback or {}).get("ended_early") else "complete"
         total = max(1, cam.get("reps_total", 0))
         tracking = "usable" if cam.get("unverified", 0) / total <= 0.3 else "limited"
         if summary.get("mode") == "nhpt" and (summary.get("tracking_lost_events") or cam.get("tracking_lost_events")):

@@ -32,7 +32,7 @@ export function feed(name: string, share = 0.5, extra: Record<string, unknown>[]
   const events = [...all.slice(0, Math.max(1, Math.floor(all.length * share))), ...extra].slice(-200)
   return vi.spyOn(hook, 'useWebcamStream').mockReturnValue({
     camActive: true, connected: true, lastEvent: events[events.length - 1] as never, events: events as never,
-    sessionId: 'a11y', error: null, start: vi.fn(async () => {}), stop: vi.fn(), send, videoRef: { current: null },
+    sessionId: 'a11y', error: null, start: vi.fn(async () => {}), stop: vi.fn(), endCapture: vi.fn(), send, videoRef: { current: null },
   })
 }
 

@@ -64,7 +64,7 @@ export function LiveArm() {
   const exId = ex.session === 'arm' ? ex.serviceId : 'abduction'
   const tier = tierFor(readCheckinPain()) === 'gentle' ? 'gentle' : 'full'
   const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
-  const { camActive, connected, events: recent, sessionId, error, start, stop, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
+  const { camActive, connected, events: recent, sessionId, error, start, stop, endCapture, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   // One-off events (reps, set ends, stops) outlive the socket's 200-event window here.
   const events = useEventHistory(recent)
   // The last Pain / feel unwell answer, pre-selected in the feedback (10 Oct walkthrough).
@@ -76,7 +76,7 @@ export function LiveArm() {
   const coach = useCoach(events)
   const rest = useRestBreak(send, coach.clearOverlay)
   const stopped = coach.overlay?.kind === 'stopped'
-  const flow = useSessionFlow(events, send, stop, connected)
+  const flow = useSessionFlow(events, send, stop, connected, endCapture)
   const latency = useLatency(recent)
   const cp = useCoachPrompt(events, coach.prompt, coach.dismissPrompt, send)
 
@@ -92,7 +92,7 @@ export function LiveArm() {
     const last = [...events].reverse().find((e) => e.type === 'perception_lost' || e.type === 'perception_regained')
     return last?.type === 'perception_lost'
   })()
-  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.feedbackOpen })
+  const status = liveStatus({ connected, camActive, error, replay: !!replay, frame, lost, overlay: coach.overlay, ended: flow.ended })
   const live = status === 'tracking' || status === 'replay'
   const lastLean = [...events].reverse().find((e) => e.type === 'compensation_lean')
   const leanRecent = !!lastLean && (frame ? frame.t - lastLean.t < 4 : true)
