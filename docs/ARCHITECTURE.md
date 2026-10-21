@@ -2,7 +2,7 @@
 
 Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per exercise, (3) one concrete agent loop where OpenCV output changes what the agent does next. Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
 
-**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS: a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CDK and the `services/tools-lambda/` folder. CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
+**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS (rebuilt on 21 Oct in a new account): a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
@@ -10,7 +10,7 @@ Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per e
 flowchart LR
     subgraph BROWSER["Browser · React 19 + TS + Vite"]
         CAM["Laptop built-in camera<br/>640×480 JPEG, ack-paced, 12 fps ceiling<br/>8-byte capture-time prefix"]
-        UI["Screens 03–11<br/>captions, prompts Yes / Not yet,<br/>Pause · Take a rest · Pain · End"]
+        UI["Screens 03–11<br/>captions, prompts Yes / Not yet,<br/>Take a rest · Pain · End session"]
         AV["Three.js avatar<br/>Blender GLB + AnimationMixer<br/>reference only, never scores"]
         TR["Show trace panel<br/>Settings › Show technical details"]
     end
@@ -63,10 +63,10 @@ flowchart LR
     TRC --> TR
     UI -->|"answer, pain, pause, commands"| WS
 
-    subgraph AWS["AWS us-east-2 · live since 11 Oct 2026"]
+    subgraph AWS["AWS us-east-2 · rebuilt 21 Oct 2026"]
         CF["CloudFront HTTPS<br/>d235zashbh751z.cloudfront.net<br/>WSS upgrade, caching off"]
         EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
-        GRD["Guardrails: SG from CloudFront prefix list only,<br/>SCP (small Graviton, 2 regions), $50 budget<br/>action stops the instance"]
+        GRD["Guardrails: SG from CloudFront prefix list only,<br/>$50 budget with email alerts<br/>(no budget action, no SCPs)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]
         CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
@@ -205,7 +205,7 @@ sequenceDiagram
     T-->>CS: intent queued: prompt kind resume
     Note over CS: socket loop drains intents and re-checks stop:<br/>a pain stop mid-run drops them (agent_drop)
     CS->>B: prompt "Setup looks good — resume?" (Yes, resume · Not yet)
-    B->>P: caption on screen (caption-only coach, no voice)
+    B->>P: caption on screen, spoken by the browser (SpeechSynthesis)
     P->>B: taps "Yes, resume"   (human approval)
     B->>CS: answer resume-1 choice Yes
     CS->>B: resume · "Thanks. Carrying on from where we stopped."
