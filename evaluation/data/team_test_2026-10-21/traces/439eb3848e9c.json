@@ -1,0 +1,319 @@
+{
+ "rows": [
+  {
+   "coach": "Rule-based coach",
+   "exercise": null,
+   "kind": "session",
+   "mode": "nhpt",
+   "prescription": "Hospital GRASP L2 v3",
+   "seq": 1,
+   "session": "439eb3848e9c",
+   "ts": 1791994856.7745848,
+   "user": "T1"
+  },
+  {
+   "changed": false,
+   "kind": "tier",
+   "pain": 5,
+   "reason": "Pain 5 today: a gentle day. Fewer reps, shorter holds, the side lift to 60°, and no fast arcs, all inside what your therapist allows.",
+   "rule": "pain_tier",
+   "running": "full",
+   "seq": 2,
+   "session": "439eb3848e9c",
+   "tier": "gentle",
+   "ts": 1791994856.832787
+  },
+  {
+   "energy": "comfortable",
+   "has_note": false,
+   "kind": "checkin",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 5,
+   "seq": 3,
+   "session": "439eb3848e9c",
+   "ts": 1791994856.833549
+  },
+  {
+   "id": 10246,
+   "kind": "event",
+   "seq": 4,
+   "session": "439eb3848e9c",
+   "t": 1791994856.8327594,
+   "ts": 1791994856.8336735,
+   "type": "checkin"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 5,
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791994856.8340058
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_prescription",
+   "ok": true,
+   "result_summary": "{\"program\": \"Hospital GRASP\", \"level\": 2, \"version\": 3, \"exercise\": \"nhpt\", \"dose\": {\"frequency\": \"weekly\", \"hands\": [\"left\"]}, \"allowed_adaptations\": {}, \"stop_rules\": {\"pain_max\": 7, \"lean_deg\": 12.0, \"lean_events\": 3, \"failed_reps\": 3, \"",
+   "run": 1,
+   "seq": 6,
+   "server": "exertion",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994859.0027065
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 4.3,
+   "name": "read_patient_model",
+   "ok": true,
+   "result_summary": "{\"sessions\": [{\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"complete\", \"tracking\": \"usable\", \"verified\": 11, \"unverified\": 0, \"sample\": false}, {\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"ended_early\", \"tracking\": \"usable\", \"verifie",
+   "run": 1,
+   "seq": 7,
+   "server": "exertion",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994859.0134695
+  },
+  {
+   "because": null,
+   "evidence": [
+    10246
+   ],
+   "goals": [
+    "Complete the peg test with the left hand",
+    "Move steadily and smoothly, all nine pegs"
+   ],
+   "kind": "plan",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 8,
+   "session": "439eb3848e9c",
+   "t": 1791994864.2092361,
+   "trigger": "checkin",
+   "ts": 1791994864.2906685,
+   "version": 1,
+   "watch": [
+    "Pain stays under 7 (starts at 5)",
+    "Pegs and sheet markers clearly seen",
+    "Any new symptoms"
+   ]
+  },
+  {
+   "args": {
+    "cue": "instruct",
+    "evidence": [
+     10246
+    ],
+    "text": "Let's start the peg test with your left hand. Go at a steady, comfortable pace, and stop if pain rises."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"instruct\"}",
+   "run": 1,
+   "seq": 9,
+   "server": "coach",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994864.291037
+  },
+  {
+   "args": {
+    "because": "",
+    "evidence": [
+     10246
+    ],
+    "goals": [
+     "Complete the peg test with the left hand",
+     "Move steadily and smoothly, all nine pegs"
+    ],
+    "watch": [
+     "Pain stays under 7 (starts at 5)",
+     "Pegs and sheet markers clearly seen",
+     "Any new symptoms"
+    ]
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 1.2,
+   "name": "set_session_plan",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"version\": 1, \"revised\": false}",
+   "run": 1,
+   "seq": 10,
+   "server": "coach",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994864.2918496
+  },
+  {
+   "action": "instruct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    10246
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at checkin",
+   "run": 1,
+   "seq": 11,
+   "session": "439eb3848e9c",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1791994864.3136322
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 12,
+   "session": "439eb3848e9c",
+   "source": "agent",
+   "text": "Let's start the peg test with your left hand. Go at a steady, comfortable pace, and stop if pain rises.",
+   "tool": "speak",
+   "ts": 1791994864.3137743,
+   "ui": {
+    "agent_run": 1,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 25551,
+   "cache_write_tokens": 1882,
+   "first_action_ms": 7456.9,
+   "input_tokens": 10,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 9757.1,
+   "outcome": "done",
+   "output_tokens": 872,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 13,
+   "session": "439eb3848e9c",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791994866.5912008
+  },
+  {
+   "again_tomorrow": "not_sure",
+   "difficulty": "just_right",
+   "effort": 4,
+   "end_reason": "finished",
+   "ended_early": true,
+   "kind": "feedback",
+   "pain_after": 3,
+   "seq": 14,
+   "session": "439eb3848e9c",
+   "ts": 1791994883.2868237
+  },
+  {
+   "kind": "event",
+   "seq": 15,
+   "session": "439eb3848e9c",
+   "t": 1791994883.2868083,
+   "ts": 1791994883.2869902,
+   "type": "feedback"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 16,
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791994883.2951264
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_set_summary",
+   "ok": true,
+   "result_summary": "{\"nhpt\": null, \"kind\": \"in_progress\", \"boundary_event_id\": null, \"boundary\": null, \"reps\": 0, \"verified\": 0, \"not_verified\": [], \"rep_event_ids\": [], \"peak_deg\": [], \"previous_set_mean_peak_deg\": null, \"hold_s\": [], \"lean_count\": 0, \"hike_c",
+   "run": 2,
+   "seq": 17,
+   "server": "perception",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994884.512258
+  },
+  {
+   "evidence": [
+    10246
+   ],
+   "kind": "coach_note",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 18,
+   "session": "439eb3848e9c",
+   "text": "Peg test session ended, not stopped. No peg test time or splits were recorded by the camera. Check-in: pain 5/10, no new symptoms, energy comfortable, 14 minutes. Exertion low. No form cues needed.",
+   "ts": 1791994886.0741243
+  },
+  {
+   "args": {
+    "evidence": [
+     10246
+    ],
+    "note": "Peg test session ended, not stopped. No peg test time or splits were recorded by the camera. Check-in: pain 5/10, no new symptoms, energy comfortable, 14 minute"
+   },
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 4.9,
+   "name": "write_session_summary",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"stored_in_report\": true}",
+   "run": 2,
+   "seq": 19,
+   "server": "coach",
+   "session": "439eb3848e9c",
+   "transport": "mcp",
+   "ts": 1791994886.079028
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 18194,
+   "cache_write_tokens": 994,
+   "first_action_ms": 2779.0,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 4005.2,
+   "outcome": "done",
+   "output_tokens": 346,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 20,
+   "session": "439eb3848e9c",
+   "tool_calls": 2,
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791994887.3003979
+  }
+ ],
+ "session": "439eb3848e9c"
+}

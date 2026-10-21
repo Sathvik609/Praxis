@@ -1,0 +1,368 @@
+{
+ "agent": {
+  "agent_decisions": 27,
+  "cost_usd": 0.5574,
+  "drops": {},
+  "error_examples": [],
+  "errors": {},
+  "first_action_ms_p50": 3939.25,
+  "models": {
+   "claude-sonnet-5-5": 42
+  },
+  "outcomes": {
+   "done": 41,
+   "stale": 1
+  },
+  "run_ms_p50": 6118.65,
+  "runs": 42,
+  "sessions": 15,
+  "skips": {},
+  "tokens": {
+   "cache_read": 689028,
+   "cache_write": 90008,
+   "input": 318,
+   "output": 19395
+  },
+  "tool_failures": {
+   "propose_adjustment": 1,
+   "recalibrate": 1,
+   "speak": 1,
+   "write_session_summary": 1
+  },
+  "tools": {
+   "check_setup": 9,
+   "flag_therapist": 1,
+   "get_events": 1,
+   "get_exertion_state": 5,
+   "get_prescription": 13,
+   "get_set_summary": 19,
+   "propose_adjustment": 1,
+   "read_patient_model": 9,
+   "recalibrate": 7,
+   "request_resume": 2,
+   "set_session_plan": 9,
+   "speak": 28,
+   "write_session_summary": 15
+  },
+  "transports": {
+   "mcp": 42
+  },
+  "triggers": {
+   "arc_complete": 3,
+   "checkin": 9,
+   "feedback": 15,
+   "pause:setup": 9,
+   "set_complete": 6
+  }
+ },
+ "exercises": [
+  {
+   "barriers": {
+    "tired": 1,
+    "weak": 1
+   },
+   "comments": [],
+   "difficulty": {
+    "just_right": 5
+   },
+   "ended_early": 8,
+   "exercise": "Arm out to the side",
+   "exertion": {
+    "low": 10,
+    "moderate": 2
+   },
+   "flags": {
+    "agent": 1,
+    "missed_reps": 3
+   },
+   "lost_what": {},
+   "median_cue_p50_s": 0.8500000000000001,
+   "median_paused_s": 11.3,
+   "missed": 15,
+   "nhpt_times_s": [],
+   "per_tester": [
+    {
+     "ended_early": 1,
+     "missed": 0,
+     "reps": 0,
+     "sessions": 1,
+     "tester": "T2",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 0
+    },
+    {
+     "ended_early": 2,
+     "missed": 14,
+     "reps": 37,
+     "sessions": 5,
+     "tester": "T1",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 23
+    },
+    {
+     "ended_early": 5,
+     "missed": 1,
+     "reps": 1,
+     "sessions": 6,
+     "tester": "test-claude",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 0
+    }
+   ],
+   "problems": {
+    "compensation_lean": 1,
+    "hold_too_short": 7,
+    "setup_blocked": 14,
+    "shoulder_hiking": 31,
+    "target_missed": 9
+   },
+   "reps": 38,
+   "sessions": 12,
+   "sessions_with_problem": {
+    "compensation_lean": 1,
+    "hold_too_short": 2,
+    "setup_blocked": 9,
+    "shoulder_hiking": 5,
+    "target_missed": 3
+   },
+   "sessions_with_tracking_lost": 0,
+   "testers": 3,
+   "top_corrections": [],
+   "tracking_lost": 0,
+   "unverified": 0,
+   "unverified_reasons": {
+    "hold_too_short": 6,
+    "target_missed": 9
+   },
+   "verified": 23,
+   "verified_pct": 61
+  },
+  {
+   "barriers": {},
+   "comments": [],
+   "difficulty": {
+    "just_right": 1
+   },
+   "ended_early": 1,
+   "exercise": "Nine-Hole Peg Test",
+   "exertion": {
+    "low": 1
+   },
+   "flags": {},
+   "lost_what": {},
+   "median_cue_p50_s": null,
+   "median_paused_s": 0.0,
+   "missed": 0,
+   "nhpt_times_s": [],
+   "per_tester": [
+    {
+     "ended_early": 1,
+     "missed": 0,
+     "reps": 0,
+     "sessions": 1,
+     "tester": "T1",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 0
+    }
+   ],
+   "problems": {},
+   "reps": 0,
+   "sessions": 1,
+   "sessions_with_problem": {},
+   "sessions_with_tracking_lost": 0,
+   "testers": 1,
+   "top_corrections": [],
+   "tracking_lost": 0,
+   "unverified": 0,
+   "unverified_reasons": {},
+   "verified": 0,
+   "verified_pct": null
+  },
+  {
+   "barriers": {
+    "time": 1
+   },
+   "comments": [
+    {
+     "tester": "test-claude",
+     "text": "automated check by Claude (synthetic clip)"
+    }
+   ],
+   "difficulty": {
+    "hard": 1,
+    "just_right": 1
+   },
+   "ended_early": 0,
+   "exercise": "Waiter – cup",
+   "exertion": {
+    "low": 2
+   },
+   "flags": {},
+   "lost_what": {},
+   "median_cue_p50_s": 1.0,
+   "median_paused_s": 0.0,
+   "missed": 0,
+   "nhpt_times_s": [],
+   "per_tester": [
+    {
+     "ended_early": 0,
+     "missed": 0,
+     "reps": 0,
+     "sessions": 1,
+     "tester": "T3",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 0
+    },
+    {
+     "ended_early": 0,
+     "missed": 0,
+     "reps": 31,
+     "sessions": 1,
+     "tester": "test-claude",
+     "tracking_lost": 0,
+     "unverified": 0,
+     "verified": 31
+    }
+   ],
+   "problems": {},
+   "reps": 31,
+   "sessions": 2,
+   "sessions_with_problem": {},
+   "sessions_with_tracking_lost": 0,
+   "testers": 2,
+   "top_corrections": [],
+   "tracking_lost": 0,
+   "unverified": 0,
+   "unverified_reasons": {},
+   "verified": 31,
+   "verified_pct": 100
+  }
+ ],
+ "issues": [
+  {
+   "count": 1,
+   "exercise": "Nine-Hole Peg Test",
+   "of": 1,
+   "sessions_hit": 1,
+   "share": 1.0,
+   "what": "session ended early"
+  },
+  {
+   "count": 14,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 9,
+   "share": 0.75,
+   "what": "setup could not see the sheet"
+  },
+  {
+   "count": 8,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 8,
+   "share": 0.67,
+   "what": "session ended early"
+  },
+  {
+   "count": 1,
+   "exercise": "Waiter – cup",
+   "of": 2,
+   "sessions_hit": 1,
+   "share": 0.5,
+   "what": "tester said it was hard or could not finish"
+  },
+  {
+   "count": 31,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 5,
+   "share": 0.42,
+   "what": "shoulder hiking cue"
+  },
+  {
+   "count": 9,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 3,
+   "share": 0.25,
+   "what": "lift fell short of the target"
+  },
+  {
+   "count": 3,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 3,
+   "share": 0.25,
+   "what": "stop rule fired: missed_reps"
+  },
+  {
+   "count": 7,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 2,
+   "share": 0.17,
+   "what": "hold shorter than prescribed"
+  },
+  {
+   "count": 1,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 1,
+   "share": 0.08,
+   "what": "trunk lean cue"
+  },
+  {
+   "count": 1,
+   "exercise": "Arm out to the side",
+   "of": 12,
+   "sessions_hit": 1,
+   "share": 0.08,
+   "what": "stop rule fired: agent"
+  },
+  {
+   "count": 1,
+   "exercise": "AI coach",
+   "of": 15,
+   "sessions_hit": 1,
+   "share": 0.07,
+   "what": "tool call failed: propose_adjustment"
+  },
+  {
+   "count": 1,
+   "exercise": "AI coach",
+   "of": 15,
+   "sessions_hit": 1,
+   "share": 0.07,
+   "what": "tool call failed: speak"
+  },
+  {
+   "count": 1,
+   "exercise": "AI coach",
+   "of": 15,
+   "sessions_hit": 1,
+   "share": 0.07,
+   "what": "tool call failed: recalibrate"
+  },
+  {
+   "count": 1,
+   "exercise": "AI coach",
+   "of": 15,
+   "sessions_hit": 1,
+   "share": 0.07,
+   "what": "tool call failed: write_session_summary"
+  }
+ ],
+ "live_sessions": 15,
+ "replay_sessions": 0,
+ "testers": {
+  "T1": 6,
+  "T2": 1,
+  "T3": 1,
+  "test-claude": 7
+ }
+}

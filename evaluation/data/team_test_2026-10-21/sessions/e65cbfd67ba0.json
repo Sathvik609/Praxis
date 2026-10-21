@@ -1,0 +1,192 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 14,
+  "new_symptoms": false,
+  "pain_before": 6
+ },
+ "date": "2026-10-13",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-13T11:17:56",
+ "events": [
+  {
+   "id": 262,
+   "kind": "event",
+   "seq": 4,
+   "session": "e65cbfd67ba0",
+   "t": 1791904654.8008814,
+   "ts": 1791904654.8012524,
+   "type": "checkin"
+  },
+  {
+   "id": 281,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 8,
+   "session": "e65cbfd67ba0",
+   "t": 1791904658.0675254,
+   "ts": 1791904658.095428,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 282,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 10,
+   "session": "e65cbfd67ba0",
+   "t": 1791904658.0675254,
+   "ts": 1791904658.095575,
+   "type": "pause"
+  },
+  {
+   "kind": "event",
+   "seq": 31,
+   "session": "e65cbfd67ba0",
+   "t": 1791904676.7131758,
+   "ts": 1791904676.7133534,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "end_reason": "finished",
+  "ended_early": true
+ },
+ "id": "e65cbfd67ba0",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-13T11:17:34",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 3.1,
+   "corrections": 2,
+   "coverage_pct": null,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 7.2,
+   "posture_cues": 0,
+   "reps_total": 0,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 3,
+   "decisions": 3,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     262,
+     281,
+     282
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Session ended with no reps counted (0 verified, 0 unverified). Paused on a camera setup rule; 2 corrections given. Pain before: 6/10, no new symptoms, energy comfortable. Exertion low. Not stopped for safety. Setup needs checking next time."
+   },
+   "notes": [
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      282
+     ],
+     "text": "Correction: claude agent at pause:setup."
+    }
+   ],
+   "plan": {
+    "because": null,
+    "evidence": [
+     262
+    ],
+    "goals": [
+     "Gentle running dose: 2 sets of 6 reps, arm up to 60°, hold 2s",
+     "Smooth, controlled lifts with good posture"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       262
+      ],
+      "goals": [
+       "Gentle running dose: 2 sets of 6 reps, arm up to 60°, hold 2s",
+       "Smooth, controlled lifts with good posture"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Pain started at 6 of 10 (stop limit 7)",
+       "Trunk leaning or shoulder hiking",
+       "Falling peaks or slower reps"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791904662.0465052,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Pain started at 6 of 10 (stop limit 7)",
+     "Trunk leaning or shoulder hiking",
+     "Falling peaks or slower reps"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 348.1,
+   "capture_to_event_p95": 731.1,
+   "cues": 0,
+   "dropped": 1,
+   "event_to_cue_p50": null,
+   "event_to_cue_p95": null,
+   "frames": 46,
+   "proc_p50": 26.4,
+   "proc_p95": 36.4
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "e65cbfd67ba0",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791904676.7131758,
+  "t_start": 1791904654.991949,
+  "told_us": {
+   "end_reason": "finished",
+   "ended_early": true,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 6
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "T2"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "T2"
+}

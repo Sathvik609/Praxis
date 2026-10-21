@@ -1,0 +1,2419 @@
+{
+ "checkin": {},
+ "date": "2026-10-12",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-12T20:04:02",
+ "events": [
+  {
+   "id": 13,
+   "kind": "event",
+   "seq": 2,
+   "session": "f0303bba63cc",
+   "t": 1791849773.262795,
+   "ts": 1791849773.2714713,
+   "type": "state_change"
+  },
+  {
+   "id": 19,
+   "kind": "event",
+   "seq": 3,
+   "session": "f0303bba63cc",
+   "t": 1791849773.6915424,
+   "ts": 1791849773.7000055,
+   "type": "state_change"
+  },
+  {
+   "id": 25,
+   "kind": "event",
+   "seq": 4,
+   "session": "f0303bba63cc",
+   "t": 1791849774.123723,
+   "to_dot": 1,
+   "ts": 1791849774.1342602,
+   "type": "state_change"
+  },
+  {
+   "id": 28,
+   "kind": "event",
+   "seq": 5,
+   "session": "f0303bba63cc",
+   "t": 1791849774.302238,
+   "to_dot": 1,
+   "ts": 1791849774.3144996,
+   "type": "state_change"
+  },
+  {
+   "id": 32,
+   "kind": "event",
+   "seq": 6,
+   "session": "f0303bba63cc",
+   "t": 1791849774.56219,
+   "ts": 1791849774.5793386,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 33,
+   "kind": "event",
+   "reason": null,
+   "rep": 1,
+   "seq": 7,
+   "session": "f0303bba63cc",
+   "t": 1791849774.56219,
+   "to_dot": 1,
+   "ts": 1791849774.5794818,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 34,
+   "kind": "event",
+   "seq": 8,
+   "session": "f0303bba63cc",
+   "t": 1791849774.56219,
+   "ts": 1791849774.5795166,
+   "type": "state_change"
+  },
+  {
+   "id": 44,
+   "kind": "event",
+   "seq": 11,
+   "session": "f0303bba63cc",
+   "t": 1791849775.1797404,
+   "ts": 1791849775.1874652,
+   "type": "state_change"
+  },
+  {
+   "id": 50,
+   "kind": "event",
+   "seq": 12,
+   "session": "f0303bba63cc",
+   "t": 1791849775.6220984,
+   "ts": 1791849775.6353927,
+   "type": "state_change"
+  },
+  {
+   "id": 56,
+   "kind": "event",
+   "seq": 13,
+   "session": "f0303bba63cc",
+   "t": 1791849776.0604897,
+   "to_dot": 2,
+   "ts": 1791849776.0732388,
+   "type": "state_change"
+  },
+  {
+   "id": 59,
+   "kind": "event",
+   "seq": 14,
+   "session": "f0303bba63cc",
+   "t": 1791849776.2652802,
+   "to_dot": 2,
+   "ts": 1791849776.279423,
+   "type": "state_change"
+  },
+  {
+   "id": 63,
+   "kind": "event",
+   "seq": 15,
+   "session": "f0303bba63cc",
+   "t": 1791849776.4915702,
+   "ts": 1791849776.5054479,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 64,
+   "kind": "event",
+   "reason": null,
+   "rep": 2,
+   "seq": 16,
+   "session": "f0303bba63cc",
+   "t": 1791849776.4915702,
+   "to_dot": 2,
+   "ts": 1791849776.5056026,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 65,
+   "kind": "event",
+   "seq": 17,
+   "session": "f0303bba63cc",
+   "t": 1791849776.4915702,
+   "ts": 1791849776.5056303,
+   "type": "state_change"
+  },
+  {
+   "id": 75,
+   "kind": "event",
+   "seq": 20,
+   "session": "f0303bba63cc",
+   "t": 1791849777.1207821,
+   "ts": 1791849777.129001,
+   "type": "state_change"
+  },
+  {
+   "id": 81,
+   "kind": "event",
+   "seq": 21,
+   "session": "f0303bba63cc",
+   "t": 1791849777.5568967,
+   "ts": 1791849777.5713987,
+   "type": "state_change"
+  },
+  {
+   "id": 87,
+   "kind": "event",
+   "seq": 22,
+   "session": "f0303bba63cc",
+   "t": 1791849777.9869168,
+   "to_dot": 3,
+   "ts": 1791849778.0004673,
+   "type": "state_change"
+  },
+  {
+   "id": 90,
+   "kind": "event",
+   "seq": 23,
+   "session": "f0303bba63cc",
+   "t": 1791849778.1706476,
+   "to_dot": 3,
+   "ts": 1791849778.184516,
+   "type": "state_change"
+  },
+  {
+   "id": 94,
+   "kind": "event",
+   "seq": 24,
+   "session": "f0303bba63cc",
+   "t": 1791849778.4344435,
+   "ts": 1791849778.448488,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 95,
+   "kind": "event",
+   "reason": null,
+   "rep": 3,
+   "seq": 25,
+   "session": "f0303bba63cc",
+   "t": 1791849778.4344435,
+   "to_dot": 3,
+   "ts": 1791849778.4486175,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 96,
+   "kind": "event",
+   "seq": 26,
+   "session": "f0303bba63cc",
+   "t": 1791849778.4344435,
+   "ts": 1791849778.4486628,
+   "type": "state_change"
+  },
+  {
+   "id": 106,
+   "kind": "event",
+   "seq": 29,
+   "session": "f0303bba63cc",
+   "t": 1791849779.046509,
+   "ts": 1791849779.0549126,
+   "type": "state_change"
+  },
+  {
+   "id": 112,
+   "kind": "event",
+   "seq": 30,
+   "session": "f0303bba63cc",
+   "t": 1791849779.4951162,
+   "ts": 1791849779.5030622,
+   "type": "state_change"
+  },
+  {
+   "id": 118,
+   "kind": "event",
+   "seq": 31,
+   "session": "f0303bba63cc",
+   "t": 1791849779.9479418,
+   "to_dot": 4,
+   "ts": 1791849779.9559886,
+   "type": "state_change"
+  },
+  {
+   "id": 121,
+   "kind": "event",
+   "seq": 32,
+   "session": "f0303bba63cc",
+   "t": 1791849780.1029198,
+   "to_dot": 4,
+   "ts": 1791849780.11267,
+   "type": "state_change"
+  },
+  {
+   "id": 125,
+   "kind": "event",
+   "seq": 33,
+   "session": "f0303bba63cc",
+   "t": 1791849780.37009,
+   "ts": 1791849780.3785884,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 126,
+   "kind": "event",
+   "reason": null,
+   "rep": 4,
+   "seq": 34,
+   "session": "f0303bba63cc",
+   "t": 1791849780.37009,
+   "to_dot": 4,
+   "ts": 1791849780.3787262,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 127,
+   "kind": "event",
+   "seq": 35,
+   "session": "f0303bba63cc",
+   "t": 1791849780.37009,
+   "ts": 1791849780.3787472,
+   "type": "state_change"
+  },
+  {
+   "id": 137,
+   "kind": "event",
+   "seq": 38,
+   "session": "f0303bba63cc",
+   "t": 1791849780.9803329,
+   "ts": 1791849780.987835,
+   "type": "state_change"
+  },
+  {
+   "id": 143,
+   "kind": "event",
+   "seq": 39,
+   "session": "f0303bba63cc",
+   "t": 1791849781.4309344,
+   "ts": 1791849781.4403222,
+   "type": "state_change"
+  },
+  {
+   "id": 149,
+   "kind": "event",
+   "seq": 40,
+   "session": "f0303bba63cc",
+   "t": 1791849781.8546731,
+   "to_dot": 3,
+   "ts": 1791849781.8690257,
+   "type": "state_change"
+  },
+  {
+   "id": 152,
+   "kind": "event",
+   "seq": 41,
+   "session": "f0303bba63cc",
+   "t": 1791849782.031286,
+   "to_dot": 3,
+   "ts": 1791849782.0470123,
+   "type": "state_change"
+  },
+  {
+   "id": 156,
+   "kind": "event",
+   "seq": 42,
+   "session": "f0303bba63cc",
+   "t": 1791849782.30001,
+   "ts": 1791849782.311915,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 157,
+   "kind": "event",
+   "reason": null,
+   "rep": 5,
+   "seq": 43,
+   "session": "f0303bba63cc",
+   "t": 1791849782.30001,
+   "to_dot": 3,
+   "ts": 1791849782.3120763,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 158,
+   "kind": "event",
+   "seq": 44,
+   "session": "f0303bba63cc",
+   "t": 1791849782.30001,
+   "ts": 1791849782.3121014,
+   "type": "state_change"
+  },
+  {
+   "id": 168,
+   "kind": "event",
+   "seq": 47,
+   "session": "f0303bba63cc",
+   "t": 1791849782.9124532,
+   "ts": 1791849782.9217122,
+   "type": "state_change"
+  },
+  {
+   "id": 174,
+   "kind": "event",
+   "seq": 48,
+   "session": "f0303bba63cc",
+   "t": 1791849783.359005,
+   "ts": 1791849783.3722467,
+   "type": "state_change"
+  },
+  {
+   "id": 180,
+   "kind": "event",
+   "seq": 49,
+   "session": "f0303bba63cc",
+   "t": 1791849783.8051069,
+   "to_dot": 2,
+   "ts": 1791849783.8167398,
+   "type": "state_change"
+  },
+  {
+   "id": 183,
+   "kind": "event",
+   "seq": 50,
+   "session": "f0303bba63cc",
+   "t": 1791849783.9785113,
+   "to_dot": 2,
+   "ts": 1791849783.9920616,
+   "type": "state_change"
+  },
+  {
+   "id": 187,
+   "kind": "event",
+   "seq": 51,
+   "session": "f0303bba63cc",
+   "t": 1791849784.234315,
+   "ts": 1791849784.2469816,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 188,
+   "kind": "event",
+   "reason": null,
+   "rep": 6,
+   "seq": 52,
+   "session": "f0303bba63cc",
+   "t": 1791849784.234315,
+   "to_dot": 2,
+   "ts": 1791849784.2471108,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 189,
+   "kind": "event",
+   "seq": 53,
+   "session": "f0303bba63cc",
+   "t": 1791849784.234315,
+   "ts": 1791849784.247132,
+   "type": "state_change"
+  },
+  {
+   "id": 199,
+   "kind": "event",
+   "seq": 56,
+   "session": "f0303bba63cc",
+   "t": 1791849784.8591864,
+   "ts": 1791849784.87088,
+   "type": "state_change"
+  },
+  {
+   "id": 205,
+   "kind": "event",
+   "seq": 57,
+   "session": "f0303bba63cc",
+   "t": 1791849785.2915733,
+   "ts": 1791849785.300813,
+   "type": "state_change"
+  },
+  {
+   "id": 211,
+   "kind": "event",
+   "seq": 58,
+   "session": "f0303bba63cc",
+   "t": 1791849785.7461941,
+   "to_dot": 1,
+   "ts": 1791849785.7550411,
+   "type": "state_change"
+  },
+  {
+   "id": 214,
+   "kind": "event",
+   "seq": 59,
+   "session": "f0303bba63cc",
+   "t": 1791849785.9050026,
+   "to_dot": 1,
+   "ts": 1791849785.9141908,
+   "type": "state_change"
+  },
+  {
+   "id": 218,
+   "kind": "event",
+   "seq": 60,
+   "session": "f0303bba63cc",
+   "t": 1791849786.1788077,
+   "ts": 1791849786.1923888,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 219,
+   "kind": "event",
+   "reason": null,
+   "rep": 7,
+   "seq": 61,
+   "session": "f0303bba63cc",
+   "t": 1791849786.1788077,
+   "to_dot": 1,
+   "ts": 1791849786.1925104,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 220,
+   "kind": "event",
+   "seq": 62,
+   "session": "f0303bba63cc",
+   "t": 1791849786.1788077,
+   "ts": 1791849786.1925337,
+   "type": "state_change"
+  },
+  {
+   "id": 230,
+   "kind": "event",
+   "seq": 65,
+   "session": "f0303bba63cc",
+   "t": 1791849786.7891355,
+   "ts": 1791849786.7979746,
+   "type": "state_change"
+  },
+  {
+   "id": 236,
+   "kind": "event",
+   "seq": 66,
+   "session": "f0303bba63cc",
+   "t": 1791849787.2415092,
+   "ts": 1791849787.2499475,
+   "type": "state_change"
+  },
+  {
+   "id": 242,
+   "kind": "event",
+   "seq": 67,
+   "session": "f0303bba63cc",
+   "t": 1791849787.6744266,
+   "to_dot": 0,
+   "ts": 1791849787.6824102,
+   "type": "state_change"
+  },
+  {
+   "id": 245,
+   "kind": "event",
+   "seq": 68,
+   "session": "f0303bba63cc",
+   "t": 1791849787.8474224,
+   "to_dot": 0,
+   "ts": 1791849787.8563426,
+   "type": "state_change"
+  },
+  {
+   "id": 249,
+   "kind": "event",
+   "seq": 69,
+   "session": "f0303bba63cc",
+   "t": 1791849788.1211221,
+   "ts": 1791849788.129756,
+   "type": "state_change"
+  },
+  {
+   "arc": 1,
+   "id": 250,
+   "kind": "event",
+   "reason": null,
+   "rep": 8,
+   "seq": 70,
+   "session": "f0303bba63cc",
+   "t": 1791849788.1211221,
+   "to_dot": 0,
+   "ts": 1791849788.1298916,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "arc": 1,
+   "id": 251,
+   "kind": "event",
+   "seq": 71,
+   "session": "f0303bba63cc",
+   "t": 1791849788.1211221,
+   "ts": 1791849788.129914,
+   "type": "arc_complete"
+  },
+  {
+   "id": 252,
+   "kind": "event",
+   "seq": 72,
+   "session": "f0303bba63cc",
+   "t": 1791849788.1211221,
+   "ts": 1791849788.1299293,
+   "type": "state_change"
+  },
+  {
+   "id": 263,
+   "kind": "event",
+   "seq": 76,
+   "session": "f0303bba63cc",
+   "t": 1791849788.732205,
+   "ts": 1791849788.751002,
+   "type": "state_change"
+  },
+  {
+   "id": 268,
+   "kind": "event",
+   "seq": 77,
+   "session": "f0303bba63cc",
+   "t": 1791849789.7821817,
+   "to_dot": 1,
+   "ts": 1791849789.7924113,
+   "type": "state_change"
+  },
+  {
+   "id": 271,
+   "kind": "event",
+   "seq": 78,
+   "session": "f0303bba63cc",
+   "t": 1791849789.803877,
+   "to_dot": 1,
+   "ts": 1791849789.8123293,
+   "type": "state_change"
+  },
+  {
+   "id": 275,
+   "kind": "event",
+   "seq": 79,
+   "session": "f0303bba63cc",
+   "t": 1791849790.0596967,
+   "ts": 1791849790.069156,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 276,
+   "kind": "event",
+   "reason": null,
+   "rep": 9,
+   "seq": 80,
+   "session": "f0303bba63cc",
+   "t": 1791849790.0596967,
+   "to_dot": 1,
+   "ts": 1791849790.0693161,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 277,
+   "kind": "event",
+   "seq": 81,
+   "session": "f0303bba63cc",
+   "t": 1791849790.0596967,
+   "ts": 1791849790.0693421,
+   "type": "state_change"
+  },
+  {
+   "id": 287,
+   "kind": "event",
+   "seq": 84,
+   "session": "f0303bba63cc",
+   "t": 1791849790.6620827,
+   "ts": 1791849790.6703162,
+   "type": "state_change"
+  },
+  {
+   "id": 293,
+   "kind": "event",
+   "seq": 85,
+   "session": "f0303bba63cc",
+   "t": 1791849791.1170053,
+   "ts": 1791849791.1266682,
+   "type": "state_change"
+  },
+  {
+   "id": 299,
+   "kind": "event",
+   "seq": 88,
+   "session": "f0303bba63cc",
+   "t": 1791849791.5508077,
+   "to_dot": 2,
+   "ts": 1791849791.564898,
+   "type": "state_change"
+  },
+  {
+   "id": 302,
+   "kind": "event",
+   "seq": 89,
+   "session": "f0303bba63cc",
+   "t": 1791849791.733688,
+   "to_dot": 2,
+   "ts": 1791849791.7513075,
+   "type": "state_change"
+  },
+  {
+   "id": 306,
+   "kind": "event",
+   "seq": 90,
+   "session": "f0303bba63cc",
+   "t": 1791849791.9949944,
+   "ts": 1791849792.010059,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 307,
+   "kind": "event",
+   "reason": null,
+   "rep": 10,
+   "seq": 91,
+   "session": "f0303bba63cc",
+   "t": 1791849791.9949944,
+   "to_dot": 2,
+   "ts": 1791849792.010179,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 308,
+   "kind": "event",
+   "seq": 92,
+   "session": "f0303bba63cc",
+   "t": 1791849791.9949944,
+   "ts": 1791849792.0102024,
+   "type": "state_change"
+  },
+  {
+   "id": 318,
+   "kind": "event",
+   "seq": 95,
+   "session": "f0303bba63cc",
+   "t": 1791849792.6090796,
+   "ts": 1791849792.617079,
+   "type": "state_change"
+  },
+  {
+   "id": 324,
+   "kind": "event",
+   "seq": 97,
+   "session": "f0303bba63cc",
+   "t": 1791849793.0436208,
+   "ts": 1791849793.0569725,
+   "type": "state_change"
+  },
+  {
+   "id": 332,
+   "kind": "event",
+   "seq": 100,
+   "session": "f0303bba63cc",
+   "t": 1791849793.4864643,
+   "to_dot": 3,
+   "ts": 1791849793.5068908,
+   "type": "state_change"
+  },
+  {
+   "id": 335,
+   "kind": "event",
+   "seq": 101,
+   "session": "f0303bba63cc",
+   "t": 1791849793.6649125,
+   "to_dot": 3,
+   "ts": 1791849793.6787083,
+   "type": "state_change"
+  },
+  {
+   "id": 339,
+   "kind": "event",
+   "seq": 102,
+   "session": "f0303bba63cc",
+   "t": 1791849793.931649,
+   "ts": 1791849793.947627,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 340,
+   "kind": "event",
+   "reason": null,
+   "rep": 11,
+   "seq": 103,
+   "session": "f0303bba63cc",
+   "t": 1791849793.931649,
+   "to_dot": 3,
+   "ts": 1791849793.9477596,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 341,
+   "kind": "event",
+   "seq": 104,
+   "session": "f0303bba63cc",
+   "t": 1791849793.931649,
+   "ts": 1791849793.9477885,
+   "type": "state_change"
+  },
+  {
+   "id": 352,
+   "kind": "event",
+   "seq": 108,
+   "session": "f0303bba63cc",
+   "t": 1791849794.5548394,
+   "ts": 1791849794.5641952,
+   "type": "state_change"
+  },
+  {
+   "id": 358,
+   "kind": "event",
+   "seq": 109,
+   "session": "f0303bba63cc",
+   "t": 1791849795.0880175,
+   "ts": 1791849795.097014,
+   "type": "state_change"
+  },
+  {
+   "id": 364,
+   "kind": "event",
+   "seq": 110,
+   "session": "f0303bba63cc",
+   "t": 1791849795.4131515,
+   "to_dot": 4,
+   "ts": 1791849795.4211633,
+   "type": "state_change"
+  },
+  {
+   "id": 367,
+   "kind": "event",
+   "seq": 111,
+   "session": "f0303bba63cc",
+   "t": 1791849795.5922773,
+   "to_dot": 4,
+   "ts": 1791849795.60147,
+   "type": "state_change"
+  },
+  {
+   "id": 371,
+   "kind": "event",
+   "seq": 112,
+   "session": "f0303bba63cc",
+   "t": 1791849795.8519847,
+   "ts": 1791849795.8708203,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 372,
+   "kind": "event",
+   "reason": null,
+   "rep": 12,
+   "seq": 113,
+   "session": "f0303bba63cc",
+   "t": 1791849795.8519847,
+   "to_dot": 4,
+   "ts": 1791849795.871843,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 373,
+   "kind": "event",
+   "seq": 114,
+   "session": "f0303bba63cc",
+   "t": 1791849795.8519847,
+   "ts": 1791849795.8719175,
+   "type": "state_change"
+  },
+  {
+   "id": 383,
+   "kind": "event",
+   "seq": 117,
+   "session": "f0303bba63cc",
+   "t": 1791849796.4812036,
+   "ts": 1791849796.4929855,
+   "type": "state_change"
+  },
+  {
+   "id": 389,
+   "kind": "event",
+   "seq": 118,
+   "session": "f0303bba63cc",
+   "t": 1791849796.9075737,
+   "ts": 1791849796.9158053,
+   "type": "state_change"
+  },
+  {
+   "id": 395,
+   "kind": "event",
+   "seq": 119,
+   "session": "f0303bba63cc",
+   "t": 1791849797.3493755,
+   "to_dot": 3,
+   "ts": 1791849797.364273,
+   "type": "state_change"
+  },
+  {
+   "id": 398,
+   "kind": "event",
+   "seq": 120,
+   "session": "f0303bba63cc",
+   "t": 1791849797.53094,
+   "to_dot": 3,
+   "ts": 1791849797.5456934,
+   "type": "state_change"
+  },
+  {
+   "id": 402,
+   "kind": "event",
+   "seq": 121,
+   "session": "f0303bba63cc",
+   "t": 1791849797.8047307,
+   "ts": 1791849797.8207872,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 403,
+   "kind": "event",
+   "reason": null,
+   "rep": 13,
+   "seq": 122,
+   "session": "f0303bba63cc",
+   "t": 1791849797.8047307,
+   "to_dot": 3,
+   "ts": 1791849797.8209307,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 404,
+   "kind": "event",
+   "seq": 123,
+   "session": "f0303bba63cc",
+   "t": 1791849797.8047307,
+   "ts": 1791849797.8209636,
+   "type": "state_change"
+  },
+  {
+   "id": 414,
+   "kind": "event",
+   "seq": 126,
+   "session": "f0303bba63cc",
+   "t": 1791849798.4499674,
+   "ts": 1791849798.4582043,
+   "type": "state_change"
+  },
+  {
+   "id": 420,
+   "kind": "event",
+   "seq": 127,
+   "session": "f0303bba63cc",
+   "t": 1791849798.8570879,
+   "ts": 1791849798.87478,
+   "type": "state_change"
+  },
+  {
+   "id": 426,
+   "kind": "event",
+   "seq": 128,
+   "session": "f0303bba63cc",
+   "t": 1791849799.2910008,
+   "to_dot": 2,
+   "ts": 1791849799.3032184,
+   "type": "state_change"
+  },
+  {
+   "id": 429,
+   "kind": "event",
+   "seq": 129,
+   "session": "f0303bba63cc",
+   "t": 1791849799.4623315,
+   "to_dot": 2,
+   "ts": 1791849799.4741626,
+   "type": "state_change"
+  },
+  {
+   "id": 433,
+   "kind": "event",
+   "seq": 130,
+   "session": "f0303bba63cc",
+   "t": 1791849799.7358487,
+   "ts": 1791849799.7501087,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 434,
+   "kind": "event",
+   "reason": null,
+   "rep": 14,
+   "seq": 131,
+   "session": "f0303bba63cc",
+   "t": 1791849799.7358487,
+   "to_dot": 2,
+   "ts": 1791849799.750234,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 435,
+   "kind": "event",
+   "seq": 132,
+   "session": "f0303bba63cc",
+   "t": 1791849799.7358487,
+   "ts": 1791849799.7502558,
+   "type": "state_change"
+  },
+  {
+   "id": 445,
+   "kind": "event",
+   "seq": 135,
+   "session": "f0303bba63cc",
+   "t": 1791849800.3582997,
+   "ts": 1791849800.365884,
+   "type": "state_change"
+  },
+  {
+   "id": 451,
+   "kind": "event",
+   "seq": 136,
+   "session": "f0303bba63cc",
+   "t": 1791849800.7816129,
+   "ts": 1791849800.7903872,
+   "type": "state_change"
+  },
+  {
+   "id": 457,
+   "kind": "event",
+   "seq": 137,
+   "session": "f0303bba63cc",
+   "t": 1791849801.2212608,
+   "to_dot": 1,
+   "ts": 1791849801.2296903,
+   "type": "state_change"
+  },
+  {
+   "id": 460,
+   "kind": "event",
+   "seq": 138,
+   "session": "f0303bba63cc",
+   "t": 1791849801.406313,
+   "to_dot": 1,
+   "ts": 1791849801.424071,
+   "type": "state_change"
+  },
+  {
+   "id": 464,
+   "kind": "event",
+   "seq": 139,
+   "session": "f0303bba63cc",
+   "t": 1791849801.6607327,
+   "ts": 1791849801.6712446,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 465,
+   "kind": "event",
+   "reason": null,
+   "rep": 15,
+   "seq": 140,
+   "session": "f0303bba63cc",
+   "t": 1791849801.6607327,
+   "to_dot": 1,
+   "ts": 1791849801.6713805,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 466,
+   "kind": "event",
+   "seq": 141,
+   "session": "f0303bba63cc",
+   "t": 1791849801.6607327,
+   "ts": 1791849801.671405,
+   "type": "state_change"
+  },
+  {
+   "id": 476,
+   "kind": "event",
+   "seq": 144,
+   "session": "f0303bba63cc",
+   "t": 1791849802.2837863,
+   "ts": 1791849802.291708,
+   "type": "state_change"
+  },
+  {
+   "id": 482,
+   "kind": "event",
+   "seq": 145,
+   "session": "f0303bba63cc",
+   "t": 1791849802.7260904,
+   "ts": 1791849802.7335637,
+   "type": "state_change"
+  },
+  {
+   "id": 488,
+   "kind": "event",
+   "seq": 146,
+   "session": "f0303bba63cc",
+   "t": 1791849803.1665983,
+   "to_dot": 0,
+   "ts": 1791849803.176389,
+   "type": "state_change"
+  },
+  {
+   "id": 491,
+   "kind": "event",
+   "seq": 147,
+   "session": "f0303bba63cc",
+   "t": 1791849803.3527439,
+   "to_dot": 0,
+   "ts": 1791849803.3623264,
+   "type": "state_change"
+  },
+  {
+   "id": 495,
+   "kind": "event",
+   "seq": 148,
+   "session": "f0303bba63cc",
+   "t": 1791849803.6058002,
+   "ts": 1791849803.6153436,
+   "type": "state_change"
+  },
+  {
+   "arc": 2,
+   "id": 496,
+   "kind": "event",
+   "reason": null,
+   "rep": 16,
+   "seq": 149,
+   "session": "f0303bba63cc",
+   "t": 1791849803.6058002,
+   "to_dot": 0,
+   "ts": 1791849803.6155353,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "arc": 2,
+   "id": 497,
+   "kind": "event",
+   "seq": 150,
+   "session": "f0303bba63cc",
+   "t": 1791849803.6058002,
+   "ts": 1791849803.6155665,
+   "type": "arc_complete"
+  },
+  {
+   "id": 498,
+   "kind": "event",
+   "seq": 151,
+   "session": "f0303bba63cc",
+   "t": 1791849803.6058002,
+   "ts": 1791849803.6155822,
+   "type": "state_change"
+  },
+  {
+   "id": 508,
+   "kind": "event",
+   "seq": 158,
+   "session": "f0303bba63cc",
+   "t": 1791849803.960073,
+   "ts": 1791849803.9696019,
+   "type": "state_change"
+  },
+  {
+   "id": 511,
+   "kind": "event",
+   "seq": 159,
+   "session": "f0303bba63cc",
+   "t": 1791849804.147076,
+   "ts": 1791849804.156113,
+   "type": "state_change"
+  },
+  {
+   "id": 514,
+   "kind": "event",
+   "seq": 160,
+   "session": "f0303bba63cc",
+   "t": 1791849804.3305523,
+   "to_dot": 1,
+   "ts": 1791849804.341442,
+   "type": "state_change"
+  },
+  {
+   "id": 517,
+   "kind": "event",
+   "seq": 161,
+   "session": "f0303bba63cc",
+   "t": 1791849804.4856381,
+   "to_dot": 1,
+   "ts": 1791849804.4943764,
+   "type": "state_change"
+  },
+  {
+   "id": 521,
+   "kind": "event",
+   "seq": 162,
+   "session": "f0303bba63cc",
+   "t": 1791849804.7564008,
+   "ts": 1791849804.7666104,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 522,
+   "kind": "event",
+   "reason": null,
+   "rep": 17,
+   "seq": 163,
+   "session": "f0303bba63cc",
+   "t": 1791849804.7564008,
+   "to_dot": 1,
+   "ts": 1791849804.767053,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 523,
+   "kind": "event",
+   "seq": 164,
+   "session": "f0303bba63cc",
+   "t": 1791849804.7564008,
+   "ts": 1791849804.7670805,
+   "type": "state_change"
+  },
+  {
+   "id": 527,
+   "kind": "event",
+   "seq": 167,
+   "session": "f0303bba63cc",
+   "t": 1791849804.8385205,
+   "ts": 1791849804.8476937,
+   "type": "state_change"
+  },
+  {
+   "id": 530,
+   "kind": "event",
+   "seq": 168,
+   "session": "f0303bba63cc",
+   "t": 1791849805.010035,
+   "ts": 1791849805.0219252,
+   "type": "state_change"
+  },
+  {
+   "id": 533,
+   "kind": "event",
+   "seq": 171,
+   "session": "f0303bba63cc",
+   "t": 1791849805.4338217,
+   "to_dot": 2,
+   "ts": 1791849805.4474344,
+   "type": "state_change"
+  },
+  {
+   "id": 536,
+   "kind": "event",
+   "seq": 172,
+   "session": "f0303bba63cc",
+   "t": 1791849805.4688148,
+   "to_dot": 2,
+   "ts": 1791849805.4931138,
+   "type": "state_change"
+  },
+  {
+   "id": 540,
+   "kind": "event",
+   "seq": 173,
+   "session": "f0303bba63cc",
+   "t": 1791849805.7202413,
+   "ts": 1791849805.7294064,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 541,
+   "kind": "event",
+   "reason": null,
+   "rep": 18,
+   "seq": 174,
+   "session": "f0303bba63cc",
+   "t": 1791849805.7202413,
+   "to_dot": 2,
+   "ts": 1791849805.7295482,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 542,
+   "kind": "event",
+   "seq": 175,
+   "session": "f0303bba63cc",
+   "t": 1791849805.7202413,
+   "ts": 1791849805.7295725,
+   "type": "state_change"
+  },
+  {
+   "id": 546,
+   "kind": "event",
+   "seq": 178,
+   "session": "f0303bba63cc",
+   "t": 1791849805.8065908,
+   "ts": 1791849805.817505,
+   "type": "state_change"
+  },
+  {
+   "id": 548,
+   "kind": "event",
+   "seq": 179,
+   "session": "f0303bba63cc",
+   "t": 1791849805.8903787,
+   "ts": 1791849805.9026759,
+   "type": "state_change"
+  },
+  {
+   "id": 551,
+   "kind": "event",
+   "seq": 180,
+   "session": "f0303bba63cc",
+   "t": 1791849806.0702236,
+   "to_dot": 3,
+   "ts": 1791849806.084754,
+   "type": "state_change"
+  },
+  {
+   "id": 554,
+   "kind": "event",
+   "seq": 181,
+   "session": "f0303bba63cc",
+   "t": 1791849806.2554986,
+   "to_dot": 3,
+   "ts": 1791849806.2712283,
+   "type": "state_change"
+  },
+  {
+   "id": 558,
+   "kind": "event",
+   "seq": 182,
+   "session": "f0303bba63cc",
+   "t": 1791849806.5131571,
+   "ts": 1791849806.5310185,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 559,
+   "kind": "event",
+   "reason": null,
+   "rep": 19,
+   "seq": 183,
+   "session": "f0303bba63cc",
+   "t": 1791849806.5131571,
+   "to_dot": 3,
+   "ts": 1791849806.5311465,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 560,
+   "kind": "event",
+   "seq": 184,
+   "session": "f0303bba63cc",
+   "t": 1791849806.5131571,
+   "ts": 1791849806.5311677,
+   "type": "state_change"
+  },
+  {
+   "id": 564,
+   "kind": "event",
+   "seq": 187,
+   "session": "f0303bba63cc",
+   "t": 1791849806.6008375,
+   "ts": 1791849806.615232,
+   "type": "state_change"
+  },
+  {
+   "id": 567,
+   "kind": "event",
+   "seq": 190,
+   "session": "f0303bba63cc",
+   "t": 1791849806.8191946,
+   "ts": 1791849806.8288772,
+   "type": "state_change"
+  },
+  {
+   "id": 570,
+   "kind": "event",
+   "seq": 191,
+   "session": "f0303bba63cc",
+   "t": 1791849806.9539218,
+   "to_dot": 4,
+   "ts": 1791849806.9632938,
+   "type": "state_change"
+  },
+  {
+   "id": 573,
+   "kind": "event",
+   "seq": 192,
+   "session": "f0303bba63cc",
+   "t": 1791849807.126145,
+   "to_dot": 4,
+   "ts": 1791849807.1344929,
+   "type": "state_change"
+  },
+  {
+   "id": 577,
+   "kind": "event",
+   "seq": 193,
+   "session": "f0303bba63cc",
+   "t": 1791849807.397327,
+   "ts": 1791849807.4074953,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 578,
+   "kind": "event",
+   "reason": null,
+   "rep": 20,
+   "seq": 194,
+   "session": "f0303bba63cc",
+   "t": 1791849807.397327,
+   "to_dot": 4,
+   "ts": 1791849807.4076176,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 579,
+   "kind": "event",
+   "seq": 195,
+   "session": "f0303bba63cc",
+   "t": 1791849807.397327,
+   "ts": 1791849807.4076402,
+   "type": "state_change"
+  },
+  {
+   "id": 583,
+   "kind": "event",
+   "seq": 198,
+   "session": "f0303bba63cc",
+   "t": 1791849807.4837415,
+   "ts": 1791849807.4920945,
+   "type": "state_change"
+  },
+  {
+   "id": 586,
+   "kind": "event",
+   "seq": 199,
+   "session": "f0303bba63cc",
+   "t": 1791849807.6649127,
+   "ts": 1791849807.6766477,
+   "type": "state_change"
+  },
+  {
+   "id": 589,
+   "kind": "event",
+   "seq": 200,
+   "session": "f0303bba63cc",
+   "t": 1791849807.8367345,
+   "to_dot": 3,
+   "ts": 1791849807.8543465,
+   "type": "state_change"
+  },
+  {
+   "id": 593,
+   "kind": "event",
+   "seq": 202,
+   "session": "f0303bba63cc",
+   "t": 1791849808.0185242,
+   "to_dot": 3,
+   "ts": 1791849808.0347192,
+   "type": "state_change"
+  },
+  {
+   "id": 597,
+   "kind": "event",
+   "seq": 203,
+   "session": "f0303bba63cc",
+   "t": 1791849808.2702901,
+   "ts": 1791849808.287645,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 598,
+   "kind": "event",
+   "reason": null,
+   "rep": 21,
+   "seq": 204,
+   "session": "f0303bba63cc",
+   "t": 1791849808.2702901,
+   "to_dot": 3,
+   "ts": 1791849808.2877808,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 599,
+   "kind": "event",
+   "seq": 205,
+   "session": "f0303bba63cc",
+   "t": 1791849808.2702901,
+   "ts": 1791849808.28781,
+   "type": "state_change"
+  },
+  {
+   "id": 603,
+   "kind": "event",
+   "seq": 208,
+   "session": "f0303bba63cc",
+   "t": 1791849808.3762815,
+   "ts": 1791849808.3848813,
+   "type": "state_change"
+  },
+  {
+   "id": 606,
+   "kind": "event",
+   "seq": 209,
+   "session": "f0303bba63cc",
+   "t": 1791849808.537643,
+   "ts": 1791849808.5520537,
+   "type": "state_change"
+  },
+  {
+   "id": 609,
+   "kind": "event",
+   "seq": 210,
+   "session": "f0303bba63cc",
+   "t": 1791849808.719182,
+   "to_dot": 2,
+   "ts": 1791849808.7353468,
+   "type": "state_change"
+  },
+  {
+   "id": 612,
+   "kind": "event",
+   "seq": 211,
+   "session": "f0303bba63cc",
+   "t": 1791849808.883987,
+   "to_dot": 2,
+   "ts": 1791849808.9367194,
+   "type": "state_change"
+  },
+  {
+   "id": 616,
+   "kind": "event",
+   "seq": 212,
+   "session": "f0303bba63cc",
+   "t": 1791849809.210373,
+   "ts": 1791849809.2265627,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 617,
+   "kind": "event",
+   "reason": null,
+   "rep": 22,
+   "seq": 213,
+   "session": "f0303bba63cc",
+   "t": 1791849809.210373,
+   "to_dot": 2,
+   "ts": 1791849809.22668,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 618,
+   "kind": "event",
+   "seq": 214,
+   "session": "f0303bba63cc",
+   "t": 1791849809.210373,
+   "ts": 1791849809.226703,
+   "type": "state_change"
+  },
+  {
+   "id": 622,
+   "kind": "event",
+   "seq": 217,
+   "session": "f0303bba63cc",
+   "t": 1791849809.270193,
+   "ts": 1791849809.2790635,
+   "type": "state_change"
+  },
+  {
+   "id": 625,
+   "kind": "event",
+   "seq": 218,
+   "session": "f0303bba63cc",
+   "t": 1791849809.4511218,
+   "ts": 1791849809.4648376,
+   "type": "state_change"
+  },
+  {
+   "id": 628,
+   "kind": "event",
+   "seq": 219,
+   "session": "f0303bba63cc",
+   "t": 1791849809.6234317,
+   "to_dot": 1,
+   "ts": 1791849809.6352353,
+   "type": "state_change"
+  },
+  {
+   "id": 631,
+   "kind": "event",
+   "seq": 220,
+   "session": "f0303bba63cc",
+   "t": 1791849809.8069167,
+   "to_dot": 1,
+   "ts": 1791849809.8167317,
+   "type": "state_change"
+  },
+  {
+   "id": 635,
+   "kind": "event",
+   "seq": 221,
+   "session": "f0303bba63cc",
+   "t": 1791849810.0655935,
+   "ts": 1791849810.0773315,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 636,
+   "kind": "event",
+   "reason": null,
+   "rep": 23,
+   "seq": 222,
+   "session": "f0303bba63cc",
+   "t": 1791849810.0655935,
+   "to_dot": 1,
+   "ts": 1791849810.0774508,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 637,
+   "kind": "event",
+   "seq": 223,
+   "session": "f0303bba63cc",
+   "t": 1791849810.0655935,
+   "ts": 1791849810.077473,
+   "type": "state_change"
+  },
+  {
+   "id": 641,
+   "kind": "event",
+   "seq": 226,
+   "session": "f0303bba63cc",
+   "t": 1791849810.1526694,
+   "ts": 1791849810.1618643,
+   "type": "state_change"
+  },
+  {
+   "id": 644,
+   "kind": "event",
+   "seq": 227,
+   "session": "f0303bba63cc",
+   "t": 1791849810.336988,
+   "ts": 1791849810.3497257,
+   "type": "state_change"
+  },
+  {
+   "id": 647,
+   "kind": "event",
+   "seq": 228,
+   "session": "f0303bba63cc",
+   "t": 1791849810.5112722,
+   "to_dot": 0,
+   "ts": 1791849810.5209708,
+   "type": "state_change"
+  },
+  {
+   "id": 650,
+   "kind": "event",
+   "seq": 229,
+   "session": "f0303bba63cc",
+   "t": 1791849810.6826558,
+   "to_dot": 0,
+   "ts": 1791849810.691694,
+   "type": "state_change"
+  },
+  {
+   "id": 654,
+   "kind": "event",
+   "seq": 230,
+   "session": "f0303bba63cc",
+   "t": 1791849810.9458585,
+   "ts": 1791849810.9552598,
+   "type": "state_change"
+  },
+  {
+   "arc": 3,
+   "id": 655,
+   "kind": "event",
+   "reason": null,
+   "rep": 24,
+   "seq": 231,
+   "session": "f0303bba63cc",
+   "t": 1791849810.9458585,
+   "to_dot": 0,
+   "ts": 1791849810.9554036,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "arc": 3,
+   "id": 656,
+   "kind": "event",
+   "seq": 232,
+   "session": "f0303bba63cc",
+   "t": 1791849810.9458585,
+   "ts": 1791849810.9554286,
+   "type": "arc_complete"
+  },
+  {
+   "id": 657,
+   "kind": "event",
+   "seq": 233,
+   "session": "f0303bba63cc",
+   "t": 1791849810.9458585,
+   "ts": 1791849810.9554453,
+   "type": "state_change"
+  },
+  {
+   "id": 661,
+   "kind": "event",
+   "seq": 237,
+   "session": "f0303bba63cc",
+   "t": 1791849811.126099,
+   "ts": 1791849811.152562,
+   "type": "state_change"
+  },
+  {
+   "id": 664,
+   "kind": "event",
+   "seq": 238,
+   "session": "f0303bba63cc",
+   "t": 1791849811.2056353,
+   "ts": 1791849811.2150266,
+   "type": "state_change"
+  },
+  {
+   "id": 667,
+   "kind": "event",
+   "seq": 239,
+   "session": "f0303bba63cc",
+   "t": 1791849811.3866086,
+   "to_dot": 1,
+   "ts": 1791849811.3983977,
+   "type": "state_change"
+  },
+  {
+   "id": 670,
+   "kind": "event",
+   "seq": 240,
+   "session": "f0303bba63cc",
+   "t": 1791849811.5680296,
+   "to_dot": 1,
+   "ts": 1791849811.5846062,
+   "type": "state_change"
+  },
+  {
+   "id": 674,
+   "kind": "event",
+   "seq": 241,
+   "session": "f0303bba63cc",
+   "t": 1791849811.843134,
+   "ts": 1791849811.8521032,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 675,
+   "kind": "event",
+   "reason": null,
+   "rep": 25,
+   "seq": 242,
+   "session": "f0303bba63cc",
+   "t": 1791849811.843134,
+   "to_dot": 1,
+   "ts": 1791849811.8522506,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 676,
+   "kind": "event",
+   "seq": 243,
+   "session": "f0303bba63cc",
+   "t": 1791849811.843134,
+   "ts": 1791849811.852273,
+   "type": "state_change"
+  },
+  {
+   "id": 680,
+   "kind": "event",
+   "seq": 246,
+   "session": "f0303bba63cc",
+   "t": 1791849811.9157906,
+   "ts": 1791849811.9251914,
+   "type": "state_change"
+  },
+  {
+   "id": 683,
+   "kind": "event",
+   "seq": 247,
+   "session": "f0303bba63cc",
+   "t": 1791849812.094758,
+   "ts": 1791849812.1085358,
+   "type": "state_change"
+  },
+  {
+   "id": 686,
+   "kind": "event",
+   "seq": 248,
+   "session": "f0303bba63cc",
+   "t": 1791849812.2693167,
+   "to_dot": 2,
+   "ts": 1791849812.2831993,
+   "type": "state_change"
+  },
+  {
+   "id": 689,
+   "kind": "event",
+   "seq": 249,
+   "session": "f0303bba63cc",
+   "t": 1791849812.4596024,
+   "to_dot": 2,
+   "ts": 1791849812.4721773,
+   "type": "state_change"
+  },
+  {
+   "id": 693,
+   "kind": "event",
+   "seq": 252,
+   "session": "f0303bba63cc",
+   "t": 1791849812.7192564,
+   "ts": 1791849812.7326763,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 694,
+   "kind": "event",
+   "reason": null,
+   "rep": 26,
+   "seq": 253,
+   "session": "f0303bba63cc",
+   "t": 1791849812.7192564,
+   "to_dot": 2,
+   "ts": 1791849812.732805,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 695,
+   "kind": "event",
+   "seq": 254,
+   "session": "f0303bba63cc",
+   "t": 1791849812.7192564,
+   "ts": 1791849812.7328272,
+   "type": "state_change"
+  },
+  {
+   "id": 699,
+   "kind": "event",
+   "seq": 257,
+   "session": "f0303bba63cc",
+   "t": 1791849812.8150237,
+   "ts": 1791849812.8242676,
+   "type": "state_change"
+  },
+  {
+   "id": 702,
+   "kind": "event",
+   "seq": 258,
+   "session": "f0303bba63cc",
+   "t": 1791849812.9971485,
+   "ts": 1791849813.0143156,
+   "type": "state_change"
+  },
+  {
+   "id": 705,
+   "kind": "event",
+   "seq": 259,
+   "session": "f0303bba63cc",
+   "t": 1791849813.1659834,
+   "to_dot": 3,
+   "ts": 1791849813.1813114,
+   "type": "state_change"
+  },
+  {
+   "id": 708,
+   "kind": "event",
+   "seq": 260,
+   "session": "f0303bba63cc",
+   "t": 1791849813.3344905,
+   "to_dot": 3,
+   "ts": 1791849813.3522105,
+   "type": "state_change"
+  },
+  {
+   "id": 712,
+   "kind": "event",
+   "seq": 261,
+   "session": "f0303bba63cc",
+   "t": 1791849813.5963144,
+   "ts": 1791849813.6125164,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 713,
+   "kind": "event",
+   "reason": null,
+   "rep": 27,
+   "seq": 262,
+   "session": "f0303bba63cc",
+   "t": 1791849813.5963144,
+   "to_dot": 3,
+   "ts": 1791849813.6126587,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 714,
+   "kind": "event",
+   "seq": 263,
+   "session": "f0303bba63cc",
+   "t": 1791849813.5963144,
+   "ts": 1791849813.6126812,
+   "type": "state_change"
+  },
+  {
+   "id": 718,
+   "kind": "event",
+   "seq": 266,
+   "session": "f0303bba63cc",
+   "t": 1791849813.679256,
+   "ts": 1791849813.6868107,
+   "type": "state_change"
+  },
+  {
+   "id": 721,
+   "kind": "event",
+   "seq": 267,
+   "session": "f0303bba63cc",
+   "t": 1791849813.8601265,
+   "ts": 1791849813.8704884,
+   "type": "state_change"
+  },
+  {
+   "id": 724,
+   "kind": "event",
+   "seq": 268,
+   "session": "f0303bba63cc",
+   "t": 1791849814.053912,
+   "to_dot": 4,
+   "ts": 1791849814.062439,
+   "type": "state_change"
+  },
+  {
+   "id": 727,
+   "kind": "event",
+   "seq": 269,
+   "session": "f0303bba63cc",
+   "t": 1791849814.2087088,
+   "to_dot": 4,
+   "ts": 1791849814.221264,
+   "type": "state_change"
+  },
+  {
+   "id": 731,
+   "kind": "event",
+   "seq": 272,
+   "session": "f0303bba63cc",
+   "t": 1791849814.485687,
+   "ts": 1791849814.49456,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 732,
+   "kind": "event",
+   "reason": null,
+   "rep": 28,
+   "seq": 273,
+   "session": "f0303bba63cc",
+   "t": 1791849814.485687,
+   "to_dot": 4,
+   "ts": 1791849814.4946768,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 733,
+   "kind": "event",
+   "seq": 274,
+   "session": "f0303bba63cc",
+   "t": 1791849814.485687,
+   "ts": 1791849814.494699,
+   "type": "state_change"
+  },
+  {
+   "id": 737,
+   "kind": "event",
+   "seq": 277,
+   "session": "f0303bba63cc",
+   "t": 1791849814.5581782,
+   "ts": 1791849814.5672817,
+   "type": "state_change"
+  },
+  {
+   "id": 740,
+   "kind": "event",
+   "seq": 278,
+   "session": "f0303bba63cc",
+   "t": 1791849814.7467659,
+   "ts": 1791849814.759709,
+   "type": "state_change"
+  },
+  {
+   "id": 743,
+   "kind": "event",
+   "seq": 279,
+   "session": "f0303bba63cc",
+   "t": 1791849814.9170127,
+   "to_dot": 3,
+   "ts": 1791849814.9324741,
+   "type": "state_change"
+  },
+  {
+   "id": 746,
+   "kind": "event",
+   "seq": 280,
+   "session": "f0303bba63cc",
+   "t": 1791849815.099502,
+   "to_dot": 3,
+   "ts": 1791849815.1177013,
+   "type": "state_change"
+  },
+  {
+   "id": 750,
+   "kind": "event",
+   "seq": 281,
+   "session": "f0303bba63cc",
+   "t": 1791849815.3635087,
+   "ts": 1791849815.3836772,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 751,
+   "kind": "event",
+   "reason": null,
+   "rep": 29,
+   "seq": 282,
+   "session": "f0303bba63cc",
+   "t": 1791849815.3635087,
+   "to_dot": 3,
+   "ts": 1791849815.3838055,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 752,
+   "kind": "event",
+   "seq": 283,
+   "session": "f0303bba63cc",
+   "t": 1791849815.3635087,
+   "ts": 1791849815.3838284,
+   "type": "state_change"
+  },
+  {
+   "id": 756,
+   "kind": "event",
+   "seq": 286,
+   "session": "f0303bba63cc",
+   "t": 1791849815.4540532,
+   "ts": 1791849815.4618025,
+   "type": "state_change"
+  },
+  {
+   "id": 759,
+   "kind": "event",
+   "seq": 288,
+   "session": "f0303bba63cc",
+   "t": 1791849815.6307116,
+   "ts": 1791849815.6465757,
+   "type": "state_change"
+  },
+  {
+   "id": 763,
+   "kind": "event",
+   "seq": 289,
+   "session": "f0303bba63cc",
+   "t": 1791849815.7966702,
+   "to_dot": 2,
+   "ts": 1791849815.8118021,
+   "type": "state_change"
+  },
+  {
+   "id": 766,
+   "kind": "event",
+   "seq": 290,
+   "session": "f0303bba63cc",
+   "t": 1791849815.9782624,
+   "to_dot": 2,
+   "ts": 1791849815.9959037,
+   "type": "state_change"
+  },
+  {
+   "id": 770,
+   "kind": "event",
+   "seq": 291,
+   "session": "f0303bba63cc",
+   "t": 1791849816.2400084,
+   "ts": 1791849816.257049,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 771,
+   "kind": "event",
+   "reason": null,
+   "rep": 30,
+   "seq": 292,
+   "session": "f0303bba63cc",
+   "t": 1791849816.2400084,
+   "to_dot": 2,
+   "ts": 1791849816.2571797,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 772,
+   "kind": "event",
+   "seq": 293,
+   "session": "f0303bba63cc",
+   "t": 1791849816.2400084,
+   "ts": 1791849816.2572072,
+   "type": "state_change"
+  },
+  {
+   "id": 776,
+   "kind": "event",
+   "seq": 296,
+   "session": "f0303bba63cc",
+   "t": 1791849816.3287027,
+   "ts": 1791849816.3383136,
+   "type": "state_change"
+  },
+  {
+   "id": 779,
+   "kind": "event",
+   "seq": 297,
+   "session": "f0303bba63cc",
+   "t": 1791849816.5057604,
+   "ts": 1791849816.5182312,
+   "type": "state_change"
+  },
+  {
+   "id": 782,
+   "kind": "event",
+   "seq": 298,
+   "session": "f0303bba63cc",
+   "t": 1791849816.6856885,
+   "to_dot": 1,
+   "ts": 1791849816.6956258,
+   "type": "state_change"
+  },
+  {
+   "id": 785,
+   "kind": "event",
+   "seq": 299,
+   "session": "f0303bba63cc",
+   "t": 1791849816.8657653,
+   "to_dot": 1,
+   "ts": 1791849816.8817708,
+   "type": "state_change"
+  },
+  {
+   "id": 789,
+   "kind": "event",
+   "seq": 300,
+   "session": "f0303bba63cc",
+   "t": 1791849817.1311913,
+   "ts": 1791849817.1401677,
+   "type": "state_change"
+  },
+  {
+   "arc": 4,
+   "id": 790,
+   "kind": "event",
+   "reason": null,
+   "rep": 31,
+   "seq": 301,
+   "session": "f0303bba63cc",
+   "t": 1791849817.1311913,
+   "to_dot": 1,
+   "ts": 1791849817.1402826,
+   "type": "reach_complete",
+   "verified": true
+  },
+  {
+   "id": 791,
+   "kind": "event",
+   "seq": 302,
+   "session": "f0303bba63cc",
+   "t": 1791849817.1311913,
+   "ts": 1791849817.1403043,
+   "type": "state_change"
+  },
+  {
+   "id": 795,
+   "kind": "event",
+   "seq": 305,
+   "session": "f0303bba63cc",
+   "t": 1791849817.21004,
+   "ts": 1791849817.2189977,
+   "type": "state_change"
+  },
+  {
+   "id": 798,
+   "kind": "event",
+   "seq": 306,
+   "session": "f0303bba63cc",
+   "t": 1791849817.4006112,
+   "ts": 1791849817.4142997,
+   "type": "state_change"
+  },
+  {
+   "id": 801,
+   "kind": "event",
+   "seq": 307,
+   "session": "f0303bba63cc",
+   "t": 1791849817.571743,
+   "to_dot": 0,
+   "ts": 1791849817.580229,
+   "type": "state_change"
+  },
+  {
+   "id": 804,
+   "kind": "event",
+   "seq": 308,
+   "session": "f0303bba63cc",
+   "t": 1791849817.7467463,
+   "to_dot": 0,
+   "ts": 1791849817.7569475,
+   "type": "state_change"
+  },
+  {
+   "kind": "event",
+   "seq": 310,
+   "session": "f0303bba63cc",
+   "t": 1791849842.9139512,
+   "ts": 1791849842.9142628,
+   "type": "feedback"
+  }
+ ],
+ "exercise": null,
+ "feedback": {
+  "compared": "same",
+  "detail": "automated check by Claude (synthetic clip)",
+  "difficulty": "just_right",
+  "effort": 4,
+  "pain_after": 2
+ },
+ "id": "f0303bba63cc",
+ "illustrative": false,
+ "mode": "cup",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+  "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-12T20:02:52",
+ "status": "complete",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 45.5,
+   "corrections": 0,
+   "coverage_pct": 100,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 0.0,
+   "posture_cues": 0,
+   "reach_ms": [
+    860.9,
+    880.7,
+    866.1,
+    901.4,
+    874.3,
+    892.7,
+    887.0,
+    885.3,
+    1050.0,
+    888.7,
+    877.4,
+    858.3,
+    868.2,
+    841.0,
+    863.0,
+    882.8,
+    370.5,
+    595.3,
+    263.6,
+    353.1,
+    353.0,
+    342.9,
+    353.2,
+    358.6,
+    260.5,
+    353.5,
+    351.0,
+    374.7,
+    358.8,
+    342.6,
+    357.0
+   ],
+   "reach_verified": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "reps_total": 31,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 31,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 1,
+   "decisions": 33,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     791,
+     795,
+     798,
+     801,
+     804
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Cup session finished, not stopped. 31 reps, all 31 verified, none missed. No form corrections, no wrong-dot or above-ceiling moves. Exertion stayed low. No check-in answers were recorded."
+   },
+   "notes": [
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      497
+     ],
+     "text": "Progression offered: two clean slow arcs, mean reach 0.9 s, 0 unverified."
+    }
+   ]
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": null,
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": null,
+   "capture_to_event_p95": null,
+   "cues": 32,
+   "dropped": 8,
+   "event_to_cue_p50": 1.0,
+   "event_to_cue_p95": 3.2,
+   "frames": 509,
+   "proc_p50": 10.6,
+   "proc_p95": 19.2
+  },
+  "mode": "cup",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "f0303bba63cc",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791849842.9139512,
+  "t_start": 1791849772.3717499,
+  "told_us": {
+   "compared": "same",
+   "detail": "automated check by Claude (synthetic clip)",
+   "difficulty": "just_right",
+   "effort": 4,
+   "pain_after": 2
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "test-claude"
+ },
+ "title": "Waiter – cup",
+ "tracking": "usable",
+ "username": "test-claude"
+}

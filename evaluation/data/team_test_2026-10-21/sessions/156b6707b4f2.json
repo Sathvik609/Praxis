@@ -1,0 +1,175 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 7,
+  "new_symptoms": false,
+  "pain_before": 6
+ },
+ "date": "2026-10-13",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-13T10:31:55",
+ "events": [
+  {
+   "id": 2008,
+   "kind": "event",
+   "seq": 4,
+   "session": "156b6707b4f2",
+   "t": 1791901897.1858287,
+   "ts": 1791901897.1862142,
+   "type": "checkin"
+  },
+  {
+   "kind": "event",
+   "seq": 15,
+   "session": "156b6707b4f2",
+   "t": 1791901915.2089689,
+   "ts": 1791901915.2091568,
+   "type": "feedback"
+  }
+ ],
+ "exercise": null,
+ "feedback": {
+  "again_tomorrow": "not_sure",
+  "barriers": [
+   "time"
+  ],
+  "difficulty": "hard",
+  "effort": 7,
+  "end_reason": "tired",
+  "ended_early": true,
+  "pain_after": 6
+ },
+ "id": "156b6707b4f2",
+ "illustrative": false,
+ "mode": "cup",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+  "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-13T10:31:37",
+ "status": "complete",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 17.6,
+   "corrections": 0,
+   "coverage_pct": null,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 0.0,
+   "posture_cues": 0,
+   "reps_total": 0,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 1,
+   "decisions": 1,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     2008
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Cup session ended with no reps counted (0 verified, 0 missed, 0 unverified). Not stopped by a rule. Check-in: pain 6 before (stop limit 7), 7 min, no new symptoms, energy comfortable. Exertion low. Plan of 2 slow and 2 fast arcs not started."
+   },
+   "notes": [],
+   "plan": {
+    "because": null,
+    "evidence": [
+     2008
+    ],
+    "goals": [
+     "Finish 2 slow arcs, then 2 fast arcs",
+     "Keep reaches smooth and controlled"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       2008
+      ],
+      "goals": [
+       "Finish 2 slow arcs, then 2 fast arcs",
+       "Keep reaches smooth and controlled"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Trunk lean (limit 12 deg)",
+       "Pain: started at 6, stop limit is 7",
+       "Cup hidden by hand"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791901903.0877151,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Trunk lean (limit 12 deg)",
+     "Pain: started at 6, stop limit is 7",
+     "Cup hidden by hand"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": null,
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 251.2,
+   "capture_to_event_p95": 473.8,
+   "cues": 0,
+   "dropped": 0,
+   "event_to_cue_p50": null,
+   "event_to_cue_p95": null,
+   "frames": 89,
+   "proc_p50": 10.6,
+   "proc_p95": 14.5
+  },
+  "mode": "cup",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "156b6707b4f2",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791901915.2089689,
+  "t_start": 1791901897.5174983,
+  "told_us": {
+   "again_tomorrow": "not_sure",
+   "barriers": [
+    "time"
+   ],
+   "difficulty": "hard",
+   "effort": 7,
+   "end_reason": "tired",
+   "ended_early": true,
+   "energy": "comfortable",
+   "minutes": 7,
+   "new_symptoms": false,
+   "pain_after": 6,
+   "pain_before": 6
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "T3"
+ },
+ "title": "Waiter – cup",
+ "tracking": "usable",
+ "username": "T3"
+}

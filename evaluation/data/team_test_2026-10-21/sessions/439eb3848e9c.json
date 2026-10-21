@@ -1,0 +1,169 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 14,
+  "new_symptoms": false,
+  "pain_before": 5
+ },
+ "date": "2026-10-14",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-14T12:21:23",
+ "events": [
+  {
+   "id": 10246,
+   "kind": "event",
+   "seq": 4,
+   "session": "439eb3848e9c",
+   "t": 1791994856.8327594,
+   "ts": 1791994856.8336735,
+   "type": "checkin"
+  },
+  {
+   "kind": "event",
+   "seq": 15,
+   "session": "439eb3848e9c",
+   "t": 1791994883.2868083,
+   "ts": 1791994883.2869902,
+   "type": "feedback"
+  }
+ ],
+ "exercise": null,
+ "feedback": {
+  "again_tomorrow": "not_sure",
+  "difficulty": "just_right",
+  "effort": 4,
+  "end_reason": "finished",
+  "ended_early": true,
+  "pain_after": 3
+ },
+ "id": "439eb3848e9c",
+ "illustrative": false,
+ "mode": "nhpt",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "repeat the peg test weekly, same board and camera setup",
+  "text": "Assessment recorded. Practice continues on the assigned plan."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-14T12:20:56",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 16.6,
+   "corrections": 0,
+   "coverage_pct": null,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 0.0,
+   "posture_cues": 0,
+   "reps_total": 0,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 1,
+   "decisions": 1,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     10246
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Peg test session ended, not stopped. No peg test time or splits were recorded by the camera. Check-in: pain 5/10, no new symptoms, energy comfortable, 14 minutes. Exertion low. No form cues needed."
+   },
+   "notes": [],
+   "plan": {
+    "because": null,
+    "evidence": [
+     10246
+    ],
+    "goals": [
+     "Complete the peg test with the left hand",
+     "Move steadily and smoothly, all nine pegs"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       10246
+      ],
+      "goals": [
+       "Complete the peg test with the left hand",
+       "Move steadily and smoothly, all nine pegs"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Pain stays under 7 (starts at 5)",
+       "Pegs and sheet markers clearly seen",
+       "Any new symptoms"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791994864.2092361,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Pain stays under 7 (starts at 5)",
+     "Pegs and sheet markers clearly seen",
+     "Any new symptoms"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": null,
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 124.3,
+   "capture_to_event_p95": 210.3,
+   "cues": 0,
+   "dropped": 0,
+   "event_to_cue_p50": null,
+   "event_to_cue_p95": null,
+   "frames": 197,
+   "proc_p50": 10.7,
+   "proc_p95": 22.6
+  },
+  "mode": "nhpt",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "439eb3848e9c",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791994883.2868083,
+  "t_start": 1791994856.9565613,
+  "told_us": {
+   "again_tomorrow": "not_sure",
+   "difficulty": "just_right",
+   "effort": 4,
+   "end_reason": "finished",
+   "ended_early": true,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_after": 3,
+   "pain_before": 5
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "T1"
+ },
+ "title": "Nine-Hole Peg Test",
+ "tracking": "usable",
+ "username": "T1"
+}

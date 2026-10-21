@@ -1,0 +1,146 @@
+{
+ "checkin": {},
+ "date": "2026-10-13",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-13T11:14:29",
+ "events": [
+  {
+   "id": 110,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 2,
+   "session": "79f797ea231a",
+   "t": 1791904455.2890804,
+   "ts": 1791904455.3116462,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 111,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 4,
+   "session": "79f797ea231a",
+   "t": 1791904455.2890804,
+   "ts": 1791904455.3119426,
+   "type": "pause"
+  },
+  {
+   "id": 154,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 13,
+   "session": "79f797ea231a",
+   "t": 1791904461.753724,
+   "ts": 1791904461.77413,
+   "type": "setup_blocked"
+  },
+  {
+   "kind": "event",
+   "seq": 16,
+   "session": "79f797ea231a",
+   "t": 1791904469.064429,
+   "ts": 1791904469.0646267,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "end_reason": "paused",
+  "ended_early": true
+ },
+ "id": "79f797ea231a",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-13T11:14:11",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 3.5,
+   "corrections": 1,
+   "coverage_pct": null,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 9.1,
+   "posture_cues": 0,
+   "reps_total": 0,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 1,
+   "decisions": 1,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     110,
+     111,
+     154
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Arm abduction session ended with 0 reps counted (0 verified, 0 unverified, 0 missed). Session paused on a setup rule and one correction was given. Camera setup was not confirmed, so no exercise data. Exertion low. Suggest therapist check camera setup."
+   },
+   "notes": [
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      111
+     ],
+     "text": "Correction: claude agent at pause:setup."
+    }
+   ]
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 300.4,
+   "capture_to_event_p95": 508.7,
+   "cues": 0,
+   "dropped": 0,
+   "event_to_cue_p50": null,
+   "event_to_cue_p95": null,
+   "frames": 67,
+   "proc_p50": 23.2,
+   "proc_p95": 40.2
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "79f797ea231a",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791904469.064429,
+  "t_start": 1791904451.783381,
+  "told_us": {
+   "end_reason": "paused",
+   "ended_early": true
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "test-claude"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "test-claude"
+}

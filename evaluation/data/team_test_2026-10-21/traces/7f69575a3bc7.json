@@ -1,0 +1,2716 @@
+{
+ "rows": [
+  {
+   "coach": "Rule-based coach",
+   "exercise": "abduction",
+   "kind": "session",
+   "mode": "arm",
+   "prescription": "Hospital GRASP L2 v3",
+   "seq": 1,
+   "session": "7f69575a3bc7",
+   "ts": 1792102227.466426,
+   "user": "T1"
+  },
+  {
+   "changed": false,
+   "kind": "tier",
+   "pain": 4,
+   "reason": "Pain 4 today: a gentle day. Fewer reps, shorter holds, the side lift to 60°, and no fast arcs, all inside what your therapist allows.",
+   "rule": "pain_tier",
+   "running": "gentle",
+   "seq": 2,
+   "session": "7f69575a3bc7",
+   "tier": "gentle",
+   "ts": 1792102227.521548
+  },
+  {
+   "energy": "comfortable",
+   "has_note": false,
+   "kind": "checkin",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 4,
+   "seq": 3,
+   "session": "7f69575a3bc7",
+   "ts": 1792102227.521811
+  },
+  {
+   "id": 16062,
+   "kind": "event",
+   "seq": 4,
+   "session": "7f69575a3bc7",
+   "t": 1792102227.5215247,
+   "ts": 1792102227.5218582,
+   "type": "checkin"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 5,
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1792102227.5221195
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 16066,
+   "kind": "event",
+   "seq": 6,
+   "session": "7f69575a3bc7",
+   "t": 1792102227.8132358,
+   "ts": 1792102227.849892,
+   "type": "exercise_start"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_intro",
+   "evidence": [
+    16066
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "Arm out to the side started, 2 × 6 · hold 2 s",
+   "seq": 7,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102227.8500648
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 8,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
+   "tool": "speak",
+   "ts": 1792102227.8500955,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_prescription",
+   "ok": true,
+   "result_summary": "{\"program\": \"Hospital GRASP\", \"level\": 2, \"version\": 3, \"exercise\": \"abduction\", \"dose\": {\"sets\": 2, \"reps\": 8, \"hold_s\": 3.0, \"target_deg\": 90.0, \"ceiling_deg\": 90.0}, \"allowed_adaptations\": {\"hold_s\": [2.0, 3.0], \"target_deg\": [60.0, 90.0",
+   "run": 1,
+   "seq": 9,
+   "server": "exertion",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102229.186651
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 2.5,
+   "name": "read_patient_model",
+   "ok": true,
+   "result_summary": "{\"sessions\": [{\"date\": \"2026-10-14\", \"mode\": \"nhpt\", \"status\": \"ended_early\", \"tracking\": \"usable\", \"verified\": 0, \"unverified\": 0, \"sample\": false}, {\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"complete\", \"tracking\": \"usable\", \"verifie",
+   "run": 1,
+   "seq": 10,
+   "server": "exertion",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102229.1939087
+  },
+  {
+   "because": null,
+   "evidence": [
+    16062
+   ],
+   "goals": [
+    "Gentle start: 2 sets of 6 reps to 60 degrees, 2 s hold",
+    "Smooth, controlled raises with no trunk lean"
+   ],
+   "kind": "plan",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 11,
+   "session": "7f69575a3bc7",
+   "t": 1792102231.7926152,
+   "trigger": "checkin",
+   "ts": 1792102231.8551302,
+   "version": 1,
+   "watch": [
+    "Trunk lean and shoulder hiking",
+    "Falling peak angles or slower reps",
+    "Pain 4/10 at start; stop if new symptoms"
+   ]
+  },
+  {
+   "args": {
+    "cue": "instruct",
+    "evidence": [
+     16062
+    ],
+    "text": "Let's start gently. Raise your arm out to the side to shoulder height, hold briefly, and keep your body upright."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.0,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"instruct\"}",
+   "run": 1,
+   "seq": 12,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102231.855416
+  },
+  {
+   "args": {
+    "because": "",
+    "evidence": [
+     16062
+    ],
+    "goals": [
+     "Gentle start: 2 sets of 6 reps to 60 degrees, 2 s hold",
+     "Smooth, controlled raises with no trunk lean"
+    ],
+    "watch": [
+     "Trunk lean and shoulder hiking",
+     "Falling peak angles or slower reps",
+     "Pain 4/10 at start; stop if new symptoms"
+    ]
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 1.1,
+   "name": "set_session_plan",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"version\": 1, \"revised\": false}",
+   "run": 1,
+   "seq": 13,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102231.856214
+  },
+  {
+   "action": "instruct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    16062
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at checkin",
+   "run": 1,
+   "seq": 14,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1792102231.888638
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 15,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "text": "Let's start gently. Raise your arm out to the side to shoulder height, hold briefly, and keep your body upright.",
+   "tool": "speak",
+   "ts": 1792102231.8888092,
+   "ui": {
+    "agent_run": 1,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 12988,
+   "cache_write_tokens": 7432,
+   "first_action_ms": 4333.3,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 5886.2,
+   "outcome": "done",
+   "output_tokens": 689,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 16,
+   "session": "7f69575a3bc7",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1792102233.408397
+  },
+  {
+   "id": 16200,
+   "kind": "event",
+   "rep": 1,
+   "seq": 17,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102240.7324426,
+   "ts": 1792102240.7515612,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    16200
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 18,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102240.7517624
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 19,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift slowly to the line.",
+   "tool": "speak",
+   "ts": 1792102240.7518013,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "id": 16226,
+   "kind": "event",
+   "rep": 1,
+   "seq": 20,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102242.6426468,
+   "ts": 1792102242.6595602,
+   "type": "state_change"
+  },
+  {
+   "id": 16227,
+   "kind": "event",
+   "rep": 1,
+   "seq": 21,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102242.6426468,
+   "ts": 1792102242.6596987,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_hold",
+   "evidence": [
+    16227
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target reached",
+   "seq": 22,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102242.6597717
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 23,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Hold… three.",
+   "tool": "speak",
+   "ts": 1792102242.6597984,
+   "ui": {}
+  },
+  {
+   "angle_deg": 68.4,
+   "id": 16235,
+   "kind": "event",
+   "seq": 24,
+   "session": "7f69575a3bc7",
+   "t": 1792102243.1202474,
+   "ts": 1792102243.135157,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    16235
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 25,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102243.1352956
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 26,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102243.1353312,
+   "ui": {}
+  },
+  {
+   "id": 16242,
+   "kind": "event",
+   "seq": 27,
+   "session": "7f69575a3bc7",
+   "t": 1792102243.6244254,
+   "ts": 1792102243.6428053,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 16243,
+   "kind": "event",
+   "rep": 1,
+   "seq": 28,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102243.6244254,
+   "ts": 1792102243.6429112,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_short_hold",
+   "evidence": [
+    16242
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "hold too short",
+   "seq": 29,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102243.642977
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 30,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "A little longer at the top next time — hold for 2.",
+   "tool": "speak",
+   "ts": 1792102243.643,
+   "ui": {}
+  },
+  {
+   "id": 16473,
+   "kind": "event",
+   "peak_deg": 75.4,
+   "reason": "hold_too_short",
+   "rep": 1,
+   "seq": 31,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102264.4108663,
+   "ts": 1792102264.4304457,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 16474,
+   "kind": "event",
+   "rep": 2,
+   "seq": 32,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102264.4108663,
+   "ts": 1792102264.4306035,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    16473
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (hold_too_short)",
+   "seq": 33,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102264.430702
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 34,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102264.4307358,
+   "ui": {}
+  },
+  {
+   "id": 16496,
+   "kind": "event",
+   "rep": 2,
+   "seq": 35,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102266.1079383,
+   "ts": 1792102266.1230228,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    16496
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 36,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102266.1231859
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 37,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Up to the line, slowly.",
+   "tool": "speak",
+   "ts": 1792102266.1232166,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "id": 16502,
+   "kind": "event",
+   "peak_deg": 35.6,
+   "seq": 38,
+   "session": "7f69575a3bc7",
+   "t": 1792102266.8540258,
+   "ts": 1792102266.8724864,
+   "type": "target_missed"
+  },
+  {
+   "id": 16503,
+   "kind": "event",
+   "rep": 2,
+   "seq": 39,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102266.8540258,
+   "ts": 1792102266.872599,
+   "type": "state_change"
+  },
+  {
+   "id": 16504,
+   "kind": "event",
+   "peak_deg": 35.6,
+   "reason": "target_missed",
+   "rep": 2,
+   "seq": 40,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102266.8540258,
+   "ts": 1792102266.8726273,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 16505,
+   "kind": "event",
+   "rep": 3,
+   "seq": 41,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102266.8540258,
+   "ts": 1792102266.8726451,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    16502
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 42,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102266.8727248
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 43,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102266.8727574,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    16504
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 44,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102266.8727844
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 45,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102266.8728087,
+   "ui": {}
+  },
+  {
+   "id": 16522,
+   "kind": "event",
+   "rep": 3,
+   "seq": 46,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102267.792445,
+   "ts": 1792102267.807124,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    16522
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 47,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102267.8072858
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 48,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift, no higher than your shoulder.",
+   "tool": "speak",
+   "ts": 1792102267.8073165,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "id": 16533,
+   "kind": "event",
+   "lean_deg": -34.2,
+   "seq": 49,
+   "session": "7f69575a3bc7",
+   "t": 1792102268.461033,
+   "ts": 1792102268.477119,
+   "type": "compensation_lean"
+  },
+  {
+   "id": 16534,
+   "kind": "event",
+   "peak_deg": 32.8,
+   "seq": 50,
+   "session": "7f69575a3bc7",
+   "t": 1792102268.461033,
+   "ts": 1792102268.4772565,
+   "type": "target_missed"
+  },
+  {
+   "id": 16535,
+   "kind": "event",
+   "rep": 3,
+   "seq": 51,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102268.461033,
+   "ts": 1792102268.4772778,
+   "type": "state_change"
+  },
+  {
+   "id": 16536,
+   "kind": "event",
+   "peak_deg": 32.8,
+   "reason": "target_missed",
+   "rep": 3,
+   "seq": 52,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102268.461033,
+   "ts": 1792102268.4773102,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 16537,
+   "kind": "event",
+   "rep": 4,
+   "seq": 53,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102268.461033,
+   "ts": 1792102268.4773278,
+   "type": "state_change"
+  },
+  {
+   "action": "rest",
+   "kind": "stop_rule",
+   "rule": "missed_reps",
+   "seq": 54,
+   "session": "7f69575a3bc7",
+   "text": "A few in a row fell a little short. That's fine — take a short rest, and keep the next ones smaller and slower.",
+   "ts": 1792102268.4773803
+  },
+  {
+   "detail": "3 consecutive missed reps (hold_too_short, target_missed, target_missed)",
+   "kind": "flag",
+   "rule": "missed_reps",
+   "seq": 55,
+   "session": "7f69575a3bc7",
+   "ts": 1792102268.4774024
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_lean",
+   "evidence": [
+    16533
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "trunk lean -34.2°",
+   "seq": 56,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102268.47747
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 57,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.",
+   "tool": "speak",
+   "ts": 1792102268.4774911,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    16534
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 58,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102268.477516
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 59,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102268.477532,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    16536
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 60,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102268.4775496
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 61,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102268.4775648,
+   "ui": {}
+  },
+  {
+   "id": 16551,
+   "kind": "event",
+   "rep": 4,
+   "seq": 62,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102268.8743749,
+   "ts": 1792102268.890746,
+   "type": "state_change"
+  },
+  {
+   "id": 16556,
+   "kind": "event",
+   "peak_deg": 30.8,
+   "seq": 63,
+   "session": "7f69575a3bc7",
+   "t": 1792102269.3012364,
+   "ts": 1792102269.3207817,
+   "type": "target_missed"
+  },
+  {
+   "id": 16557,
+   "kind": "event",
+   "rep": 4,
+   "seq": 64,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102269.3012364,
+   "ts": 1792102269.3209314,
+   "type": "state_change"
+  },
+  {
+   "id": 16558,
+   "kind": "event",
+   "peak_deg": 30.8,
+   "reason": "target_missed",
+   "rep": 4,
+   "seq": 65,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102269.3012364,
+   "ts": 1792102269.3209698,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 16559,
+   "kind": "event",
+   "rep": 5,
+   "seq": 66,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102269.3012364,
+   "ts": 1792102269.3209934,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    16556
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 67,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102269.3211446
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 68,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102269.3211815,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    16558
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 69,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102269.3212152
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 70,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102269.3212364,
+   "ui": {}
+  },
+  {
+   "id": 17021,
+   "kind": "event",
+   "rep": 5,
+   "seq": 71,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102309.5527925,
+   "ts": 1792102309.5687137,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    17021
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 72,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102309.5689094
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 73,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Up to the line, slowly.",
+   "tool": "speak",
+   "ts": 1792102309.5689409,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "id": 17025,
+   "kind": "event",
+   "peak_deg": 33.8,
+   "seq": 74,
+   "session": "7f69575a3bc7",
+   "t": 1792102309.725815,
+   "ts": 1792102309.7414656,
+   "type": "target_missed"
+  },
+  {
+   "id": 17026,
+   "kind": "event",
+   "rep": 5,
+   "seq": 75,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102309.725815,
+   "ts": 1792102309.741605,
+   "type": "state_change"
+  },
+  {
+   "id": 17027,
+   "kind": "event",
+   "peak_deg": 33.8,
+   "reason": "target_missed",
+   "rep": 5,
+   "seq": 76,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102309.725815,
+   "ts": 1792102309.741635,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 17028,
+   "kind": "event",
+   "rep": 6,
+   "seq": 77,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102309.725815,
+   "ts": 1792102309.7416532,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    17025
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 78,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102309.7418008
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 79,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102309.741833,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    17027
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 80,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102309.7418666
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 81,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102309.741884,
+   "ui": {}
+  },
+  {
+   "id": 17039,
+   "kind": "event",
+   "rep": 6,
+   "seq": 82,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102310.3436425,
+   "ts": 1792102310.3612592,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 37.1,
+   "id": 17048,
+   "kind": "event",
+   "seq": 83,
+   "session": "7f69575a3bc7",
+   "t": 1792102310.9622543,
+   "ts": 1792102310.9784188,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    17048
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 84,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102310.9786837
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 85,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102310.9787297,
+   "ui": {}
+  },
+  {
+   "id": 17054,
+   "kind": "event",
+   "peak_deg": 37.3,
+   "seq": 86,
+   "session": "7f69575a3bc7",
+   "t": 1792102311.2093694,
+   "ts": 1792102311.2270794,
+   "type": "target_missed"
+  },
+  {
+   "id": 17055,
+   "kind": "event",
+   "rep": 6,
+   "seq": 87,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102311.2093694,
+   "ts": 1792102311.2271974,
+   "type": "state_change"
+  },
+  {
+   "id": 17056,
+   "kind": "event",
+   "peak_deg": 37.3,
+   "reason": "target_missed",
+   "rep": 6,
+   "seq": 88,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102311.2093694,
+   "ts": 1792102311.2272255,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 17057,
+   "kind": "event",
+   "seq": 89,
+   "session": "7f69575a3bc7",
+   "set": 1,
+   "t": 1792102311.2093694,
+   "ts": 1792102311.227243,
+   "type": "set_complete"
+  },
+  {
+   "id": 17058,
+   "kind": "event",
+   "rep": 1,
+   "seq": 90,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102311.2093694,
+   "ts": 1792102311.2272575,
+   "type": "state_change"
+  },
+  {
+   "action": "rest",
+   "kind": "stop_rule",
+   "rule": "missed_reps",
+   "seq": 91,
+   "session": "7f69575a3bc7",
+   "text": "A few in a row fell a little short. That's fine — take a short rest, and keep the next ones smaller and slower.",
+   "ts": 1792102311.2282443
+  },
+  {
+   "detail": "3 consecutive missed reps (target_missed, target_missed, target_missed)",
+   "kind": "flag",
+   "rule": "missed_reps",
+   "seq": 92,
+   "session": "7f69575a3bc7",
+   "ts": 1792102311.228314
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    17054
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 93,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102311.2284377
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 94,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102311.2284656,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    17056
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 95,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102311.228491
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 96,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102311.2285066,
+   "ui": {}
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 97,
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "trigger": "set_complete",
+   "ts": 1792102311.2288482
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_prescription",
+   "ok": true,
+   "result_summary": "{\"program\": \"Hospital GRASP\", \"level\": 2, \"version\": 3, \"exercise\": \"abduction\", \"dose\": {\"sets\": 2, \"reps\": 8, \"hold_s\": 3.0, \"target_deg\": 90.0, \"ceiling_deg\": 90.0}, \"allowed_adaptations\": {\"hold_s\": [2.0, 3.0], \"target_deg\": [60.0, 90.0",
+   "run": 2,
+   "seq": 98,
+   "server": "exertion",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102312.7678003
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_set_summary",
+   "ok": true,
+   "result_summary": "{\"nhpt\": null, \"kind\": \"set\", \"boundary_event_id\": 17057, \"boundary\": {\"type\": \"set_complete\", \"t\": 1792102311.2093694, \"id\": 17057, \"set\": 1, \"reps\": 6, \"verified_reps\": 0, \"best_deg\": 0.0, \"above_ceiling_count\": 0}, \"reps\": 6, \"verified\":",
+   "run": 2,
+   "seq": 99,
+   "server": "perception",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102312.7687757
+  },
+  {
+   "args": {
+    "cue": "correct",
+    "evidence": [
+     17057
+    ],
+    "text": "Take it slow and keep your shoulder down and body upright. Lift as far as is comfortable, and we'll tell the therapist how it went."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"correct\"}",
+   "run": 2,
+   "seq": 100,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102315.7693386
+  },
+  {
+   "args": {
+    "evidence": [
+     17057
+    ],
+    "reason": "Set 1: 0 of 6 reps reached target even at the lowest allowed 60°; peaks fell from 75° to about 33°, with shoulder hiking and lean noted. Pain 4/10 at start."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.0,
+   "name": "flag_therapist",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"flagged\": true}",
+   "run": 2,
+   "seq": 101,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102315.7699897
+  },
+  {
+   "action": "correct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    17057
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at set_complete",
+   "run": 2,
+   "seq": 102,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1792102315.8016613
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 103,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "text": "Take it slow and keep your shoulder down and body upright. Lift as far as is comfortable, and we'll tell the therapist how it went.",
+   "tool": "speak",
+   "ts": 1792102315.801813,
+   "ui": {
+    "agent_run": 2,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "detail": "agent: Set 1: 0 of 6 reps reached target even at the lowest allowed 60°; peaks fell from 75° to about 33°, with shoulder hiking and lean noted. Pain 4/10 at start.",
+   "kind": "flag",
+   "rule": "agent",
+   "seq": 104,
+   "session": "7f69575a3bc7",
+   "ts": 1792102315.801869
+  },
+  {
+   "actions": 2,
+   "cache_read_tokens": 19045,
+   "cache_write_tokens": 2023,
+   "first_action_ms": 4540.5,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 6153.9,
+   "outcome": "done",
+   "output_tokens": 620,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 105,
+   "session": "7f69575a3bc7",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "set_complete",
+   "ts": 1792102317.382841
+  },
+  {
+   "kind": "resume",
+   "rule": null,
+   "seq": 106,
+   "session": "7f69575a3bc7",
+   "ts": 1792102368.499859
+  },
+  {
+   "id": 17659,
+   "kind": "event",
+   "rep": 1,
+   "seq": 107,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102370.570102,
+   "ts": 1792102370.5876014,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    17659
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 108,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102370.5881753
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 109,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift slowly to the line.",
+   "tool": "speak",
+   "ts": 1792102370.5882502,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "angle_deg": 50.6,
+   "id": 17665,
+   "kind": "event",
+   "seq": 110,
+   "session": "7f69575a3bc7",
+   "t": 1792102370.897347,
+   "ts": 1792102370.9113526,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 17666,
+   "kind": "event",
+   "rep": 1,
+   "seq": 111,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102370.897347,
+   "ts": 1792102370.9114888,
+   "type": "state_change"
+  },
+  {
+   "id": 17667,
+   "kind": "event",
+   "rep": 1,
+   "seq": 112,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102370.897347,
+   "ts": 1792102370.9115126,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    17665
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 113,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102370.911909
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 114,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102370.9119623,
+   "ui": {}
+  },
+  {
+   "id": 17688,
+   "kind": "event",
+   "seq": 115,
+   "session": "7f69575a3bc7",
+   "t": 1792102372.5660453,
+   "ts": 1792102372.5809298,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 17689,
+   "kind": "event",
+   "rep": 1,
+   "seq": 116,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102372.5660453,
+   "ts": 1792102372.5810444,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_short_hold",
+   "evidence": [
+    17688
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "hold too short",
+   "seq": 117,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102372.5814052
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 118,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "A little longer at the top next time — hold for 2.",
+   "tool": "speak",
+   "ts": 1792102372.5814576,
+   "ui": {}
+  },
+  {
+   "id": 17695,
+   "kind": "event",
+   "peak_deg": 55.9,
+   "reason": "hold_too_short",
+   "rep": 1,
+   "seq": 119,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102372.701163,
+   "ts": 1792102372.7172682,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 17696,
+   "kind": "event",
+   "rep": 2,
+   "seq": 120,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102372.701163,
+   "ts": 1792102372.7173908,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    17695
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (hold_too_short)",
+   "seq": 121,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102372.717653
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 122,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102372.7176938,
+   "ui": {}
+  },
+  {
+   "id": 17723,
+   "kind": "event",
+   "rep": 2,
+   "seq": 123,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102374.7249036,
+   "ts": 1792102374.7417798,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    17723
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 124,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102374.7422528
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 125,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Up to the line, slowly.",
+   "tool": "speak",
+   "ts": 1792102374.7423143,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "angle_deg": 54.1,
+   "id": 17732,
+   "kind": "event",
+   "seq": 126,
+   "session": "7f69575a3bc7",
+   "t": 1792102375.283823,
+   "ts": 1792102375.2993047,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 17733,
+   "kind": "event",
+   "rep": 2,
+   "seq": 127,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102375.283823,
+   "ts": 1792102375.2994037,
+   "type": "state_change"
+  },
+  {
+   "id": 17734,
+   "kind": "event",
+   "rep": 2,
+   "seq": 128,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102375.283823,
+   "ts": 1792102375.299425,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    17732
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 129,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102375.2998168
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 130,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102375.2998745,
+   "ui": {}
+  },
+  {
+   "id": 17748,
+   "kind": "event",
+   "seq": 131,
+   "session": "7f69575a3bc7",
+   "t": 1792102376.2727916,
+   "ts": 1792102376.2890723,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 17749,
+   "kind": "event",
+   "rep": 2,
+   "seq": 132,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102376.2727916,
+   "ts": 1792102376.289186,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_short_hold",
+   "evidence": [
+    17748
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "hold too short",
+   "seq": 133,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102376.2895331
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 134,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "A little longer at the top next time — hold for 2.",
+   "tool": "speak",
+   "ts": 1792102376.2895796,
+   "ui": {}
+  },
+  {
+   "id": 17775,
+   "kind": "event",
+   "peak_deg": 55.4,
+   "reason": "hold_too_short",
+   "rep": 2,
+   "seq": 135,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102378.5907838,
+   "ts": 1792102378.6078753,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 17776,
+   "kind": "event",
+   "rep": 3,
+   "seq": 136,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102378.5907838,
+   "ts": 1792102378.6080134,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    17775
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (hold_too_short)",
+   "seq": 137,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102378.6083033
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 138,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102378.6083522,
+   "ui": {}
+  },
+  {
+   "id": 17993,
+   "kind": "event",
+   "rep": 3,
+   "seq": 139,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102397.5982456,
+   "ts": 1792102397.6207952,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    17993
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 140,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102397.62128
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 141,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift, no higher than your shoulder.",
+   "tool": "speak",
+   "ts": 1792102397.6213508,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "id": 17997,
+   "kind": "event",
+   "rep": 3,
+   "seq": 142,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102397.676618,
+   "ts": 1792102397.6972096,
+   "type": "state_change"
+  },
+  {
+   "id": 17998,
+   "kind": "event",
+   "rep": 3,
+   "seq": 143,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102397.676618,
+   "ts": 1792102397.6973574,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 65.5,
+   "id": 18001,
+   "kind": "event",
+   "seq": 144,
+   "session": "7f69575a3bc7",
+   "t": 1792102397.8488874,
+   "ts": 1792102397.8703086,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    18001
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 145,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102397.87135
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 146,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102397.8716307,
+   "ui": {}
+  },
+  {
+   "id": 18015,
+   "kind": "event",
+   "seq": 147,
+   "session": "7f69575a3bc7",
+   "t": 1792102398.7709033,
+   "ts": 1792102398.7996542,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 18016,
+   "kind": "event",
+   "rep": 3,
+   "seq": 148,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102398.7709033,
+   "ts": 1792102398.799931,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_short_hold",
+   "evidence": [
+    18015
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "hold too short",
+   "seq": 149,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102398.800375
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 150,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "A little longer at the top next time — hold for 2.",
+   "tool": "speak",
+   "ts": 1792102398.8004448,
+   "ui": {}
+  },
+  {
+   "id": 18114,
+   "kind": "event",
+   "peak_deg": 65.5,
+   "reason": "hold_too_short",
+   "rep": 3,
+   "seq": 151,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102407.010291,
+   "ts": 1792102407.0427456,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 18115,
+   "kind": "event",
+   "rep": 4,
+   "seq": 152,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102407.010291,
+   "ts": 1792102407.042916,
+   "type": "state_change"
+  },
+  {
+   "action": "rest",
+   "kind": "stop_rule",
+   "rule": "missed_reps",
+   "seq": 153,
+   "session": "7f69575a3bc7",
+   "text": "A few in a row fell a little short. That's fine — take a short rest, and keep the next ones smaller and slower.",
+   "ts": 1792102407.0433846
+  },
+  {
+   "detail": "3 consecutive missed reps (hold_too_short, hold_too_short, hold_too_short)",
+   "kind": "flag",
+   "rule": "missed_reps",
+   "seq": 154,
+   "session": "7f69575a3bc7",
+   "ts": 1792102407.043466
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    18114
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (hold_too_short)",
+   "seq": 155,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102407.043545
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 156,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102407.0435774,
+   "ui": {}
+  },
+  {
+   "id": 18407,
+   "kind": "event",
+   "rep": 4,
+   "seq": 157,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102435.9048462,
+   "ts": 1792102435.919899,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    18407
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 158,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102435.9202545
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 159,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift slowly to the line.",
+   "tool": "speak",
+   "ts": 1792102435.9204695,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "angle_deg": 36.9,
+   "id": 18425,
+   "kind": "event",
+   "seq": 160,
+   "session": "7f69575a3bc7",
+   "t": 1792102437.1356947,
+   "ts": 1792102437.155721,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    18425
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 161,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102437.156183
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 162,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102437.1562564,
+   "ui": {}
+  },
+  {
+   "id": 18441,
+   "kind": "event",
+   "peak_deg": 40.5,
+   "seq": 163,
+   "session": "7f69575a3bc7",
+   "t": 1792102438.1770515,
+   "ts": 1792102438.1968958,
+   "type": "target_missed"
+  },
+  {
+   "id": 18442,
+   "kind": "event",
+   "rep": 4,
+   "seq": 164,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102438.1770515,
+   "ts": 1792102438.1970563,
+   "type": "state_change"
+  },
+  {
+   "id": 18443,
+   "kind": "event",
+   "peak_deg": 40.5,
+   "reason": "target_missed",
+   "rep": 4,
+   "seq": 165,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102438.1770515,
+   "ts": 1792102438.1970894,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 18444,
+   "kind": "event",
+   "rep": 5,
+   "seq": 166,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102438.1770515,
+   "ts": 1792102438.197113,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    18441
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 167,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102438.1974933
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 168,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102438.197574,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    18443
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 169,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102438.1976023
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 170,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102438.1976194,
+   "ui": {}
+  },
+  {
+   "id": 18467,
+   "kind": "event",
+   "rep": 5,
+   "seq": 171,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102439.762999,
+   "ts": 1792102439.7789443,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    18467
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 172,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102439.77932
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 173,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Up to the line, slowly.",
+   "tool": "speak",
+   "ts": 1792102439.7794023,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "kind": "resume",
+   "rule": null,
+   "seq": 174,
+   "session": "7f69575a3bc7",
+   "ts": 1792102440.0741599
+  },
+  {
+   "angle_deg": 48.2,
+   "id": 18487,
+   "kind": "event",
+   "seq": 175,
+   "session": "7f69575a3bc7",
+   "t": 1792102441.1793554,
+   "ts": 1792102441.2005186,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    18487
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 176,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102441.200888
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 177,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102441.2009447,
+   "ui": {}
+  },
+  {
+   "id": 18491,
+   "kind": "event",
+   "rep": 5,
+   "seq": 178,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102441.2562053,
+   "ts": 1792102441.2736921,
+   "type": "state_change"
+  },
+  {
+   "id": 18492,
+   "kind": "event",
+   "rep": 5,
+   "seq": 179,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102441.2562053,
+   "ts": 1792102441.273809,
+   "type": "state_change"
+  },
+  {
+   "id": 18503,
+   "kind": "event",
+   "seq": 180,
+   "session": "7f69575a3bc7",
+   "t": 1792102442.1065876,
+   "ts": 1792102442.1223238,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 18504,
+   "kind": "event",
+   "rep": 5,
+   "seq": 181,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102442.1065876,
+   "ts": 1792102442.1224673,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_short_hold",
+   "evidence": [
+    18503
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "hold too short",
+   "seq": 182,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102442.1228049
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 183,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "A little longer at the top next time — hold for 2.",
+   "tool": "speak",
+   "ts": 1792102442.1229372,
+   "ui": {}
+  },
+  {
+   "id": 18511,
+   "kind": "event",
+   "peak_deg": 56.6,
+   "reason": "hold_too_short",
+   "rep": 5,
+   "seq": 184,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102442.4791071,
+   "ts": 1792102442.4943087,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 18512,
+   "kind": "event",
+   "rep": 6,
+   "seq": 185,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102442.4791071,
+   "ts": 1792102442.4944184,
+   "type": "state_change"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    18511
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (hold_too_short)",
+   "seq": 186,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102442.4947274
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 187,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: the hold was under 2. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102442.4947724,
+   "ui": {}
+  },
+  {
+   "id": 18524,
+   "kind": "event",
+   "rep": 6,
+   "seq": 188,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102443.4004226,
+   "ts": 1792102443.4155471,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    18524
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 189,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102443.4159808
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 190,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Lift, no higher than your shoulder.",
+   "tool": "speak",
+   "ts": 1792102443.416021,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "angle_deg": 44.1,
+   "id": 18530,
+   "kind": "event",
+   "seq": 191,
+   "session": "7f69575a3bc7",
+   "t": 1792102443.6039152,
+   "ts": 1792102443.6295314,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    18530
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 192,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102443.62994
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 193,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1792102443.6299856,
+   "ui": {}
+  },
+  {
+   "id": 18623,
+   "kind": "event",
+   "peak_deg": 48.6,
+   "seq": 194,
+   "session": "7f69575a3bc7",
+   "t": 1792102452.2822115,
+   "ts": 1792102452.304152,
+   "type": "target_missed"
+  },
+  {
+   "id": 18624,
+   "kind": "event",
+   "rep": 6,
+   "seq": 195,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102452.2822115,
+   "ts": 1792102452.3043194,
+   "type": "state_change"
+  },
+  {
+   "id": 18625,
+   "kind": "event",
+   "peak_deg": 48.6,
+   "reason": "target_missed",
+   "rep": 6,
+   "seq": 196,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102452.2822115,
+   "ts": 1792102452.3043633,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 18626,
+   "kind": "event",
+   "seq": 197,
+   "session": "7f69575a3bc7",
+   "set": 2,
+   "t": 1792102452.2822115,
+   "ts": 1792102452.3043876,
+   "type": "set_complete"
+  },
+  {
+   "id": 18627,
+   "kind": "event",
+   "seq": 198,
+   "session": "7f69575a3bc7",
+   "t": 1792102452.2822115,
+   "ts": 1792102452.3044078,
+   "type": "arm_complete"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_missed",
+   "evidence": [
+    18623
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target missed",
+   "seq": 199,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102452.3047733
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 200,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "Nearly — a touch higher, up to the line.",
+   "tool": "speak",
+   "ts": 1792102452.304829,
+   "ui": {}
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_unverified",
+   "evidence": [
+    18625
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "unverified rep (target_missed)",
+   "seq": 201,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "ts": 1792102452.3048642
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 202,
+   "session": "7f69575a3bc7",
+   "source": "rule",
+   "text": "That one didn't count: it stopped short of the line. Next one, up to the line and hold for 2.",
+   "tool": "speak",
+   "ts": 1792102452.3048863,
+   "ui": {}
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 3,
+   "seq": 203,
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "trigger": "set_complete",
+   "ts": 1792102452.305289
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.2,
+   "name": "get_set_summary",
+   "ok": true,
+   "result_summary": "{\"nhpt\": null, \"kind\": \"set\", \"boundary_event_id\": 18626, \"boundary\": {\"type\": \"set_complete\", \"t\": 1792102452.2822115, \"id\": 18626, \"set\": 2, \"reps\": 6, \"verified_reps\": 0, \"best_deg\": 0.0, \"above_ceiling_count\": 0}, \"reps\": 6, \"verified\":",
+   "run": 3,
+   "seq": 204,
+   "server": "perception",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102453.9184253
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.0,
+   "name": "get_exertion_state",
+   "ok": true,
+   "result_summary": "{\"level\": \"low\", \"score\": 0.0, \"reasons\": [], \"method\": \"behavioural\"}",
+   "run": 3,
+   "seq": 205,
+   "server": "exertion",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102453.918568
+  },
+  {
+   "args": {
+    "evidence": [
+     18626
+    ],
+    "exercise": "abduction",
+    "field": "hold_s",
+    "reason": "Your shoulder lifted on every raise and holds were short. A shorter hold may help you keep good form.",
+    "value": "1"
+   },
+   "autonomy": "patient_approval",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "propose_adjustment",
+   "ok": false,
+   "result_summary": "{\"error\": \"no change: hold_s is already 2 (after clamping 1 to the prescription)\", \"kind\": \"no_change\"}",
+   "run": 3,
+   "seq": 206,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102457.8481255
+  },
+  {
+   "args": {
+    "cue": "correct",
+    "evidence": [
+     18626
+    ],
+    "text": "Nice effort. Keep your shoulder down away from your ear, and hold each raise a little longer before lowering."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.2,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"correct\"}",
+   "run": 3,
+   "seq": 207,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102457.8484075
+  },
+  {
+   "action": "correct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    18626
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at set_complete",
+   "run": 3,
+   "seq": 208,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1792102457.8888443
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 209,
+   "session": "7f69575a3bc7",
+   "source": "agent",
+   "text": "Nice effort. Keep your shoulder down away from your ear, and hold each raise a little longer before lowering.",
+   "tool": "speak",
+   "ts": 1792102457.889,
+   "ui": {
+    "agent_run": 3,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 18763,
+   "cache_write_tokens": 1797,
+   "first_action_ms": 5543.1,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 9001.0,
+   "outcome": "done",
+   "output_tokens": 649,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 3,
+   "seq": 210,
+   "session": "7f69575a3bc7",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "set_complete",
+   "ts": 1792102461.3063874
+  },
+  {
+   "again_tomorrow": "yes_probably",
+   "difficulty": "just_right",
+   "effort": 4,
+   "end_reason": null,
+   "ended_early": false,
+   "kind": "feedback",
+   "pain_after": 3,
+   "seq": 211,
+   "session": "7f69575a3bc7",
+   "ts": 1792102471.5141716
+  },
+  {
+   "kind": "event",
+   "seq": 212,
+   "session": "7f69575a3bc7",
+   "t": 1792102471.5141566,
+   "ts": 1792102471.5143437,
+   "type": "feedback"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 4,
+   "seq": 213,
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1792102471.5293705
+  },
+  {
+   "evidence": [
+    18623,
+    18624,
+    18625,
+    18626,
+    18627
+   ],
+   "kind": "coach_note",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 214,
+   "session": "7f69575a3bc7",
+   "text": "Session ended, not stopped early. 12 reps attempted, 0 verified, all 12 seen falling short of target. 35 form corrections (8 shoulder hiking, 1 trunk lean). Exertion low. Pain 4/10 at start, no new symptoms. Therapist may want to review target.",
+   "ts": 1792102474.2520878
+  },
+  {
+   "args": {
+    "evidence": [
+     18623,
+     18624,
+     18625,
+     18626,
+     18627
+    ],
+    "note": "Session ended, not stopped early. 12 reps attempted, 0 verified, all 12 seen falling short of target. 35 form corrections (8 shoulder hiking, 1 trunk lean). Exe"
+   },
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 7.6,
+   "name": "write_session_summary",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"stored_in_report\": true}",
+   "run": 4,
+   "seq": 215,
+   "server": "coach",
+   "session": "7f69575a3bc7",
+   "transport": "mcp",
+   "ts": 1792102474.2595656
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 11807,
+   "cache_write_tokens": 772,
+   "first_action_ms": 2722.7,
+   "input_tokens": 6,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 4009.4,
+   "outcome": "done",
+   "output_tokens": 350,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 4,
+   "seq": 216,
+   "session": "7f69575a3bc7",
+   "tool_calls": 1,
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1792102475.538859
+  }
+ ],
+ "session": "7f69575a3bc7"
+}
