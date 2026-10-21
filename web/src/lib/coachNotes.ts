@@ -18,3 +18,23 @@ export function noteText(text: string): string {
   if (m[1] === 'progress' && body === 'patient accepted progression') return 'Patient accepted the faster arcs.'
   return `${LEAD[m[1]]}: ${body}${/[.!?]$/.test(body) ? '' : '.'}`
 }
+
+/** Longest coach note the report shows (team design review, 21 Oct: 2–3 sentences). The full
+ *  note stays in the stored session and in Download. */
+export const NOTE_SENTENCES = 3
+
+// A full stop after one of these words does not end a sentence ("Dr. Rao").
+const ABBREV = /(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|St|vs|e\.g|i\.e|approx)\.$/i
+
+/** The first `max` sentences of `text`, cut only after ".", "!" or "?" followed by a space, so
+ *  "1.2 s" and "Dr. Rao" stay whole. Shorter text comes back trimmed and otherwise unchanged. */
+export function capSentences(text: string, max = NOTE_SENTENCES): string {
+  const t = text.trim()
+  let count = 0
+  for (const m of t.matchAll(/[.!?]+(?=\s+\S)/g)) {
+    const end = m.index + m[0].length
+    if (ABBREV.test(t.slice(0, end))) continue
+    if (++count === max) return t.slice(0, end)
+  }
+  return t
+}
