@@ -381,7 +381,7 @@ class CoachSession:
                 self.tracking_lost_events += 1
             if e.type != "frame":
                 self._ring.append(e)
-                self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep", "angle_deg", "ceiling_deg")})
+                self.trace.log("event", type=e.type, id=e.id, t=e.t, **{k: v for k, v in e.payload.items() if k in ("to_dot", "hole", "verified", "reason", "peak_deg", "lean_deg", "rule", "arc", "set", "rep", "angle_deg", "ceiling_deg", "hike", "limit", "held_s", "visibility", "hip_visibility", "shoulders_visibility", "shoulder_sep_norm")})
         out: list[Event] = []
         state = self.exertion.update(events, t=t)
         if state["level"] != self._last_level:

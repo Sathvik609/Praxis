@@ -238,3 +238,31 @@ def test_above_ceiling_respects_its_cooldown_and_rotates_its_phrases():
     later_t = 10.0 + COOLDOWN_S["arm_above_ceiling"] + 0.1
     later = c.decide(arm_ctx([above(later_t, rep=3)], later_t, {"arm_above_ceiling": 10.0}))
     assert [d.cue_id for d in later] == ["arm_above_ceiling"] and later[0].text != first[0].text
+
+
+# ---- shoulder_hiking cue cadence (21 Oct team test: 31 hike flags in 5 sessions) ------------
+def hike(t, angle=50.0):
+    return make_event("shoulder_hiking", t=t, hike=0.12, limit=0.09, angle_deg=angle, count=1)
+
+
+def test_hike_cue_is_capped_per_set_and_spaced():
+    from praxis_session.coach.rules import HIKE_CUE_GAP_S, HIKE_CUES_PER_SET
+
+    c = RuleCoach()
+    said = []
+    for i in range(10):  # one hike flag per rep, a rep every 8 s: what the team test saw
+        t = 10.0 + 8.0 * i
+        said += [(t, d) for d in c.decide(arm_ctx([hike(t)], t)) if d.cue_id == "arm_hike"]
+    assert len(said) == HIKE_CUES_PER_SET
+    assert all(b[0] - a[0] >= HIKE_CUE_GAP_S for a, b in zip(said, said[1:]))
+    assert all(d.action == "correct" and d.label == LABEL for _, d in said)
+    # a new set re-arms the cue (the flag itself is never capped: it is the FSM's event)
+    done = make_event("set_complete", t=100.0, set=1, reps=6, verified_reps=5, best_deg=88.0)
+    c.decide(arm_ctx([done], 100.0))
+    assert [d.cue_id for d in c.decide(arm_ctx([hike(130.0)], 130.0))] == ["arm_hike"]
+
+
+def test_hike_cue_gap_applies_inside_one_batch_of_events():
+    c = RuleCoach()
+    d = c.decide(arm_ctx([hike(5.0), hike(6.0)], 6.0))
+    assert [x.cue_id for x in d] == ["arm_hike"]

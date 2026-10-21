@@ -23,6 +23,12 @@ COOLDOWN_S: dict[str, float] = {"arm_lift": 0.8, "arm_hold": 0.8, "arm_lower": 0
 # Corrections pass the instruct gap, but these keep their own cooldown: the FSM sends
 # `above_ceiling` at most once per rep, and one reminder per ~8 s is enough (10 Oct).
 CORRECTION_COOLDOWN: frozenset[str] = frozenset({"arm_above_ceiling"})
+# Shoulder-hike cue cadence (21 Oct team test: the FSM flagged a hike on nearly every rep, 31
+# flags in 5 Arm out to the side sessions, and the coach said the same line each time). The
+# `shoulder_hiking` event is unchanged and still logged, counted in the summary/report and
+# traced; only the caption is rationed: at most HIKE_CUES_PER_SET per set, HIKE_CUE_GAP_S apart.
+HIKE_CUES_PER_SET = 2
+HIKE_CUE_GAP_S = 20.0
 
 # One intro and one done line per camera-coached arm exercise (locked set, 23 Sep), in our own
 # words (GRASP text is UBC / Heart & Stroke material; see docs/LICENSES.md). Everything else
@@ -59,6 +65,8 @@ class RuleCoach:
         self._regressed_hold = False
         self._proposed_progression = False
         self._pool_idx: dict[str, int] = {}
+        self._hike_cues = 0  # hike captions said in the current set
+        self._hike_last_t = -1e9
 
     def _phrase(self, cue_id: str, **kw: object) -> str:
         pool = PHRASES[cue_id]
@@ -145,6 +153,8 @@ class RuleCoach:
                 return [Decision("instruct", "cup_done", "All four arcs done. Lovely work.", "cup complete", ev)]
         if m == "arm":
             ex = self._exercise(ctx, p)
+            if e.type in ("exercise_start", "set_complete"):
+                self._hike_cues, self._hike_last_t = 0, -1e9  # each set gets its own hike cues
             if e.type == "exercise_start":
                 return [
                     Decision(
@@ -175,7 +185,12 @@ class RuleCoach:
                         out.append(reg)
                 return out
             if e.type == "shoulder_hiking":
-                return [Decision("correct", "arm_hike", "Let the shoulder drop; lift from the arm, not the shoulder.", "shoulder hiking", ev)]
+                if self._hike_cues >= HIKE_CUES_PER_SET or e.t - self._hike_last_t < HIKE_CUE_GAP_S:
+                    return []  # flagged and counted (the event), not said again so soon
+                self._hike_cues += 1
+                self._hike_last_t = e.t
+                return [Decision("correct", "arm_hike", "Let the shoulder drop; lift from the arm, not the shoulder.", "shoulder hiking", ev,
+                                 tool_calls=[{"tool": "get_events", "result": {"hike": p.get("hike"), "limit": p.get("limit"), "angle_deg": p.get("angle_deg"), "hike_cue": self._hike_cues, "of_per_set": HIKE_CUES_PER_SET}}])]
             if e.type == "above_ceiling":
                 # Not a stop rule: the rep still counts; the patient is reminded of the line.
                 return [Decision("correct", "arm_above_ceiling", self._phrase("arm_above_ceiling"), f"lift {p.get('angle_deg')}° past the {p.get('ceiling_deg')}° ceiling (rep {p.get('rep')})", ev)]

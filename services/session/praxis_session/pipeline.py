@@ -17,7 +17,8 @@ facts (facing, needed view, both shoulders, trunk lean). `resample_target_colour
 cup or peg colour from the latest frame (cv2.warpPerspective to the canonical sheet, the HSV
 patch sampler of the tap-to-sample path, cv2.inRange + cv2.findContours to test it) and applies
 the new window only if detection then succeeds where the current window failed. In arm mode a
-view gate held for SETUP_BLOCK_S emits `setup_blocked` (the stop rules pause with the fix).
+view gate held for SETUP_BLOCK_S (3 s; HIPS_BLOCK_S = 6 s for `hips_out_of_view`, 21 Oct) emits
+`setup_blocked` with the visibility numbers (the stop rules pause with the fix).
 
 Patient tap-to-sample (12 Oct): `sample_colour` also takes a tap in frame px (the live screen's
 "Cup not found?" control), mapped to sheet mm with the last homography; a colourless patch
@@ -68,7 +69,17 @@ GATE_HINTS = {
     "turn_side": "Turn side-on so your practising shoulder faces the camera.",
     "hips_out_of_view": "Move the camera back or down so your shoulder, elbow and hips are in view.",
 }
-SETUP_BLOCK_S = 3.0  # a gate held this long (stream time) while the pose is seen -> setup_blocked
+SETUP_BLOCK_S = 3.0  # a view gate (turned from the camera) held this long while the pose is seen -> setup_blocked
+# 21 Oct team test (14/14 setup_blocked were hips_out_of_view, most mid-set on a laptop, with reps
+# verified right after the resume): a practising-side shoulder/elbow/hip visibility dip under
+# arm_fsm.MIN_VISIBILITY needs this long before it pauses. Scoring still freezes from the first
+# frame (the angle needs the hip), so nothing unmeasured is counted; only the pause waits.
+HIPS_BLOCK_S = 6.0
+
+
+def block_after_s(gate: str) -> float:
+    """How long (stream seconds) a view gate is held before `setup_blocked` pauses the set."""
+    return HIPS_BLOCK_S if gate == "hips_out_of_view" else SETUP_BLOCK_S
 MIN_SAMPLE_S = 60  # a sampled patch below this median saturation is paper or print, not a cup/peg
 PEG_DIAMETER_MM = 8.0
 
@@ -920,9 +931,12 @@ class SessionPipeline:
         if gate is not None:
             if self._gate_since is None:
                 self._gate_since = t
-            if not self._setup_blocked and t - self._gate_since >= SETUP_BLOCK_S:
+            if not self._setup_blocked and t - self._gate_since >= block_after_s(gate):
                 self._setup_blocked = True
-                self._emit(out, make_event("setup_blocked", t=t, frame_index=frame_index, target="pose", reason=gate, hint=GATE_HINTS.get(gate, "Check the camera setup."), held_s=round(t - self._gate_since, 1)))
+                # The visibility numbers go with the event (and into the stored trace) so a team
+                # test shows how far under the line the failing check was (21 Oct).
+                vis = {} if angles is None else {k: round(float(angles[k]), 2) for k in ("visibility", "hip_visibility", "shoulders_visibility", "shoulder_sep_norm")}
+                self._emit(out, make_event("setup_blocked", t=t, frame_index=frame_index, target="pose", reason=gate, hint=GATE_HINTS.get(gate, "Check the camera setup."), held_s=round(t - self._gate_since, 1), **vis))
         elif res is not None:
             self._gate_since, self._setup_blocked = None, False
         # pose loss bookkeeping (mirrors marker loss)
