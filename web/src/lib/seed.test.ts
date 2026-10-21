@@ -11,12 +11,12 @@ test('28 Sep lock: only Arm out to the side, Waiter – cup and the peg test are
 })
 
 test('the Home body map names no hidden exercise', () => {
-  const names = Object.values(REGIONS).flatMap((r) => [...r.program.map((p) => p.name), r.primary.label, r.primary.to])
+  const names = Object.values(REGIONS).flatMap((r) => [r.primary.label, r.primary.to])
   expect(names.join(' ')).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|exercise=(arm|pendulum)\b/)
   expect(REGIONS.lShoulder.primary.to).toBe('/details/demo?exercise=abduction&side=left')
   // design v2 (6 Oct): the artifact's dropped / non-registry tasks are never ported
   expect(names.join(' ')).not.toMatch(/Block towers|Grip power|Box and Block/)
-  expect(Object.values(REGIONS).flatMap((r) => r.program.map((p) => p.id)).every((id) => ['abduction', 'cup', 'nhpt'].includes(id))).toBe(true)
+  expect(Object.values(REGIONS).every((r) => !('program' in r))).toBe(true) // design review 21 Oct: no in-card program list
 })
 
 test('a stored session resolves to its registry exercise from the service id, the summary or the mode', () => {
@@ -65,7 +65,6 @@ test('design v2 library: the artifact\'s dropped / non-registry tasks and their 
   for (const id of ['blocks', 'gripper', 'grip', 'bbt']) {
     expect(ALL_EXERCISES.some((e) => e.id === id || e.serviceId === id)).toBe(false)
     expect(EQUIPMENT.some((k) => k.id === id)).toBe(false)
-    expect(Object.values(REGIONS).some((r) => r.program.some((p) => p.id === (id as never)))).toBe(false)
   }
   expect(JSON.stringify(REGIONS)).not.toMatch(DROPPED)
 })

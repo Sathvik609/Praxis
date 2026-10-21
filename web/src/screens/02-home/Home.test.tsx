@@ -58,7 +58,21 @@ test('home shows next practice, the week from the calendar and the affected area
   expect(screen.getByRole('tablist', { name: 'Affected areas' })).toBeInTheDocument()
   // design v2: the shoulder is the default focus area
   expect(screen.getByRole('tab', { name: /Left shoulder/ })).toHaveAttribute('aria-selected', 'true')
-  expect(await screen.findByText(/Use a cup on my own/)).toBeInTheDocument()
+})
+
+test('design review 21 Oct: no everyday goal, no trend line and no program list on Home', async () => {
+  localStorage.setItem('praxis.goal', 'Comb my hair.')
+  mockApi(routes({ '/api/sessions': { sessions: [ARM] }, '/api/progress': { ...PROGRESS, nhpt_trend: [{ date: '2026-09-20', total_s: 45, kind: 'live' }, { date: '2026-10-02', total_s: 41.2, kind: 'live' }] } }))
+  await renderHome()
+  for (const tab of [/Left shoulder/, /Left hand/, /Left elbow/]) {
+    fireEvent.click(screen.getByRole('tab', { name: tab }))
+    const panel = screen.getByRole('tabpanel')
+    expect(within(panel).queryByText(/Everyday goal/i)).not.toBeInTheDocument()
+    expect(within(panel).queryByText(/In your program/)).not.toBeInTheDocument()
+    expect(panel.querySelector('figure, .ad-trend, .ad-prog, .ad-steps')).toBeNull()
+  }
+  expect(document.body.textContent).not.toMatch(/Use a cup on my own|Comb my hair|attempts? logged/)
+  expect(screen.queryByRole('img', { name: /per session|Peg Test · seconds/ })).not.toBeInTheDocument()
 })
 
 test('this week reads the calendar week: days, minutes and today; no sample chip on live history', async () => {
@@ -132,13 +146,13 @@ test('"Sample" is visible whenever a sample value is shown, and only then', asyn
   expect(await screen.findByText('Sample')).toBeInTheDocument()
   const hand = screen.getByRole('tabpanel', { name: 'Left hand details' })
   expect(within(hand).getByText('Getting quicker')).toBeInTheDocument()
-  expect(within(hand).getByText('3.8 s faster since 20 Sep')).toBeInTheDocument()
-  expect(within(hand).getByRole('img', { name: /1 Aug 68 s \(sample\)/ })).toBeInTheDocument()
+  expect(within(hand).getByText('3.8 s faster than your first test on 20 Sep')).toBeInTheDocument()
 })
 
-test('program items navigate', async () => {
+test('the area action under the stage navigates (the in-card program list is gone)', async () => {
   await renderHome()
-  fireEvent.click(screen.getByRole('button', { name: /^Arm out to the side\s*Arm strengthening$/ }))
+  expect(screen.queryByRole('button', { name: /^Arm out to the side\s*Arm strengthening$/ })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Practise Arm out to the side' }))
   expect(screen.getByText('DEMO')).toBeInTheDocument()
 })
 
@@ -174,11 +188,10 @@ test('open report goes to the last session report when there is one, else progre
   expect(screen.getByText('REPORT')).toBeInTheDocument()
 })
 
-test('a replayed last session says replay; one goal attempt is singular (review 28 Sep)', async () => {
-  mockApi(routes({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] }, '/api/patients/me': { ...ME, goal_attempts: 1 } }))
+test('a replayed last session says replay (review 28 Sep)', async () => {
+  mockApi(routes({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] } }))
   await renderHome()
   expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · replay/)).toBeInTheDocument()
-  expect(await screen.findByText(/^1 attempt logged this week/)).toBeInTheDocument()
 })
 
 test('open report falls back to progress without sessions; no seeded last session is shown', async () => {

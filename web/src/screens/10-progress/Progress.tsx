@@ -86,16 +86,16 @@ const sampleChip = (on: boolean) => (on ? <span className="pg-sample" title="Ill
  *  sample history is drawn hollow/outlined and labelled Sample; replays are listed with a badge
  *  and never charted; unverified movements are shown next to verified ones; the arm limit is the
  *  prescription's ceiling; a clinician flag is named only when a flag row exists. Tasks are never
- *  combined and there is no recovery score. */
+ *  combined and there is no recovery score. Design review 21 Oct removed the everyday goal log:
+ *  the camera only sees in-session activity, so the session list takes its height. */
 export function Progress() {
   const nav = useNavigate()
-  const { data: p, error: pError, reload } = useApi(() => api.progress())
+  const { data: p, error: pError } = useApi(() => api.progress())
   const { data: sessions, error: sError } = useApi(() => api.sessions())
   const { data: me } = useApi(() => api.me())
   const { data: rx } = useApi(() => api.prescription())
   const { data: flags } = useApi(() => api.flags())
   const [range, setRange] = useState<Range>('4w')
-  const [logNote, setLogNote] = useState<string | null>(null)
 
   if (!p && !pError) return <p className="p-8 text-xl text-muted" role="status">Loading your progress…</p>
   if (!p) return <p className="p-8 text-xl text-red-ink" role="alert">Could not load progress: {pError}. Is the session service running?</p>
@@ -195,15 +195,6 @@ export function Progress() {
   const peP = line(pe.map((x) => x.pain_after), 0, 10, 26, 14)
   const peE = line(pe.map((x) => x.effort), 0, 10, 26, 14)
   const spike = pe.findIndex((x) => x.ended_early && !x.illustrative)
-
-  const logAttempt = () =>
-    api
-      .logGoal('cup')
-      .then(() => {
-        setLogNote('Logged.')
-        reload()
-      })
-      .catch(() => setLogNote('Could not log — the session service is not reachable.'))
 
   return (
     <div className="pg">
@@ -306,18 +297,6 @@ export function Progress() {
               ))}
             </ul>
             {listRows.length === 0 && sessions && <p className="pg-empty">No sessions in this range.</p>}
-          </Card>
-          <Card className="pg-card" title="Everyday goal log">
-            <div className="flex items-center gap-4">
-              <span className="pg-what">
-                <b>{countOf(p.goal_log_count, 'attempt')} logged at your everyday goal</b>
-                {me?.goal && <small>{me.goal}</small>}
-              </span>
-              <button type="button" className="pg-open" onClick={logAttempt}>
-                Log an attempt
-              </button>
-            </div>
-            {logNote && <p className="pg-note" role="status">{logNote}</p>}
           </Card>
         </div>
         <div className="pg-side">

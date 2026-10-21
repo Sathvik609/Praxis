@@ -6,11 +6,11 @@
  *    a delta), the last Waiter – cup session's verified reaches, the weekly test day;
  *  - elbow: nothing in the program measures it, so it says so.
  *  Status (Focus / Watch / Stable) is set by the program (seed `REGIONS`); headlines are
- *  derived. The everyday goal is the patient's single goal, not an invented ladder. */
+ *  derived. Design review 21 Oct: no everyday goal, trend line or program list on the card. */
 import { sessionSource, type Calendar, type Patient, type Prescription, type Progress, type SessionRecord } from './api'
 import { WEEKDAYS, mondayOf, addDays } from './calendar'
 import { REGIONS, exerciseOfSession } from './seed'
-import { fmtV, trendDelta, type Better, type TrendPoint } from './trend'
+import { fmtV, trendDelta, type TrendPoint } from './trend'
 
 export type AreaKey = 'lShoulder' | 'lElbow' | 'lWrist'
 export type AreaStatus = 'focus' | 'watch' | 'stable'
@@ -25,13 +25,10 @@ export type AreaView = {
   now?: { label: string; value: string; unit?: string; caption: string; detail: string; ring?: { now: number; max: number } }
   /** Shown instead of `now` when there is nothing measured yet. */
   empty?: string
-  trend?: { label: string; points: TrendPoint[]; better: Better; ref?: number; caption?: string }
-  goal: { text: string | null; attempts: number }
   /** The card's two detail tiles. */
   tiles: AreaTile[]
   /** The two quality tiles on the stage (right rail). */
   quality: AreaQuality[]
-  program: { id: string; name: string; tag: string; to: string }[]
   /** True when any value shown comes from sample history: the card shows "Sample". */
   sample: boolean
 }
@@ -76,20 +73,9 @@ function thisWeek(d: AreaSources, sessions: SessionRecord[]): { from: string; to
   return { from: mon, to: addDays(mon, 6) }
 }
 
-function programFor(k: AreaKey, side: string) {
-  return REGIONS[k].program.map((p) => ({ ...p, to: p.to.replace(/side=(left|right)/, `side=${side}`) }))
-}
-
-function base(k: AreaKey, d: AreaSources) {
+function base(k: AreaKey) {
   const r = REGIONS[k]
-  const side = d.me?.side === 'right' || d.rx?.side === 'right' ? 'right' : 'left'
-  return {
-    name: r.title,
-    status: r.status,
-    word: STATUS_WORD[r.status],
-    goal: { text: d.me?.goal ?? null, attempts: d.me?.goal_attempts ?? 0 },
-    program: programFor(k, side),
-  }
+  return { name: r.title, status: r.status, word: STATUS_WORD[r.status] }
 }
 
 function shoulder(d: AreaSources): AreaView {
@@ -109,7 +95,7 @@ function shoulder(d: AreaSources): AreaView {
   const unv = lastArm ? (num(lastArm.summary.camera.unverified) ?? 0) : 0
   const reps = lastArm ? num(lastArm.summary.camera.reps_total) : undefined
   return {
-    ...base('lShoulder', d),
+    ...base('lShoulder'),
     // An arm session whose lifts carry no verified angle is still a session: the card never says
     // "No arm session yet" beside that session's own lift counts (10 Oct walkthrough).
     headline: !last ? (lastArm ? 'No lift angle yet' : 'No arm session yet') : last.best >= ceiling - 3 ? "At today's safe limit" : 'Building range',
@@ -122,7 +108,6 @@ function shoulder(d: AreaSources): AreaView {
       ring: { now: last.best, max: ceiling },
     },
     empty: last ? undefined : lastArm ? 'No verified lift angle in your last arm session.' : 'Starts after your next arm session.',
-    trend: measured.length ? { label: 'Best lift per session · degrees', points: measured.map(({ s, best }) => ({ date: s.date, value: best, sample: isSample(s) })), better: 'up', ref: ceiling } : undefined,
     tiles: [
       { k: 'Lifts with a posture cue', v: inWeek.length ? String(cues) : '—', u: inWeek.length ? `of ${lifts} · this week` : 'No arm session this week' },
       { k: 'Sessions logged', v: String(arm.length), u: arm.length ? `since ${dayMonth(arm[0].date)}` : undefined },
@@ -131,7 +116,7 @@ function shoulder(d: AreaSources): AreaView {
       { k: 'Verified lifts', v: ver === undefined ? '—' : String(ver), u: ver !== undefined && reps !== undefined ? `of ${reps}` : undefined, c: lastArm ? `${unv} unverified · last session` : 'No arm session yet.' },
       { k: 'Shoulder hiking', v: !hikingKnown.length ? '—' : hiking ? String(hiking) : 'None', u: undefined, c: !hikingKnown.length ? 'Not measured this week.' : hiking ? 'events this week' : 'this week' },
     ],
-    // every shoulder value (trend, tiles, counts) comes from these sessions
+    // every shoulder value (tiles, counts) comes from these sessions
     sample: arm.some(isSample),
   }
 }
@@ -146,7 +131,7 @@ function hand(d: AreaSources): AreaView {
   const lastCup = cups[cups.length - 1]
   const nhptDay = d.calendar?.schedule?.nhpt_day ?? d.rx?.schedule?.nhpt_day
   return {
-    ...base('lWrist', d),
+    ...base('lWrist'),
     headline: !points.length ? 'No peg test yet' : delta?.tone === 'good' ? 'Getting quicker' : 'Holding steady',
     now: latest && {
       label: 'Peg test',
@@ -156,7 +141,6 @@ function hand(d: AreaSources): AreaView {
       detail: delta && live.length > 1 ? `${delta.text} than your first test on ${dayMonth(live[0].date)}` : `Nine-Hole Peg Test · ${dayMonth(latest.date)}`,
     },
     empty: latest ? undefined : 'Starts after your next peg test.',
-    trend: points.length ? { label: 'Nine-Hole Peg Test · seconds — lower is better', points, better: 'down', caption: points.some((p) => p.sample) ? 'Earlier points are sample history.' : 'Going down means getting faster.' } : undefined,
     tiles: [
       { k: 'Verified reaches', v: lastCup ? String(num(lastCup.summary.camera.verified) ?? 0) : '—', u: lastCup ? `${num(lastCup.summary.camera.unverified) ?? 0} unverified · last session` : 'No cup session yet' },
       { k: 'Next test', v: nhptDay === undefined ? '—' : WEEKDAYS[nhptDay], u: 'weekly' },
