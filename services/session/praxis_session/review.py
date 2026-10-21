@@ -192,9 +192,10 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
     }
 
 
-def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]] | None = None, prices: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]] | None = None, prices: dict[str, dict[str, float]] | None = None, unsaved: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Sessions as `Store.session()` returns them (with events). Live ones are analysed;
-    `traces` (session id → trace lines) adds the agent coach section."""
+    `traces` (session id → trace lines) adds the agent coach section; `unsaved`
+    (`unsaved_closes`) the live sockets that closed before their session was saved."""
     live = [s for s in sessions if s.get("source") == "live"]
     replays = sum(1 for s in sessions if s.get("source") == "replay")
     by_ex: dict[str, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
@@ -272,6 +273,7 @@ def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
         "live_sessions": len(live), "replay_sessions": replays,
         "testers": dict(testers.most_common()), "exercises": exercises, "issues": issues,
         "agent": agent,
+        "unsaved_sockets": _unsaved_summary(unsaved or []),
     }
 
 
@@ -305,12 +307,58 @@ def _pct(a: int, b: int) -> str:
     return f"{a}/{b} ({round(100 * a / b)} %)" if b else "–"
 
 
+def unsaved_closes(directory: Any, exclude: set[str] | frozenset[str] = frozenset(), limit: int = 500) -> list[dict[str, Any]]:
+    """Live sockets that closed before their session was saved (21 Oct): the trace's
+    `socket_close` row with `saved: false`, newest `limit` trace files, stored sessions left out.
+    A session is only stored when its feedback arrives, so these are otherwise invisible."""
+    from pathlib import Path
+
+    d = Path(directory)
+    try:
+        files = sorted(d.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
+    except OSError:
+        return []
+    out = []
+    for f in files:
+        sid = f.stem
+        if sid in exclude:
+            continue
+        rows = load_trace(d, sid)
+        close = next((r for r in reversed(rows) if r.get("kind") == "socket_close"), None)
+        if close is None or close.get("saved") or close.get("source") != "live":
+            continue
+        head = next((r for r in rows if r.get("kind") == "session"), {})
+        out.append({"session": sid, "mode": head.get("mode"), "exercise": head.get("exercise"), "tester": clean_tester(head.get("user")) or UNTAGGED,
+                    **{k: close.get(k) for k in ("close_code", "agent_run_in_flight", "s_since_agent_run", "s_since_last_message", "frames")}})
+    return out
+
+
+def _unsaved_summary(drops: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "count": len(drops),
+        "close_codes": dict(Counter(str(x.get("close_code")) for x in drops).most_common()),
+        "agent_run_in_flight": sum(1 for x in drops if x.get("agent_run_in_flight")),
+        "within_30s_of_agent_run": sum(1 for x in drops if not x.get("agent_run_in_flight") and x.get("s_since_agent_run") is not None and x["s_since_agent_run"] <= 30),
+        "testers": dict(Counter(x["tester"] for x in drops).most_common()),
+        "sessions": [x["session"] for x in drops][:20],
+    }
+
+
+def _unsaved_md(u: dict[str, Any] | None) -> list[str]:
+    if not u or not u["count"]:
+        return []
+    codes = ", ".join(f"{k} ×{v}" for k, v in u["close_codes"].items())
+    return ["", f"Sockets closed before the session was saved: {u['count']} · close codes {codes} (1000/1001 = the browser closed it, 1006 = the connection dropped)",
+            f"- agent run in flight at the close: {u['agent_run_in_flight']} · within 30 s after an agent run: {u['within_30s_of_agent_run']} · testers: " + ", ".join(f"{k} ({v})" for k, v in u["testers"].items())]
+
+
 def render_md(r: dict[str, Any]) -> str:
     lines = ["# Praxis team test — where to improve", ""]
     if not r["live_sessions"]:
         lines += ["No live sessions yet. Each teammate opens the review link, enters a name, and runs the default day.", ""]
         if r["replay_sessions"]:
             lines.append(f"({r['replay_sessions']} replay sessions are stored; replays are recorded clips and are not analysed.)")
+        lines += _unsaved_md(r.get("unsaved_sockets"))
         return "\n".join(lines) + "\n"
     who = ", ".join(f"{k} ({v})" for k, v in r["testers"].items())
     lines += [f"Live sessions: {r['live_sessions']} · testers: {who} · {r['replay_sessions']} replays not counted.",
@@ -321,6 +369,7 @@ def render_md(r: dict[str, Any]) -> str:
         lines += [f"| {i['exercise']} | {i['what']} | {i['count']} | {i['sessions_hit']}/{i['of']} |" for i in r["issues"]]
     else:
         lines.append("None seen.")
+    lines += _unsaved_md(r.get("unsaved_sockets"))
     a = r.get("agent") or {}
     lines += ["", "## AI coach (Claude agent)", ""]
     if not a.get("sessions"):

@@ -195,9 +195,11 @@ class SessionOps:
                 self.perception_lost += 1
                 emit("perception_lost", {**self._base(), "missing": [str(m) for m in (p.get("missing") or [])][:8]})
 
-    def end(self, summary: dict[str, Any] | None, latency: dict[str, Any] | None, now: float | None = None) -> dict[str, Any] | None:
+    def end(self, summary: dict[str, Any] | None, latency: dict[str, Any] | None, now: float | None = None, how: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """The session_end line (once). `summary` is `CoachSession.summary()`; only counts and
-        labels are read from it, never `told_us`, notes, flag details or the username."""
+        labels are read from it, never `told_us`, notes, flag details or the username. `how`
+        (21 Oct) says how the socket ended: `ended_by` feedback | socket_closed, `close_code`,
+        the agent run in flight and seconds since the last agent run."""
         if self.ended:
             return None
         self.ended = True
@@ -236,6 +238,7 @@ class SessionOps:
             "cues": lat.get("cues"),
             "coach": (s.get("coach") or {}).get("label"),
             "agent_decisions": (s.get("coach") or {}).get("agent_decisions"),
+            **(how or {}),
         }
         metrics = {
             "Sessions": 1,
