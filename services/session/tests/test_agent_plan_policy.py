@@ -158,3 +158,15 @@ def test_policy_table_is_rendered_into_the_docs():
     md = T.autonomy_markdown()
     assert md.startswith("| Tool | Autonomy | Why |") and "`propose_adjustment`" in md
     assert md in (ROOT / "docs" / "AGENT.md").read_text()
+
+
+def test_pause_run_must_not_stop_after_the_fix_line():
+    # 21 Oct: real Sonnet 5.5 spoke the right fix and ended the run 2 of 3 times on covered_marker
+    assert "fix line is not the end of the run" in SYSTEM_PROMPT
+    assert "Do not stop after the fix line" in TRIGGER_JOB["pause"]
+
+
+def test_pause_run_recalibrates_before_it_asks_to_resume():
+    # 21 Oct: called together, request_resume ran on the stale frame and failed before recalibrate saw the fix
+    assert "Never call them together" in SYSTEM_PROMPT
+    assert "never call recalibrate and request_resume together" in TRIGGER_JOB["pause"]

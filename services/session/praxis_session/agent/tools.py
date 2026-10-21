@@ -58,7 +58,7 @@ PRAISE_EVERY_N = 3
 PEAK_DROP_DEG = 3.0
 REVIEW_TRIGGERS = ("arc_complete", "set_complete")
 
-POLICY_VERSION = "2026-10-11.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
+POLICY_VERSION = "2026-10-21.1"  # the autonomy policy (AUTONOMY below); in every agent_run row
 PLAN_MAX_ITEMS = 3
 PLAN_ITEM_MAX_CHARS = 100
 BECAUSE_MAX_CHARS = 200

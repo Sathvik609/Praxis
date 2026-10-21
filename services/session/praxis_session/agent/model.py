@@ -433,6 +433,11 @@ get_set_summary (never invent ids).
   pose facts (facing vs needed_view, both shoulders, hips, trunk lean) to name the fix. Then
   recalibrate, then
   request_resume (the prompt already asks the patient, so do not ask in `speak` too).
+  The fix line is not the end of the run, and the order matters: after speak, call
+  recalibrate alone and wait for its result (it waits for the patient's fix on fresh frames);
+  only then, in a later turn, call request_resume. Never call them together. If recalibrate
+  found all markers, do not speak again: request_resume asks the patient. A run that speaks
+  the fix and stops leaves the patient paused with nothing to tap.
   request_resume re-checks the camera first: if it returns ok=false the setup still fails,
   so speak its `hint` once more and stop. Never claim a fix the camera has not confirmed.
   Never resume on your own.
@@ -463,7 +468,7 @@ TRIGGER_JOB = {
     "checkin": "Plan the session: read the prescription (and history if useful), set_session_plan (goals, what to watch, evidence = the check-in event), then give one short opening instruction.",
     "set_complete": "Review the set just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this set's evidence changes it.",
     "arc_complete": "Review the arc just finished (get_set_summary, get_exertion_state): praise, correct, or propose an adjustment; revise the plan with set_session_plan only if this arc's evidence changes it.",
-    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup (if only the target check fails: resample_target_colour), speak the specific fix, recalibrate, request_resume (if it says the setup still fails, say its hint again).",
+    "pause": "Setup recovery: get_set_summary (why reps were not verified), check_setup (if only the target check fails: resample_target_colour), speak the specific fix, then recalibrate alone and wait for its result, then request_resume (if it says the setup still fails, say its hint again). Do not stop after the fix line, and never call recalibrate and request_resume together.",
     "nhpt_complete": "Explain the peg-test result plainly: get_set_summary (`nhpt`: total time, per-peg splits), then one speak line with the time and the slowest peg; no norms, no clinical interpretation.",
     "feedback": "Write the session summary note for the report (if the session was stopped, say why, factually).",
 }
