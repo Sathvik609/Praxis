@@ -1,6 +1,6 @@
 import { agentRuns, isAgentRow, sessionIdOf, toolLine } from './agentTrace'
 
-const AGENT = 'Claude agent · Anthropic API (dev)'
+const AGENT = 'Claude agent · Anthropic API'
 let seq = 0
 // like the service's Trace.log: the row kind wins over a field named kind
 const row = (kind: string, f: Record<string, unknown> = {}) => ({ ...f, seq: ++seq, ts: 1000 + seq, session: 's1', kind })

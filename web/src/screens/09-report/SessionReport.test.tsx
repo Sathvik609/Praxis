@@ -324,9 +324,9 @@ const AGENT_COACH = {
   label: 'Rule-based coach',
   notes: [],
   decisions: 4,
-  agent: 'Claude agent · Anthropic API (dev)',
+  agent: 'Claude agent · Anthropic API',
   agent_decisions: 2,
-  note: { text: 'Steady slow arcs; reach time held across the fast arcs.', evidence: [12, 30], label: 'Claude agent · Anthropic API (dev)' },
+  note: { text: 'Steady slow arcs; reach time held across the fast arcs.', evidence: [12, 30], label: 'Claude agent · Anthropic API' },
 }
 
 test("the Claude agent's session note sits in a section titled just \"Agent\"", async () => {
@@ -367,7 +367,7 @@ test('rule notes beside the agent note keep the rule coach label; the agent note
 })
 
 test('with the agent off (or silent) the section stays labelled "Rule-based coach", never "Agent"', async () => {
-  const coach = { label: 'Rule-based coach', notes: [], decisions: 0, agent: 'Claude agent · Anthropic API (dev)', agent_decisions: 0 }
+  const coach = { label: 'Rule-based coach', notes: [], decisions: 0, agent: 'Claude agent · Anthropic API', agent_decisions: 0 }
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
   renderReport()
   expect(await screen.findByRole('heading', { name: 'Rule-based coach' })).toBeInTheDocument()

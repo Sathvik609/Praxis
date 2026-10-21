@@ -26,7 +26,7 @@ def test_config_anthropic_needs_a_key_and_defaults_to_the_default_model():
     assert c.mode == "anthropic" and c.model == M.DEFAULT_MODEL and c.ready is False
     assert c.reason == "ANTHROPIC_API_KEY is not set"
     c = M.load_config({"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": "sk-test", "PRAXIS_AGENT_MODEL": "claude-sonnet-5", "PORT": "9001"})
-    assert c.ready and c.label == "Claude agent · Anthropic API (dev)" and c.mcp_url == "http://127.0.0.1:9001/mcp"
+    assert c.ready and c.label == "Claude agent · Anthropic API" and c.mcp_url == "http://127.0.0.1:9001/mcp"
     assert "sk-test" not in json.dumps(c.health(True))  # the key is never reported
 
 
@@ -156,7 +156,7 @@ class FakeModel:
 def test_strands_planner_falls_back_to_direct_tools_and_calls_them(tmp_path):
     reg = T.Registry()
     s = CoachSession(mode="cup", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="st1")
-    h = reg.register(T.SessionHandle(session=s, pipeline=SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False), label="Claude agent · Anthropic API (dev)"))
+    h = reg.register(T.SessionHandle(session=s, pipeline=SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False), label="Claude agent · Anthropic API"))
     e = make_event("arc_complete", t=1.0, arc=1, reaches=4, unverified=0)
     s.on_events([e], snapshot={}, t=1.0)
     fake = FakeModel([("speak", {"session_id": "st1", "text": "Nice steady arc.", "cue": "instruct", "evidence": [e.id]})])

@@ -1,4 +1,4 @@
-# Accessibility audit (WCAG 2.1 AA) — 10 Oct 2026
+# Accessibility audit (WCAG 2.1 AA) — 10 Oct 2026, updated 21 Oct 2026
 
 Target: WCAG 2.1 level AA plus keyboard and screen-reader usability on every screen of the web app, without changing the designers' look (design v2, 6 Oct). This file says what was checked, what was found and fixed, what is excepted by product decision and what is still not served. Every check below is a test or script in the repo, so the numbers can be regenerated.
 
@@ -95,7 +95,7 @@ Totals: 18 issues fixed (1–7 from axe, 8–18 from the keyboard and screen-rea
 
 - **Landmarks:** patient screens: `header` (banner) with the `nav` "Hubs", one `main`; live screens: their own `header` and `main`, the control bar as a `footer`; Therapist: banner + `main`. Every page has one `h1` and headings in order.
 - **Names:** every icon-only control has an accessible name (axe `button-name` / `link-name` pass on every screen); the rail's hub labels are visually hidden text, not tooltips only.
-- **Live regions:** on a live screen the coach caption is the one polite announcer (`SxCoach`, always on screen since the voice was removed). The counters and progress card are not live. The state chip in the header (`role="status"`) changes only on state transitions (connecting, tracking, lost, paused). Stops are `role="alertdialog"`; a blocked camera is `role="alert"`.
+- **Live regions:** on a live screen the coach caption is the one polite announcer (`SxCoach`; since 21 Oct the browser also speaks each cue, and the caption stays on while it does). The counters and progress card are not live. The state chip in the header (`role="status"`) changes only on state transitions (connecting, tracking, lost, paused). Stops are `role="alertdialog"`; a blocked camera is `role="alert"`.
 - **Status never by colour alone:** status chips, area states, week dots, board holes and verified / unverified counts all carry words or a text label (`role="img"` with a name where the visual is a shape).
 - **Forms:** every input, scale and switch has a label (axe `label`, `aria-input-field-name` pass).
 
@@ -107,10 +107,9 @@ Totals: 18 issues fixed (1–7 from axe, 8–18 from the keyboard and screen-rea
 
 ## 6. Remaining limitations
 
-- **Caption-only coach.** The coach voice was removed on 10 Oct by product-owner decision; captions are the only coach channel. Patients who cannot read the captions (low vision, low literacy, or eyes on the task across the table, and Arm out to the side is done 2–2.5 m from the laptop) get no coach cues. A screen-reader user hears the caption through the polite live region, which is not the same as a coach voice. An Amazon Polly voice behind the same captions is a possible W6 option, not a commitment (`docs/RISKS.md`, 10 Oct).
+- **Spoken coach, always captioned (21 Oct).** The coach voice was removed on 10 Oct and restored on 21 Oct, because patients stand too far from the screen to read captions (Arm out to the side is done 2–2.5 m from the laptop). Cues are spoken by the browser (`SpeechSynthesis`) and always captioned; captions cannot be switched off while the coach speaks. Controls, checked by reading the code, not with a screen reader: Settings › Audio (on by default); the session bar's volume is a native range input named "Coach voice volume" with its value as text (`aria-valuetext`, e.g. "60%"); the Demonstration's Audio button is a toggle with `aria-pressed` and visible text "Audio on" / "Audio off". Open: the voice and a screen reader can talk over each other (the caption is also a polite live region), and the browser voice varies by device and language pack. Polly is not used.
 - **No real assistive-technology testing yet** (§1). Pilot sessions should include at least one keyboard-only run and one VoiceOver run of the default day.
 - **The camera view and the figure are visual.** The overlay canvas and the WebGL figure have no text equivalent of their own; the same information is given in text (status band, counts, captions, the Demonstration's step captions), but a blind patient cannot use the camera-coached exercises in a meaningful way.
-- **The Demonstration must play to its end** before "Before you start" opens (no skip), the same for every user.
 - **Radio groups keep every option as a Tab stop** (plus arrows), instead of the WAI-ARIA single-Tab-stop pattern; only the pain / effort scales use a roving tab index.
 - **Target size:** controls are 40–48 px as the designers drew them (D-SIZE). That meets 2.1 AA (2.5.5 target size is AAA) but is harder for patients with impaired hand control.
 - **Text over live video** (the "You" tag and band over the camera) has its own backing, but its contrast against a real room is not measurable in the test pages.

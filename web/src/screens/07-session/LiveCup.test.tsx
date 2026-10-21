@@ -160,12 +160,12 @@ test('Show trace swaps the reference for the trace and keeps the caption, counts
 test('an agent cue shows its label and the header shows the thinking chip', () => {
   mockStream([
     frame,
-    { type: 'agent_status', t: 10, id: 2, state: 'thinking', trigger: 'arc_complete', label: 'Claude agent · Anthropic API (dev)' },
-    cue(3, { source: 'agent', label: 'Claude agent · Anthropic API (dev)', text: 'Slower on the way down to dot 4.' }),
+    { type: 'agent_status', t: 10, id: 2, state: 'thinking', trigger: 'arc_complete', label: 'Claude agent · Anthropic API' },
+    cue(3, { source: 'agent', label: 'Claude agent · Anthropic API', text: 'Slower on the way down to dot 4.' }),
   ])
   renderAt('/session?exercise=cup&side=left')
   expect(screen.getByText('Slower on the way down to dot 4.')).toBeInTheDocument()
-  expect(screen.getByText('Claude agent · Anthropic API (dev)').closest('[data-source]')).toHaveAttribute('data-source', 'agent')
+  expect(screen.getByText('Claude agent · Anthropic API').closest('[data-source]')).toHaveAttribute('data-source', 'agent')
   expect(screen.getByText('Coach is thinking…')).toBeInTheDocument()
 })
 
@@ -173,8 +173,8 @@ test('a resume prompt during a setup pause shows inside the paused hold with the
   mockStream([
     frame,
     { type: 'pause', t: 10, id: 2, rule: 'failed_reps', text: 'Three reaches in a row were not verified.' },
-    cue(3, { source: 'agent', action: 'correct', label: 'Claude agent · Anthropic API (dev)', text: 'Marker 2 is covered by your sleeve. Move it clear of the sheet.' }),
-    cue(4, { source: 'agent', label: 'Claude agent · Anthropic API (dev)', text: 'Setup looks good — resume?', ui: { prompt: { id: 'r1', kind: 'resume', title: 'Setup looks good — resume?', text: 'All four markers are in view again.', options: ['Yes, resume', 'Not yet'], within_prescription: true } } }),
+    cue(3, { source: 'agent', action: 'correct', label: 'Claude agent · Anthropic API', text: 'Marker 2 is covered by your sleeve. Move it clear of the sheet.' }),
+    cue(4, { source: 'agent', label: 'Claude agent · Anthropic API', text: 'Setup looks good — resume?', ui: { prompt: { id: 'r1', kind: 'resume', title: 'Setup looks good — resume?', text: 'All four markers are in view again.', options: ['Yes, resume', 'Not yet'], within_prescription: true } } }),
   ])
   renderAt('/session?exercise=cup&side=left')
   const hold = screen.getByRole('alertdialog')

@@ -105,7 +105,7 @@ export function healthLines(h: AgentHealth | null | undefined): { title: string;
   if (!h || h.mode === 'off') return { title: 'Off — rule-based coach', details: [] }
   const model = modelName(h.model) || h.model
   const title =
-    h.mode === 'scripted' ? 'Scripted agent (test) — no model calls' : `Claude ${model} via Anthropic API (dev)`
+    h.mode === 'scripted' ? 'Scripted agent (test) — no model calls' : `Claude ${model} via Anthropic API`
   const details = [h.mcp ? 'MCP tools connected' : 'Tools called directly (MCP not connected)']
   if (!h.ready) details.push(`Not ready${h.reason ? `: ${h.reason}` : ''} · the rule-based coach runs`)
   return { title, details }

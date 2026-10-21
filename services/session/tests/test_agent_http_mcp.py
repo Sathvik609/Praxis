@@ -39,7 +39,7 @@ def test_strands_planner_uses_real_streamable_http_mcp(tmp_path):
         p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
         p.process(camera_frame(CUP_TARGETS, hide_marker=3)[0], 0.0, 0)
         s = CoachSession(mode="cup", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="http1")
-        h = reg.register(T.SessionHandle(session=s, pipeline=p, label="Claude agent · Anthropic API (dev)"))
+        h = reg.register(T.SessionHandle(session=s, pipeline=p, label="Claude agent · Anthropic API"))
         e = make_event("arc_complete", t=1.0, arc=1, reaches=4, unverified=3)
         s.on_events([e], snapshot={}, t=1.0)
         fake = FakeModel([("check_setup", {"session_id": "http1"}), ("speak", {"session_id": "http1", "text": "Marker 3 is covered.", "cue": "correct", "evidence": [e.id]})])

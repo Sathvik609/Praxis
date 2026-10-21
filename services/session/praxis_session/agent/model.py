@@ -31,7 +31,7 @@ from praxis_session.agent import tools as T
 from praxis_session.agent.budget import DailyRunBudget, parse_limit
 
 AGENT_LABELS = {
-    "anthropic": "Claude agent · Anthropic API (dev)",
+    "anthropic": "Claude agent · Anthropic API",
     "scripted": "Claude agent · scripted (test)",
 }
 PROVIDERS = {"anthropic": "anthropic-api", "scripted": "scripted"}

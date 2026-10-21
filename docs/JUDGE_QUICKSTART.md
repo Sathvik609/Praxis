@@ -10,7 +10,7 @@ Five minutes, no install. If you have a webcam you can try one exercise live; wi
 
 This is the AWS deployment: an EC2 **c8g.large (Graviton4)** in us-east-2, launched from the **COOL AMI**, running the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To confirm what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
 
-The team keeps the endpoint up for the judging period (through 9 Nov 2026). If it does not answer, use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
+The team keeps the endpoint up for the judging period (started for judging from 24 Oct, kept up through 10 Nov 2026; judging ends 10 Nov, 2:45 am EST). If it does not answer, use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
 
 ## 2. Turn on the judge view (10 s)
 
@@ -28,7 +28,7 @@ Settings → Demo and judging → **Replay a recorded session** → pick a clip:
 | `synthetic_cup_01` (Waiter – cup) | ArUco calibration → warped target sheet → cup-base segmentation → reach state machine. 32 reaches over 2 slow and 2 fast arcs. Watch the verified vs unverified counts, the progression prompt (Yes / Not yet / Why) before the fast arcs, and, on the AWS endpoint, the Claude agent coach's lines at the end of each arc (`source: agent` in the trace). |
 | `synthetic_nhpt_01` (Nine-Hole Peg Test) | Board warp, Hough holes, HSV + contour pegs, masked `matchTemplate` occupancy, the peg state machine, the NHPT timer and per-peg splits. |
 
-The replays are **OpenCV-rendered synthetic clips** (labelled "Replay"). They show the pipeline working; they are not evidence of real-world accuracy (report §6). A replayed session gets a report like a live one but is never counted in progress, adherence or trends.
+The replays are **OpenCV-rendered synthetic clips** (labelled "Replay"). They show the pipeline working; they are not evidence of real-world accuracy (report §8.1). A replayed session gets a report like a live one but is never counted in progress, adherence or trends.
 
 ## 4. With a webcam: try one exercise live (3 min)
 
@@ -57,12 +57,12 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 
 | Claim | Evidence |
 |---|---|
-| OpenCV 5 does the substantive vision work | [`docs/TECHNICAL_REPORT.md`](TECHNICAL_REPORT.md) §4, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §2, `services/session/praxis_session/perception/` |
-| Runs on AWS Graviton with COOL | report §6, `/health` above, `infra/ec2/deploy.sh` |
+| OpenCV 5 does the substantive vision work | [`docs/TECHNICAL_REPORT.md`](TECHNICAL_REPORT.md) §5, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §2, `services/session/praxis_session/perception/` |
+| Runs on AWS Graviton with COOL | report §7, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
 | OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl`, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
-| Agent evaluation (real Claude, 15 scenarios × 3) and the rule-only ablation | [`evaluation/results/agent_v0_anthropic.md`](../evaluation/results/agent_v0_anthropic.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md) |
+| Agent evaluation: real Claude Sonnet 5.5 on 15 synthetic scenarios (21 Oct: 15/15, 0 guardrail violations), on real video (REHAB24-6, 40 sessions), and the rule-only ablation | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
 | Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
 | Camera robustness (107 synthetic conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
-| Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §8 |
-| What is not done yet | report §9 (Limitations) |
+| Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §9.1 |
+| What is not done yet | report §10 (Limitations) |

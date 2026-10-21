@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { mockApi } from '../../test/api-mock'
 import { TracePanel, traceRows } from './TracePanel'
 
-const AGENT = 'Claude agent · Anthropic API (dev)'
+const AGENT = 'Claude agent · Anthropic API'
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const agentEvents = [
   { type: 'command', t: 0.5, id: 39, cmd: 'checkin', ok: true, session_id: 's1' },
