@@ -26,6 +26,10 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
 - `labels.schema.json` — the ground-truth schema (`praxis.labels/1`): reps with start/end time,
   hole (NHPT) or dot (cup), expected verified/unverified + reason, scripted error, and for Arm
   out to the side the goniometer-app angle (`peak_deg_goniometer`) and trunk lean / shoulder hike.
+- `data/team_test_2026-10-21/` — the team shake-down on the hosted 13 Oct build (15 live
+  sessions, 12–15 Oct; snapshot 21 Oct, GET only): stored session summaries + events, 6 traces,
+  the server's `/api/review` aggregate, `meta.json` (provenance). Testers pseudonymised (T1–T3;
+  `test-claude` = automated, Claude-driven, synthetic clip); no frames exist. Not labelled.
 
 ## Tools (`services/session/tools/`, run from `services/session`)
 
@@ -63,6 +67,12 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
   `issues.csv`, `therapist.csv`) into `results/usability_v0.{json,md}`: unaided and completion
   rates with Wilson 95 % intervals, median time, errors, SEQ per task, issues by severity, and the
   therapist table (our own six items, labelled as not a validated scale).
+- `team_test_report.py [--check]` — `data/team_test_2026-10-21/` into
+  `results/team_test_2026-10-21.{md,json}`: per exercise verified / unverified / missed, setup
+  pauses, ended early, hike flags (and the captions the 21 Oct rationing would say), therapist
+  flags, agent runs / refused vs failed tool calls / latency / cost, human testers and automated
+  sessions always apart, and what Phase 2 (21 Oct) changed. `--check` fails if the committed
+  output differs.
 - `agent_eval.py` + `agent/scenarios/*.json` — the agent coach's nine scenarios (covered marker,
   dim light, three unverified, falling peaks + exertion, repeated lean, pain stop mid-run, model
   timeout, MCP down, clean session) through the real session, OpenCV setup checks on synthetic
@@ -87,6 +97,7 @@ uv run python ../../evaluation/scripts/eval.py --dataset ../../evaluation/datase
 uv run python ../../evaluation/scripts/latency.py --replay
 uv run python ../../evaluation/scripts/sus.py
 uv run python ../../evaluation/scripts/usability.py
+uv run python ../../evaluation/scripts/team_test_report.py
 ```
 
 Synthetic numbers validate the pipeline only; they are not evidence about real-world accuracy.

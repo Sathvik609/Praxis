@@ -1,0 +1,19 @@
+{
+ "what": "Team shake-down test of the hosted review build (Railway, PRAXIS_TEAM_TEST=1), not a usability study",
+ "build": "13 Oct 2026 build (the 13 Oct handoff names 4afb8f0 as live; /health does not report a commit). The 21 Oct Phase 2 fixes were NOT deployed there.",
+ "sessions_run": "2026-10-12 to 2026-10-15",
+ "snapshot_taken": "2026-10-21",
+ "source": "https://team-test.example — GET only: /api/sessions (listing), /api/sessions/{id} (summary + stored events, one file per session in sessions/), /api/trace?session={id}&n=100000 (traces/, only the sessions still in the server's memory), /api/review (review_server.json, the server's own aggregate, which read every trace file on its disk)",
+ "live_sessions": 15,
+ "excluded": "the 4 illustrative seed sessions (s-09xx, source null) are not live and are not included",
+ "testers": {
+  "T1": "team member (pseudonym)",
+  "T2": "team member (pseudonym)",
+  "T3": "team member (pseudonym)",
+  "test-claude": "automated (Claude-driven, synthetic clip): Claude Code drove the hosted site with a synthetic or replayed clip as the camera; not a person"
+ },
+ "pseudonymisation": "real tester names replaced by T1-T3 everywhere (username, trace user, review keys); the mapping is not committed. No free-text notes from people exist in the snapshot (the only feedback 'detail' text is test-claude's 'automated check by Claude (synthetic clip)'). Self-reported pain/effort answers are kept because stop rules depend on them.",
+ "pixels": "none: the service never stores frames; these files hold events, summaries and trace rows only (checked by tests/test_team_test_report.py: no inline image, base64 or JPEG payloads)",
+ "traces_note": "traces/ holds 6 of 15 sessions (all T1): the other sessions' traces were no longer in the server's memory and /api/trace serves memory only. Agent totals over all 15 sessions therefore come from review_server.json.",
+ "socket_close": "not recorded: the 13 Oct build predates the socket_close trace row (ec98186, 21 Oct)"
+}

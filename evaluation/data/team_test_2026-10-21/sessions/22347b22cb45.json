@@ -1,0 +1,334 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 14,
+  "new_symptoms": false,
+  "pain_before": 5
+ },
+ "date": "2026-10-14",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-14T12:07:01",
+ "events": [
+  {
+   "id": 7755,
+   "kind": "event",
+   "seq": 4,
+   "session": "22347b22cb45",
+   "t": 1791993971.8832328,
+   "ts": 1791993971.8836012,
+   "type": "checkin"
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 7761,
+   "kind": "event",
+   "seq": 6,
+   "session": "22347b22cb45",
+   "t": 1791993972.0975928,
+   "ts": 1791993972.1316473,
+   "type": "exercise_start"
+  },
+  {
+   "id": 7799,
+   "kind": "event",
+   "rep": 1,
+   "seq": 11,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993975.9319253,
+   "ts": 1791993975.9491773,
+   "type": "state_change"
+  },
+  {
+   "id": 7819,
+   "kind": "event",
+   "rep": 1,
+   "seq": 17,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993977.4065213,
+   "ts": 1791993977.4359198,
+   "type": "state_change"
+  },
+  {
+   "id": 7820,
+   "kind": "event",
+   "rep": 1,
+   "seq": 18,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993977.4065213,
+   "ts": 1791993977.4360816,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 81.6,
+   "id": 7830,
+   "kind": "event",
+   "seq": 23,
+   "session": "22347b22cb45",
+   "t": 1791993977.8798327,
+   "ts": 1791993977.8996952,
+   "type": "shoulder_hiking"
+  },
+  {
+   "angle_deg": 98.7,
+   "ceiling_deg": 90.0,
+   "id": 7860,
+   "kind": "event",
+   "rep": 1,
+   "seq": 27,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993980.015726,
+   "ts": 1791993980.0358953,
+   "type": "above_ceiling"
+  },
+  {
+   "id": 7891,
+   "kind": "event",
+   "rep": 1,
+   "seq": 30,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993982.4228134,
+   "ts": 1791993982.4459465,
+   "type": "state_change"
+  },
+  {
+   "id": 8037,
+   "kind": "event",
+   "peak_deg": 102.3,
+   "reason": null,
+   "rep": 1,
+   "seq": 33,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993994.4586112,
+   "ts": 1791993994.4772,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 8038,
+   "kind": "event",
+   "rep": 2,
+   "seq": 34,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993994.4586112,
+   "ts": 1791993994.47731,
+   "type": "state_change"
+  },
+  {
+   "id": 8088,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 37,
+   "session": "22347b22cb45",
+   "t": 1791993998.4253078,
+   "ts": 1791993998.445406,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 8089,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 39,
+   "session": "22347b22cb45",
+   "t": 1791993998.4253078,
+   "ts": 1791993998.4455862,
+   "type": "pause"
+  },
+  {
+   "id": 8170,
+   "kind": "event",
+   "rep": 2,
+   "seq": 47,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791994005.3488817,
+   "ts": 1791994005.3677356,
+   "type": "state_change"
+  },
+  {
+   "kind": "event",
+   "seq": 50,
+   "session": "22347b22cb45",
+   "t": 1791994021.0072353,
+   "ts": 1791994021.0073957,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "end_reason": "finished",
+  "ended_early": true,
+  "pain_after": 3
+ },
+ "id": "22347b22cb45",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s, watch leaning",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-14T12:06:11",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 1,
+   "above_ceiling_by_set": {
+    "1": 1
+   },
+   "active_s": 26.4,
+   "corrections": 3,
+   "coverage_pct": 100,
+   "hiking_cues": 1,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 13.5,
+   "peak_deg": [
+    102.3
+   ],
+   "peak_verified": [
+    true
+   ],
+   "posture_cues": 1,
+   "reps_total": 1,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 1,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 2,
+   "decisions": 9,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     8037,
+     8038,
+     8088,
+     8089,
+     8170
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Arm abduction, gentle tier (plan 2x6 to 60°). Session ended early with a setup pause, not a stop rule. Only 1 rep done (verified), 0 missed. 3 corrections: 1 hiking cue, 1 posture cue; 1 rep above ceiling. Pain 5 before, no new symptoms. Exertion low."
+   },
+   "notes": [
+    {
+     "cat": "Posture",
+     "confidence": "high",
+     "evidence": [
+      7830
+     ],
+     "text": "Posture correction: shoulder hiking."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      7860
+     ],
+     "text": "Range correction: lift 98.7° past the 90.0° ceiling (rep 1)."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      8089
+     ],
+     "text": "Correction: claude agent at pause:setup."
+    }
+   ],
+   "plan": {
+    "because": null,
+    "evidence": [
+     7755
+    ],
+    "goals": [
+     "Gentle tier: 2 sets of 6 reps to 60°, 2 s hold",
+     "Smooth, controlled lifts with good form"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       7755
+      ],
+      "goals": [
+       "Gentle tier: 2 sets of 6 reps to 60°, 2 s hold",
+       "Smooth, controlled lifts with good form"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Trunk lean",
+       "Shoulder hiking",
+       "Pain (5 before) and any new symptoms"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791993977.322765,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Trunk lean",
+     "Shoulder hiking",
+     "Pain (5 before) and any new symptoms"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 123.3,
+   "capture_to_event_p95": 216.0,
+   "cues": 7,
+   "dropped": 4,
+   "event_to_cue_p50": 0.7,
+   "event_to_cue_p95": 1.0,
+   "frames": 457,
+   "proc_p50": 19.4,
+   "proc_p95": 27.2
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "22347b22cb45",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791994021.0072353,
+  "t_start": 1791993971.9900935,
+  "told_us": {
+   "end_reason": "finished",
+   "ended_early": true,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_after": 3,
+   "pain_before": 5
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "T1"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "T1"
+}

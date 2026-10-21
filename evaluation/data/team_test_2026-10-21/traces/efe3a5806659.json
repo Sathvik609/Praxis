@@ -1,0 +1,346 @@
+{
+ "rows": [
+  {
+   "coach": "Rule-based coach",
+   "exercise": "abduction",
+   "kind": "session",
+   "mode": "arm",
+   "prescription": "Hospital GRASP L2 v3",
+   "seq": 1,
+   "session": "efe3a5806659",
+   "ts": 1791993637.922322,
+   "user": "T1"
+  },
+  {
+   "changed": false,
+   "kind": "tier",
+   "pain": 5,
+   "reason": "Pain 5 today: a gentle day. Fewer reps, shorter holds, the side lift to 60°, and no fast arcs, all inside what your therapist allows.",
+   "rule": "pain_tier",
+   "running": "gentle",
+   "seq": 2,
+   "session": "efe3a5806659",
+   "tier": "gentle",
+   "ts": 1791993637.976843
+  },
+  {
+   "energy": "comfortable",
+   "has_note": false,
+   "kind": "checkin",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 5,
+   "seq": 3,
+   "session": "efe3a5806659",
+   "ts": 1791993637.9771106
+  },
+  {
+   "id": 6928,
+   "kind": "event",
+   "seq": 4,
+   "session": "efe3a5806659",
+   "t": 1791993637.9768224,
+   "ts": 1791993637.9771569,
+   "type": "checkin"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 5,
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791993637.9776335
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 6933,
+   "kind": "event",
+   "seq": 6,
+   "session": "efe3a5806659",
+   "t": 1791993638.2157547,
+   "ts": 1791993638.230891,
+   "type": "exercise_start"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_intro",
+   "evidence": [
+    6933
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "Arm out to the side started, 2 × 6 · hold 2 s",
+   "seq": 7,
+   "session": "efe3a5806659",
+   "source": "rule",
+   "ts": 1791993638.2310338
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 8,
+   "session": "efe3a5806659",
+   "source": "rule",
+   "text": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
+   "tool": "speak",
+   "ts": 1791993638.2310643,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_prescription",
+   "ok": true,
+   "result_summary": "{\"program\": \"Hospital GRASP\", \"level\": 2, \"version\": 3, \"exercise\": \"abduction\", \"dose\": {\"sets\": 2, \"reps\": 8, \"hold_s\": 3.0, \"target_deg\": 90.0, \"ceiling_deg\": 90.0}, \"allowed_adaptations\": {\"hold_s\": [2.0, 3.0], \"target_deg\": [60.0, 90.0",
+   "run": 1,
+   "seq": 9,
+   "server": "exertion",
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "ts": 1791993639.2816303
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 4.8,
+   "name": "read_patient_model",
+   "ok": true,
+   "result_summary": "{\"sessions\": [{\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"complete\", \"tracking\": \"usable\", \"verified\": 11, \"unverified\": 0, \"sample\": false}, {\"date\": \"2026-10-13\", \"mode\": \"arm\", \"status\": \"ended_early\", \"tracking\": \"usable\", \"verifie",
+   "run": 1,
+   "seq": 10,
+   "server": "exertion",
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "ts": 1791993639.2888484
+  },
+  {
+   "because": null,
+   "evidence": [
+    6928
+   ],
+   "goals": [
+    "Complete 2 sets of 6 reps at the gentle 60° target",
+    "Hold each rep 2 seconds with steady form"
+   ],
+   "kind": "plan",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 11,
+   "session": "efe3a5806659",
+   "t": 1791993641.8198802,
+   "trigger": "checkin",
+   "ts": 1791993641.8554773,
+   "version": 1,
+   "watch": [
+    "Trunk lean over 12°",
+    "Shoulder hiking",
+    "Pain or tiredness rising"
+   ]
+  },
+  {
+   "args": {
+    "cue": "instruct",
+    "evidence": [
+     6928
+    ],
+    "text": "Let's start gently. Raise your arm out to the side, hold it for 2 seconds, and keep your body upright. Stop if anything hurts."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"instruct\"}",
+   "run": 1,
+   "seq": 12,
+   "server": "coach",
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "ts": 1791993641.8557339
+  },
+  {
+   "args": {
+    "because": "",
+    "evidence": [
+     6928
+    ],
+    "goals": [
+     "Complete 2 sets of 6 reps at the gentle 60° target",
+     "Hold each rep 2 seconds with steady form"
+    ],
+    "watch": [
+     "Trunk lean over 12°",
+     "Shoulder hiking",
+     "Pain or tiredness rising"
+    ]
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 1.4,
+   "name": "set_session_plan",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"version\": 1, \"revised\": false}",
+   "run": 1,
+   "seq": 13,
+   "server": "coach",
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "ts": 1791993641.8568664
+  },
+  {
+   "action": "instruct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    6928
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at checkin",
+   "run": 1,
+   "seq": 14,
+   "session": "efe3a5806659",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1791993641.9160407
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 15,
+   "session": "efe3a5806659",
+   "source": "agent",
+   "text": "Let's start gently. Raise your arm out to the side, hold it for 2 seconds, and keep your body upright. Stop if anything hurts.",
+   "tool": "speak",
+   "ts": 1791993641.916178,
+   "ui": {
+    "agent_run": 1,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 18620,
+   "cache_write_tokens": 1774,
+   "first_action_ms": 3878.0,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 5375.8,
+   "outcome": "done",
+   "output_tokens": 631,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 16,
+   "session": "efe3a5806659",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791993643.353551
+  },
+  {
+   "again_tomorrow": "yes_probably",
+   "barriers": [
+    "weak"
+   ],
+   "difficulty": "just_right",
+   "effort": 4,
+   "end_reason": "finished",
+   "ended_early": true,
+   "kind": "feedback",
+   "pain_after": 2,
+   "seq": 17,
+   "session": "efe3a5806659",
+   "ts": 1791993713.2481055
+  },
+  {
+   "kind": "event",
+   "seq": 18,
+   "session": "efe3a5806659",
+   "t": 1791993713.2480884,
+   "ts": 1791993713.2482498,
+   "type": "feedback"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 19,
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791993713.256976
+  },
+  {
+   "evidence": [
+    6928,
+    6933
+   ],
+   "kind": "coach_note",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 20,
+   "session": "efe3a5806659",
+   "text": "Arm abduction session ended with no reps recorded (0 verified, 0 missed, 0 unverified). Check-in: pain 5/10, 14 minutes, no new symptoms, energy comfortable. Plan was 2x6 at 60°. No corrections or stop. Exertion low.",
+   "ts": 1791993715.4452581
+  },
+  {
+   "args": {
+    "evidence": [
+     6928,
+     6933
+    ],
+    "note": "Arm abduction session ended with no reps recorded (0 verified, 0 missed, 0 unverified). Check-in: pain 5/10, 14 minutes, no new symptoms, energy comfortable. Pl"
+   },
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 6.9,
+   "name": "write_session_summary",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"stored_in_report\": true}",
+   "run": 2,
+   "seq": 21,
+   "server": "coach",
+   "session": "efe3a5806659",
+   "transport": "mcp",
+   "ts": 1791993715.4520888
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 11776,
+   "cache_write_tokens": 724,
+   "first_action_ms": 2188.3,
+   "input_tokens": 6,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 3811.8,
+   "outcome": "done",
+   "output_tokens": 322,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 22,
+   "session": "efe3a5806659",
+   "tool_calls": 1,
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791993717.0689418
+  }
+ ],
+ "session": "efe3a5806659"
+}

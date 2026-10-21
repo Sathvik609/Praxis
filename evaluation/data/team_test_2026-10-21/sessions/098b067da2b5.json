@@ -1,0 +1,98 @@
+{
+ "checkin": {},
+ "date": "2026-10-13",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-13T11:40:22",
+ "events": [
+  {
+   "kind": "event",
+   "seq": 3,
+   "session": "098b067da2b5",
+   "t": 1791906022.0336053,
+   "ts": 1791906022.0350394,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "end_reason": "finished",
+  "ended_early": true
+ },
+ "id": "098b067da2b5",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-13T11:39:32",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 45.8,
+   "corrections": 0,
+   "coverage_pct": null,
+   "hiking_cues": 0,
+   "lean_cues": 0,
+   "missed": 0,
+   "paused_s": 0.0,
+   "posture_cues": 0,
+   "reps_total": 0,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 0,
+   "decisions": 0,
+   "label": "Rule-based coach",
+   "notes": []
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 264.2,
+   "capture_to_event_p95": 428.7,
+   "cues": 0,
+   "dropped": 0,
+   "event_to_cue_p50": null,
+   "event_to_cue_p95": null,
+   "frames": 427,
+   "proc_p50": 12.7,
+   "proc_p95": 20.5
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "098b067da2b5",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791906022.0336053,
+  "t_start": 1791905972.329055,
+  "told_us": {
+   "end_reason": "finished",
+   "ended_early": true
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "test-claude"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "test-claude"
+}

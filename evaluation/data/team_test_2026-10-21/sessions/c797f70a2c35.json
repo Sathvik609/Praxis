@@ -1,0 +1,1234 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 14,
+  "new_symptoms": false,
+  "pain_before": 5
+ },
+ "date": "2026-10-14",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-14T11:59:43",
+ "events": [
+  {
+   "id": 5297,
+   "kind": "event",
+   "seq": 4,
+   "session": "c797f70a2c35",
+   "t": 1791993439.1164813,
+   "ts": 1791993439.1168778,
+   "type": "checkin"
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 5300,
+   "kind": "event",
+   "seq": 6,
+   "session": "c797f70a2c35",
+   "t": 1791993439.24123,
+   "ts": 1791993439.2721093,
+   "type": "exercise_start"
+  },
+  {
+   "id": 5386,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 17,
+   "session": "c797f70a2c35",
+   "t": 1791993445.8612454,
+   "ts": 1791993445.8789847,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 5387,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 19,
+   "session": "c797f70a2c35",
+   "t": 1791993445.8612454,
+   "ts": 1791993445.8791907,
+   "type": "pause"
+  },
+  {
+   "id": 5470,
+   "kind": "event",
+   "rep": 1,
+   "seq": 27,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993452.5065901,
+   "ts": 1791993452.5205307,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 52.8,
+   "id": 5476,
+   "kind": "event",
+   "seq": 30,
+   "session": "c797f70a2c35",
+   "t": 1791993452.6836486,
+   "ts": 1791993452.6998572,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 5477,
+   "kind": "event",
+   "rep": 1,
+   "seq": 31,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993452.6836486,
+   "ts": 1791993452.6999755,
+   "type": "state_change"
+  },
+  {
+   "id": 5478,
+   "kind": "event",
+   "rep": 1,
+   "seq": 32,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993452.6836486,
+   "ts": 1791993452.6999965,
+   "type": "state_change"
+  },
+  {
+   "id": 5533,
+   "kind": "event",
+   "rep": 1,
+   "seq": 35,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993457.0899577,
+   "ts": 1791993457.1081278,
+   "type": "state_change"
+  },
+  {
+   "id": 5567,
+   "kind": "event",
+   "peak_deg": 84.1,
+   "reason": null,
+   "rep": 1,
+   "seq": 38,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993459.6767468,
+   "ts": 1791993459.698348,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 5568,
+   "kind": "event",
+   "rep": 2,
+   "seq": 39,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993459.6767468,
+   "ts": 1791993459.6984837,
+   "type": "state_change"
+  },
+  {
+   "id": 5576,
+   "kind": "event",
+   "rep": 2,
+   "seq": 42,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993460.0966272,
+   "ts": 1791993460.113809,
+   "type": "state_change"
+  },
+  {
+   "id": 5579,
+   "kind": "event",
+   "peak_deg": 31.1,
+   "seq": 43,
+   "session": "c797f70a2c35",
+   "t": 1791993460.2839248,
+   "ts": 1791993460.3073957,
+   "type": "target_missed"
+  },
+  {
+   "id": 5580,
+   "kind": "event",
+   "rep": 2,
+   "seq": 44,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993460.2839248,
+   "ts": 1791993460.3075464,
+   "type": "state_change"
+  },
+  {
+   "id": 5581,
+   "kind": "event",
+   "peak_deg": 31.1,
+   "reason": "target_missed",
+   "rep": 2,
+   "seq": 45,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993460.2839248,
+   "ts": 1791993460.3076024,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 5582,
+   "kind": "event",
+   "rep": 3,
+   "seq": 46,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993460.2839248,
+   "ts": 1791993460.3076293,
+   "type": "state_change"
+  },
+  {
+   "id": 5618,
+   "kind": "event",
+   "rep": 3,
+   "seq": 51,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993462.8696454,
+   "ts": 1791993462.8847563,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 52.5,
+   "id": 5624,
+   "kind": "event",
+   "seq": 54,
+   "session": "c797f70a2c35",
+   "t": 1791993463.1366992,
+   "ts": 1791993463.160823,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 5625,
+   "kind": "event",
+   "rep": 3,
+   "seq": 55,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993463.1366992,
+   "ts": 1791993463.160944,
+   "type": "state_change"
+  },
+  {
+   "id": 5626,
+   "kind": "event",
+   "rep": 3,
+   "seq": 56,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993463.1366992,
+   "ts": 1791993463.1609735,
+   "type": "state_change"
+  },
+  {
+   "id": 5669,
+   "kind": "event",
+   "rep": 3,
+   "seq": 59,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993466.5041804,
+   "ts": 1791993466.5200288,
+   "type": "state_change"
+  },
+  {
+   "id": 5678,
+   "kind": "event",
+   "peak_deg": 91.0,
+   "reason": null,
+   "rep": 3,
+   "seq": 62,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993467.0427995,
+   "ts": 1791993467.0598555,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 5679,
+   "kind": "event",
+   "rep": 4,
+   "seq": 63,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993467.0427995,
+   "ts": 1791993467.0599914,
+   "type": "state_change"
+  },
+  {
+   "id": 5718,
+   "kind": "event",
+   "rep": 4,
+   "seq": 64,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993470.1986663,
+   "ts": 1791993470.2138357,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 40.0,
+   "id": 5724,
+   "kind": "event",
+   "seq": 67,
+   "session": "c797f70a2c35",
+   "t": 1791993470.4520128,
+   "ts": 1791993470.468838,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 5730,
+   "kind": "event",
+   "rep": 4,
+   "seq": 70,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993470.7135272,
+   "ts": 1791993470.7289493,
+   "type": "state_change"
+  },
+  {
+   "id": 5731,
+   "kind": "event",
+   "rep": 4,
+   "seq": 71,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993470.7135272,
+   "ts": 1791993470.729055,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 98.4,
+   "ceiling_deg": 90.0,
+   "id": 5758,
+   "kind": "event",
+   "rep": 4,
+   "seq": 72,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993472.8875623,
+   "ts": 1791993472.9032419,
+   "type": "above_ceiling"
+  },
+  {
+   "id": 5923,
+   "kind": "event",
+   "rep": 4,
+   "seq": 75,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993487.1294096,
+   "ts": 1791993487.1464055,
+   "type": "state_change"
+  },
+  {
+   "id": 5936,
+   "kind": "event",
+   "peak_deg": 98.8,
+   "reason": null,
+   "rep": 4,
+   "seq": 78,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993487.9482942,
+   "ts": 1791993487.9639308,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 5937,
+   "kind": "event",
+   "rep": 5,
+   "seq": 79,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993487.9482942,
+   "ts": 1791993487.9640574,
+   "type": "state_change"
+  },
+  {
+   "id": 5986,
+   "kind": "event",
+   "rep": 5,
+   "seq": 82,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993491.8291848,
+   "ts": 1791993491.8434913,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 46.0,
+   "id": 5992,
+   "kind": "event",
+   "seq": 85,
+   "session": "c797f70a2c35",
+   "t": 1791993492.109337,
+   "ts": 1791993492.1263173,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 5996,
+   "kind": "event",
+   "rep": 5,
+   "seq": 88,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993492.166204,
+   "ts": 1791993492.1837542,
+   "type": "state_change"
+  },
+  {
+   "id": 5997,
+   "kind": "event",
+   "rep": 5,
+   "seq": 89,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993492.166204,
+   "ts": 1791993492.183869,
+   "type": "state_change"
+  },
+  {
+   "id": 6068,
+   "kind": "event",
+   "rep": 5,
+   "seq": 90,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993498.0469782,
+   "ts": 1791993498.0646698,
+   "type": "state_change"
+  },
+  {
+   "id": 6081,
+   "kind": "event",
+   "peak_deg": 90.7,
+   "reason": null,
+   "rep": 5,
+   "seq": 93,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993498.887486,
+   "ts": 1791993498.9060042,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6082,
+   "kind": "event",
+   "rep": 6,
+   "seq": 94,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993498.887486,
+   "ts": 1791993498.9061196,
+   "type": "state_change"
+  },
+  {
+   "id": 6109,
+   "kind": "event",
+   "rep": 6,
+   "seq": 97,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993500.916043,
+   "ts": 1791993500.9335887,
+   "type": "state_change"
+  },
+  {
+   "id": 6114,
+   "kind": "event",
+   "rep": 6,
+   "seq": 100,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993501.0891008,
+   "ts": 1791993501.1120346,
+   "type": "state_change"
+  },
+  {
+   "id": 6115,
+   "kind": "event",
+   "rep": 6,
+   "seq": 101,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993501.0891008,
+   "ts": 1791993501.1122062,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 55.9,
+   "id": 6117,
+   "kind": "event",
+   "seq": 102,
+   "session": "c797f70a2c35",
+   "t": 1791993501.1684704,
+   "ts": 1791993501.1872067,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6184,
+   "kind": "event",
+   "rep": 6,
+   "seq": 105,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993506.5722687,
+   "ts": 1791993506.5889223,
+   "type": "state_change"
+  },
+  {
+   "id": 6193,
+   "kind": "event",
+   "peak_deg": 90.8,
+   "reason": null,
+   "rep": 6,
+   "seq": 108,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993507.0684366,
+   "ts": 1791993507.083167,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6194,
+   "kind": "event",
+   "seq": 109,
+   "session": "c797f70a2c35",
+   "set": 1,
+   "t": 1791993507.0684366,
+   "ts": 1791993507.083297,
+   "type": "set_complete"
+  },
+  {
+   "id": 6195,
+   "kind": "event",
+   "rep": 1,
+   "seq": 110,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993507.0684366,
+   "ts": 1791993507.083318,
+   "type": "state_change"
+  },
+  {
+   "id": 6312,
+   "kind": "event",
+   "rep": 1,
+   "seq": 119,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993517.0180116,
+   "ts": 1791993517.0324094,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 41.0,
+   "id": 6318,
+   "kind": "event",
+   "seq": 122,
+   "session": "c797f70a2c35",
+   "t": 1791993517.2813985,
+   "ts": 1791993517.299969,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6324,
+   "kind": "event",
+   "rep": 1,
+   "seq": 125,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993517.6066234,
+   "ts": 1791993517.6213372,
+   "type": "state_change"
+  },
+  {
+   "id": 6325,
+   "kind": "event",
+   "rep": 1,
+   "seq": 126,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993517.6066234,
+   "ts": 1791993517.6214533,
+   "type": "state_change"
+  },
+  {
+   "id": 6378,
+   "kind": "event",
+   "rep": 1,
+   "seq": 127,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993523.1833446,
+   "ts": 1791993523.1971385,
+   "type": "state_change"
+  },
+  {
+   "id": 6388,
+   "kind": "event",
+   "peak_deg": 76.5,
+   "reason": null,
+   "rep": 1,
+   "seq": 130,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993523.8376093,
+   "ts": 1791993523.858633,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6389,
+   "kind": "event",
+   "rep": 2,
+   "seq": 131,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993523.8376093,
+   "ts": 1791993523.858756,
+   "type": "state_change"
+  },
+  {
+   "id": 6416,
+   "kind": "event",
+   "rep": 2,
+   "seq": 134,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993525.9076865,
+   "ts": 1791993525.9225383,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 41.2,
+   "id": 6422,
+   "kind": "event",
+   "seq": 137,
+   "session": "c797f70a2c35",
+   "t": 1791993526.0602376,
+   "ts": 1791993526.0780683,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6427,
+   "kind": "event",
+   "rep": 2,
+   "seq": 140,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993526.2413301,
+   "ts": 1791993526.2561684,
+   "type": "state_change"
+  },
+  {
+   "id": 6428,
+   "kind": "event",
+   "rep": 2,
+   "seq": 141,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993526.2413301,
+   "ts": 1791993526.256324,
+   "type": "state_change"
+  },
+  {
+   "id": 6484,
+   "kind": "event",
+   "rep": 2,
+   "seq": 142,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993530.844557,
+   "ts": 1791993530.8615203,
+   "type": "state_change"
+  },
+  {
+   "id": 6494,
+   "kind": "event",
+   "peak_deg": 77.2,
+   "reason": null,
+   "rep": 2,
+   "seq": 145,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993531.4371147,
+   "ts": 1791993531.4620118,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6495,
+   "kind": "event",
+   "rep": 3,
+   "seq": 146,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993531.4371147,
+   "ts": 1791993531.462132,
+   "type": "state_change"
+  },
+  {
+   "id": 6524,
+   "kind": "event",
+   "rep": 3,
+   "seq": 147,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993533.7726767,
+   "ts": 1791993533.787464,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 46.2,
+   "id": 6530,
+   "kind": "event",
+   "seq": 150,
+   "session": "c797f70a2c35",
+   "t": 1791993534.0215206,
+   "ts": 1791993534.0371604,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6534,
+   "kind": "event",
+   "rep": 3,
+   "seq": 153,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993534.1169894,
+   "ts": 1791993534.131261,
+   "type": "state_change"
+  },
+  {
+   "id": 6535,
+   "kind": "event",
+   "rep": 3,
+   "seq": 154,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993534.1169894,
+   "ts": 1791993534.131392,
+   "type": "state_change"
+  },
+  {
+   "id": 6581,
+   "kind": "event",
+   "rep": 3,
+   "seq": 155,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993537.9375496,
+   "ts": 1791993537.9541194,
+   "type": "state_change"
+  },
+  {
+   "id": 6593,
+   "kind": "event",
+   "peak_deg": 78.7,
+   "reason": null,
+   "rep": 3,
+   "seq": 158,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993538.7055228,
+   "ts": 1791993538.7217288,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6594,
+   "kind": "event",
+   "rep": 4,
+   "seq": 159,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993538.7055228,
+   "ts": 1791993538.7218385,
+   "type": "state_change"
+  },
+  {
+   "id": 6625,
+   "kind": "event",
+   "rep": 4,
+   "seq": 162,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993541.0282147,
+   "ts": 1791993541.044682,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 44.8,
+   "id": 6631,
+   "kind": "event",
+   "seq": 165,
+   "session": "c797f70a2c35",
+   "t": 1791993541.2855604,
+   "ts": 1791993541.3015957,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6636,
+   "kind": "event",
+   "rep": 4,
+   "seq": 168,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993541.4460242,
+   "ts": 1791993541.463734,
+   "type": "state_change"
+  },
+  {
+   "id": 6637,
+   "kind": "event",
+   "rep": 4,
+   "seq": 169,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993541.4460242,
+   "ts": 1791993541.4638698,
+   "type": "state_change"
+  },
+  {
+   "id": 6674,
+   "kind": "event",
+   "rep": 4,
+   "seq": 170,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993544.5080879,
+   "ts": 1791993544.5241265,
+   "type": "state_change"
+  },
+  {
+   "id": 6683,
+   "kind": "event",
+   "peak_deg": 77.1,
+   "reason": null,
+   "rep": 4,
+   "seq": 173,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993544.996645,
+   "ts": 1791993545.0140972,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6684,
+   "kind": "event",
+   "rep": 5,
+   "seq": 174,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993544.996645,
+   "ts": 1791993545.0142324,
+   "type": "state_change"
+  },
+  {
+   "id": 6718,
+   "kind": "event",
+   "rep": 5,
+   "seq": 175,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993547.6842215,
+   "ts": 1791993547.6993966,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 46.1,
+   "id": 6724,
+   "kind": "event",
+   "seq": 178,
+   "session": "c797f70a2c35",
+   "t": 1791993547.945383,
+   "ts": 1791993547.9634645,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6728,
+   "kind": "event",
+   "rep": 5,
+   "seq": 181,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993548.0207834,
+   "ts": 1791993548.0388687,
+   "type": "state_change"
+  },
+  {
+   "id": 6729,
+   "kind": "event",
+   "rep": 5,
+   "seq": 182,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993548.0207834,
+   "ts": 1791993548.0389857,
+   "type": "state_change"
+  },
+  {
+   "id": 6803,
+   "kind": "event",
+   "rep": 5,
+   "seq": 183,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993554.2497408,
+   "ts": 1791993554.2641737,
+   "type": "state_change"
+  },
+  {
+   "id": 6813,
+   "kind": "event",
+   "peak_deg": 76.6,
+   "reason": null,
+   "rep": 5,
+   "seq": 186,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993554.8636534,
+   "ts": 1791993554.8801124,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6814,
+   "kind": "event",
+   "rep": 6,
+   "seq": 187,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993554.8636534,
+   "ts": 1791993554.8802366,
+   "type": "state_change"
+  },
+  {
+   "id": 6850,
+   "kind": "event",
+   "rep": 6,
+   "seq": 190,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993557.769706,
+   "ts": 1791993557.7856312,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 44.5,
+   "id": 6856,
+   "kind": "event",
+   "seq": 193,
+   "session": "c797f70a2c35",
+   "t": 1791993557.9652069,
+   "ts": 1791993557.9809906,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 6860,
+   "kind": "event",
+   "rep": 6,
+   "seq": 196,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993558.0553598,
+   "ts": 1791993558.0717168,
+   "type": "state_change"
+  },
+  {
+   "id": 6861,
+   "kind": "event",
+   "rep": 6,
+   "seq": 197,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993558.0553598,
+   "ts": 1791993558.072006,
+   "type": "state_change"
+  },
+  {
+   "id": 6909,
+   "kind": "event",
+   "rep": 6,
+   "seq": 198,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993561.9939368,
+   "ts": 1791993562.013328,
+   "type": "state_change"
+  },
+  {
+   "id": 6918,
+   "kind": "event",
+   "peak_deg": 77.1,
+   "reason": null,
+   "rep": 6,
+   "seq": 201,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993562.5031042,
+   "ts": 1791993562.5179582,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 6919,
+   "kind": "event",
+   "seq": 202,
+   "session": "c797f70a2c35",
+   "set": 2,
+   "t": 1791993562.5031042,
+   "ts": 1791993562.5180912,
+   "type": "set_complete"
+  },
+  {
+   "id": 6920,
+   "kind": "event",
+   "seq": 203,
+   "session": "c797f70a2c35",
+   "t": 1791993562.5031042,
+   "ts": 1791993562.5181124,
+   "type": "arm_complete"
+  },
+  {
+   "kind": "event",
+   "seq": 212,
+   "session": "c797f70a2c35",
+   "t": 1791993583.685302,
+   "ts": 1791993583.6855023,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "again_tomorrow": "yes_probably",
+  "difficulty": "just_right",
+  "effort": 4,
+  "end_reason": null,
+  "ended_early": false,
+  "pain_after": 3
+ },
+ "id": "c797f70a2c35",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s, watch leaning",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-14T11:57:19",
+ "status": "complete",
+ "summary": {
+  "camera": {
+   "above_ceiling": 1,
+   "above_ceiling_by_set": {
+    "1": 1
+   },
+   "active_s": 120.9,
+   "corrections": 16,
+   "coverage_pct": 92,
+   "hiking_cues": 11,
+   "lean_cues": 0,
+   "missed": 1,
+   "paused_s": 2.4,
+   "peak_deg": [
+    84.1,
+    31.1,
+    91.0,
+    98.8,
+    90.7,
+    90.8,
+    76.5,
+    77.2,
+    78.7,
+    77.1,
+    76.6,
+    77.1
+   ],
+   "peak_verified": [
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "posture_cues": 11,
+   "reps_total": 12,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 11,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 3,
+   "decisions": 46,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     6861,
+     6909,
+     6918,
+     6919,
+     6920
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Arm abduction, 12 reps: 11 verified, 1 missed, 1 above ceiling. Shoulder hiking cued 11 times; no trunk lean. Peak angle fell 14° over the set; exertion moderate. Pain before: 5/10, comfortable energy, no new symptoms. Therapist may review hiking and target."
+   },
+   "notes": [
+    {
+     "cat": "Posture",
+     "confidence": "high",
+     "evidence": [
+      5476
+     ],
+     "text": "Posture correction: shoulder hiking."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      5579
+     ],
+     "text": "Correction: the lift stopped short of the target."
+    },
+    {
+     "cat": "Data quality",
+     "confidence": "high",
+     "evidence": [
+      5581
+     ],
+     "text": "Rep not verified by the camera: target missed."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      5758
+     ],
+     "text": "Range correction: lift 98.4° past the 90.0° ceiling (rep 4)."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      6194
+     ],
+     "text": "Correction: claude agent at set_complete."
+    }
+   ],
+   "plan": {
+    "because": null,
+    "evidence": [
+     5297
+    ],
+    "goals": [
+     "Complete 2 sets of 6 slow reps at the gentle 60° target",
+     "Hold each rep 2 seconds with good form"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       5297
+      ],
+      "goals": [
+       "Complete 2 sets of 6 slow reps at the gentle 60° target",
+       "Hold each rep 2 seconds with good form"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Trunk lean and shoulder hiking",
+       "Pain, starting at 5 of 10",
+       "Falling peaks or slower reps"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791993443.416869,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Trunk lean and shoulder hiking",
+     "Pain, starting at 5 of 10",
+     "Falling peaks or slower reps"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "moderate",
+   "method": "behavioural",
+   "reasons": [
+    "peak angle falling (14° over the set)"
+   ],
+   "score": 0.68
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 115.9,
+   "capture_to_event_p95": 223.7,
+   "cues": 43,
+   "dropped": 3,
+   "event_to_cue_p50": 1.0,
+   "event_to_cue_p95": 1.8,
+   "frames": 1432,
+   "proc_p50": 15.6,
+   "proc_p95": 21.0
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "c797f70a2c35",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791993583.685302,
+  "t_start": 1791993439.24123,
+  "told_us": {
+   "again_tomorrow": "yes_probably",
+   "difficulty": "just_right",
+   "effort": 4,
+   "end_reason": null,
+   "ended_early": false,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_after": 3,
+   "pain_before": 5
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "T1"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "T1"
+}

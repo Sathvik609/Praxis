@@ -1,0 +1,785 @@
+{
+ "rows": [
+  {
+   "coach": "Rule-based coach",
+   "exercise": "abduction",
+   "kind": "session",
+   "mode": "arm",
+   "prescription": "Hospital GRASP L2 v3",
+   "seq": 1,
+   "session": "22347b22cb45",
+   "ts": 1791993971.8310683,
+   "user": "T1"
+  },
+  {
+   "changed": false,
+   "kind": "tier",
+   "pain": 5,
+   "reason": "Pain 5 today: a gentle day. Fewer reps, shorter holds, the side lift to 60°, and no fast arcs, all inside what your therapist allows.",
+   "rule": "pain_tier",
+   "running": "gentle",
+   "seq": 2,
+   "session": "22347b22cb45",
+   "tier": "gentle",
+   "ts": 1791993971.8832557
+  },
+  {
+   "energy": "comfortable",
+   "has_note": false,
+   "kind": "checkin",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 5,
+   "seq": 3,
+   "session": "22347b22cb45",
+   "ts": 1791993971.8835516
+  },
+  {
+   "id": 7755,
+   "kind": "event",
+   "seq": 4,
+   "session": "22347b22cb45",
+   "t": 1791993971.8832328,
+   "ts": 1791993971.8836012,
+   "type": "checkin"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 5,
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791993971.8838954
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 7761,
+   "kind": "event",
+   "seq": 6,
+   "session": "22347b22cb45",
+   "t": 1791993972.0975928,
+   "ts": 1791993972.1316473,
+   "type": "exercise_start"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_intro",
+   "evidence": [
+    7761
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "Arm out to the side started, 2 × 6 · hold 2 s",
+   "seq": 7,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993972.1318083
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 8,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Arm out to the side: face me, lift out to shoulder height, and keep the shoulder down.",
+   "tool": "speak",
+   "ts": 1791993972.1318405,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_prescription",
+   "ok": true,
+   "result_summary": "{\"program\": \"Hospital GRASP\", \"level\": 2, \"version\": 3, \"exercise\": \"abduction\", \"dose\": {\"sets\": 2, \"reps\": 8, \"hold_s\": 3.0, \"target_deg\": 90.0, \"ceiling_deg\": 90.0}, \"allowed_adaptations\": {\"hold_s\": [2.0, 3.0], \"target_deg\": [60.0, 90.0",
+   "run": 1,
+   "seq": 9,
+   "server": "exertion",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791993974.3006678
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 4.5,
+   "name": "read_patient_model",
+   "ok": true,
+   "result_summary": "{\"sessions\": [{\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"ended_early\", \"tracking\": \"usable\", \"verified\": 0, \"unverified\": 0, \"sample\": false}, {\"date\": \"2026-10-14\", \"mode\": \"arm\", \"status\": \"complete\", \"tracking\": \"usable\", \"verified",
+   "run": 1,
+   "seq": 10,
+   "server": "exertion",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791993974.3057046
+  },
+  {
+   "id": 7799,
+   "kind": "event",
+   "rep": 1,
+   "seq": 11,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993975.9319253,
+   "ts": 1791993975.9491773,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lift",
+   "evidence": [
+    7799
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift started",
+   "seq": 12,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993975.9493437
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 13,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Lift slowly to the line.",
+   "tool": "speak",
+   "ts": 1791993975.9493728,
+   "ui": {
+    "avatar_clip": "abduction"
+   }
+  },
+  {
+   "because": null,
+   "evidence": [
+    7755
+   ],
+   "goals": [
+    "Gentle tier: 2 sets of 6 reps to 60°, 2 s hold",
+    "Smooth, controlled lifts with good form"
+   ],
+   "kind": "plan",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 14,
+   "session": "22347b22cb45",
+   "t": 1791993977.322765,
+   "trigger": "checkin",
+   "ts": 1791993977.381523,
+   "version": 1,
+   "watch": [
+    "Trunk lean",
+    "Shoulder hiking",
+    "Pain (5 before) and any new symptoms"
+   ]
+  },
+  {
+   "args": {
+    "cue": "instruct",
+    "evidence": [
+     7755
+    ],
+    "text": "Let's start gently. Lift your arm out to the side to about 60°, hold for 2 seconds, and keep your body upright. Stop if pain rises."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"instruct\"}",
+   "run": 1,
+   "seq": 15,
+   "server": "coach",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791993977.3817494
+  },
+  {
+   "args": {
+    "because": "",
+    "evidence": [
+     7755
+    ],
+    "goals": [
+     "Gentle tier: 2 sets of 6 reps to 60°, 2 s hold",
+     "Smooth, controlled lifts with good form"
+    ],
+    "watch": [
+     "Trunk lean",
+     "Shoulder hiking",
+     "Pain (5 before) and any new symptoms"
+    ]
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.6,
+   "name": "set_session_plan",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"version\": 1, \"revised\": false}",
+   "run": 1,
+   "seq": 16,
+   "server": "coach",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791993977.3820338
+  },
+  {
+   "id": 7819,
+   "kind": "event",
+   "rep": 1,
+   "seq": 17,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993977.4065213,
+   "ts": 1791993977.4359198,
+   "type": "state_change"
+  },
+  {
+   "id": 7820,
+   "kind": "event",
+   "rep": 1,
+   "seq": 18,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993977.4065213,
+   "ts": 1791993977.4360816,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_hold",
+   "evidence": [
+    7820
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "target reached",
+   "seq": 19,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993977.436172
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 20,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Hold… three.",
+   "tool": "speak",
+   "ts": 1791993977.4362009,
+   "ui": {}
+  },
+  {
+   "action": "instruct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    7755
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at checkin",
+   "run": 1,
+   "seq": 21,
+   "session": "22347b22cb45",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1791993977.4364145
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 22,
+   "session": "22347b22cb45",
+   "source": "agent",
+   "text": "Let's start gently. Lift your arm out to the side to about 60°, hold for 2 seconds, and keep your body upright. Stop if pain rises.",
+   "tool": "speak",
+   "ts": 1791993977.4364588,
+   "ui": {
+    "agent_run": 1,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "angle_deg": 81.6,
+   "id": 7830,
+   "kind": "event",
+   "seq": 23,
+   "session": "22347b22cb45",
+   "t": 1791993977.8798327,
+   "ts": 1791993977.8996952,
+   "type": "shoulder_hiking"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_hike",
+   "evidence": [
+    7830
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "shoulder hiking",
+   "seq": 24,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993977.8998394
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 25,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Let the shoulder drop; lift from the arm, not the shoulder.",
+   "tool": "speak",
+   "ts": 1791993977.8998682,
+   "ui": {}
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 18620,
+   "cache_write_tokens": 1777,
+   "first_action_ms": 5497.8,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 7666.0,
+   "outcome": "done",
+   "output_tokens": 659,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 1,
+   "seq": 26,
+   "session": "22347b22cb45",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "checkin",
+   "ts": 1791993979.5499346
+  },
+  {
+   "angle_deg": 98.7,
+   "ceiling_deg": 90.0,
+   "id": 7860,
+   "kind": "event",
+   "rep": 1,
+   "seq": 27,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993980.015726,
+   "ts": 1791993980.0358953,
+   "type": "above_ceiling"
+  },
+  {
+   "action": "correct",
+   "cue_id": "arm_above_ceiling",
+   "evidence": [
+    7860
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "lift 98.7° past the 90.0° ceiling (rep 1)",
+   "seq": 28,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993980.0360477
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 29,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Stop at shoulder height.",
+   "tool": "speak",
+   "ts": 1791993980.0360758,
+   "ui": {}
+  },
+  {
+   "id": 7891,
+   "kind": "event",
+   "rep": 1,
+   "seq": 30,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993982.4228134,
+   "ts": 1791993982.4459465,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_lower",
+   "evidence": [
+    7891
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "returning",
+   "seq": 31,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993982.4461164
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 32,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Lower for three.",
+   "tool": "speak",
+   "ts": 1791993982.4462233,
+   "ui": {}
+  },
+  {
+   "id": 8037,
+   "kind": "event",
+   "peak_deg": 102.3,
+   "reason": null,
+   "rep": 1,
+   "seq": 33,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993994.4586112,
+   "ts": 1791993994.4772,
+   "type": "rep_complete",
+   "verified": true
+  },
+  {
+   "id": 8038,
+   "kind": "event",
+   "rep": 2,
+   "seq": 34,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791993994.4586112,
+   "ts": 1791993994.47731,
+   "type": "state_change"
+  },
+  {
+   "action": "instruct",
+   "cue_id": "arm_rep",
+   "evidence": [
+    8037
+   ],
+   "kind": "decide",
+   "label": "Rule-based coach",
+   "reason": "verified rep",
+   "seq": 35,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "ts": 1791993994.4773803
+  },
+  {
+   "kind": "action",
+   "label": "Rule-based coach",
+   "seq": 36,
+   "session": "22347b22cb45",
+   "source": "rule",
+   "text": "Good, 1 of 6.",
+   "tool": "speak",
+   "ts": 1791993994.4774063,
+   "ui": {}
+  },
+  {
+   "id": 8088,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 37,
+   "session": "22347b22cb45",
+   "t": 1791993998.4253078,
+   "ts": 1791993998.445406,
+   "type": "setup_blocked"
+  },
+  {
+   "action": "pause",
+   "kind": "stop_rule",
+   "rule": "setup",
+   "seq": 38,
+   "session": "22347b22cb45",
+   "text": "Paused so the camera can measure the lift. Move the camera back or down so your shoulder, elbow and hips are in view.",
+   "ts": 1791993998.4455452
+  },
+  {
+   "id": 8089,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 39,
+   "session": "22347b22cb45",
+   "t": 1791993998.4253078,
+   "ts": 1791993998.4455862,
+   "type": "pause"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 40,
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "trigger": "pause:setup",
+   "ts": 1791993998.4458914
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "get_set_summary",
+   "ok": true,
+   "result_summary": "{\"nhpt\": null, \"kind\": \"in_progress\", \"boundary_event_id\": null, \"boundary\": null, \"reps\": 1, \"verified\": 1, \"not_verified\": [], \"rep_event_ids\": [8037], \"peak_deg\": [102.3], \"previous_set_mean_peak_deg\": null, \"hold_s\": [5.02], \"lean_count",
+   "run": 2,
+   "seq": 41,
+   "server": "perception",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791994000.0696619
+  },
+  {
+   "args": {},
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 3.6,
+   "name": "check_setup",
+   "ok": true,
+   "opencv": {
+    "facing": "front",
+    "failing": [
+     "hips",
+     "pose"
+    ],
+    "first_hint": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+    "frame_age_s": 0.03,
+    "gate": "hips_out_of_view",
+    "mean_luma": 159.2,
+    "needed_view": "front",
+    "pose_present": true,
+    "sharpness": 214.6,
+    "trunk_lean_deg": -2.2,
+    "visibility": 0.38
+   },
+   "result_summary": "{\"ok\": true, \"mode\": \"arm\", \"frame_age_s\": 0.03, \"checks\": [{\"id\": \"person\", \"label\": \"Person in view\", \"status\": \"pass\", \"hint\": null}, {\"id\": \"view\", \"label\": \"Facing the camera the right way\", \"status\": \"pass\", \"hint\": null}, {\"id\": \"hip",
+   "run": 2,
+   "seq": 42,
+   "server": "perception",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791994000.0733795
+  },
+  {
+   "args": {
+    "cue": "correct",
+    "evidence": [
+     8089
+    ],
+    "text": "I can't see your hips. Move back a little, or tilt the camera down, so your shoulder, elbow and hips are all in view."
+   },
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 0.1,
+   "name": "speak",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"queued\": true, \"action\": \"correct\"}",
+   "run": 2,
+   "seq": 43,
+   "server": "coach",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791994002.8020792
+  },
+  {
+   "action": "correct",
+   "cue_id": "agent_speak",
+   "evidence": [
+    8089
+   ],
+   "kind": "decide",
+   "label": "Claude agent · Anthropic API (dev)",
+   "reason": "Claude agent at pause:setup",
+   "run": 2,
+   "seq": 44,
+   "session": "22347b22cb45",
+   "source": "agent",
+   "tool": "speak",
+   "ts": 1791994002.8185093
+  },
+  {
+   "kind": "action",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 45,
+   "session": "22347b22cb45",
+   "source": "agent",
+   "text": "I can't see your hips. Move back a little, or tilt the camera down, so your shoulder, elbow and hips are all in view.",
+   "tool": "speak",
+   "ts": 1791994002.8186371,
+   "ui": {
+    "agent_run": 2,
+    "agent_tool": "speak"
+   }
+  },
+  {
+   "args": {},
+   "autonomy": "forbidden_after_stop",
+   "kind": "tool",
+   "ms": 361.1,
+   "name": "recalibrate",
+   "ok": true,
+   "opencv": {
+    "frames_seen": 4,
+    "gate": "hips_out_of_view",
+    "pose_visible": true,
+    "reset": "pose_gate",
+    "visibility": 0.44
+   },
+   "result_summary": "{\"ok\": true, \"reset\": \"pose_gate\", \"frames_seen\": 4, \"pose_visible\": true, \"visibility\": 0.44, \"gate\": \"hips_out_of_view\"}",
+   "run": 2,
+   "seq": 46,
+   "server": "perception",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791994003.1618538
+  },
+  {
+   "id": 8170,
+   "kind": "event",
+   "rep": 2,
+   "seq": 47,
+   "session": "22347b22cb45",
+   "set": 1,
+   "t": 1791994005.3488817,
+   "ts": 1791994005.3677356,
+   "type": "state_change"
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 18922,
+   "cache_write_tokens": 1806,
+   "first_action_ms": 4356.1,
+   "input_tokens": 8,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 7873.6,
+   "outcome": "done",
+   "output_tokens": 496,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 2,
+   "seq": 48,
+   "session": "22347b22cb45",
+   "tool_calls": 4,
+   "transport": "mcp",
+   "trigger": "pause:setup",
+   "ts": 1791994006.319508
+  },
+  {
+   "end_reason": "finished",
+   "ended_early": true,
+   "kind": "feedback",
+   "pain_after": 3,
+   "seq": 49,
+   "session": "22347b22cb45",
+   "ts": 1791994021.0072484
+  },
+  {
+   "kind": "event",
+   "seq": 50,
+   "session": "22347b22cb45",
+   "t": 1791994021.0072353,
+   "ts": 1791994021.0073957,
+   "type": "feedback"
+  },
+  {
+   "also": [],
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "phase": "start",
+   "policy_version": "2026-10-11.1",
+   "run": 3,
+   "seq": 51,
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791994021.0204241
+  },
+  {
+   "evidence": [
+    8037,
+    8038,
+    8088,
+    8089,
+    8170
+   ],
+   "kind": "coach_note",
+   "label": "Claude agent · Anthropic API (dev)",
+   "seq": 52,
+   "session": "22347b22cb45",
+   "text": "Arm abduction, gentle tier (plan 2x6 to 60°). Session ended early with a setup pause, not a stop rule. Only 1 rep done (verified), 0 missed. 3 corrections: 1 hiking cue, 1 posture cue; 1 rep above ceiling. Pain 5 before, no new symptoms. Exertion low.",
+   "ts": 1791994023.3279836
+  },
+  {
+   "args": {
+    "evidence": [
+     8037,
+     8038,
+     8088,
+     8089,
+     8170
+    ],
+    "note": "Arm abduction, gentle tier (plan 2x6 to 60°). Session ended early with a setup pause, not a stop rule. Only 1 rep done (verified), 0 missed. 3 corrections: 1 hi"
+   },
+   "autonomy": "autonomous",
+   "kind": "tool",
+   "ms": 12.8,
+   "name": "write_session_summary",
+   "ok": true,
+   "result_summary": "{\"ok\": true, \"stored_in_report\": true}",
+   "run": 3,
+   "seq": 53,
+   "server": "coach",
+   "session": "22347b22cb45",
+   "transport": "mcp",
+   "ts": 1791994023.3407416
+  },
+  {
+   "actions": 1,
+   "cache_read_tokens": 11790,
+   "cache_write_tokens": 772,
+   "first_action_ms": 2307.6,
+   "input_tokens": 6,
+   "kind": "agent_run",
+   "label": "Claude agent · Anthropic API (dev)",
+   "model": "claude-sonnet-5-5",
+   "ms": 4509.4,
+   "outcome": "done",
+   "output_tokens": 441,
+   "phase": "end",
+   "policy_version": "2026-10-11.1",
+   "run": 3,
+   "seq": 54,
+   "session": "22347b22cb45",
+   "tool_calls": 1,
+   "transport": "mcp",
+   "trigger": "feedback",
+   "ts": 1791994025.5299313
+  }
+ ],
+ "session": "22347b22cb45"
+}

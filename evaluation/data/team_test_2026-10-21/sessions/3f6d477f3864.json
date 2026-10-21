@@ -1,0 +1,397 @@
+{
+ "checkin": {
+  "energy": "comfortable",
+  "minutes": 14,
+  "new_symptoms": false,
+  "pain_before": 6
+ },
+ "date": "2026-10-13",
+ "delivery": "queued · not yet delivered",
+ "ended_at": "2026-10-13T12:04:12",
+ "events": [
+  {
+   "id": 296,
+   "kind": "event",
+   "seq": 4,
+   "session": "3f6d477f3864",
+   "t": 1791907397.1810956,
+   "ts": 1791907397.18173,
+   "type": "checkin"
+  },
+  {
+   "ceiling_deg": 90.0,
+   "id": 299,
+   "kind": "event",
+   "seq": 6,
+   "session": "3f6d477f3864",
+   "t": 1791907397.2743316,
+   "ts": 1791907397.3023407,
+   "type": "exercise_start"
+  },
+  {
+   "id": 300,
+   "kind": "event",
+   "rep": 1,
+   "seq": 7,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907397.2743316,
+   "ts": 1791907397.302487,
+   "type": "state_change"
+  },
+  {
+   "angle_deg": 54.6,
+   "id": 309,
+   "kind": "event",
+   "seq": 10,
+   "session": "3f6d477f3864",
+   "t": 1791907397.710677,
+   "ts": 1791907397.7239254,
+   "type": "shoulder_hiking"
+  },
+  {
+   "id": 310,
+   "kind": "event",
+   "rep": 1,
+   "seq": 11,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907397.710677,
+   "ts": 1791907397.7240336,
+   "type": "state_change"
+  },
+  {
+   "id": 311,
+   "kind": "event",
+   "rep": 1,
+   "seq": 12,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907397.710677,
+   "ts": 1791907397.7240527,
+   "type": "state_change"
+  },
+  {
+   "id": 316,
+   "kind": "event",
+   "seq": 15,
+   "session": "3f6d477f3864",
+   "t": 1791907397.874607,
+   "ts": 1791907397.8975902,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 317,
+   "kind": "event",
+   "rep": 1,
+   "seq": 16,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907397.874607,
+   "ts": 1791907397.8977468,
+   "type": "state_change"
+  },
+  {
+   "id": 360,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 26,
+   "session": "3f6d477f3864",
+   "t": 1791907402.696751,
+   "ts": 1791907402.7160103,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 361,
+   "kind": "event",
+   "rule": "setup",
+   "seq": 28,
+   "session": "3f6d477f3864",
+   "t": 1791907402.696751,
+   "ts": 1791907402.716178,
+   "type": "pause"
+  },
+  {
+   "id": 451,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 38,
+   "session": "3f6d477f3864",
+   "t": 1791907413.5252702,
+   "ts": 1791907413.5478551,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 673,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 40,
+   "session": "3f6d477f3864",
+   "t": 1791907435.9159498,
+   "ts": 1791907435.9334967,
+   "type": "setup_blocked"
+  },
+  {
+   "id": 705,
+   "kind": "event",
+   "peak_deg": 54.6,
+   "reason": "hold_too_short",
+   "rep": 1,
+   "seq": 42,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907438.4322474,
+   "ts": 1791907438.4455621,
+   "type": "rep_complete",
+   "verified": false
+  },
+  {
+   "id": 706,
+   "kind": "event",
+   "rep": 2,
+   "seq": 43,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907438.4322474,
+   "ts": 1791907438.4457116,
+   "type": "state_change"
+  },
+  {
+   "id": 711,
+   "kind": "event",
+   "rep": 2,
+   "seq": 44,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907438.7578535,
+   "ts": 1791907438.793374,
+   "type": "state_change"
+  },
+  {
+   "id": 713,
+   "kind": "event",
+   "rep": 2,
+   "seq": 45,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907438.8171449,
+   "ts": 1791907438.830819,
+   "type": "state_change"
+  },
+  {
+   "id": 714,
+   "kind": "event",
+   "rep": 2,
+   "seq": 46,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907438.8171449,
+   "ts": 1791907438.8309321,
+   "type": "state_change"
+  },
+  {
+   "id": 718,
+   "kind": "event",
+   "seq": 47,
+   "session": "3f6d477f3864",
+   "t": 1791907439.689824,
+   "ts": 1791907439.7034354,
+   "type": "hold_too_short"
+  },
+  {
+   "id": 719,
+   "kind": "event",
+   "rep": 2,
+   "seq": 48,
+   "session": "3f6d477f3864",
+   "set": 1,
+   "t": 1791907439.689824,
+   "ts": 1791907439.703546,
+   "type": "state_change"
+  },
+  {
+   "id": 754,
+   "kind": "event",
+   "reason": "hips_out_of_view",
+   "seq": 49,
+   "session": "3f6d477f3864",
+   "t": 1791907444.0900714,
+   "ts": 1791907444.1096454,
+   "type": "setup_blocked"
+  },
+  {
+   "kind": "event",
+   "seq": 52,
+   "session": "3f6d477f3864",
+   "t": 1791907452.99166,
+   "ts": 1791907452.991828,
+   "type": "feedback"
+  }
+ ],
+ "exercise": "abduction",
+ "feedback": {
+  "end_reason": "finished",
+  "ended_early": true
+ },
+ "id": "3f6d477f3864",
+ "illustrative": false,
+ "mode": "arm",
+ "next_practice": {
+  "level_change": false,
+  "proposal": "keep hold at 3 s, watch leaning",
+  "text": "Continue your assigned plan. No level change — that needs Dr. Rao."
+ },
+ "replay": false,
+ "source": "live",
+ "started_at": "2026-10-13T12:03:17",
+ "status": "ended_early",
+ "summary": {
+  "camera": {
+   "above_ceiling": 0,
+   "active_s": 5.4,
+   "corrections": 3,
+   "coverage_pct": 0,
+   "hiking_cues": 1,
+   "lean_cues": 0,
+   "missed": 1,
+   "paused_s": 46.1,
+   "peak_deg": [
+    54.6
+   ],
+   "peak_verified": [
+    false
+   ],
+   "posture_cues": 1,
+   "reps_total": 1,
+   "tracking_lost_events": 0,
+   "unverified": 0,
+   "verified": 0,
+   "wrong_dot": 0
+  },
+  "clock": "wall",
+  "coach": {
+   "agent": "Claude agent · Anthropic API (dev)",
+   "agent_decisions": 2,
+   "decisions": 5,
+   "label": "Rule-based coach",
+   "note": {
+    "evidence": [
+     713,
+     714,
+     718,
+     719,
+     754
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "text": "Arm abduction session ended early on a setup pause, not stopped by a safety rule. 1 rep seen, missed (0 verified). 3 corrections given, including a shoulder-hiking cue and a posture cue. Pain 6 before, energy comfortable. Exertion low."
+   },
+   "notes": [
+    {
+     "cat": "Posture",
+     "confidence": "high",
+     "evidence": [
+      309
+     ],
+     "text": "Posture correction: shoulder hiking."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      316
+     ],
+     "text": "Correction: the hold at the top was too short."
+    },
+    {
+     "cat": "Performance",
+     "confidence": "high",
+     "evidence": [
+      361
+     ],
+     "text": "Correction: claude agent at pause:setup."
+    }
+   ],
+   "plan": {
+    "because": null,
+    "evidence": [
+     296
+    ],
+    "goals": [
+     "Gentle start: 2 sets of 6 reps to 60 degrees, 2 s hold",
+     "Keep the trunk upright and shoulder down"
+    ],
+    "history": [
+     {
+      "because": null,
+      "evidence": [
+       296
+      ],
+      "goals": [
+       "Gentle start: 2 sets of 6 reps to 60 degrees, 2 s hold",
+       "Keep the trunk upright and shoulder down"
+      ],
+      "trigger": "checkin",
+      "version": 1,
+      "watch": [
+       "Trunk lean",
+       "Shoulder hiking",
+       "Pain rating (6 before; stop limit 7)"
+      ]
+     }
+    ],
+    "label": "Claude agent · Anthropic API (dev)",
+    "t": 1791907402.1848946,
+    "trigger": "checkin",
+    "version": 1,
+    "watch": [
+     "Trunk lean",
+     "Shoulder hiking",
+     "Pain rating (6 before; stop limit 7)"
+    ]
+   }
+  },
+  "colour_samples": [],
+  "delivery": "queued · not yet delivered",
+  "exercise": "abduction",
+  "exertion": {
+   "level": "low",
+   "method": "behavioural",
+   "reasons": [],
+   "score": 0.0
+  },
+  "flags": [],
+  "latency": {
+   "capture_to_event_p50": 192.2,
+   "capture_to_event_p95": 418.3,
+   "cues": 3,
+   "dropped": 36,
+   "event_to_cue_p50": 0.8,
+   "event_to_cue_p95": 0.9,
+   "frames": 457,
+   "proc_p50": 20.8,
+   "proc_p95": 34.9
+  },
+  "mode": "arm",
+  "replay_clip": null,
+  "reported_pain": null,
+  "session_id": "3f6d477f3864",
+  "source": "live",
+  "stopped": false,
+  "t_end": 1791907452.99166,
+  "t_start": 1791907397.2743316,
+  "told_us": {
+   "end_reason": "finished",
+   "ended_early": true,
+   "energy": "comfortable",
+   "minutes": 14,
+   "new_symptoms": false,
+   "pain_before": 6
+  },
+  "tracking": "usable",
+  "tracking_lost_events": 0,
+  "username": "test-claude"
+ },
+ "title": "Arm out to the side",
+ "tracking": "usable",
+ "username": "test-claude"
+}
