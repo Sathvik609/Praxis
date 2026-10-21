@@ -2,26 +2,26 @@
 
 Status 21 Oct 2026: **rebuilt in the Praxis-Team management account and verified, now stopped.**
 `<instance-id>` (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
-`ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), Elastic IP `[redacted-ip]`
-(`[redacted-eip]`), security group `<security-group-id>`, HTTPS at
+`ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
+address survives stop/start), a CloudFront-only security group, HTTPS at
 **https://d235zashbh751z.cloudfront.net** (CloudFront `<cloudfront-id>`). `/health` shows
 `"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
 
 ## Account and access (read first)
-- **Account:** Praxis-Team management account **[redacted-account-id]**, region **us-east-2 (Ohio)**.
-  Everything for the judge build lives here.
-- **Ways in (both tested 21 Oct):** the root login ([redacted-email]), and the IAM user
-  `sathvik-admin` at [redacted-signin-url]. Add MFA to both.
-  CloudShell (console, us-east-2) has the AWS CLI with the signed-in identity; the laptop's
-  local AWS keys are not used.
-- **Why not "Hold My Coffee" ([redacted-account-id]):** the 11 Oct build (`<instance-id>`,
+- **Account:** the team's AWS Organizations management account, region **us-east-2 (Ohio)**.
+  Everything for the judge build lives here. Account IDs, sign-in URLs and owner emails are kept
+  out of the repo (team notes only).
+- **Ways in (both tested 21 Oct):** the account owner's root login and one IAM admin user, both
+  with MFA. CloudShell (console, us-east-2) has the AWS CLI with the signed-in identity; the
+  laptop's local AWS keys are not used.
+- **Why not the old member account:** the 11 Oct build (`<instance-id>`,
   CloudFront `<cloudfront-id>`, `dl8xykmg8ki61.cloudfront.net`) lives in that member account, which
   became unreachable on 21 Oct (no OrganizationAccountAccessRole; root switch-role, IAM
   switch-role and member email update all denied; its Builder ID portal login failed). Its server
   was closed by the user on 21 Oct (reopenable for 90 days, then deleted).
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
-  so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh [redacted-ip] --agent`.
+  so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh <elastic-ip> --agent`.
 - **Spend:** budget `praxis-monthly-50` ($50/month, emails at 80 %, 100 % and forecast 100 %);
   credits about $117 (until Oct 2027). COOL is billed through Marketplace ($0.01/h for c8g.large,
   7-day trial from 21 Oct); promotional credits may not cover Marketplace fees.
