@@ -20,7 +20,7 @@ test('DESIGN_PREVIEW is off outside the design build', async () => {
 describe('deploymentLabel', () => {
   const cool = { status: 'ok', opencv_build: { version: '5.1.0-dev', cool: true, arch: 'aarch64', dnn: true, path: '/opt/cool/x' } }
   it('names AWS Graviton + COOL when the service reports the COOL build', () => {
-    const d = deploymentLabel(cool, 'dl8xykmg8ki61.cloudfront.net')
+    const d = deploymentLabel(cool, 'd235zashbh751z.cloudfront.net')
     expect(d.title).toBe('Running on AWS Graviton · COOL OpenCV 5.1.0-dev')
     expect(d.sub).toMatch(/Other AWS cloud services are off/)
     expect(d.sub).toMatch(/processed on the Praxis service in memory, never stored/)
@@ -35,6 +35,6 @@ describe('deploymentLabel', () => {
     expect(d.title).toBe('Hosted review build · AWS cloud services off')
   })
   it('does not claim AWS before /health answers', () => {
-    expect(deploymentLabel(undefined, 'dl8xykmg8ki61.cloudfront.net').title).not.toMatch(/AWS Graviton/)
+    expect(deploymentLabel(undefined, 'd235zashbh751z.cloudfront.net').title).not.toMatch(/AWS Graviton/)
   })
 })

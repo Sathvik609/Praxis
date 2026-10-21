@@ -6,9 +6,9 @@ Five minutes, no install. If you have a webcam you can try one exercise live; wi
 
 ## 1. Open the app
 
-**https://dl8xykmg8ki61.cloudfront.net** (Chrome or Edge, desktop or landscape tablet, 1280 × 800 or larger).
+**https://d235zashbh751z.cloudfront.net** (Chrome or Edge, desktop or landscape tablet, 1280 × 800 or larger).
 
-This is the AWS deployment: an EC2 **c8g.large (Graviton4)** in us-east-2, launched from the **COOL AMI**, running the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To confirm what is running, open [`/health`](https://dl8xykmg8ki61.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
+This is the AWS deployment: an EC2 **c8g.large (Graviton4)** in us-east-2, launched from the **COOL AMI**, running the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To confirm what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
 
 The team keeps the endpoint up for the judging period (through 9 Nov 2026). If it does not answer, use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
 

@@ -2,7 +2,7 @@
 
 **Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 11 Oct 2026**
 
-Live (AWS Graviton4 + COOL, HTTPS): **https://dl8xykmg8ki61.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · Full engineering detail, module by module: [`docs/ENGINEERING_NOTES.md`](ENGINEERING_NOTES.md)
+Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · Full engineering detail, module by module: [`docs/ENGINEERING_NOTES.md`](ENGINEERING_NOTES.md)
 
 > Praxis is an adherence and coaching aid for exercises a therapist has already prescribed. **It is not a medical device.** It does not diagnose and does not choose exercises, and its angles and times are not clinical measurements.
 
@@ -183,9 +183,9 @@ In `green_cup`, the default blue window cannot see a green cup, so the agent cal
 | Compute | EC2 `<instance-id>`, **c8g.large (Graviton4, Neoverse-V2, 2 vCPU, 4 GiB)**, us-east-2, 60 GB gp3, Elastic IP |
 | Image | AWS Marketplace **COOL AMI** `ami-005a9f90c70ba8d9b` (Cloud Optimized OpenCV for Graviton v3, Ubuntu 24.04); `cv2` 5.1.0-dev from `/opt/cool`, SVE + NEON baseline, KleidiCV 0.7.0 HAL |
 | Service | the same FastAPI service under systemd; venv from `uv.lock` **minus** the OpenCV wheel, so `import cv2` resolves to COOL; the install refuses to continue unless `cv2.__file__` is under `/opt/cool` |
-| HTTPS | CloudFront `<cloudfront-id>` → `dl8xykmg8ki61.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets upgrade) |
+| HTTPS | CloudFront `<cloudfront-id>` → `d235zashbh751z.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets upgrade) |
 | Network | security group: port 8000 only from the CloudFront origin prefix list and one admin IP; SSH from that IP only; MCP routes 403 from the internet |
-| Cost and safety rails | Organizations SCPs (small Graviton types, two regions only); $50/month budget whose action **stops the instance** at 100 %; anomaly alerts; root MFA; no long-lived keys (CloudShell); ≈ $0.10/h running, stopped between work sessions |
+| Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %; Anthropic spend limit + daily agent-run cap; root MFA; no long-lived keys (CloudShell). Rebuilt 21 Oct in the Praxis-Team management account (the 11 Oct member account became unreachable), so the member-account SCPs no longer apply to this instance |
 | Deploy | one idempotent command: `infra/ec2/deploy.sh <host> [--agent]` |
 
 **Verified on the instance.** `/health` through HTTPS reports `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded and the agent ready. The full service test suite run against COOL's `cv2` passes **634 / 636**; the two failures check `.gitignore` rules and need a git checkout that the host does not have. A full Waiter – cup replay over `wss://` through CloudFront produced 517 frames, 31 reaches, 33 coach decisions and agent runs.

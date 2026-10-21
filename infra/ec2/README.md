@@ -1,9 +1,30 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
-Status 11 Oct 2026: **live.** `<instance-id>` (c8g.large, us-east-2) from the COOL AMI
-`ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), Elastic IP `[redacted-ip]`, HTTPS at
-**https://dl8xykmg8ki61.cloudfront.net** (CloudFront `<cloudfront-id>`). `/health` shows
-`"cool": true`. Evidence: `docs/ENGINEERING_NOTES.md` §5; benchmark: `benchmark/results/`.
+Status 21 Oct 2026: **rebuilt in the Praxis-Team management account and verified, now stopped.**
+`<instance-id>` (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
+`ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), Elastic IP `[redacted-ip]`
+(`[redacted-eip]`), security group `<security-group-id>`, HTTPS at
+**https://d235zashbh751z.cloudfront.net** (CloudFront `<cloudfront-id>`). `/health` shows
+`"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
+
+## Account and access (read first)
+- **Account:** Praxis-Team management account **[redacted-account-id]**, region **us-east-2 (Ohio)**.
+  Everything for the judge build lives here.
+- **Ways in (both tested 21 Oct):** the root login ([redacted-email]), and the IAM user
+  `sathvik-admin` at [redacted-signin-url]. Add MFA to both.
+  CloudShell (console, us-east-2) has the AWS CLI with the signed-in identity; the laptop's
+  local AWS keys are not used.
+- **Why not "Hold My Coffee" ([redacted-account-id]):** the 11 Oct build (`<instance-id>`,
+  CloudFront `<cloudfront-id>`, `dl8xykmg8ki61.cloudfront.net`) lives in that member account, which
+  became unreachable on 21 Oct (no OrganizationAccountAccessRole; root switch-role, IAM
+  switch-role and member email update all denied; its Builder ID portal login failed). Its server
+  is stopped (disk + IP about $8/month from credits). Close it from Organizations after judging.
+- **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
+  `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
+  so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh [redacted-ip] --agent`.
+- **Spend:** budget `praxis-monthly-50` ($50/month, emails at 80 %, 100 % and forecast 100 %);
+  credits about $117 (until Oct 2027). COOL is billed through Marketplace ($0.01/h for c8g.large,
+  7-day trial from 21 Oct); promotional credits may not cover Marketplace fees.
 
 ## What it builds
 - One **c8g.large** (Graviton4, 2 vCPU, 4 GiB) in **us-east-2** (the account's project region), launched from the AWS Marketplace
@@ -41,9 +62,8 @@ To allow edits from a browser, add `PRAXIS_THERAPIST_TOKEN=<random>` to the root
 `therapist_writes: token | local_only`.
 
 ## Cost controls (10 Oct)
-Paid plan; budget `praxis-monthly-50` whose action stops this instance at 100 % of $50; SCPs
-allow only small Graviton types in us-east-1/2; c8g.large $0.0798/h + COOL $0.01/h after the
-7-day trial + public IPv4 $0.005/h; stopped between work sessions; on 24/7 from submission to 9 Nov (~$40). The agent
+Budget `praxis-monthly-50` (alerts only since the 21 Oct rebuild; the 11 Oct SCPs apply to the member account, not here); c8g.large $0.0798/h + COOL $0.01/h after the
+7-day trial + public IPv4 $0.005/h; stopped between work sessions; on 24/7 from submission to 10 Nov (~$41). The agent
 has a daily run cap (`PRAXIS_AGENT_DAILY_RUNS`) and an Anthropic console spend limit.
 
 ## Observability: CloudWatch (built 12 Oct, **not yet verified on AWS**)
