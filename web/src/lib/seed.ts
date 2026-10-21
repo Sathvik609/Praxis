@@ -175,16 +175,13 @@ export const WEEK = { days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], done: [true, tr
 
 /** Home's affected areas (design v2, 6 Oct). Status is set by the program (no endpoint sets it
  *  yet); every number on the area card is derived from stored sessions in `lib/areaSummary.ts`.
- *  Programs list only the three visible exercises (28 Sep lock); the elbow has none. */
-export type RegionProgram = { id: ExerciseId; name: string; tag: string; to: string }
-export const REGIONS: Record<'lShoulder' | 'lElbow' | 'lWrist', { title: string; status: 'focus' | 'watch' | 'stable'; setBy: string; program: RegionProgram[]; primary: { label: string; to: string } }> = {
+ *  The primary action names only a visible exercise (28 Sep lock); design review 21 Oct removed
+ *  the in-card program list. */
+export const REGIONS: Record<'lShoulder' | 'lElbow' | 'lWrist', { title: string; status: 'focus' | 'watch' | 'stable'; setBy: string; primary: { label: string; to: string } }> = {
   lWrist: { title: 'Left hand', status: 'focus', setBy: 'Set by your program',
-    program: [{ id: 'nhpt', name: 'Nine-Hole Peg Test', tag: 'Assessment', to: '/details/choose?next=nhpt' }, { id: 'cup', name: 'Waiter – cup', tag: 'Coordination', to: '/details/demo?exercise=cup&side=left' }],
     primary: { label: 'Run the peg test', to: '/details/choose?next=nhpt' } },
   lShoulder: { title: 'Left shoulder', status: 'watch', setBy: 'Set by your program · watch for leaning',
-    program: [{ id: 'abduction', name: 'Arm out to the side', tag: 'Arm strengthening', to: '/details/demo?exercise=abduction&side=left' }, { id: 'cup', name: 'Waiter – cup', tag: 'Coordination', to: '/details/demo?exercise=cup&side=left' }],
     primary: { label: 'Practise Arm out to the side', to: '/details/demo?exercise=abduction&side=left' } },
   lElbow: { title: 'Left elbow', status: 'stable', setBy: 'No exercise assigned here',
-    program: [],
     primary: { label: 'Practise Waiter – cup', to: '/details/demo?exercise=cup&side=left' } },
 }

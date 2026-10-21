@@ -1,7 +1,6 @@
 import { ME, PRESCRIPTION } from '../test/api-mock'
 import type { Calendar, Patient, Prescription, Progress, SessionRecord } from './api'
 import { areaSummary, type AreaSources, type AreaView } from './areaSummary'
-import { trendDelta } from './trend'
 
 /** A stored session as the service lists it, with only the fields the summary reads. */
 function rec(date: string, exercise: string, camera: SessionRecord['summary']['camera'], source: 'live' | 'replay' | 'sample' = 'live'): SessionRecord {
@@ -31,8 +30,6 @@ function fx(over: { sessions?: SessionRecord[]; progress?: Partial<Progress>; rx
 it('shoulder now = best verified peak of the latest live abduction session; replays ignored', () => {
   const v = areaSummary('lShoulder', fx({ sessions: [arm('2026-10-01', [70, 80], [true, true]), arm('2026-10-03', [88, 91], [true, false]), replayArm('2026-10-04', [95])] })) as AreaView
   expect(v.now).toMatchObject({ value: '88', unit: '°', ring: { now: 88, max: 90 } })
-  expect(v.trend!.points.map((p) => p.value)).toEqual([80, 88])
-  expect(v.trend).toMatchObject({ better: 'up', ref: 90 })
   expect(v.sample).toBe(false)
 })
 
@@ -71,7 +68,6 @@ it('stage tiles: verified and unverified lifts of the last session; shoulder hik
 it('shoulder without any arm session: no number is invented', () => {
   const v = areaSummary('lShoulder', fx({})) as AreaView
   expect(v.now).toBeUndefined()
-  expect(v.trend).toBeUndefined()
   expect(v.empty).toBe('Starts after your next arm session.')
 })
 
@@ -88,7 +84,6 @@ it('an arm session with no verified angle never reads as "no arm session" next t
 
 it('a sample arm session is marked sample', () => {
   const v = areaSummary('lShoulder', fx({ sessions: [arm('2026-09-08', [76], [true], {}, 'sample'), arm('2026-10-03', [88], [true])] })) as AreaView
-  expect(v.trend!.points.map((p) => p.sample)).toEqual([true, false])
   expect(v.sample).toBe(true)
 })
 
@@ -96,10 +91,9 @@ it('elbow has an honest empty state', () => {
   expect(areaSummary('lElbow', fx({}))).toEqual({ empty: 'No measure for this area in your program.' })
 })
 
-it('hand trend uses nhpt_trend; sample points marked and excluded from the delta', () => {
+it('hand uses nhpt_trend; sample points are labelled and excluded from the delta', () => {
   const v = areaSummary('lWrist', fx({ progress: { nhpt_trend: [{ date: '2026-08-01', total_s: 68, kind: 'sample' }, { date: '2026-09-20', total_s: 45, kind: 'live' }, { date: '2026-10-02', total_s: 41.2, kind: 'live' }] } })) as AreaView
-  expect(v.trend!.points[0].sample).toBe(true)
-  expect(trendDelta(v.trend!.points, 'down')!.text).toBe('3.8 s faster')
+  expect(v.now!.detail).toBe('3.8 s faster than your first test on 20 Sep')
   expect(v.sample).toBe(true)
   expect(v.now).toMatchObject({ value: '41.2', unit: 's' })
   expect(v.headline).toBe('Getting quicker')
@@ -119,17 +113,16 @@ it('hand tiles: verified reaches of the last live cup session and the next weekl
 it('never lists dropped tasks', () => {
   for (const k of ['lShoulder', 'lWrist'] as const) {
     const v = areaSummary(k, fx({})) as AreaView
-    expect(v.program.map((p) => p.id).every((id) => ['abduction', 'cup', 'nhpt'].includes(id))).toBe(true)
     expect(JSON.stringify(v)).not.toMatch(/Block towers|Grip power|Box and Block/)
   }
 })
 
-it('program links carry the patient side', () => {
-  const v = areaSummary('lShoulder', fx({ me: { ...(ME as Patient), side: 'right' } })) as AreaView
-  expect(v.program.map((p) => p.to)).toEqual(['/details/demo?exercise=abduction&side=right', '/details/demo?exercise=cup&side=right'])
-})
-
-it('goal is the patient\'s single goal and attempts count', () => {
-  const v = areaSummary('lWrist', fx({})) as AreaView
-  expect(v.goal).toEqual({ text: 'Use a cup on my own.', attempts: 2 })
+it('design review 21 Oct: the area view carries no everyday goal, trend line or program list', () => {
+  for (const k of ['lShoulder', 'lWrist'] as const) {
+    const v = areaSummary(k, fx({ sessions: [arm('2026-10-03', [88], [true])], progress: { nhpt_trend: [{ date: '2026-10-02', total_s: 41.2, kind: 'live' }] } })) as AreaView
+    expect(v).not.toHaveProperty('goal')
+    expect(v).not.toHaveProperty('trend')
+    expect(v).not.toHaveProperty('program')
+    expect(JSON.stringify(v)).not.toMatch(/Use a cup on my own/)
+  }
 })

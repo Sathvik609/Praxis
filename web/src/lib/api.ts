@@ -99,7 +99,6 @@ export const api = {
   session: (id: string) => get<SessionRecord>(`/api/sessions/${id}`),
   flags: () => get<{ flags: Flag[] }>('/api/flags').then((r) => r.flags),
   markReviewed: (id: number) => post<{ ok: boolean }>(`/api/flags/${id}/reviewed`),
-  logGoal: (note: string) => post<{ ok: boolean; goal_attempts: number }>('/api/goal-log', { note }),
   progress: () => get<Progress>('/api/progress'),
   therapistPatients: () => get<{ patients: TherapistPatient[] }>('/api/therapist/patients').then((r) => r.patients),
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),

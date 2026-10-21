@@ -18,18 +18,8 @@ import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
 
-const GOAL_KEY = 'praxis.goal'
 const ZOOMS = [1, 1.25, 1.5]
 const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
-
-/** A goal the patient saved on this device before design v2 hid the goal editor. */
-function readGoal(): string | null {
-  try {
-    return localStorage.getItem(GOAL_KEY)
-  } catch {
-    return null
-  }
-}
 
 /** Screen 02 · Home (design v2, designers' 6 Oct artifact). Next practice, this week from
  *  `/api/calendar`, and the affected-areas card: tabs + body-map hotspots pick an area; the
@@ -50,7 +40,6 @@ export function Home() {
   const { data: calendar } = useApi(() => api.calendar())
   const view = areaSummary(focus, { sessions, progress, rx, calendar, me })
   const area = 'name' in view ? view : null
-  const goal = { text: readGoal() ?? me?.goal ?? null, attempts: me?.goal_attempts ?? 0 }
   const headline = area?.headline ?? 'Nothing measured here'
   const hotspots: Hotspot[] = AR_ORDER.map((k) => ({ key: k, joint: k, status: REGIONS[k].status, label: REGIONS[k].title, word: STATUS_WORD[REGIONS[k].status] }))
   const week = calendar ? calendar.days.filter((d) => d.date >= calendar.week.from && d.date <= calendar.week.to) : []
@@ -131,7 +120,7 @@ export function Home() {
       </Card>
 
       <div className="flex flex-col gap-4">
-        <AreaDetail k={focus} head={{ name: region.title, word: STATUS_WORD[region.status], headline }} view={view} goal={goal} onGo={nav} />
+        <AreaDetail k={focus} head={{ name: region.title, word: STATUS_WORD[region.status], headline }} view={view} />
       </div>
       <CoachChat
         open={coachOpen}
