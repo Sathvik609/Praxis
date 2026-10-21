@@ -1637,6 +1637,8 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
    main; the page scrolls instead of clipping the right column's cards. */
 .rp{flex-shrink:0}
 .rp-cam{min-height:45vh;display:flex;flex-direction:column}
+/* No per-rep charts to show: the card keeps its natural height (21 Oct review). */
+.rp-cam.rp-cam-flat{min-height:0}
 .rp-cam .rp-exs{flex:1}
 .rp-cam .rp-ex{flex:1}
 .rp-cam .rp-bars{flex:1;height:auto;min-height:88px}

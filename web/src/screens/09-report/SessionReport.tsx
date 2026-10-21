@@ -372,7 +372,7 @@ export function SessionReport() {
         </div>
       </div>
 
-      <Card title="What the camera measured" className="rp-cam">
+      <Card title="What the camera measured" className={inDay || cam.reach_ms?.length || cam.peak_deg?.length || cam.splits_s ? 'rp-cam' : 'rp-cam rp-cam-flat'}>
         <div className="rp-stats">
           {inDay ? (
             <>

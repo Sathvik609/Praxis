@@ -482,3 +482,18 @@ describe('a late agent note', () => {
     expect(calls()).toBe(1)
   })
 })
+
+test('the camera card keeps its natural height when there are no per-rep charts', async () => {
+  const camera = { ...SESSION.summary.camera, reach_ms: undefined, reach_verified: undefined }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera } }, '/api/patients/me': ME })
+  renderReport()
+  const card = (await screen.findByRole('heading', { name: 'What the camera measured' })).closest('.rp-cam')
+  expect(card).toHaveClass('rp-cam-flat')
+})
+
+test('the camera card fills the column when it draws per-rep bars', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  const card = (await screen.findByRole('heading', { name: 'What the camera measured' })).closest('.rp-cam')
+  expect(card).not.toHaveClass('rp-cam-flat')
+})
