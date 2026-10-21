@@ -79,3 +79,31 @@ def test_agent_section_reads_runs_tools_errors_and_cost_from_traces():
 
 def test_agent_section_says_when_the_agent_was_off():
     assert "rule coach only" in render_md(build_review([_live("a", "ravi")]))
+
+
+def _arm(sid, events):
+    s = _live(sid, "ravi", mode="arm", events=events)
+    s["title"], s["exercise"] = "Arm out to the side", "abduction"
+    return s
+
+
+def test_setup_blocked_label_is_exercise_aware_and_counts_the_pauses_the_patient_saw():
+    """21 Oct: the arm has no sheet. Its setup_blocked is the camera view check, and it can
+    re-fire while the set is already paused for it, so the count is the pauses the patient saw;
+    the failing checks are listed with how often each held."""
+    arm_events = [
+        {"type": "setup_blocked", "reason": "hips_out_of_view"},
+        {"type": "pause", "rule": "setup"},
+        {"type": "setup_blocked", "reason": "hips_out_of_view"},  # while already paused
+        {"type": "setup_blocked", "reason": "hips_out_of_view"},
+    ]
+    r = build_review([_arm("a", arm_events), _live("c", "ravi", events=[{"type": "setup_blocked"}])])
+    whats = {(i["exercise"], i["what"]): i["count"] for i in r["issues"]}
+    assert whats[("Arm out to the side", "camera view check paused the set — hips_out_of_view ×3")] == 1
+    assert whats[("Waiter – cup", "setup could not see the sheet")] == 1
+    assert not any("sheet" in w for (ex, w) in whats if ex == "Arm out to the side")
+
+
+def test_shoulder_hiking_is_reported_as_a_flag_not_a_cue():
+    r = build_review([_arm("a", [{"type": "shoulder_hiking"}, {"type": "shoulder_hiking"}])])
+    assert any(i["what"] == "shoulder hiking flagged" and i["count"] == 2 for i in r["issues"])

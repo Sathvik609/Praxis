@@ -25,13 +25,24 @@ PROBLEM_EVENTS: dict[str, str] = {
     "perception_lost": "camera lost tracking (session paused)",
     "target_missed": "lift fell short of the target",
     "hold_too_short": "hold shorter than prescribed",
-    "shoulder_hiking": "shoulder hiking cue",
+    "shoulder_hiking": "shoulder hiking flagged",
     "compensation_lean": "trunk lean cue",
     "wrong_hole": "peg in the wrong hole",
     "drop": "peg dropped",
     "wrong_dot": "cup put on the wrong dot",
     "setup_blocked": "setup could not see the sheet",
 }
+# Modes with no printed sheet: their `setup_blocked` is the camera view check (arm view gates:
+# turned from the camera, practising shoulder/elbow/hip not visible), not the sheet (21 Oct).
+SHEETLESS_MODES = frozenset({"arm"})
+VIEW_CHECK_LABEL = "camera view check paused the set"
+
+
+def problem_label(kind: str, mode: str | None) -> str:
+    """The plain words for a problem event, by the exercise it happened in."""
+    if kind == "setup_blocked" and mode in SHEETLESS_MODES:
+        return VIEW_CHECK_LABEL
+    return PROBLEM_EVENTS[kind]
 REP_EVENTS = ("rep_complete", "reach_complete")
 
 
@@ -65,10 +76,18 @@ def _one(s: dict[str, Any]) -> dict[str, Any]:
     kinds = Counter(e.get("type") for e in events)
     reasons = Counter(e.get("reason") for e in events if e.get("type") in REP_EVENTS and not e.get("verified") and e.get("reason"))
     problems = Counter({k: kinds[k] for k in PROBLEM_EVENTS if kinds.get(k)})
+    # Arm: `setup_blocked` can re-fire while the set is already paused for it (the session
+    # drops the repeat pause), so count the setup pauses the patient actually saw.
+    setup_pauses = sum(1 for e in events if e.get("type") == "pause" and e.get("rule") == "setup")
+    if s.get("mode") in SHEETLESS_MODES and problems.get("setup_blocked") and setup_pauses:
+        problems["setup_blocked"] = setup_pauses
+    blocked_why = Counter(str(e.get("reason")) for e in events if e.get("type") == "setup_blocked" and e.get("reason"))
     # What the camera could not see when tracking was lost: marker ids, "pose", ...
     lost_what = Counter((f"marker {m}" if isinstance(m, int) else str(m)) for e in events if e.get("type") == "perception_lost" for m in e.get("missing") or [])
     fb = s.get("feedback") or {}
     return {
+        "mode": s.get("mode"),
+        "blocked_why": blocked_why,
         "reps": int(cam.get("reps_total") or 0),
         "verified": int(cam.get("verified") or 0),
         "unverified": int(cam.get("unverified") or 0),
@@ -199,8 +218,10 @@ def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
         flags: Counter[str] = Counter()
         corrections: Counter[str] = Counter()
         lost_what: Counter[str] = Counter()
+        blocked_why: Counter[str] = Counter()
         for _, r in rows:
             lost_what.update(r["lost_what"])
+            blocked_why.update(r["blocked_why"])
             problems.update(r["problems"])
             sessions_with.update(set(r["problems"]))
             reasons.update(r["unverified_reasons"])
@@ -217,7 +238,7 @@ def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
                 "ended_early": sum(r["ended_early"] for r in mine),
             })
         entry = {
-            "exercise": ex, "sessions": n, "testers": len({w for w, _ in rows}),
+            "exercise": ex, "mode": rows[0][1]["mode"], "sessions": n, "testers": len({w for w, _ in rows}),
             "reps": reps, "verified": ver, "unverified": unver, "missed": missed,
             "verified_pct": round(100 * ver / reps) if reps else None,
             "tracking_lost": sum(r["tracking_lost"] for _, r in rows),
@@ -230,6 +251,7 @@ def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
             "sessions_with_problem": dict(sessions_with),
             "unverified_reasons": dict(reasons.most_common()),
             "lost_what": dict(lost_what.most_common()),
+            "setup_blocked_why": dict(blocked_why.most_common()),
             "flags": dict(flags.most_common()),
             "top_corrections": corrections.most_common(5),
             "exertion": dict(Counter(r["exertion"] for _, r in rows if r["exertion"])),
@@ -266,9 +288,11 @@ def _issues(e: dict[str, Any]) -> list[dict[str, Any]]:
             out.append({"exercise": e["exercise"], "what": what, "count": count, "sessions_hit": sessions_hit, "of": n, "share": round(sessions_hit / n, 2)})
 
     for kind, count in e["problems"].items():
-        what = PROBLEM_EVENTS[kind]
+        what = problem_label(kind, e.get("mode"))
         if kind == "perception_lost" and e["lost_what"]:
             what += " — missing: " + ", ".join(f"{k} ×{v}" for k, v in e["lost_what"].items())
+        if kind == "setup_blocked" and e.get("mode") in SHEETLESS_MODES and e.get("setup_blocked_why"):
+            what += " — " + ", ".join(f"{k} ×{v}" for k, v in e["setup_blocked_why"].items())
         add(what, count, e["sessions_with_problem"].get(kind, 0))
     if e["unverified"] and e["reps"]:
         add(f"{e['unverified']} of {e['reps']} reps unverified ({', '.join(e['unverified_reasons']) or 'no reason given'})", e["unverified"], sum(1 for t in e["per_tester"] if t["unverified"]))
