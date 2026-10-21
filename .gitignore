@@ -37,6 +37,8 @@ evaluation/dataset_3d_v*/work/
 # Failure-case frames (pixels from consented real clips): local only, deleted with the clip
 evaluation/failure_cases/*
 !evaluation/failure_cases/README.md
+# documented cases: text only, no pixels (failure_cases/README.md)
+!evaluation/failure_cases/FC*.md
 services/session/praxis.db
 services/session/data/
 

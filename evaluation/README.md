@@ -84,6 +84,10 @@ Labeled datasets, scripts that regenerate every number, result tables and failur
 
 ## Failure cases
 
+`failure_cases/FC*.md` — 19 documented misses so far (team test, agent re-checks, REHAB24-6 real
+video, 3-D and 2-D renders), each with evidence, root cause, change and status; text only, no
+pixels, indexed in `failure_cases/README.md`.
+
 `failure_cases/<clip_id>/` — JPEG frames around every miss on a real clip plus `reason.json`,
 written by `eval.py` only for clips whose participant agreed (`consent_clips: true`). Git-ignored
 except its README and deleted with the clip; see `failure_cases/README.md`.
