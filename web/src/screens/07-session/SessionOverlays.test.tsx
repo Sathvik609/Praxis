@@ -15,7 +15,7 @@ test('paused overlay carries the coach cue said during the pause and an open coa
   render(
     <SessionOverlay
       overlay={{ kind: 'paused', rule: 'failed_reps', text: 'Three reps in a row were not verified.' }}
-      note={{ text: 'Marker 2 is covered — move the cup a little left.', label: 'Claude agent · Anthropic API (dev)', source: 'agent' }}
+      note={{ text: 'Marker 2 is covered — move the cup a little left.', label: 'Claude agent · Anthropic API', source: 'agent' }}
       prompt={<button type="button">Yes, resume</button>}
       resumeByPrompt
       onResume={vi.fn()}
@@ -23,7 +23,7 @@ test('paused overlay carries the coach cue said during the pause and an open coa
     />,
   )
   expect(screen.getByText(/Marker 2 is covered/)).toBeInTheDocument()
-  expect(screen.getByText('Claude agent · Anthropic API (dev)')).toBeInTheDocument()
+  expect(screen.getByText('Claude agent · Anthropic API')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Yes, resume' })).toBeInTheDocument()
   // the prompt's own Yes resumes; the overlay's Resume is not offered twice, End session stays
   expect(screen.queryByRole('button', { name: 'Resume' })).toBeNull()

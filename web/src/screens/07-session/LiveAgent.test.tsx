@@ -22,7 +22,7 @@ const nhptFrame = {
   board: { occupancy: {}, hole_source: 'hough', free_pegs_mm: [] },
   overlay: { holes_px: [], target: null, next_hole: 5, markers_px: {} },
 }
-const AGENT = 'Claude agent · Anthropic API (dev)'
+const AGENT = 'Claude agent · Anthropic API'
 const cue = (id: number, extra: Record<string, unknown> = {}) => ({ type: 'coach', t: 11, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [], ui: {}, ...extra })
 
 const send = vi.fn()

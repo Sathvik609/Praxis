@@ -53,7 +53,7 @@ def test_review_with_no_live_sessions_says_so():
 
 def test_agent_section_reads_runs_tools_errors_and_cost_from_traces():
     s = _live("a", "ravi")
-    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API (dev)", "agent_decisions": 2}
+    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API", "agent_decisions": 2}
     trace = [
         {"kind": "agent_run", "phase": "start", "trigger": "checkin"},
         {"kind": "tool", "server": "perception", "name": "get_events", "ok": True},
@@ -82,7 +82,7 @@ def test_guardrail_refusals_are_counted_apart_from_tool_failures():
     `propose_adjustment` as "tool call failed". They were guardrails doing their job; older trace
     rows only carry the kind inside `result_summary`, newer ones say `refused` directly."""
     s = _live("a", "ravi")
-    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API (dev)", "agent_decisions": 1}
+    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API", "agent_decisions": 1}
     trace = [
         {"kind": "tool", "server": "coach", "name": "speak", "ok": False, "result_summary": '{"error": "stale: the session moved on since this checkpoint", "kind": "stale"}'},
         {"kind": "tool", "server": "perception", "name": "recalibrate", "ok": False, "error_kind": "stale", "refused": True},

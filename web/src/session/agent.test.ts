@@ -26,14 +26,14 @@ test('proposal context: running value first, then the prescription; range from a
 const coach = (id: number, extra: Record<string, unknown> = {}): PraxisEvent => ({ type: 'coach', t: id, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [], ui: {}, ...extra })
 
 test('coach source: agent only when the event says so; legacy events without source are rule', () => {
-  expect(coachSource(coach(1, { source: 'agent', label: 'Claude agent · Anthropic API (dev)' }))).toBe('agent')
+  expect(coachSource(coach(1, { source: 'agent', label: 'Claude agent · Anthropic API' }))).toBe('agent')
   expect(coachSource(coach(2, { source: 'rule', label: 'Rule-based coach' }))).toBe('rule')
   expect(coachSource(coach(3, { label: 'Rule-based coach · LLM agent pending' }))).toBe('rule')
   expect(coachSource(null)).toBe('rule')
 })
 
 test('coach label: the event label, else the pending rule label', () => {
-  expect(coachLabel(coach(1, { source: 'agent', label: 'Claude agent · Anthropic API (dev)' }))).toBe('Claude agent · Anthropic API (dev)')
+  expect(coachLabel(coach(1, { source: 'agent', label: 'Claude agent · Anthropic API' }))).toBe('Claude agent · Anthropic API')
   expect(coachLabel(coach(2))).toBe(COACH_LABEL)
   expect(coachLabel(null)).toBe('Rule-based coach · LLM agent pending')
 })
@@ -41,7 +41,7 @@ test('coach label: the event label, else the pending rule label', () => {
 test('agent status: the latest agent_status event, null when never seen', () => {
   expect(latestAgentStatus([coach(1)])).toBeNull()
   const evs: PraxisEvent[] = [
-    { type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API (dev)' },
+    { type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API' },
     { type: 'agent_status', t: 2, id: 2, state: 'offline', reason: 'timeout', label: 'Rule-based coach' },
   ]
   expect(latestAgentStatus(evs)).toEqual({ state: 'offline', trigger: undefined, reason: 'timeout', label: 'Rule-based coach' })
@@ -75,8 +75,8 @@ test('proposal in plain words, with the program range and the clamp note', () =>
 test('health lines: off, Anthropic API with and without MCP, Haiku 5.5, not ready with a reason', () => {
   expect(healthLines(undefined)).toEqual({ title: 'Off — rule-based coach', details: [] })
   expect(healthLines({ mode: 'off', model: '', mcp: false, ready: false })).toEqual({ title: 'Off — rule-based coach', details: [] })
-  expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true })).toEqual({ title: 'Claude Sonnet 5 via Anthropic API (dev)', details: ['MCP tools connected'] })
-  expect(healthLines({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: true }).title).toBe('Claude Haiku 5.5 via Anthropic API (dev)')
+  expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true })).toEqual({ title: 'Claude Sonnet 5 via Anthropic API', details: ['MCP tools connected'] })
+  expect(healthLines({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: true }).title).toBe('Claude Haiku 5.5 via Anthropic API')
   expect(healthLines({ mode: 'anthropic', model: 'x', mcp: false, ready: true }).details).toEqual(['Tools called directly (MCP not connected)'])
   expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: false, ready: false, reason: 'ANTHROPIC_API_KEY not set' }).details).toContain('Not ready: ANTHROPIC_API_KEY not set · the rule-based coach runs')
   expect(healthLines({ mode: 'scripted', model: 'scripted', mcp: true, ready: true }).title).toBe('Scripted agent (test) — no model calls')

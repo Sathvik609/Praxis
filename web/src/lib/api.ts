@@ -19,7 +19,7 @@ export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_vis
 /** `cat` (6 Oct, Task 17) is the report's note eyebrow; older stored notes have none. */
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }
 /** The agent coach's one session note (`write_session_summary`, ≤ 400 chars), with the event ids
- *  it cites and the agent's own label (e.g. "Claude agent · Anthropic API (dev)"). */
+ *  it cites and the agent's own label (e.g. "Claude agent · Anthropic API"). */
 export type AgentNote = { text: string; evidence?: number[]; label?: string }
 /** `agent` / `agent_decisions` are present only when the service ran an agent coach. */
 /** The last "Pain / feel unwell" answer of the session (service `CoachSession.on_pain`, 10 Oct);

@@ -3,7 +3,7 @@ import type { PraxisEvent } from '../lib/events'
 import { useCoach } from './useCoach'
 import { useCoachPrompt } from './useCoachPrompt'
 
-const coach = (id: number, extra: Record<string, unknown> = {}): PraxisEvent => ({ type: 'coach', t: id, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [1], ui: {}, label: 'Claude agent · Anthropic API (dev)', source: 'agent', ...extra })
+const coach = (id: number, extra: Record<string, unknown> = {}): PraxisEvent => ({ type: 'coach', t: id, id, action: 'instruct', cue_id: 'x', text: `Cue ${id}`, reason: 'r', evidence: [1], ui: {}, label: 'Claude agent · Anthropic API', source: 'agent', ...extra })
 const adjust = (id: number) =>
   coach(id, {
     action: 'regress',

@@ -50,9 +50,9 @@ test('an agent resume command (after the patient said yes) clears the paused ove
 
 test('caption carries its source; the latest rule label is kept for the screen-state captions', () => {
   const { result } = renderHook(() =>
-    useCoach([coach(1, { source: 'rule', label: 'Rule-based coach' }), coach(2, { source: 'agent', label: 'Claude agent · Anthropic API (dev)' })]),
+    useCoach([coach(1, { source: 'rule', label: 'Rule-based coach' }), coach(2, { source: 'agent', label: 'Claude agent · Anthropic API' })]),
   )
-  expect(result.current.caption?.label).toBe('Claude agent · Anthropic API (dev)')
+  expect(result.current.caption?.label).toBe('Claude agent · Anthropic API')
   expect(result.current.captionSource).toBe('agent')
   expect(result.current.ruleLabel).toBe('Rule-based coach')
 })
@@ -64,7 +64,7 @@ test('legacy coach events (no source) read as the rule coach with their own labe
 })
 
 test('agent_status events surface as the agent state', () => {
-  const { result } = renderHook(() => useCoach([{ type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API (dev)' } as PraxisEvent]))
+  const { result } = renderHook(() => useCoach([{ type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API' } as PraxisEvent]))
   expect(result.current.agent?.state).toBe('thinking')
 })
 

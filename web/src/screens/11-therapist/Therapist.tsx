@@ -154,7 +154,7 @@ export function Therapist() {
                 </ul>
                 {savedNote && <p className="mt-2 font-bold text-mint-ink" role="status">{savedNote}</p>}
                 <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
-                <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new symptoms · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
+                <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new symptoms (API only; patients use Pain / feel unwell) · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
                 <p className="mt-3 text-base text-muted">Dose edits arrive with clinician accounts; until then this card is the reference the coach is clamped to. Practice days and the next visit can be edited now (Edit practice days).</p>
               </section>
             </Card>

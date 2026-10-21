@@ -152,8 +152,8 @@ describe('SxCoach', () => {
   })
 
   it('rule and agent differ by label text and icon, never by colour alone', () => {
-    const { container } = render(<SxCoach caption="Move the cup left." label="Claude agent · Anthropic API (dev)" source="agent" />)
-    expect(screen.getByText('Claude agent · Anthropic API (dev)').closest('[data-source]')).toHaveAttribute('data-source', 'agent')
+    const { container } = render(<SxCoach caption="Move the cup left." label="Claude agent · Anthropic API" source="agent" />)
+    expect(screen.getByText('Claude agent · Anthropic API').closest('[data-source]')).toHaveAttribute('data-source', 'agent')
     const agentIcon = container.querySelector('[data-source="agent"] svg')?.getAttribute('class')
     const { container: rule } = render(<SxCoach caption="x" label="Rule-based coach" source="rule" />)
     const ruleIcon = rule.querySelector('[data-source="rule"] svg')?.getAttribute('class')
@@ -270,10 +270,10 @@ describe('sxHold', () => {
   })
 
   it('carries the coach cue said during the pause and an open resume prompt', () => {
-    const cue = { type: 'coach', t: 5, id: 7, action: 'instruct', cue_id: 'x', text: 'Marker 2 is covered — move the cup a little left.', reason: '', evidence: [6], ui: {}, label: 'Claude agent · Anthropic API (dev)', source: 'agent' } as CoachEvent
+    const cue = { type: 'coach', t: 5, id: 7, action: 'instruct', cue_id: 'x', text: 'Marker 2 is covered — move the cup a little left.', reason: '', evidence: [6], ui: {}, label: 'Claude agent · Anthropic API', source: 'agent' } as CoachEvent
     const coach = coachWithOverlay({ kind: 'paused', rule: 'failed_reps', text: 'Three reps were not verified.', t: 4, id: 6 }, [cue])
     const h = sxHold(coach, noRest, false, false, vi.fn(), vi.fn(), { prompt: { kind: 'resume' } })
-    expect(h.note).toEqual({ text: cue.text, label: 'Claude agent · Anthropic API (dev)', source: 'agent' })
+    expect(h.note).toEqual({ text: cue.text, label: 'Claude agent · Anthropic API', source: 'agent' })
     expect(h.prompt).toBe(true)
     expect(h.resumeByPrompt).toBe(true)
     const h2 = sxHold(coach, noRest, false, false, vi.fn(), vi.fn(), { prompt: { kind: 'dose' } })
@@ -334,13 +334,13 @@ describe('SxHold', () => {
     render(
       <SxHold
         {...base}
-        note={{ text: 'Marker 2 is covered.', label: 'Claude agent · Anthropic API (dev)', source: 'agent' }}
+        note={{ text: 'Marker 2 is covered.', label: 'Claude agent · Anthropic API', source: 'agent' }}
         prompt={<button type="button">Yes, resume</button>}
         resumeByPrompt
       />,
     )
     expect(screen.getByText('Marker 2 is covered.')).toBeInTheDocument()
-    expect(screen.getByText('Claude agent · Anthropic API (dev)')).toBeVisible()
+    expect(screen.getByText('Claude agent · Anthropic API')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Yes, resume' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Resume when ready' })).toBeNull()
     expect(screen.getByRole('button', { name: 'End session instead' })).toBeInTheDocument()

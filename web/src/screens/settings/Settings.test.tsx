@@ -219,17 +219,17 @@ test('export my data downloads the service record and this device, as JSON', asy
   }
 })
 
-test('Coach row: Claude Sonnet 5 via the Anthropic API (dev) with MCP tools connected', async () => {
+test('Coach row: Claude Sonnet 5 via the Anthropic API with MCP tools connected', async () => {
   mockApi({ '/health': health({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true }) })
   await renderSettings()
-  expect(await screen.findByText('Claude Sonnet 5 via Anthropic API (dev)')).toBeInTheDocument()
+  expect(await screen.findByText('Claude Sonnet 5 via Anthropic API')).toBeInTheDocument()
   expect(screen.getByText('MCP tools connected')).toBeInTheDocument()
 })
 
 test('Coach row: Anthropic API not ready says why and that the rule coach runs', async () => {
   mockApi({ '/health': health({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: false, reason: 'ANTHROPIC_API_KEY is not set' }) })
   await renderSettings()
-  expect(await screen.findByText('Claude Haiku 5.5 via Anthropic API (dev)')).toBeInTheDocument()
+  expect(await screen.findByText('Claude Haiku 5.5 via Anthropic API')).toBeInTheDocument()
   expect(screen.getByText(/Not ready: ANTHROPIC_API_KEY is not set · the rule-based coach runs/)).toBeInTheDocument()
 })
 
