@@ -518,6 +518,30 @@ def safe_checkin(checkin: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+FEEDBACK_WORDS = {
+    "difficulty": frozenset({"too_easy", "just_right", "hard", "couldnt_finish"}),
+    "again_tomorrow": frozenset({"yes_easily", "yes_probably", "not_sure", "no"}),
+    "end_reason": frozenset({"pain", "tired", "blocked", "finished", "rest", "paused", "replay_end"}),
+}
+
+
+def safe_feedback(feedback: dict[str, Any]) -> dict[str, Any]:
+    """The screen-08 answers as typed values only, for the `feedback` event the agent's report
+    note cites (21 Oct). Integers 0-10, booleans and known words; a stop end keeps its rule id
+    (`stop:<rule>`); the typed `detail` and the barrier words never go on the ring."""
+    out: dict[str, Any] = {"ended_early": bool(feedback.get("ended_early", False))}
+    for k in ("pain_after", "effort"):
+        v = feedback.get(k)
+        out[k] = v if isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 10 else None
+    for k, words in FEEDBACK_WORDS.items():
+        v = str(feedback.get(k) or "").strip()
+        if k == "end_reason" and re.fullmatch(r"stop:[a-z_]{1,32}", v):
+            out[k] = v
+        else:
+            out[k] = v if v in words else ("other" if v else None)
+    return out
+
+
 def quote_patient_text(text: str) -> dict[str, Any]:
     """Patient free text as a data field: markup, brackets and control characters dropped (it
     cannot close a delimiter or open a fake one), whitespace collapsed, capped. The system

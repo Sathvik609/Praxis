@@ -57,6 +57,19 @@ def _median(xs: list[float]) -> float | None:
     return ys[n // 2] if n % 2 else (ys[n // 2 - 1] + ys[n // 2]) / 2
 
 
+def _refusal_kind(line: dict[str, Any]) -> str | None:
+    """The guardrail kind when a failed agent tool call was a refusal (agent.tools.REFUSAL_KINDS),
+    else None. Rows from before 21 Oct carry the kind only inside `result_summary`."""
+    from praxis_session.agent.tools import REFUSAL_KINDS
+
+    kind = line.get("error_kind")
+    if kind is None:  # the summary is cut at 240 characters, so read the kind, not the JSON
+        m = re.search(r'"kind": "(\w+)"\}$', str(line.get("result_summary") or ""))
+        kind = m.group(1) if m else None
+    refused = line["refused"] if "refused" in line else kind in REFUSAL_KINDS
+    return str(kind) if refused else None
+
+
 def _one(s: dict[str, Any]) -> dict[str, Any]:
     """The numbers one session contributes."""
     summ = s.get("summary") or {}
@@ -120,6 +133,7 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
     error_msgs: list[str] = []
     tools: Counter[str] = Counter()
     tool_fail: Counter[str] = Counter()
+    tool_refused: defaultdict[str, Counter[str]] = defaultdict(Counter)
     drops: Counter[str] = Counter()
     skips: Counter[str] = Counter()
     first_ms: list[float] = []
@@ -156,7 +170,11 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
                 name = str(line.get("name"))
                 tools[name] += 1
                 if line.get("ok") is False:
-                    tool_fail[name] += 1
+                    refusal = _refusal_kind(line)
+                    if refusal is None:
+                        tool_fail[name] += 1
+                    else:
+                        tool_refused[name][refusal] += 1
             elif kind == "agent_drop":
                 drops[str(line.get("reason"))] += 1
             elif kind == "agent_skip":
@@ -167,6 +185,7 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
         "outcomes": dict(outcomes), "triggers": dict(triggers.most_common()), "models": dict(models),
         "transports": dict(transports), "errors": dict(errors.most_common()), "error_examples": error_msgs,
         "tools": dict(tools.most_common()), "tool_failures": dict(tool_fail.most_common()),
+        "tool_refusals": {k: dict(v.most_common()) for k, v in tool_refused.items()},
         "drops": dict(drops.most_common()), "skips": dict(skips.most_common()),
         "first_action_ms_p50": _median(first_ms), "run_ms_p50": _median(run_ms),
         "tokens": tok, "cost_usd": round(cost, 4) if prices else None,
@@ -311,7 +330,8 @@ def render_md(r: dict[str, Any]) -> str:
                   "- run outcomes: " + (", ".join(f"{k} {v}" for k, v in a["outcomes"].items()) or "none"),
                   "- runs by trigger: " + (", ".join(f"{k} {v}" for k, v in a["triggers"].items()) or "none"),
                   "- tool calls: " + (", ".join(f"{k} {v}" for k, v in a["tools"].items()) or "none")
-                  + (" · failed: " + ", ".join(f"{k} {v}" for k, v in a["tool_failures"].items()) if a["tool_failures"] else ""),
+                  + (" · failed: " + ", ".join(f"{k} {v}" for k, v in a["tool_failures"].items()) if a["tool_failures"] else "")
+                  + (" · refused by a guardrail: " + ", ".join(f"{k} {sum(v.values())} ({', '.join(v)})" for k, v in a.get("tool_refusals", {}).items()) if a.get("tool_refusals") else ""),
                   "- transport: " + (", ".join(f"{k} {v}" for k, v in a["transports"].items()) or "–") + " (direct = MCP fell back)"]
         if a["first_action_ms_p50"] is not None:
             lines.append(f"- checkpoint → first action, median: {a['first_action_ms_p50'] / 1000:.1f} s · whole run, median: {(a['run_ms_p50'] or 0) / 1000:.1f} s")

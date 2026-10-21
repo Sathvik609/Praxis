@@ -418,3 +418,50 @@ def test_agent_decisions_name_their_run(tmp_path):
     run_id = [r for r in rows(s, "agent_run") if r["phase"] == "end"][-1]["run"]
     dec = [r for r in rows(s, "decide") if r.get("source") == "agent"][-1]
     assert dec["run"] == run_id and dec["tool"] == "speak"
+
+
+# ---- 21 Oct team test: the four "failed" tool calls in the hosted review ------------------------
+def test_a_feedback_run_can_cite_the_feedback_itself_when_nothing_else_happened(tmp_path):
+    """Team test 13 Oct (session 098b067da2b5): no check-in, no OpenCV event, then End. The
+    feedback checkpoint had no evidence ids, so write_session_summary was refused and the report
+    had no coach note. The feedback is now an event on the ring the note can cite."""
+    scripts = {"feedback": [{"tool": "write_session_summary", "args": {"note": "Ended before any rep; nothing seen yet.", "evidence": "$evidence"}}]}
+    s, p, h, reg = build(tmp_path, scripts, mode="arm")
+    s.on_feedback({"ended_early": True, "end_reason": "finished", "pain_after": 2, "detail": "free text never goes on the ring"}, t=2.0)
+    asyncio.run(s.agent.run_pending())
+    calls = [r for r in rows(s, "tool") if r.get("name") == "write_session_summary"]
+    assert calls and calls[-1]["ok"] is True
+    fb = s.recent_events(["feedback"])
+    assert len(fb) == 1 and s.coach_note and fb[0].id in s.coach_note["evidence"]
+    assert "detail" not in fb[0].payload  # typed answers only, never the patient's free text
+    assert fb[0].payload["pain_after"] == 2 and fb[0].payload["ended_early"] is True
+
+
+def test_a_guardrail_refusal_is_traced_as_refused_not_as_an_error(tmp_path):
+    """Team test 14-15 Oct: `speak`/`recalibrate` refused as stale and `propose_adjustment`
+    refused as no_change were counted as failures. The tool row now says which it was."""
+    s, p, h, reg = build(tmp_path)
+    e = arc_event(s)
+    h.begin_run("arc_complete")
+    s.epoch += 1  # the session moved on while the run was thinking
+    try:
+        with pytest.raises(T.ToolRejected):
+            call(reg, "speak", text="Nice arc.", cue="instruct", evidence=[e.id])
+    finally:
+        h.end_run()
+    h.begin_run("arc_complete")  # a fresh run: now the model's own argument is wrong
+    try:
+        with pytest.raises(T.ToolRejected):
+            call(reg, "speak", text="Nice arc.", cue="shout", evidence=[e.id])
+    finally:
+        h.end_run()
+    stale, bad = [r for r in rows(s, "tool") if r.get("name") == "speak"][-2:]
+    assert (stale["ok"], stale["error_kind"], stale["refused"]) == (False, "stale", True)
+    assert (bad["ok"], bad["error_kind"], bad["refused"]) == (False, "field", False)
+    h.begin_run("arc_complete")
+    try:
+        call(reg, "get_set_summary")
+    finally:
+        h.end_run()
+    fine = [r for r in rows(s, "tool") if r.get("name") == "get_set_summary"][-1]
+    assert fine["ok"] is True and "refused" not in fine and "error_kind" not in fine
