@@ -334,8 +334,15 @@ class CoachSession:
         self.epoch += 1
         self.ended = True
         if self.agent is not None:
-            ids = [e.id for e in self.recent_events(last_n=5)]
-            self.trace.log("event", type="feedback", t=t)
+            # 21 Oct team test: a session ended before any check-in or OpenCV event left the
+            # feedback checkpoint with no evidence, so the report note was refused. The answers
+            # are now an event on the ring the note can cite (typed values only, never `detail`).
+            from praxis_session.agent.model import safe_feedback
+
+            e = make_event("feedback", t=t, **safe_feedback(feedback))
+            self._ring.append(e)
+            ids = [x.id for x in self.recent_events(last_n=5)]
+            self.trace.log("event", type="feedback", id=e.id, t=t)
             self._checkpoint("feedback", ids, t)
 
     def _checkpoint(self, trigger: str, evidence: list[int], t: float) -> None:

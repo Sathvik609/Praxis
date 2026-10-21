@@ -27,7 +27,7 @@ import json
 import os
 import platform
 import time
-from dataclasses import replace as _replace_event
+from dataclasses import dataclass, replace as _replace_event
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -36,11 +36,12 @@ from pydantic import BaseModel, Field, ValidationError
 
 import cv2
 import numpy as np
-from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.metrics import METRICS as AGENT_METRICS
+from praxis_session.auth import therapist_token_from_env, therapist_write_allowed
 from praxis_session.agent.model import PAUSE_RUN_TIMEOUT_S, PRICES as AGENT_PRICES, load_config as load_agent_config, make_planner, with_listening_port
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
@@ -53,7 +54,7 @@ from praxis_session.perception.exercises import DEFAULT_VISIBLE_ID, EXERCISES, R
 from praxis_session.perception.hand import HAND_MODEL, MODELS_DIR, PALM_MODEL
 from praxis_session.pipeline import MODES as PIPELINE_MODES, SessionPipeline
 from praxis_session.replay import find_replay_clip, list_replay_clips
-from praxis_session.review import build_review, clean_tester, load_trace, render_md
+from praxis_session.review import build_review, clean_tester, load_trace, render_md, unsaved_closes
 from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, tier_reason
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 from praxis_session.session import CoachSession
@@ -68,6 +69,9 @@ CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
 # Team test (12 Oct): the hosted review build asks each browser for a tester name once and tags
 # that browser's sessions with it; /api/review reads them back. Off on the judge build.
 TEAM_TEST = os.environ.get("PRAXIS_TEAM_TEST", "0") == "1"
+# Therapist-only writes (21 Oct, auth.py): practice days and "Mark reviewed" need this token in
+# X-Praxis-Therapist-Token; unset, only a local unproxied request (laptop dev) may write.
+THERAPIST_TOKEN = therapist_token_from_env()
 MODES = {"heartbeat", *PIPELINE_MODES}
 COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no coach session or trace
 
@@ -140,6 +144,7 @@ def health() -> dict[str, object]:
         "opencv_build": opencv_build(),
         "mode": "cloud" if CLOUD_ENABLED else "edge",
         "team_test": TEAM_TEST,
+        "therapist_writes": "token" if THERAPIST_TOKEN else "local_only",
         "models": {
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
@@ -210,12 +215,23 @@ class ScheduleBody(BaseModel):
     next_visit: dict[str, str] | None = None
 
 
+THERAPIST_ONLY_TEXT = "Therapist only: this change needs the therapist's access, which this shared site does not have. Nothing was changed."
+
+
+def _require_therapist(request: Request) -> None:
+    """403 unless the request may make a therapist write (auth.therapist_write_allowed)."""
+    if not therapist_write_allowed(request.scope, THERAPIST_TOKEN):
+        raise HTTPException(403, {"error": "therapist_only", "text": THERAPIST_ONLY_TEXT})
+
+
 @app.put("/api/prescription/schedule")
-def api_put_schedule(body: ScheduleBody) -> dict[str, object]:
+def api_put_schedule(body: ScheduleBody, request: Request) -> dict[str, object]:
     """The therapist changes practice days, the peg-test day or the next clinic visit: stored
     as prescription v(N+1) (dose, adaptations and stop rules carried over), logged in
-    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid. No
-    auth exists (removed 21 Sep); the UI labels it "Therapist view" and Cognito lands in W6."""
+    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid.
+    Therapist only (21 Oct): 403 without the therapist token (`_require_therapist`); there is
+    still no sign-in (removed 21 Sep, Cognito deferred)."""
+    _require_therapist(request)
     before = store.prescription()["version"]
     try:
         rx = store.update_schedule(body.model_dump(), by="therapist", now=_clock().timestamp())
@@ -307,7 +323,8 @@ def api_review(format: str = "json", limit: int = 1000) -> dict[str, object] | P
     (review.py). `?format=md` gives the same as readable text for a browser tab."""
     rows = [r for r in (store.session(s["id"]) for s in store.sessions(limit)) if r is not None]
     traces = {r["id"]: load_trace(trace_mod.DEFAULT_DIR, r["id"]) for r in rows if r.get("source") == "live"}
-    review = build_review(rows, traces, AGENT_PRICES)
+    unsaved = unsaved_closes(trace_mod.DEFAULT_DIR, exclude={r["id"] for r in rows})
+    review = build_review(rows, traces, AGENT_PRICES, unsaved)
     if format == "md":
         return PlainTextResponse(render_md(review), media_type="text/plain; charset=utf-8")
     return review
@@ -319,7 +336,10 @@ def api_flags() -> dict[str, object]:
 
 
 @app.post("/api/flags/{flag_id}/reviewed")
-def api_flag_reviewed(flag_id: int) -> dict[str, object]:
+def api_flag_reviewed(flag_id: int, request: Request) -> dict[str, object]:
+    """Therapist dashboard · Mark reviewed. Therapist only (21 Oct): a public visitor must not
+    clear a pain or stop flag the therapist has not seen."""
+    _require_therapist(request)
     store.mark_reviewed(flag_id)
     return {"ok": True}
 
@@ -563,15 +583,17 @@ async def session_ws(
         while len(sessions) > 50:
             old = sessions.pop(next(iter(sessions)))
             latency_stats.pop(old.session_id, None)
+    closed = SocketClose()
     try:
         if replay and pipeline is not None and coach is not None:
             await _replay_loop(ws, replay, pipeline, coach, stats)
             return
-        await _live_loop(ws, pipeline, coach, stats)
+        await _live_loop(ws, pipeline, coach, stats, closed)
     except Exception as exc:
         ops.ws_error("exception", mode, error=type(exc).__name__)
         raise
     finally:
+        close = _socket_close(coach, closed, "replay" if replay else "live") if coach is not None else None
         # 11 Oct audit: the socket is gone, so the agent must not keep running (model spend,
         # tools on a dead pipeline): pending checkpoints dropped, the run in flight cancelled
         # (a feedback run may finish its report note), the tool handle unregistered.
@@ -580,16 +602,52 @@ async def session_ws(
         elif coach is not None:
             agent_tools.REGISTRY.remove(coach.session_id)
         if coach is not None:
-            _end_ops(coach)
+            _end_ops(coach, close)
 
 
-def _end_ops(coach: CoachSession) -> None:
+@dataclass
+class SocketClose:
+    """How a live socket ended (21 Oct team test): the close code the disconnect carried
+    (1000/1001 the browser closed it, 1006 the connection dropped) and when the last message
+    arrived."""
+
+    code: int | None = None
+    last_message_t: float | None = None
+
+
+def _socket_close(coach: CoachSession, closed: SocketClose, source: str) -> dict[str, Any] | None:
+    """The `socket_close` trace row: saved or not (the feedback stores the session), the close
+    code, the agent run in flight and seconds since the last agent run ended and since the last
+    message. Never raises (the socket is already closing)."""
+    try:
+        now = time.time()
+        last_run = next((r for r in reversed(coach.trace.tail(5000)) if r.get("kind") == "agent_run" and r.get("phase") == "end"), None)
+        st = latency_stats.get(coach.session_id)
+        return coach.trace.log(
+            "socket_close",
+            saved=bool(coach.ended),
+            close_code=closed.code,
+            source=source,
+            agent_run_in_flight=getattr(coach.agent, "_current", None) if coach.agent is not None else None,
+            s_since_agent_run=round(now - last_run["ts"], 1) if last_run else None,
+            s_since_last_message=round(now - closed.last_message_t, 1) if closed.last_message_t else None,
+            frames=st.summary().get("frames") if st is not None else None,
+        )
+    except Exception as exc:  # noqa: BLE001
+        ops.ws_error("socket_close_log", coach.mode, error=type(exc).__name__)
+        return None
+
+
+def _end_ops(coach: CoachSession, close: dict[str, Any] | None = None) -> None:
     """The session_end ops line; never raises (the socket is already closing)."""
     so = ops_sessions.pop(coach.session_id, None)
     if so is None:
         return
     try:
-        so.end(coach.summary(), latency_stats[coach.session_id].summary() if coach.session_id in latency_stats else None)
+        how = None
+        if close is not None:
+            how = {"ended_by": "feedback" if close["saved"] else "socket_closed", "close_code": close["close_code"], "agent_run_in_flight": close["agent_run_in_flight"], "s_since_agent_run": close["s_since_agent_run"]}
+        so.end(coach.summary(), latency_stats[coach.session_id].summary() if coach.session_id in latency_stats else None, how=how)
     except Exception as exc:  # noqa: BLE001
         ops.ws_error("session_end_log", coach.mode, error=type(exc).__name__)
 
@@ -650,22 +708,31 @@ def _is_disconnect(msg: dict) -> bool:
     return msg.get("type") == "websocket.disconnect"
 
 
-async def _live_loop(ws: WebSocket, pipeline: SessionPipeline | None, coach: CoachSession | None, stats: LatencyStats) -> None:
+async def _live_loop(ws: WebSocket, pipeline: SessionPipeline | None, coach: CoachSession | None, stats: LatencyStats, closed: SocketClose | None = None) -> None:
     """Reader task -> queue -> consumer. The consumer never blocks the event loop on OpenCV:
     `pipeline.process` runs in the default thread pool, and frames that queued up meanwhile
     are dropped oldest-first. Commands are handled in arrival order between frames, so the
-    pipeline and coach are only ever touched from one coroutine at a time."""
+    pipeline and coach are only ever touched from one coroutine at a time. `closed` records the
+    disconnect's close code and the last message time (21 Oct, `socket_close`)."""
     loop = asyncio.get_running_loop()
     q: asyncio.Queue[dict] = asyncio.Queue()
+    closed = closed if closed is not None else SocketClose()
 
     async def reader() -> None:
         try:
             while True:
                 msg = await ws.receive()
+                if _is_disconnect(msg):
+                    closed.code = msg.get("code")
+                else:
+                    closed.last_message_t = time.time()
                 await q.put(msg)
                 if _is_disconnect(msg):
                     return
-        except (WebSocketDisconnect, RuntimeError):
+        except WebSocketDisconnect as e:
+            closed.code = e.code
+            await q.put({"type": "websocket.disconnect"})
+        except RuntimeError:
             await q.put({"type": "websocket.disconnect"})
 
     reader_task = asyncio.ensure_future(reader())

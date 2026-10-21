@@ -5,13 +5,17 @@ import { Field } from '../../design/Field'
 import { Check } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Pill } from '../../design/Pill'
-import { api, type Prescription, type Schedule } from '../../lib/api'
+import { api, isTherapistOnly, type Prescription, type Schedule } from '../../lib/api'
 import { WEEKDAYS, sampleVisitAt } from '../../lib/calendar'
 import { plural } from '../../lib/plural'
 
 /** The seed schedule, for a service that predates 28 Sep (its prescription has no schedule). */
 /** Offline fallback: the seed schedule with its sample visit relative to today (as the service). */
 export const DEFAULT_SCHEDULE: Schedule = { practice_days: [0, 1, 2, 3, 4], nhpt_day: 6, next_visit: { at: sampleVisitAt(), with: 'Dr. Anita Rao, OT', sample: true }, minutes_per_day: 10 }
+
+/** What a refused therapist write says (21 Oct: the service needs the therapist token; this
+ *  shared site has no sign-in, so here the therapist view is read-only). */
+export const THERAPIST_ONLY = 'Therapist only: on this shared site the therapist view is read-only. Nothing was changed.'
 
 type Props = { schedule: Schedule; version: number; onClose: () => void; onSaved: (rx: Prescription) => void }
 
@@ -42,7 +46,7 @@ export function ScheduleDialog({ schedule, version, onClose, onSaved }: Props) {
       .putSchedule({ practice_days: days, nhpt_day: Number(pegDay), next_visit: booked ? { at: `${date}T${time}`, with: who.trim() } : null })
       .then(onSaved)
       .catch((e) => {
-        setError(`Could not save: ${e instanceof Error ? e.message : String(e)}. Nothing was changed.`)
+        setError(isTherapistOnly(e) ? THERAPIST_ONLY : `Could not save: ${e instanceof Error ? e.message : String(e)}. Nothing was changed.`)
         setSaving(false)
       })
   }

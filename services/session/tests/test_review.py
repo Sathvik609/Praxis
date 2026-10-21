@@ -77,6 +77,28 @@ def test_agent_section_reads_runs_tools_errors_and_cost_from_traces():
     assert "## AI coach" in md and "speak 1" in md and "timeout" in md
 
 
+def test_guardrail_refusals_are_counted_apart_from_tool_failures():
+    """21 Oct: the hosted review listed a stale `speak`/`recalibrate` and a no_change
+    `propose_adjustment` as "tool call failed". They were guardrails doing their job; older trace
+    rows only carry the kind inside `result_summary`, newer ones say `refused` directly."""
+    s = _live("a", "ravi")
+    s["summary"]["coach"] |= {"agent": "Claude agent · Anthropic API (dev)", "agent_decisions": 1}
+    trace = [
+        {"kind": "tool", "server": "coach", "name": "speak", "ok": False, "result_summary": '{"error": "stale: the session moved on since this checkpoint", "kind": "stale"}'},
+        {"kind": "tool", "server": "perception", "name": "recalibrate", "ok": False, "error_kind": "stale", "refused": True},
+        {"kind": "tool", "server": "coach", "name": "propose_adjustment", "ok": False, "result_summary": '{"error": "no change: hold_s is already 2", "kind": "no_change"}'},
+        {"kind": "tool", "server": "coach", "name": "write_session_summary", "ok": False, "error_kind": "evidence", "refused": False},
+    ]
+    r = build_review([s], {"a": trace})
+    a = r["agent"]
+    assert a["tool_failures"] == {"write_session_summary": 1}
+    assert a["tool_refusals"] == {"speak": {"stale": 1}, "recalibrate": {"stale": 1}, "propose_adjustment": {"no_change": 1}}
+    whats = [i["what"] for i in r["issues"] if i["exercise"] == "AI coach"]
+    assert whats == ["tool call failed: write_session_summary"]
+    md = render_md(r)
+    assert "refused by a guardrail: speak 1 (stale)" in md and "propose_adjustment 1 (no_change)" in md
+
+
 def test_agent_section_says_when_the_agent_was_off():
     assert "rule coach only" in render_md(build_review([_live("a", "ravi")]))
 

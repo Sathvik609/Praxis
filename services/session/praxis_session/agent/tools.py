@@ -129,6 +129,13 @@ _BIG_KEYS = {"overlay", "markers_px", "hand", "pose", "board", "targets_px", "sk
 _B64 = re.compile(r"[A-Za-z0-9+/=_-]{200,}")
 
 
+# Rejection kinds that are a guardrail doing its job on the session's state (the session moved
+# on, stopped or ended, the clamped value is already in force, a rate limit or budget, a prompt
+# already waiting), not a bad call (21 Oct team test). The trace row says `refused: true` for
+# these; review.py counts them apart from tool failures (malformed arguments, bad evidence...).
+REFUSAL_KINDS = frozenset({"stale", "stopped", "ended", "no_change", "rate", "prompt_pending", "state", "budget", "policy"})
+
+
 class ToolRejected(Exception):
     """A guardrail said no. The model sees the message as a tool error; nothing happened."""
 
@@ -358,7 +365,10 @@ def invoke(name: str, args: dict[str, Any], transport: str, registry: Registry |
         ms = round((time.perf_counter() - t0) * 1000.0, 1)
         summary = json.dumps(result if ok else {"error": str(err), "kind": getattr(err, "kind", "error")}, default=str)[:240]
         safe_args = {k: (v[:SPEAK_MAX_CHARS] if isinstance(v, str) else v) for k, v in args.items() if k != "session_id"}
-        extra = {}
+        extra: dict[str, Any] = {}
+        if not ok:
+            kind = getattr(err, "kind", "error")
+            extra |= {"error_kind": kind, "refused": kind in REFUSAL_KINDS}
         if ok and isinstance(result, dict) and name in OPENCV_TOOLS:
             extra["opencv"] = opencv_digest(name, result)
         h.session.trace.log("tool", server=SERVER_OF.get(name, "none"), name=name, autonomy=level or None, args=safe_args, ok=ok, ms=ms, transport=transport, result_summary=summary, run=h.run.id if h.run else None, **extra)

@@ -68,6 +68,19 @@ def _median(xs: list[float]) -> float | None:
     return ys[n // 2] if n % 2 else (ys[n // 2 - 1] + ys[n // 2]) / 2
 
 
+def _refusal_kind(line: dict[str, Any]) -> str | None:
+    """The guardrail kind when a failed agent tool call was a refusal (agent.tools.REFUSAL_KINDS),
+    else None. Rows from before 21 Oct carry the kind only inside `result_summary`."""
+    from praxis_session.agent.tools import REFUSAL_KINDS
+
+    kind = line.get("error_kind")
+    if kind is None:  # the summary is cut at 240 characters, so read the kind, not the JSON
+        m = re.search(r'"kind": "(\w+)"\}$', str(line.get("result_summary") or ""))
+        kind = m.group(1) if m else None
+    refused = line["refused"] if "refused" in line else kind in REFUSAL_KINDS
+    return str(kind) if refused else None
+
+
 def _one(s: dict[str, Any]) -> dict[str, Any]:
     """The numbers one session contributes."""
     summ = s.get("summary") or {}
@@ -139,6 +152,7 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
     error_msgs: list[str] = []
     tools: Counter[str] = Counter()
     tool_fail: Counter[str] = Counter()
+    tool_refused: defaultdict[str, Counter[str]] = defaultdict(Counter)
     drops: Counter[str] = Counter()
     skips: Counter[str] = Counter()
     first_ms: list[float] = []
@@ -175,7 +189,11 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
                 name = str(line.get("name"))
                 tools[name] += 1
                 if line.get("ok") is False:
-                    tool_fail[name] += 1
+                    refusal = _refusal_kind(line)
+                    if refusal is None:
+                        tool_fail[name] += 1
+                    else:
+                        tool_refused[name][refusal] += 1
             elif kind == "agent_drop":
                 drops[str(line.get("reason"))] += 1
             elif kind == "agent_skip":
@@ -186,15 +204,17 @@ def agent_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
         "outcomes": dict(outcomes), "triggers": dict(triggers.most_common()), "models": dict(models),
         "transports": dict(transports), "errors": dict(errors.most_common()), "error_examples": error_msgs,
         "tools": dict(tools.most_common()), "tool_failures": dict(tool_fail.most_common()),
+        "tool_refusals": {k: dict(v.most_common()) for k, v in tool_refused.items()},
         "drops": dict(drops.most_common()), "skips": dict(skips.most_common()),
         "first_action_ms_p50": _median(first_ms), "run_ms_p50": _median(run_ms),
         "tokens": tok, "cost_usd": round(cost, 4) if prices else None,
     }
 
 
-def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]] | None = None, prices: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str, Any]]] | None = None, prices: dict[str, dict[str, float]] | None = None, unsaved: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Sessions as `Store.session()` returns them (with events). Live ones are analysed;
-    `traces` (session id → trace lines) adds the agent coach section."""
+    `traces` (session id → trace lines) adds the agent coach section; `unsaved`
+    (`unsaved_closes`) the live sockets that closed before their session was saved."""
     live = [s for s in sessions if s.get("source") == "live"]
     replays = sum(1 for s in sessions if s.get("source") == "replay")
     by_ex: dict[str, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
@@ -275,6 +295,7 @@ def build_review(sessions: list[dict[str, Any]], traces: dict[str, list[dict[str
         "live_sessions": len(live), "replay_sessions": replays,
         "testers": dict(testers.most_common()), "exercises": exercises, "issues": issues,
         "agent": agent,
+        "unsaved_sockets": _unsaved_summary(unsaved or []),
     }
 
 
@@ -310,12 +331,58 @@ def _pct(a: int, b: int) -> str:
     return f"{a}/{b} ({round(100 * a / b)} %)" if b else "–"
 
 
+def unsaved_closes(directory: Any, exclude: set[str] | frozenset[str] = frozenset(), limit: int = 500) -> list[dict[str, Any]]:
+    """Live sockets that closed before their session was saved (21 Oct): the trace's
+    `socket_close` row with `saved: false`, newest `limit` trace files, stored sessions left out.
+    A session is only stored when its feedback arrives, so these are otherwise invisible."""
+    from pathlib import Path
+
+    d = Path(directory)
+    try:
+        files = sorted(d.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
+    except OSError:
+        return []
+    out = []
+    for f in files:
+        sid = f.stem
+        if sid in exclude:
+            continue
+        rows = load_trace(d, sid)
+        close = next((r for r in reversed(rows) if r.get("kind") == "socket_close"), None)
+        if close is None or close.get("saved") or close.get("source") != "live":
+            continue
+        head = next((r for r in rows if r.get("kind") == "session"), {})
+        out.append({"session": sid, "mode": head.get("mode"), "exercise": head.get("exercise"), "tester": clean_tester(head.get("user")) or UNTAGGED,
+                    **{k: close.get(k) for k in ("close_code", "agent_run_in_flight", "s_since_agent_run", "s_since_last_message", "frames")}})
+    return out
+
+
+def _unsaved_summary(drops: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "count": len(drops),
+        "close_codes": dict(Counter(str(x.get("close_code")) for x in drops).most_common()),
+        "agent_run_in_flight": sum(1 for x in drops if x.get("agent_run_in_flight")),
+        "within_30s_of_agent_run": sum(1 for x in drops if not x.get("agent_run_in_flight") and x.get("s_since_agent_run") is not None and x["s_since_agent_run"] <= 30),
+        "testers": dict(Counter(x["tester"] for x in drops).most_common()),
+        "sessions": [x["session"] for x in drops][:20],
+    }
+
+
+def _unsaved_md(u: dict[str, Any] | None) -> list[str]:
+    if not u or not u["count"]:
+        return []
+    codes = ", ".join(f"{k} ×{v}" for k, v in u["close_codes"].items())
+    return ["", f"Sockets closed before the session was saved: {u['count']} · close codes {codes} (1000/1001 = the browser closed it, 1006 = the connection dropped)",
+            f"- agent run in flight at the close: {u['agent_run_in_flight']} · within 30 s after an agent run: {u['within_30s_of_agent_run']} · testers: " + ", ".join(f"{k} ({v})" for k, v in u["testers"].items())]
+
+
 def render_md(r: dict[str, Any]) -> str:
     lines = ["# Praxis team test — where to improve", ""]
     if not r["live_sessions"]:
         lines += ["No live sessions yet. Each teammate opens the review link, enters a name, and runs the default day.", ""]
         if r["replay_sessions"]:
             lines.append(f"({r['replay_sessions']} replay sessions are stored; replays are recorded clips and are not analysed.)")
+        lines += _unsaved_md(r.get("unsaved_sockets"))
         return "\n".join(lines) + "\n"
     who = ", ".join(f"{k} ({v})" for k, v in r["testers"].items())
     lines += [f"Live sessions: {r['live_sessions']} · testers: {who} · {r['replay_sessions']} replays not counted.",
@@ -326,6 +393,7 @@ def render_md(r: dict[str, Any]) -> str:
         lines += [f"| {i['exercise']} | {i['what']} | {i['count']} | {i['sessions_hit']}/{i['of']} |" for i in r["issues"]]
     else:
         lines.append("None seen.")
+    lines += _unsaved_md(r.get("unsaved_sockets"))
     a = r.get("agent") or {}
     lines += ["", "## AI coach (Claude agent)", ""]
     if not a.get("sessions"):
@@ -335,7 +403,8 @@ def render_md(r: dict[str, Any]) -> str:
                   "- run outcomes: " + (", ".join(f"{k} {v}" for k, v in a["outcomes"].items()) or "none"),
                   "- runs by trigger: " + (", ".join(f"{k} {v}" for k, v in a["triggers"].items()) or "none"),
                   "- tool calls: " + (", ".join(f"{k} {v}" for k, v in a["tools"].items()) or "none")
-                  + (" · failed: " + ", ".join(f"{k} {v}" for k, v in a["tool_failures"].items()) if a["tool_failures"] else ""),
+                  + (" · failed: " + ", ".join(f"{k} {v}" for k, v in a["tool_failures"].items()) if a["tool_failures"] else "")
+                  + (" · refused by a guardrail: " + ", ".join(f"{k} {sum(v.values())} ({', '.join(v)})" for k, v in a.get("tool_refusals", {}).items()) if a.get("tool_refusals") else ""),
                   "- transport: " + (", ".join(f"{k} {v}" for k, v in a["transports"].items()) or "–") + " (direct = MCP fell back)"]
         if a["first_action_ms_p50"] is not None:
             lines.append(f"- checkpoint → first action, median: {a['first_action_ms_p50'] / 1000:.1f} s · whole run, median: {(a['run_ms_p50'] or 0) / 1000:.1f} s")

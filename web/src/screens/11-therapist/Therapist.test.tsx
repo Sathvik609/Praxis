@@ -163,6 +163,56 @@ test('no practice day, or a booked visit without a date, cannot be saved', async
   expect(within(dialog).getByRole('button', { name: 'Save as v4' })).toBeEnabled()
 })
 
+// ---- 21 Oct · therapist writes need the therapist token (service auth.py) ------------------
+
+function refuseTherapistWrites() {
+  const ok = mockApi(ROUTES)
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input)
+    if (url.includes('/api/prescription/schedule') || url.includes('/reviewed')) {
+      return { ok: false, status: 403, json: async () => ({ detail: { error: 'therapist_only' } }) } as Response
+    }
+    return ok(input, init)
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+test('a refused schedule save says therapist only and that nothing changed; the dialog stays open', async () => {
+  const { dialog } = await openSchedule()
+  refuseTherapistWrites()
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Tue' }))
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Save as v4' }))
+  const alert = await within(dialog).findByRole('alert')
+  expect(alert).toHaveTextContent('Therapist only')
+  expect(alert).toHaveTextContent('Nothing was changed')
+  expect(screen.getByRole('dialog', { name: 'Edit practice days' })).toBeInTheDocument()
+})
+
+test('a refused Mark reviewed says therapist only and keeps the flag open', async () => {
+  refuseTherapistWrites()
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  const flags = await screen.findByRole('region', { name: 'Open flags' })
+  fireEvent.click((await within(flags).findAllByRole('button', { name: 'Mark reviewed' }))[0])
+  expect(await within(flags).findByRole('status')).toHaveTextContent('Therapist only')
+  expect(within(flags).getAllByRole('button', { name: 'Mark reviewed' })).toHaveLength(2)
+})
+
+test('a therapist token kept in this browser is sent with therapist writes only', async () => {
+  localStorage.setItem('praxis.therapistToken', 'tok-1')
+  try {
+    const { fetchMock, dialog } = await openSchedule()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save as v4' }))
+    await screen.findByText(/Saved as prescription v4/)
+    const put = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/prescription/schedule'))!
+    expect(new Headers(put[1]?.headers).get('X-Praxis-Therapist-Token')).toBe('tok-1')
+    const read = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/flags') && !String(c[0]).includes('reviewed'))!
+    expect(new Headers(read[1]?.headers).get('X-Praxis-Therapist-Token')).toBeNull()
+  } finally {
+    localStorage.removeItem('praxis.therapistToken')
+  }
+})
+
 test('cancel changes nothing', async () => {
   const { fetchMock, dialog } = await openSchedule()
   fireEvent.click(within(dialog).getByRole('button', { name: 'Tue' }))

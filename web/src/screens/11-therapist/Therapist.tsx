@@ -6,11 +6,11 @@ import { Chip } from '../../design/Chip'
 import { Field } from '../../design/Field'
 import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
-import { api, isReplaySession, useApi } from '../../lib/api'
+import { api, isReplaySession, isTherapistOnly, useApi } from '../../lib/api'
 import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
 import { PROGRAM, upcomingVisit } from '../../lib/seed'
 import { ruleCoachLabel } from '../../session/agent'
-import { DEFAULT_SCHEDULE, ScheduleDialog } from './ScheduleDialog'
+import { DEFAULT_SCHEDULE, ScheduleDialog, THERAPIST_ONLY } from './ScheduleDialog'
 
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
 
@@ -32,6 +32,16 @@ export function Therapist() {
   const [trace, setTrace] = useState<Trace | null>(null)
   const [traceNote, setTraceNote] = useState<string | null>(null)
   const flagsRef = useRef<HTMLElement>(null)
+  // 21 Oct: Mark reviewed is therapist only on the service; a refusal is said, the flag stays open.
+  const [flagNote, setFlagNote] = useState<string | null>(null)
+  const markReviewed = (id: number) =>
+    api
+      .markReviewed(id)
+      .then(() => {
+        setFlagNote(null)
+        reload()
+      })
+      .catch((e) => setFlagNote(isTherapistOnly(e) ? THERAPIST_ONLY : 'Could not mark it reviewed: the session service is not reachable. The flag stays open.'))
 
   const me = patients?.find((p) => p.id === selectedId) ?? patients?.[0]
   const visitSample = !!schedule.next_visit?.sample
@@ -121,10 +131,11 @@ export function Therapist() {
                   {open.map((f) => (
                     <li key={f.id} className="py-3">
                       <b>{f.date.slice(5)}</b> · {f.rule === 'pain' ? 'Session ended by stop rule: ' : ''}{f.detail}
-                      <div className="mt-2"><Button variant="secondary" onClick={() => api.markReviewed(f.id).then(reload)}>Mark reviewed</Button></div>
+                      <div className="mt-2"><Button variant="secondary" onClick={() => markReviewed(f.id)}>Mark reviewed</Button></div>
                     </li>
                   ))}
                   {flags && open.length === 0 && <li className="py-3 text-muted">No open flags.</li>}
+                  {flagNote && <li role="status" className="py-3 text-lg text-red-ink">{flagNote}</li>}
                   {!flags && <li className="py-3 text-muted">Loading flags…</li>}
                 </ul>
               </section>

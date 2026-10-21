@@ -20,7 +20,8 @@ Environment=PRAXIS_AGENT=off
 # Observability (12 Oct): ops lines carry CloudWatch EMF metrics + a 60 s heartbeat (ops.py).
 Environment=PRAXIS_EMF=1
 Environment=PYTHONUNBUFFERED=1
-# Optional: ANTHROPIC_API_KEY and PRAXIS_AGENT=anthropic (deploy.sh --agent), root-only file.
+# Optional: ANTHROPIC_API_KEY and PRAXIS_AGENT=anthropic (deploy.sh --agent), root-only file;
+# also PRAXIS_THERAPIST_TOKEN to allow therapist edits (unset: the therapist view is read-only).
 EnvironmentFile=-/etc/praxis/agent.env
 ExecStart=/opt/praxis/venv/bin/uvicorn praxis_session.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
 # JSON ops lines + uvicorn logs go to a plain file (rotated by /etc/logrotate.d/praxis) that the
