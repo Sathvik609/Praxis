@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PraxisEvent } from '../lib/events'
 import { coachLabel, coachSource, latestAgentStatus, promptKind, type CoachSource, type Prompt } from './agent'
 
@@ -20,9 +20,20 @@ export type CoachEvent = PraxisEvent & {
 export type Overlay = { kind: 'paused' | 'stopped' | 'rest'; rule: string; text: string; id?: number; t?: number }
 export type ExertionState = { level: 'low' | 'moderate' | 'high'; reasons: string[]; method: string }
 
+export type SpeechPriority = 'instruct' | 'correct' | 'stop'
+/** `speak` reads each new coach cue aloud once (`browserSpeak` on the live screens); `voice:
+ *  false` (the Audio pref off) keeps it silent. The caption is shown either way. */
+type Opts = { speak?: (text: string, priority: SpeechPriority) => void; voice?: boolean }
+
 /** A coach caption stays on screen this long (in event time, from the newest frame) before
  *  the screen falls back to its state caption ("Hold… 2", "Place the cup on dot 1"). */
 export const CAPTION_TTL_S = 4
+
+function priorityOf(action: string): SpeechPriority {
+  if (action === 'stop') return 'stop'
+  if (action === 'correct' || action === 'rest' || action === 'regress') return 'correct'
+  return 'instruct'
+}
 
 /** A resume, however it happened: the service's `resume` event, or an accepted `resume`
  *  command (the patient's own, or the agent's after the patient tapped Yes). */
@@ -30,10 +41,19 @@ function isResume(e: PraxisEvent): boolean {
   return e.type === 'resume' || (e.type === 'command' && e.cmd === 'resume' && e.ok !== false)
 }
 
-/** Consumes coach / stop-rule / exertion events: latest caption, pending prompt, overlay state
- *  (paused | stopped | rest) and the exertion chip. The coach is caption-only (10 Oct, product
- *  owner): nothing here, or anywhere in the app, speaks aloud; every coach line is shown as text. */
-export function useCoach(events: PraxisEvent[]) {
+/** Consumes coach / stop-rule / exertion events: latest caption (spoken once when `speak` is
+ *  given and `voice` is not false), pending prompt, overlay state (paused | stopped | rest) and
+ *  the exertion chip. Spoken cues are back since 21 Oct (team review: patients stand too far
+ *  from the screen to read captions); every spoken line is still shown as text. A cue that
+ *  arrived while the voice was off is not read out later. */
+export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
+  const spoken = useRef<Set<number>>(new Set())
+  const speakRef = useRef(opts.speak)
+  const voiceRef = useRef(opts.voice)
+  useEffect(() => {
+    speakRef.current = opts.speak
+    voiceRef.current = opts.voice
+  })
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
   const [resumedAfter, setResumedAfter] = useState(0)
 
@@ -41,6 +61,14 @@ export function useCoach(events: PraxisEvent[]) {
   const latest = coachEvents.length ? coachEvents[coachEvents.length - 1] : null
   const lastFrame = [...events].reverse().find((e) => e.type === 'frame')
   const caption = latest && (!lastFrame || lastFrame.t - latest.t <= CAPTION_TTL_S) ? latest : null
+
+  useEffect(() => {
+    for (const e of coachEvents) {
+      if (spoken.current.has(e.id)) continue
+      spoken.current.add(e.id)
+      if (voiceRef.current !== false) speakRef.current?.(e.text, priorityOf(e.action))
+    }
+  }, [coachEvents])
 
   // A resume prompt is answered by the session resuming, whichever button did it.
   const resumedAt = events.reduce((m, e) => (isResume(e) ? Math.max(m, e.id) : m), 0)
@@ -81,5 +109,81 @@ export function useCoach(events: PraxisEvent[]) {
     clearOverlay: () => setResumedAfter(events.length ? Math.max(...events.map((e) => e.id)) : 0),
     exertion,
     decisions: coachEvents,
+  }
+}
+
+/** Browser text-to-speech (Polly later). Cues queue instead of cancelling each other mid-word
+ *  (audit A8); a correction drops queued instructions, a stop interrupts. */
+const queue: { text: string; priority: SpeechPriority }[] = []
+let speaking = false
+
+/** Coach voice volume 0–1 (the session bar's slider), kept on this browser under
+ *  `praxis.volume`; default 0.8. Every spoken cue uses the current value. */
+export const VOLUME_KEY = 'praxis.volume'
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
+let volume = (() => {
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY)
+    const v = Number(raw)
+    return raw != null && raw !== '' && Number.isFinite(v) ? clamp01(v) : 0.8
+  } catch {
+    return 0.8
+  }
+})()
+
+export function coachVolume(): number {
+  return volume
+}
+
+export function setCoachVolume(v: number) {
+  volume = Number.isFinite(v) ? clamp01(v) : volume
+  try {
+    localStorage.setItem(VOLUME_KEY, String(volume))
+  } catch {
+    /* private mode: kept for this page only */
+  }
+}
+
+function pump() {
+  if (speaking) return
+  const next = queue.shift()
+  if (!next) return
+  speaking = true
+  const u = new SpeechSynthesisUtterance(next.text)
+  u.rate = 1.0
+  u.volume = volume
+  u.onend = u.onerror = () => {
+    speaking = false
+    pump()
+  }
+  window.speechSynthesis.speak(u)
+}
+
+/** Drops queued cues and silences the one being spoken (Audio off, leaving a screen). */
+export function resetSpeech() {
+  queue.length = 0
+  speaking = false
+  try {
+    window.speechSynthesis?.cancel()
+  } catch {
+    /* unsupported */
+  }
+}
+
+export function browserSpeak(text: string, priority: SpeechPriority = 'instruct') {
+  try {
+    if (!('speechSynthesis' in window) || !text) return
+    if (priority !== 'instruct') {
+      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].priority === 'instruct') queue.splice(i, 1)
+    }
+    if (priority === 'stop') {
+      window.speechSynthesis.cancel()
+      speaking = false
+    }
+    queue.push({ text, priority })
+    if (queue.length > 3) queue.splice(0, queue.length - 3) // stale cues are worse than silence
+    pump()
+  } catch {
+    /* unsupported */
   }
 }

@@ -19,12 +19,15 @@ test('the judge line has its own row at the foot of the feed, not the top-right 
 })
 
 const barProps = () => ({
-  onPause: vi.fn(),
   onRest: vi.fn(),
   onPain: vi.fn(),
   onEnd: vi.fn(),
   traceOpen: false,
   onTrace: vi.fn(),
+  captions: true,
+  onCaptions: vi.fn(),
+  volume: 0.8,
+  onVolume: vi.fn(),
 })
 
 const statsProps = { metricLabel: 'Lifts', metric: '3 of 8', head: 'Rep 3 of 8', dots: null }
@@ -42,20 +45,30 @@ afterEach(() => {
 })
 
 describe('SxBar', () => {
-  it('bar always offers Pause, Take a rest, Pain / feel unwell, End session (artifact .sx-btn look)', () => {
+  it('bar always offers Take a rest, Pain / feel unwell, End session (artifact .sx-btn look); no separate Pause', () => {
     render(<SxBar {...barProps()} />)
-    for (const n of ['Pause', 'Take a rest', 'Pain / feel unwell', 'End session']) expect(screen.getByRole('button', { name: n })).toHaveClass('sx-btn')
+    for (const n of ['Take a rest', 'Pain / feel unwell', 'End session']) expect(screen.getByRole('button', { name: n })).toHaveClass('sx-btn')
+    expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull()
+  })
+
+  it('captions and volume on one side; Take a rest, Pain / feel unwell and End session on the other', () => {
+    const { container } = render(<SxBar {...barProps()} />)
+    const bar = container.querySelector('footer.sx-bar')!
+    const kids = Array.from(bar.children)
+    expect(kids[0]).toBe(screen.getByRole('switch', { name: 'Captions' }))
+    expect(kids[1]).toContainElement(screen.getByRole('slider', { name: 'Coach voice volume' }))
+    const right = kids[kids.length - 1]
+    expect(right).toHaveClass('ml-auto')
+    expect(Array.from(right.querySelectorAll('button')).map((b) => b.textContent)).toEqual(['Take a rest', 'Pain / feel unwell', 'End session'])
   })
 
   it('fires each control', () => {
     const p = barProps()
     render(<SxBar {...p} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
     fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
     fireEvent.click(screen.getByRole('button', { name: 'Pain / feel unwell' }))
     fireEvent.click(screen.getByRole('button', { name: 'End session' }))
     fireEvent.click(screen.getByRole('button', { name: 'Show trace' }))
-    expect(p.onPause).toHaveBeenCalled()
     expect(p.onRest).toHaveBeenCalled()
     expect(p.onPain).toHaveBeenCalled()
     expect(p.onEnd).toHaveBeenCalled()
@@ -83,10 +96,26 @@ describe('SxBar', () => {
     expect(screen.getByRole('button', { name: 'End session' })).toBeEnabled()
   })
 
-  it('has no voice volume and no captions switch: the coach is caption-only, captions always on', () => {
-    render(<SxBar {...barProps()} />)
-    expect(screen.queryByRole('slider')).toBeNull()
-    expect(screen.queryByRole('switch')).toBeNull()
+  it('volume slider reads 0–100 and reports 0–1', () => {
+    const p = barProps()
+    render(<SxBar {...p} />)
+    const slider = screen.getByRole('slider', { name: 'Coach voice volume' })
+    expect(slider).toHaveValue('80')
+    fireEvent.change(slider, { target: { value: '35' } })
+    expect(p.onVolume).toHaveBeenCalledWith(0.35)
+  })
+
+  it('captions switch toggles, but is locked on while the coach speaks', () => {
+    const p = barProps()
+    const { rerender } = render(<SxBar {...p} />)
+    const sw = screen.getByRole('switch', { name: 'Captions' })
+    expect(sw).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(sw)
+    expect(p.onCaptions).toHaveBeenCalledTimes(1)
+    rerender(<SxBar {...p} captionsLocked />)
+    expect(screen.getByRole('switch', { name: 'Captions' })).toHaveAttribute('aria-disabled', 'true')
+    fireEvent.click(screen.getByRole('switch', { name: 'Captions' }))
+    expect(p.onCaptions).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -144,10 +173,13 @@ describe('SxCoach', () => {
     expect(container.querySelector('section')).toHaveClass('sx-coach-watch')
   })
 
-  it('always shows the caption: there is no captions-off state', () => {
-    render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" />)
+  it('shows the caption by default; captions off hides it but keeps the coach label', () => {
+    const { rerender } = render(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" />)
     expect(screen.getByText('Lift slowly')).toBeInTheDocument()
-    expect(screen.queryByText(/Captions are off/)).toBeNull()
+    rerender(<SxCoach caption="Lift slowly" label="Rule-based coach" source="rule" captions={false} />)
+    expect(screen.queryByText('Lift slowly')).toBeNull()
+    expect(screen.getByText(/Captions are off/)).toBeInTheDocument()
+    expect(screen.getByText('Rule-based coach')).toBeVisible()
   })
 })
 
@@ -183,7 +215,16 @@ describe('sxHold', () => {
     expect(h.clock).toBe('event')
     expect(h.title).toBe('Tracking lost')
     expect(h.text).toBe('I lost you.')
-    expect(h.primary.label).toBe('Resume when ready')
+    // tracking lost clears itself on the service: a caution with no button (21 Oct)
+    expect(h.caution).toBe(true)
+  })
+
+  it('only the perception pause is a caution; other pauses still ask for a tap', () => {
+    for (const rule of ['patient', 'setup', 'failed_reps', 'lean']) {
+      const h = sxHold(coachWithOverlay({ kind: 'paused', rule, text: 'x', t: 1 }), noRest, false, false, vi.fn(), vi.fn(), noPrompt)
+      expect(h.caution).toBe(false)
+      expect(h.primary.label).toBe('Resume when ready')
+    }
   })
 
   it('resume sends the command and clears the overlay; end finishes early', () => {
@@ -305,6 +346,18 @@ describe('SxHold', () => {
     expect(screen.getByRole('button', { name: 'End session instead' })).toBeInTheDocument()
   })
 
+  it('tracking lost is a centered, non-blocking caution: says why, no button, no focus taken', () => {
+    const before = document.activeElement
+    render(<SxHold {...base} caution primary={{ label: 'Resume when ready', onClick: vi.fn() }} onEnd={vi.fn()} />)
+    const card = screen.getByRole('alert', { name: 'Tracking lost' })
+    expect(card).toHaveAccessibleDescription('I lost you.')
+    expect(screen.getByText(/carries on by itself when you are back in view/)).toBeInTheDocument()
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(screen.getByTestId('tracking-caution')).toHaveClass('sx-hold-wrap', 'pointer-events-none')
+    expect(document.activeElement).toBe(before)
+  })
+
   it('renders nothing when closed', () => {
     render(<SxHold {...base} open={false} />)
     expect(screen.queryByRole('alertdialog')).toBeNull()
@@ -352,12 +405,30 @@ describe('SxEndDialog', () => {
 })
 
 describe('useSxSession', () => {
-  it('has no caption state: an old stored captionsPanel:false or spoken:true changes nothing', () => {
-    localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
-    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true }))
+  it('audio is on by default: the coach speaks and captions are locked on', () => {
     const { result } = renderHook(() => useSxSession())
-    expect(result.current).not.toHaveProperty('captions')
-    expect(result.current).not.toHaveProperty('toggleCaptions')
+    expect(result.current.audio).toBe(true)
+    expect(result.current.captions).toBe(true)
+    expect(result.current.captionsLocked).toBe(true)
+    act(() => result.current.toggleCaptions())
+    expect(result.current.captions).toBe(true)
+  })
+
+  it('with Audio off in Settings, or the volume at 0, captions can be switched off', () => {
+    localStorage.setItem('praxis.prefs', JSON.stringify({ audio: false }))
+    const { result } = renderHook(() => useSxSession())
+    expect(result.current.audio).toBe(false)
+    expect(result.current.captionsLocked).toBe(false)
+    act(() => result.current.toggleCaptions())
+    expect(result.current.captions).toBe(false)
+    localStorage.clear()
+    const { result: r2 } = renderHook(() => useSxSession())
+    act(() => r2.current.setVolume(0))
+    expect(r2.current.audio).toBe(false)
+    expect(r2.current.volume).toBe(0)
+    expect(localStorage.getItem('praxis.volume')).toBe('0')
+    act(() => r2.current.setVolume(0.8))
+    expect(r2.current.audio).toBe(true)
   })
 
   it('the end dialog', () => {

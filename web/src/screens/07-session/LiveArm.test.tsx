@@ -197,11 +197,13 @@ test('Show trace swaps the reference for the trace panel; the caption stays', ()
   expect(screen.getByText(/Hold it there/)).toBeInTheDocument()
 })
 
-test('fixed controls: Pause sends pause, Pain opens the pain check, End asks why', () => {
+test('fixed controls: Take a rest pauses (no separate Pause), Pain opens the pain check, End asks why', () => {
   mockStream([frame])
   renderAt('/session?exercise=abduction&side=left')
-  fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
-  expect(hook.useWebcamStream({} as never).send).toHaveBeenCalledWith({ cmd: 'pause' })
+  expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Take a rest' }))
+  expect(hook.useWebcamStream({} as never).send).toHaveBeenCalledWith({ cmd: 'pause', reason: 'rest' })
+  fireEvent.click(screen.getByRole('button', { name: 'Rested — continue' }))
   fireEvent.click(screen.getByRole('button', { name: 'Pain / feel unwell' }))
   expect(screen.getByRole('heading', { name: 'How is the pain right now?' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Back to session' }))
@@ -210,11 +212,27 @@ test('fixed controls: Pause sends pause, Pain opens the pain check, End asks why
 })
 
 test('a service pause opens the hold over the camera, not a page modal', () => {
-  mockStream([frame, { type: 'pause', t: 11, id: 2, rule: 'perception', text: 'I lost you.' }])
+  mockStream([frame, { type: 'pause', t: 11, id: 2, rule: 'setup', text: 'Paused so the camera can measure the lift.' }])
   renderAt('/session?exercise=abduction&side=left')
-  const hold = screen.getByRole('alertdialog', { name: 'Tracking lost' })
+  const hold = screen.getByRole('alertdialog', { name: 'Paused · check your position' })
   expect(screen.getByRole('region', { name: 'Your camera' })).toContainElement(hold)
+  expect(within(hold).getByRole('button', { name: 'Resume when ready' })).toBeInTheDocument()
   expect(screen.getByText('Reference · ready')).toBeInTheDocument()
+})
+
+test('out of frame: a centered caution over the camera with no button; it clears when the service resumes', () => {
+  const lost = [frame, { type: 'perception_lost', t: 11, id: 2, missing: ['pose'] }, { type: 'pause', t: 11, id: 3, rule: 'perception', text: 'I lost tracking. Paused until your shoulder is back in view, then we carry on.' }]
+  mockStream(lost)
+  const { rerender } = renderAt('/session?exercise=abduction&side=left')
+  const caution = screen.getByRole('alert', { name: 'Tracking lost' })
+  expect(screen.getByRole('region', { name: 'Your camera' })).toContainElement(caution)
+  expect(caution).toHaveTextContent(/until your shoulder is back in view/)
+  expect(within(caution).queryByRole('button')).toBeNull()
+  expect(screen.queryByRole('alertdialog')).toBeNull()
+  // the service resumes on perception_regained (D-CAL-2): nothing for the patient to tap
+  mockStream([...lost, { type: 'perception_regained', t: 13, id: 4 }, { type: 'resume', t: 13, id: 5, rule: 'perception', text: 'Tracking is back. Carry on.' }, { ...frame, t: 13.1, id: 6 }])
+  rerender(tree('/session?exercise=abduction&side=left'))
+  expect(screen.queryByRole('alert', { name: 'Tracking lost' })).toBeNull()
 })
 
 test('no design-preview simulators in the app', () => {

@@ -116,8 +116,6 @@ test('no recordings and an unreachable service are both said plainly', async () 
 test('guidance switches persist and apply at once; larger text is off by default', async () => {
   mockApi({})
   const { unmount } = await renderSettings()
-  // no voice: the coach is caption-only
-  expect(screen.queryByRole('switch', { name: 'Spoken instructions' })).toBeNull()
   // larger text is off by default since 10 Oct (pages fit a 1336 x 759 laptop window at 16 px)
   const larger = screen.getByRole('switch', { name: 'Larger text' })
   expect(larger).toHaveAttribute('aria-checked', 'false')
@@ -131,11 +129,17 @@ test('guidance switches persist and apply at once; larger text is off by default
   expect(document.documentElement.dataset.text).toBeUndefined()
 })
 
-test('no voice or caption switches: captions are always shown, they are the coach\'s only channel', async () => {
+test('Audio: spoken coach cues are on by default, persist when switched off, and captions stay', async () => {
   mockApi({})
+  const { unmount } = await renderSettings()
+  const audio = screen.getByRole('switch', { name: 'Audio' })
+  expect(audio).toHaveAttribute('aria-checked', 'true')
+  fireEvent.click(audio)
+  expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').audio).toBe(false)
+  unmount()
   await renderSettings()
-  expect(screen.queryByRole('switch', { name: 'Spoken instructions' })).toBeNull()
-  expect(screen.queryByRole('switch', { name: 'Caption panel' })).toBeNull()
+  expect(screen.getByRole('switch', { name: 'Audio' })).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByText(/captions are always shown too/i)).toBeInTheDocument()
 })
 
 test('display switches set attributes on the page and persist', async () => {

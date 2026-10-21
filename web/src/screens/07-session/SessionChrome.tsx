@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { AlertTriangle, Bot, Camera, Check, CloudOff, ListChecks, LoaderCircle, Pause, Play, X } from '../../design/Icon'
 import { Chip } from '../../design/Chip'
 import { useModalFocus } from '../../design/useModalFocus'
@@ -9,7 +9,8 @@ import type { AgentStatus, CoachSource } from '../../session/agent'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
-import type { CoachEvent, Overlay } from '../../session/useCoach'
+import { readPrefs } from '../../lib/prefs'
+import { coachVolume, resetSpeech, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
 import type { EndReason } from '../../session/useSessionFlow'
 import { pausedNote } from './LivePrompt'
 import { RULE_TITLE } from './SessionOverlays'
@@ -163,8 +164,8 @@ function CoachLabel({ label, source }: { label: string; source: CoachSource }) {
 
 /** Coach card. The eyebrow names the coach implementation that said the caption
  *  (`coachLabel(...)`) as visible text with its icon. `watch` is the posture tone, `tone` the
- *  artifact's mint / amber / neutral card. The caption is always shown: the coach is
- *  caption-only since 10 Oct, so there is no captions-off state. */
+ *  artifact's mint / amber / neutral card. With captions off (only possible while the coach is
+ *  not speaking: Audio off or volume 0) the caption is hidden; the label stays. */
 export function SxCoach({
   caption,
   label,
@@ -172,6 +173,7 @@ export function SxCoach({
   eyebrow,
   tone,
   watch = false,
+  captions = true,
   sub,
 }: {
   caption: string
@@ -180,6 +182,7 @@ export function SxCoach({
   eyebrow?: string
   tone?: 'mint' | 'amber' | 'neutral'
   watch?: boolean
+  captions?: boolean
   sub?: ReactNode
 }) {
   const toneClass = watch ? 'sx-coach-watch cup-coach-amber' : tone ? `cup-coach-${tone}` : ''
@@ -190,7 +193,11 @@ export function SxCoach({
         <span aria-hidden>·</span>
         <CoachLabel label={label} source={source} />
       </div>
-      <p className="sx-coach-text" aria-live="polite">{caption}</p>
+      {captions ? (
+        <p className="sx-coach-text" aria-live="polite">{caption}</p>
+      ) : (
+        <p className="sx-coach-off">Captions are off. Turn them on with the captions switch below.</p>
+      )}
       {sub && <p className="sx-small">{sub}</p>}
     </section>
   )
@@ -252,7 +259,10 @@ type Note = { text: string; label: string; source: CoachSource }
 
 /** What `sxHold` decides; `since` is the opening event's time (`clock: 'event'`, seconds) or,
  *  for the patient's own rest, the wall-clock start (`clock: 'wall'`, ms). `prompt` says the
- *  open coach prompt belongs inside the hold (the screen renders it in the `prompt` slot). */
+ *  open coach prompt belongs inside the hold (the screen renders it in the `prompt` slot).
+ *  `caution` is the tracking-lost state (the service's `perception` pause): a non-blocking
+ *  notice with no button, since the service resumes by itself once the camera sees the person
+ *  or the sheet again (D-CAL-2) and the `resume` event closes it. */
 export type Hold = {
   open: boolean
   kind: HoldKind
@@ -265,10 +275,11 @@ export type Hold = {
   note: Note | null
   prompt: boolean
   resumeByPrompt: boolean
+  caution: boolean
 }
 
 const noop = () => {}
-const CLOSED: Hold = { open: false, kind: 'paused', title: '', text: '', since: null, clock: 'event', primary: { label: '', onClick: noop }, onEnd: noop, note: null, prompt: false, resumeByPrompt: false }
+const CLOSED: Hold = { open: false, kind: 'paused', title: '', text: '', since: null, clock: 'event', primary: { label: '', onClick: noop }, onEnd: noop, note: null, prompt: false, resumeByPrompt: false, caution: false }
 
 type HoldCoach = { overlay: Overlay | null; decisions: CoachEvent[]; clearOverlay: () => void }
 type HoldRest = { since: number | null; end: () => void; cancel: () => void }
@@ -277,7 +288,8 @@ type HoldRest = { since: number | null; end: () => void; cancel: () => void }
  *  the service opened (counted from its event). A stop is explained by `SessionOverlay`, so the
  *  hold stays closed then and while the feedback form is open. While paused, the coach cue said
  *  during the pause (`pausedNote`) and an open coach prompt go inside; a resume prompt's Yes is
- *  the resume. */
+ *  the resume. Tracking lost (21 Oct team review) is a `caution`: counting and coaching stay
+ *  paused on the service (the stop rule), but nothing asks for a tap; it clears itself. */
 export function sxHold(
   coach: HoldCoach,
   rest: HoldRest,
@@ -307,7 +319,9 @@ export function sxHold(
   const o = coach.overlay
   if (!o || o.kind === 'stopped') return CLOSED
   const prompt = !!cp.prompt
+  const caution = o.kind === 'paused' && o.rule === 'perception'
   return {
+    caution,
     open: true,
     kind: o.kind === 'rest' ? 'rest' : 'paused',
     title: RULE_TITLE[o.rule] ?? 'Paused',
@@ -364,6 +378,7 @@ export function SxHold({
   note = null,
   prompt = null,
   resumeByPrompt = false,
+  caution = false,
 }: {
   open: boolean
   kind: HoldKind
@@ -375,12 +390,31 @@ export function SxHold({
   note?: Note | null
   prompt?: ReactNode
   resumeByPrompt?: boolean
+  caution?: boolean
 }) {
   const id = useId()
   const ref = useRef<HTMLDivElement>(null)
-  // not modal (the control bar stays usable): focus moves in on open and back on close
-  useModalFocus(ref, open, { trap: false })
+  // not modal (the control bar stays usable): focus moves in on open and back on close; a
+  // caution takes no focus (nothing in it to press)
+  useModalFocus(ref, open && !caution, { trap: false })
   if (!open) return null
+  if (caution) {
+    // Centered over the feed, without the scrim and click-through, so the patient sees
+    // themselves while getting back in view. No Resume: the service resumes on its own.
+    return (
+      <div className="sx-hold-wrap pointer-events-none !bg-transparent" data-testid="tracking-caution">
+        <div ref={ref} className="sx-hold" role="alert" aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`}>
+          <div className="sx-hold-head">
+            <h2 id={`${id}-t`}>{title}</h2>
+            <span className="sx-hold-time" aria-label={`paused for ${seconds} seconds`}>{clock(seconds)}</span>
+          </div>
+          <p id={`${id}-d`}>{text}</p>
+          <p className="sx-small">Counting is paused. It carries on by itself when you are back in view.</p>
+          {prompt && <div className="sx-prompt pointer-events-auto">{prompt}</div>}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="sx-hold-wrap">
       <div ref={ref} className="sx-hold" role="alertdialog" aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`}>
@@ -405,34 +439,71 @@ export function SxHold({
   )
 }
 
-/** The fixed control bar (CLAUDE.md §1: Pause · Take a rest · Pain / feel unwell · End session on
- *  every in-session screen), in the artifact's `.sx-btn` look, plus Show trace (the stylesheet
- *  shows it in Judge view only). The coach is caption-only since 10 Oct: captions are always
- *  shown, so there is no captions switch and no volume control. */
+/** The fixed control bar (CLAUDE.md §1: Take a rest · Pain / feel unwell · End session on every
+ *  in-session screen), in the artifact's `.sx-btn` look. 21 Oct team review: the captions switch
+ *  and the coach voice volume on the left; Show trace (Judge view only), Take a rest, Pain /
+ *  feel unwell and End session on the right. There is no separate Pause: it did what Take a rest
+ *  does (both pause the session on the service), so Take a rest is the one pause. Captions are
+ *  locked on while the coach speaks (Audio on and volume above 0), so every spoken cue is
+ *  shown as text. */
 export function SxBar({
-  onPause,
   onRest,
   onPain,
   onEnd,
   traceOpen,
   onTrace,
+  captions,
+  onCaptions,
+  captionsLocked = false,
+  volume,
+  onVolume,
   resting = false,
 }: {
-  onPause: () => void
   onRest: () => void
   onPain: () => void
   onEnd: () => void
   traceOpen: boolean
   onTrace: () => void
+  captions: boolean
+  onCaptions: () => void
+  captionsLocked?: boolean
+  volume: number
+  onVolume: (v: number) => void
   resting?: boolean
 }) {
+  const vol = Math.round(volume * 100)
+  const change = (e: ChangeEvent<HTMLInputElement>) => onVolume(Number(e.target.value) / 100)
   return (
     <footer className="sx-bar">
+      <button
+        type="button"
+        role="switch"
+        className="sx-switch"
+        aria-checked={captions}
+        aria-disabled={captionsLocked || undefined}
+        aria-label="Captions"
+        title={captionsLocked ? 'Captions stay on while the coach speaks' : captions ? 'Captions on' : 'Captions off'}
+        onClick={() => !captionsLocked && onCaptions()}
+      >
+        <svg className="sx-cc-ic" viewBox="0 0 24 24" aria-hidden>
+          <rect x={3} y={5} width={18} height={14} rx={3} />
+          <path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" />
+        </svg>
+        <span className="sx-switch-track" aria-hidden><span className="sx-switch-thumb" /></span>
+      </button>
+      <label className="sx-vol">
+        <svg className="sx-vol-ic" viewBox="0 0 24 24" aria-hidden>
+          <path d={vol === 0 ? 'M11 5 6 9H3v6h3l5 4V5Zm6 4 5 5m0-5-5 5' : vol < 50 ? 'M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7' : 'M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13'} />
+        </svg>
+        <input type="range" min={0} max={100} step={5} value={vol} onChange={change} aria-label="Coach voice volume" aria-valuetext={`${vol}%`} style={{ '--v': `${vol}%` } as CSSProperties} />
+      </label>
       <button type="button" className="sx-linkbtn sx-trace-btn" aria-pressed={traceOpen} onClick={onTrace}>{traceOpen ? 'Hide trace' : 'Show trace'}</button>
-      <button type="button" className="sx-btn sx-btn-secondary" onClick={onPause}>Pause</button>
-      <button type="button" className="sx-btn sx-btn-secondary" disabled={resting} onClick={onRest}>Take a rest</button>
-      <button type="button" className="sx-btn sx-btn-danger" onClick={onPain}>Pain / feel unwell</button>
-      <button type="button" className="sx-btn sx-btn-danger" onClick={onEnd}>End session</button>
+      {/* ml-auto: the right-hand group stays right when Show trace is hidden (no Judge view) */}
+      <span className="ml-auto flex flex-wrap items-center gap-3.5">
+        <button type="button" className="sx-btn sx-btn-secondary" disabled={resting} onClick={onRest}>Take a rest</button>
+        <button type="button" className="sx-btn sx-btn-danger" onClick={onPain}>Pain / feel unwell</button>
+        <button type="button" className="sx-btn sx-btn-danger" onClick={onEnd}>End session</button>
+      </span>
     </footer>
   )
 }
@@ -487,11 +558,32 @@ export const sxClock = (t: number | null | undefined) => {
   return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`
 }
 
-/** Per-screen session UI state: the End dialog. (Captions need no state: always shown.) */
+/** Per-screen session UI state: the coach voice (Settings > Audio, `prefs.audio`, on by
+ *  default) and its volume (`praxis.volume`), captions (on; they cannot be switched off while the
+ *  coach speaks, so every spoken cue is captioned) and the End dialog. */
 export function useSxSession() {
+  const [audio] = useState(() => readPrefs().audio)
+  const [volume, setVol] = useState(() => coachVolume())
+  const [panel, setPanel] = useState(true)
   const [endOpen, setEndOpen] = useState(false)
   const closeEnd = useCallback(() => setEndOpen(false), [])
+  // leaving the screen silences any cue still queued
+  useEffect(() => () => resetSpeech(), [])
+  const speaking = audio && volume > 0
   return {
+    /** Speak the coach's cues on this screen (pass to `useCoach` as `voice`). */
+    audio: speaking,
+    volume,
+    setVolume: (v: number) => {
+      setCoachVolume(v)
+      setVol(coachVolume())
+      if (v <= 0) resetSpeech()
+    },
+    captions: speaking || panel,
+    captionsLocked: speaking,
+    toggleCaptions: () => {
+      if (!speaking) setPanel((c) => !c)
+    },
     endOpen,
     openEnd: () => setEndOpen(true),
     closeEnd,
