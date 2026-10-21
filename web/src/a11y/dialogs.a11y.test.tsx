@@ -89,13 +89,15 @@ test('a stop rule is an alert dialog with no axe violations; it needs Save and c
   expect(within(dialog).getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
 })
 
-test('tracking lost is an alert dialog over the feed with focus on Resume, and the status chip says so in words', async () => {
+test('tracking lost is a non-blocking alert over the feed with no button (it clears itself), and the status chip says so in words', async () => {
   feed('cup', 0.5, [{ type: 'pause', t: LATE, id: LATE, rule: 'perception', text: 'I lost the sheet. Bring all four markers back into view.' }])
   await renderRoute(CUP)
-  const hold = screen.getByRole('alertdialog', { name: 'Tracking lost' })
+  const hold = screen.getByRole('alert', { name: 'Tracking lost' })
   await expectNoAxeViolations(hold)
-  expect(within(hold).getByRole('button', { name: 'Resume when ready' })).toHaveFocus()
-  // the control bar stays usable while the hold is open (it is not modal)
+  expect(hold).toHaveTextContent('I lost the sheet. Bring all four markers back into view.')
+  expect(within(hold).queryByRole('button')).toBeNull()
+  expect(hold).not.toContainElement(document.activeElement as HTMLElement)
+  // the control bar stays usable while the caution shows (it is not modal)
   expect(screen.getByRole('button', { name: 'End session' })).toBeEnabled()
 })
 
