@@ -31,6 +31,15 @@ Needs the ssh key `~/.ssh/praxis-aws` (its public half is imported into EC2 as k
 CloudFront. The script builds the web app, rsyncs the service, installs, restarts and prints:
 `opencv 5.0.0 · aarch64 · COOL=True · dnn=True`.
 
+## Therapist-only writes (21 Oct)
+Edit practice days and Mark reviewed need `PRAXIS_THERAPIST_TOKEN` (header
+`X-Praxis-Therapist-Token`). Nothing to set for the judge build: unset, every request through
+CloudFront gets 403 and the therapist view is read-only ("Therapist only … Nothing was changed").
+To allow edits from a browser, add `PRAXIS_THERAPIST_TOKEN=<random>` to the root-only
+`/etc/praxis/agent.env`, `sudo systemctl restart praxis`, and in that browser's console run
+`localStorage.setItem('praxis.therapistToken', '<random>')`. `/health` shows
+`therapist_writes: token | local_only`.
+
 ## Cost controls (10 Oct)
 Paid plan; budget `praxis-monthly-50` whose action stops this instance at 100 % of $50; SCPs
 allow only small Graviton types in us-east-1/2; c8g.large $0.0798/h + COOL $0.01/h after the
