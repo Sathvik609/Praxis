@@ -211,7 +211,7 @@ test('hotspots (GLB loaded): one button per area, "{label} — {word}", pressed 
   expect(onHot).toHaveBeenCalledWith('lShoulder')
 })
 
-test('theater: the dock (step, progress, Play/Pause, Replay, Slower; no Audio, captions only) replaces caption, view line and controls', async () => {
+test('theater: the dock (step, progress, Play/Pause, Replay, Slower; Audio is the host\'s, via dockEnd) replaces caption, view line and controls', async () => {
   h.load.mockResolvedValue(asset)
   render(<AvatarPanel clip="abduction" theater holdS={3} limitDeg={60} />)
   await screen.findByTestId('glb-scene')
@@ -230,6 +230,24 @@ test('theater: the dock (step, progress, Play/Pause, Replay, Slower; no Audio, c
   expect(screen.queryByText(/Reference only/)).toBeNull()
   // the script follows today's limit
   expect((h.lastGlb as unknown as { script: { steps: string[] } }).script.steps[1]).toMatch(/up to 60°/)
+})
+
+test('theater: speakSteps reads the current step aloud once; dockEnd sits at the right of the controls', async () => {
+  h.load.mockResolvedValue(asset)
+  const said: string[] = []
+  vi.stubGlobal('SpeechSynthesisUtterance', class { rate = 1; volume = 1; onend?: () => void; onerror?: () => void; constructor(public text: string) {} })
+  vi.stubGlobal('speechSynthesis', { speak: (u: { text: string; onend?: () => void }) => { said.push(u.text); u.onend?.() }, cancel: vi.fn() })
+  try {
+    const { rerender } = render(<AvatarPanel clip="abduction" theater holdS={3} dockEnd={<button type="button">Skip demo</button>} />)
+    await screen.findByTestId('glb-scene')
+    expect(said).toEqual([])
+    const controls = document.querySelector('.dth-controls')!
+    expect(controls.lastElementChild).toContainElement(screen.getByRole('button', { name: 'Skip demo' }))
+    rerender(<AvatarPanel clip="abduction" theater holdS={3} speakSteps dockEnd={<button type="button">Skip demo</button>} />)
+    expect(said).toEqual(['Sit tall facing the camera, arm by your side'])
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
 
 test('theater readouts: limit line + "{n}° limit", the figure\'s own shoulder angle, and the trunk-lean tag', async () => {

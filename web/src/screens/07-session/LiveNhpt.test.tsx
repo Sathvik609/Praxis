@@ -239,17 +239,46 @@ test('the service pause event that answers a rest does not stack the pause overl
   expect(screen.queryByRole('alertdialog', { name: 'Paused' })).not.toBeInTheDocument()
 })
 
-test('the coach is caption-only: a cue is always shown as text, with no voice or captions control, whatever an old build stored', () => {
+test('the coach speaks its cue aloud by default and shows it as text; captions are locked on while it speaks', () => {
   const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
+  const said: string[] = []
+  class FakeUtterance {
+    rate = 1
+    volume = 1
+    onend?: () => void
+    onerror?: () => void
+    constructor(public text: string) {}
+  }
+  vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
+  vi.stubGlobal('speechSynthesis', { speak: (u: FakeUtterance) => { said.push(u.text); u.onend?.() }, cancel: vi.fn() })
   try {
-    localStorage.setItem('praxis.guidance', JSON.stringify({ spoken: true, larger: false }))
-    localStorage.setItem('praxis.prefs', JSON.stringify({ captionsPanel: false }))
     mockStream([frame, cue])
     renderAt('/session?hand=left')
     expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()
-    expect(screen.queryByRole('slider', { name: /volume/i })).toBeNull()
-    expect(screen.queryByRole('switch', { name: 'Captions' })).toBeNull()
+    expect(said).toEqual(['Next peg, nice and steady.'])
+    expect(screen.getByRole('slider', { name: 'Coach voice volume' })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Captions' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull()
   } finally {
+    vi.unstubAllGlobals()
+    localStorage.clear()
+  }
+})
+
+test('with Audio off in Settings the cue is shown, not spoken', () => {
+  const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
+  const speak = vi.fn()
+  vi.stubGlobal('SpeechSynthesisUtterance', class { constructor(public text: string) {} })
+  vi.stubGlobal('speechSynthesis', { speak, cancel: vi.fn() })
+  try {
+    localStorage.setItem('praxis.prefs', JSON.stringify({ audio: false }))
+    mockStream([frame, cue])
+    renderAt('/session?hand=left')
+    expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()
+    expect(speak).not.toHaveBeenCalled()
+    expect(screen.getByRole('switch', { name: 'Captions' })).not.toHaveAttribute('aria-disabled')
+  } finally {
+    vi.unstubAllGlobals()
     localStorage.clear()
   }
 })

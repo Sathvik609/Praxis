@@ -3,7 +3,6 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { FlowBar } from '../../app/FlowBar'
 import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
-import { Checkbox } from '../../design/Checkbox'
 import { Chip, type ChipTone } from '../../design/Chip'
 import { NumberScale } from '../../design/NumberScale'
 import { Pill } from '../../design/Pill'
@@ -41,13 +40,15 @@ const SIDES: { value: Side; label: string }[] = [
 const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest: 'red' }
 
 /** Screen 03 · Pre-session check-in, once a day. Feeling is self-reported, never read from the
- *  face. Stop rules are shown from the prescription, not inferred. Voice via SpeechRecognition
- *  with a tap fallback for every prompt. Pain starts unselected; Continue stays disabled with a
- *  visible hint until a number (and, the first time, the practising side) is chosen.
+ *  face. Stop rules are shown from the prescription, not inferred. Every answer is a tap (21 Oct
+ *  team review: no push to talk, and no "something new or worse" box: pausing or ending the
+ *  session with Pain / feel unwell covers it, so the check-in posts `new_symptoms: false`). Pain
+ *  starts unselected; Continue stays disabled with a visible hint until a number (and, the first
+ *  time, the practising side) is chosen.
  *
  *  The check-in goes to the service (`POST /api/checkin`, `lib/day.ts`), which sets the tier
- *  and writes the therapist flag. New or worse symptoms, or pain at the stop level, end the day
- *  here, before any setup or demonstration. "Your therapist has been told" appears only when
+ *  and writes the therapist flag. Pain at the stop level ends the day here, before any setup or
+ *  demonstration (a day an older build stopped for new symptoms still shows as stopped). "Your therapist has been told" appears only when
  *  the service says it flagged; offline, the check-in is kept on this device and posted again
  *  on the next load. A second visit the same day reuses today's answers (one tap to go on).
  *  `?next=<exercise>` is the demonstration's hand-off (design v2, 6 Oct: Choose → Demonstration
@@ -95,7 +96,6 @@ export function CheckIn() {
               <Chip tone={TIER_TONE[c.tier]}>{TIER_TEXT[c.tier].chip}</Chip>
             </p>
             <p className="text-lg">Practising side: {c.side} arm · {c.minutes < 14 ? 'shorter day, one exercise' : 'full day'}</p>
-            {c.new_symptoms && <p className="text-lg">You told us something is new or worse.</p>}
             {!c.synced && <p className="text-lg text-muted">{therapistLine(c)}</p>}
           </Card>
           <p className="mt-4 text-lg text-muted">If your pain has changed since, check in again. Today's plan follows your latest answer.</p>
@@ -174,38 +174,10 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
   const [location, setLocation] = useState<Location | null>(null)
   const [energy, setEnergy] = useState<Energy>('comfortable')
   const [minutes, setMinutes] = useState<Minutes>('14')
-  const [symptoms, setSymptoms] = useState(false)
-  const [heard, setHeard] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const listen = () => {
-    const SR = (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition
-    if (!SR) {
-      setHeard('Voice input is not available in this browser — tap instead.')
-      return
-    }
-    const r = new SR()
-    r.lang = 'en-US'
-    r.onresult = (ev) => {
-      const text = ev.results[0][0].transcript.toLowerCase()
-      setHeard(`Heard: “${text}”`)
-      const n = text.match(/\b(\d|10)\b/)
-      if (n) setPain(Number(n[1]))
-      if (/tired/.test(text)) setEnergy(/very/.test(text) ? 'very_tired' : 'tired')
-      if (/comfortable|fine|good/.test(text)) setEnergy('comfortable')
-      const loc = text.match(/shoulder|arm|hand|nowhere/)
-      if (loc) setLocation(loc[0] as Location)
-      if (askSide) {
-        if (/\bleft\b/.test(text)) setSide('left')
-        else if (/\bright\b/.test(text)) setSide('right')
-      }
-    }
-    r.onerror = () => setHeard('Did not catch that — tap instead.')
-    r.start()
-  }
-
-  const stopping = symptoms ? 'new_symptoms' : pain != null && stopReason({ pain, new_symptoms: false, tier: tierFor(pain, painMax) }) ? 'rest' : null
-  const label = stopping === 'new_symptoms' ? 'Tell my therapist and stop for today' : stopping === 'rest' ? 'Rest today and tell my therapist' : continueLabel
+  const stopping = pain != null && stopReason({ pain, new_symptoms: false, tier: tierFor(pain, painMax) }) === 'rest'
+  const label = stopping ? 'Rest today and tell my therapist' : continueLabel
   // The side is only needed to practise; a day that stops here does not ask for it. Where it
   // hurts is asked only when there is pain (pain 0 is saved as nowhere) and never blocks a stop.
   const hint =
@@ -221,7 +193,7 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
     if (pain === null) return
     setBusy(true)
     try {
-      await saveCheckin({ pain, location: location ?? (pain === 0 ? 'nowhere' : 'not said'), energy, minutes: Number(minutes), new_symptoms: symptoms }, side, painMax)
+      await saveCheckin({ pain, location: location ?? (pain === 0 ? 'nowhere' : 'not said'), energy, minutes: Number(minutes), new_symptoms: false }, side, painMax)
     } finally {
       setBusy(false)
     }
@@ -236,7 +208,7 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div>
           <h1 className="text-4xl">Before you start</h1>
-          <p className="mt-2 text-muted">Answer by tapping or speaking. This sets today's pace inside your assigned limits.</p>
+          <p className="mt-2 text-muted">Tap your answers. This sets today's pace inside your assigned limits.</p>
           <Card className="mt-5 space-y-5">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
             {askSide ? (
@@ -259,27 +231,19 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
               <div className="mb-2 font-bold">Energy today</div>
               <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
             </div>
-          </Card>
-        </div>
-        {/* 10 Oct: Time and New-or-worse sit in the right column so the form fits one laptop
-            screen (1336 x 759) without scrolling under the flow bar. */}
-        <div className="flex flex-col gap-5">
-          <Card className="ci-today space-y-5">
+            {/* 21 Oct team review: the time choice sits in the main card, its two options side by
+                side across the card's width. */}
             <div>
               <div className="mb-2 font-bold">Time you have</div>
-              <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} />
+              <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} className="w-full !flex-nowrap [&>button]:flex-1" />
             </div>
-            <Checkbox label="Something new or worse since last time" checked={symptoms} onChange={setSymptoms} description="If so, there are no exercises today and your therapist reviews it first." />
           </Card>
+        </div>
+        <div className="flex flex-col gap-5">
           <Card className="ci-note">
             <p className="text-muted">
-              Your answers set today's pace and go into your report for {clinician}. Pain of {gentle} means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs. Pain of {stopAt} or more, or something new or worse, means rest today and your therapist is told. Feeling is what you tell us, never read from your face.
+              Your answers set today's pace and go into your report for {clinician}. Pain of {gentle} means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs. Pain of {stopAt} or more means rest today and your therapist is told. Feeling is what you tell us, never read from your face.
             </p>
-            <div className="ci-mic-row">
-              <span>Prefer to answer out loud?</span>
-              <button type="button" className="ci-mic-btn" onClick={listen}>Push to talk</button>
-            </div>
-            {heard && <p role="status" className="mt-2 text-muted">{heard}</p>}
           </Card>
         </div>
       </div>
@@ -297,5 +261,3 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
     </div>
   )
 }
-
-type SpeechRecognitionLike = { lang: string; onresult: ((ev: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null; onerror: (() => void) | null; start: () => void }

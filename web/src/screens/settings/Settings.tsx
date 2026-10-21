@@ -13,6 +13,7 @@ import { readPrefs, writePrefs, type Prefs } from '../../lib/prefs'
 import { exerciseOfSession, isHiddenExercise } from '../../lib/seed'
 import { healthLines } from '../../session/agent'
 import { readGuidance, writeGuidance, type Guidance } from '../../session/guidance'
+import { resetSpeech } from '../../session/useCoach'
 import { SettingsRow } from './SettingsRow'
 import { readTester, writeTester } from '../../lib/tester'
 
@@ -105,6 +106,7 @@ export function Settings() {
         <div className="st-col">
           <Card title="Guidance">
             <ul className="st-list">
+              <SettingsRow title="Audio" sub="Coach cues read aloud by this browser; captions are always shown too" control={<Switch label="Audio" checked={prefs.audio} onChange={(v) => { setP('audio', v); if (!v) resetSpeech() }} />} />
               <SettingsRow title="Language" sub="English (US)" control={<span className="st-val">Only option</span>} />
             </ul>
           </Card>

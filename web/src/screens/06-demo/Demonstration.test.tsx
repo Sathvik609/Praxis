@@ -1,6 +1,6 @@
 import { act, render as rtlRender, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { MutableRefObject, ReactElement } from 'react'
+import type { MutableRefObject, ReactElement, ReactNode } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 const ctl = vi.hoisted(() => ({ replay: vi.fn() }))
@@ -8,11 +8,12 @@ const ctl = vi.hoisted(() => ({ replay: vi.fn() }))
 // The theater's figure is the real AvatarPanel elsewhere (AvatarPanel.test.tsx); here it is a stub
 // that exposes what the screen hands it and lets a test finish the clip.
 vi.mock('../../avatar/AvatarPanel', () => ({
-  AvatarPanel: (p: { theater?: boolean; limitDeg?: number; holdS?: number; side: string; patientSide?: string; onComplete?: () => void; ctlRef?: MutableRefObject<unknown> }) => {
+  AvatarPanel: (p: { theater?: boolean; limitDeg?: number; holdS?: number; side: string; patientSide?: string; speakSteps?: boolean; dockEnd?: ReactNode; onComplete?: () => void; ctlRef?: MutableRefObject<unknown> }) => {
     if (p.ctlRef) p.ctlRef.current = { replay: ctl.replay }
     return (
-      <div data-testid="avatar" data-theater={String(!!p.theater)} data-limit={p.limitDeg ?? ''} data-hold={p.holdS ?? ''} data-side={p.side} data-patient-side={p.patientSide}>
+      <div data-testid="avatar" data-theater={String(!!p.theater)} data-limit={p.limitDeg ?? ''} data-hold={p.holdS ?? ''} data-side={p.side} data-patient-side={p.patientSide} data-speak={String(!!p.speakSteps)}>
         <button type="button" onClick={p.onComplete}>finish clip</button>
+        <div data-testid="dock-end">{p.dockEnd}</div>
       </div>
     )
   },
@@ -235,6 +236,33 @@ test('Skip demo without a check-in today still goes through the check-in', async
   await render(<DemoAt id="cup" side="right" />)
   await userEvent.click(screen.getByRole('button', { name: 'Skip demo' }))
   expect(screen.getByTestId('where')).toHaveTextContent('/details/checkin?next=cup&side=right')
+})
+
+test('Skip demo and Audio sit at the bottom right of the dock; Skip demo is the primary button; Exit stays top left', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  seedDay({ checkin: { pain: 2, at: Date.now() - 0.5 * HOUR } })
+  await render(<DemoAt id="abduction" />)
+  const end = screen.getByTestId('dock-end')
+  const skip = within(end).getByRole('button', { name: 'Skip demo' })
+  expect(skip).toHaveClass('dth-mbtn', 'dth-mbtn-1')
+  expect(within(end).getByRole('button', { name: 'Audio on' })).toHaveClass('dth-btn')
+  expect(screen.getByRole('button', { name: 'Exit' }).closest('header')).toHaveClass('dth-top')
+  expect(screen.getByRole('banner')).not.toContainElement(skip)
+})
+
+test('Audio is on by default (steps are spoken); Audio off is remembered for next time', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  const { unmount } = await render(<DemoAt id="abduction" />)
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-speak', 'true')
+  const audio = screen.getByRole('button', { name: 'Audio on' })
+  expect(audio).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(audio)
+  expect(screen.getByRole('button', { name: 'Audio off' })).toHaveAttribute('aria-pressed', 'false')
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-speak', 'false')
+  expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').audio).toBe(false)
+  unmount()
+  await render(<DemoAt id="abduction" />)
+  expect(screen.getByRole('button', { name: 'Audio off' })).toBeInTheDocument()
 })
 
 test('a day stopped at check-in offers no Skip demo', async () => {

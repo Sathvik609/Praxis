@@ -2,9 +2,9 @@
  *  names, so no toggle is decorative:
  *  - `larger`: `applyGuidance` sets `data-text="large"` on <html>; tokens.css raises the root
  *    font size, so every rem-sized cue, label and control grows together.
- *  There is no `spoken`: the coach is caption-only since 10 Oct (product-owner decision), so an
- *  older build's stored `spoken` value is ignored.
- *  Display preferences (contrast, motion, caption panel, Judge view) live in `lib/prefs.ts`. */
+ *  An older build's stored `spoken` value is ignored: spoken cues (back since 21 Oct) follow
+ *  `prefs.audio` instead.
+ *  Display and audio preferences (contrast, motion, audio, Judge view) live in `lib/prefs.ts`. */
 export type Guidance = { larger: boolean }
 
 export const GUIDANCE_KEY = 'praxis.guidance'

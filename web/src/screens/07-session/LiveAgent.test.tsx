@@ -133,6 +133,9 @@ test('peg test: a resume request after tracking loss is answered from the paused
   renderAt('/session?hand=left', <LiveNhpt />)
   fireEvent.click(screen.getByRole('button', { name: 'Not yet' }))
   expect(send).toHaveBeenCalledWith({ cmd: 'answer', prompt: 'r2', choice: 'Not yet' })
-  // declined: the overlay's own Resume is back for when the patient is ready
-  expect(within(screen.getByRole('alertdialog', { name: 'Tracking lost' })).getByRole('button', { name: 'Resume when ready' })).toBeInTheDocument()
+  // declined: tracking lost is a caution with no button (21 Oct); the service resumes by itself
+  // when the board is back in view
+  const caution = screen.getByRole('alert', { name: 'Tracking lost' })
+  expect(within(caution).queryByRole('button')).toBeNull()
+  expect(caution).toHaveTextContent(/carries on by itself/)
 })

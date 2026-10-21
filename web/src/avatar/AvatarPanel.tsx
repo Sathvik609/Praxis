@@ -1,6 +1,7 @@
-import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../design/Button'
 import { Pause, Play, RotateCcw } from '../design/Icon'
+import { browserSpeak } from '../session/useCoach'
 import { AvatarScene, type Clock, type FigureMode, type Projection, type Tick } from './AvatarScene'
 import { CLIPS, type Clip, mirror } from './clips'
 import type { Insets } from './framing'
@@ -49,6 +50,11 @@ type Props = {
    *  the caption, view line and controls; for Arm out to the side the figure's own shoulder angle,
    *  the limit line and the trunk-lean tag are drawn over the stage. */
   theater?: boolean
+  /** Theater: read each step aloud as it starts (the host's Audio button, `prefs.audio`). */
+  speakSteps?: boolean
+  /** Theater: the host's own buttons at the right end of the dock's control row (Demonstration:
+   *  Audio and Skip demo, 21 Oct team review). */
+  dockEnd?: ReactNode
   /** The stage alone (session reference): no caption, view line, controls or reference line. */
   bare?: boolean
   /** Theater: called once when the demonstrated rep ends. */
@@ -164,6 +170,8 @@ export function AvatarPanel({
   overlayTop = 0,
   className = '',
   theater = false,
+  speakSteps = false,
+  dockEnd,
   bare = false,
   onComplete,
   ctlRef,
@@ -476,6 +484,10 @@ export function AvatarPanel({
   }, [theater, timeline, onComplete, script])
   const stepText = (caption || '').replace(/^Step \d+ of \d+\s*·\s*/, '')
   const stepLabel = stepText ? stepText.charAt(0).toUpperCase() + stepText.slice(1) : ''
+  // Spoken steps (21 Oct): each step once as it starts; switching Audio on reads the current one.
+  useEffect(() => {
+    if (theater && speakSteps && stepLabel) browserSpeak(stepLabel, 'instruct')
+  }, [theater, speakSteps, step, stepLabel])
   const theaterReplay = () => {
     doneRef.current = false
     prevPos.current = 0
@@ -686,6 +698,7 @@ export function AvatarPanel({
                 {speed === 1 ? 'Slower' : `Slower · ${speed}×`}
               </button>
             </div>
+            {dockEnd && <div className="dth-group">{dockEnd}</div>}
           </div>
         </div>
       ) : (
