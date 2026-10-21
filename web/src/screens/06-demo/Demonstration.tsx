@@ -2,15 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { AvatarPanel, type AvatarCtl } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
-import { Activity, AlertTriangle, ChevronRight, Flag, RotateCcw, X } from '../../design/Icon'
+import { Activity, AlertTriangle, ChevronRight, Flag, RotateCcw, Volume2, VolumeX, X } from '../../design/Icon'
 import { NumberScale } from '../../design/NumberScale'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { useModalFocus } from '../../design/useModalFocus'
 import { api, useApi, type Prescription } from '../../lib/api'
 import { prefersReducedMotion } from '../../lib/motion'
+import { readPrefs, writePrefs } from '../../lib/prefs'
 import { dayPosition, markDemoSeen, readDay, saveCheckin, setupUrl, sideOr, startExercise, therapistLine, type Day, type DayCheckin } from '../../lib/day'
 import { doseFor, readCheckinPain, tierFor, type Tier } from '../../lib/plan'
 import { EXERCISES, exerciseById, isHiddenExercise, type ExerciseId } from '../../lib/seed'
+import { resetSpeech } from '../../session/useCoach'
 
 /** A check-in older than this asks for the pain number again before setup. */
 const RECHECK_AFTER_MS = 2 * 3600e3
@@ -18,7 +20,9 @@ const RECHECK_AFTER_MS = 2 * 3600e3
 /** Screen 06 · Demonstration, design v2 (6 Oct 2026): the designers' full-screen theater
  *  (`dth-*`). The reference figure plays the clip mirrored so it faces the patient, with the
  *  theater dock (step, progress, Play/Pause, Replay, Slower) and its readouts (AvatarPanel
- *  `theater`). When the clip ends, "Before you start" lists the target, Watch for and Stop if,
+ *  `theater`). 21 Oct team review: Audio (each step read aloud, on by default, the same
+ *  `prefs.audio` as Settings > Audio) and Skip demo (the theater's primary button) sit at the
+ *  bottom right of the dock; Exit stays top left. When the clip ends, "Before you start" lists the target, Watch for and Stop if,
  *  with Watch again and one primary action.
  *
  *  The primary action follows the artifact's flow (D-FLOW): no check-in today → check-in with
@@ -126,6 +130,14 @@ function DemonstrationFor() {
     setComplete(false)
     ctl.current?.replay()
   }
+  const [audio, setAudio] = useState(() => readPrefs().audio)
+  const toggleAudio = () => {
+    const next = !audio
+    setAudio(next)
+    writePrefs({ ...readPrefs(), audio: next })
+    if (!next) resetSpeech()
+  }
+  useEffect(() => () => resetSpeech(), [])
   // "Before you start": focus inside while open, Escape = Watch again, focus back on close
   useModalFocus(modalRef, complete, { onEscape: watchAgain })
   const stopAt = Math.min(7, rx?.stop_rules?.pain_max ?? 7)
@@ -143,13 +155,6 @@ function DemonstrationFor() {
           <p className="dth-sub">{`Demonstration · ${ex.category} · ${sideWord} arm`}</p>
         </div>
         {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
-        {/* 13 Oct team test: go on without watching (same way on as the clip's own Continue) */}
-        {!demo && !stopped && (
-          <button type="button" className="dth-exit dth-skip" onClick={practise}>
-            Skip demo
-            <ChevronRight aria-hidden size={18} />
-          </button>
-        )}
       </header>
       <div className="dth-main" aria-hidden={complete || undefined}>
         <AvatarPanel
@@ -163,6 +168,22 @@ function DemonstrationFor() {
           side={side === 'right' ? 'left' : 'right'}
           patientSide={side}
           holdS={holdS}
+          speakSteps={audio && !complete}
+          dockEnd={
+            <>
+              <button type="button" className={`dth-btn ${audio ? 'dth-on' : ''}`} aria-pressed={audio} onClick={toggleAudio}>
+                {audio ? <Volume2 aria-hidden size={18} /> : <VolumeX aria-hidden size={18} />}
+                {audio ? 'Audio on' : 'Audio off'}
+              </button>
+              {/* 13 Oct team test: go on without watching (same way on as the clip's own Continue) */}
+              {!demo && !stopped && (
+                <button type="button" className="dth-mbtn dth-mbtn-1" onClick={practise}>
+                  Skip demo
+                  <ChevronRight aria-hidden size={18} />
+                </button>
+              )}
+            </>
+          }
         />
         {ex.stopIf && (
           <p className="dth-stopline">

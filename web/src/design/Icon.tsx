@@ -25,6 +25,8 @@ export {
   Stethoscope,
   TrendingUp,
   Settings,
+  Volume2,
+  VolumeX,
   X,
   ZoomIn,
   ZoomOut,
