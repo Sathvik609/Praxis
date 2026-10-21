@@ -18,7 +18,7 @@ Status 21 Oct 2026: **rebuilt in the Praxis-Team management account and verified
   CloudFront `<cloudfront-id>`, `dl8xykmg8ki61.cloudfront.net`) lives in that member account, which
   became unreachable on 21 Oct (no OrganizationAccountAccessRole; root switch-role, IAM
   switch-role and member email update all denied; its Builder ID portal login failed). Its server
-  is stopped (disk + IP about $8/month from credits). Close it from Organizations after judging.
+  was closed by the user on 21 Oct (reopenable for 90 days, then deleted).
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
   so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh [redacted-ip] --agent`.
