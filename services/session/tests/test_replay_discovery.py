@@ -113,7 +113,11 @@ def test_cli_list_prints_json(capsys, monkeypatch, tmp_path: Path):
 
 
 def test_api_lists_recorded_clip_and_ws_replays_it_as_its_own_exercise(client, tmp_path: Path, monkeypatch):
-    _make(tmp_path, "p02_abduction_1", side="right")
+    # the API checks consent against the real date, so the clip's deletion date follows it
+    today = dt.date.today()
+    consent = {"file": "consent/p02.json", "consented_on": (today - dt.timedelta(days=1)).isoformat(),
+               "delete_after": (today + dt.timedelta(days=29)).isoformat(), "replay_demo": True}
+    _make(tmp_path, "p02_abduction_1", side="right", consent=consent)
     monkeypatch.setenv("PRAXIS_REPLAY_DIRS", str(tmp_path))
     clips = client.get("/api/replay/list").json()["clips"]
     rec = [c for c in clips if c["id"] == "p02_abduction_1"]
