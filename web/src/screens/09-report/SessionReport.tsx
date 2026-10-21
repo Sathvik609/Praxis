@@ -4,10 +4,10 @@ import { Button } from '../../design/Button'
 import { Card } from '../../design/Card'
 import { Bars } from '../../design/charts/Bars'
 import { Chip } from '../../design/Chip'
-import { Check, Download, Flag, Share2 } from '../../design/Icon'
+import { Check, Download, Share2 } from '../../design/Icon'
 import { Overlay, OverlayActions } from '../../design/Overlay'
 import { Stat } from '../../design/Stat'
-import { noteText } from '../../lib/coachNotes'
+import { capSentences, noteText } from '../../lib/coachNotes'
 import { plural } from '../../lib/plural'
 import { api, isReplaySession, useApi, type SessionCoach, type SessionRecord, type SessionSummary } from '../../lib/api'
 import { processingPlace } from '../../lib/config'
@@ -69,12 +69,9 @@ const shortName = (c: string) => c.replace(/^Dr\.? [A-Z][a-z]+ /, 'Dr. ')
 
 type Finished = { exercise: ExerciseId; reportId: string }
 
-/** The coach card's chip: the service's rule-coach label, plus the agent's name when the agent
- *  actually took part (a decision or the session note); a configured but silent agent is not named. */
-function coachChip(c: SessionCoach): string {
-  const tookPart = !!c.agent && ((c.agent_decisions ?? 0) > 0 || !!c.note?.text)
-  return tookPart ? `${c.label} + ${c.agent!.split(' · ')[0]}` : c.label
-}
+/** The rule coach's short name from the service label ("Rule-based coach · LLM agent pending" →
+ *  "Rule-based coach"), for a rule note listed beside the agent's note. */
+const ruleName = (c: SessionCoach) => c.label.split(' · ')[0]
 
 // How long the report waits for a Claude agent's late session note: every 2 s for up to 20 s.
 const NOTE_POLL_MS = 2000
@@ -84,9 +81,13 @@ const NOTE_POLLS = 10
  *  `api.session(id)`, plus the other sessions of today's run from `readDay().finished[].reportId`.
  *  Camera measurements are separated from what the patient reported; in today's run each
  *  exercise column keeps its own verified · unverified counts and only active time is summed.
- *  Coach notes carry the service's label, category and confidence. "Edit feedback" PATCHes the
- *  stored session (ruling R4). Kept from v1 (ruling R7): exertion chip, delivery card, latency
- *  line, "Nothing here is combined into a score." Side comes from `summary.camera.side` only. */
+ *  The coach section is titled "Agent" only when the Claude agent's note is shown, else with the
+ *  service's rule-coach label; notes are cut to NOTE_SENTENCES sentences. "Edit feedback" PATCHes
+ *  the stored session (ruling R4). Kept from v1 (ruling R7): exertion chip, latency line,
+ *  "Nothing here is combined into a score." Side comes from `summary.camera.side` only.
+ *  Team design review (21 Oct): metrics first, one legend for the bars, less copy; therapist
+ *  flags and the delivery card left this patient report (flags stay on screen 11, delivery
+ *  status in Sharing). */
 export function SessionReport() {
   const { id } = useParams()
   const nav = useNavigate()
@@ -262,7 +263,7 @@ export function SessionReport() {
         </div>
         {o.dose && <p className="rp-ex-sub">{o.dose}</p>}
         <p className="rp-ex-sub"><span>{`${o.counts[0]} verified · ${o.counts[1]} unverified`}</span>{` · ${extras}`}</p>
-        <p className="rp-ex-sub">{isCup ? 'Reach time per dot, ms · amber = unverified' : `${swings ? 'Swing size' : 'Peak angle'} per rep${tgt ? ` · target ${tgt}°` : ''} · amber = unverified`}</p>
+        <p className="rp-ex-sub">{isCup ? 'Reach time per dot, ms' : `${swings ? 'Swing size' : 'Peak angle'} per rep${tgt ? ` · target ${tgt}°` : ''}`}</p>
         {vals.length ? (
           <div className="rp-bars" role="img" aria-label={`${o.name} · ${isCup ? 'reach time per dot' : swings ? 'swing size per rep' : 'peak angle per rep'}: ${vals.map((val, i) => `${i + 1}: ${val}${isCup ? ' ms' : '°'}${ver && ver[i] === false ? ' unverified' : ''}`).join(', ')}`}>
             {tgt ? <div className="rp-ceil" style={{ bottom: `${(tgt / max) * 100}%` }} /> : null}
@@ -290,6 +291,8 @@ export function SessionReport() {
       cam.peak_deg?.length ? barsCol('arm', { name: armName, c: cam, counts: own(cam.peak_verified, cam.peak_deg.length), isCup: false, vals: cam.peak_deg.map((v) => Math.round(v)), ver: cam.peak_verified, tgt: peakTarget }) : null,
     ].filter(Boolean)
   }
+  // One legend under the columns whenever per-rep bars are drawn (design review 21 Oct).
+  const hasBars = inDay ? DAY_ORDER.some((x) => !pendingIds.includes(x) && !!srcFor(x)?.vals.length) : !!(cam.reach_ms?.length || cam.peak_deg?.length)
   const pendCol = (x: ExerciseId) => {
     const e = exerciseById(x)
     return (
@@ -320,7 +323,7 @@ export function SessionReport() {
           <>
             <div className="rp-day-l">
               <b>{`Today · ${dn} of ${plan.length} done`}</b>
-              <p>{dn === plan.length ? "That's everything for today." : "Today's check-in carries over to the rest of your plan."}</p>
+              {dn === plan.length && <p>That's everything for today.</p>}
             </div>
             <ul className="rp-day-tags" aria-label="Today's exercises">
               {plan.map((x) => {
@@ -368,12 +371,23 @@ export function SessionReport() {
           <Button variant="secondary" onClick={() => nav('/details')}>Back to Home</Button>
         </div>
       </div>
-      {dayCard}
 
       <Card title="What the camera measured" className="rp-cam">
         <div className="rp-stats">
           {inDay ? (
-            <Stat value={mmss(activeSum)} label="active · all exercises today" />
+            <>
+              <Stat value={mmss(activeSum)} label="active · all exercises today" />
+              {/* each exercise's own counts, never summed across exercises */}
+              {DAY_ORDER.filter((x) => !pendingIds.includes(x)).flatMap((x) => {
+                const c = srcFor(x)?.c
+                if (!c) return []
+                const name = exerciseById(x)?.name ?? x
+                return [
+                  <Stat key={`${x}-v`} value={String(c.verified ?? 0)} label={`verified · ${name}`} />,
+                  <Stat key={`${x}-u`} value={String(c.unverified ?? 0)} label={`unverified · ${name}`} tone={c.unverified ? 'amber' : 'default'} />,
+                ]
+              })}
+            </>
           ) : (
             <>
               <Stat value={mmss(cam.active_s)} label="active · rest excluded" />
@@ -400,6 +414,12 @@ export function SessionReport() {
             {cam.splits_s && <div className="mt-5"><Bars title="Nine-Hole Peg Test · per-peg split" unit="s" values={cam.splits_s.map((v) => Math.round(v * 10) / 10)} labels={cam.splits_s.map((_, i) => `Peg ${i + 1}`)} height={140} /></div>}
           </>
         )}
+        {hasBars && (
+          <ul className="rp-legend" aria-label="Chart legend">
+            <li><i aria-hidden />Verified</li>
+            <li><i aria-hidden className="rp-bar-u" />Unverified</li>
+          </ul>
+        )}
         {/* Kept small (ruling R7): exertion chip, the no-score statement and the latency line. */}
         <div className="rp-cam-foot">
           <p className="rp-meta mt-3">
@@ -407,39 +427,29 @@ export function SessionReport() {
             <Chip tone={exertion.level === 'high' ? 'red' : exertion.level === 'moderate' ? 'amber' : 'mint'}>{cap(exertion.level)}</Chip>
             · behavioural index
           </p>
-          <p className="rp-ex-sub">Verified and unverified are counted separately. Nothing here is combined into a score.</p>
+          <p className="rp-ex-sub">Nothing here is combined into a score.</p>
         </div>
         {latency && latency.frames > 0 && <p className="rp-ex-sub tabular-nums">{latencyText(latency)}</p>}
       </Card>
+      {dayCard}
 
       <div className="rp-grid">
         <div className="rp-col">
-          <Card
-            title={
-              <span className="rp-nt">
-                {`Coach notes for ${clinician}`}
-                <small>From this session's camera events and your answers.</small>
-              </span>
-            }
-            className="rp-notes-card"
-            action={<Chip tone="neutral">{coachChip(s.summary.coach)}</Chip>}
-          >
+          {/* "Agent" only when the Claude agent's note is on screen; otherwise the service's
+              rule-coach label (CLAUDE.md §3 rule 3: no claim outruns the build). */}
+          <Card title={agentNote ? 'Agent' : s.summary.coach.label} className="rp-notes-card">
             <ul className="rp-notes">
               {agentNote && (
                 <li>
-                  <span className="rp-note-b">
-                    <small>{`Coach's note · ${agentNote.label || s.summary.coach.agent || 'agent'}`}</small>
-                    {agentNote.text}
-                  </span>
-                  <Chip tone="focus">Agent</Chip>
+                  <span className="rp-note-b">{capSentences(agentNote.text)}</span>
                 </li>
               )}
               {s.summary.coach.notes.length === 0 && !agentNote && <li className="text-muted">No coach notes: nothing needed correcting or changing.</li>}
               {s.summary.coach.notes.map((n, i) => (
                 <li key={i}>
                   <span className="rp-note-b">
-                    {n.cat && <small>{n.cat}</small>}
-                    {noteText(n.text)}
+                    {(agentNote || n.cat) && <small>{[agentNote ? ruleName(s.summary.coach) : null, n.cat].filter(Boolean).join(' · ')}</small>}
+                    {capSentences(noteText(n.text))}
                   </span>
                   <Chip tone={conf[n.confidence] ?? 'neutral'}>{cap(n.confidence)}</Chip>
                 </li>
@@ -459,20 +469,6 @@ export function SessionReport() {
             {typeof told.detail === 'string' && told.detail && <p className="rp-told-line text-muted">Your note: “{told.detail}”</p>}
             {saveError && <p role="alert" className="rp-told-line text-muted">We couldn't save your changes. What you told us before is kept.</p>}
           </Card>
-
-          {/* Flags sit right under What you told us (10 Oct) so they are in the first screen. */}
-          {s.summary.flags.length > 0 && (
-            <Card tone="watch" title="Therapist flags">
-              <ul className="space-y-2 text-lg">
-                {s.summary.flags.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <Flag aria-hidden className="mt-1 h-5 w-5 shrink-0 text-red-ink" />
-                    <span>{f.rule}: {f.detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
 
           <Card title="Next practice" className="rp-next">
             {canStart && nx && (
@@ -494,12 +490,7 @@ export function SessionReport() {
               </div>
             )}
             {!canStart && <p className="rp-p">{s.next_practice.text}</p>}
-            <p className="rp-authority">{`Nothing in your plan changes until ${shortName(clinician)} approves it. Only ${shortName(clinician)} sets your level.`}</p>
-          </Card>
-
-          <Card as="div" padding="sm" className="rp-deliv">
-            <b>Report to {clinician}</b>
-            <p>{cap(s.delivery)}</p>
+            <p className="rp-authority">{`Nothing in your plan changes until ${shortName(clinician)} approves it.`}</p>
           </Card>
 
         </div>

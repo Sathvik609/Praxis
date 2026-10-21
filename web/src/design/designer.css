@@ -1624,6 +1624,13 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] .rp-ceil{border-top-color:rgba(255,255,255,.3)}
 :root[data-theme="dark"] :is(.rp-ex-h b,.rp-notes li,.rp-told-line,.rp-p,.rp-deliv b,.rp-done-other){color:#EAF0FA}
 :root[data-theme="dark"] .rp-ex-pend .rp-ex-h b{color:var(--muted)}
+/* App, 21 Oct (team design review): one legend under the per-rep bars. Metrics copied from
+   .pg-legend; swatch fills are the .rp-bars blue and unverified hatch, with the words beside them. */
+.rp-legend{display:flex;gap:16px;margin-top:8px;font-size:13px;line-height:18px;color:var(--muted)}
+.rp-legend li{display:inline-flex;align-items:center;gap:6px}
+.rp-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;background:#3D62E3}
+.rp-legend i.rp-bar-u{background:repeating-linear-gradient(135deg,#E7A447 0 3px,#F2C27E 3px 6px)}
+:root[data-theme="dark"] .rp-legend i:not(.rp-bar-u){background:#3A84FF}
 /* Layout: camera card full width (~45% of the page), then coach notes | told + next practice */
 .rp{min-height:100%}
 /* App, 10 Oct (no fit engine, D-SIZE): never shrink the report to the window inside the flex-column

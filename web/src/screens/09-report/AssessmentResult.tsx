@@ -67,7 +67,7 @@ function ArmReport({ r, onDone }: { r: ArmResult; onDone: () => void }) {
             target={r.ceiling_deg}
             height={180}
           />
-          <p className="mt-2 text-base text-muted">Labels are set.lift. Unverified lifts missed the target or held too short; they are counted, never scored.</p>
+          <p className="mt-2 text-base text-muted">Labels are set.lift.</p>
         </Card>
       )}
     </Frame>

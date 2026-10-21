@@ -53,8 +53,8 @@ test('Edit feedback PATCHes the session and the page shows what the service retu
   expect(String(call[0])).toMatch(/\/api\/sessions\/abc\/feedback$/)
   expect(JSON.parse(String(call[1]!.body))).toEqual({ pain_after: 7, difficulty: 'hard', effort: 7, again_tomorrow: 'not_sure' })
   expect(screen.getByText('Hard. Again tomorrow: Not sure.')).toBeInTheDocument()
-  // the service's pain_after flag appears with the other therapist flags
-  expect(screen.getByText(/pain_after: pain 7 after the session/)).toBeInTheDocument()
+  // the service's pain_after flag goes to the therapist dashboard, not the patient's report (21 Oct)
+  expect(screen.queryByText(/pain_after/)).toBeNull()
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
