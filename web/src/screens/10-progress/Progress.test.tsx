@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ME, PRESCRIPTION, SESSION, mockApi } from '../../test/api-mock'
 import { Progress } from './Progress'
@@ -185,14 +185,14 @@ test('pain and effort: chart and caption from your reports; the narrative ignore
   expect(screen.getByText('Pain steady at 2 except once. Effort drifting down.')).toBeInTheDocument()
 })
 
-test('goal log card: count, and Log an attempt refetches', async () => {
-  const fetchMock = mockApi({ ...BASE, '/api/goal-log': { ok: true, goal_attempts: 7 } })
+test('design review 21 Oct: no everyday goal log (the camera only sees in-session activity)', async () => {
+  mockApi(BASE)
   renderProgress()
-  expect(await screen.findByText(/6 attempts logged at your everyday goal/)).toBeInTheDocument()
-  expect(screen.queryByText(/this month/)).not.toBeInTheDocument()
-  const before = fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/progress')).length
-  fireEvent.click(screen.getByRole('button', { name: 'Log an attempt' }))
-  await waitFor(() => expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/progress')).length).toBe(before + 1))
+  await ready()
+  expect(screen.queryByText('Everyday goal log')).not.toBeInTheDocument()
+  expect(screen.queryByText(/logged at your everyday goal/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Log an attempt' })).not.toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Use a cup on my own/)
 })
 
 test('empty state when there are no sessions yet', async () => {
@@ -213,11 +213,10 @@ test('a trend mixing sample and your own points says so; sample points are named
   expect(screen.getByRole('img', { name: /1 Aug 68 s sample.*25 Sep 38\.5 s$/ })).toBeInTheDocument()
 })
 
-test('counts are pluralised: one session, one attempt', async () => {
-  const one = { ...PROGRESS, verified_per_session: [{ date: '2026-09-12', verified: 1, limited: false, mode: 'cup' }], goal_log_count: 1 }
+test('counts are pluralised: one session', async () => {
+  const one = { ...PROGRESS, verified_per_session: [{ date: '2026-09-12', verified: 1, limited: false, mode: 'cup' }] }
   mockApi({ ...BASE, '/api/progress': one, '/api/sessions': { error: 'down' } })
   renderProgress()
-  expect(await screen.findByText(/1 attempt logged/)).toBeInTheDocument()
-  expect(screen.getByText('1 session')).toBeInTheDocument()
+  expect(await screen.findByText('1 session')).toBeInTheDocument()
   expect(cupBars()).toHaveAccessibleName(/12 Sep 1 verified$/)
 })
