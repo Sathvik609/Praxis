@@ -168,9 +168,9 @@ def test_api_calendar_rejects_a_bad_range(client, q):
 # ---- therapist edit + adherence --------------------------------------------------------------
 
 
-def test_put_schedule_stores_a_new_version_and_the_calendar_follows(client, at_28_sep):
+def test_put_schedule_stores_a_new_version_and_the_calendar_follows(client, at_28_sep, therapist):
     body = {"practice_days": [0, 2, 4], "nhpt_day": 5, "next_visit": {"at": "2026-10-09T10:00", "with": "Dr. Anita Rao, OT"}}
-    r = client.put("/api/prescription/schedule", json=body)
+    r = client.put("/api/prescription/schedule", json=body, headers=therapist)
     assert r.status_code == 200
     rx = r.json()
     assert rx["version"] == 4 and rx["schedule"]["practice_days"] == [0, 2, 4] and rx["edited"]["by"] == "therapist"
@@ -193,8 +193,8 @@ def test_put_schedule_stores_a_new_version_and_the_calendar_follows(client, at_2
         {"practice_days": [1], "nhpt_day": 6, "next_visit": {"at": "soon", "with": "Dr. Rao"}},
     ],
 )
-def test_put_schedule_validates_and_changes_nothing_when_invalid(client, body):
-    r = client.put("/api/prescription/schedule", json=body)
+def test_put_schedule_validates_and_changes_nothing_when_invalid(client, body, therapist):
+    r = client.put("/api/prescription/schedule", json=body, headers=therapist)
     assert r.status_code == 422
     assert client.get("/api/prescription").json()["version"] == 3
 

@@ -84,9 +84,29 @@ async function get<T>(path: string): Promise<T> {
   if (body && typeof body === 'object' && 'error' in body && body.error) throw new Error(`${path}: ${body.error}`) // the service answers 200 {error} for unknown ids
   return body
 }
-async function send<T>(method: 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
-  const r = await fetch(`${SESSION_API_URL}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-  if (!r.ok) throw new Error(`${path}: ${r.status}`)
+/** A refused or failed write; `status` lets a screen say why (403 = therapist only). */
+export class ApiError extends Error {
+  constructor(path: string, readonly status: number) {
+    super(`${path}: ${status}`)
+  }
+}
+/** The service refused a therapist-only write (21 Oct, service `auth.py`). */
+export const isTherapistOnly = (e: unknown): boolean => e instanceof ApiError && e.status === 403
+/** Therapist writes (practice days, Mark reviewed) need the service's `PRAXIS_THERAPIST_TOKEN`.
+ *  There is no sign-in (Cognito is deferred): a therapist's browser may keep the token under
+ *  this key, and only therapist writes send it. Without it the shared site is read-only there. */
+export const THERAPIST_TOKEN_KEY = 'praxis.therapistToken'
+function therapistHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem(THERAPIST_TOKEN_KEY)?.trim()
+    return t ? { 'X-Praxis-Therapist-Token': t } : {}
+  } catch {
+    return {}
+  }
+}
+async function send<T>(method: 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<T> {
+  const r = await fetch(`${SESSION_API_URL}${path}`, { method, headers: { 'content-type': 'application/json', ...extraHeaders }, body: body ? JSON.stringify(body) : undefined })
+  if (!r.ok) throw new ApiError(path, r.status)
   return r.json() as Promise<T>
 }
 const post = <T,>(path: string, body?: unknown) => send<T>('POST', path, body)
@@ -98,7 +118,8 @@ export const api = {
   sessions: () => get<{ sessions: SessionRecord[] }>('/api/sessions').then((r) => r.sessions),
   session: (id: string) => get<SessionRecord>(`/api/sessions/${id}`),
   flags: () => get<{ flags: Flag[] }>('/api/flags').then((r) => r.flags),
-  markReviewed: (id: number) => post<{ ok: boolean }>(`/api/flags/${id}/reviewed`),
+  /** Therapist only: 403 (`isTherapistOnly`) without the therapist token. */
+  markReviewed: (id: number) => send<{ ok: boolean }>('POST', `/api/flags/${id}/reviewed`, undefined, therapistHeaders()),
   progress: () => get<Progress>('/api/progress'),
   therapistPatients: () => get<{ patients: TherapistPatient[] }>('/api/therapist/patients').then((r) => r.patients),
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
@@ -108,8 +129,9 @@ export const api = {
   checkin: (body: CheckinBody) => post<CheckinResult>('/api/checkin', body),
   /** Screen 12. No range: the Mon–Sun week holding the service's today. */
   calendar: (range?: { from: string; to: string }) => get<Calendar>(`/api/calendar${range ? `?from=${range.from}&to=${range.to}` : ''}`),
-  /** Therapist view · Edit practice days: stored as prescription v(N+1). */
-  putSchedule: (body: ScheduleBody) => send<Prescription>('PUT', '/api/prescription/schedule', body),
+  /** Therapist view · Edit practice days: stored as prescription v(N+1). Therapist only: 403
+   *  (`isTherapistOnly`) without the therapist token. */
+  putSchedule: (body: ScheduleBody) => send<Prescription>('PUT', '/api/prescription/schedule', body, therapistHeaders()),
   /** Report · Edit feedback (ruling R4): merges into the stored feedback, may add a `pain_after`
    *  flag, and answers with the whole session record (same shape as `session`). */
   updateFeedback: (id: string, f: Record<string, unknown>) => send<SessionRecord>('PATCH', `/api/sessions/${id}/feedback`, f),

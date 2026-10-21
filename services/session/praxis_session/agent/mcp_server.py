@@ -25,7 +25,6 @@ memory; results are numbers and short text, never pixels.
 from __future__ import annotations
 
 import functools
-import hmac
 import json
 import os
 import secrets
@@ -38,6 +37,7 @@ from fastmcp.server.http import RequestContextMiddleware
 from starlette.routing import Route
 
 from praxis_session.agent import tools as T
+from praxis_session.auth import header_matches, is_local
 
 INSTRUCTIONS = {
     "perception": "Praxis perception: OpenCV 5 on the patient's live camera session, run on demand. Events, the last set/arc summary, setup checks on the latest frame (ArUco markers, homography error, tilt, lighting, pose visibility) and recalibration. Numbers and short text only; no images ever leave the service.",
@@ -47,12 +47,7 @@ INSTRUCTIONS = {
 
 
 TOKEN_HEADER = "X-Praxis-MCP-Token"
-LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
-# Any of these means the request came through a proxy (CloudFront adds X-Forwarded-For and Via;
-# the EC2 unit runs uvicorn with --proxy-headers --forwarded-allow-ips=*, which rewrites the
-# client address from X-Forwarded-For, so loopback is only trusted with none of them present).
-PROXY_HEADERS = (b"x-forwarded-for", b"forwarded", b"x-real-ip", b"via", b"x-forwarded-host", b"x-forwarded-proto", b"x-forwarded-port")
-PROXY_PREFIXES = (b"cloudfront-", b"x-amz-cf-")
+# Loopback and proxy-header rules live in praxis_session.auth (shared with therapist writes).
 
 
 def resolve_token() -> str:
@@ -71,15 +66,8 @@ def mcp_token() -> str:
 
 def access_allowed(scope: dict[str, Any], token: str | None = None) -> bool:
     """Loopback without proxy headers, or the right token header; nothing else."""
-    token = token or _TOKEN
-    headers = {k.lower(): v for k, v in (scope.get("headers") or [])}
-    sent = headers.get(TOKEN_HEADER.lower().encode())
-    if sent is not None:
-        return hmac.compare_digest(sent, token.encode())
-    client = scope.get("client")
-    host = client[0] if client else None
-    proxied = any(h in headers for h in PROXY_HEADERS) or any(k.startswith(PROXY_PREFIXES) for k in headers)
-    return host in LOOPBACK and not proxied
+    matched = header_matches(scope, TOKEN_HEADER, token or _TOKEN)
+    return is_local(scope) if matched is None else matched
 
 
 class MCPAccessGuard:

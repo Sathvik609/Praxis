@@ -36,11 +36,12 @@ from pydantic import BaseModel, Field, ValidationError
 
 import cv2
 import numpy as np
-from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
 
 from praxis_session.agent import tools as agent_tools
 from praxis_session.agent.metrics import METRICS as AGENT_METRICS
+from praxis_session.auth import therapist_token_from_env, therapist_write_allowed
 from praxis_session.agent.model import PAUSE_RUN_TIMEOUT_S, PRICES as AGENT_PRICES, load_config as load_agent_config, make_planner, with_listening_port
 from praxis_session.calendar_view import MAX_DAYS, build_calendar, week_start
 from praxis_session.coach.agent import AgentCoach
@@ -68,6 +69,9 @@ CLOUD_ENABLED = os.environ.get("PRAXIS_CLOUD_ENABLED", "0") == "1"
 # Team test (12 Oct): the hosted review build asks each browser for a tester name once and tags
 # that browser's sessions with it; /api/review reads them back. Off on the judge build.
 TEAM_TEST = os.environ.get("PRAXIS_TEAM_TEST", "0") == "1"
+# Therapist-only writes (21 Oct, auth.py): practice days and "Mark reviewed" need this token in
+# X-Praxis-Therapist-Token; unset, only a local unproxied request (laptop dev) may write.
+THERAPIST_TOKEN = therapist_token_from_env()
 MODES = {"heartbeat", *PIPELINE_MODES}
 COACH_MODES = {"nhpt", "cup", "arm"}  # calibrate sockets get a pipeline but no coach session or trace
 
@@ -140,6 +144,7 @@ def health() -> dict[str, object]:
         "opencv_build": opencv_build(),
         "mode": "cloud" if CLOUD_ENABLED else "edge",
         "team_test": TEAM_TEST,
+        "therapist_writes": "token" if THERAPIST_TOKEN else "local_only",
         "models": {
             "hand": all((MODELS_DIR / n).exists() for n in (PALM_MODEL, HAND_MODEL)),
             "pose": all((MODELS_DIR / n).exists() for n in POSE_MODELS),
@@ -210,12 +215,23 @@ class ScheduleBody(BaseModel):
     next_visit: dict[str, str] | None = None
 
 
+THERAPIST_ONLY_TEXT = "Therapist only: this change needs the therapist's access, which this shared site does not have. Nothing was changed."
+
+
+def _require_therapist(request: Request) -> None:
+    """403 unless the request may make a therapist write (auth.therapist_write_allowed)."""
+    if not therapist_write_allowed(request.scope, THERAPIST_TOKEN):
+        raise HTTPException(403, {"error": "therapist_only", "text": THERAPIST_ONLY_TEXT})
+
+
 @app.put("/api/prescription/schedule")
-def api_put_schedule(body: ScheduleBody) -> dict[str, object]:
+def api_put_schedule(body: ScheduleBody, request: Request) -> dict[str, object]:
     """The therapist changes practice days, the peg-test day or the next clinic visit: stored
     as prescription v(N+1) (dose, adaptations and stop rules carried over), logged in
-    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid. No
-    auth exists (removed 21 Sep); the UI labels it "Therapist view" and Cognito lands in W6."""
+    `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid.
+    Therapist only (21 Oct): 403 without the therapist token (`_require_therapist`); there is
+    still no sign-in (removed 21 Sep, Cognito deferred)."""
+    _require_therapist(request)
     before = store.prescription()["version"]
     try:
         rx = store.update_schedule(body.model_dump(), by="therapist", now=_clock().timestamp())
@@ -319,7 +335,10 @@ def api_flags() -> dict[str, object]:
 
 
 @app.post("/api/flags/{flag_id}/reviewed")
-def api_flag_reviewed(flag_id: int) -> dict[str, object]:
+def api_flag_reviewed(flag_id: int, request: Request) -> dict[str, object]:
+    """Therapist dashboard · Mark reviewed. Therapist only (21 Oct): a public visitor must not
+    clear a pain or stop flag the therapist has not seen."""
+    _require_therapist(request)
     store.mark_reviewed(flag_id)
     return {"ok": True}
 

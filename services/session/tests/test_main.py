@@ -169,7 +169,7 @@ def _pending(ws) -> bool:
     return False
 
 
-def test_rest_store_endpoints(client):
+def test_rest_store_endpoints(client, therapist):
     me = client.get("/api/patients/me").json()
     assert me["name"] == "Alex M."
     sessions = client.get("/api/sessions").json()["sessions"]
@@ -178,7 +178,7 @@ def test_rest_store_endpoints(client):
     assert one["id"] == sessions[0]["id"] and "summary" in one
     flags = client.get("/api/flags").json()["flags"]
     assert flags and "rule" in flags[0]
-    r = client.post(f"/api/flags/{flags[0]['id']}/reviewed").json()
+    r = client.post(f"/api/flags/{flags[0]['id']}/reviewed", headers=therapist).json()
     assert r["ok"] is True
     g = client.post("/api/goal-log", json={"note": "cup at lunch"}).json()
     assert g["ok"] is True and g["goal_attempts"] >= 1
