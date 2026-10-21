@@ -23,17 +23,13 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getByText('verified movements')).toBeInTheDocument()
   expect(screen.getByText('unverified (hand hid cup)')).toBeInTheDocument()
-  expect(await screen.findByText(/Coach notes for Dr. Anita Rao/)).toBeInTheDocument()
-  expect(screen.getByText("From this session's camera events and your answers.")).toBeInTheDocument()
   expect(screen.getByText('High')).toBeInTheDocument()
   expect(screen.getByText('Medium')).toBeInTheDocument()
   // P0 items the artifact dropped are kept small (ruling R7)
-  expect(screen.getByText('Report to Dr. Anita Rao')).toBeInTheDocument()
-  expect(screen.getByText('Queued · not yet delivered')).toBeInTheDocument()
   expect(screen.getByText(/Nothing here is combined into a score\./)).toBeInTheDocument()
   expect(screen.getByText(/^Exertion/)).toHaveTextContent(/Exertion\s*Low\s*· behavioural index/)
-  // coach chip is the service's own label, never "agent-generated"
-  expect(screen.getByText('Rule-based coach · LLM agent pending')).toBeInTheDocument()
+  // the coach section is titled with the service's own label, never "agent-generated"
+  expect(screen.getByRole('heading', { name: 'Rule-based coach · LLM agent pending' })).toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/agent-generated/)
   expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Back to Home' })).toBeInTheDocument()
@@ -46,6 +42,70 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.getByText('2 → 2')).toBeInTheDocument()
   expect(screen.getByText('Felt about the same as last time.')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Edit feedback' })).toBeInTheDocument()
+})
+
+// Team design review, 21 Oct: metrics first, a legend for the bars, less text, no flags or
+// delivery card on the patient's report (flags stay on the therapist dashboard).
+test('the key metrics are the first thing under the header', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  const stats = (await screen.findByText('verified movements')).closest('.rp-stats')!
+  const head = document.querySelector('.rp-head')!
+  expect(head.nextElementSibling).toContainElement(stats as HTMLElement)
+  expect(stats).toHaveTextContent(/11:42\s*active/)
+  expect(stats).toHaveTextContent(/17\s*verified movements/)
+  expect(stats).toHaveTextContent(/3\s*unverified/)
+  expect(document.body.textContent).not.toMatch(/accuracy|recovery score/i)
+})
+
+test('the per-rep bars carry a legend that names verified (blue) and unverified (amber, hatched) in words', async () => {
+  mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
+  renderReport()
+  const legend = await screen.findByRole('list', { name: 'Chart legend' })
+  expect(legend).toHaveClass('rp-legend')
+  const items = legend.querySelectorAll('li')
+  expect(items).toHaveLength(2)
+  expect(items[0]).toHaveTextContent('Verified')
+  expect(items[0].querySelector('i')).not.toHaveClass('rp-bar-u')
+  expect(items[1]).toHaveTextContent('Unverified')
+  expect(items[1].querySelector('i')).toHaveClass('rp-bar-u')
+  // the old inline "amber = unverified" captions are replaced by the legend
+  expect(document.body.textContent).not.toMatch(/amber = unverified/)
+})
+
+test('no legend when no per-rep bars are drawn', async () => {
+  const camera = { reps_total: 9, verified: 9, unverified: 0, active_s: 38, nhpt_total_s: 24.2, splits_s: [1.4, 2.5] }
+  mockApi({ '/api/sessions/abc': { ...SESSION, mode: 'nhpt', summary: { ...SESSION.summary, mode: 'nhpt', camera } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText(/Nine-Hole Peg Test:/)
+  expect(screen.queryByRole('list', { name: 'Chart legend' })).toBeNull()
+})
+
+test('the patient report shows no therapist-flags card and no delivery card', async () => {
+  const flags = [{ t: 1, rule: 'pain_after', detail: 'pain 7 after the session (stop level 7)' }]
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, flags } }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByRole('heading', { name: 'What the camera measured' })
+  expect(screen.queryByText(/Therapist flags/)).toBeNull()
+  expect(screen.queryByText(/pain_after/)).toBeNull()
+  expect(screen.queryByText(/Report to/)).toBeNull()
+  expect(screen.queryByText(/not yet delivered/i)).toBeNull()
+  // the delivery status is still one tap away, in Sharing
+  fireEvent.click(screen.getByRole('button', { name: 'Sharing' }))
+  expect(screen.getByRole('dialog', { name: /Who sees this report/ })).toHaveTextContent(/not yet delivered/i)
+})
+
+test('explanatory copy is trimmed; honesty labels stay', async () => {
+  mockApi({ '/api/sessions/abc': { ...SESSION, status: 'ended_early', source: 'replay', replay: true }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByRole('heading', { name: 'What the camera measured' })
+  expect(screen.queryByText(/From this session's camera events/)).toBeNull()
+  expect(screen.queryByText(/counted separately/)).toBeNull()
+  expect(screen.queryByText(/Only Dr\. Rao sets your level/)).toBeNull()
+  expect(screen.getByText('Ended early')).toBeInTheDocument()
+  expect(screen.getByText('Replay · not counted')).toBeInTheDocument()
+  expect(screen.getByText('verified movements')).toBeInTheDocument()
+  expect(screen.getByText('unverified (hand hid cup)')).toBeInTheDocument()
 })
 
 test('the meta line reads date · title and the status chip says Complete', async () => {
@@ -117,7 +177,7 @@ test('a live session carries no Replay badge', async () => {
 test('clinician falls back to "your therapist" when the profile is unavailable', async () => {
   mockApi({ '/api/sessions/abc': SESSION })
   renderReport()
-  expect(await screen.findByText(/Coach notes for your therapist/)).toBeInTheDocument()
+  expect(await screen.findByText('Nothing in your plan changes until your therapist approves it.')).toBeInTheDocument()
 })
 
 test('download builds a JSON blob and sharing explains who sees the report', async () => {
@@ -269,35 +329,62 @@ const AGENT_COACH = {
   note: { text: 'Steady slow arcs; reach time held across the fast arcs.', evidence: [12, 30], label: 'Claude agent · Anthropic API (dev)' },
 }
 
-test("the agent's session note is shown as a labelled coach's note, and the chip names both coaches", async () => {
+test("the Claude agent's session note sits in a section titled just \"Agent\"", async () => {
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: AGENT_COACH } }, '/api/patients/me': ME })
   renderReport()
   const note = (await screen.findByText('Steady slow arcs; reach time held across the fast arcs.')).closest('li')!
-  expect(note.querySelector('small')).toHaveTextContent("Coach's note · Claude agent · Anthropic API (dev)")
-  expect(note).toHaveTextContent('Agent')
-  expect(screen.getByText('Rule-based coach + Claude agent')).toBeInTheDocument()
+  expect(note.closest('section')!.querySelector('h2')).toHaveTextContent(/^Agent$/)
+  expect(screen.queryByRole('heading', { name: /Rule-based coach/ })).toBeNull()
   expect(screen.queryByText(/No coach notes/)).toBeNull()
   expect(document.body.textContent).not.toMatch(/LLM agent pending/)
 })
 
-test('rule notes and the agent note sit side by side; the agent note comes first', async () => {
+test('a long agent note is cut to three sentences on the report', async () => {
+  const text = 'Steady slow arcs. Reach time held at 1.2 s. Two reps were unverified. Keep the fast arcs on. Rest if it hurts.'
+  const coach = { ...AGENT_COACH, note: { ...AGENT_COACH.note, text } }
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Steady slow arcs. Reach time held at 1.2 s. Two reps were unverified.')).toBeInTheDocument()
+  expect(screen.queryByText(/Keep the fast arcs on/)).toBeNull()
+})
+
+test('a long rule-coach note is cut to three sentences too', async () => {
+  const notes = [{ text: 'Lean seen. Lean seen again. Lean three. Lean four.', confidence: 'medium', evidence: [58], cat: 'Posture' }]
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach: { ...SESSION.summary.coach, notes } } }, '/api/patients/me': ME })
+  renderReport()
+  expect(await screen.findByText('Lean seen. Lean seen again. Lean three.')).toBeInTheDocument()
+})
+
+test('rule notes beside the agent note keep the rule coach label; the agent note comes first', async () => {
   const coach = { ...AGENT_COACH, notes: [{ text: 'correct: trunk lean in 2 of 16 lifts', confidence: 'medium', evidence: [58], cat: 'Posture' }] }
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
   renderReport()
   await screen.findByText(/trunk lean in 2 of 16/)
   const items = document.querySelectorAll('.rp-notes > li')
   expect(items).toHaveLength(2)
-  expect(items[0]).toHaveTextContent("Coach's note")
-  expect(items[1]).toHaveTextContent('Posture')
+  expect(items[0]).toHaveTextContent(AGENT_COACH.note.text)
+  expect(items[1].querySelector('small')).toHaveTextContent('Rule-based coach · Posture')
 })
 
-test('an agent that was configured but did nothing leaves the chip at the rule coach', async () => {
+test('with the agent off (or silent) the section stays labelled "Rule-based coach", never "Agent"', async () => {
   const coach = { label: 'Rule-based coach', notes: [], decisions: 0, agent: 'Claude agent · Anthropic API (dev)', agent_decisions: 0 }
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByText('Rule-based coach')).toBeInTheDocument()
-  expect(screen.queryByText(/\+ Claude agent/)).toBeNull()
+  expect(await screen.findByRole('heading', { name: 'Rule-based coach' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Agent' })).toBeNull()
+  expect(screen.queryByText(/Claude agent/)).toBeNull()
   expect(screen.getByText(/No coach notes/)).toBeInTheDocument()
+})
+
+test('an agent that made decisions but wrote no note does not title the rule notes "Agent"', async () => {
+  const coach = { ...AGENT_COACH, note: undefined, notes: [{ text: 'Posture correction: trunk lean 14°.', confidence: 'medium', evidence: [58], cat: 'Posture' }] }
+  vi.useFakeTimers()
+  mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, coach } }, '/api/patients/me': ME })
+  renderReport()
+  await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+  expect(screen.getByRole('heading', { name: 'Rule-based coach' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Agent' })).toBeNull()
+  vi.useRealTimers()
 })
 
 // 10 Oct walkthrough: a session ended by the pain stop rule, feedback skipped, read "— → —".

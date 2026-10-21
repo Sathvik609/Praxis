@@ -69,6 +69,9 @@ test('arm variant shows sets, verified reps, lean events and the ceiling as targ
   const chart = screen.getByRole('img', { name: /Peak angle/ })
   expect(chart.getAttribute('aria-label')).toMatch(/2 70 ° unverified/)
   expect(screen.getByText(/target 90 °/)).toBeInTheDocument()
+  // design review 21 Oct: less text; the stat labels already say why a lift is unverified
+  expect(screen.getByText('Labels are set.lift.')).toBeInTheDocument()
+  expect(screen.queryByText(/held too short; they are counted/)).toBeNull()
 })
 
 test('arm variant shows lifts above the ceiling beside the posture counts, in words', () => {

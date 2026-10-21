@@ -1,8 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { readDay, todayKey, type Day } from '../../lib/day'
+import { readDay, todayKey } from '../../lib/day'
 import { ME, SESSION, mockApi } from '../../test/api-mock'
-import { DayNext } from './DayNext'
 import { SessionReport } from './SessionReport'
 
 function Where() {
@@ -71,6 +70,14 @@ test('after the last exercise each column keeps its own counts and only active t
   expect(screen.getByText('16:42')).toBeInTheDocument()
   expect(screen.getByText('active · all exercises today')).toBeInTheDocument()
   expect(screen.queryByText('20')).not.toBeInTheDocument()
+  // design review 21 Oct: each exercise's counts are also in the metrics row at the top, never summed
+  const stats = screen.getByText('active · all exercises today').closest('.rp-stats')!
+  expect(stats).toHaveTextContent(/3\s*verified · Arm out to the side/)
+  expect(stats).toHaveTextContent(/0\s*unverified · Arm out to the side/)
+  expect(stats).toHaveTextContent(/17\s*verified · Waiter – cup/)
+  expect(stats).toHaveTextContent(/3\s*unverified · Waiter – cup/)
+  // the metrics come before the day card
+  expect(stats.compareDocumentPosition(screen.getByText('Today · 2 of 2 done')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.getByText('Today · 2 of 2 done')).toBeInTheDocument()
   expect(screen.getByText("That's everything for today.")).toBeInTheDocument()
   expect(screen.getByText('Complete')).toBeInTheDocument()
@@ -98,19 +105,4 @@ test('an old report opened from history shows no day controls and keeps its next
   expect(screen.queryByText(/^Today ·/)).not.toBeInTheDocument()
   expect(screen.queryByText('Not done yet')).not.toBeInTheDocument()
   expect(screen.getByRole('img', { name: /reach time/i })).toBeInTheDocument()
-})
-
-test('DayNext sends the next exercise to its demonstration; the check-in carries over', () => {
-  const day = { date: todayKey(), checkin: CHECKIN, done: ['abduction'], demosSeen: [], current: null, finished: [], stopped: null } as unknown as Day
-  render(
-    <MemoryRouter initialEntries={['/x']}>
-      <Routes>
-        <Route path="/x" element={<DayNext day={day} />} />
-        <Route path="*" element={<Where />} />
-      </Routes>
-    </MemoryRouter>,
-  )
-  expect(screen.getByText("Demonstration next, then camera setup. Today's check-in carries over.")).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Next: Waiter – cup' }))
-  expect(screen.getByText('AT /details/demo?exercise=cup&side=right')).toBeInTheDocument()
 })
