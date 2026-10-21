@@ -36,17 +36,15 @@ beforeEach(() => {
   sessionStorage.clear()
 })
 
-test('check-in collects pain, side, location, energy, time and symptoms, shows stop rules, posts, then continues', async () => {
+test('check-in collects pain, side, location, energy and time, shows stop rules, posts, then continues', async () => {
   const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
   renderCheckIn()
   // v2 (6 Oct artifact): one ci-note card carries how answers are used, the tiers and the privacy line
-  await screen.findByText(/Pain of 7 or more, or something new or worse, means rest today/)
+  await screen.findByText(/Pain of 7 or more means rest today/)
   const note = document.querySelector('.ci-note') as HTMLElement
-  expect(note).toHaveTextContent('Pain of 7 or more, or something new or worse, means rest today and your therapist is told.')
+  expect(note).toHaveTextContent('Pain of 7 or more means rest today and your therapist is told.')
   expect(note).toHaveTextContent('Pain of 4–6 means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs.')
   expect(note).toHaveTextContent('Feeling is what you tell us, never read from your face.')
-  expect(note).toHaveTextContent('Prefer to answer out loud?')
-  expect(within(note).getByRole('button', { name: 'Push to talk' })).toHaveClass('ci-mic-btn')
   expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Right arm' }))
@@ -60,7 +58,29 @@ test('check-in collects pain, side, location, energy, time and symptoms, shows s
   expect(readDay().checkin).toMatchObject({ side: 'right', synced: true })
   expect(localStorage.getItem('praxis.side')).toBe('right')
   const post = fetchMock.mock.calls.find(([u]) => String(u).includes('/api/checkin'))!
+  // the service contract is unchanged: new_symptoms is always sent, and is false (no box any more)
   expect(JSON.parse(String(post[1]?.body))).toMatchObject({ pain: 2, new_symptoms: false })
+})
+
+test('time you have sits in the main card, its two options side by side across the card', () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn()
+  const time = screen.getByLabelText('Time you have')
+  const main = screen.getByRole('radio', { name: '0' }).closest('.ui-card')!
+  expect(main).toContainElement(time)
+  expect(time).toHaveClass('w-full', '!flex-nowrap')
+  expect(within(time).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Full session · 14 min', 'Shorter · one exercise'])
+  expect(document.querySelector('.ci-today')).toBeNull()
+})
+
+test('no "something new or worse" box and no push to talk: every answer is a tap', () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn()
+  expect(screen.queryByRole('checkbox')).toBeNull()
+  expect(screen.queryByText(/new or worse/i)).toBeNull()
+  expect(screen.queryByRole('button', { name: /talk/i })).toBeNull()
+  expect(screen.queryByText(/out loud/)).toBeNull()
+  expect(screen.getByText(/Tap your answers/)).toBeInTheDocument()
 })
 
 test('continue is disabled with a hint until pain and side are chosen; the hint then goes away', () => {
@@ -101,26 +121,6 @@ test('pain 0 needs no body area and is saved as nowhere, never as a guessed area
   expect(JSON.parse(sessionStorage.getItem('praxis.checkin') ?? '{}')).toMatchObject({ pain: 0, location: 'nowhere' })
 })
 
-test('voice still sets the body area (tap fallback unchanged)', () => {
-  writeSide('left')
-  mockApi({ '/api/prescription': PRESCRIPTION })
-  class FakeSR {
-    lang = ''
-    onresult: ((ev: unknown) => void) | null = null
-    onerror: (() => void) | null = null
-    start() {
-      this.onresult?.({ results: { 0: { 0: { transcript: '2 in my shoulder' } } } })
-    }
-  }
-  vi.stubGlobal('SpeechRecognition', FakeSR)
-  renderCheckIn()
-  fireEvent.click(screen.getByRole('button', { name: 'Push to talk' }))
-  expect(screen.getByRole('radio', { name: 'Shoulder' })).toBeChecked()
-  expect(screen.getByRole('radio', { name: '2' })).toBeChecked()
-  expect(screen.getByRole('button', { name: 'Continue to exercises' })).toBeEnabled()
-
-})
-
 test('a side chosen before is not asked again, and can be changed', () => {
   writeSide('left')
   mockApi({ '/api/prescription': PRESCRIPTION })
@@ -129,32 +129,6 @@ test('a side chosen before is not asked again, and can be changed', () => {
   expect(screen.getByText(/Practising side: left arm/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Change side' }))
   expect(screen.getByRole('radio', { name: 'Left arm' })).toBeInTheDocument()
-})
-
-test('new-symptoms checkbox and push-to-talk are real controls', () => {
-  mockApi({ '/api/prescription': PRESCRIPTION })
-  renderCheckIn()
-  const box = screen.getByRole('checkbox', { name: /Something new or worse/ })
-  fireEvent.click(box)
-  expect(box).toBeChecked()
-  fireEvent.click(screen.getByRole('button', { name: 'Push to talk' }))
-  expect(screen.getByText(/Voice input is not available/)).toBeInTheDocument()
-})
-
-test('new or worse symptoms stop the day right at check-in; "told" only when the service flagged it', async () => {
-  writeSide('left')
-  mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': { tier: 'rest', flagged: true, reasons: ['new or worse symptoms'], plan: {} } })
-  renderCheckIn()
-  fireEvent.click(screen.getByRole('radio', { name: '1' }))
-  fireEvent.click(screen.getByRole('checkbox', { name: /Something new or worse/ }))
-  fireEvent.click(screen.getByRole('button', { name: 'Tell my therapist and stop for today' }))
-  expect(await screen.findByRole('heading', { name: 'No exercises today' })).toBeInTheDocument()
-  expect(screen.getByText('Your therapist has been told.')).toBeInTheDocument()
-  expect(screen.queryByText(/AT \/details\/choose/)).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Check in again' })).not.toBeInTheDocument()
-  expect(readDay().stopped).toBe('new_symptoms')
-  fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
-  expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
 test('offline: pain 8 is a rest day saved on this device, and the copy says the therapist has not been told', async () => {

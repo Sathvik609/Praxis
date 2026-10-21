@@ -1,7 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mic } from '../../design/Icon'
 import { useReturnFocus } from '../../design/Overlay'
 import { api, useApi } from '../../lib/api'
 import { readDay, therapistLine, type Day } from '../../lib/day'
@@ -16,17 +15,12 @@ type Props = { open: boolean; onOpenChange: (v: boolean) => void; side: 'left' |
 const QUICK = ["I'm tired", 'Something hurts', 'Less time today', 'Explain this exercise']
 const OUT_OF_SCOPE = "I can only suggest from your assigned exercises and today's check-in."
 
-type SR = { lang: string; interimResults: boolean; onresult: ((e: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null; start: () => void; stop: () => void }
-function speechRecognition(): (new () => SR) | null {
-  const w = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR }
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
-}
-
 /** The designers' library coach (6 Oct, `LibCoach`): same panel, bubbles, suggestion card and
  *  quick replies, answered by rules in code from today's plan (`GET /api/plan`), the day on this
  *  device, the calendar, the prescription and live sessions. Labelled rule-based in every
  *  bubble. New or worse pain is never answered here: it goes to the check-in, which is what
- *  writes a therapist flag. Free text is keyword-routed; the mic only fills the input. */
+ *  writes a therapist flag. Free text is keyword-routed. No mic: push to talk was removed (21 Oct team
+ *  review); the quick replies are the tap path and the input takes typed text. */
 export function CoachChat({ open, onOpenChange, onBegin }: Props) {
   const returnFocus = useReturnFocus()
   return (
@@ -58,9 +52,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [skip, setSkip] = useState<string[]>([])
   const [draft, setDraft] = useState('')
-  const [listening, setListening] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
-  const Recognition = speechRecognition()
 
   const current = [...msgs].reverse().find((m) => m.suggest)?.suggest ?? null
   const name = (id: CoachId) => exerciseById(id)?.name ?? id
@@ -135,17 +127,6 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
     setDraft('')
     answer(q)
   }
-  const mic = () => {
-    if (!Recognition) return
-    const r = new Recognition()
-    r.lang = 'en-US'
-    r.interimResults = false
-    r.onresult = (e) => setDraft(e.results[0][0].transcript)
-    r.onend = () => setListening(false)
-    r.onerror = () => setListening(false)
-    setListening(true)
-    r.start()
-  }
 
   const card = (id: CoachId) => {
     const ex = exerciseById(id)
@@ -211,7 +192,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
         <div ref={endRef} />
       </div>
       <footer className="lc-foot">
-        <p className="lc-note">New or worse symptoms go to the check-in, not answered here.</p>
+        <p className="lc-note">Pain goes to the check-in, not answered here.</p>
         <form
           className="lc-input"
           onSubmit={(e) => {
@@ -219,18 +200,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
             send()
           }}
         >
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={listening ? 'Listening…' : 'Type or tap the mic…'} aria-label="Message the coach" />
-          <button
-            type="button"
-            className={`lc-mic${listening ? ' is-on' : ''}`}
-            aria-label={listening ? 'Stop listening' : 'Talk to the coach'}
-            aria-pressed={listening}
-            disabled={!Recognition}
-            title={Recognition ? undefined : 'Voice input is not available in this browser. Type instead.'}
-            onClick={mic}
-          >
-            <Mic aria-hidden />
-          </button>
+          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Type a message…" aria-label="Message the coach" />
         </form>
       </footer>
     </>

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { exerciseById } from '../../lib/seed'
 import { ME, PRESCRIPTION, mockApi } from '../../test/api-mock'
@@ -98,38 +98,8 @@ test('"Suggest more" moves to the next exercise; "Begin setup" calls onBegin wit
   expect(onBegin).toHaveBeenCalledWith('cup')
 })
 
-test('the mic is disabled with a reason when the browser has no speech recognition', async () => {
+test('no push to talk: no mic button, the input takes typed text', async () => {
   await renderChat()
-  const mic = screen.getByRole('button', { name: 'Talk to the coach' })
-  expect(mic).toBeDisabled()
-  expect(mic).toHaveAttribute('title', expect.stringMatching(/not available/))
-})
-
-test('the mic fills the input from speech recognition without sending it', async () => {
-  let inst: { onresult: ((e: unknown) => void) | null; onend: (() => void) | null; start: () => void } | null = null
-  class FakeSR {
-    lang = ''
-    interimResults = false
-    onresult: ((e: unknown) => void) | null = null
-    onend: (() => void) | null = null
-    onerror: (() => void) | null = null
-    constructor() {
-      inst = this // eslint-disable-line @typescript-eslint/no-this-alias
-    }
-    start() {}
-    stop() {}
-  }
-  vi.stubGlobal('webkitSpeechRecognition', FakeSR)
-  try {
-    await renderChat()
-    fireEvent.click(screen.getByRole('button', { name: 'Talk to the coach' }))
-    act(() => {
-      inst!.onresult!({ results: [[{ transcript: 'explain please' }]] })
-      inst!.onend!()
-    })
-    expect(screen.getByRole('textbox', { name: 'Message the coach' })).toHaveValue('explain please')
-    expect(within(screen.getByRole('log')).queryByText('explain please')).toBeNull()
-  } finally {
-    vi.unstubAllGlobals()
-  }
+  expect(screen.queryByRole('button', { name: /talk|listening/i })).toBeNull()
+  expect(screen.getByRole('textbox', { name: 'Message the coach' })).toHaveAttribute('placeholder', 'Type a message…')
 })
