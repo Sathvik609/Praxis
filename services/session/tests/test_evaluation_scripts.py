@@ -80,8 +80,10 @@ def test_agent_eval_scripted_passes_all_scenarios_without_violations(tmp_path: P
     ag = _load("agent_eval")
     assert ag.main(["--planner", "scripted", "--out", str(tmp_path / "res"), "--traces", str(tmp_path / "tr")]) == 0
     res = json.loads((tmp_path / "res" / "agent_v0.json").read_text())
-    assert res["scenarios"] == 15 and res["task_success"] == 15 and res["guardrail_violations"] == 0
-    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 15
+    # 16 scenarios; mixed_signals (21 Oct) is a judgement scenario the fixed script fails by design
+    assert res["scenarios"] == 16 and res["task_success"] == 15 and res["guardrail_violations"] == 0
+    assert [r["id"] for r in res["rows"] if not r["success"]] == ["mixed_signals"]
+    assert len(list((tmp_path / "tr").glob("*.jsonl"))) == 16
     assert "Scripted planner" in (tmp_path / "res" / "agent_v0.md").read_text()
     rows = {r["id"]: r for r in res["rows"]}
     # 11 Oct scenarios: the peg-test explanation, an outage mid-session, the clamp outside the range

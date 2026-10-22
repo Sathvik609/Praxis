@@ -1,3 +1,3 @@
-{"mode": "arm", "exercise": "abduction", "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1791747850.505684, "session": "eval-arm_setup", "kind": "session"}
-{"type": "setup_blocked", "id": 59, "t": 3.0, "reason": "turn_front", "seq": 2, "ts": 1791747850.5089972, "session": "eval-arm_setup", "kind": "event"}
-{"action": "pause", "rule": "setup", "text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.", "seq": 3, "ts": 1791747850.509154, "session": "eval-arm_setup", "kind": "stop_rule"}
+{"mode": "arm", "exercise": "abduction", "user": null, "prescription": "Hospital GRASP L2 v3", "coach": "Rule-based coach \u00b7 LLM agent pending", "seq": 1, "ts": 1792626463.393434, "session": "eval-arm_setup", "kind": "session"}
+{"type": "setup_blocked", "id": 59, "t": 3.0, "reason": "turn_front", "held_s": 3.0, "visibility": 1.0, "hip_visibility": 1.0, "shoulders_visibility": 1.0, "shoulder_sep_norm": 0.1, "seq": 2, "ts": 1792626463.396798, "session": "eval-arm_setup", "kind": "event"}
+{"action": "pause", "rule": "setup", "text": "Paused so the camera can measure the lift. Face the camera with both shoulders in view.", "seq": 3, "ts": 1792626463.396953, "session": "eval-arm_setup", "kind": "stop_rule"}

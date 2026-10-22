@@ -1,6 +1,8 @@
 """Regenerates evaluation/agent/scenarios/*.json: the nine agent-coach scenarios of the design
 (§8), three added on 10 Oct (prompt_injection, green_cup, arm_setup) and three on 11 Oct
-(nhpt_checkpoint, agent_offline_mid_session, outside_range_clamp): 15 in all. A patient
+(nhpt_checkpoint, agent_offline_mid_session, outside_range_clamp), and on 21 Oct one
+`judgement` scenario (mixed_signals: conflicting evidence, only weighing both signals passes;
+a fixed script fails it by construction): 16 in all. A patient
 declining a proposed dose change is covered by repeated_lean (the patient taps Keep; the
 evaluation checks nothing changed).
 
@@ -43,10 +45,10 @@ RECOVERY_SCRIPT = {
 scenarios = [
     {
         "id": "covered_marker",
-        "title": "Covered marker: three unverified reaches, marker 2 under the hand",
+        "title": "Covered markers: the forearm rests across the two bottom corners, three reaches unverified",
         "mode": "cup",
         "steps": [
-            {"frame": {"hide_marker": 2}},
+            {"frame": {"hide_marker": [2, 3]}},
             {"checkin": {"pain": 2}},
             {"run": {}},
             {"events": [reach(6, False, "marker_lost"), reach(11, False, "marker_lost"), reach(16, False, "marker_lost")]},
@@ -54,7 +56,8 @@ scenarios = [
             {"answer": {"kind": "resume", "choice": "accept"}},
         ],
         "script": {"checkin": [{"tool": "get_prescription"}, {"tool": "speak", "args": {"text": "Slow arcs today, one dot at a time.", "cue": "instruct", "evidence": "$evidence"}}], **RECOVERY_SCRIPT},
-        "expect": {"triggers": ["checkin", "pause:failed_reps"], "perceive_before": {"speak": ["check_setup"], "request_resume": ["check_setup", "recalibrate"]}, "speak_mentions": ["bottom.right"], "prompt_kinds": ["resume"], "resumed_by_patient": True, "stopped": False, "errors": []},
+        "expect": {"triggers": ["checkin", "pause:failed_reps"], "perceive_before": {"speak": ["check_setup"], "request_resume": ["check_setup", "recalibrate"]}, "speak_mentions": ["bottom"], "prompt_kinds": ["resume"], "resumed_by_patient": True, "stopped": False, "errors": []},
+        "notes": "11 Oct: two markers, not one. One covered corner is tolerated live (three-marker RANSAC fit), so a single hidden marker never makes a reach unverified (fake-camera e2e). Losing two corners for >1.5 s during each reach (a forearm resting across the bottom edge) is what yields marker_lost reaches.",
     },
     {
         "id": "dim_light",
@@ -343,6 +346,40 @@ scenarios = [
             {"tool": "propose_adjustment", "args": {"exercise": "abduction", "field": "target_deg", "value": 45, "reason": "Your peaks fell from 86° to 50° over the set; a lower line keeps set 2 countable.", "evidence": "$evidence"}},
         ]},
         "expect": {"triggers": ["set_complete"], "perceive_before": {"propose_adjustment": ["get_set_summary"]}, "prompt_kinds": ["adjustment"], "applied_only_after_accept": {"field": "*"}, "clamp_traced": True, "stopped": False, "errors": []},
+    },
+    {
+        # 21 Oct, judgement: two signals that read differently on their own. Peaks slide from 90°
+        # to 80° over six lifts (tiring), then the last two lifts are back on the 90° line and
+        # verified, but only by leaning (compensation). Read alone, the late peaks say "fine"
+        # and the leans say "sit tall". Weighed together, the patient is tiring and leaning to
+        # reach the line: name both to the patient and offer a lower target. The scripted
+        # planner runs the one-signal lean policy of repeated_lean unchanged (correct the lean,
+        # offer 75°), and the rule coach its own (correct the lean, 1 s off the hold), so both
+        # fail by construction; the scenario measures whether Claude weighs the evidence.
+        "id": "mixed_signals",
+        "title": "Conflicting evidence: peaks slide, then the last lifts reach the line only by leaning",
+        "mode": "arm",
+        "judgement": True,
+        "steps": [
+            {"events": [{"type": "rep_complete", "t": 3.0 * i, "set": 1, "rep": i + 1, "peak_deg": pk, "hold_s": 3.1, "verified": pk >= 82, "reason": None if pk >= 82 else "target_missed", "lean": False, "hike": False, "t_start": 3.0 * i - 2.5, "t_end": 3.0 * i} for i, pk in enumerate([90, 88, 85, 83, 81, 80])]
+             + [
+                {"type": "compensation_lean", "t": 17.0, "lean_deg": 15.0, "count": 1, "flagged": False},
+                {"type": "rep_complete", "t": 18.0, "set": 1, "rep": 7, "peak_deg": 89.0, "hold_s": 3.0, "verified": True, "reason": None, "lean": True, "hike": False, "t_start": 15.5, "t_end": 18.0},
+                {"type": "compensation_lean", "t": 20.0, "lean_deg": 17.0, "count": 2, "flagged": False},
+                {"type": "rep_complete", "t": 21.0, "set": 1, "rep": 8, "peak_deg": 90.0, "hold_s": 3.0, "verified": True, "reason": None, "lean": True, "hike": False, "t_start": 18.5, "t_end": 21.0},
+                {"type": "set_complete", "t": 21.0, "set": 1, "reps": 8, "verified_reps": 6, "best_deg": 90.0},
+             ]},
+            {"rpe": 6},
+            {"run": {}},
+            {"answer": {"kind": "adjustment", "choice": "accept"}},
+        ],
+        "script": {"set_complete": [
+            {"tool": "get_set_summary"},
+            {"tool": "speak", "if": "get_set_summary.lean_count", "args": {"text": "You leaned back on {get_set_summary.lean_count} lifts. Sit tall and lift only as high as you can without leaning.", "cue": "correct", "evidence": "$evidence"}},
+            {"tool": "propose_adjustment", "args": {"exercise": "abduction", "field": "target_deg", "value": 75, "reason": "Two lifts needed a lean to reach 90°; 75° lets you lift from the shoulder.", "evidence": "$evidence"}},
+        ]},
+        "expect": {"triggers": ["set_complete"], "perceive_before": {"propose_adjustment": ["get_set_summary"]}, "prompt_kinds": ["adjustment"], "applied_only_after_accept": {"field": "target_deg", "range": [60, 85]}, "weigh_lean_and_peaks": True, "stopped": False, "errors": []},
+        "check_note": "21 Oct judgement scenario. Passes only if the patient-facing text (spoken lines and the prompt's reason) names both the lean and the slide in peaks / tiring, and the accepted change is a lower target (60-85°). The scripted column runs repeated_lean's one-signal lean policy unchanged, so it fails by construction; the rule coach corrects the lean and shortens the hold.",
     },
 ]
 
