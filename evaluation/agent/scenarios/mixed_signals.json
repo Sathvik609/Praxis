@@ -1,0 +1,208 @@
+{
+  "id": "mixed_signals",
+  "title": "Conflicting evidence: peaks slide, then the last lifts reach the line only by leaning",
+  "mode": "arm",
+  "judgement": true,
+  "steps": [
+    {
+      "events": [
+        {
+          "type": "rep_complete",
+          "t": 0.0,
+          "set": 1,
+          "rep": 1,
+          "peak_deg": 90,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": -2.5,
+          "t_end": 0.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 3.0,
+          "set": 1,
+          "rep": 2,
+          "peak_deg": 88,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 0.5,
+          "t_end": 3.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 6.0,
+          "set": 1,
+          "rep": 3,
+          "peak_deg": 85,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 3.5,
+          "t_end": 6.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 9.0,
+          "set": 1,
+          "rep": 4,
+          "peak_deg": 83,
+          "hold_s": 3.1,
+          "verified": true,
+          "reason": null,
+          "lean": false,
+          "hike": false,
+          "t_start": 6.5,
+          "t_end": 9.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 12.0,
+          "set": 1,
+          "rep": 5,
+          "peak_deg": 81,
+          "hold_s": 3.1,
+          "verified": false,
+          "reason": "target_missed",
+          "lean": false,
+          "hike": false,
+          "t_start": 9.5,
+          "t_end": 12.0
+        },
+        {
+          "type": "rep_complete",
+          "t": 15.0,
+          "set": 1,
+          "rep": 6,
+          "peak_deg": 80,
+          "hold_s": 3.1,
+          "verified": false,
+          "reason": "target_missed",
+          "lean": false,
+          "hike": false,
+          "t_start": 12.5,
+          "t_end": 15.0
+        },
+        {
+          "type": "compensation_lean",
+          "t": 17.0,
+          "lean_deg": 15.0,
+          "count": 1,
+          "flagged": false
+        },
+        {
+          "type": "rep_complete",
+          "t": 18.0,
+          "set": 1,
+          "rep": 7,
+          "peak_deg": 89.0,
+          "hold_s": 3.0,
+          "verified": true,
+          "reason": null,
+          "lean": true,
+          "hike": false,
+          "t_start": 15.5,
+          "t_end": 18.0
+        },
+        {
+          "type": "compensation_lean",
+          "t": 20.0,
+          "lean_deg": 17.0,
+          "count": 2,
+          "flagged": false
+        },
+        {
+          "type": "rep_complete",
+          "t": 21.0,
+          "set": 1,
+          "rep": 8,
+          "peak_deg": 90.0,
+          "hold_s": 3.0,
+          "verified": true,
+          "reason": null,
+          "lean": true,
+          "hike": false,
+          "t_start": 18.5,
+          "t_end": 21.0
+        },
+        {
+          "type": "set_complete",
+          "t": 21.0,
+          "set": 1,
+          "reps": 8,
+          "verified_reps": 6,
+          "best_deg": 90.0
+        }
+      ]
+    },
+    {
+      "rpe": 6
+    },
+    {
+      "run": {}
+    },
+    {
+      "answer": {
+        "kind": "adjustment",
+        "choice": "accept"
+      }
+    }
+  ],
+  "script": {
+    "set_complete": [
+      {
+        "tool": "get_set_summary"
+      },
+      {
+        "tool": "speak",
+        "if": "get_set_summary.lean_count",
+        "args": {
+          "text": "You leaned back on {get_set_summary.lean_count} lifts. Sit tall and lift only as high as you can without leaning.",
+          "cue": "correct",
+          "evidence": "$evidence"
+        }
+      },
+      {
+        "tool": "propose_adjustment",
+        "args": {
+          "exercise": "abduction",
+          "field": "target_deg",
+          "value": 75,
+          "reason": "Two lifts needed a lean to reach 90°; 75° lets you lift from the shoulder.",
+          "evidence": "$evidence"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "triggers": [
+      "set_complete"
+    ],
+    "perceive_before": {
+      "propose_adjustment": [
+        "get_set_summary"
+      ]
+    },
+    "prompt_kinds": [
+      "adjustment"
+    ],
+    "applied_only_after_accept": {
+      "field": "target_deg",
+      "range": [
+        60,
+        85
+      ]
+    },
+    "weigh_lean_and_peaks": true,
+    "stopped": false,
+    "errors": []
+  },
+  "check_note": "21 Oct judgement scenario. Passes only if the patient-facing text (spoken lines and the prompt's reason) names both the lean and the slide in peaks / tiring, and the accepted change is a lower target (60-85°). The scripted column runs repeated_lean's one-signal lean policy unchanged, so it fails by construction; the rule coach corrects the lean and shortens the hold."
+}
