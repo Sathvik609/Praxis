@@ -1,8 +1,77 @@
-# Praxis
+<h1 align="center">Praxis</h1>
+
+<p align="center"><b>An agentic vision coach for therapist-prescribed arm and shoulder rehab at home: one laptop camera, a printed sheet, OpenCV 5.</b></p>
+
+<p align="center">
+  <a href="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white">
+  <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-3178C6?logo=typescript&logoColor=white">
+  <img alt="AWS Graviton4 with COOL" src="https://img.shields.io/badge/AWS-Graviton4%20%C2%B7%20COOL-FF9900?logo=amazonwebservices&logoColor=white">
+  <img alt="Claude agent over MCP" src="https://img.shields.io/badge/Claude%20agent-MCP%20tools-D97757?logo=anthropic&logoColor=white">
+  <img alt="Not a medical device" src="https://img.shields.io/badge/not%20a-medical%20device-C0362C">
+</p>
 
 Praxis is a vision coach for upper-limb rehab at home. A patient does exercises their therapist prescribed in front of a laptop's built-in camera, with a printed A4 sheet and a cup or a few pegs. OpenCV 5 measures each repetition, hard-coded stop rules run first, and a coach (a deterministic rule coach, plus an optional Claude agent that calls OpenCV tools over MCP) gives cues within the prescription. Three exercises: **Arm out to the side** (shoulder abduction), **Waiter – cup** (a GRASP coordination task) and the **Nine-Hole Peg Test** (weekly assessment). Team Praxis' entry in the **OpenCV AI Competition 2026 (powered by AWS)**.
 
 > Praxis is an adherence and coaching aid. **It is not a medical device.** The therapist prescribes; the coach proposes within the prescription; stop rules in code always win. Video is processed in memory and never stored by default.
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/img/screens/home.png" alt="Home: the body map on the 3-D mannequin with tappable shoulder, elbow and hand hotspots, today's plan and this week's practice (sample data)"></td>
+    <td width="33%"><img src="docs/img/screens/demonstration_arm.png" alt="Demonstration: the mannequin performs Arm out to the side with the 90 degree limit line, shoulder angle and trunk lean labels, and a step caption"></td>
+    <td width="33%"><img src="docs/img/screens/replay_cup.png" alt="Replay of Waiter – cup: OpenCV overlay of the corner markers and five dots on the warped sheet, the reference mannequin, the rule coach's caption, verified and unverified counts and the Replay badge"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Home</b> · body map on the mannequin (sample data)</sub></td>
+    <td><sub><b>Demonstration</b> · Arm out to the side, 90° ceiling</sub></td>
+    <td><sub><b>Waiter – cup</b> · Replay of a synthetic clip: OpenCV overlay, coach caption, verified / unverified counts</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/screens/replay_nhpt.png" alt="Replay of the Nine-Hole Peg Test: detected holes and seated pegs on the warped board, timer from first peg lift, 5 of 9 seated, rule coach caption and the Replay badge"></td>
+    <td><img src="docs/img/screens/replay_cup_trace.png" alt="Judge view: the decision trace listing OpenCV events, the coach decision with the evidence event id and the spoken action, with timestamps and latency"></td>
+    <td><img src="docs/img/screens/report_cup.png" alt="Session report: active time, verified and unverified movements, tracking coverage, reach time per dot, exertion and the coach notes, marked Replay, not counted"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Nine-Hole Peg Test</b> · Replay: Hough holes, peg occupancy, timer and splits</sub></td>
+    <td><sub><b>Show trace</b> (judge view) · OpenCV event → decision → action</sub></td>
+    <td><sub><b>Session report</b> · verified vs unverified, no composite score</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary>More screens: dark theme, progression prompt, Replay picker, therapist view</summary>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/screens/home_dark.png" alt="Home in the dark theme (sample data)"></td>
+    <td width="50%"><img src="docs/img/screens/replay_cup_progression.png" alt="Progression prompt during Waiter – cup: Ready to go faster? Inside your program, with the evidence it is based on and Yes, Keep pace and Why buttons"></td>
+  </tr>
+  <tr>
+    <td><sub>Home, dark theme</sub></td>
+    <td><sub>Progression prompt: the coach proposes within the prescription and the patient decides</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/screens/replay_picker.png" alt="Settings, Replay a recorded session: two synthetic render clips, Nine-Hole Peg Test and Waiter – cup"></td>
+    <td><img src="docs/img/screens/therapist.png" alt="Read-only therapist view: open flags, the prescription with pain tiers and stop rules, adherence and NHPT, with sample patients labelled Sample"></td>
+  </tr>
+  <tr>
+    <td><sub>Replay picker (Settings → Demo and judging); the clips are synthetic renders</sub></td>
+    <td><sub>Therapist view (read-only, sample data)</sub></td>
+  </tr>
+</table>
+
+</details>
+
+Screenshots are from the app at 1280 × 800 with no webcam: the sessions are **Replay** runs of synthetic clips through the same pipeline, and Home and the therapist view show the built-in sample data.
+
+## Why it matters
+
+From [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §1 (references there):
+
+- **Arm deficits after stroke are common and persistent.** More than 70 % of people who have a stroke have upper-limb deficits [2], and in a cohort of 102 patients with arm paresis only 11.6 % had complete functional recovery of the arm at six months [3].
+- **Recovery needs repetitions that clinic time does not provide.** Across 312 observed therapy sessions, task-specific arm practice happened in only 51 % of them and averaged 32 repetitions when it did [5]; the rest is meant to happen at home, where non-adherence to self-managed physical therapy can reach 70 % [6].
+- **Home programs work when people do them, but home gives no feedback.** GRASP, a self-administered arm program, improved arm function by 6.2 CAHAI points over an education control in a trial of 103 stroke inpatients [2]. At home nobody checks the quality of a rep, the dose on a bad day, or tells the therapist until the next visit.
 
 ## Try it
 
@@ -10,9 +79,17 @@ Praxis is a vision coach for upper-limb rehab at home. A patient does exercises 
 - **No webcam?** Settings → Demo and judging → **Replay a recorded session** runs a recorded clip through the identical pipeline (labelled "Replay"; the clips are synthetic renders).
 - Five-minute walkthrough: [`docs/JUDGE_QUICKSTART.md`](docs/JUDGE_QUICKSTART.md).
 
+## How it works
+
 ![Praxis system architecture: browser, OpenCV 5 session service, stop rules, rule and agent coach, trace and SQLite, AWS EC2 + COOL + CloudFront](docs/img/architecture.svg)
 
 The diagram is exported from [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §1 (dashed boxes are planned, not built).
+
+<p align="center"><img src="docs/img/agent_qualifier_green_cup.svg" alt="Green cup, before and after: check_setup reports the target unseen, the agent re-samples the cup colour, OpenCV then detects the cup, the resume prompt passes a fresh check, and the next reach is verified"></p>
+
+One real agent run (Claude Sonnet 5.5, synthetic frames, 21 Oct): `check_setup` reports the cup unseen, so the agent re-samples the cup colour, OpenCV then detects it, the resume prompt passes a fresh check and the next reach is verified; the rule coach alone never re-samples the cup. Every value is copied from the trace, line by line, in [`docs/AGENT.md`](docs/AGENT.md).
+
+**Built with:** OpenCV 5 (`cv2.aruco` + `findHomography` sheet calibration, `HoughCircles`, HSV `inRange` + `findContours`, masked `matchTemplate`, OpenCV Zoo hand and pose ONNX models via `cv2.dnn`) · FastAPI · React + TypeScript + Three.js · Strands Agents + FastMCP · Claude via the Anthropic API · AWS EC2 Graviton4 (c8g) from the COOL AMI behind CloudFront.
 
 ## Headline results
 
@@ -21,7 +98,7 @@ The diagram is exported from [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §1 
 | Arm angle on **real video** (REHAB24-6, public lab dataset, 8 healthy adults facing the camera, 88 reps) vs motion capture | angle MAE **3.8°**, rep-peak MAE 3.8°, rep F1 **0.93** | [`evaluation/results/rehab24_v0.md`](evaluation/results/rehab24_v0.md), [`rehab24_thresholds_v0.md`](evaluation/results/rehab24_thresholds_v0.md) |
 | COOL vs the stock OpenCV wheel, same c8g.large (11 Oct) | **1.2–1.6×** faster on HSV threshold, contours, Hough and template matching; full classical frame 1.03× (NHPT) and 0.94× (cup); slower on decode, ArUco, warp and the DNN | [`benchmark/results/cool_vs_stock_c8g.md`](benchmark/results/cool_vs_stock_c8g.md) |
 | Claude agent (Sonnet 5.5, Anthropic API) on **real video** (REHAB24-6 through the product pipeline, 40 sessions, simulated taps) | fault confirmed by motion capture corrected in **41/44** set reviews; fix named on **26/26** wrong-view pauses; **0** guardrail violations; first action p50/p95 3.7/5.8 s; $0.050 per session | [`evaluation/results/agent_video_v0.md`](evaluation/results/agent_video_v0.md) |
-| Claude agent on 15 synthetic scenarios (21 Oct recheck, current build) | **15/15**, 0 guardrail violations | [`evaluation/results/agent_recheck_2026-10-21_all.md`](evaluation/results/agent_recheck_2026-10-21_all.md) |
+| Claude agent on synthetic scenarios (21 Oct recheck of the 15 plumbing scenarios, current build) | **15/15**, 0 guardrail violations. The suite is now 16: the new `mixed_signals` judgement scenario **fails 0/3** on Sonnet 5.5, an open finding ([`docs/AGENT.md`](docs/AGENT.md)) | [`agent_recheck_2026-10-21_all.md`](evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_recheck_2026-10-21_mixed_signals_x3.md`](evaluation/results/agent_recheck_2026-10-21_mixed_signals_x3.md) |
 | Nine-Hole Peg Test and Waiter – cup | **synthetic only.** No real-camera accuracy number. Pipeline validation on renders (NHPT rep F1 1.0, cup reach F1 0.984), 107-condition robustness sweep, 3-D renders | [`dataset_v0.md`](evaluation/results/dataset_v0.md), [`robustness_v0.md`](evaluation/results/robustness_v0.md), [`synthetic3d_v0.md`](evaluation/results/synthetic3d_v0.md) |
 
 ## Run it locally (edge mode, no frame leaves the laptop)
@@ -62,7 +139,14 @@ Full list: [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §10 and [`doc
 | [`infra/ec2/README.md`](infra/ec2/README.md) | AWS deploy (one script), start/stop, CloudWatch setup |
 | [`video/README.md`](video/README.md) | Video kit: captures and slides |
 
-## Full local commands (edge / laptop mode)
+## Developer reference
+
+Everything below is for running, testing and deploying the code.
+
+### Full local commands (edge / laptop mode)
+
+<details>
+<summary>Show the commands (print sheets, service, web app, Replay, evaluation, recordings)</summary>
 
 ```bash
 # 0. Print the sheets at 100 % (A4 or US Letter). Check the scale bar measures 80 mm.
@@ -122,9 +206,11 @@ uv run python ../../evaluation/scripts/sus.py                        # SUS quest
 uv run python tools/record_session.py purge-expired                  # daily: deletes clips past 30 days
 ```
 
+</details>
+
 Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && pnpm typecheck && pnpm lint` (web).
 
-### Browser end-to-end check with a simulated camera
+#### Browser end-to-end check with a simulated camera
 
 A real Chrome plays an OpenCV-rendered clip as its webcam (`--use-file-for-fake-video-capture`), so camera setup → detection → session → coach → feedback → report runs exactly as a judge sees it, with no person and no printout. The clips show what a laptop camera sees of a printed sheet 25–35 cm in front of it (~40° tilt, upside down in the raw frame, sensor noise): the NHPT run, Waiter – cup (2 slow + 2 fast arcs), the sheet leaving the view for 4 s, a fingertip on one corner marker (setup), a hand over the two near corners mid-session (agent run), and too dark / blurred / half-out-of-frame setups. Synthetic: this validates the product path, not real-world accuracy.
 
@@ -138,7 +224,7 @@ cd ../../web && node scripts/e2e-fake-camera.mjs --origin http://127.0.0.1:8100 
 
 It checks the setup rows and the hint the patient sees for each failure, the overlay geometry against where the renderer put the sheet (and that the canvas mirrors with the video while the frames sent stay unmirrored), live counts, the timer and splits, captions, the trace and latency line, perception loss with pause and resume, replay, and the report. Screenshots, the service's events per run and `results.json` land in `--out`; the exit code is 1 when a check fails.
 
-## Agent coach (Claude + OpenCV tools over MCP, optional)
+### Agent coach (Claude + OpenCV tools over MCP, optional)
 
 Off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). With it on, Claude Sonnet 5.5 (Strands Agents) runs at checkpoints — check-in, end of a set/arc, a stop-rule pause after unverified reps or lost tracking, peg-test end, session end — and calls OpenCV 5 tools served by FastMCP at `/mcp/perception`, `/mcp/exertion`, `/mcp/coach` (streamable HTTP, same port). Every dose change and every resume is a prompt the patient accepts; stop rules still run first. Details and the workflow diagram: `docs/AGENT.md`.
 
@@ -161,7 +247,10 @@ uv run python ../../evaluation/scripts/agent_video_eval.py --planner rule       
 uv run --env-file .env python ../../evaluation/scripts/agent_video_eval.py --planner anthropic --model claude-sonnet-5-5 --repeat 2 --yes   # ~$2.00 on Sonnet 5.5
 ```
 
-## One-container deploy (Railway / any Docker host)
+### One-container deploy (Railway / any Docker host)
+
+<details>
+<summary>Show deploy details (single origin, team-test mode, therapist-only writes, Docker)</summary>
 
 The image builds the web app and serves it from the session service, so the browser talks to **one origin** for the page, `/api`, `/health`, `/events` and the WebSocket (`/ws/session`). Build context is the repo root; models are fetched (SHA256-pinned) at build time; the SQLite store lives in `/app/data` (ephemeral unless a volume is mounted). `PORT` is honoured; `railway.json` points Railway at the Dockerfile and the `/health` check.
 
@@ -176,11 +265,14 @@ docker run -p 8000:8000 praxis            # → http://127.0.0.1:8000/
 
 Locally you can serve a build the same way without Docker: `cd web && pnpm build`, then start uvicorn with `PRAXIS_WEB_DIST=../../web/dist`. This is still the **edge build** (`PRAXIS_CLOUD_ENABLED=0`, rule-based coach); hosting it remotely means webcam frames travel to the host over TLS, where they are processed in memory and discarded, never stored. The AWS cloud mode is separate: Graviton4 c8g + COOL OpenCV behind CloudFront HTTPS (`infra/ec2/`, `docs/ENGINEERING_NOTES.md` §5).
 
-## Static design preview (for designers; not the product)
+</details>
+
+### Static design preview (for designers; not the product)
 
 `cd web && pnpm build:design` (optionally `--outDir <dir>`) builds a click-through copy of the app into `web/dist-design/` that needs **no service and no camera**: relative asset URLs, hash routing, unminified output. Only `--mode design` includes `src/designPreview/`; `pnpm build` is unchanged. Every screen reads fixtures captured from the live service (`node scripts/capture-design-fixtures.mjs`); sessions replay recorded event streams (NHPT and Waiter – cup: the synthetic replay clips recorded over the service's WebSocket; Arm out to the side and Camera setup: the service's pipeline run offline on synthetic input, `uv run python ../../web/scripts/record-design-streams.py` from `services/session`). The camera shows a labelled placeholder and every page carries a "Design preview · sample data · no camera" tab. Nothing is measured or stored; writes (flag reviewed, schedule edit, check-in) live in page memory until reload.
 
-## Layout
+### Layout
+
 ```
 services/session/   FastAPI + OpenCV 5 + stop rules + coach (one process)
 web/                React + TS + Vite, Radix + Tailwind 4, Three.js avatar
@@ -192,5 +284,16 @@ video/              video kit: capture script, slides
 docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHITECTURE.md, AGENT.md, ENGINEERING_NOTES.md, ACCESSIBILITY.md, LICENSES.md, RISKS.md, PLAN.md, sheets/, wireframes/, img/
 ```
 
-## Licenses and attribution
-See `docs/LICENSES.md`. GRASP concepts are paraphrased from UBC / Heart & Stroke material with our own illustrations. The real-motion avatar clips derive from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0); only derived joint angles are in the repo.
+## Team
+
+Team Praxis
+
+<!-- TEAM: names/roles to be added -->
+
+## License
+
+Third-party models, datasets, fonts and GRASP attribution: [`docs/LICENSES.md`](docs/LICENSES.md).
+
+GRASP concepts are paraphrased from UBC / Heart & Stroke material with our own illustrations. The real-motion avatar clips derive from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0); only derived joint angles are in the repo.
+
+<!-- LICENSE: to be decided by the team -->
