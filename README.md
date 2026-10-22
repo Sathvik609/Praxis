@@ -3,7 +3,6 @@
 <p align="center"><b>An agentic vision coach for therapist-prescribed arm and shoulder rehab at home: one laptop camera, a printed sheet, OpenCV 5.</b></p>
 
 <p align="center">
-  <a href="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
   <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-3178C6?logo=typescript&logoColor=white">
@@ -286,9 +285,7 @@ docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHI
 
 ## Team
 
-Team Praxis
-
-<!-- TEAM: names/roles to be added -->
+Team Praxis: Rinky · Shruthi · Sathvik
 
 ## License
 
@@ -296,4 +293,4 @@ Third-party models, datasets, fonts and GRASP attribution: [`docs/LICENSES.md`](
 
 GRASP concepts are paraphrased from UBC / Heart & Stroke material with our own illustrations. The real-motion avatar clips derive from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0); only derived joint angles are in the repo.
 
-<!-- LICENSE: to be decided by the team -->
+Praxis code is released under the [MIT License](LICENSE). Third-party models, datasets, fonts and GRASP material keep their own terms.
