@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 640" width="1240" height="640" font-family="Mulish, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Green cup trace: check_setup reports the target unseen, the agent re-samples the cup colour, OpenCV then detects the cup, the resume prompt passes a fresh check and the next reach is verified.">
+<title>Agent qualifier: green cup before and after</title>
+<rect x="0" y="0" width="1240" height="640" fill="#FFFFFF"/>
+<text x="24" y="38" font-size="21" font-weight="800" fill="#1B2233">OpenCV result → agent decision → next action (green cup, before and after)</text>
+<text x="24" y="64" font-size="13.5" fill="#4A5468">claude-sonnet-5-5 via the Anthropic API, policy 2026-10-21.1; synthetic frames, real model. Values copied from traces/agent/anthropic-sonnet-5-5/green_cup.jsonl by docs/img/make_agent_qualifier.py.</text>
+<text x="24" y="88" font-size="14" font-weight="700" fill="#A15C00">BEFORE · cup not seen with the default colour window</text>
+<text x="24" y="368" font-size="14" font-weight="700" fill="#1F7A4D">AFTER · colour re-sampled by OpenCV, cup detected</text>
+<text x="24" y="626" font-size="12" fill="#4A5468">Rule coach alone on the same scenario: the cup is never re-sampled and 0 reaches are verified after the pause (evaluation/results/agent_v0_rule.md).</text>
+<rect x="24" y="96" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="24" y="96" width="6" height="214" rx="3" fill="#4A5468"/>
+<text x="42" y="122" font-size="15" font-weight="700" fill="#4A5468">1 · Frame state</text>
+<text x="42" y="146" font-size="13.5" fill="#1B2233">Synthetic sheet frame, green cup on</text>
+<text x="42" y="164" font-size="13.5" fill="#1B2233">dot 0 (default cup window is blue).</text>
+<text x="42" y="186" font-size="13.5" fill="#1B2233">3 reaches unverified (cup_occluded)</text>
+<text x="42" y="204" font-size="13.5" fill="#1B2233">→ stop rule pauses → agent run</text>
+<text x="42" y="222" font-size="13.5" fill="#1B2233">pause:failed_reps</text>
+<text x="42" y="244" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">frame_age_s 0.04</text>
+<text x="42" y="298" font-size="11.5" fill="#4A5468">trace lines 19, 21</text>
+<rect x="330" y="96" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="330" y="96" width="6" height="214" rx="3" fill="#A15C00"/>
+<text x="348" y="122" font-size="15" font-weight="700" fill="#A15C00">2 · OpenCV: check_setup</text>
+<text x="348" y="146" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">failing [&quot;target&quot;]</text>
+<text x="348" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">target_seen false</text>
+<text x="348" y="190" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">colour_source &quot;default&quot;</text>
+<text x="348" y="212" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">markers_found [0, 1, 2, 3]</text>
+<text x="348" y="234" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">rms_mm 0.165</text>
+<text x="348" y="256" font-size="13.5" fill="#1B2233">ArUco + homography pass; only the</text>
+<text x="348" y="274" font-size="13.5" fill="#1B2233">cup is unseen on the warped sheet.</text>
+<text x="348" y="298" font-size="11.5" fill="#4A5468">trace line 21</text>
+<rect x="636" y="96" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="636" y="96" width="6" height="214" rx="3" fill="#3D62E3"/>
+<text x="654" y="122" font-size="15" font-weight="700" fill="#3D62E3">3 · Agent decision</text>
+<text x="654" y="146" font-size="13.5" fill="#1B2233">The setup is fine, so the cause is</text>
+<text x="654" y="164" font-size="13.5" fill="#1B2233">the cup&#x27;s colour, not the camera:</text>
+<text x="654" y="182" font-size="13.5" fill="#1B2233">re-sample it instead of telling the</text>
+<text x="654" y="200" font-size="13.5" fill="#1B2233">patient to move anything.</text>
+<text x="654" y="222" font-size="13.5" fill="#1B2233">(Claude&#x27;s next call, read from the</text>
+<text x="654" y="240" font-size="13.5" fill="#1B2233">trace; the reasoning text is ours.)</text>
+<text x="654" y="298" font-size="11.5" fill="#4A5468">trace line 23</text>
+<rect x="942" y="96" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="942" y="96" width="6" height="214" rx="3" fill="#3D62E3"/>
+<text x="960" y="122" font-size="15" font-weight="700" fill="#3D62E3">4 · Next action</text>
+<text x="960" y="146" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">resample_target_colour(</text>
+<text x="960" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">target=&quot;cup&quot;,</text>
+<text x="960" y="190" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">evidence=[322, 323, 324])</text>
+<text x="960" y="212" font-size="13.5" fill="#1B2233">Autonomous: retunes perception only,</text>
+<text x="960" y="230" font-size="13.5" fill="#1B2233">applied only if detection then</text>
+<text x="960" y="248" font-size="13.5" fill="#1B2233">succeeds.</text>
+<text x="960" y="298" font-size="11.5" fill="#4A5468">trace line 23</text>
+<rect x="24" y="376" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="24" y="376" width="6" height="214" rx="3" fill="#4A5468"/>
+<text x="42" y="402" font-size="15" font-weight="700" fill="#4A5468">1 · Frame state</text>
+<text x="42" y="426" font-size="13.5" fill="#1B2233">Same scene; colour window re-sampled</text>
+<text x="42" y="444" font-size="13.5" fill="#1B2233">at dot 0:</text>
+<text x="42" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">H 59–71, S ≥ 117, V ≥ 100</text>
+<text x="42" y="488" font-size="13.5" fill="#1B2233">recalibrate, on new frames:</text>
+<text x="42" y="510" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">frames_seen 3</text>
+<text x="42" y="532" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">markers [0, 1, 2, 3]</text>
+<text x="42" y="578" font-size="11.5" fill="#4A5468">trace lines 22, 25</text>
+<rect x="330" y="376" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="330" y="376" width="6" height="214" rx="3" fill="#1F7A4D"/>
+<text x="348" y="402" font-size="15" font-weight="700" fill="#1F7A4D">2 · OpenCV: re-sample result</text>
+<text x="348" y="426" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">before.detected false</text>
+<text x="348" y="448" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">after.detected true</text>
+<text x="348" y="470" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">after.diameter_mm 59.7</text>
+<text x="348" y="492" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1B2233">after.cup_mm [39.1, 117.8]</text>
+<text x="348" y="514" font-size="13.5" fill="#1B2233">warpPerspective, HSV sample, then</text>
+<text x="348" y="532" font-size="13.5" fill="#1B2233">inRange + findContours find the cup</text>
+<text x="348" y="550" font-size="13.5" fill="#1B2233">base.</text>
+<text x="348" y="578" font-size="11.5" fill="#4A5468">trace line 23</text>
+<rect x="636" y="376" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="636" y="376" width="6" height="214" rx="3" fill="#3D62E3"/>
+<text x="654" y="402" font-size="15" font-weight="700" fill="#3D62E3">3 · Agent decision</text>
+<text x="654" y="426" font-size="13.5" fill="#1B2233">speak: “The camera hadn&#x27;t recognised</text>
+<text x="654" y="444" font-size="13.5" fill="#1B2233">your cup&#x27;s colour, so those reps</text>
+<text x="654" y="462" font-size="13.5" fill="#1B2233">weren&#x27;t counted. It has now learned</text>
+<text x="654" y="480" font-size="13.5" fill="#1B2233">it. Keep the cup on a dot.”</text>
+<text x="654" y="502" font-size="13.5" fill="#1B2233">request_resume → a fresh check_setup</text>
+<text x="654" y="520" font-size="13.5" fill="#1B2233">runs inside the tool and passes</text>
+<text x="654" y="578" font-size="11.5" fill="#4A5468">trace lines 24, 26</text>
+<rect x="942" y="376" width="274" height="214" rx="10" fill="#FFFFFF" stroke="#C9D1E0" stroke-width="1.5"/>
+<rect x="942" y="376" width="6" height="214" rx="3" fill="#1F7A4D"/>
+<text x="960" y="402" font-size="15" font-weight="700" fill="#1F7A4D">4 · Next action</text>
+<text x="960" y="426" font-size="13.5" fill="#1B2233">Prompt “Setup looks good — resume?”</text>
+<text x="960" y="448" font-size="13.5" fill="#1B2233">Patient taps “Yes, resume”</text>
+<text x="960" y="470" font-size="13.5" fill="#1B2233">Next reach (event 470, to dot 1):</text>
+<text x="960" y="492" font-size="13.5" font-weight="700" fill="#1B2233">verified: true</text>
+<text x="960" y="578" font-size="11.5" fill="#4A5468">trace lines 31, 32, 41</text>
+<line x1="298" y1="203" x2="322" y2="203" stroke="#4A5468" stroke-width="2"/><path d="M321,197 L330,203 L321,209 Z" fill="#4A5468"/>
+<line x1="604" y1="203" x2="628" y2="203" stroke="#4A5468" stroke-width="2"/><path d="M627,197 L636,203 L627,209 Z" fill="#4A5468"/>
+<line x1="910" y1="203" x2="934" y2="203" stroke="#4A5468" stroke-width="2"/><path d="M933,197 L942,203 L933,209 Z" fill="#4A5468"/>
+<line x1="298" y1="483" x2="322" y2="483" stroke="#4A5468" stroke-width="2"/><path d="M321,477 L330,483 L321,489 Z" fill="#4A5468"/>
+<line x1="604" y1="483" x2="628" y2="483" stroke="#4A5468" stroke-width="2"/><path d="M627,477 L636,483 L627,489 Z" fill="#4A5468"/>
+<line x1="910" y1="483" x2="934" y2="483" stroke="#4A5468" stroke-width="2"/><path d="M933,477 L942,483 L933,489 Z" fill="#4A5468"/>
+<path d="M1079,310 C1079,350 467,330 467,368" fill="none" stroke="#3D62E3" stroke-width="2" stroke-dasharray="6 5"/><path d="M461,362 L467,374 L473,362 Z" fill="#3D62E3"/><text x="1091" y="334" font-size="12.5" font-weight="700" fill="#3D62E3">the tool result</text><text x="1091" y="350" font-size="12.5" font-weight="700" fill="#3D62E3">decides the next call</text>
+</svg>
