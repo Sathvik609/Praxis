@@ -19,9 +19,13 @@ Settings (gear in the left rail) → **Demo and judging** → **Show technical d
 - the OpenCV status line (calibration source, reprojection error, fps, latency p50/p95);
 - the camera-setup telemetry.
 
+<img src="img/screens/replay_cup_trace.png" width="640" alt="Judge view during a Waiter – cup replay: the trace lists OpenCV events, the coach decision with its evidence event id, and the spoken action, with timestamps and latency">
+
 ## 3. Without a webcam: Replay (2 min)
 
 Settings → Demo and judging → **Replay a recorded session** → pick a clip:
+
+<img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two synthetic render clips, Nine-Hole Peg Test and Waiter – cup">
 
 | Clip | What to watch |
 |---|---|
@@ -29,6 +33,14 @@ Settings → Demo and judging → **Replay a recorded session** → pick a clip:
 | `synthetic_nhpt_01` (Nine-Hole Peg Test) | Board warp, Hough holes, HSV + contour pegs, masked `matchTemplate` occupancy, the peg state machine, the NHPT timer and per-peg splits. |
 
 The replays are **OpenCV-rendered synthetic clips** (labelled "Replay"). They show the pipeline working; they are not evidence of real-world accuracy (report §8.1). A replayed session gets a report like a live one but is never counted in progress, adherence or trends.
+
+<table><tr>
+<td width="50%"><img src="img/screens/replay_nhpt.png" alt="Nine-Hole Peg Test replay: holes and seated pegs on the warped board, the timer from first peg lift, 5 of 9 seated, the coach caption and the Replay badge"></td>
+<td width="50%"><img src="img/screens/report_cup.png" alt="Session report after the Waiter – cup replay, marked Replay · not counted, with verified and unverified movements and reach time per dot"></td>
+</tr><tr>
+<td><sub>NHPT replay mid-run (Replay badge top right)</sub></td>
+<td><sub>The report after a cup replay: "Replay · not counted"</sub></td>
+</tr></table>
 
 ## 4. With a webcam: try one exercise live (3 min)
 
@@ -61,7 +73,7 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 | Runs on AWS Graviton with COOL | report §7, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
 | OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl`, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
-| Agent evaluation: real Claude Sonnet 5.5 on 15 synthetic scenarios (21 Oct: 15/15, 0 guardrail violations), on real video (REHAB24-6, 40 sessions), and the rule-only ablation | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
+| Agent evaluation: real Claude Sonnet 5.5 on 15 synthetic scenarios (21 Oct: 15/15, 0 guardrail violations; the 16th, the `mixed_signals` judgement scenario, fails 0/3, [`docs/AGENT.md`](AGENT.md)), on real video (REHAB24-6, 40 sessions), and the rule-only ablation | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
 | Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
 | Camera robustness (107 synthetic conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
 | Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §9.1 |
