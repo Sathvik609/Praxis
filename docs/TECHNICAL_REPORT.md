@@ -21,7 +21,7 @@ What is measured and what is not, in one place:
 
 | Area | Status (21 Oct 2026) |
 |---|---|
-| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 760 service tests + 960 web tests green; CI on every push |
+| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 894 service tests + 1014 web tests green (21 Oct); CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; Claude Sonnet 5.5 via the Anthropic API. **On real video** (REHAB24-6 through the product pipeline, 40 sessions): a motion-capture-confirmed fault corrected in 41/44 set reviews, the fix named on 26/26 real wrong-view pauses, **0 guardrail violations**; synthetic 15 scenarios, 21 Oct recheck: 15/15, 0 violations (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; stopped between work sessions, started for judging 24 Oct–10 Nov). 11 Oct, previous instance, same AMI and type: the test suite passed 634/636 on COOL and the benchmark was measured (§7). 21 Oct rebuild verified by `/health`, a replay and 3 agent runs |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.93** (§8.4, after the 12 Oct threshold changes). Two pose defects it exposed are fixed. NHPT and Waiter – cup: synthetic only (§8.1); our own-recordings protocol is built, not run (§8.6). |
