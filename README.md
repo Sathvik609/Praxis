@@ -148,7 +148,7 @@ cp .env.example .env              # set ANTHROPIC_API_KEY and PRAXIS_AGENT=anthr
 uv run uvicorn praxis_session.main:app --port 8000 --env-file .env
 curl -s localhost:8000/health     # "agent": {"mode": "anthropic", "model": "claude-sonnet-5-5", "mcp": true, "ready": true, "runs_today": 0, "daily_runs_limit": 100}
 PRAXIS_AGENT=scripted uv run uvicorn praxis_session.main:app --port 8000   # no key: canned tool calls, for UI work
-uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # 15 scenarios, free (CI)
+uv run python ../../evaluation/scripts/agent_eval.py --planner scripted    # 16 scenarios (scripted passes 15; mixed_signals needs judgement), free (CI)
 uv run python ../../evaluation/scripts/agent_eval.py --planner rule        # baseline: agent off; writes the ablation table
 uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes   # real model, prints the cost first (add --repeat N)
 curl -s localhost:8000/api/agent/metrics   # runs today, outcomes, errors, first-action p50/p95, cap

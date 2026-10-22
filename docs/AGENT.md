@@ -49,7 +49,7 @@ The harness now re-sends the current scene at 15 fps during every agent run (`ca
 | `traces/agent/*.jsonl` | The scripted CI planner. |
 | `traces/agent/rule/` | The rule coach alone. |
 
-Rows read "Claude agent · Anthropic API (dev)" because that was the label string in `agent/model.py` `AGENT_LABELS` when they were recorded. No cloud-mode (AWS) agent trace is committed: every agent trace here came from the eval harness or the replay pipeline on a laptop, calling the Anthropic API.
+Rows read "Claude agent · Anthropic API (dev)" because that was the label string in `agent/model.py` `AGENT_LABELS` when they were recorded; "(dev)" was dropped on 21 Oct, since the agent also runs on the judge endpoint. No cloud-mode (AWS) agent trace is committed: every agent trace here came from the eval harness or the replay pipeline on a laptop, calling the Anthropic API.
 
 ## Rubric → evidence (Agentic Vision Award)
 
@@ -218,7 +218,7 @@ curl -s localhost:8000/api/agent/metrics | jq
 
 ## Contract with the web app
 
-- `coach` events: the Decision fields plus `source: "rule" | "agent"` and `label` ("Rule-based coach · LLM agent pending" with the agent off, "Rule-based coach" otherwise; "Claude agent · Anthropic API (dev)" | "Claude agent · scripted (test)").
+- `coach` events: the Decision fields plus `source: "rule" | "agent"` and `label` ("Rule-based coach · LLM agent pending" with the agent off, "Rule-based coach" otherwise; "Claude agent · Anthropic API" | "Claude agent · scripted (test)").
 - `ui.prompt`: `{id, kind: progression | adjustment | resume, title, text, options, within_prescription, proposal?: {exercise, field, value, requested, clamped, unit}}`; answer `{"cmd": "answer", "prompt": id, "choice": option}`, option 0 accepts, option 1 declines.
 - `agent_status {state: thinking | idle | offline, trigger?, reason?, label}`; `command {cmd: resume | set_target | set_hold | set_reps | set_phase | recalibrate | sample_colour, source: "agent"}` (`sample_colour` carries `target` and the new HSV window after a successful re-sample).
 - `pause {rule: "setup", text, reason, hint}` (arm view gate held 3 s) and the new event type `setup_blocked {target: "pose", reason, hint, held_s}`.
