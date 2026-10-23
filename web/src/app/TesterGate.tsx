@@ -33,6 +33,10 @@ export function TesterGate() {
           <button type="submit" className="sx-btn sx-btn-primary" disabled={!draft.trim()}>
             Start
           </button>
+          {/* 23 Oct: a name is optional; skipped, sessions are still saved, as "guest". */}
+          <button type="button" className="sx-btn sx-btn-secondary" onClick={() => setName(writeTester('guest'))}>
+            Skip
+          </button>
         </form>
       </div>
     </div>

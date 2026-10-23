@@ -20,6 +20,14 @@ it('asks for a name on the team test build and saves it', async () => {
   expect(screen.queryByRole('dialog')).toBeNull()
 })
 
+it('can be skipped: sessions are then saved as guest', async () => {
+  mockHealth(true)
+  render(<TesterGate />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Skip' }))
+  expect(readTester()).toBe('guest')
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
 it('stays hidden without the flag, or once a name is set', async () => {
   mockHealth(false)
   const { unmount } = render(<TesterGate />)
