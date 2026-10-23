@@ -155,7 +155,7 @@ def build_model(cfg: AgentConfig, env: Mapping[str, str] | None = None) -> Any:
     if cfg.mode == "anthropic":
         from strands.models.anthropic import AnthropicModel
 
-        return AnthropicModel(client_args={"api_key": env.get("ANTHROPIC_API_KEY", ""), "max_retries": 0, "timeout": RUN_TIMEOUT_S}, **model_config(cfg.model or DEFAULT_MODEL))
+        return AnthropicModel(client_args={"api_key": (env.get("ANTHROPIC_API_KEY") or "").strip(), "max_retries": 0, "timeout": RUN_TIMEOUT_S}, **model_config(cfg.model or DEFAULT_MODEL))
     raise ValueError(f"no model for PRAXIS_AGENT={cfg.mode}")
 
 

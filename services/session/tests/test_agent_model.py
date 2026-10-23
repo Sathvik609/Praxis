@@ -77,6 +77,12 @@ def test_no_model_without_the_anthropic_mode():
         M.build_model(M.load_config({"PRAXIS_AGENT": "bedrock"}), {})
 
 
+def test_api_key_whitespace_is_trimmed():
+    # 23 Oct: a key pasted into Railway with a trailing newline passed the "is set" check but 401'd.
+    cfg = M.load_config({"PRAXIS_AGENT": "anthropic", "ANTHROPIC_API_KEY": " sk-test\n"})
+    assert M.build_model(cfg, {"ANTHROPIC_API_KEY": " sk-test\n"}).client.api_key == "sk-test"
+
+
 def _resp(code):
     return httpx.Response(code, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"))
 
