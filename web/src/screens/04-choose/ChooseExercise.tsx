@@ -18,15 +18,6 @@ const EQUIPMENT_KEY = 'praxis.equipment'
 /** The artifact's labels. "All GRASP L2" stays verbatim (ruling R5: the seeded program is GRASP Level 2). */
 const FILTERS: [Filter, string][] = [['today', 'Assigned'], ['all', 'All GRASP L2'], ['equipment', 'Equipment I have']]
 
-/** Design review 21 Oct: placeholders that show the library will grow. They are not exercises:
- *  not in the registry (`lib/seed.ts`), the schedule or the service, never selectable or
- *  startable, and say "Coming soon" in text. None is a hidden or dropped task (CLAUDE.md §1). */
-const COMING_SOON: { id: string; name: string; eyebrow: string; note: string }[] = [
-  { id: 'shelf', name: 'Shelf reach', eyebrow: 'Reach · shoulder', note: 'Reach up and place an object on a shelf.' },
-  { id: 'tapping', name: 'Finger tapping', eyebrow: 'Dexterity · fingers', note: 'Tap each fingertip to the thumb in turn.' },
-  { id: 'wrist', name: 'Wrist circles', eyebrow: 'Mobility · wrist', note: 'Slow circles of the wrist, forearm resting.' },
-]
-
 function readEquipment(): EquipmentId[] {
   try {
     const raw = localStorage.getItem(EQUIPMENT_KEY)
@@ -202,28 +193,6 @@ export function ChooseExercise() {
             </div>
           </section>
         )}
-        <section aria-label="Coming soon" className="mt-4">
-          <div className="grid auto-rows-fr grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
-            {COMING_SOON.map((c) => (
-              <Card key={c.id} as="article" padding="none" className="flex flex-col">
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <span className="lib-eyebrow">{c.eyebrow}</span>
-                    <span className="lib-tag">Coming soon</span>
-                  </div>
-                  <h3 className="mt-2 text-2xl">{c.name}</h3>
-                  <p className="mt-1 text-muted">{c.note}</p>
-                  <p className="text-muted">Not in your program yet · no camera coaching.</p>
-                </div>
-                <div className="flex px-6 pb-6 pt-4">
-                  <button type="button" className="lib-cta lib-cta-2 flex-1" disabled>
-                    Coming soon
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
       </div>
 
       <FlowBar

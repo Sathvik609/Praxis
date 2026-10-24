@@ -39,7 +39,7 @@ test('library v2: the artifact header, filters Assigned / All GRASP L2 / Equipme
   expect(screen.getByRole('radio', { name: 'All GRASP L2' })).toHaveAttribute('aria-checked', 'true')
   expect(screen.getByRole('radio', { name: 'Assigned' })).toHaveAttribute('aria-checked', 'false')
   const groups = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))
-  expect(groups).toEqual(['Your exercises', 'Coming soon'])
+  expect(groups).toEqual(['Your exercises'])
   const row = screen.getByTestId('choose-cards')
   expect(row.className).toMatch(/grid-cols-3/)
   expect(row.className).toMatch(/max-lg:grid-cols-/)
@@ -64,41 +64,11 @@ test('Assigned shows the default day in order then the weekly peg test, Arm out 
   expect(document.body.textContent).not.toMatch(DROPPED)
 })
 
-const SOON = ['Shelf reach', 'Finger tapping', 'Wrist circles']
-
-test('design review 21 Oct: three Coming soon placeholders, labelled in text, never startable or selectable', () => {
+test('24 Oct: only the three launchable exercises are listed, no Coming soon placeholders', () => {
   renderChoose()
-  const soon = screen.getByRole('region', { name: 'Coming soon' })
-  const cards = within(soon).getAllByRole('article')
-  expect(cards.map((c) => within(c).getByRole('heading', { level: 3 }).textContent)).toEqual(SOON)
-  for (const c of cards) {
-    // visible text, not only a muted colour: the tag and the button both say Coming soon
-    expect(within(c).getAllByText('Coming soon').length).toBeGreaterThanOrEqual(2)
-    const btn = within(c).getByRole('button')
-    expect(btn).toBeDisabled()
-    expect(btn).not.toHaveAccessibleName(/Start|Select/)
-    expect(btn).not.toHaveAttribute('aria-pressed')
-    // nothing in a placeholder can take keyboard focus
-    expect(c.querySelectorAll('button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])')).toHaveLength(0)
-    fireEvent.click(btn)
-    fireEvent.click(c)
-    fireEvent.keyDown(c, { key: 'Enter' })
-  }
-  expect(screen.queryByText(/^AT /)).not.toBeInTheDocument() // nothing navigated
-  // they never join the startable cards or the Start session buttons
-  expect(within(screen.getByTestId('choose-cards')).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
-  expect(screen.getAllByRole('button', { name: /^Start session: / })).toHaveLength(3)
-  for (const t of SOON) {
-    expect(screen.queryByRole('button', { name: new RegExp(`(Start session|Select).*${t}`) })).not.toBeInTheDocument()
-  }
-})
-
-test('on a rest day the placeholders still say Coming soon, not Resting today', () => {
-  checkin(8)
-  renderChoose()
-  const soon = screen.getByRole('region', { name: 'Coming soon' })
-  expect(within(soon).queryByText('Resting today')).not.toBeInTheDocument()
-  expect(within(soon).getAllByRole('article')).toHaveLength(3)
+  expect(screen.queryByRole('region', { name: 'Coming soon' })).not.toBeInTheDocument()
+  expect(screen.queryByText(/Coming soon/)).not.toBeInTheDocument()
+  for (const t of ['Shelf reach', 'Finger tapping', 'Wrist circles']) expect(screen.queryByText(t)).not.toBeInTheDocument()
 })
 
 test('each card’s Start session opens that exercise’s demonstration (D-FLOW), never camera setup', () => {
