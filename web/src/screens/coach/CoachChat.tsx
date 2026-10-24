@@ -158,7 +158,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
       <header className="lc-head">
         <Dialog.Title className="lc-title">Praxis coach</Dialog.Title>
         <Dialog.Close asChild>
-          <button type="button" className="lib-cta lib-cta-2 lc-close">Close</button>
+          <button type="button" className="lib-cta lib-cta-2 lc-close"><span className="lc-close-x" aria-hidden="true">×</span>Close</button>
         </Dialog.Close>
       </header>
       <Dialog.Description className="lc-scope">

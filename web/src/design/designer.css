@@ -2168,3 +2168,22 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 @media (prefers-reduced-motion:reduce){.ui-btn.start-here,.start-here-tag,.start-here-arrow{animation:none}}
 :root[data-motion="reduced"] .ui-btn.start-here,:root[data-motion="reduced"] .start-here-tag,:root[data-motion="reduced"] .start-here-arrow{animation:none}
 .start-here-hint{font-size:14px;line-height:20px;color:var(--muted)}
+/* 24 Oct: coach drawer motion. It is a side panel, so it slides in from the right edge and back out on Close
+   (it used to rise and zoom like a centred modal, then vanish). The scrim fades both ways. Radix keeps the
+   panel mounted until the closing animation ends; the glass stays on while closing so the colour doesn't jump. */
+.lc-panel.lc-panel[data-state=open]{animation:lc-slide-in .34s cubic-bezier(.22,1,.36,1) both}
+.lc-panel.lc-panel[data-state=closed]{animation:lc-slide-out .24s cubic-bezier(.4,0,1,1) both;background:var(--glass-strong)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge)!important;box-shadow:var(--glass-hi),var(--glass-shadow)!important}
+.lc-scrim[data-state=open]{animation:lc-fade .3s ease both}
+.lc-scrim[data-state=closed]{animation:lc-fade-out .24s ease both}
+@keyframes lc-slide-in{from{transform:translateX(100%)}to{transform:none}}
+@keyframes lc-slide-out{from{transform:none}to{transform:translateX(100%)}}
+@keyframes lc-fade-out{from{opacity:1}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.lc-panel.lc-panel[data-state],.lc-scrim[data-state]{animation:lc-fade .15s ease both}.lc-panel.lc-panel[data-state=closed],.lc-scrim[data-state=closed]{animation:lc-fade-out .15s ease both}}
+:root[data-motion="reduced"] .lc-panel.lc-panel[data-state=open],:root[data-motion="reduced"] .lc-scrim[data-state=open]{animation:lc-fade .15s ease both}
+:root[data-motion="reduced"] .lc-panel.lc-panel[data-state=closed],:root[data-motion="reduced"] .lc-scrim[data-state=closed]{animation:lc-fade-out .15s ease both}
+/* 24 Oct: Close reads as a control, not a dim box: × plus the word, brand-blue outline, fills on hover. */
+.lib-cta.lib-cta-2.lc-close.lc-close{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--teal-ink)!important;color:var(--teal-ink)!important;background:transparent!important;box-shadow:none!important;transition:background .15s ease,color .15s ease}
+.lib-cta.lib-cta-2.lc-close.lc-close:hover{background:var(--teal-fill)!important;border-color:var(--teal-fill)!important;color:#fff!important}
+.lc-close-x{font-size:18px;line-height:1;font-weight:600}
+:root[data-theme="dark"] .lib-cta.lib-cta-2.lc-close.lc-close{border-color:rgba(141,181,255,.7)!important;color:#CFE0FF!important;background:rgba(58,132,255,.12)!important}
+:root[data-theme="dark"] .lib-cta.lib-cta-2.lc-close.lc-close:hover{background:#2F6FE0!important;border-color:#2F6FE0!important;color:#fff!important}
