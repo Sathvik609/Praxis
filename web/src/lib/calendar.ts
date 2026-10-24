@@ -146,9 +146,8 @@ export function dayLines(day: CalendarDay, compact = false): string[] {
     if (day.nhpt_due) lines.push(compact ? 'Peg test · not done' : 'Peg test · not done')
   } else if (day.status === 'rest') {
     lines.push('Rest')
-  } else {
-    lines.push(compact ? 'Not tracked' : 'Not tracked yet')
   }
+  // 24 Oct: a day before tracking started stays blank instead of saying "Not tracked yet"
   if (day.clinic_visit) lines.push(compact ? `Clinic ${day.clinic_visit.time}` : `Clinic · ${day.clinic_visit.with_short} ${day.clinic_visit.time}`)
   return lines
 }

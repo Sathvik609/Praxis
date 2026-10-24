@@ -118,7 +118,7 @@ export function Progress() {
         ? `${countOf(ownTrend.length, 'assessment')} · same board and camera setup · run separately from practice.`
         : trend.length
           ? `${countOf(sampleTrend.length, 'sample assessment')} · illustrative, not yours · run separately from practice.`
-          : 'Run weekly, separately from practice.'
+          : 'A timed test you do once a week.'
   const nhVals = trend.map((t) => t.total_s)
   const nhPts = line(nhVals, Math.min(...nhVals) - 4, Math.max(...nhVals) + 4)
 
@@ -244,11 +244,13 @@ export function Progress() {
               <span>{fmtD(cupRows[cupRows.length - 1].date)}</span>
             </div>
           )}
-          <p className="pg-note">
-            {run.length >= 2
-              ? `${run[0].verified} → ${run[run.length - 1].verified} verified · same task, side and setup.${run[0].illustrative ? ' Sample history, not yours.' : ''}${cupRows.some((r) => r.limited) ? ' The pale bar is a session the camera could not see well enough to compare.' : ''}`
-              : 'Verified placements per session; hatched tops are unverified. Limited-tracking sessions show pale and are never compared.'}
-          </p>
+          {cupRows.length > 0 && (
+            <p className="pg-note">
+              {run.length >= 2
+                ? `${run[0].verified} → ${run[run.length - 1].verified} verified · same task, side and setup.${run[0].illustrative ? ' Sample history, not yours.' : ''}${cupRows.some((r) => r.limited) ? ' The pale bar is a session the camera could not see well enough to compare.' : ''}`
+                : 'One bar per session. The striped top is reps the camera could not confirm.'}
+            </p>
+          )}
         </Card>
         <Card className="pg-card" title={tt('Arm out to the side', 'peak angle per session')} action={sampleChip(armRows.some((r) => r.sample))}>
           {armRows.length ? (
@@ -270,9 +272,11 @@ export function Progress() {
               <span>{`${armRows[armRows.length - 1].deg}° · ${fmtD(armRows[armRows.length - 1].date)}`}</span>
             </div>
           )}
-          <p className="pg-note">
-            {armRows.length >= 2 ? `${armRows[0].deg}° → ${armRows[armRows.length - 1].deg}° · median verified peak per session${armLimitNote}` : 'Median verified peak angle per session, estimated by the camera.'}
-          </p>
+          {armRows.length > 0 && (
+            <p className="pg-note">
+              {armRows.length >= 2 ? `${armRows[0].deg}° → ${armRows[armRows.length - 1].deg}° · median verified peak per session${armLimitNote}` : 'Your typical verified lift angle each session, measured by the camera.'}
+            </p>
+          )}
         </Card>
       </div>
       <div className="pg-row2">
@@ -310,7 +314,7 @@ export function Progress() {
               )}
               <Stat value={pr.hours} unit="h" label="active time" />
             </div>
-            <p className="pg-note">{best >= 2 ? `Longest run: ${best} practice days in a row` : `${liveDates.filter((d) => inRange(d)).length} practice days in this range · rests excluded`}</p>
+            <p className="pg-note">{best >= 2 ? `Longest run: ${best} practice days in a row` : `${liveDates.filter((d) => inRange(d)).length} practice days in this range`}</p>
             {p.sample && (
               <p className="pg-note">
                 {sampleChip(true)} <span>{`${p.sample.done}/${p.sample.planned} planned · ${p.sample.hours} h · illustrative, not added to yours`}</span>
@@ -332,16 +336,18 @@ export function Progress() {
               <p className="pg-empty">Nothing reported yet.</p>
             )}
             {spike >= 0 && <p className="pg-spike-l">{`${fmtD(pe[spike].date)} · pain ${pe[spike].pain_after} · session ended early`}</p>}
-            <div className="pg-legend">
-              <span>
-                <i className="pg-lg-pain" />
-                pain after
-              </span>
-              <span>
-                <i className="pg-lg-eff" />
-                effort
-              </span>
-            </div>
+            {pe.length > 0 && (
+              <div className="pg-legend">
+                <span>
+                  <i className="pg-lg-pain" />
+                  pain after
+                </span>
+                <span>
+                  <i className="pg-lg-eff" />
+                  effort
+                </span>
+              </div>
+            )}
             <p className="pg-note">
               {painVals.length
                 ? `Pain steady at ${painMode}${spikes ? ` except ${spikes === 1 ? 'once' : `${spikes} times`}` : ''}.${effortVals.length >= 2 ? ` Effort ${effortVals[effortVals.length - 1] < effortVals[0] ? 'drifting down' : effortVals[effortVals.length - 1] > effortVals[0] ? 'drifting up' : 'steady'}.` : ''}`

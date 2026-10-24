@@ -76,7 +76,8 @@ test('week view: last week and this week, every status in words, today from the 
   expect(within(card('2026-10-02')).getByText('Friday 2 October')).toBeInTheDocument()
   // colour never alone: a legend names every colour
   const legend = screen.getByRole('list', { name: 'Legend' })
-  for (const t of ['Done', 'Today', 'Planned', 'Planned, not done', 'Clinic visit', 'Rest', 'Sample (not yours)', 'Not tracked yet']) expect(within(legend).getByText(t)).toBeInTheDocument()
+  for (const t of ['Done', 'Today', 'Planned', 'Planned, not done', 'Rest']) expect(within(legend).getByText(t)).toBeInTheDocument()
+  expect(within(legend).queryByText('Not tracked yet')).not.toBeInTheDocument()
   // v2: each card carries its status class; a done day shows a tick and says "done" in words too
   expect(card('2026-09-21')).toHaveClass('cal-day', 'cal-done')
   expect(card('2026-09-28')).toHaveClass('cal-day', 'cal-today')
@@ -107,14 +108,12 @@ test('side cards: today (no start button, D-FLOW) and the clinic visit; the week
   expect(visit).not.toHaveTextContent('Sample')
 })
 
-test('the seeded visit is labelled Sample (its date moves with today until the therapist books one)', async () => {
+test('the seeded sample visit is not shown; the card appears once the therapist books a real one', async () => {
   const c = cal('2026-09-21', '2026-10-04')
   mockApi({ '/api/calendar': { ...c, next_visit: { ...c.next_visit!, sample: true } } })
   renderCalendar()
-  const visit = await screen.findByRole('region', { name: 'Clinic visit' })
-  expect(within(visit).getByText('Sample')).toBeInTheDocument()
-  expect(visit).toHaveTextContent('Sample date · your therapist books the real visit.')
-  expect(visit).not.toHaveTextContent('Set by your therapist.')
+  await screen.findByRole('region', { name: 'Today' })
+  expect(screen.queryByRole('region', { name: 'Clinic visit' })).not.toBeInTheDocument()
 })
 
 test('‹ › move a week at a time', async () => {
@@ -159,8 +158,8 @@ test('week view shows the sample history labelled when it is in range', async ()
   expect(card('2026-09-12')).toHaveTextContent('Sample')
   expect(card('2026-09-12')).toHaveTextContent('Waiter – cup · 12 min')
   expect(card('2026-09-12')).toHaveTextContent('Peg test 41.2 s')
-  expect(card('2026-09-11')).toHaveTextContent('Not tracked yet')
-  expect(card('2026-09-13')).toHaveTextContent('Not tracked yet') // a peg-test Sunday before the first live session
+  expect(card('2026-09-11')).not.toHaveTextContent(/Not tracked|Sample/)
+  expect(card('2026-09-13')).not.toHaveTextContent(/Not tracked|Peg test/) // a peg-test Sunday before the first live session stays blank
 })
 
 test('layout holds at 1280: shrinkable grid columns, controls at least 56 px', async () => {

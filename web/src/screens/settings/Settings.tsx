@@ -216,7 +216,7 @@ function CoachRow({ health, error }: { health: Health | null; error: string | nu
   const running = !!health.agent && health.agent.mode !== 'off' && !!health.agent.ready
   const how = running
     ? 'The agent runs at checkpoints; the rule-based coach gives the cues in between. Stop rules run before both.'
-    : 'Deterministic cues from the camera events. Stop rules run first.'
+    : 'Fixed rules turn what the camera sees into cues. Safety stops always run first.'
   return (
     <SettingsRow
       title={lines.title}

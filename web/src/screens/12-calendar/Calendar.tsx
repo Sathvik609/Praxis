@@ -21,7 +21,7 @@ function tone(day: CalendarDay): string {
   if (day.sample) return 'cal-day cal-sample'
   if (day.status === 'missed') return 'cal-day cal-missed'
   if (day.status === 'planned') return 'cal-day cal-planned'
-  if (day.status === 'untracked') return 'cal-day cal-untracked'
+  if (day.status === 'untracked') return 'cal-day' // 24 Oct: blank and uncoded, so no colour needs a word
   return 'cal-day cal-rest'
 }
 
@@ -33,7 +33,6 @@ const LEGEND: { label: string; box: string }[] = [
   { label: 'Clinic visit', box: 'cal-key cal-clinic' },
   { label: 'Rest', box: 'cal-key cal-rest' },
   { label: 'Sample (not yours)', box: 'cal-key cal-sample' },
-  { label: 'Not tracked yet', box: 'cal-key cal-untracked' },
 ]
 
 function dateLabel(day: CalendarDay, view: View, anchor: string): string {
@@ -156,7 +155,7 @@ export function Calendar() {
             {data.days.map((d) => <DayCard key={d.date} day={d} view={loaded.view} anchor={loaded.anchor} />)}
           </ol>
           <ul aria-label="Legend" className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-base text-muted">
-            {LEGEND.map((l) => (
+            {LEGEND.filter((l) => (l.label === 'Sample (not yours)' ? data.days.some((d) => d.sample) : l.label === 'Clinic visit' ? data.days.some((d) => d.clinic_visit) : true)).map((l) => (
               <li key={l.label} className="flex items-center gap-2">
                 <span aria-hidden className={l.box} />
                 {l.label}
@@ -164,8 +163,7 @@ export function Calendar() {
             ))}
           </ul>
           <p className="mt-3 text-base text-muted">
-            A day is done only when the camera saw you practise. Replays of recorded sessions never count
-            {data.tracking_since ? '.' : ', and days before your first camera session are not tracked.'}
+            A day counts as done when the camera sees you practise. Replays don't count.
           </p>
         </section>
 
@@ -200,6 +198,8 @@ function TodayCard({ day, today }: { day: CalendarDay | null; today: string }) {
 function VisitCard({ data }: { data: CalendarData }) {
   const v = data.next_visit
   const upcoming = v && v.upcoming
+  // 24 Oct: a made-up sample visit only confuses; the card shows once the therapist books a real one
+  if (v?.sample) return null
   return (
     <Card as="section" aria-label="Clinic visit" padding="sm" className="py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -53,7 +53,7 @@ export function Home() {
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-white/80">Today's practice</div>
+            <div className="text-white/80">Your practice</div>
             {/* 24 Oct: where a first-time visitor starts. Said in words; the ring on the button only repeats it. */}
             <span className="start-here-tag"><span className="start-here-arrow" aria-hidden="true">↓</span>Start here</span>
           </div>

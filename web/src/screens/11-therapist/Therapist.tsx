@@ -154,14 +154,15 @@ export function Therapist() {
                 </ul>
                 {savedNote && <p className="mt-2 font-bold text-mint-ink" role="status">{savedNote}</p>}
                 <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
-                <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new symptoms (API only; patients use Pain / feel unwell) · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
-                <p className="mt-3 text-base text-muted">Dose edits arrive with clinician accounts; until then this card is the reference the coach is clamped to. Practice days and the next visit can be edited now (Edit practice days).</p>
+                <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new or worse symptoms · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
+                <p className="mt-3 text-base text-muted">Doses are read-only here, and the coach never goes beyond them. Practice days and the next visit can be changed with Edit practice days.</p>
               </section>
             </Card>
             <Card title="Adherence and NHPT">
               <div className="flex flex-wrap gap-8">
-                <Stat value={me?.adherence_pct ?? '—'} unit="%" label="planned days practised" />
-                <Stat value={me?.nhpt_last_s ?? '—'} unit="s" label={`NHPT · ${me?.nhpt_first_s ?? '—'} s at wk 1${me?.nhpt_sample ? ' · sample' : ''}`} />
+                {/* 24 Oct: plain words instead of "— %" and "— s" before there is anything to count */}
+                {me?.adherence_pct == null ? <p className="text-muted">No practice days yet.</p> : <Stat value={me.adherence_pct} unit="%" label="planned days practised" />}
+                {me?.nhpt_last_s == null ? <p className="text-muted">No peg test yet.</p> : <Stat value={me.nhpt_last_s} unit="s" label={`NHPT · ${me.nhpt_first_s ?? '—'} s at wk 1${me.nhpt_sample ? ' · sample' : ''}`} />}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
                 {painRows.length ? (

@@ -40,11 +40,11 @@ test('check-in collects pain, side, location, energy and time, shows stop rules,
   const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
   renderCheckIn()
   // v2 (6 Oct artifact): one ci-note card carries how answers are used, the tiers and the privacy line
-  await screen.findByText(/Pain of 7 or more means rest today/)
+  await screen.findByText(/Pain 7 or more: rest today/)
   const note = document.querySelector('.ci-note') as HTMLElement
-  expect(note).toHaveTextContent('Pain of 7 or more means rest today and your therapist is told.')
-  expect(note).toHaveTextContent('Pain of 4–6 means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs.')
-  expect(note).toHaveTextContent('Feeling is what you tell us, never read from your face.')
+  expect(note).toHaveTextContent(/Pain 7 or more: rest today, and Dr\. .+ is told\./)
+  expect(note).toHaveTextContent('Pain 4–6: a gentler session with fewer reps and a smaller lift.')
+  expect(note).toHaveTextContent('never read from your face.')
   expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Right arm' }))
@@ -69,7 +69,7 @@ test('time you have sits in the main card, its two options side by side across t
   const main = screen.getByRole('radio', { name: '0' }).closest('.ui-card')!
   expect(main).toContainElement(time)
   expect(time).toHaveClass('w-full', '!flex-nowrap')
-  expect(within(time).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Full session · 14 min', 'Shorter · one exercise'])
+  expect(within(time).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Full session · about 10 min', 'Shorter · one exercise'])
   expect(document.querySelector('.ci-today')).toBeNull()
 })
 
@@ -80,7 +80,7 @@ test('no "something new or worse" box and no push to talk: every answer is a tap
   expect(screen.queryByText(/new or worse/i)).toBeNull()
   expect(screen.queryByRole('button', { name: /talk/i })).toBeNull()
   expect(screen.queryByText(/out loud/)).toBeNull()
-  expect(screen.getByText(/Tap your answers/)).toBeInTheDocument()
+  expect(screen.getByText(/A few quick taps/)).toBeInTheDocument()
 })
 
 test('continue is disabled with a hint until pain and side are chosen; the hint then goes away', () => {

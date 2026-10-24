@@ -8,7 +8,7 @@ import { NumberScale } from '../../design/NumberScale'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
 import { demoUrl, readDay, readSide, saveCheckin, setupUrl, sideOr, stopReason, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
-import { TIER_TEXT, tierFor, type Tier } from '../../lib/plan'
+import { DAY_MINUTES, TIER_TEXT, tierFor, type Tier } from '../../lib/plan'
 import { exerciseById, type ExerciseId } from '../../lib/seed'
 
 /** Kept for older imports: what screen 03 collects. */
@@ -30,7 +30,7 @@ const ENERGY: { value: Energy; label: string }[] = [
   { value: 'very_tired', label: 'Very tired' },
 ]
 const MINUTES: { value: Minutes; label: string }[] = [
-  { value: '14', label: 'Full session · 14 min' },
+  { value: '14', label: `Full session · about ${DAY_MINUTES} min` }, // same figure as Home
   { value: '7', label: 'Shorter · one exercise' },
 ]
 const SIDES: { value: Side; label: string }[] = [
@@ -208,14 +208,14 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
       <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
         <div>
           <h1 className="text-4xl">Before you start</h1>
-          <p className="mt-2 text-muted">Tap your answers. This sets today's pace inside your assigned limits.</p>
+          <p className="mt-2 text-muted">A few quick taps. Your answers set today's pace.</p>
           <Card className="mt-5 space-y-5">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
             {askSide ? (
               <div>
                 <div className="mb-2 font-bold">Which arm are you practising?</div>
                 <Pill ariaLabel="Which arm are you practising?" value={side ?? ('' as Side)} options={SIDES} onChange={setSide} />
-                <p className="mt-1 text-lg text-muted">Asked once. The camera setup and the figure follow this side.</p>
+                <p className="mt-1 text-lg text-muted">The camera setup and the guide figure use this side.</p>
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
@@ -242,7 +242,7 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
         <div className="flex flex-col gap-5">
           <Card className="ci-note">
             <p className="text-muted">
-              Your answers set today's pace and go into your report for {clinician}. Pain of {gentle} means a gentle day: fewer reps, shorter holds, the side lift up to 60° and no fast arcs. Pain of {stopAt} or more means rest today and your therapist is told. Feeling is what you tell us, never read from your face.
+              Pain {gentle}: a gentler session with fewer reps and a smaller lift. Pain {stopAt} or more: rest today, and {clinician} is told. Your answers go into your report. How you feel is what you tell us, never read from your face.
             </p>
           </Card>
         </div>
