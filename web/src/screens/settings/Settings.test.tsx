@@ -5,9 +5,9 @@ import { ME, mockApi } from '../../test/api-mock'
 import { Settings } from './Settings'
 
 /** Render, then let the three service calls (profile, replay list, health) settle. */
-async function renderSettings() {
+async function renderSettings(at = '/settings') {
   const r = render(
-    <MemoryRouter initialEntries={['/settings']}>
+    <MemoryRouter initialEntries={[at]}>
       <Routes>
         <Route path="/settings" element={<Settings />} />
         <Route path="/session" element={<div>SESSION</div>} />
@@ -247,4 +247,18 @@ test('Coach row: an unreachable service says so instead of guessing', async () =
   mockApi({})
   await renderSettings()
   expect(await screen.findByText(/Coach status unavailable/)).toBeInTheDocument()
+})
+
+test('?open=replay (Home › Start here) opens the replay picker', async () => {
+  mockApi({})
+  await renderSettings('/settings?open=replay')
+  expect(screen.getByRole('dialog', { name: 'Replay a recorded session' })).toBeInTheDocument()
+})
+
+test('Show the start guide brings the Home card back after it was hidden', async () => {
+  localStorage.setItem('praxis.startHere', 'hidden')
+  mockApi({})
+  await renderSettings()
+  fireEvent.click(screen.getByRole('button', { name: /^Show the start guide/ }))
+  expect(localStorage.getItem('praxis.startHere')).toBeNull()
 })

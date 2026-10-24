@@ -17,6 +17,7 @@ import { demoUrl, readSide } from '../../lib/day'
 import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
+import { StartHere } from './StartHere'
 
 const ZOOMS = [1, 1.25, 1.5]
 const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
@@ -49,6 +50,9 @@ export function Home() {
   }
 
   return (
+    <>
+    {/* Outside the grid: designer.css places the Home columns by nth-child. */}
+    <StartHere />
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.1fr)] gap-5 p-5">
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
@@ -132,5 +136,6 @@ export function Home() {
         }}
       />
     </div>
+    </>
   )
 }

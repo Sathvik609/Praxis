@@ -200,3 +200,11 @@ test('open report falls back to progress without sessions; no seeded last sessio
   fireEvent.click(screen.getByRole('button', { name: 'Open report' }))
   expect(screen.getByText('PROGRESS')).toBeInTheDocument()
 })
+
+test('a first visit shows the Start here guide above the cards', async () => {
+  localStorage.removeItem('praxis.startHere')
+  mockApi(routes())
+  await renderHome()
+  expect(screen.getByRole('region', { name: 'Start here' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Start Arm out to the side' })).toBeInTheDocument()
+})

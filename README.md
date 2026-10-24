@@ -75,6 +75,8 @@ From [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §1 (references ther
 ## Try it
 
 - **Live (AWS Graviton4 c8g + COOL OpenCV, HTTPS): https://d235zashbh751z.cloudfront.net**. The instance is stopped between work sessions; it is started for judging from 24 Oct and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). `/health` shows `opencv_build.cool: true` and `arch: aarch64`.
+- **Where to start:** Home opens with a **Start here** card: 1) Arm out to the side live (webcam only), 2) Nine-Hole Peg Test and Waiter – cup in Replay (no sheet or pegs needed), 3) turn on technical details to see the trace. Hide it with "Hide start guide"; Settings › Demo and judging › Show the start guide brings it back.
+- **Starts from zero:** a fresh install has no history; every number on Home, Progress and the therapist view comes from sessions run on it. The illustrative sample history (patient "Alex M.", September sessions, labelled Sample) loads only with `PRAXIS_SAMPLE_HISTORY=1`.
 - **No webcam?** Settings → Demo and judging → **Replay a recorded session** runs a recorded clip through the identical pipeline (labelled "Replay"; the clips are synthetic renders).
 - Five-minute walkthrough: [`docs/JUDGE_QUICKSTART.md`](docs/JUDGE_QUICKSTART.md).
 

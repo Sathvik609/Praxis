@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { applyTheme, getTheme, type Theme } from '../../app/theme'
 import { arrowSelect } from '../../design/arrowKeys'
 import { Button } from '../../design/Button'
@@ -16,6 +16,7 @@ import { readGuidance, writeGuidance, type Guidance } from '../../session/guidan
 import { resetSpeech } from '../../session/useCoach'
 import { SettingsRow } from './SettingsRow'
 import { readTester, writeTester } from '../../lib/tester'
+import { readStartHere, showStartHere } from '../02-home/StartHere'
 
 const THEMES: [Theme, string][] = [
   ['light', 'Light'],
@@ -37,7 +38,9 @@ export function Settings() {
   const [guidance, setGuidance] = useState<Guidance>(() => readGuidance())
   const [prefs, setPrefs] = useState<Prefs>(() => readPrefs())
   const [day, setDay] = useState<Day>(() => readDay())
-  const [replayOpen, setReplayOpen] = useState(false)
+  const [params] = useSearchParams()
+  const [replayOpen, setReplayOpen] = useState(() => params.get('open') === 'replay') // Home › Start here, step 2
+  const [guideShown, setGuideShown] = useState(readStartHere)
   const [note, setNote] = useState('')
   const { data: me, error: meError } = useApi(() => api.me())
   const { data: clips, error: clipsError } = useApi(() => api.replayList())
@@ -114,6 +117,14 @@ export function Settings() {
             <ul className="st-list">
               <SettingsRow title="Show technical details" sub="OpenCV status, decision trace, telemetry" control={<Switch label="Show technical details" checked={prefs.judge} onChange={(v) => setP('judge', v)} />} />
               <SettingsRow title="Replay a recorded session" sub="Same OpenCV pipeline, no webcam needed" onClick={() => setReplayOpen(true)} />
+              <SettingsRow
+                title="Show the start guide"
+                sub={guideShown ? 'Shown at the top of Home' : 'Three steps at the top of Home: live exercise, Replay, technical details'}
+                onClick={() => {
+                  showStartHere()
+                  setGuideShown(true)
+                }}
+              />
               <SettingsRow
                 title="Reset today's check-in"
                 sub={day.stopped ? "Today is stopped, so it can't be reset" : day.checkin ? `Checked in today · pain ${day.checkin.pain}` : 'No check-in yet today'}
