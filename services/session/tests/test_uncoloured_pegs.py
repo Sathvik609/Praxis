@@ -71,3 +71,18 @@ def test_a_hand_over_the_board_is_covering_not_pegs_and_seated_pegs_stay_seated(
 def test_coloured_pegs_still_work_the_same():
     board, cal = _board((40, 40, 220))
     assert _occupied(board, cal, _frame([2, 6], (40, 40, 220)), 0.1) == {2, 6}
+
+
+def test_wood_grain_specks_are_not_loose_pegs():
+    # stress run 24 Oct: grey pegs on a wooden board at 45 deg left 5-30 mm2 specks of the colour
+    # mask in the grain; read as loose pegs by a seated hole, they held the FSM in "seated" (no hand
+    # seen) and the test stopped after five pegs. A peg's top alone is ~40 mm2.
+    board, cal = BoardState(NHPT_BOARD), Calibrator(NHPT_BOARD)
+    empty = _frame([], GREY, WOOD_BGR, tilt=45.0)
+    board.detect_holes(board.warp(empty, cal.run(empty, 0.0)))
+    holes = [4, 0, 8, 2, 6]
+    pegs = [(H[k][0], H[k][1], 8.0, 32.0, 7.0) for k in holes] + [(160.0, 148.5, 0.0, 24.0, 7.0)]
+    frame, _ = camera_frame(NHPT_BOARD, tilt_deg=45.0, yaw_deg=5.0, focal_per_width=0.85, pegs_3d=pegs,
+                            peg_bgr=GREY, board_bgr=WOOD_BGR, noise_sigma=3.0, seed=9)
+    free = board.free_pegs_mm(board.warp(frame, cal.run(frame, 0.1)))
+    assert len(free) == 1 and np.hypot(free[0][0] - 160.0, free[0][1] - 148.5) < 20.0, free

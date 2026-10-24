@@ -549,7 +549,7 @@ class BoardState:
         if skin_excluded:
             skin = cv2.inRange(hsv, np.array(SKIN_HSV_LO, np.uint8), np.array(SKIN_HSV_HI, np.uint8))
             mask = cv2.bitwise_and(mask, cv2.bitwise_not(skin))
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))  # 1.7 mm: wood-grain specks go
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         change = self.change_masks(canonical_bgr)
         if change is not None:  # section 6: what colour misses (wooden, white, grey pegs)
@@ -575,7 +575,7 @@ class BoardState:
         a peg), outside the excluded (hand) rectangles."""
         mask = self._exclude(self.peg_mask(canonical_bgr, colour_range), exclude_mm)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        min_area = (self.px_per_mm * 2.0) ** 2
+        min_area = (self.px_per_mm * 5.0) ** 2  # 25 mm2: a peg's top alone is ~40; specks are not pegs
         max_len = self.max_peg_len_mm * self.px_per_mm
         blobs = []
         for c in contours:
