@@ -2202,3 +2202,16 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 /* 24 Oct: Watch again matches the other secondary buttons in dark (it rendered near-black) */
 :root[data-theme="dark"] .dth-mbtn.dth-mbtn-2.dth-mbtn-2{background:rgba(255,255,255,.06)!important;border:1px solid rgba(141,181,255,.45)!important;color:#DCE5F5!important}
 :root[data-theme="dark"] .dth-mbtn.dth-mbtn-2.dth-mbtn-2:hover{background:rgba(58,132,255,.16)!important;border-color:rgba(141,181,255,.7)!important}
+/* 24 Oct: check-in at full width; the pain scale stretches and carries its own meaning below it */
+.ci-form .ci-pain [role=radiogroup]>button.ui-scale-btn{max-width:none}
+.ci-form .ci-pain [role=radiogroup]+div{max-width:none}
+.ci-bands{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:10px;margin-top:10px}
+.ci-band{display:flex;align-items:center;justify-content:center;min-height:34px;padding:0 8px;border-radius:10px;font:600 14px/18px var(--font-body);text-align:center;border:1px solid transparent;opacity:.75;transition:opacity .15s ease,box-shadow .15s ease}
+.ci-band-full{background:color-mix(in srgb,var(--teal) 14%,transparent);border-color:color-mix(in srgb,var(--teal) 40%,transparent);color:var(--teal-ink)}
+.ci-band-gentle{background:color-mix(in srgb,var(--amber) 14%,transparent);border-color:color-mix(in srgb,var(--amber) 40%,transparent);color:var(--amber-ink)}
+.ci-band-rest{background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 40%,transparent);color:var(--red-ink)}
+.ci-band-on{opacity:1;box-shadow:0 0 0 2px currentColor}
+.ci-meaning{margin-top:12px;font-size:16px;line-height:24px;color:var(--muted)}
+.ci-form .ci-meaning.ci-meaning-full{color:var(--teal-ink)!important;font-weight:600}
+.ci-form .ci-meaning.ci-meaning-gentle{color:var(--amber-ink)!important;font-weight:600}
+.ci-form .ci-meaning.ci-meaning-rest{color:var(--red-ink)!important;font-weight:600}

@@ -39,13 +39,11 @@ beforeEach(() => {
 test('check-in collects pain, side, location, energy and time, shows stop rules, posts, then continues', async () => {
   const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
   renderCheckIn()
-  // v2 (6 Oct artifact): one ci-note card carries how answers are used, the tiers and the privacy line
-  await screen.findByText('7 or more: rest today, and your therapist is told')
-  const note = document.querySelector('.ci-note') as HTMLElement
-  expect(note).toHaveTextContent('What your pain number does')
-  expect(note).toHaveTextContent('0–3: your full session')
-  expect(note).toHaveTextContent('4–6: a lighter session')
-  expect(note).not.toHaveTextContent(/Dr\./)
+  // 24 Oct: the tiers sit under the scale, and one line says what the chosen number does
+  const meaning = await screen.findByRole('status')
+  expect(meaning).toHaveTextContent('Tap the number closest to how you feel now.')
+  expect(document.querySelector('.ci-bands')).toHaveTextContent('0–3 · Full session4–6 · Lighter session7–10 · Rest today')
+  expect(document.body.textContent).not.toMatch(/Dr\./)
   expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Right arm' }))
@@ -128,7 +126,7 @@ test('a side chosen before is not asked again, and can be changed', () => {
   mockApi({ '/api/prescription': PRESCRIPTION })
   renderCheckIn()
   expect(screen.queryByRole('radio', { name: 'Left arm' })).not.toBeInTheDocument()
-  expect(screen.getByText(/Practising side: left arm/)).toBeInTheDocument()
+  expect(screen.getByText('Left arm')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Change side' }))
   expect(screen.getByRole('radio', { name: 'Left arm' })).toBeInTheDocument()
 })
@@ -207,4 +205,17 @@ test('a stopped day shows the stop, not the form; an unsent check-in is posted a
   expect(screen.getByText(/hasn't been told yet/)).toBeInTheDocument()
   expect(await screen.findByText('Your therapist has been told.')).toBeInTheDocument()
   expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/checkin'))).toBe(true)
+})
+
+test('the line under the scale says what the chosen pain number does', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  renderCheckIn()
+  const meaning = await screen.findByRole('status')
+  fireEvent.click(screen.getByRole('radio', { name: '2' }))
+  expect(meaning).toHaveTextContent('Pain 2: your full session today.')
+  fireEvent.click(screen.getByRole('radio', { name: '5' }))
+  expect(meaning).toHaveTextContent('Pain 5: a lighter session today, with fewer reps and a smaller lift.')
+  expect(document.querySelector('.ci-band-on')).toHaveTextContent('4–6 · Lighter session')
+  fireEvent.click(screen.getByRole('radio', { name: '8' }))
+  expect(meaning).toHaveTextContent('Pain 8: rest today, and your therapist is told.')
 })

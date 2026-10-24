@@ -203,14 +203,52 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
   const stopAt = Math.min(7, painMax ?? 7)
   const gentle = stopAt - 1 > 4 ? `4–${stopAt - 1}` : '4'
 
+  // 24 Oct: what the pain number does sits under the scale itself, one band per tier, so the
+  // patient sees the effect while choosing (it was a side card).
+  const fullTo = 3
+  const tierOf = (n: number) => (n >= stopAt ? 'rest' : n > fullTo ? 'gentle' : 'full')
+  const bands = [
+    { tier: 'full', span: fullTo + 1, label: `0–${fullTo} · Full session` },
+    { tier: 'gentle', span: stopAt - fullTo - 1, label: `${gentle} · Lighter session` },
+    { tier: 'rest', span: 11 - stopAt, label: `${stopAt}–10 · Rest today` },
+  ].filter((b) => b.span > 0)
+  const picked = pain == null ? null : tierOf(pain)
+  const meaning =
+    pain == null
+      ? null
+      : picked === 'rest'
+        ? `Pain ${pain}: rest today, and ${clinician} is told.`
+        : picked === 'gentle'
+          ? `Pain ${pain}: a lighter session today, with fewer reps and a smaller lift.`
+          : `Pain ${pain}: your full session today.`
+
   return (
     <div className="ci-form flex min-h-full flex-col">
-      <div className="grid flex-1 grid-cols-[3fr_2fr] gap-6 p-6">
-        <div>
-          <h1 className="text-4xl">Before you start</h1>
-          <p className="mt-2 text-muted">A few quick taps. Your answers set today's pace.</p>
-          <Card className="mt-5 space-y-5">
+      <div className="flex-1 p-6">
+        <h1 className="text-4xl">Before you start</h1>
+        <p className="mt-2 text-muted">A few quick taps. Your answers set today's pace.</p>
+        <Card className="mt-5 space-y-6">
+          <div className="ci-pain">
             <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
+            <div className="ci-bands" aria-hidden>
+              {bands.map((b) => (
+                <span key={b.tier} className={`ci-band ci-band-${b.tier}${picked === b.tier ? ' ci-band-on' : ''}`} style={{ gridColumn: `span ${b.span}` }}>
+                  {b.label}
+                </span>
+              ))}
+            </div>
+            <p className={`ci-meaning${picked ? ` ci-meaning-${picked}` : ''}`} role="status">
+              {meaning ?? 'Tap the number closest to how you feel now.'}
+            </p>
+          </div>
+          {/* asked only once there is pain to place (pain 0 is saved as nowhere) */}
+          {pain != null && pain > 0 && (
+            <div>
+              <div className="mb-2 font-bold">Where does it hurt?</div>
+              <Pill ariaLabel="Where does it hurt?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
             {askSide ? (
               <div>
                 <div className="mb-2 font-bold">Which arm are you practising?</div>
@@ -218,39 +256,24 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
                 <p className="mt-1 text-lg text-muted">The camera setup and the guide figure use this side.</p>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-lg">Practising side: {side} arm</span>
-                <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
-              </div>
-            )}
-            {/* 24 Oct: asked only once there is pain to place (pain 0 is saved as nowhere) */}
-            {pain != null && pain > 0 && (
               <div>
-                <div className="mb-2 font-bold">Where does it hurt?</div>
-                <Pill ariaLabel="Where does it hurt?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
+                <div className="mb-2 font-bold">Practising side</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-lg">{side === 'left' ? 'Left' : 'Right'} arm</span>
+                  <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
+                </div>
               </div>
             )}
             <div>
               <div className="mb-2 font-bold">Energy today</div>
               <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
             </div>
-            {/* 21 Oct team review: the time choice sits in the main card, its two options side by
-                side across the card's width. */}
-            <div>
-              <div className="mb-2 font-bold">Time you have</div>
-              <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} className="w-full !flex-nowrap [&>button]:flex-1" />
-            </div>
-          </Card>
-        </div>
-        <div className="flex flex-col gap-5">
-          <Card className="ci-note" title="What your pain number does">
-            <ul className="mt-2 space-y-1 text-muted">
-              <li>0–3: your full session</li>
-              <li>{gentle}: a lighter session</li>
-              <li>{stopAt} or more: rest today, and {clinician} is told</li>
-            </ul>
-          </Card>
-        </div>
+          </div>
+          <div>
+            <div className="mb-2 font-bold">Time you have</div>
+            <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} className="w-full !flex-nowrap [&>button]:flex-1" />
+          </div>
+        </Card>
       </div>
       <FlowBar
         step={2}
