@@ -151,8 +151,12 @@ function DemonstrationFor() {
           Exit
         </button>
         <div className="dth-titles">
-          <h1 className="dth-title">{ex.name}</h1>
-          <p className="dth-sub">{`Demonstration · ${ex.category} · ${sideWord} arm`}</p>
+          <div className="dth-title-row">
+            <h1 className="dth-title">{ex.name}</h1>
+            {/* 24 Oct: said up front that this is only a demonstration; the camera starts later */}
+            <span className="dth-demo-badge">Demo · camera off</span>
+          </div>
+          <p className="dth-sub">{`Watch how it's done first · ${sideWord} arm`}</p>
         </div>
         {pos && <div className="dth-count" data-testid="day-title">{`Exercise ${pos.index} of ${pos.total}`}</div>}
       </header>
@@ -214,7 +218,7 @@ function DemonstrationFor() {
                 <div className="dth-row dth-row-stop">
                   <Flag aria-hidden className="dth-ic dth-ic-red" />
                   <dt>Stop if</dt>
-                  <dd>{ex.stopIf}</dd>
+                  <dd>{`Your ${ex.stopIf}`}</dd>
                 </div>
               )}
             </dl>
@@ -229,7 +233,7 @@ function DemonstrationFor() {
                     : 'Demo only: follow the figure and tick each set yourself. The camera does not score this one.'}
               </p>
             ) : (
-              <p className="dth-note">The figure is a reference only. Your reps are checked by the camera, not by matching the figure.</p>
+              <p className="dth-note">The figure only shows the movement. The camera checks your real reps.</p>
             )}
             <div className="dth-actions">
               <button type="button" className="dth-mbtn dth-mbtn-2" onClick={watchAgain}>

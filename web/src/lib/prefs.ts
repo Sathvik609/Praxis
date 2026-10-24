@@ -3,14 +3,14 @@
  *  - `contrast`: `data-contrast="high"` on <html>; the stylesheet raises contrast.
  *  - `motion`: `data-motion="reduced"`; the stylesheet and `prefersReducedMotion()` stop animation.
  *  - `audio`: the coach's cues are spoken aloud by this browser (SpeechSynthesis, `useCoach`).
- *    On by default (21 Oct team review, reversing the 10 Oct caption-only decision: patients
- *    stand too far from the screen to read). Captions are still shown for every spoken cue.
+ *    Off by default (24 Oct team request: a page that talks on its own surprises a first-time
+ *    visitor); one tap turns it on in the demo dock, the session or Settings. Captions are always shown.
  *  - `judge`: Judge view, `data-judge="1"`; shows Show trace and telemetry. The red
  *    "Live · not recording" marker and Sample chips stay visible either way. */
 export type Prefs = { contrast: boolean; motion: boolean; audio: boolean; judge: boolean }
 
 export const PREFS_KEY = 'praxis.prefs'
-export const PREFS_DEFAULT: Prefs = { contrast: false, motion: false, audio: true, judge: false }
+export const PREFS_DEFAULT: Prefs = { contrast: false, motion: false, audio: false, judge: false }
 
 export function readPrefs(): Prefs {
   try {

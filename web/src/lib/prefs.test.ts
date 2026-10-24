@@ -20,20 +20,20 @@ it('applies contrast, motion and judge attributes', () => {
 })
 
 it('defaults when storage is empty or broken', () => {
-  expect(readPrefs()).toEqual({ contrast: false, motion: false, audio: true, judge: false })
+  expect(readPrefs()).toEqual({ contrast: false, motion: false, audio: false, judge: false })
   localStorage.setItem('praxis.prefs', '{bad')
-  expect(readPrefs()).toEqual({ contrast: false, motion: false, audio: true, judge: false })
+  expect(readPrefs()).toEqual({ contrast: false, motion: false, audio: false, judge: false })
 })
 
 it('keeps only the four known keys (an old captionsPanel is ignored) and ignores non-boolean values', () => {
   localStorage.setItem('praxis.prefs', JSON.stringify({ contrast: true, judge: 'yes', audio: 'no', pushToTalk: true, clips: true, captionsPanel: false }))
-  expect(readPrefs()).toEqual({ contrast: true, motion: false, audio: true, judge: false })
+  expect(readPrefs()).toEqual({ contrast: true, motion: false, audio: false, judge: false })
 })
 
-it('audio is on by default and a stored off is kept', () => {
-  expect(readPrefs().audio).toBe(true)
-  localStorage.setItem('praxis.prefs', JSON.stringify({ audio: false }))
+it('audio is off by default (24 Oct) and a stored on is kept', () => {
   expect(readPrefs().audio).toBe(false)
+  localStorage.setItem('praxis.prefs', JSON.stringify({ audio: true }))
+  expect(readPrefs().audio).toBe(true)
 })
 
 it('writePrefs persists and applies', () => {

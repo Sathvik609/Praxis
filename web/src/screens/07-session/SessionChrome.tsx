@@ -9,7 +9,7 @@ import type { AgentStatus, CoachSource } from '../../session/agent'
 import { CameraBlocked } from '../../session/CameraBlocked'
 import { type LiveStatus, type StatusLabel } from '../../session/liveStatus'
 import { OverlayCanvas, type FrameEvent } from '../../session/OverlayCanvas'
-import { readPrefs } from '../../lib/prefs'
+import { readPrefs, writePrefs } from '../../lib/prefs'
 import { coachVolume, resetSpeech, setCoachVolume, type CoachEvent, type Overlay } from '../../session/useCoach'
 import type { EndReason } from '../../session/useSessionFlow'
 import { pausedNote } from './LivePrompt'
@@ -558,11 +558,11 @@ export const sxClock = (t: number | null | undefined) => {
   return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`
 }
 
-/** Per-screen session UI state: the coach voice (Settings > Audio, `prefs.audio`, on by
- *  default) and its volume (`praxis.volume`), captions (on; they cannot be switched off while the
+/** Per-screen session UI state: the coach voice (Settings > Audio, `prefs.audio`, off by
+ *  default since 24 Oct; the slider reads 0 while it is off and raising it turns the voice on) and its volume (`praxis.volume`), captions (on; they cannot be switched off while the
  *  coach speaks, so every spoken cue is captioned) and the End dialog. */
 export function useSxSession() {
-  const [audio] = useState(() => readPrefs().audio)
+  const [audio, setAudio] = useState(() => readPrefs().audio)
   const [volume, setVol] = useState(() => coachVolume())
   const [panel, setPanel] = useState(true)
   const [endOpen, setEndOpen] = useState(false)
@@ -573,11 +573,15 @@ export function useSxSession() {
   return {
     /** Speak the coach's cues on this screen (pass to `useCoach` as `voice`). */
     audio: speaking,
-    volume,
+    volume: audio ? volume : 0,
     setVolume: (v: number) => {
       setCoachVolume(v)
       setVol(coachVolume())
       if (v <= 0) resetSpeech()
+      else if (!audio) {
+        setAudio(true)
+        writePrefs({ ...readPrefs(), audio: true })
+      }
     },
     captions: speaking || panel,
     captionsLocked: speaking,

@@ -239,7 +239,7 @@ test('the service pause event that answers a rest does not stack the pause overl
   expect(screen.queryByRole('alertdialog', { name: 'Paused' })).not.toBeInTheDocument()
 })
 
-test('the coach speaks its cue aloud by default and shows it as text; captions are locked on while it speaks', () => {
+test('with Audio on the coach speaks its cue aloud and shows it as text; captions are locked on while it speaks', () => {
   const cue = { type: 'coach', t: 11, id: 3, action: 'instruct', cue_id: 'x', text: 'Next peg, nice and steady.', reason: 'r', evidence: [], ui: {}, label: 'Rule-based coach · LLM agent pending' }
   const said: string[] = []
   class FakeUtterance {
@@ -252,6 +252,7 @@ test('the coach speaks its cue aloud by default and shows it as text; captions a
   vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
   vi.stubGlobal('speechSynthesis', { speak: (u: FakeUtterance) => { said.push(u.text); u.onend?.() }, cancel: vi.fn() })
   try {
+    localStorage.setItem('praxis.prefs', JSON.stringify({ audio: true }))
     mockStream([frame, cue])
     renderAt('/session?hand=left')
     expect(screen.getByText('Next peg, nice and steady.')).toBeInTheDocument()

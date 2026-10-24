@@ -129,16 +129,16 @@ test('guidance switches persist and apply at once; larger text is off by default
   expect(document.documentElement.dataset.text).toBeUndefined()
 })
 
-test('Audio: spoken coach cues are on by default, persist when switched off, and captions stay', async () => {
+test('Audio: spoken coach cues are off by default (24 Oct), persist when switched on, and captions stay', async () => {
   mockApi({})
   const { unmount } = await renderSettings()
   const audio = screen.getByRole('switch', { name: 'Audio' })
-  expect(audio).toHaveAttribute('aria-checked', 'true')
+  expect(audio).toHaveAttribute('aria-checked', 'false')
   fireEvent.click(audio)
-  expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').audio).toBe(false)
+  expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').audio).toBe(true)
   unmount()
   await renderSettings()
-  expect(screen.getByRole('switch', { name: 'Audio' })).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByRole('switch', { name: 'Audio' })).toHaveAttribute('aria-checked', 'true')
   expect(screen.getByText(/captions are always shown too/i)).toBeInTheDocument()
 })
 

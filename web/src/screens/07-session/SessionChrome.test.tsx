@@ -405,11 +405,15 @@ describe('SxEndDialog', () => {
 })
 
 describe('useSxSession', () => {
-  it('audio is on by default: the coach speaks and captions are locked on', () => {
+  it('audio is off by default (24 Oct): the slider reads 0, captions show; raising it turns the voice on and locks captions', () => {
     const { result } = renderHook(() => useSxSession())
-    expect(result.current.audio).toBe(true)
+    expect(result.current.audio).toBe(false)
+    expect(result.current.volume).toBe(0)
     expect(result.current.captions).toBe(true)
+    act(() => result.current.setVolume(0.6))
+    expect(result.current.audio).toBe(true)
     expect(result.current.captionsLocked).toBe(true)
+    expect(JSON.parse(localStorage.getItem('praxis.prefs') ?? '{}').audio).toBe(true)
     act(() => result.current.toggleCaptions())
     expect(result.current.captions).toBe(true)
   })
