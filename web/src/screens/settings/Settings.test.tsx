@@ -38,14 +38,14 @@ async function openReplay() {
   return screen.findByRole('dialog')
 }
 
-test('theme is a Light / Dark / Auto choice, light by default', async () => {
+test('theme is a Light / Dark / Auto choice, dark by default', async () => {
   mockApi({})
   await renderSettings()
   const group = screen.getByRole('radiogroup', { name: 'Theme' })
   expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Light', 'Dark', 'Auto'])
-  expect(within(group).getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true')
-  fireEvent.click(within(group).getByRole('radio', { name: 'Dark' }))
-  expect(document.documentElement.dataset.theme).toBe('dark')
+  expect(within(group).getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true')
+  fireEvent.click(within(group).getByRole('radio', { name: 'Light' }))
+  expect(document.documentElement.dataset.theme).toBe('light')
   fireEvent.click(within(group).getByRole('radio', { name: 'Auto' }))
   expect(document.documentElement.dataset.themePref).toBe('auto')
   expect(screen.getByText('Follows your device')).toBeInTheDocument()
