@@ -9,8 +9,6 @@ const ACCENT: Record<AreaKey, string> = { lShoulder: 'sh', lElbow: 'el', lWrist:
 export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: AreaView | AreaEmpty }) {
   const v = 'name' in view ? view : null
   const now = v?.now
-  // 24 Oct: nothing measured yet means nothing to show over the figure; the area card below says what comes next
-  if (!now && !v?.quality.some((q) => q.v !== '—')) return null
   return (
     <div className={`mn mn-${ACCENT[k]}`} aria-label={`${name} at a glance`}>
       <div className="mn-l">
@@ -19,13 +17,14 @@ export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: 
           {name}
         </span>
         {now && <span className="mn-cl">{now.label}</span>}
-        {now && !now.ring && (
-          <b className="mn-v">
-            {`${now.value}${now.unit === '°' ? '°' : ''}`}
-            {now.unit && now.unit !== '°' && <small>{` ${now.unit}`}</small>}
+        {!now?.ring && (now || v) && (
+          // 24 Oct: before the first measurement the box says "Not yet" in words, not a bare dash
+          <b className={`mn-v${now ? '' : ' mn-qv-word'}`}>
+            {now ? `${now.value}${now.unit === '°' ? '°' : ''}` : 'Not yet'}
+            {now?.unit && now.unit !== '°' && <small>{` ${now.unit}`}</small>}
           </b>
         )}
-        {now && <span className="mn-c">{now.caption}</span>}
+        <span className="mn-c">{now ? now.caption : v ? 'Shows after your first session.' : view.empty}</span>
         {now?.ring && (
           <div className="mn-ring">
             <RangeRing now={now.ring.now} max={now.ring.max} />
@@ -34,11 +33,11 @@ export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: 
       </div>
       {v && (
         <div className="mn-r">
-          {v.quality.filter((q) => q.v !== '—').slice(0, 2).map((q) => (
+          {v.quality.slice(0, 2).map((q) => (
             <div key={q.k} className="mn-q">
               <span className="mn-ql">{q.k}</span>
               <b className={`mn-qv${/^\d/.test(q.v) ? '' : ' mn-qv-word'}`}>
-                {q.v}
+                {q.v === '—' ? 'Not yet' : q.v}
                 {q.u && <small>{` ${q.u}`}</small>}
               </b>
               <span className="mn-c">{q.c}</span>

@@ -113,8 +113,8 @@ function shoulder(d: AreaSources): AreaView {
       { k: 'Sessions logged', v: String(arm.length), u: arm.length ? `since ${dayMonth(arm[0].date)}` : undefined },
     ],
     quality: [
-      { k: 'Verified lifts', v: ver === undefined ? '—' : String(ver), u: ver !== undefined && reps !== undefined ? `of ${reps}` : undefined, c: lastArm ? `${unv} unverified · last session` : 'No arm session yet.' },
-      { k: 'Shoulder hiking', v: !hikingKnown.length ? '—' : hiking ? String(hiking) : 'None', u: undefined, c: !hikingKnown.length ? 'Not measured this week.' : hiking ? 'events this week' : 'this week' },
+      { k: 'Verified lifts', v: ver === undefined ? '—' : String(ver), u: ver !== undefined && reps !== undefined ? `of ${reps}` : undefined, c: lastArm ? `${unv} unverified · last session` : 'Confirmed by the camera.' },
+      { k: 'Shoulder hiking', v: !hikingKnown.length ? '—' : hiking ? String(hiking) : 'None', u: undefined, c: !hikingKnown.length ? 'Checked as you lift.' : hiking ? 'events this week' : 'this week' },
     ],
     // every shoulder value (tiles, counts) comes from these sessions
     sample: arm.some(isSample),
@@ -146,8 +146,8 @@ function hand(d: AreaSources): AreaView {
       { k: 'Next test', v: nhptDay === undefined ? '—' : WEEKDAYS[nhptDay], u: 'weekly' },
     ],
     quality: [
-      { k: 'Tests done', v: live.length ? String(live.length) : '—', c: live.length ? `since ${dayMonth(live[0].date)}` : 'No live test yet.' },
-      { k: 'Best time', v: best === undefined ? '—' : fmtV(best), u: best === undefined ? undefined : 's', c: best === undefined ? 'No live test yet.' : 'fastest so far' },
+      { k: 'Tests done', v: live.length ? String(live.length) : '—', c: live.length ? `since ${dayMonth(live[0].date)}` : 'Weekly, timed.' },
+      { k: 'Best time', v: best === undefined ? '—' : fmtV(best), u: best === undefined ? undefined : 's', c: best === undefined ? 'Fastest time.' : 'fastest so far' },
     ],
     sample: points.some((p) => p.sample) || (!!lastCup && isSample(lastCup)),
   }

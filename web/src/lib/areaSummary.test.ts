@@ -62,7 +62,7 @@ it('stage tiles: verified and unverified lifts of the last session; shoulder hik
   expect(none.quality[1]).toMatchObject({ v: 'None', c: 'this week' })
   // sessions stored before the service split posture cues carry no hiking count: no number is invented
   const old = areaSummary('lShoulder', fx({ sessions: [arm('2026-10-05', [80], [true])] })) as AreaView
-  expect(old.quality[1]).toMatchObject({ v: '—', c: 'Not measured this week.' })
+  expect(old.quality[1]).toMatchObject({ v: '—', c: 'Checked as you lift.' })
 })
 
 it('shoulder without any arm session: no number is invented', () => {
