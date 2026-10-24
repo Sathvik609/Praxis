@@ -23,33 +23,29 @@ const HIDDEN = /Pendulum|Arm to the front|Rotate (in|out)/
 // design v2 (6 Oct): the artifact's instructions-only cards are dropped tasks / not in the registry
 const DROPPED = /Block towers|Grip power|Box and Block|View instructions/
 const checkin = (pain: number) => sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain }))
-const filters = () => within(screen.getByRole('radiogroup', { name: 'Show exercises' })).getAllByRole('radio')
 
 beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
 })
 
-test('library v2: the artifact header, filters Assigned / All GRASP L2 / Equipment I have, one row of three cards', () => {
+test('library: header, no filters (24 Oct), one row of three cards in plain words, no clinician footer', () => {
   renderChoose()
   expect(screen.getByRole('heading', { level: 1, name: 'Choose your exercise' })).toBeInTheDocument()
-  expect(filters().map((r) => r.textContent)).toEqual(['Assigned', 'All GRASP L2', 'Equipment I have'])
-  expect(screen.getByRole('radio', { name: 'Assigned' })).toHaveAttribute('aria-checked', 'true')
-  fireEvent.click(screen.getByRole('radio', { name: 'All GRASP L2' }))
-  expect(screen.getByRole('radio', { name: 'All GRASP L2' })).toHaveAttribute('aria-checked', 'true')
-  expect(screen.getByRole('radio', { name: 'Assigned' })).toHaveAttribute('aria-checked', 'false')
+  expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument()
+  expect(screen.queryByText(/All GRASP L2|Equipment I have/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Level changes need/)).not.toBeInTheDocument()
   const groups = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))
   expect(groups).toEqual(['Your exercises'])
   const row = screen.getByTestId('choose-cards')
   expect(row.className).toMatch(/grid-cols-3/)
   expect(row.className).toMatch(/max-lg:grid-cols-/)
   expect(within(row).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Arm out to the side', 'Waiter – cup', 'Nine-Hole Peg Test'])
-  // eyebrow + tag replace the Today · n / Weekly / Camera coached chips
   const peg = screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })
-  expect(within(peg).getByText('Dexterity · timed')).toBeInTheDocument()
-  expect(within(peg).getByText('Assessment')).toBeInTheDocument()
+  expect(within(peg).getByText('Hand · dexterity')).toBeInTheDocument()
+  expect(within(peg).getByText('Weekly test')).toBeInTheDocument()
+  expect(within(peg).getByText('You need a pegboard, 9 pegs and the printed marker sheet.')).toBeInTheDocument()
   expect(within(screen.getByRole('button', { name: 'Select Waiter – cup' })).getByText('Coordination')).toBeInTheDocument()
-  expect(screen.queryByText('Today · 1')).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(HIDDEN)
   expect(document.body.textContent).not.toMatch(DROPPED)
   expect(screen.getByText('Exercise library')).toBeInTheDocument()
@@ -94,7 +90,7 @@ test('?next= naming a hidden or unknown exercise falls back to the day’s next 
 test('pain 4–6 at check-in shows the gentle doses on the cards', () => {
   checkin(5)
   renderChoose()
-  expect(screen.getByText('2 × 6 · hold 2 s · up to 60°')).toBeInTheDocument()
+  expect(screen.getByText('2 sets of 6 · hold 2 s · up to 60°')).toBeInTheDocument()
   expect(screen.getByText(/60°/)).toBeInTheDocument()
   expect(screen.getByText('2 slow arcs only')).toBeInTheDocument()
 })
@@ -123,37 +119,11 @@ test('rest day: "check in again" goes to the check-in', () => {
   expect(screen.getByText('AT /details/checkin')).toBeInTheDocument()
 })
 
-test('no filter ever offers a hidden exercise or a dropped task, even with every piece of equipment ticked', () => {
-  localStorage.setItem('praxis.equipment', JSON.stringify(['sheets', 'pegboard', 'cup', 'weight', 'table', 'chair']))
+test('no hidden exercise or dropped task is ever offered', () => {
   renderChoose()
-  for (const f of ['Assigned', 'All GRASP L2', 'Equipment I have']) {
-    fireEvent.click(screen.getByRole('radio', { name: f }))
-    expect(document.body.textContent).not.toMatch(HIDDEN)
-    expect(document.body.textContent).not.toMatch(DROPPED)
-    expect(screen.queryByRole('button', { name: /Select (Pendulum|Arm to the front|Rotate)/ })).not.toBeInTheDocument()
-  }
-})
-
-test('Equipment I have filters by the saved list', () => {
-  renderChoose()
-  fireEvent.click(screen.getByRole('radio', { name: 'Equipment I have' }))
-  expect(screen.getByRole('heading', { name: 'Waiter – cup' })).toBeInTheDocument()
-  expect(screen.queryByRole('heading', { name: 'Nine-Hole Peg Test' })).not.toBeInTheDocument()
-})
-
-test('Equipment I have with nothing ticked offers What I have, and ticking brings cards back', () => {
-  localStorage.setItem('praxis.equipment', '[]')
-  renderChoose()
-  fireEvent.click(screen.getByRole('radio', { name: 'Equipment I have' }))
-  expect(screen.getByText('Nothing matches the equipment you have yet.')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'What I have' }))
-  const dialog = screen.getByRole('dialog', { name: 'What I have' })
-  expect(dialog.textContent).not.toMatch(/Building blocks|Hand gripper|Box and Block/)
-  fireEvent.click(within(dialog).getByLabelText(/Pegboard/))
-  fireEvent.click(within(dialog).getByLabelText(/Printed sheets/))
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }))
-  expect(screen.getByRole('heading', { name: 'Nine-Hole Peg Test' })).toBeInTheDocument()
-  expect(JSON.parse(localStorage.getItem('praxis.equipment') ?? '[]')).toEqual(['pegboard', 'sheets'])
+  expect(document.body.textContent).not.toMatch(HIDDEN)
+  expect(document.body.textContent).not.toMatch(DROPPED)
+  expect(screen.queryByRole('button', { name: /Select (Pendulum|Arm to the front|Rotate)/ })).not.toBeInTheDocument()
 })
 
 function storeDay(checkin: Record<string, unknown>, extra: Record<string, unknown> = {}) {

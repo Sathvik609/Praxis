@@ -111,7 +111,7 @@ test('when the clip ends, "Before you start" lists target, watch-for and stop-if
   const modal = screen.getByRole('dialog', { name: 'Before you start' })
   expect(within(modal).getByText('Arm out to the side · Left arm')).toBeInTheDocument()
   expect(within(modal).getByText('Your target')).toBeInTheDocument()
-  expect(within(modal).getByText('2 × 8 · hold 3 s · no higher than shoulder')).toBeInTheDocument()
+  expect(within(modal).getByText('2 sets of 8 · hold 3 s · up to shoulder height')).toBeInTheDocument()
   expect(within(modal).getByText('Watch for')).toBeInTheDocument()
   expect(within(modal).getByText('Stop if')).toBeInTheDocument()
   expect(within(modal).getByText(/The figure is a reference only\. Your reps are checked by the camera/)).toBeInTheDocument()

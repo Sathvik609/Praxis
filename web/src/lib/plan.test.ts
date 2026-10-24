@@ -21,7 +21,7 @@ test('default day (28 Sep) is Arm out to the side then Waiter – cup, about 10 
 
 test('the gentle dose is shown for exercises that have one', () => {
   const abduction = EXERCISES.find((e) => e.id === 'abduction')!
-  expect(doseFor(abduction, 'full')).toMatch(/2 × 8/)
+  expect(doseFor(abduction, 'full')).toMatch(/2 sets of 8/)
   expect(doseFor(abduction, 'gentle')).toMatch(/60°/)
   const nhpt = EXERCISES.find((e) => e.id === 'nhpt')!
   expect(doseFor(nhpt, 'gentle')).toBe(nhpt.dose)

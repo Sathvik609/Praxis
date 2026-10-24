@@ -71,9 +71,9 @@ test('design v2 library: the artifact\'s dropped / non-registry tasks and their 
 
 test('design v2 library: each visible exercise carries the artifact\'s eyebrow and tag', () => {
   expect(EXERCISES.map((e) => libTags(e))).toEqual([
-    ['Shoulder · range of motion', 'Arm strengthening'],
-    ['Reach and place', 'Coordination'],
-    ['Dexterity · timed', 'Assessment'],
+    ['Shoulder', 'Arm strengthening'],
+    ['Hand and arm', 'Coordination'],
+    ['Hand · dexterity', 'Weekly test'],
   ])
   // the cup keeps the locked dose wording; gentle abduction keeps the 60° the service enforces
   expect(EXERCISES.find((e) => e.id === 'cup')?.dose).toBe('2 slow arcs, then 2 fast')
