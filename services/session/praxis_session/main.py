@@ -59,7 +59,7 @@ from praxis_session.plan import checkin_outcome, day_plan, stricter, tier_for, t
 from praxis_session.prescription import SEED_PRESCRIPTION, Prescription
 from praxis_session.session import CoachSession
 import praxis_session.store as store_module
-from praxis_session.store import DEFAULT_PATH, Store
+from praxis_session.store import DEFAULT_PATH, Store, sample_history_enabled
 from praxis_session.trace import Trace
 from praxis_session.web import mount_web
 
@@ -116,7 +116,7 @@ sessions: dict[str, CoachSession] = {}
 latency_stats: dict[str, LatencyStats] = {}  # per session id; summary().latency comes from here
 ops_sessions: dict[str, ops.SessionOps] = {}  # open coach sockets only (ops logs; heartbeat count)
 store = Store(os.environ.get("PRAXIS_DB", str(DEFAULT_PATH)))
-store.seed_if_empty()
+store.seed_if_empty(sample=sample_history_enabled())  # zero start unless PRAXIS_SAMPLE_HISTORY=1
 _HERE = Path(__file__).resolve()
 # Repo layout when run from source; env overrides in the container image (see Dockerfile).
 EVAL_DIR = Path(os.environ["PRAXIS_EVAL_DIR"]) if "PRAXIS_EVAL_DIR" in os.environ else _HERE.parents[3] / "evaluation" / "dataset_v0"

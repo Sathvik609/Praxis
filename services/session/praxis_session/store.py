@@ -7,13 +7,14 @@ anywhere.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 import threading
 import time
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from praxis_session.calendar_view import practice_counts, short_name
 from praxis_session.perception.exercises import EXERCISES, HIDDEN_IDS
@@ -36,6 +37,13 @@ CREATE TABLE IF NOT EXISTS checkins(id INTEGER PRIMARY KEY AUTOINCREMENT, patien
 CREATE TABLE IF NOT EXISTS nhpt_trend(patient_id TEXT, date TEXT, total_s REAL, PRIMARY KEY(patient_id, date));
 """
 SAMPLE_TREND = {(d, float(v)) for d, v in NHPT_TREND}
+SAMPLE_SESSION_IDS = tuple(s["id"] for s in SESSIONS)
+
+
+def sample_history_enabled(env: Mapping[str, str] = os.environ) -> bool:
+    """Start from zero (24 Oct 2026): the illustrative seed history loads only when
+    PRAXIS_SAMPLE_HISTORY=1. The patient record and the prescription always load."""
+    return env.get("PRAXIS_SAMPLE_HISTORY", "0") == "1"
 
 
 def session_source(summary: dict[str, Any]) -> str:
@@ -183,16 +191,45 @@ class Store:
                 self._db.execute("DELETE FROM nhpt_trend WHERE date=? AND total_s=?", key)
         self._db.commit()
 
-    def seed_if_empty(self) -> None:
+    def _drop_sample_history(self) -> None:
+        """Zero start on a database seeded with the sample: delete the seed sessions (by seed id),
+        their events and flags, the sample NHPT points and the seed's goal attempts. Real sessions
+        are never touched."""
+        marks = ",".join("?" * len(SAMPLE_SESSION_IDS))
+        for table, col in (("events", "session_id"), ("flags", "session_id"), ("sessions", "id")):
+            self._db.execute(f"DELETE FROM {table} WHERE {col} IN ({marks})", SAMPLE_SESSION_IDS)
+        for d, v in SAMPLE_TREND:
+            self._db.execute("DELETE FROM nhpt_trend WHERE date=? AND total_s=?", (d, v))
+        for r in self._db.execute("SELECT id, json FROM patients").fetchall():
+            p = json.loads(r["json"])
+            if p.get("goal_attempts"):
+                p["goal_attempts"] = 0
+                self._db.execute("UPDATE patients SET json=? WHERE id=?", (json.dumps(p), r["id"]))
+        self._db.commit()
+
+    def _has_sample_history(self) -> bool:
+        marks = ",".join("?" * len(SAMPLE_SESSION_IDS))
+        return self._db.execute(f"SELECT 1 FROM sessions WHERE id IN ({marks}) LIMIT 1", SAMPLE_SESSION_IDS).fetchone() is not None
+
+    def seed_if_empty(self, sample: bool = True) -> None:
         """Seed an empty database; on an existing one, bring the seed prescription and the
-        illustrative seed history up to date."""
+        illustrative seed history up to date. `sample=False` (the product default since 24 Oct,
+        see `sample_history_enabled`) seeds only the patient and the prescription, and removes
+        the sample history from a database that has it."""
         if self._db.execute("SELECT COUNT(*) FROM patients").fetchone()[0]:
             self._refresh_seed_prescription()
-            self._refresh_seed_sessions()
+            if sample:
+                self._refresh_seed_sessions()
+            else:
+                self._drop_sample_history()
             self._purge_replay_trend()
             return
-        self._db.execute("INSERT INTO patients(id, json) VALUES(?, ?)", (PATIENT["id"], json.dumps(PATIENT)))
+        patient = PATIENT if sample else {**PATIENT, "goal_attempts": 0}
+        self._db.execute("INSERT INTO patients(id, json) VALUES(?, ?)", (PATIENT["id"], json.dumps(patient)))
         self._db.execute("INSERT INTO prescriptions(patient_id, version, json) VALUES(?, ?, ?)", (PATIENT["id"], SEED_PRESCRIPTION.version, SEED_PRESCRIPTION.model_dump_json()))
+        if not sample:
+            self._db.commit()
+            return
         for d, s in NHPT_TREND:
             self._db.execute("INSERT INTO nhpt_trend(patient_id, date, total_s) VALUES(?, ?, ?)", (PATIENT["id"], d, s))
         for s in SESSIONS:
@@ -331,7 +368,7 @@ class Store:
             "verified_per_session": per,
             "practice": practice,
             "adherence_pct": self._adherence(practice),
-            "sample": dict(SAMPLE_PRACTICE) | {"illustrative": True},
+            "sample": dict(SAMPLE_PRACTICE) | {"illustrative": True} if self._has_sample_history() else None,
             "pain_effort": pain,
             "goal_log_count": self._db.execute("SELECT COUNT(*) FROM goal_log").fetchone()[0],
         }
