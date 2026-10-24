@@ -170,3 +170,14 @@ def test_tracking_loss_after_the_exercise_is_complete_does_not_pause():
     # In the same batch, completion first, then the loss: still no pause.
     sr = StopRules(SEED_PRESCRIPTION)
     assert sr.on_events([make_event("cup_complete", t=1.0), make_event("perception_lost", t=1.5, missing=[0])]) == []
+
+
+def test_continue_gently_at_check_in_does_not_stop_but_later_pain_still_does():
+    """24 Oct: the patient chose a lighter session after the check-in warning. The check-in pain
+    does not end the session (the check-in already flagged the therapist); pain reported during
+    the session still stops it, and new symptoms still block."""
+    sr = StopRules(SEED_PRESCRIPTION)
+    assert sr.on_checkin(pain=8, new_symptoms=False, t=0.0, continue_gently=True) == [] and not sr.stopped
+    assert types(sr.on_pain(8, t=1.0)) == ["stop", "therapist_flag"] and sr.stopped
+    sr2 = StopRules(SEED_PRESCRIPTION)
+    assert sr2.on_checkin(pain=8, new_symptoms=True, t=0.0, continue_gently=True)[0].payload["rule"] == "symptoms"

@@ -53,7 +53,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
       const raw = sessionStorage.getItem('praxis.checkin')
       if (raw) {
         const c = JSON.parse(raw)
-        send({ cmd: 'checkin', pain: c.pain ?? 0, energy: c.energy ?? '', minutes: c.minutes ?? 0, new_symptoms: !!c.new_symptoms })
+        send({ cmd: 'checkin', pain: c.pain ?? 0, energy: c.energy ?? '', minutes: c.minutes ?? 0, new_symptoms: !!c.new_symptoms, ...(c.continue_gently ? { continue_gently: true } : {}) })
       }
     } catch {
       /* no check-in stored */

@@ -71,13 +71,19 @@ class StopRules:
             return []
         return [self._flag(t, "pain_after", detail)]
 
-    def on_checkin(self, pain: int, new_symptoms: bool, t: float) -> list[Event]:
+    def on_checkin(self, pain: int, new_symptoms: bool, t: float, continue_gently: bool = False) -> list[Event]:
+        """`continue_gently` (24 Oct): the patient saw the check-in warning at the stop level and
+        chose a lighter session. The check-in's pain does not end the session then (the check-in
+        already flagged the therapist, `checkin_pain`); new or worse symptoms still do, and a pain
+        number reported during the session (`on_pain`) still stops it."""
         if self.th.new_symptoms and new_symptoms:
             self.stopped = True
             return [
                 make_event("stop", t=t, rule="symptoms", text="Something new or worse since last time: no practice today, and your therapist is flagged to review it first."),
                 self._flag(t, "symptoms", "new or worse symptoms reported at check-in"),
             ]
+        if continue_gently:
+            return []
         return self.on_pain(pain, t)
 
     def on_pain(self, pain: int, t: float) -> list[Event]:

@@ -65,7 +65,7 @@ export type TherapistPatient = { id: string; name: string; program: string; open
 /** `POST /api/checkin` (service track): the service computes the tier and writes the therapist
  *  flag (rest day, new or worse symptoms). `flagged` is the only thing that lets the UI say the
  *  therapist has been told. */
-export type CheckinBody = { patient_id?: string; pain: number; new_symptoms: boolean; rpe?: number; notes?: string }
+export type CheckinBody = { patient_id?: string; pain: number; new_symptoms: boolean; rpe?: number; notes?: string; continue_gently?: boolean }
 export type CheckinResult = { tier: 'full' | 'gentle' | 'rest'; flagged: boolean; reasons: string[]; plan?: unknown }
 /** `GET /api/plan?pain=` (service `plan.day_plan`): today in the default order at the pain
  *  tier's dose. `items` are the day (with `order`), `weekly` the peg test; both empty on rest. */

@@ -774,3 +774,24 @@ def test_ws_tester_name_is_saved_with_the_session_and_review_reads_it(client):
     md = client.get("/api/review?format=md")
     assert md.headers["content-type"].startswith("text/plain") and "No live sessions yet" in md.text
     assert client.get("/health").json()["team_test"] is False
+
+
+def test_socket_check_in_with_continue_gently_runs_the_gentle_dose_without_stopping(tmp_path):
+    """24 Oct: pain 8 with `continue_gently` tightens the arm to the gentle dose and the session
+    keeps running; without it the same pain ends the session."""
+    import praxis_session.main as main
+    from praxis_session.pipeline import SessionPipeline
+    from praxis_session.prescription import SEED_PRESCRIPTION
+    from praxis_session.session import CoachSession
+
+    p = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="cg1")
+    out = main._handle_command({"cmd": "checkin", "pain": 8, "minutes": 14, "continue_gently": True}, p, s, now=1.0)
+    assert out[0].payload["ok"] is True and out[0].payload["tier"] == "gentle"
+    assert p.tier == "gentle" and not s.stopped
+    assert "stop" not in [e.type for e in out]
+
+    p2 = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, exercise="abduction")
+    s2 = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="cg2")
+    out2 = main._handle_command({"cmd": "checkin", "pain": 8, "minutes": 14}, p2, s2, now=1.0)
+    assert "stop" in [e.type for e in out2] and s2.stopped

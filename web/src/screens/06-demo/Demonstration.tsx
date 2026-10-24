@@ -117,6 +117,16 @@ function DemonstrationFor() {
     if (after.stopped) setRestResult({ checkin: c, stop: after.stopped })
     else nav(setupUrl(ex.id, side))
   }
+  // 24 Oct: at the stop level the patient may still choose a lighter session; the therapist is
+  // told either way and the in-session stop rules stay on.
+  const continueGently = async () => {
+    const prev = readDay().checkin
+    if (!prev || saving) return
+    setSaving(true)
+    await saveCheckin({ pain: prev.pain, location: prev.location, energy: prev.energy, minutes: prev.minutes, new_symptoms: prev.new_symptoms, continue_gently: true }, prev.side, rx?.stop_rules?.pain_max)
+    setSaving(false)
+    if (!readDay().stopped) nav(setupUrl(ex.id, side))
+  }
 
   const ctl = useRef<AvatarCtl | null>(null)
   const [complete, setComplete] = useState(false)
@@ -286,8 +296,12 @@ function DemonstrationFor() {
             </p>
             {restResult.stop !== 'session' && <p className="mt-2">{therapistLine(restResult.checkin)}</p>}
             <p className="mt-2 text-muted">If it feels urgent, call your care team.</p>
+            {restResult.stop === 'rest' && <p className="mt-2">Resting is safest. You can still do a lighter session: fewer reps and a smaller lift. Stop if it hurts more.</p>}
             <OverlayActions className="justify-end">
-              <Button onClick={() => nav('/details')}>Back to Home</Button>
+              {restResult.stop === 'rest' && (
+                <Button variant="secondary" disabled={saving} onClick={() => void continueGently()}>Continue gently</Button>
+              )}
+              <Button onClick={() => nav('/details')}>{restResult.stop === 'rest' ? 'Rest today' : 'Back to Home'}</Button>
             </OverlayActions>
           </>
         )}

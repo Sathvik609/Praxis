@@ -164,9 +164,11 @@ class CoachSession:
         if isinstance(t, (int, float)) and t > self._clock_t:
             self._clock_t = float(t)
 
-    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None, notes: str | None = None) -> list[Event]:
+    def on_checkin(self, pain: int, energy: str, minutes: int, new_symptoms: bool, t: float, rpe: int | None = None, notes: str | None = None, continue_gently: bool = False) -> list[Event]:
         self._tick(t)
         self.checkin ={"pain_before": pain, "energy": energy, "minutes": minutes, "new_symptoms": new_symptoms}
+        if continue_gently:
+            self.checkin["continue_gently"] = True
         # 10 Oct: the patient's typed note is kept apart from the structured answers: it never
         # goes on the event ring (agent evidence) and reaches the model only as quoted, capped
         # data (agent.model.build_prompt), never as instructions.
@@ -174,7 +176,7 @@ class CoachSession:
         self.trace.log("checkin", **self.checkin, has_note=self.patient_note is not None)
         if rpe is not None:
             self.exertion.update([], rpe=rpe, t=t)
-        out = self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t))
+        out = self._log_stop(self.stop_rules.on_checkin(pain, new_symptoms, t, continue_gently=continue_gently))
         if self.agent is not None and not self.stopped:
             # The check-in is the patient's own report, kept (not emitted) so the agent's
             # opening instruction can cite it as evidence.

@@ -16,7 +16,7 @@ export type Side = 'left' | 'right'
 export type StopReason = 'rest' | 'new_symptoms' | 'session'
 
 /** What screen 03 collects. `pain` 0–10, self-reported; feeling is never read from the face. */
-export type CheckinAnswers = { pain: number; location: string; energy: string; minutes: number; new_symptoms: boolean }
+export type CheckinAnswers = { pain: number; location: string; energy: string; minutes: number; new_symptoms: boolean; continue_gently?: boolean }
 
 export type DayCheckin = CheckinAnswers & {
   side: Side
@@ -106,7 +106,7 @@ export function recordPainAfter(pain: number | null | undefined): void {
  *  and symptoms to the service (`useSessionFlow`), even in a new tab. */
 function mirrorLegacy(c: DayCheckin): void {
   try {
-    sessionStorage.setItem(LEGACY_CHECKIN_KEY, JSON.stringify({ pain: c.pain, location: c.location, energy: c.energy, minutes: c.minutes, new_symptoms: c.new_symptoms }))
+    sessionStorage.setItem(LEGACY_CHECKIN_KEY, JSON.stringify({ pain: c.pain, location: c.location, energy: c.energy, minutes: c.minutes, new_symptoms: c.new_symptoms, continue_gently: !!c.continue_gently }))
   } catch {
     /* private mode */
   }
@@ -177,7 +177,7 @@ function isResult(r: unknown): r is CheckinResult {
 async function post(c: CheckinAnswers): Promise<CheckinResult | null> {
   try {
     const notes = `where: ${c.location} · energy: ${c.energy} · time: ${c.minutes} min`
-    const r = await withTimeout(api.checkin({ pain: c.pain, new_symptoms: c.new_symptoms, notes }), POST_TIMEOUT_MS)
+    const r = await withTimeout(api.checkin({ pain: c.pain, new_symptoms: c.new_symptoms, notes, ...(c.continue_gently ? { continue_gently: true } : {}) }), POST_TIMEOUT_MS)
     return isResult(r) ? r : null
   } catch {
     return null
@@ -195,7 +195,7 @@ function applyResult(c: DayCheckin, r: CheckinResult | null): DayCheckin {
  *  the patient picked one; it is then not written to the profile. */
 export async function saveCheckin(answers: CheckinAnswers, side: Side | null, painMax?: number): Promise<DayCheckin> {
   if (side) writeSide(side)
-  const local: DayCheckin = { ...answers, side: side ?? readSide() ?? 'left', tier: tierFor(answers.pain, painMax), flagged: false, reasons: [], synced: false, at: new Date().toISOString() }
+  const local: DayCheckin = { ...answers, side: side ?? readSide() ?? 'left', tier: tierFor(answers.pain, painMax, answers.continue_gently), flagged: false, reasons: [], synced: false, at: new Date().toISOString() }
   const commit = (c: DayCheckin) =>
     update((d) => ({ ...d, checkin: c, lastPainAfter: null, stopped: stopReason(c) ?? (d.stopped === 'session' ? 'session' : null) }))
   commit(local)

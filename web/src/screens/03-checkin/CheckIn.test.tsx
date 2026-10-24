@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { readDay, todayKey, writeSide } from '../../lib/day'
 import { PRESCRIPTION, mockApi } from '../../test/api-mock'
@@ -42,7 +42,7 @@ test('check-in collects pain, side, location, energy and time, shows stop rules,
   // 24 Oct: the tiers sit under the scale, and one line says what the chosen number does
   const meaning = await screen.findByRole('status')
   expect(meaning).toHaveTextContent('Tap the number closest to how you feel now.')
-  expect(document.querySelector('.ci-bands')).toHaveTextContent('0–3 · Full session4–6 · Lighter session7–10 · Rest today')
+  expect(within(screen.getByRole('list', { name: 'What the number does' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['0–3 full session', '4–6 lighter session', '7–10 rest advised'])
   expect(document.body.textContent).not.toMatch(/Dr\./)
   expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
@@ -136,7 +136,9 @@ test('offline: pain 8 is a rest day saved on this device, and the copy says the 
   mockApi({ '/api/prescription': PRESCRIPTION }) // /api/checkin unmocked → 404
   renderCheckIn()
   fireEvent.click(screen.getByRole('radio', { name: '8' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Rest today and tell my therapist' }))
+  expect(screen.getByRole('button', { name: 'Continue to exercises' })).toBeDisabled() // a choice is needed first
+  fireEvent.click(screen.getByRole('radio', { name: 'Rest today' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Rest today' }))
   expect(await screen.findByRole('heading', { name: 'Rest today' })).toBeInTheDocument()
   expect(screen.getByText(/couldn't reach the service, so your therapist hasn't been told yet/)).toBeInTheDocument()
   expect(screen.queryByText('Your therapist has been told.')).not.toBeInTheDocument()
@@ -215,7 +217,26 @@ test('the line under the scale says what the chosen pain number does', async () 
   expect(meaning).toHaveTextContent('Pain 2: your full session today.')
   fireEvent.click(screen.getByRole('radio', { name: '5' }))
   expect(meaning).toHaveTextContent('Pain 5: a lighter session today, with fewer reps and a smaller lift.')
-  expect(document.querySelector('.ci-band-on')).toHaveTextContent('4–6 · Lighter session')
+  expect(document.querySelector('.ci-key-on')).toHaveTextContent('4–6 lighter session')
   fireEvent.click(screen.getByRole('radio', { name: '8' }))
-  expect(meaning).toHaveTextContent('Pain 8: rest today, and your therapist is told.')
+  // 24 Oct: at the stop level a careful warning offers rest or a lighter session
+  const warn = screen.getByRole('alert')
+  expect(warn).toHaveTextContent('Careful: pain 8 is high')
+  expect(warn).toHaveTextContent('Your therapist is told either way.')
+  expect(within(warn).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Rest today', 'Continue gently'])
+})
+
+test('pain at the stop level can continue gently: a lighter day, posted with continue_gently, and the therapist is told', async () => {
+  writeSide('left')
+  const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': { tier: 'gentle', flagged: true, reasons: [] } })
+  renderCheckIn()
+  fireEvent.click(screen.getByRole('radio', { name: '8' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Continue gently' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Shoulder' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to exercises' }))
+  await waitFor(() => expect(readDay().checkin?.synced).toBe(true))
+  const call = fetchMock.mock.calls.find(([u]) => String(u).includes('/api/checkin'))!
+  expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({ pain: 8, continue_gently: true })
+  expect(readDay().checkin?.tier).toBe('gentle')
+  expect(readDay().stopped).toBeNull()
 })

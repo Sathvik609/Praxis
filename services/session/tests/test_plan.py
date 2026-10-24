@@ -138,3 +138,15 @@ def test_checkin_outcome_flags_pain_and_symptoms_separately():
     both = checkin_outcome(8, True)
     assert both["tier"] == "rest" and [r for r, _ in both["flags"]] == ["checkin_pain", "checkin_symptoms"]
     assert both["plan"]["tier"] == "rest" and len(both["reasons"]) == 2
+
+
+def test_continue_gently_turns_the_rest_tier_into_gentle_and_keeps_the_flag():
+    """24 Oct: at or above the stop level, Continue gently is the gentle day, still flagged."""
+    from praxis_session.plan import checkin_outcome, day_plan, tier_for
+
+    assert tier_for(8, continue_gently=True) == "gentle" and tier_for(8) == "rest"
+    assert tier_for(2, continue_gently=True) == "full"
+    plan = day_plan(9, continue_gently=True)
+    assert plan["tier"] == "gentle" and plan["items"] and plan["therapist_flag"] is True
+    out = checkin_outcome(9, False, continue_gently=True)
+    assert out["tier"] == "gentle" and [r for r, _ in out["flags"]] == ["checkin_pain"]

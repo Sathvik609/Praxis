@@ -16,11 +16,12 @@ export const WEEKLY: ExerciseId[] = ['nhpt']
 export const DAY_MINUTES = 10
 
 /** 0–3 full, 4–6 gentle, ≥ 7 rest. `painMax` is the prescription's stop level; it can only make
- *  the rest tier stricter. */
-export function tierFor(pain: number | null, painMax: number = REST_AT): Tier {
+ *  the rest tier stricter. `continueGently` (24 Oct): the patient saw the warning at the stop
+ *  level and chose a lighter session, so the day is gentle instead of rest. */
+export function tierFor(pain: number | null, painMax: number = REST_AT, continueGently = false): Tier {
   if (pain == null) return 'full'
   const p = Math.max(0, Math.min(10, Math.round(pain)))
-  if (p >= Math.min(REST_AT, painMax)) return 'rest'
+  if (p >= Math.min(REST_AT, painMax)) return continueGently ? 'gentle' : 'rest'
   return p <= FULL_MAX ? 'full' : 'gentle'
 }
 
@@ -33,6 +34,20 @@ export const TIER_TEXT: Record<Tier, { chip: string; line: string }> = {
 
 export function doseFor(ex: Exercise, tier: Tier): string {
   return tier === 'gentle' && ex.gentleDose ? ex.gentleDose : ex.dose
+}
+
+/** Today's tier: the check-in's own (service-decided) tier when there is one, else from the pain. */
+export function readCheckinTier(): Tier {
+  try {
+    const day = JSON.parse(localStorage.getItem('praxis.day') ?? 'null') as { date?: string; checkin?: { tier?: unknown } | null } | null
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const t = day?.date === today ? day.checkin?.tier : undefined
+    if (t === 'full' || t === 'gentle' || t === 'rest') return t
+  } catch {
+    /* fall through */
+  }
+  return tierFor(readCheckinPain())
 }
 
 /** Pain from today's check-in (screen 03 stores it via `day.ts`), or null when there is none.

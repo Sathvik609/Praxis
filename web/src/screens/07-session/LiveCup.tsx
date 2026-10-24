@@ -5,7 +5,7 @@ import { useModalFocus } from '../../design/useModalFocus'
 import { SESSION_WS_URL } from '../../lib/config'
 import { demoUrl, nextExercise, readDay } from '../../lib/day'
 import type { PraxisEvent } from '../../lib/events'
-import { readCheckinPain, tierFor } from '../../lib/plan'
+import { readCheckinPain, readCheckinTier } from '../../lib/plan'
 import { plural } from '../../lib/plural'
 import { exerciseById } from '../../lib/seed'
 import { coachLabel, isWhy, promptKind, type Prompt } from '../../session/agent'
@@ -177,7 +177,7 @@ export function LiveCup() {
 
   const nextId = complete ? nextExercise(readDay()) : null
   const nextEx = nextId && nextId !== 'cup' ? exerciseById(nextId) : null
-  const nextDose = nextEx ? (tierFor(pain) === 'gentle' ? (nextEx.gentleDose ?? nextEx.dose) : nextEx.dose).split(' · ')[0] : ''
+  const nextDose = nextEx ? (readCheckinTier() === 'gentle' ? (nextEx.gentleDose ?? nextEx.dose) : nextEx.dose).split(' · ')[0] : ''
   const doneVerified = complete ? complete.reaches.filter((r) => r.verified).length : verifiedReaches
   const doneUnverified = complete ? complete.reaches.length - doneVerified : unverified
   const doneOpen = !!complete && !doneClosed && !flow.feedbackOpen

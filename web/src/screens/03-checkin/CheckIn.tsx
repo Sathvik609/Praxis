@@ -7,8 +7,8 @@ import { Chip, type ChipTone } from '../../design/Chip'
 import { NumberScale } from '../../design/NumberScale'
 import { Pill } from '../../design/Pill'
 import { api, useApi } from '../../lib/api'
-import { demoUrl, readDay, readSide, saveCheckin, setupUrl, sideOr, stopReason, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
-import { DAY_MINUTES, TIER_TEXT, tierFor, type Tier } from '../../lib/plan'
+import { demoUrl, readDay, readSide, saveCheckin, setupUrl, sideOr, syncCheckin, therapistLine, type CheckinAnswers, type Day, type Side } from '../../lib/day'
+import { DAY_MINUTES, TIER_TEXT, type Tier } from '../../lib/plan'
 import { exerciseById, type ExerciseId } from '../../lib/seed'
 
 /** Kept for older imports: what screen 03 collects. */
@@ -47,8 +47,9 @@ const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest:
  *  time, the practising side) is chosen.
  *
  *  The check-in goes to the service (`POST /api/checkin`, `lib/day.ts`), which sets the tier
- *  and writes the therapist flag. Pain at the stop level ends the day here, before any setup or
- *  demonstration (a day an older build stopped for new symptoms still shows as stopped). "Your therapist has been told" appears only when
+ *  and writes the therapist flag. Pain at the stop level shows a careful warning (24 Oct): Rest
+ *  today ends the day here, before any setup; Continue gently runs a lighter session and the
+ *  therapist is still told (a day an older build stopped for new symptoms still shows as stopped). "Your therapist has been told" appears only when
  *  the service says it flagged; offline, the check-in is kept on this device and posted again
  *  on the next load. A second visit the same day reuses today's answers (one tap to go on).
  *  `?next=<exercise>` is the demonstration's hand-off (design v2, 6 Oct: Choose → Demonstration
@@ -96,6 +97,7 @@ export function CheckIn() {
               <Chip tone={TIER_TONE[c.tier]}>{TIER_TEXT[c.tier].chip}</Chip>
             </p>
             <p className="text-lg">Practising side: {c.side} arm · {c.minutes < 14 ? 'shorter day, one exercise' : 'full day'}</p>
+            {c.continue_gently && <p className="text-lg">You chose to continue gently. Stop if it hurts more.</p>}
             {!c.synced && <p className="text-lg text-muted">{therapistLine(c)}</p>}
           </Card>
           <p className="mt-4 text-lg text-muted">If your pain has changed since, check in again. Today's plan follows your latest answer.</p>
@@ -176,108 +178,141 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
   const [minutes, setMinutes] = useState<Minutes>('14')
   const [busy, setBusy] = useState(false)
 
-  const stopping = pain != null && stopReason({ pain, new_symptoms: false, tier: tierFor(pain, painMax) }) === 'rest'
-  const label = stopping ? 'Rest today and tell my therapist' : continueLabel
+  const stopAt = Math.min(7, painMax ?? 7)
+  const atStop = pain != null && pain >= stopAt
+  // 24 Oct: at the stop level the patient is warned and chooses: rest (advised) or a lighter
+  // session. The service still flags the therapist either way; in-session stop rules stay on.
+  const [choice, setChoice] = useState<'rest' | 'gently' | null>(null)
+  const stopping = atStop && choice === 'rest'
+  const gently = atStop && choice === 'gently'
+  const label = stopping ? 'Rest today' : continueLabel
   // The side is only needed to practise; a day that stops here does not ask for it. Where it
   // hurts is asked only when there is pain (pain 0 is saved as nowhere) and never blocks a stop.
   const hint =
     pain === null
       ? 'Choose a pain number to continue'
-      : side === null && !stopping
-        ? 'Choose the arm you are practising to continue'
-        : pain > 0 && location === null && !stopping
-          ? 'Choose where it hurts, or Nowhere, to continue'
-          : null
+      : atStop && choice === null
+        ? 'Choose Rest today or Continue gently'
+        : side === null && !stopping
+          ? 'Choose the arm you are practising to continue'
+          : pain > 0 && location === null && !stopping
+            ? 'Choose where it hurts, or Nowhere, to continue'
+            : null
 
   const go = async () => {
     if (pain === null) return
     setBusy(true)
     try {
-      await saveCheckin({ pain, location: location ?? (pain === 0 ? 'nowhere' : 'not said'), energy, minutes: Number(minutes), new_symptoms: false }, side, painMax)
+      await saveCheckin({ pain, location: location ?? (pain === 0 ? 'nowhere' : 'not said'), energy, minutes: Number(minutes), new_symptoms: false, ...(gently ? { continue_gently: true } : {}) }, side, painMax)
     } finally {
       setBusy(false)
     }
     onSaved(side)
   }
 
-  const stopAt = Math.min(7, painMax ?? 7)
   const gentle = stopAt - 1 > 4 ? `4–${stopAt - 1}` : '4'
-
-  // 24 Oct: what the pain number does sits under the scale itself, one band per tier, so the
-  // patient sees the effect while choosing (it was a side card).
-  const fullTo = 3
-  const tierOf = (n: number) => (n >= stopAt ? 'rest' : n > fullTo ? 'gentle' : 'full')
-  const bands = [
-    { tier: 'full', span: fullTo + 1, label: `0–${fullTo} · Full session` },
-    { tier: 'gentle', span: stopAt - fullTo - 1, label: `${gentle} · Lighter session` },
-    { tier: 'rest', span: 11 - stopAt, label: `${stopAt}–10 · Rest today` },
-  ].filter((b) => b.span > 0)
+  const tierOf = (n: number) => (n >= stopAt ? 'rest' : n > 3 ? 'gentle' : 'full')
   const picked = pain == null ? null : tierOf(pain)
+  const key = [
+    { tier: 'full', label: '0–3 full session' },
+    { tier: 'gentle', label: `${gentle} lighter session` },
+    { tier: 'rest', label: `${stopAt}–10 rest advised` },
+  ]
   const meaning =
-    pain == null
+    pain == null || picked === 'rest'
       ? null
-      : picked === 'rest'
-        ? `Pain ${pain}: rest today, and ${clinician} is told.`
-        : picked === 'gentle'
-          ? `Pain ${pain}: a lighter session today, with fewer reps and a smaller lift.`
-          : `Pain ${pain}: your full session today.`
+      : picked === 'gentle'
+        ? `Pain ${pain}: a lighter session today, with fewer reps and a smaller lift.`
+        : `Pain ${pain}: your full session today.`
 
   return (
     <div className="ci-form flex min-h-full flex-col">
-      <div className="flex-1 p-6">
+      <div className="ci-wrap flex-1 p-6">
         <h1 className="text-4xl">Before you start</h1>
         <p className="mt-2 text-muted">A few quick taps. Your answers set today's pace.</p>
         <Card className="mt-5 space-y-6">
           <div className="ci-pain">
-            <NumberScale label="Pain right now" value={pain} onChange={setPain} leftAnchor="No pain" rightAnchor="Worst imaginable" />
-            <div className="ci-bands" aria-hidden>
-              {bands.map((b) => (
-                <span key={b.tier} className={`ci-band ci-band-${b.tier}${picked === b.tier ? ' ci-band-on' : ''}`} style={{ gridColumn: `span ${b.span}` }}>
-                  {b.label}
-                </span>
+            <NumberScale
+              label="Pain right now"
+              value={pain}
+              onChange={(n) => {
+                setPain(n)
+                if (n < stopAt) setChoice(null)
+              }}
+              leftAnchor="No pain"
+              rightAnchor="Worst imaginable"
+            />
+            <ul className="ci-key" aria-label="What the number does">
+              {key.map((k) => (
+                <li key={k.tier} className={`ci-key-${k.tier}${picked === k.tier ? ' ci-key-on' : ''}`}>
+                  {k.label}
+                </li>
               ))}
-            </div>
-            <p className={`ci-meaning${picked ? ` ci-meaning-${picked}` : ''}`} role="status">
-              {meaning ?? 'Tap the number closest to how you feel now.'}
-            </p>
+            </ul>
+            {atStop ? (
+              <div className="ci-careful" role="alert">
+                <div className="ci-careful-title">
+                  <span aria-hidden="true">!</span>Careful: pain {pain} is high
+                </div>
+                <p>
+                  Resting today is safest. If you still want to practise, do a lighter session: fewer reps and a smaller lift. Stop if it hurts more. {clinician[0].toUpperCase() + clinician.slice(1)} is told either way.
+                </p>
+                <Pill
+                  ariaLabel="Rest or continue gently"
+                  value={choice ?? ('' as 'rest')}
+                  options={[
+                    { value: 'rest', label: 'Rest today' },
+                    { value: 'gently', label: 'Continue gently' },
+                  ]}
+                  onChange={setChoice}
+                />
+              </div>
+            ) : (
+              <p className={`ci-meaning${picked ? ` ci-meaning-${picked}` : ''}`} role="status">
+                {meaning ?? 'Tap the number closest to how you feel now.'}
+              </p>
+            )}
           </div>
-          {/* asked only once there is pain to place (pain 0 is saved as nowhere) */}
-          {pain != null && pain > 0 && (
+          {/* asked only once there is pain to place (pain 0 is saved as nowhere); not on a rest day */}
+          {pain != null && pain > 0 && !stopping && (
             <div>
               <div className="mb-2 font-bold">Where does it hurt?</div>
               <Pill ariaLabel="Where does it hurt?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
-            {askSide ? (
-              <div>
-                <div className="mb-2 font-bold">Which arm are you practising?</div>
-                <Pill ariaLabel="Which arm are you practising?" value={side ?? ('' as Side)} options={SIDES} onChange={setSide} />
-                <p className="mt-1 text-lg text-muted">The camera setup and the guide figure use this side.</p>
-              </div>
-            ) : (
-              <div>
-                <div className="mb-2 font-bold">Practising side</div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-lg">{side === 'left' ? 'Left' : 'Right'} arm</span>
-                  <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
+          {!stopping && (
+            <>
+              <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
+                {askSide ? (
+                  <div>
+                    <div className="mb-2 font-bold">Which arm are you practising?</div>
+                    <Pill ariaLabel="Which arm are you practising?" value={side ?? ('' as Side)} options={SIDES} onChange={setSide} />
+                  </div>
+                ) : (
+                  <div>
+                    <div className="mb-2 font-bold">Practising side</div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-lg">{side === 'left' ? 'Left' : 'Right'} arm</span>
+                      <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <div className="mb-2 font-bold">Energy today</div>
+                  <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
                 </div>
               </div>
-            )}
-            <div>
-              <div className="mb-2 font-bold">Energy today</div>
-              <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
-            </div>
-          </div>
-          <div>
-            <div className="mb-2 font-bold">Time you have</div>
-            <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} className="w-full !flex-nowrap [&>button]:flex-1" />
-          </div>
+              <div>
+                <div className="mb-2 font-bold">Time you have</div>
+                <Pill ariaLabel="Time you have" value={minutes} options={MINUTES} onChange={setMinutes} className="w-full !flex-nowrap [&>button]:flex-1" />
+              </div>
+            </>
+          )}
         </Card>
       </div>
       <FlowBar
         step={2}
-        label={hint ?? readyLabel}
+        label={hint ?? (stopping ? 'Resting is the safest choice today' : readyLabel)}
         labelId={hintId}
         left={<Button variant="secondary" onClick={onBack}>{backLabel}</Button>}
         right={

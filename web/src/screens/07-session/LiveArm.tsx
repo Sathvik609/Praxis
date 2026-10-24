@@ -4,7 +4,7 @@ import { AvatarPanel } from '../../avatar/AvatarPanel'
 import { RefAvatar, demoRequested, refMode } from '../../avatar/RefAvatar'
 import { SESSION_WS_URL } from '../../lib/config'
 import type { PraxisEvent } from '../../lib/events'
-import { readCheckinPain, tierFor } from '../../lib/plan'
+import { readCheckinPain, readCheckinTier } from '../../lib/plan'
 import { plural } from '../../lib/plural'
 import { exerciseById } from '../../lib/seed'
 import { coachLabel } from '../../session/agent'
@@ -63,7 +63,7 @@ export function LiveArm() {
   const ex = exerciseById(sp.get('exercise')) ?? exerciseById('abduction')!
   const exId = ex.session === 'arm' ? ex.serviceId : 'abduction'
   const checkinPain = readCheckinPain()
-  const tier = tierFor(checkinPain) === 'gentle' ? 'gentle' : 'full'
+  const tier = readCheckinTier() === 'gentle' ? 'gentle' : 'full'
   const params = useMemo(() => ({ sheet: 'none', side, exercise: exId, tier }), [side, exId, tier])
   const { camActive, connected, events: recent, sessionId, error, start, stop, endCapture, send, videoRef } = useWebcamStream({ wsUrl: SESSION_WS_URL, mode: 'arm', params, replay })
   // One-off events (reps, set ends, stops) outlive the socket's 200-event window here.

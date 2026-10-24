@@ -62,6 +62,23 @@ def test_pain_at_the_stop_level_is_a_rest_day_and_flags_the_therapist(client):
     assert "8/10" in f["detail"] and "stop level 7" in f["detail"]
 
 
+def test_continue_gently_at_the_stop_level_is_a_gentle_day_and_still_flags_the_therapist(client):
+    """24 Oct: after the warning the patient may choose a lighter session instead of resting."""
+    body = _post(client, pain=8, continue_gently=True).json()
+    assert body["tier"] == "gentle" and body["flagged"] is True
+    assert body["plan"]["tier"] == "gentle" and [i["id"] for i in body["plan"]["items"]] == list(DAY_ORDER)
+    assert all(i["tier"] == "gentle" for i in body["plan"]["items"])
+    assert any("lighter session" in r for r in body["reasons"])
+    flags = _checkin_flags(client)
+    assert len(flags) == 1 and flags[0]["rule"] == "checkin_pain" and "continue gently" in flags[0]["detail"]
+
+
+def test_continue_gently_below_the_stop_level_changes_nothing(client):
+    assert _post(client, pain=2, continue_gently=True).json()["tier"] == "full"
+    assert _post(client, pain=5, continue_gently=True).json()["tier"] == "gentle"
+    assert _checkin_flags(client) == []
+
+
 def test_the_stop_level_comes_from_the_current_prescription_not_a_constant(client):
     """A therapist's stricter stop level (pain_max 5, prescription v+1) makes pain 5 a rest day."""
     rx = main.store.prescription()

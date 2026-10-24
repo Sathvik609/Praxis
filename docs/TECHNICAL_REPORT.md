@@ -336,7 +336,7 @@ The standard 10-item SUS (`evaluation/sus/`, scored by `evaluation/scripts/sus.p
 
 ### 9.1 Safety lives in code
 - The **prescription** (`prescription.py`, versioned) holds the dose, `allowed_adaptations` and stop rules. Every proposal from either coach is clamped by `prescription.clamp`, shown as a prompt, applied only on the patient's Yes, and clamped again by the pipeline. The 90° shoulder ceiling is enforced in the arm state machine.
-- The **check-in pain tier** is computed by the service: 0–3 full dose, 4–6 gentle dose within the allowed adaptations, ≥ 7 rest today plus a therapist flag.
+- The **check-in pain tier** is computed by the service: 0–3 full dose, 4–6 gentle dose within the allowed adaptations, ≥ 7 a careful warning with a therapist flag: rest today is advised, or the patient chooses Continue gently (`continue_gently`), which runs the gentle dose with every in-session stop rule still on (24 Oct).
 - **Stop rules** run before either coach (§6.1). Nothing the agent does can override or shorten a stop: `end_session` can end a session but never extend one, and queued agent output is dropped when a stop lands.
 - Every pause, rest and stop says why on screen. A rule pause asks the patient before resuming, and "Why?" repeats the reason with its evidence.
 

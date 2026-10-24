@@ -406,6 +406,8 @@ class CheckinBody(BaseModel):
     notes: Annotated[str | None, Field(max_length=2000)] = None
     side: Literal["left", "right"] | None = None
     patient_id: Annotated[str | None, Field(min_length=1, max_length=64)] = None
+    # 24 Oct: at or above the stop level the patient may choose a lighter session after a warning.
+    continue_gently: Annotated[bool, Field(strict=True)] = False
 
 
 _checkin_traces: dict[tuple[str, str], Trace] = {}  # one trace file per day (and trace dir)
@@ -424,15 +426,15 @@ def api_checkin(body: CheckinBody) -> dict[str, object]:
     422 on bad input, and nothing is written."""
     now = _clock()
     day, t = now.date().isoformat(), now.timestamp()
-    out = checkin_outcome(body.pain, body.new_symptoms, store.rx())
-    record = {"pain": body.pain, "new_symptoms": body.new_symptoms, "rpe": body.rpe, "notes": body.notes, "side": body.side, "tier": out["tier"], "reasons": out["reasons"], "flagged": bool(out["flags"])}
+    out = checkin_outcome(body.pain, body.new_symptoms, store.rx(), continue_gently=body.continue_gently)
+    record = {"pain": body.pain, "new_symptoms": body.new_symptoms, "continue_gently": body.continue_gently, "rpe": body.rpe, "notes": body.notes, "side": body.side, "tier": out["tier"], "reasons": out["reasons"], "flagged": bool(out["flags"])}
     patient_id = body.patient_id or store.patient()["id"]
     saved, added = store.save_checkin(record, out["flags"], day, t, patient_id=patient_id)
     key = (day, str(trace_mod.DEFAULT_DIR))
     tr = _checkin_traces.get(key)
     if tr is None:
         tr = _checkin_traces[key] = Trace(f"checkin-{day}")
-    tr.log("checkin", checkin_id=saved["id"], patient=patient_id, pain=body.pain, new_symptoms=body.new_symptoms, rpe=body.rpe, tier=out["tier"], reasons=out["reasons"])
+    tr.log("checkin", checkin_id=saved["id"], patient=patient_id, pain=body.pain, new_symptoms=body.new_symptoms, continue_gently=body.continue_gently, rpe=body.rpe, tier=out["tier"], reasons=out["reasons"])
     for f in added:
         tr.log("flag", rule=f["rule"], detail=f["detail"], flag_id=f["id"])
         ring.append(make_event("therapist_flag", t=t, rule=f["rule"], detail=f["detail"]))
@@ -912,12 +914,15 @@ def _handle_command_unchecked(cmd: dict, pipeline: SessionPipeline | None, coach
         minutes = _int_field(cmd, "minutes", 0, 0, 600)
         # Pain tier (plan.py), enforced here and not left to the client: pain 4-6 tightens the
         # running dose to gentle before the first rep; >= 7 is a rest day, and the pain stop
-        # rule below ends the session and writes the therapist flag.
-        tier = stricter(tier_for(pain, coach.prescription), pipeline.tier)
+        # rule below ends the session and writes the therapist flag, unless the patient chose
+        # Continue gently after the check-in warning (24 Oct): then the dose is gentle and the
+        # session runs, with every in-session stop rule still on.
+        gently = cmd.get("continue_gently") is True
+        tier = stricter(tier_for(pain, coach.prescription, gently), pipeline.tier)
         applied = pipeline.apply_tier(tier)
         coach.trace.log("tier", rule="pain_tier", pain=pain, tier=tier, running=applied["tier"], changed=applied["changed"], reason=tier_reason(tier, pain))
         notes = cmd.get("notes")
-        out += coach.on_checkin(pain, str(cmd.get("energy", "")), minutes, bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None)
+        out += coach.on_checkin(pain, str(cmd.get("energy", "")), minutes, bool(cmd.get("new_symptoms", False)), now, rpe=cmd.get("rpe"), notes=notes[:2000] if isinstance(notes, str) else None, continue_gently=gently)
         return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, tier=tier, tier_applied=applied["changed"]), *out]
     if name == "pain":
         out += coach.on_pain(_int_field(cmd, "pain", 0, 0, 10), now)
