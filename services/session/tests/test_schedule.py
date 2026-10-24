@@ -13,7 +13,7 @@ from praxis_session.store import Store
 def test_seed_schedule_is_mon_to_fri_peg_test_sunday_and_the_next_visit():
     s = SEED_PRESCRIPTION.schedule
     assert s.practice_days == [0, 1, 2, 3, 4] and s.nhpt_day == 6
-    assert s.next_visit is not None and s.next_visit.at == "2026-10-01T14:30" and s.next_visit.with_ == "Dr. Anita Rao, OT"
+    assert s.next_visit is not None and s.next_visit.at == "2026-10-01T14:30" and s.next_visit.with_ == "your therapist"
     assert s.minutes_per_day == 10
 
 
@@ -25,7 +25,7 @@ def test_minutes_per_day_matches_the_day_plan():
 
 def test_schedule_round_trips_through_json_with_the_with_key():
     blob = json.loads(SEED_PRESCRIPTION.model_dump_json())
-    assert blob["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
+    assert blob["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "your therapist"}
     again = Prescription.model_validate(blob)
     assert again.schedule == SEED_PRESCRIPTION.schedule
 
@@ -87,7 +87,7 @@ def test_store_serves_the_schedule_and_a_patient_next_visit_derived_from_it(tmp_
 )
 def test_the_sample_next_visit_is_the_next_weekday_at_least_three_days_ahead(today, visit):
     v = sample_next_visit(today)
-    assert v.at == visit and v.with_ == "Dr. Anita Rao, OT"
+    assert v.at == visit and v.with_ == "your therapist"
     assert v.when().date() >= today + timedelta(days=3) and v.when().weekday() < 5
 
 
@@ -97,12 +97,12 @@ def test_the_seeded_next_visit_is_relative_to_today_and_labelled_sample(tmp_path
     monkeypatch.setattr(store_module, "local_today", lambda: date(2026, 10, 10))
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()
-    assert st.prescription()["schedule"]["next_visit"] == {"at": "2026-10-13T14:30", "with": "Dr. Anita Rao, OT", "sample": True}
+    assert st.prescription()["schedule"]["next_visit"] == {"at": "2026-10-13T14:30", "with": "your therapist", "sample": True}
     assert st.rx().schedule.next_visit is not None and st.rx().schedule.next_visit.at == "2026-10-13T14:30"
     assert st.patient()["program"]["next_visit"] == "Tue 13 Oct, 2:30 PM"
     # stored as the seed, untouched: only the served value moves
     stored = json.loads(st._db.execute("SELECT json FROM prescriptions").fetchone()["json"])
-    assert stored["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
+    assert stored["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "your therapist"}
 
 
 def test_a_visit_the_therapist_booked_is_never_moved_or_called_a_sample(tmp_path, monkeypatch):

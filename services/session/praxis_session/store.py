@@ -259,8 +259,11 @@ class Store:
         program = p.setdefault("program", {})
         program["next_visit"] = visit_text(rx.schedule.next_visit)
         program["version"] = rx.version
+        # the clinician is the prescription's too, so an older stored name never lingers (24 Oct)
+        program["clinician"] = rx.clinician
         if isinstance(program.get("short"), str):
-            program["short"] = re.sub(r"\bv\d+\b", f"v{rx.version}", program["short"])
+            short = re.sub(r"\bv\d+\b", f"v{rx.version}", program["short"])
+            program["short"] = re.sub(r"\s·\s*Dr\.[^·]*$", "", short)
         return p
 
     def _latest_rx_row(self) -> sqlite3.Row:

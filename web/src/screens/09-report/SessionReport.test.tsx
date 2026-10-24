@@ -153,7 +153,7 @@ test('coach notes stored in the old "action: reason" form read as sentences; the
 test('the authority line names the clinician from data and guesses no pronoun', async () => {
   mockApi({ '/api/sessions/abc': SESSION, '/api/patients/me': ME })
   renderReport()
-  const line = await screen.findByText(/Nothing in your plan changes until Dr\. Rao approves it\./)
+  const line = await screen.findByText(/Nothing in your plan changes until your therapist approves it\./)
   expect(line.textContent).not.toMatch(/\b(hers|his|her|him|she|he)\b/i)
   expect(screen.getByText(/Continue your assigned plan/)).toBeInTheDocument()
 })

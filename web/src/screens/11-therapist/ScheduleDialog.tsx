@@ -11,7 +11,7 @@ import { plural } from '../../lib/plural'
 
 /** The seed schedule, for a service that predates 28 Sep (its prescription has no schedule). */
 /** Offline fallback: the seed schedule with its sample visit relative to today (as the service). */
-export const DEFAULT_SCHEDULE: Schedule = { practice_days: [0, 1, 2, 3, 4], nhpt_day: 6, next_visit: { at: sampleVisitAt(), with: 'Dr. Anita Rao, OT', sample: true }, minutes_per_day: 10 }
+export const DEFAULT_SCHEDULE: Schedule = { practice_days: [0, 1, 2, 3, 4], nhpt_day: 6, next_visit: { at: sampleVisitAt(), with: 'your therapist', sample: true }, minutes_per_day: 10 }
 
 /** What a refused therapist write says (21 Oct: the service needs the therapist token; this
  *  shared site has no sign-in, so here the therapist view is read-only). */
@@ -30,7 +30,7 @@ export function ScheduleDialog({ schedule, version, onClose, onSaved }: Props) {
   const [booked, setBooked] = useState(schedule.next_visit != null)
   const [date, setDate] = useState(schedule.next_visit?.at.slice(0, 10) ?? '')
   const [time, setTime] = useState(schedule.next_visit?.at.slice(11, 16) || '14:30')
-  const [who, setWho] = useState(schedule.next_visit?.with ?? 'Dr. Anita Rao, OT')
+  const [who, setWho] = useState(schedule.next_visit?.with ?? 'your therapist')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

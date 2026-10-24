@@ -19,7 +19,7 @@ PATIENT = {
     "program_code": "GR-4471-L2",
     "program": {
         "label": "Hospital GRASP, Level 2 · Left side",
-        "short": "Hospital GRASP L2 · v3 · Dr. Rao",
+        "short": "Hospital GRASP L2 · v3",
         "clinician": SEED_PRESCRIPTION.clinician,
         "next_visit": "Thu 18 Sep, 2:30 PM",
         "level": 2,

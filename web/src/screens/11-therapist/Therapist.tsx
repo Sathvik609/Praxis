@@ -8,7 +8,7 @@ import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
 import { api, isReplaySession, isTherapistOnly, useApi } from '../../lib/api'
 import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
-import { PROGRAM, upcomingVisit } from '../../lib/seed'
+import { upcomingVisit } from '../../lib/seed'
 import { ruleCoachLabel } from '../../session/agent'
 import { DEFAULT_SCHEDULE, ScheduleDialog, THERAPIST_ONLY } from './ScheduleDialog'
 
@@ -68,7 +68,7 @@ export function Therapist() {
         <span className="font-heading text-2xl font-semibold text-teal-ink">Praxis</span>
         <span className="text-muted">·</span>
         <Chip tone="mint">Clinician view</Chip>
-        <span className="ml-auto text-muted">{PROGRAM.clinician}</span>
+        <span className="ml-auto text-muted">Therapist view</span>
         <Chip tone="neutral">No clinician sign-in yet</Chip>
         <Link
           to="/details"

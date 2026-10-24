@@ -40,11 +40,12 @@ test('check-in collects pain, side, location, energy and time, shows stop rules,
   const fetchMock = mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': FULL })
   renderCheckIn()
   // v2 (6 Oct artifact): one ci-note card carries how answers are used, the tiers and the privacy line
-  await screen.findByText(/Pain 7 or more: rest today/)
+  await screen.findByText('7 or more: rest today, and your therapist is told')
   const note = document.querySelector('.ci-note') as HTMLElement
-  expect(note).toHaveTextContent(/Pain 7 or more: rest today, and Dr\. .+ is told\./)
-  expect(note).toHaveTextContent('Pain 4–6: a gentler session with fewer reps and a smaller lift.')
-  expect(note).toHaveTextContent('never read from your face.')
+  expect(note).toHaveTextContent('What your pain number does')
+  expect(note).toHaveTextContent('0–3: your full session')
+  expect(note).toHaveTextContent('4–6: a lighter session')
+  expect(note).not.toHaveTextContent(/Dr\./)
   expect(screen.getByText('Choose a pain number to continue')).toBeInTheDocument() // the hint is the FlowBar label
   fireEvent.click(screen.getByRole('radio', { name: '2' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Right arm' }))
@@ -101,9 +102,10 @@ test('no body area is preselected: with pain, the patient chooses where (or Nowh
   writeSide('left')
   mockApi({ '/api/prescription': PRESCRIPTION })
   renderCheckIn()
-  const where = screen.getByLabelText('Where is it?')
-  for (const r of within(where).getAllByRole('radio')) expect(r).not.toBeChecked()
+  expect(screen.queryByLabelText('Where does it hurt?')).not.toBeInTheDocument() // asked only once there is pain
   fireEvent.click(screen.getByRole('radio', { name: '3' }))
+  const where = screen.getByLabelText('Where does it hurt?')
+  for (const r of within(where).getAllByRole('radio')) expect(r).not.toBeChecked()
   const cont = screen.getByRole('button', { name: 'Continue to exercises' })
   expect(cont).toBeDisabled()
   expect(cont).toHaveAccessibleDescription('Choose where it hurts, or Nowhere, to continue')

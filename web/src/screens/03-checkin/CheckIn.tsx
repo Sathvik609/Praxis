@@ -223,10 +223,13 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
                 <Button variant="link" onClick={() => setAskSide(true)}>Change side</Button>
               </div>
             )}
-            <div>
-              <div className="mb-2 font-bold">Where is it?</div>
-              <Pill ariaLabel="Where is it?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
-            </div>
+            {/* 24 Oct: asked only once there is pain to place (pain 0 is saved as nowhere) */}
+            {pain != null && pain > 0 && (
+              <div>
+                <div className="mb-2 font-bold">Where does it hurt?</div>
+                <Pill ariaLabel="Where does it hurt?" value={location ?? ('' as Location)} options={LOCATIONS} onChange={setLocation} />
+              </div>
+            )}
             <div>
               <div className="mb-2 font-bold">Energy today</div>
               <Pill ariaLabel="Energy today" value={energy} options={ENERGY} onChange={setEnergy} />
@@ -240,10 +243,12 @@ function CheckInForm({ painMax, clinician, continueLabel, readyLabel, onBack, ba
           </Card>
         </div>
         <div className="flex flex-col gap-5">
-          <Card className="ci-note">
-            <p className="text-muted">
-              Pain {gentle}: a gentler session with fewer reps and a smaller lift. Pain {stopAt} or more: rest today, and {clinician} is told. Your answers go into your report. How you feel is what you tell us, never read from your face.
-            </p>
+          <Card className="ci-note" title="What your pain number does">
+            <ul className="mt-2 space-y-1 text-muted">
+              <li>0–3: your full session</li>
+              <li>{gentle}: a lighter session</li>
+              <li>{stopAt} or more: rest today, and {clinician} is told</li>
+            </ul>
           </Card>
         </div>
       </div>

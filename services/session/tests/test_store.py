@@ -23,7 +23,7 @@ def test_seed_matches_wireframe(tmp_path):
     pat = st.patient()
     assert pat["name"] == "Alex M." and pat["side"] == "left" and pat["goal"].startswith("Use a cup")
     p = st.prescription()
-    assert p["version"] == 3 and p["level"] == 2 and p["clinician"].startswith("Dr. Anita Rao")
+    assert p["version"] == 3 and p["level"] == 2 and p["clinician"] == "your therapist"
     sessions = st.sessions()
     assert len(sessions) >= 4
     modes = [s["mode"] for s in sessions]
@@ -330,7 +330,7 @@ def test_next_practice_names_the_prescriptions_clinician(tmp_path):
     st.seed_if_empty()
     st.save_session(_summary(session_id="c1", mode="cup"), {}, {}, [])
     st.save_session(_summary(session_id="a1", mode="arm"), {}, {}, [])
-    assert "Dr. Rao" in st.session("c1")["next_practice"]["text"]  # the seed: Dr. Anita Rao, OT
+    assert "that needs your therapist" in st.session("c1")["next_practice"]["text"]  # the seed names no clinician (24 Oct)
     _with_clinician(st, "Dr. Maya Chen, PT")
     for sid in ("c1", "a1"):
         text = st.session(sid)["next_practice"]["text"]

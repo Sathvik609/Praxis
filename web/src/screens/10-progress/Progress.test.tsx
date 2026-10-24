@@ -154,7 +154,7 @@ test('stopped early names the clinician flag only when a flag row exists for tha
   unmount()
   mockApi({ ...BASE, '/api/flags': { flags: [{ id: 1, session_id: 'early', rule: 'pain', detail: 'pain 5', t: 0, date: '2026-09-11', reviewed: false }] } })
   renderProgress()
-  expect(await screen.findByText('Stopped early · pain 5 · flag for Dr. Anita Rao, OT · queued')).toBeInTheDocument()
+  expect(await screen.findByText('Stopped early · pain 5 · flag for your therapist · queued')).toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/notified/)
 })
 
@@ -163,7 +163,7 @@ test('a flag in the session summary also counts', async () => {
   early.summary = { ...early.summary, flags: [{ t: 1, rule: 'pain', detail: 'pain 8' }] } as typeof early.summary
   mockApi({ ...BASE, '/api/sessions': { sessions: [early] } })
   renderProgress()
-  expect(await screen.findByText('Stopped early · pain 8 · flag for Dr. Anita Rao, OT · queued')).toBeInTheDocument()
+  expect(await screen.findByText('Stopped early · pain 8 · flag for your therapist · queued')).toBeInTheDocument()
 })
 
 test('range: the July session shows only under All activities', async () => {

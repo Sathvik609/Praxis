@@ -3,6 +3,8 @@ seed (Alex M.'s September sessions, the NHPT trend, the 19/22 practice card) loa
 PRAXIS_SAMPLE_HISTORY=1; the patient record and the prescription always load, so every
 exercise still runs."""
 
+import json
+
 from praxis_session.seed_data import SESSIONS
 from praxis_session.store import Store, sample_history_enabled
 
@@ -39,3 +41,16 @@ def test_zero_start_on_a_sampled_database_drops_only_the_sample(tmp_path):
     assert st.nhpt_trend() == []
     assert st.patient()["goal_attempts"] == 0
     assert st.progress()["sample"] is None
+
+
+def test_an_older_stored_clinician_name_gives_way_to_the_prescription(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty(sample=False)
+    row = st._db.execute("SELECT id, json FROM patients LIMIT 1").fetchone()
+    p = json.loads(row["json"])
+    p["program"]["clinician"] = "Dr. Anita Rao, OT"
+    p["program"]["short"] = "Hospital GRASP L2 · v3 · Dr. Rao"
+    st._db.execute("UPDATE patients SET json = ? WHERE id = ?", (json.dumps(p), row["id"]))
+    me = st.patient()
+    assert me["program"]["clinician"] == "your therapist"
+    assert me["program"]["short"] == "Hospital GRASP L2 · v3"

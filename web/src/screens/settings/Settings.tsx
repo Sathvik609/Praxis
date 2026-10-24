@@ -143,7 +143,7 @@ export function Settings() {
           <Card title="Privacy and data">
             <ul className="st-list">
               <SettingsRow title="Video processing" sub={place.replace(/^./, (c) => c.toUpperCase())} control={<span className="st-tag st-tag-ok">Default</span>} />
-              <SettingsRow title="Who receives reports" sub={me ? me.program.clinician : meError ? 'Unavailable — the session service is not reachable' : 'Loading…'} />
+              <SettingsRow title="Who receives reports" sub={me ? cap(me.program.clinician) : meError ? 'Unavailable — the session service is not reachable' : 'Loading…'} />
               <SettingsRow title="Export my data" sub="Sessions, reports and check-ins (JSON)" onClick={() => void exportData()} />
             </ul>
           </Card>
@@ -191,6 +191,8 @@ export function Settings() {
   )
 }
 
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
+
 /** Name, side and goal (row → today's check-in), the assigned program and the clinician, all
  *  from the service. Nothing is filled in from the seed when the service is not reachable. */
 function ProfileRows({ me, error, side, onOpen }: { me: Patient | null; error: string | null; side: 'left' | 'right'; onOpen: () => void }) {
@@ -203,7 +205,6 @@ function ProfileRows({ me, error, side, onOpen }: { me: Patient | null; error: s
     <>
       <SettingsRow title={me.name} sub={`Practising side: ${side === 'right' ? 'Right' : 'Left'}${goal ? ` · goal: ${goal}` : ''}`} onClick={onOpen} />
       <SettingsRow title="Assigned program" sub={me.program.short} control={<span className="st-tag">Read-only</span>} />
-      <SettingsRow title="Clinician contact" sub={me.program.clinician} />
     </>
   )
 }

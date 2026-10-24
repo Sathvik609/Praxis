@@ -46,7 +46,7 @@ def test_the_next_clinic_visit_is_on_its_day():
     cal = build_calendar(SCHED, [], date(2026, 9, 28), date(2026, 10, 4), TODAY)
     d = _days(cal)
     visit = d["2026-10-01"]["clinic_visit"]
-    assert visit == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT", "with_short": "Dr. Rao", "time": "2:30 PM"}
+    assert visit == {"at": "2026-10-01T14:30", "with": "your therapist", "with_short": "your therapist", "time": "2:30 PM"}
     assert d["2026-10-01"]["status"] == "planned"  # a practice day that also has the visit
     assert sum(1 for x in cal["days"] if x["clinic_visit"]) == 1
 
@@ -138,7 +138,7 @@ def test_api_calendar_defaults_to_this_week_from_the_clock(client, at_28_sep):
     cal = client.get("/api/calendar").json()
     assert cal["today"] == "2026-09-28" and cal["from"] == "2026-09-28" and cal["to"] == "2026-10-04"
     assert len(cal["days"]) == 7 and cal["schedule"]["practice_days"] == [0, 1, 2, 3, 4]
-    assert cal["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "Dr. Anita Rao, OT"}
+    assert cal["schedule"]["next_visit"] == {"at": "2026-10-01T14:30", "with": "your therapist"}
     assert cal["week"]["planned_days"] == 5 and cal["week"]["done_days"] == 0
 
 
