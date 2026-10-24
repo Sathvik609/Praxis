@@ -159,7 +159,7 @@ def test_gentle_tier_softens_within_the_prescription():
     cup = resolve("cup", "gentle")
     assert cup.slow_arcs == 2 and cup.fast_arcs == 0 and "fast" not in cup.dose
     assert "fast" in resolve("cup", "full").dose
-    assert "×" in g.dose
+    assert g.dose == "2 sets of 6 · hold 2 s"
 
 
 def test_gentle_overrides_outside_the_allowed_adaptations_are_dropped_or_clamped():

@@ -57,7 +57,7 @@ export function ChooseExercise() {
             <p className="lib-sub text-muted">Pick an exercise. The camera checks each rep.</p>
           </div>
           <div className="lib-head-right">
-            <Button variant="secondary" className="lib-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
+            <Button variant="secondary" className="lib-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           </div>
         </div>
 

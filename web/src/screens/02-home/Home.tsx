@@ -60,7 +60,7 @@ export function Home() {
           <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
           <p className="mt-1 text-white/80">About {DAY_MINUTES} min · you need a cup and the printed target sheet</p>
           <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav('/details/choose')}>Start session</Button>
-          <Button full variant="secondary" className="mt-3 hero-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
+          <Button full variant="secondary" className="mt-3 hero-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
         </Card>
 

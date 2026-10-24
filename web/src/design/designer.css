@@ -2189,3 +2189,10 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] .lib-cta.lib-cta-2.lc-close.lc-close:hover{background:#2F6FE0!important;border-color:#2F6FE0!important;color:#fff!important}
 /* 24 Oct: Home's figure is decoration, not a demonstration: no "Front view · 1×" line over it. */
 .hp-stage [data-testid=view-line]{display:none}
+/* 24 Oct: Ask the coach answers a tap: blue tint on hover, solid blue while pressed and while the coach is open
+   (aria-expanded). The repeated class only outranks the older secondary-button rules. */
+:root .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn{transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+:root .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn:hover{background:rgba(61,98,227,.1)!important;border-color:#3D62E3!important;color:#2D4FC7!important}
+:root .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn:active,:root .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn[aria-expanded=true]{background:#3D62E3!important;border-color:#3D62E3!important;color:#fff!important;box-shadow:0 0 0 4px rgba(61,98,227,.25)!important}
+:root[data-theme="dark"] .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn:hover{background:rgba(58,132,255,.16)!important;border-color:rgba(141,181,255,.7)!important;color:#CFE0FF!important}
+:root[data-theme="dark"] .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn:active,:root[data-theme="dark"] .ui-btn.coach-btn.coach-btn.coach-btn.coach-btn[aria-expanded=true]{background:#2F6FE0!important;border-color:#2F6FE0!important;color:#fff!important;box-shadow:0 0 0 4px rgba(58,132,255,.3)!important}

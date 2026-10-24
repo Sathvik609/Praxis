@@ -113,14 +113,14 @@ class Exercise:
     @property
     def dose(self) -> str:
         if self.kind == "timed":
-            return "Timed · one attempt each hand"
+            return "One timed try with each hand"
         if self.kind == "arcs":
             if not self.fast_arcs:
                 return f"{self.slow_arcs} slow arcs only"
             return f"{self.slow_arcs} slow arcs, then {self.fast_arcs} fast"
         if self.kind == "oscillation":
             return f"{self.sets} × {self.reps} swings"
-        return f"{self.sets} × {self.reps} · hold {self.hold_s:g} s"
+        return f"{self.sets} sets of {self.reps} · hold {self.hold_s:g} s"  # same words as the web library (24 Oct)
 
     def to_dict(self) -> dict[str, Any]:
         return {
