@@ -2157,11 +2157,13 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 }
 /* 13 Oct: Skip demo, top right of the theater (after the day count, or on its own) */
 .dth-skip{margin-left:auto}.dth-count+.dth-skip{margin-left:0}
-/* 24 Oct: Start here has to be the first thing the eye lands on. Bright yellow on the blue card (text says it; colour only repeats), bouncing arrow, pulsing glow on the button. */
-.start-here-tag{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 14px;border-radius:999px;background:#FFD24A;color:#1A1300;font:800 14px/18px var(--font-body);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;box-shadow:0 0 0 0 rgba(255,210,74,.7),0 4px 14px rgba(0,0,0,.25);animation:start-here-glow 1.8s var(--ease) infinite}
+/* 24 Oct: Start here has to be the first thing the eye lands on. Brand blue, made louder: solid tag with a bouncing
+   arrow and a pulsing light-blue glow, the same glow ring on Start session. The text says it; colour only repeats it. */
+.start-here-tag{--sh-glow:141,181,255;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 14px;border-radius:999px;background:var(--teal-fill);color:#fff;border:1px solid rgba(var(--sh-glow),.9);font:800 14px/18px var(--font-body);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;animation:start-here-glow 1.8s var(--ease) infinite}
 .start-here-arrow{display:inline-block;font-size:16px;line-height:1;animation:start-here-bounce 1s ease-in-out infinite}
-.ui-btn.start-here{position:relative;outline:3px solid #FFD24A;outline-offset:4px;box-shadow:0 0 0 0 rgba(255,210,74,.65);animation:start-here-glow 1.8s var(--ease) infinite;font-weight:800}
-@keyframes start-here-glow{0%{box-shadow:0 0 0 0 rgba(255,210,74,.7),0 4px 14px rgba(0,0,0,.25)}70%{box-shadow:0 0 0 14px rgba(255,210,74,0),0 4px 14px rgba(0,0,0,.25)}100%{box-shadow:0 0 0 0 rgba(255,210,74,0),0 4px 14px rgba(0,0,0,.25)}}
+.ui-btn.start-here{--sh-glow:141,181,255;outline:3px solid rgba(var(--sh-glow),.95);outline-offset:4px;animation:start-here-glow 1.8s var(--ease) infinite;font-weight:800}
+:root[data-theme="light"] .start-here-tag,:root[data-theme="light"] .ui-btn.start-here{--sh-glow:61,98,227}
+@keyframes start-here-glow{0%{box-shadow:0 0 0 0 rgba(var(--sh-glow),.75),0 0 18px rgba(var(--sh-glow),.45)}70%{box-shadow:0 0 0 14px rgba(var(--sh-glow),0),0 0 18px rgba(var(--sh-glow),.45)}100%{box-shadow:0 0 0 0 rgba(var(--sh-glow),0),0 0 18px rgba(var(--sh-glow),.45)}}
 @keyframes start-here-bounce{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
 @media (prefers-reduced-motion:reduce){.ui-btn.start-here,.start-here-tag,.start-here-arrow{animation:none}}
 :root[data-motion="reduced"] .ui-btn.start-here,:root[data-motion="reduced"] .start-here-tag,:root[data-motion="reduced"] .start-here-arrow{animation:none}
