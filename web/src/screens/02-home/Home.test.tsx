@@ -104,19 +104,26 @@ test('start session goes to Choose (design v2 flow: Choose → Demo → Check-in
   expect(screen.getByText('CHOOSE')).toBeInTheDocument()
 })
 
-test('the area card header shows the status word as text; tabs switch the focus area', async () => {
+test('the area card header shows the status word as text once something is measured; tabs switch the focus area', async () => {
   await renderHome()
   const shoulder = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
-  expect(within(shoulder).getByText('Watch')).toBeInTheDocument()
+  expect(within(shoulder).queryByText('Watch')).not.toBeInTheDocument() // nothing measured yet: no status word
   fireEvent.click(screen.getByRole('tab', { name: /Left hand/ }))
   expect(screen.getByRole('tab', { name: /Left hand/ })).toHaveAttribute('aria-selected', 'true')
   const hand = screen.getByRole('tabpanel', { name: 'Left hand details' })
-  expect(within(hand).getByText('Focus')).toBeInTheDocument()
+  expect(within(hand).queryByText('Focus')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Run the peg test' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('tab', { name: /Left elbow/ }))
   const elbow = screen.getByRole('tabpanel', { name: 'Left elbow details' })
-  expect(within(elbow).getByText('Stable')).toBeInTheDocument()
-  expect(within(elbow).getByText('No measure for this area in your program.')).toBeInTheDocument()
+  expect(within(elbow).queryByText('Stable')).not.toBeInTheDocument()
+  expect(within(elbow).getByText('The camera does not measure the elbow in this program.')).toBeInTheDocument()
+})
+
+test('once an arm session is measured the shoulder card shows its status word as text', async () => {
+  mockApi(routes({ '/api/sessions': { sessions: [ARM] } }))
+  await renderHome()
+  const card = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
+  expect(await within(card).findByText('Watch')).toBeInTheDocument()
 })
 
 test('shoulder numbers come from the last live arm session: best verified peak, never an unverified one', async () => {
@@ -134,7 +141,7 @@ test('shoulder numbers come from the last live arm session: best verified peak, 
 test('without an arm session the shoulder says when it starts, with no invented number', async () => {
   await renderHome()
   const card = screen.getByRole('tabpanel', { name: 'Left shoulder details' })
-  expect(await within(card).findByText('Starts after your next arm session.')).toBeInTheDocument()
+  expect(await within(card).findByText('Your best lift angle shows here after your first Arm out to the side session.')).toBeInTheDocument()
   expect(within(card).queryByRole('img')).not.toBeInTheDocument()
 })
 
@@ -194,11 +201,11 @@ test('a replayed last session says replay (review 28 Sep)', async () => {
   expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · replay/)).toBeInTheDocument()
 })
 
-test('open report falls back to progress without sessions; no seeded last session is shown', async () => {
+test('without sessions there is no report to open and no seeded last session is shown', async () => {
   await renderHome()
-  expect(screen.getByText(/Last session · No sessions yet/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Open report' }))
-  expect(screen.getByText('PROGRESS')).toBeInTheDocument()
+  expect(screen.getByText('No sessions yet')).toBeInTheDocument()
+  expect(screen.queryByText(/Last session/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Open report' })).not.toBeInTheDocument()
 })
 
 test('the next-practice card marks where to start, how to go on, and that the rest can be explored', async () => {

@@ -25,14 +25,16 @@ export function AreaDetail({ k, head, view }: { k: AreaKey; head: Head; view: Ar
           <span className="ad-name">{head.name}</span>
           <h2 className="ad-title">{head.headline}</h2>
         </div>
-        <span className="ad-status">{head.word}</span>
+        {v?.now && <span className="ad-status">{head.word}</span>}
       </header>
       <div className="ad-now">
         <div className="ad-now-t">
-          <b>
-            {v?.now ? `${v.now.value}${v.now.unit === '°' ? '°' : ''}` : '—'}
-            {v?.now && v.now.unit && v.now.unit !== '°' && <small>{` ${v.now.unit}`}</small>}
-          </b>
+          {v?.now && (
+            <b>
+              {`${v.now.value}${v.now.unit === '°' ? '°' : ''}`}
+              {v.now.unit && v.now.unit !== '°' && <small>{` ${v.now.unit}`}</small>}
+            </b>
+          )}
           <span>{v ? (v.now?.detail ?? v.empty) : view.empty}</span>
         </div>
         {v?.now?.ring && (

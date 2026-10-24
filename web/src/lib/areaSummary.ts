@@ -36,7 +36,7 @@ export type AreaEmpty = { empty: string }
 export type AreaSources = { sessions?: SessionRecord[] | null; progress?: Progress | null; rx?: Prescription | null; calendar?: Calendar | null; me?: Patient | null }
 
 export const STATUS_WORD: Record<AreaStatus, string> = { focus: 'Focus', watch: 'Watch', stable: 'Stable' }
-export const ELBOW_EMPTY = 'No measure for this area in your program.'
+export const ELBOW_EMPTY = 'The camera does not measure the elbow in this program.'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 /** "2026-09-08" → "8 Sep". */
@@ -107,7 +107,7 @@ function shoulder(d: AreaSources): AreaView {
       detail: `Best verified lift in your last arm session, ${dayMonth(last.s.date)} · limit ${ceiling}°`,
       ring: { now: last.best, max: ceiling },
     },
-    empty: last ? undefined : lastArm ? 'No verified lift angle in your last arm session.' : 'Starts after your next arm session.',
+    empty: last ? undefined : lastArm ? 'No verified lift angle in your last arm session.' : 'Your best lift angle shows here after your first Arm out to the side session.',
     tiles: [
       { k: 'Lifts with a posture cue', v: inWeek.length ? String(cues) : '—', u: inWeek.length ? `of ${lifts} · this week` : 'No arm session this week' },
       { k: 'Sessions logged', v: String(arm.length), u: arm.length ? `since ${dayMonth(arm[0].date)}` : undefined },
@@ -140,13 +140,13 @@ function hand(d: AreaSources): AreaView {
       caption: `${dayMonth(latest.date)}${delta && delta.tone !== 'flat' ? ` · ${delta.text}` : ''}${latest.sample ? ' · sample' : ''}`,
       detail: delta && live.length > 1 ? `${delta.text} than your first test on ${dayMonth(live[0].date)}` : `Nine-Hole Peg Test · ${dayMonth(latest.date)}`,
     },
-    empty: latest ? undefined : 'Starts after your next peg test.',
+    empty: latest ? undefined : 'Your peg test time shows here after your first Nine-Hole Peg Test.',
     tiles: [
       { k: 'Verified reaches', v: lastCup ? String(num(lastCup.summary.camera.verified) ?? 0) : '—', u: lastCup ? `${num(lastCup.summary.camera.unverified) ?? 0} unverified · last session` : 'No cup session yet' },
       { k: 'Next test', v: nhptDay === undefined ? '—' : WEEKDAYS[nhptDay], u: 'weekly' },
     ],
     quality: [
-      { k: 'Tests done', v: String(live.length), c: live.length ? `since ${dayMonth(live[0].date)}` : 'No live test yet.' },
+      { k: 'Tests done', v: live.length ? String(live.length) : '—', c: live.length ? `since ${dayMonth(live[0].date)}` : 'No live test yet.' },
       { k: 'Best time', v: best === undefined ? '—' : fmtV(best), u: best === undefined ? undefined : 's', c: best === undefined ? 'No live test yet.' : 'fastest so far' },
     ],
     sample: points.some((p) => p.sample) || (!!lastCup && isSample(lastCup)),

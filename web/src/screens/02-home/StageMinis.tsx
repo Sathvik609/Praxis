@@ -9,6 +9,8 @@ const ACCENT: Record<AreaKey, string> = { lShoulder: 'sh', lElbow: 'el', lWrist:
 export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: AreaView | AreaEmpty }) {
   const v = 'name' in view ? view : null
   const now = v?.now
+  // 24 Oct: nothing measured yet means nothing to show over the figure; the area card below says what comes next
+  if (!now && !v?.quality.some((q) => q.v !== '—')) return null
   return (
     <div className={`mn mn-${ACCENT[k]}`} aria-label={`${name} at a glance`}>
       <div className="mn-l">
@@ -17,13 +19,13 @@ export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: 
           {name}
         </span>
         {now && <span className="mn-cl">{now.label}</span>}
-        {!now?.ring && (
+        {now && !now.ring && (
           <b className="mn-v">
-            {now ? `${now.value}${now.unit === '°' ? '°' : ''}` : '—'}
-            {now?.unit && now.unit !== '°' && <small>{` ${now.unit}`}</small>}
+            {`${now.value}${now.unit === '°' ? '°' : ''}`}
+            {now.unit && now.unit !== '°' && <small>{` ${now.unit}`}</small>}
           </b>
         )}
-        <span className="mn-c">{now ? now.caption : v ? v.empty : view.empty}</span>
+        {now && <span className="mn-c">{now.caption}</span>}
         {now?.ring && (
           <div className="mn-ring">
             <RangeRing now={now.ring.now} max={now.ring.max} />
@@ -32,7 +34,7 @@ export function StageMinis({ k, name, view }: { k: AreaKey; name: string; view: 
       </div>
       {v && (
         <div className="mn-r">
-          {v.quality.slice(0, 2).map((q) => (
+          {v.quality.filter((q) => q.v !== '—').slice(0, 2).map((q) => (
             <div key={q.k} className="mn-q">
               <span className="mn-ql">{q.k}</span>
               <b className={`mn-qv${/^\d/.test(q.v) ? '' : ' mn-qv-word'}`}>

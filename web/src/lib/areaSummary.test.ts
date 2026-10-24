@@ -68,7 +68,7 @@ it('stage tiles: verified and unverified lifts of the last session; shoulder hik
 it('shoulder without any arm session: no number is invented', () => {
   const v = areaSummary('lShoulder', fx({})) as AreaView
   expect(v.now).toBeUndefined()
-  expect(v.empty).toBe('Starts after your next arm session.')
+  expect(v.empty).toBe('Your best lift angle shows here after your first Arm out to the side session.')
 })
 
 it('an arm session with no verified angle never reads as "no arm session" next to its own lift counts (10 Oct)', () => {
@@ -88,7 +88,7 @@ it('a sample arm session is marked sample', () => {
 })
 
 it('elbow has an honest empty state', () => {
-  expect(areaSummary('lElbow', fx({}))).toEqual({ empty: 'No measure for this area in your program.' })
+  expect(areaSummary('lElbow', fx({}))).toEqual({ empty: 'The camera does not measure the elbow in this program.' })
 })
 
 it('hand uses nhpt_trend; sample points are labelled and excluded from the delta', () => {

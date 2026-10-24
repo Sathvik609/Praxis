@@ -53,12 +53,12 @@ export function Home() {
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-white/80">Next practice · today</div>
+            <div className="text-white/80">Today's practice</div>
             {/* 24 Oct: where a first-time visitor starts. Said in words; the ring on the button only repeats it. */}
             <span className="start-here-tag"><span className="start-here-arrow" aria-hidden="true">↓</span>Start here</span>
           </div>
           <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
-          <p className="mt-1 text-white/80">About {DAY_MINUTES} min · cup + target sheet</p>
+          <p className="mt-1 text-white/80">About {DAY_MINUTES} min · you need a cup and the printed target sheet</p>
           <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav('/details/choose')}>Start session</Button>
           <Button full variant="secondary" className="mt-3 hero-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
@@ -82,8 +82,9 @@ export function Home() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-            <span className="text-muted">Last session · {sessions?.[0] ? `${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : 'No sessions yet'}</span>
-            <Button variant="secondary" className="shrink-0" onClick={openReport}>Open report</Button>
+            <span className="text-muted">{sessions?.[0] ? `Last session · ${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : 'No sessions yet'}</span>
+            {/* 24 Oct: no report to open before the first session */}
+            {sessions?.[0] && <Button variant="secondary" className="shrink-0" onClick={openReport}>Open report</Button>}
           </div>
         </Card>
       </div>
@@ -92,7 +93,7 @@ export function Home() {
         <div className="hp-head">
           <div className="min-w-0">
             <h2 className="text-2xl">Your affected areas</h2>
-            <p className="text-muted">Where your program is working, and how each area is changing.</p>
+            <p className="text-muted">Tap an area to see what the camera has measured.</p>
           </div>
           {/* Visible to patients, not only in Judge view: a sample value is never shown unlabelled. */}
           {area?.sample && <span className="hp-sample">Sample</span>}
