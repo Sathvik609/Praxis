@@ -98,7 +98,9 @@ def test_a_partly_segmented_peg_does_not_light_the_next_hole():
     canon = board.warp(frame, cal.run(frame, 0.1))
     s = board.hole_scores(canon)
     assert s[4]["peg_fraction"] >= 0.35  # the streak's top is on hole 4's disc
-    assert 0.15 <= s[1]["column_fraction"] < 0.5  # seen, but not confirmed
+    # seen (24 Oct: change from the empty board also takes the dark lower part, so the column
+    # may now be confirmed; either way the top on hole 4's disc must not count as a peg there)
+    assert s[1]["column_fraction"] >= 0.15
     occ = {int(k.split("_")[1]) for k, v in board.occupancy(canon).items() if v == "occupied"}
     assert 4 not in occ
 

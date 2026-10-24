@@ -6,8 +6,15 @@ refuse to start otherwise). After that, brief occlusion is tolerated (Sprint D-C
 - four markers            -> ``source="fresh"``: homography from 16 corners (exact fit);
 - exactly three markers   -> ``source="partial"``: homography from 12 corners with
   ``cv2.RANSAC`` (3 px), still ``calibrated``; ``missing`` names the covered marker;
-- fewer than three, but a fresh/partial result within ``HOLD_S`` seconds -> ``source="held"``:
-  the previous homography is reused, ``age_s`` says how stale it is;
+- one or two markers still where the last fix puts them (mean corner error <= ``ANCHOR_MM``)
+  -> ``source="held"`` for as long as that stays true (24 Oct 2026, team test: a hand moving pegs
+  or a cup on dot 1 / 5 covers two corners for seconds at a time, and the 1.5 s hold paused one
+  real NHPT session 19 times); the visible markers prove the sheet has not moved;
+- two markers that HAVE moved (the sheet was nudged) -> ``source="partial"``: homography from
+  their 8 corners, kept only when it fits them to ``PAIR_RMS_MM``;
+- otherwise (no marker in view, or one marker that moved), a fresh/partial result within
+  ``HOLD_S`` seconds -> ``source="held"``: the previous homography is reused, ``age_s`` says how
+  stale it is;
 - otherwise not calibrated (``source=None``).
 
 Mirrored video (11 Oct 2026): the web sends the camera's own (unmirrored) frames, but some
@@ -53,6 +60,8 @@ from praxis_session.perception.render import DICT
 
 HOLD_S = 1.5
 MIN_PARTIAL_MARKERS = 3
+ANCHOR_MM = 3.0  # visible marker corners within this of the last fix: the sheet has not moved
+PAIR_RMS_MM = 1.0  # a two-marker refit must fit its own 8 corners this well
 RANSAC_PX = 3.0
 NOMINAL_F_PER_WIDTH = 1.2
 FOCAL_FIT_MIN_TILT_DEG = 15.0  # one planar view constrains f only when it is seen at an angle
@@ -254,6 +263,23 @@ class Calibrator:
             self._last_good, self._last_good_t = res, t
             return res
 
+        if self._last_good is not None and found:
+            prev = self._last_good
+            if self._anchored(found, prev):
+                # The visible markers sit where the last fix puts them: the sheet has not moved,
+                # so the covered ones are only covered (a hand, the cup), however long.
+                return CalibrationResult(
+                    self.spec.name, True, missing, prev.H_px_to_mm, prev.rms_mm, found,
+                    source="held", age_s=t - self._last_good_t, tilt_deg=prev.tilt_deg,
+                    mirrored=prev.mirrored, rejected=rejected, rejected_px=rej_px, camera=prev.camera,
+                )
+            if len(found) >= 2:
+                pair = self._fit(found, missing, "partial", frame_bgr.shape, method=0, pnp=pnp)
+                if pair.calibrated and pair.rms_mm is not None and pair.rms_mm <= PAIR_RMS_MM:
+                    pair.mirrored, pair.rejected, pair.rejected_px = mirrored, rejected, rej_px
+                    self._last_good, self._last_good_t = pair, t
+                    return pair
+
         # Hold the last good homography through a short occlusion (never before a first fix).
         if self._last_good is not None and 0.0 <= t - self._last_good_t <= self.hold_s:
             prev = self._last_good
@@ -276,6 +302,16 @@ class Calibrator:
             self.spec.name, False, missing, None, None, found,
             mirrored=mirrored, rejected=rejected, rejected_px=rej_px,
         )
+
+    def _anchored(self, found: dict[int, np.ndarray], prev: CalibrationResult) -> bool:
+        """The visible markers' corners, through the last fix, land on their printed positions."""
+        if prev.H_px_to_mm is None:
+            return False
+        order = sorted(found)
+        src = np.concatenate([found[i] for i in order]).astype(np.float64).reshape(-1, 1, 2)
+        dst = np.concatenate([self.spec.marker_corners_mm(i) for i in order]).astype(np.float64)
+        got = cv2.perspectiveTransform(src, prev.H_px_to_mm.astype(np.float64)).reshape(-1, 2)
+        return float(np.mean(np.hypot(*(got - dst).T))) <= ANCHOR_MM
 
     def _detect(self, gray: np.ndarray) -> tuple[dict[int, np.ndarray], np.ndarray]:
         """This sheet's markers (id -> 4x2 corners) and the corners of undecoded candidates."""

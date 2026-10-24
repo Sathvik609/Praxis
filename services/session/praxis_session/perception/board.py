@@ -37,6 +37,24 @@
                    longer than 45 mm (cv2.minAreaRect: a pen is not a peg). The hand
                    box (from the hand tracker, expanded by 15 mm) is excluded here only - never
                    from hole occupancy, because the hand covers a hole right after seating a peg.
+6. Uncoloured pegs (24 Oct 2026, team test). Wooden, white and grey pegs carry no colour the
+                   window above can use (natural wood even sits inside the skin band), and the
+                   team's real session logged `pegs_detected: 0`. When the holes are first found
+                   the empty board is kept as a reference (NHPT starts with every hole empty), and
+                   the peg mask also takes every pixel that differs from it (max channel
+                   cv2.absdiff >= `change_threshold`, after a small blur). The change is measured
+                   on the warped view BEFORE paper normalisation (which flattens a hand into
+                   "paper" and leaves only the hole rings it covers), with each channel scaled
+                   by the ratio of its median to the reference's so exposure drift is not change.
+                   cv2.connectedComponentsWithStats splits that change: a component with more
+                   than `occluder_area_mm2` (several pegs' worth) OUTSIDE the holes' peg
+                   footprints is a hand or forearm (nine seated pegs at 45 deg merge into one
+                   component, but it lies inside their footprints), so it is the **occluder**
+                   mask, never pegs; a hole whose disc or column it covers is
+                   hidden and keeps its last decision, and the skin rule below only hides a hole
+                   while an occluder is there (a seated wooden peg is skin-coloured itself).
+                   Coloured pegs read exactly as before; the change only adds what colour misses
+                   (tests/test_uncoloured_pegs.py).
 5. Height (12 Oct 2026, found by the 3-D renders, evaluation/results/synthetic3d_v0.md). A real
                    peg is 32 mm tall and stands in a board on the sheet; from a laptop camera
                    20-50 deg off vertical its body lands on the sheet plane as a streak that
@@ -104,6 +122,12 @@ def normalise_to_paper(canonical_bgr: np.ndarray, px_per_mm: float, kernel_mm: f
     """Divide the canonical view by its paper brightness (see PAPER_LEVEL). `kernel_mm` must be
     larger than the largest dark object on the sheet that should not be taken for shading
     (a peg, a printed ring or marker, the cup base)."""
+    paper = paper_field(canonical_bgr, px_per_mm, kernel_mm)
+    return cv2.divide(canonical_bgr, paper, scale=PAPER_LEVEL)  # saturating uint8
+
+
+def paper_field(canonical_bgr: np.ndarray, px_per_mm: float, kernel_mm: float) -> np.ndarray:
+    """The paper's own brightness at every point (normalise_to_paper's divisor)."""
     h, w = canonical_bgr.shape[:2]
     cell_mm = max(PAPER_CELL_MM, kernel_mm / 15.0)  # ~15 cells across the kernel keeps it cheap
     step = max(1, int(round(px_per_mm * cell_mm)))
@@ -113,8 +137,39 @@ def normalise_to_paper(canonical_bgr: np.ndarray, px_per_mm: float, kernel_mm: f
     paper = cv2.morphologyEx(small, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (k, k)))
     paper = cv2.blur(paper, (3, 3))
     paper = cv2.resize(paper, (w, h), interpolation=cv2.INTER_LINEAR)
-    paper = cv2.max(paper, np.full_like(paper, int(PAPER_FLOOR)))
-    return cv2.divide(canonical_bgr, paper, scale=PAPER_LEVEL)  # saturating uint8
+    return cv2.max(paper, np.full_like(paper, int(PAPER_FLOOR)))
+
+
+class EmptyReference:
+    """The empty board or sheet as the camera saw it at the start (blurred, before paper
+    normalisation) and its own paper level, for change detection (module docstring, section 6;
+    also the cup sheet, cup.py). `changed()` is max-channel cv2.absdiff >= threshold after
+    matching each channel's median to the reference's (exposure drift is not change), minus
+    ghosts: where the reference had something (ink, a peg in the dish) and bare paper now shows,
+    removal is not an object. Paper is every channel within -20 % / +15 % of the reference's
+    paper level, which a bright object added later cannot raise."""
+
+    def __init__(self, raw_bgr: np.ndarray, px_per_mm: float, kernel_mm: float) -> None:
+        self.ref = cv2.GaussianBlur(raw_bgr, (3, 3), 0)
+        self._ref_f = self.ref.astype(np.float32)
+        self._med = np.median(self._ref_f.reshape(-1, 3), axis=0)
+        self._paper = paper_field(self.ref, px_per_mm, kernel_mm).astype(np.float32)
+        self._obj = ~self._paper_like(self._ref_f)
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        return self.ref.shape
+
+    def _paper_like(self, bgr: np.ndarray) -> np.ndarray:
+        ratio = bgr / self._paper
+        return ((ratio >= 0.8) & (ratio <= 1.15)).all(axis=2)
+
+    def changed(self, raw_bgr: np.ndarray, threshold: float) -> np.ndarray:
+        cur = cv2.GaussianBlur(raw_bgr, (3, 3), 0).astype(np.float32)
+        cur_med = np.median(cur.reshape(-1, 3), axis=0)
+        cur = np.clip(cur * (self._med / np.maximum(cur_med, 1.0)), 0, 255)
+        out = np.abs(cur - self._ref_f).max(axis=2) >= threshold
+        return out & ~(self._obj & self._paper_like(cur))
 
 
 def hsv_window_from_patch(
@@ -196,8 +251,14 @@ class BoardState:
         footprint_z_mm: tuple[float, float] = (0.0, 32.0),
         footprint_r_mm: float = 5.0,
         disc_in_footprint: float = 0.25,
+        change_threshold: int = 38,
+        occluder_area_mm2: float = 700.0,
     ) -> None:
         self.spec = spec
+        self.change_threshold = change_threshold
+        self.occluder_area_mm2 = occluder_area_mm2
+        self._ref: EmptyReference | None = None  # the empty board, section 6
+        self._raw: np.ndarray | None = None  # the last warp before paper normalisation
         self.column_z_mm = column_z_mm
         self.column_r_mm = column_r_mm
         self.column_occupied_fraction = column_occupied_fraction
@@ -272,6 +333,7 @@ class BoardState:
             frame_bgr, H, (self.canonical_w, self.canonical_h), flags=cv2.INTER_LINEAR
         )
         self._cal = cal
+        self._raw = canon
         if self.normalise:
             canon = normalise_to_paper(canon, self.px_per_mm, self.paper_kernel_mm)
         return canon
@@ -337,6 +399,7 @@ class BoardState:
         self._geom = None
         self._skin_base = []
         self._last_occ = None
+        self._ref = None
 
     # ---- height-aware regions (section 5 of the module docstring) ---------------------------
     def seat_geometry(self) -> dict[str, Any] | None:
@@ -406,6 +469,43 @@ class BoardState:
             self._templates.append(patch.copy() if patch is not None and clearly_empty else None)
         skin = self.skin_mask(canonical_bgr)
         self._skin_base = [self._disc_fraction(skin, h) for h in self._holes]
+        raw = self._raw if self._raw is not None and self._raw.shape == canonical_bgr.shape else canonical_bgr
+        self._ref = EmptyReference(raw, self.px_per_mm, self.paper_kernel_mm)  # section 6
+
+    def change_masks(self, canonical_bgr: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+        """(peg-sized change, occluder) against the empty board, or None before it exists."""
+        if self._ref is None or self._ref.shape != canonical_bgr.shape:
+            return None
+        raw = self._raw if self._raw is not None and self._raw.shape == canonical_bgr.shape else canonical_bgr
+        changed = self._ref.changed(raw, self.change_threshold)
+        changed = changed.astype(np.uint8) * 255
+        changed = cv2.morphologyEx(changed, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+        n, labels, stats, _ = cv2.connectedComponentsWithStats(changed, connectivity=8)
+        big = self.occluder_area_mm2 * self.px_per_mm**2
+        large = np.zeros(n, bool)
+        cand = np.flatnonzero(stats[:, cv2.CC_STAT_AREA] > big)
+        cand = cand[cand > 0]
+        if cand.size:
+            # Area outside where seated pegs stand: the footprints, or discs of 1.5 r without
+            # a camera model. Nine pegs at 45 deg touch, but stay inside their footprints.
+            geom = self.seat_geometry()
+            if geom is not None:
+                seat = geom["any_footprint"]
+            else:
+                disc = np.zeros(changed.shape, np.uint8)
+                for h in self._holes or []:
+                    cv2.circle(disc, (int(round(h.x)), int(round(h.y))), int(round(1.5 * self.hole_radius_px)), 255, -1)
+                seat = disc > 0
+            outside = np.bincount(labels[~seat], minlength=n)
+            large[cand] = outside[cand] > big
+        if large.any():
+            # fingertips the threshold split off the hand: small pieces within 4 mm of it
+            k = max(3, int(round(8 * self.px_per_mm)) | 1)
+            near = cv2.dilate(np.where(large[labels], 255, 0).astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+            touching = np.unique(labels[(near > 0) & (labels > 0)])
+            large[touching] = True
+        occluder = np.where(large[labels], 255, 0).astype(np.uint8)
+        return cv2.bitwise_and(changed, cv2.bitwise_not(occluder)), occluder
 
     def _patch(self, gray: np.ndarray, h: Hole) -> np.ndarray | None:
         m = self.template_half_px
@@ -450,7 +550,11 @@ class BoardState:
             skin = cv2.inRange(hsv, np.array(SKIN_HSV_LO, np.uint8), np.array(SKIN_HSV_HI, np.uint8))
             mask = cv2.bitwise_and(mask, cv2.bitwise_not(skin))
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        return cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        change = self.change_masks(canonical_bgr)
+        if change is not None:  # section 6: what colour misses (wooden, white, grey pegs)
+            mask = cv2.bitwise_and(cv2.bitwise_or(mask, change[0]), cv2.bitwise_not(change[1]))
+        return mask
 
     def _exclude(self, mask: np.ndarray, exclude_mm: Sequence[RectMM] | None) -> np.ndarray:
         if not exclude_mm:
@@ -489,6 +593,8 @@ class BoardState:
         assert self._template_mask is not None
         geom = self.seat_geometry()
         skin = self.skin_mask(canonical_bgr)
+        change = self.change_masks(canonical_bgr)
+        occluder = None if change is None else change[1]
         out = []
         for h in holes:
             frac = self._disc_fraction(mask, h)
@@ -505,6 +611,11 @@ class BoardState:
                 col = float(mask.ravel()[region].mean() / 255.0)
                 skin_frac = max(skin_frac, float(skin.ravel()[region].mean() / 255.0))
             base = self._skin_base[h.index] if h.index < len(self._skin_base) else 0.0
+            occl = 0.0
+            if occluder is not None:
+                occl = self._disc_fraction(occluder, h)
+                if geom is not None and geom["columns"][h.index].size:
+                    occl = max(occl, float(occluder.ravel()[geom["columns"][h.index]].mean() / 255.0))
             # Covered, not empty: the hole no longer looks like its empty template and no peg
             # colour explains it (a large hand is normalised to "paper" in this view, so the
             # skin share alone misses it).
@@ -526,7 +637,13 @@ class BoardState:
                     "peg_fraction": round(frac, 4),
                     "empty_template_score": None if score is None else round(score, 4),
                     "column_fraction": None if col is None else round(col, 4),
-                    "hidden": bool(skin_frac - base >= self.occluded_skin or covered),
+                    # with the empty board known, skin hides a hole only while an occluder is
+                    # there (a seated wooden peg is skin-coloured itself), section 6
+                    "hidden": bool(
+                        (skin_frac - base >= self.occluded_skin and (occluder is None or occl >= 0.15))
+                        or covered
+                        or occl >= 0.3
+                    ),
                 }
             )
         return out
@@ -544,6 +661,8 @@ class BoardState:
                 out.append(True)
             elif s.get("hidden") and self._last_occ is not None and k < len(self._last_occ):
                 out.append(self._last_occ[k])  # a hand over the hole: hidden is not a change
+            elif s.get("hidden") and self._ref is not None:
+                out.append(False)  # covered before any decision: a peg not seen is not counted
             elif geom is not None and any(
                 col_seen[j] and geom["disc_in_footprint"][k, j] >= self.disc_in_footprint
                 for j in range(len(scores)) if j != k

@@ -326,3 +326,10 @@ test('no tap-to-sample in a replay', () => {
   renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
   expect(screen.queryByRole('button', { name: /^Cup not found\?/ })).not.toBeInTheDocument()
 })
+
+test('before the first fix the coach asks to keep the cup off the sheet', () => {
+  // 24 Oct team test: a cup on dot 1 hides a corner marker, so the session never started
+  mockStream([{ ...frame, calibrated: false, missing: [0], cup: { ...frame.cup, dot: null, state: 'at_dot' } }])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.getAllByText(/Keep the cup and your hand off the sheet for a moment\./).length).toBeGreaterThan(0)
+})

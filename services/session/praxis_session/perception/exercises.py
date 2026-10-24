@@ -212,7 +212,7 @@ _STEPS: dict[str, list[str]] = {
     ],
     "cup": [
         "Sit at the table with the printed five-dot sheet in front of you, cup in your practising hand.",
-        "Put the cup on dot 1, then rest your hand in your lap.",
+        "Keep the cup beside the sheet until the camera finds all four corners, then put it on dot 1 and rest your hand in your lap.",
         "Reach, lift the cup and set it down on the next dot, one dot at a time.",
         "After dot 5 come back the same way. Two slow arcs, then two as quick as feels safe.",
     ],

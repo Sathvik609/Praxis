@@ -170,8 +170,9 @@ cd web && pnpm install && pnpm dev
 #      ("Tap a seated peg to sample its colour") — the service samples a 6 mm patch and uses a
 #      ±12° hue window from then on (WebSocket command {"cmd":"sample_colour","hole":k}), or press
 #      "Pegs not found? Tap a peg on the picture" and tap a peg on the camera view.
-#    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (blue band on the cup base, docs/sheets/cup_targets.pdf;
-#      a different band colour: press "Cup not found? Tap the cup base on the picture" and tap it, or Enter
+#    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (any cup: keep it beside the sheet until the four corners are found, then on dot 1;
+#      it is found as what changed on the empty sheet; docs/sheets/cup_targets.pdf. A blue band still works, and for
+#      a band colour: press "Cup not found? Tap the cup base on the picture" and tap it, or Enter
 #      for the cup on its dot; sends {"cmd":"sample_colour","x_px":..,"y_px":..}. Black/grey/white is refused with the reason).
 #    → http://localhost:5173/session?exercise=abduction&side=left runs Arm out to the side (face the camera,
 #      no sheet needed). A link to a hidden exercise (pendulum, arm, external_rotation, ...) goes back to Choose.

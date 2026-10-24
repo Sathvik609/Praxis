@@ -37,7 +37,11 @@ def test_check_setup_reports_whether_the_cup_is_seen():
     p.process(frame(0, bgr=(200, 90, 30)), 0.0, 0)  # the default blue cup
     r = p.check_setup()
     assert r["all_pass"] and row(r, "target")["status"] == "pass" and r["measures"]["target_seen"] is True
-    p.process(frame(0), 0.1, 1)  # a green cup
+    # 24 Oct: a green cup on the same dot is now seen too (it changed the sheet seen at the first
+    # fix, cup.py), so the "not seen" path is a sheet with no cup on it
+    p.process(frame(0), 0.1, 1)
+    assert p.check_setup()["measures"]["target_seen"] is True
+    p.process(frame(None), 0.2, 2)
     r = p.check_setup()
     assert "target" in r["failing"] and r["measures"]["target_seen"] is False
     assert r["measures"]["colour_source"] == "default" and row(r, "target")["hint"]

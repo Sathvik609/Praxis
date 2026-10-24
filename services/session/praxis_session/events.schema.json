@@ -639,10 +639,11 @@
       "type": "array"
     },
     "grasp": {
-      "description": "state_change to grasped: what lifted the peg - 'count' (a free peg disappeared) or 'pinch' (pinch aperture in the source zone).",
+      "description": "state_change to grasped: what lifted the peg - 'count' (a free peg disappeared), 'pinch' (pinch aperture in the source zone) or 'unseen' (a peg was seated whose lift was not seen; the rep is unverified).",
       "enum": [
         "count",
-        "pinch"
+        "pinch",
+        "unseen"
       ]
     },
     "exercise": {

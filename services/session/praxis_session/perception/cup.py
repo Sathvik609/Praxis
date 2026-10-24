@@ -37,6 +37,15 @@ base centre and diameter when the radius is cup-sized (15-50 mm), the arc spans 
 radius and the fit is tight (RMS <= 1.5 mm). A full disc (the flat 2-D renders, or a camera
 straight overhead) still takes the old centroid path; a lifted cup's edge leaves the paper and
 reads as moved, which is the lift.
+
+An ordinary cup (24 Oct 2026, team test): nothing asked for the blue tape ring, and the team's
+real cup sessions logged no state change at all. The pipeline keeps the sheet seen at the
+session's first fix as an empty reference (`capture_reference`, board.EmptyReference: the
+change is cv2.absdiff on the warped view before paper normalisation, exposure-matched, with
+ghosts of removed things dropped). When the colour window finds no cup, the cup is what changed:
+the whole cup body is one silhouette running away from the camera, so its centroid is far
+behind the base and only the base-edge fit above is used (never the centroid), with the length
+gate widened to `max_silhouette_mm` for the body (tests/test_cup_any_colour.py).
 """
 
 from __future__ import annotations
@@ -49,7 +58,7 @@ import cv2
 import numpy as np
 
 from praxis_session.events import Event, make_event
-from praxis_session.perception.board import hsv_window_from_patch, hue_window_mask, normalise_to_paper
+from praxis_session.perception.board import EmptyReference, hsv_window_from_patch, hue_window_mask, normalise_to_paper
 from praxis_session.perception.board_spec import CUP_TARGETS, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
@@ -91,8 +100,17 @@ class CupSheetState:
         paper_kernel_mm: float = 100.0,
         group_mm: float = 40.0,
         max_cup_mm: float = 100.0,
+        change_threshold: int = 38,
+        max_silhouette_mm: float = 230.0,
     ) -> None:
         self.spec = spec
+        self.change_threshold = change_threshold
+        self.max_silhouette_mm = max_silhouette_mm
+        # a body silhouette's base: only edge points this close to its front are the base arc
+        # (behind that, the outermost points are the cup's flaring sides)
+        self.front_arc_mm = 22.0
+        self._raw: np.ndarray | None = None  # the last warp before paper normalisation
+        self._ref: EmptyReference | None = None  # the sheet at the first fix (capture_reference)
         self.max_aspect = max_aspect
         self.group_mm = group_mm
         self.max_cup_mm = max_cup_mm
@@ -118,6 +136,7 @@ class CupSheetState:
             raise RuntimeError("warp requires a calibrated frame")
         canon = cv2.warpPerspective(frame_bgr, self._S @ cal.H_px_to_mm, (self.w, self.h))
         self._cal = cal
+        self._raw = canon
         if self.normalise:
             # Paper-referenced white balance + flat field (board.normalise_to_paper); the kernel
             # is wider than the cup base so the base itself is never taken for shading.
@@ -146,9 +165,33 @@ class CupSheetState:
         k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         return cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
 
+    @property
+    def has_reference(self) -> bool:
+        return self._ref is not None
+
+    def capture_reference(self) -> None:
+        """Keep the last warped view as the empty sheet (the session's first fix)."""
+        if self._raw is not None:
+            self._ref = EmptyReference(self._raw, self.px_per_mm, self.paper_kernel_mm)
+
+    def change_mask(self, canonical_bgr: np.ndarray) -> np.ndarray | None:
+        if self._ref is None or self._raw is None or self._ref.shape != self._raw.shape or self._raw.shape != canonical_bgr.shape:
+            return None
+        mask = self._ref.changed(self._raw, self.change_threshold).astype(np.uint8) * 255
+        k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        return cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
+
     def cup_mm(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> tuple[float, float, float] | None:
+        got = self._find(self.cup_mask(canonical_bgr, colour_range), self.max_cup_mm, edge_only=False)
+        if got is None and isinstance(colour_range, str):
+            change = self.change_mask(canonical_bgr)
+            if change is not None:  # an ordinary cup: what changed on the empty sheet
+                got = self._find(change, self.max_silhouette_mm, edge_only=True)
+        return got
+
+    def _find(self, mask: np.ndarray, max_len_mm: float, edge_only: bool) -> tuple[float, float, float] | None:
         contours, _ = cv2.findContours(
-            self.cup_mask(canonical_bgr, colour_range), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE  # every edge pixel: the base-edge fit needs them
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE  # every edge pixel: the base-edge fit needs them
         )
         ppm = self.px_per_mm
         # Fingers gripping the cup split its base band into pieces, none cup-sized on its own
@@ -160,7 +203,7 @@ class CupSheetState:
         blobs = []
         for c in contours:
             a = cv2.contourArea(c)
-            if a < (3.0 * ppm) ** 2 or max(cv2.minAreaRect(c)[1]) > self.max_cup_mm * ppm:
+            if a < (3.0 * ppm) ** 2 or max(cv2.minAreaRect(c)[1]) > max_len_mm * ppm:
                 continue
             m = cv2.moments(c)
             blobs.append((a, np.array([m["m10"] / m["m00"], m["m01"] / m["m00"]]), c))
@@ -174,6 +217,11 @@ class CupSheetState:
             centre = sum(b[0] * b[1] for b in group) / area
             full_disc = hull_area > 0 and area / hull_area >= self.full_disc_solidity
             disc_ok = diameter_mm >= self.min_diameter_mm and self._cup_shaped(pts)
+            if edge_only:  # a whole cup body: only its bottom edge lies on the paper
+                fit = self._base_circle(group, centre, front_mm=self.front_arc_mm)
+                if fit is not None:
+                    return fit
+                continue
             if disc_ok and (full_disc or len(group) > 1 and self._cal is None):
                 return (float(centre[0]) / ppm, float(centre[1]) / ppm, float(diameter_mm))
             # a crescent, or a piece of one too small to be a disc: fit the base edge
@@ -200,7 +248,7 @@ class CupSheetState:
         n = float(np.linalg.norm(d))
         return None if n < 1e-6 else d / n
 
-    def _base_circle(self, group: list, centre_px: np.ndarray) -> tuple[float, float, float] | None:
+    def _base_circle(self, group: list, centre_px: np.ndarray, front_mm: float | None = None) -> tuple[float, float, float] | None:
         """Circle through the camera-side edge of the base band (see the module docstring)."""
         ppm = self.px_per_mm
         u = self._towards_camera(centre_px, group)
@@ -216,6 +264,9 @@ class CupSheetState:
             k = np.flatnonzero(bins == b)
             edge.append(pts[k[np.argmax(along[k])]])
         edge_a = np.array(edge)
+        if front_mm is not None and len(edge_a):
+            ahead_of = (edge_a - centre_px) @ u
+            edge_a = edge_a[ahead_of >= ahead_of.max() - front_mm * ppm]
         if len(edge_a) < 6:
             return None
         fit = None

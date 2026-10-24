@@ -56,7 +56,8 @@ const LOST: Record<CameraView, string> = {
 /** `view` defaults to the side view for arm work and the sheet for cup / NHPT. */
 export function statusLabel(s: LiveStatus, mode: 'nhpt' | 'cup' | 'arm', view?: CameraView): StatusLabel {
   const v: CameraView = mode === 'arm' ? (view === 'front' ? 'front' : 'side') : 'table'
-  const sheet = FIND[v]
+  // 24 Oct team test: a cup on dot 1 (or a hand) hides a corner, so the first fix never came
+  const sheet = mode === 'cup' ? `${FIND.table} Keep the cup and your hand off the sheet for a moment.` : mode === 'nhpt' ? `${FIND.table} Keep your hand off the sheet for a moment.` : FIND[v]
   switch (s) {
     case 'connecting':
       return { chip: 'Connecting', tone: 'neutral', feed: 'Connecting to the coach service', coach: 'Connecting to the coach service.' }

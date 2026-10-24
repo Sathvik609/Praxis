@@ -783,6 +783,10 @@ class SessionPipeline:
         if cal.calibrated:
             canon = self._cup_sheet.warp(frame_bgr, cal)
             self._last_canon, self._last_cal = canon, cal
+            if not self._cup_sheet.has_reference and cal.source == "fresh":
+                # the session's first four-marker fix: the sheet before the cup goes on it, the
+                # reference an ordinary (non-blue) cup is found against (cup.py, 24 Oct)
+                self._cup_sheet.capture_reference()
             cup_mm = self._cup_sheet.cup_mm(canon)
             dots_px = self._cup_sheet.dots_frame_px(cal)
             if cup_mm is not None:

@@ -88,18 +88,33 @@ def test_three_markers_never_calibrate_without_a_prior_four_marker_frame():
         assert not res.calibrated and res.missing == [1] and res.source is None
 
 
-def test_two_missing_markers_hold_the_last_homography_for_1_5_s():
+def test_markers_that_have_not_moved_keep_the_fix_through_a_long_occlusion():
+    """24 Oct (team test: 19 tracking-lost pauses in one NHPT session, the cup on dot 1 or 5 hiding
+    a top corner): one or two markers still in view, where the last fix says they are, prove the
+    sheet has not moved, so the fix holds however long the hand or cup covers the others."""
     frame, H = camera_frame(NHPT_BOARD)
     cal = Calibrator(NHPT_BOARD)
     fresh = cal.run(frame, t=0.0)
-    bad = hide_markers(frame, H, NHPT_BOARD, [1, 2])
+    for hidden in ([1, 2], [0, 1, 2]):
+        bad = hide_markers(frame, H, NHPT_BOARD, hidden)
+        for i in range(1, 60):
+            res = cal.run(bad, t=i * 0.1)
+            assert res.calibrated and res.source == "held", (hidden, i)
+            assert res.missing == hidden
+            assert np.allclose(res.H_px_to_mm, fresh.H_px_to_mm)
+
+
+def test_with_every_marker_covered_the_fix_holds_1_5_s_then_is_lost():
+    frame, H = camera_frame(NHPT_BOARD)
+    cal = Calibrator(NHPT_BOARD)
+    fresh = cal.run(frame, t=0.0)
+    bad = hide_markers(frame, H, NHPT_BOARD, [0, 1, 2, 3])
     held_ages = []
     for i in range(1, 30):
         t = i * 0.1
         res = cal.run(bad, t=t)
         if t <= 1.5 + 1e-9:
             assert res.calibrated and res.source == "held", t
-            assert res.missing == [1, 2]
             assert np.allclose(res.H_px_to_mm, fresh.H_px_to_mm)
             held_ages.append(res.age_s)
         else:
@@ -108,6 +123,29 @@ def test_two_missing_markers_hold_the_last_homography_for_1_5_s():
     # a fresh frame resets the hold
     assert cal.run(frame, t=5.0).source == "fresh"
     assert cal.run(bad, t=5.5).source == "held"
+
+
+def test_two_markers_refit_the_sheet_after_it_moved():
+    frame, _ = camera_frame(NHPT_BOARD)
+    cal = Calibrator(NHPT_BOARD)
+    cal.run(frame, t=0.0)
+    moved, H2 = camera_frame(NHPT_BOARD, tilt_deg=22.0, yaw_deg=-4.0, scale=0.92)
+    res = cal.run(hide_markers(moved, H2, NHPT_BOARD, [1, 2]), t=3.0)
+    assert res.calibrated and res.source == "partial" and res.missing == [1, 2]
+    pts = np.array(NHPT_BOARD.targets_mm, np.float32)
+    import cv2
+
+    truth = cv2.perspectiveTransform(pts.reshape(-1, 1, 2), H2.astype(np.float64)).reshape(-1, 2)
+    assert np.abs(res.to_px(pts) - truth).max() < 2.5  # the new pose (old one is far off), ~0.6 mm
+
+
+def test_one_marker_that_moved_does_not_hold_the_old_fix():
+    frame, _ = camera_frame(NHPT_BOARD)
+    cal = Calibrator(NHPT_BOARD)
+    cal.run(frame, t=0.0)
+    moved, H2 = camera_frame(NHPT_BOARD, tilt_deg=25.0, yaw_deg=-6.0, scale=0.9)
+    res = cal.run(hide_markers(moved, H2, NHPT_BOARD, [1, 2, 3]), t=3.0)
+    assert not res.calibrated
 
 
 # ---- Sprint D-CAL-3: camera tilt from ArUco pose (cv2.solvePnP) -------------------------

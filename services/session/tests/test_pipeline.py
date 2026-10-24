@@ -44,13 +44,18 @@ def test_setup_rows_say_which_checks_gate_the_start():
 
 
 def test_perception_lost_and_regained():
-    """Two markers gone: the homography is held 1.5 s, then LOSS_FRAMES (20) uncalibrated
-    frames are needed before `perception_lost` (D-CAL-1). At 0.5 s steps: 15 bad frames
-    (3 held + 12 lost) stay quiet, 25 (3 held + 22 lost) pause."""
+    """Every marker gone (the sheet pushed out of view): the homography is held 1.5 s, then
+    LOSS_FRAMES (20) uncalibrated frames are needed before `perception_lost` (D-CAL-1). At 0.5 s
+    steps: 15 bad frames (3 held + 12 lost) stay quiet, 25 (3 held + 22 lost) pause. Two markers
+    covered but unmoved never pause (24 Oct, anchored hold)."""
     from tests.test_calibration import hide_markers
 
     good, H = camera_frame(NHPT_BOARD)
-    bad = hide_markers(good, H, NHPT_BOARD, [1, 2])
+    two = hide_markers(good, H, NHPT_BOARD, [1, 2])
+    p2 = SessionPipeline(mode="calibrate", sheet="nhpt_board")
+    p2.process(good, 0.0, 0)
+    assert "perception_lost" not in [t for i in range(1, 40) for t in _types(p2.process(two, i * 0.5, i))]
+    bad = hide_markers(good, H, NHPT_BOARD, [0, 1, 2, 3])
     p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
     p.process(good, 0.0, 0)
     seen = []
