@@ -58,7 +58,7 @@ What is measured and what is not, in one place:
 3. **Feeling is self-reported.** Pain and effort come from what the patient taps or says. The face is never analysed for pain or emotion, and person detection is used for presence and pose only.
 4. **No composite score.** No "accuracy" or "recovery" number appears anywhere. The app shows reps (verified / unverified), times and camera-relative angles, each labelled as such.
 5. **The patient can always stop.** Take a rest (which pauses) · Pain / feel unwell · End session are fixed on every live screen. A resume is always the patient's tap.
-6. **Say what is simulated.** The rule coach says it is rule-based, a replay says "Replay", sample data says "Sample" (and is off by default since 24 Oct: a fresh install starts from zero), and every trace row names its source. Home opens with a three-step "Start here" card (live Arm out to the side, Replay for the sheet tasks, technical details).
+6. **Say what is simulated.** The rule coach says it is rule-based, a replay says "Replay", sample data says "Sample" (and is off by default since 24 Oct: a fresh install starts from zero), and every trace row names its source. On Home, the next-practice card is marked "Start here".
 
 ## 3. What exists and what is new
 

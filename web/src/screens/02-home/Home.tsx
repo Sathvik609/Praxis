@@ -17,7 +17,6 @@ import { demoUrl, readSide } from '../../lib/day'
 import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
-import { StartHere } from './StartHere'
 
 const ZOOMS = [1, 1.25, 1.5]
 const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
@@ -50,17 +49,19 @@ export function Home() {
   }
 
   return (
-    <>
-    {/* Outside the grid: designer.css places the Home columns by nth-child. */}
-    <StartHere />
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.1fr)] gap-5 p-5">
       <div className="flex flex-col gap-4">
         <Card tone="brand" className="p-6">
-          <div className="text-white/80">Next practice · today</div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-white/80">Next practice · today</div>
+            {/* 24 Oct: where a first-time visitor starts. Said in words; the ring on the button only repeats it. */}
+            <span className="start-here-tag">Start here</span>
+          </div>
           <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
           <p className="mt-1 text-white/80">About {DAY_MINUTES} min · cup + target sheet</p>
-          <Button full variant="inverse" className="mt-5" onClick={() => nav('/details/choose')}>Start session</Button>
+          <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav('/details/choose')}>Start session</Button>
           <Button full variant="secondary" className="mt-3 hero-coach" onClick={() => setCoachOpen(true)}>Ask the coach</Button>
+          <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
         </Card>
 
         <Card className="wk-card" title="This week" action={week.some((d) => d.sample) ? <Chip tone="neutral">Sample history</Chip> : undefined}>
@@ -136,6 +137,5 @@ export function Home() {
         }}
       />
     </div>
-    </>
   )
 }

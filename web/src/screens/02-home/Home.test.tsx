@@ -201,10 +201,14 @@ test('open report falls back to progress without sessions; no seeded last sessio
   expect(screen.getByText('PROGRESS')).toBeInTheDocument()
 })
 
-test('a first visit shows the Start here guide above the cards', async () => {
-  localStorage.removeItem('praxis.startHere')
+test('the next-practice card marks where to start, how to go on, and that the rest can be explored', async () => {
   mockApi(routes())
   await renderHome()
-  expect(screen.getByRole('region', { name: 'Start here' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Start Arm out to the side' })).toBeInTheDocument()
+  const start = screen.getByRole('button', { name: 'Start session' })
+  const card = start.closest('section') as HTMLElement
+  expect(within(card).getByText('Start here')).toBeInTheDocument() // in words, not only the highlight
+  expect(start).toHaveClass('start-here')
+  expect(card).toHaveTextContent(/each step tells you what to do next/i)
+  expect(card).toHaveTextContent(/explore/i)
+  expect(screen.queryByRole('button', { name: /Hide/ })).not.toBeInTheDocument()
 })
