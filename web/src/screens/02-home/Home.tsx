@@ -55,7 +55,7 @@ export function Home() {
           <div className="flex items-center justify-between gap-3">
             <div className="text-white/80">Next practice · today</div>
             {/* 24 Oct: where a first-time visitor starts. Said in words; the ring on the button only repeats it. */}
-            <span className="start-here-tag">Start here</span>
+            <span className="start-here-tag"><span className="start-here-arrow" aria-hidden="true">↓</span>Start here</span>
           </div>
           <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
           <p className="mt-1 text-white/80">About {DAY_MINUTES} min · cup + target sheet</p>
