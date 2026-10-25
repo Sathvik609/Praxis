@@ -21,7 +21,7 @@ const FB_FACES = [
 ]
 const FB_DIFFICULTY: Option<Difficulty>[] = [
   { value: 'too_easy', label: 'Too easy', sub: 'I could have done more', effort: 2 },
-  { value: 'just_right', label: 'Just right', sub: 'Worked, but I finished it', effort: 4 },
+  { value: 'just_right', label: 'Just right', sub: 'Some effort, and I finished it', effort: 4 },
   { value: 'hard', label: 'Hard', sub: 'I got through it, but only just', effort: 7 },
   { value: 'couldnt_finish', label: "I couldn't finish", sub: 'I had to stop or skip part of it', effort: 9 },
 ]
@@ -253,7 +253,7 @@ export function FeedbackOverlay({ open, early = false, reportedPain = null, noti
           <div className="fb-actions">
             {step === 0 ? (
               <Button variant="secondary" onClick={onSkip}>
-                Skip
+                Skip feedback
               </Button>
             ) : (
               <Button variant="secondary" onClick={() => setStep(step - 1)}>

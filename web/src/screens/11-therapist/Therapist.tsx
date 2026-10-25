@@ -7,7 +7,7 @@ import { Field } from '../../design/Field'
 import { X } from '../../design/Icon'
 import { Stat } from '../../design/Stat'
 import { api, isReplaySession, isTherapistOnly, useApi } from '../../lib/api'
-import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
+import { WEEKDAYS, dayMonth, daysLabel, visitText } from '../../lib/calendar'
 import { upcomingVisit } from '../../lib/seed'
 import { fmtV } from '../../lib/trend'
 import { ruleCoachLabel } from '../../session/agent'
@@ -131,7 +131,7 @@ export function Therapist() {
                 <ul className="divide-y divide-line">
                   {open.map((f) => (
                     <li key={f.id} className="py-3">
-                      <b>{f.date.slice(5)}</b> · {f.rule === 'pain' ? 'Session ended by stop rule: ' : ''}{f.detail}
+                      <b>{dayMonth(f.date)}</b> · {f.rule === 'pain' ? 'Session ended by stop rule: ' : ''}{f.detail}
                       <div className="mt-2"><Button variant="secondary" onClick={() => markReviewed(f.id)}>Mark reviewed</Button></div>
                     </li>
                   ))}
@@ -154,7 +154,7 @@ export function Therapist() {
                   </li>
                 </ul>
                 {savedNote && <p className="mt-2 font-bold text-mint-ink" role="status">{savedNote}</p>}
-                <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest</p>
+                <p className="mt-3 text-muted">Pain tier at check-in: 0–3 full · 4–6 gentle (side lift 2×6 hold 2 s ≤60°, no fast arcs) · ≥{Math.min(7, rx?.stop_rules.pain_max ?? 7)} rest advised, or continue gently · flagged</p>
                 <p className="text-muted">Stop rules: pain ≥{rx?.stop_rules.pain_max ?? 7} · new or worse symptoms · lean &gt;{rx?.stop_rules.lean_deg ?? 12}° ×{rx?.stop_rules.lean_events ?? 3}</p>
                 <p className="mt-3 text-base text-muted">Doses are read-only here, and the coach never goes beyond them. Practice days and the next visit can be changed with Edit practice days.</p>
               </section>
@@ -167,7 +167,7 @@ export function Therapist() {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
                 {painRows.length ? (
-                  <span>Pain before → after · {painRows.map((s) => `${s.date.slice(5)}: ${String(s.checkin?.pain_before ?? '—')} → ${String(s.feedback.pain_after)}`).join(' · ')}</span>
+                  <span>Pain before → after · {painRows.map((s) => `${dayMonth(s.date)}: ${String(s.checkin?.pain_before ?? '—')} → ${String(s.feedback.pain_after)}`).join(' · ')}</span>
                 ) : (
                   <span>{sessions ? 'No pain reports yet.' : 'Loading pain reports…'}</span>
                 )}
@@ -180,7 +180,7 @@ export function Therapist() {
             <ul className="divide-y divide-line">
               {(sessions ?? []).map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-3 py-3">
-                  <span className="w-16 text-muted">{s.date.slice(5)}</span>
+                  <span className="w-16 text-muted">{dayMonth(s.date)}</span>
                   <span className="min-w-0 flex-1 text-lg">{s.title}</span>
                   <span className="text-muted">{s.summary.camera.verified ?? 0} verified · {s.summary.camera.unverified ?? 0} unverified · {s.summary.camera.coverage_pct ?? '—'}% coverage</span>
                   {s.illustrative && <Chip tone="neutral">Sample</Chip>}

@@ -70,6 +70,12 @@ export function shortDate(day: string): string {
   return `${WEEKDAYS[weekday(day)]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
 }
 
+/** "28 Sep" */
+export function dayMonth(day: string): string {
+  const d = utc(day)
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
+}
+
 /** "Monday 28 September" for screen readers. */
 export function longDate(day: string): string {
   const d = utc(day)
@@ -136,7 +142,7 @@ export function dayLines(day: CalendarDay, compact = false): string[] {
   } else if (day.status === 'today') {
     if (compact) lines.push('Today')
     else if (day.planned) lines.push(`Today · ${plan} · ${day.minutes} min`)
-    else lines.push(day.nhpt_due ? 'Today' : 'Today · Rest')
+    else if (!day.nhpt_due) lines.push('Today · Rest') // a peg day: the card's Today badge says it once
     if (day.nhpt_due) lines.push('Peg test (weekly)')
   } else if (day.status === 'planned') {
     if (day.planned) lines.push(compact ? 'Planned' : `Planned · ${day.minutes} min`)

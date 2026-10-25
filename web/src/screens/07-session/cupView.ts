@@ -72,7 +72,7 @@ export function cupBand(events: Ev[], frame: FrameEvent | null): CupBand | null 
     return { text: `Arc ${Number(last.arc)} complete · ${n - Number(last.unverified ?? 0)} of ${n} verified`, tone: 'mint' }
   }
   if (last?.type === 'reach_complete') {
-    if (last.verified) return { text: `Dot ${Number(last.to_dot) + 1} seated · hand clear · verified`, tone: 'mint' }
+    if (last.verified) return { text: `Dot ${Number(last.to_dot) + 1} placed · hand clear · verified`, tone: 'mint' }
     return { text: last.reason === 'marker_lost' ? 'Placement not visible · a corner marker was hidden' : 'Placement not visible · hand over the cup', tone: 'neutral' }
   }
   if (cup && cup.dot != null && frame?.calibrated) return { text: 'Cup found · sheet locked', tone: 'mint' }

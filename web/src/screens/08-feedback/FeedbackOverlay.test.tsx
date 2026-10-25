@@ -149,6 +149,6 @@ test('a pain report that arrives while the dialog is closed is pre-selected when
 test('Skip on the first step reports nothing (not recorded, never zero)', () => {
   const onSkip = vi.fn()
   render(<FeedbackOverlay open onSave={vi.fn()} onSkip={onSkip} />)
-  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip feedback' }))
   expect(onSkip).toHaveBeenCalled()
 })

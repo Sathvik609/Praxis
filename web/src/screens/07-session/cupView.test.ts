@@ -31,7 +31,7 @@ test('band for a wrong dot', () => {
 })
 
 test('band for a verified placement, a moving cup and lost tracking', () => {
-  expect(cupBand([reach(5, 2, true)] as never, cupFrame({}, 5))).toEqual({ text: 'Dot 3 seated · hand clear · verified', tone: 'mint' })
+  expect(cupBand([reach(5, 2, true)] as never, cupFrame({}, 5))).toEqual({ text: 'Dot 3 placed · hand clear · verified', tone: 'mint' })
   expect(cupBand([reach(5, 2, true)] as never, cupFrame({ state: 'in_transit' }, 6))).toEqual({ text: 'Cup moving', tone: 'mint' })
   expect(cupBand([reach(5, 2, true), { type: 'perception_lost', t: 6, id: 99 }] as never, cupFrame({}, 6))).toEqual({ text: 'Tracking paused · counters held', tone: 'neutral' })
   expect(cupBand([], cupFrame({ dot: null }))).toBeNull()

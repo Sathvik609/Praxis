@@ -51,6 +51,8 @@ test('every status is said in words, never by colour alone', () => {
   expect(dayLines(day({ status: 'missed' }))).toEqual(['Planned · not done'])
   expect(dayLines(day({ status: 'rest', planned: false, exercises: [] }))).toEqual(['Rest'])
   expect(dayLines(day({ status: 'planned', planned: false, nhpt_due: true, minutes: 0, exercises: [{ id: 'nhpt', name: 'Nine-Hole Peg Test' }] }))).toEqual(['Peg test (weekly)'])
+  // today's peg day: the card's own Today badge already says it, so no bare "Today" line under it (25 Oct)
+  expect(dayLines(day({ status: 'today', is_today: true, planned: false, nhpt_due: true, minutes: 0, exercises: [{ id: 'nhpt', name: 'Nine-Hole Peg Test' }] }))).toEqual(['Peg test (weekly)'])
   expect(dayLines(day({ status: 'untracked' }))).toEqual([]) // blank, and its card carries no status colour
   expect(dayLines(day({ clinic_visit: { at: '2026-10-02T14:30', with: 'Dr. Anita Rao, OT', with_short: 'Dr. Rao', time: '2:30 PM' } }))).toEqual(['Planned · 10 min', 'Clinic · Dr. Rao 2:30 PM'])
 })

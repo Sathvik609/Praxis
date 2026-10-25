@@ -451,7 +451,7 @@ export function SessionReport() {
                     {(agentNote || n.cat) && <small>{[agentNote ? ruleName(s.summary.coach) : null, n.cat].filter(Boolean).join(' · ')}</small>}
                     {capSentences(noteText(n.text))}
                   </span>
-                  <Chip tone={conf[n.confidence] ?? 'neutral'}>{cap(n.confidence)}</Chip>
+                  <Chip tone={conf[n.confidence] ?? 'neutral'}>{`${cap(n.confidence)} confidence`}</Chip>
                 </li>
               ))}
             </ul>

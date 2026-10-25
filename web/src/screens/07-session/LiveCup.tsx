@@ -175,7 +175,8 @@ export function LiveCup() {
   const serviceProgression = !!cp.prompt && promptKind(cp.prompt) === 'progression' && !hold.prompt
   const showModal = !flow.feedbackOpen && !hold.open && !complete && serviceProgression
 
-  const nextId = complete ? nextExercise(readDay()) : null
+  // A replay is not part of today's plan, and its "next" would open the live camera.
+  const nextId = complete && !replay ? nextExercise(readDay()) : null
   const nextEx = nextId && nextId !== 'cup' ? exerciseById(nextId) : null
   const nextDose = nextEx ? (readCheckinTier() === 'gentle' ? (nextEx.gentleDose ?? nextEx.dose) : nextEx.dose).split(' · ')[0] : ''
   const doneVerified = complete ? complete.reaches.filter((r) => r.verified).length : verifiedReaches
@@ -226,7 +227,7 @@ export function LiveCup() {
           status={status}
           videoRef={videoRef}
           frame={frame}
-          note={live ? `${frame?.hand?.present ? 'hand tracked' : 'hand not in view'} · ${frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'}` : label.feed}
+          note={live ? [frame?.models?.hand ? (frame.hand?.present ? 'hand tracked' : 'hand not in view') : null, frame?.overlay.cup_px ? 'cup tracked' : 'cup not seen'].filter(Boolean).join(' · ') : label.feed}
           band={live && band ? band.text : null}
           bandTone={band?.tone}
           mono={pipe}
@@ -286,6 +287,8 @@ export function LiveCup() {
             <p className="cup-modal-p">
               {nextEx ? (
                 <>Next in today&apos;s plan: <b>{nextEx.name}</b>, {nextDose}. You can also stop here and come back to it.</>
+              ) : replay ? (
+                'That was a replay. It is not counted in your practice.'
               ) : (
                 "That's everything in today's plan."
               )}

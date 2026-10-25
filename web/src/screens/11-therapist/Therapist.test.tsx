@@ -43,7 +43,8 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   expect(screen.queryByText(/illustrative/)).not.toBeInTheDocument()
   // pain summary comes from the stored sessions, not a hard-coded sentence
   expect(screen.queryByText(/one spike to 5 on 8 Sep/)).not.toBeInTheDocument()
-  expect(await screen.findByText(/Pain before → after · 09-12: 2 → 2/)).toBeInTheDocument()
+  expect(await screen.findByText(/Pain before → after · 12 Sep: 2 → 2/)).toBeInTheDocument() // dates read as on every other screen, not 09-12
+  expect(screen.getByText(/≥7 rest advised, or continue gently · flagged/)).toBeInTheDocument() // the 24 Oct pain tier, not a plain "rest"
   expect(screen.getAllByRole('button', { name: 'Open trace' }).length).toBeGreaterThan(0)
   fireEvent.click(screen.getAllByRole('button', { name: 'Mark reviewed' })[0])
   expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/flags/1/reviewed'))).toBe(true)
@@ -89,7 +90,7 @@ test('a replayed session is badged Replay in the summaries and left out of the p
   mockApi({ ...ROUTES, '/api/sessions': { sessions: [replay, { ...SESSION, source: 'live' }] } })
   render(<MemoryRouter><Therapist /></MemoryRouter>)
   const line = await screen.findByText(/Pain before → after/)
-  expect(line).not.toHaveTextContent('09-23')
+  expect(line).not.toHaveTextContent('23 Sep')
   const [replayRow, liveRow] = screen.getAllByRole('button', { name: 'Open trace' }).map((b) => b.closest('li')!)
   expect(within(replayRow).getByText('Replay')).toBeInTheDocument()
   expect(within(liveRow).queryByText('Replay')).not.toBeInTheDocument()

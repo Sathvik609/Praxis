@@ -57,6 +57,13 @@ test('shows the arc, direction, dot progress, unverified count and hand / cup tr
   expect(screen.getByText(/hand not in view · cup tracked/)).toBeInTheDocument()
 })
 
+test('with the hand model off the note says nothing about the hand', () => {
+  mockStream([{ ...frame, models: { hand: false } }])
+  renderAt('/session?exercise=cup&side=left')
+  expect(screen.queryByText(/hand not in view/)).toBeNull()
+  expect(screen.getByText(/cup tracked/)).toBeInTheDocument()
+})
+
 test('the band and the dots come from the real reach events; an occluded placement is unverified, not failed', () => {
   mockStream([reach(9, 2, false, 'cup_occluded'), frame])
   renderAt('/session?exercise=cup&side=left')
@@ -252,7 +259,7 @@ test('ending from a stop rule records the stop rule as the end reason, never nul
   mockStream([frame, { type: 'stop', t: 12, id: 50, rule: 'exertion', text: 'Sustained high exertion. Session ended and saved.' }])
   renderAt('/session?exercise=cup&side=left')
   fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip feedback' }))
   expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
 })
 
@@ -262,7 +269,7 @@ test('a replay whose last arc never completes moves to the feedback when the rec
   const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
   expect(dlg).toHaveTextContent('The recording has ended.')
   expect(dlg).not.toHaveTextContent(/ended early|What got in the way/)
-  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip feedback' }))
   expect(send).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: 'replay_end' }))
 })
 
@@ -271,6 +278,15 @@ test('a replay that completed keeps its done modal when the recording ends; noth
   renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
   expect(screen.getByRole('dialog', { name: 'Waiter – cup, done' })).toBeInTheDocument()
   expect(screen.queryByRole('dialog', { name: 'How was your practice?' })).not.toBeInTheDocument()
+})
+
+test('a finished replay offers no "Next exercise" (it would open the live camera, 25 Oct judge walk)', () => {
+  mockStream([frame, { type: 'cup_complete', t: 12, id: 3, arcs: 4, reaches: [] }])
+  renderAt('/session?exercise=cup&side=left&replay=synthetic_cup_01')
+  const dlg = screen.getByRole('dialog', { name: 'Waiter – cup, done' })
+  expect(within(dlg).queryByRole('button', { name: 'Next exercise' })).toBeNull()
+  expect(within(dlg).getByRole('button', { name: 'Finish for today' })).toBeInTheDocument()
+  expect(dlg).toHaveTextContent('That was a replay. It is not counted in your practice.')
 })
 
 // ---- tap-to-sample (12 Oct): a non-blue cup band ------------------------------------------

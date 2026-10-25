@@ -119,7 +119,7 @@ test('a replay that ends before the last set moves to the feedback as the record
   renderAt('/session?exercise=abduction&side=left&replay=synthetic_abduction_01')
   const dlg = screen.getByRole('dialog', { name: 'How was your practice?' })
   expect(dlg).toHaveTextContent('The recording has ended.')
-  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip' }))
+  fireEvent.click(within(dlg).getByRole('button', { name: 'Skip feedback' }))
   expect(armSend).toHaveBeenLastCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: false, end_reason: 'replay_end' }))
 })
 
@@ -280,7 +280,7 @@ test('ending from a stop rule records the stop rule as the end reason, never nul
   mockStream([frame, { type: 'stop', t: 12, id: 50, rule: 'exertion', text: 'Sustained high exertion. Session ended and saved.' }])
   renderAt('/session?exercise=abduction&side=left')
   fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Skip feedback' }))
   expect(armSend).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'feedback', ended_early: true, end_reason: 'stop:exertion' }))
 })
 

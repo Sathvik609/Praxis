@@ -79,7 +79,9 @@ test('replay clips open in a modal with the synthetic label and start a replay s
   const dialog = await openReplay()
   expect(await within(dialog).findByText('Nine-Hole Peg Test')).toBeInTheDocument()
   expect(within(dialog).getByText('Synthetic render')).toBeInTheDocument()
-  expect(within(dialog).getByText(/identical OpenCV pipeline/)).toBeInTheDocument()
+  expect(within(dialog).getByText(/same OpenCV pipeline and coach as a live session/)).toBeInTheDocument()
+  expect(within(dialog).getByText('Left hand')).toBeInTheDocument() // the peg test is a hand task; "rendered" is said once, by the tag
+  expect(within(dialog).queryByText(/rendered test clip/)).toBeNull()
   fireEvent.click(within(dialog).getByRole('button', { name: 'Replay Nine-Hole Peg Test' }))
   expect(screen.getByText('SESSION')).toBeInTheDocument()
 })
@@ -207,7 +209,7 @@ test('privacy, cloud and help rows say what is real', async () => {
   expect(screen.getByText('Default')).toBeInTheDocument()
   expect(screen.getByText('Edge mode · this laptop')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /^Camera setup/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /^Equipment and substitutes/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Equipment and sheets/ })).toBeInTheDocument()
   // push-to-talk was removed on 21 Oct: nothing promises a microphone
   expect(screen.queryByText(/microphone/i)).not.toBeInTheDocument()
 })

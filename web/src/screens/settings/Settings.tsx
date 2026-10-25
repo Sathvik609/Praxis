@@ -152,14 +152,14 @@ export function Settings() {
           <Card title="Help">
             <ul className="st-list">
               <SettingsRow title="Camera setup" sub="Laptop camera only · step-by-step with pictures" to={setupUrl('abduction', side)} />
-              <SettingsRow title="Equipment and substitutes" sub="What to use if something is missing" to="/details/choose" />
+              <SettingsRow title="Equipment and sheets" sub="What each exercise needs, and the sheets to print" to="/details/choose" />
             </ul>
           </Card>
         </div>
       </div>
 
       <Overlay open={replayOpen} title="Replay a recorded session" description="Recorded clips run through the same pipeline." onClose={() => setReplayOpen(false)} className="w-[min(620px,92vw)]">
-        <p className="mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live. The screen draws what OpenCV found (markers, holes, pegs, cup), not the video itself.</p>
+        <p className="mt-2 text-muted">No webcam needed. Each clip runs through the same OpenCV pipeline and coach as a live session, is badged Replay and is not counted in your progress. The screen draws what OpenCV found, not the video itself.</p>
         <ul className="st-list mt-4">
           {/* The service never lists a hidden exercise's clip (28 Sep); filtered here too. */}
           {(clips ?? [])
@@ -172,7 +172,7 @@ export function Settings() {
                 <SettingsRow
                   key={c.id}
                   title={name}
-                  sub={`Left side · ${c.synthetic ? 'rendered test clip' : 'recorded with consent'}`}
+                  sub={`${c.mode === 'nhpt' ? 'Left hand' : 'Left arm'}${c.synthetic ? '' : ' · recorded with consent'}`}
                   control={c.synthetic ? <span className="st-tag">Synthetic render</span> : undefined}
                   ariaLabel={`Replay ${name}`}
                   to={`/session?exercise=${ex?.id ?? c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`}

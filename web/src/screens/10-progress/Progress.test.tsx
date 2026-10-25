@@ -220,6 +220,15 @@ test('empty state when there are no sessions yet', async () => {
   expect(screen.getByText('No arm sessions in this range.')).toBeInTheDocument()
 })
 
+test('only replays so far: the empty charts say replays are listed, not charted', async () => {
+  const rp = (id: string, mode: string, title: string) => ({ ...SESSION, id, mode, title, source: 'replay', replay: true, date: '2026-09-12', summary: { ...cam(9), mode, source: 'replay' } })
+  mockApi({ ...BASE, '/api/progress': { ...PROGRESS, nhpt_trend: [], verified_per_session: [], pain_effort: [] }, '/api/sessions': { sessions: [rp('a', 'cup', 'Waiter – cup'), rp('b', 'nhpt', 'Nine-Hole Peg Test')] } })
+  renderProgress()
+  expect(await screen.findByText('No assessments yet. Replays are listed below, not charted.')).toBeInTheDocument()
+  expect(screen.getByText('No Waiter – cup sessions in this range. Replays are listed below, not charted.')).toBeInTheDocument()
+  expect(screen.getByText('No arm sessions in this range.')).toBeInTheDocument()
+})
+
 test('a trend mixing sample and your own points says so; sample points are named in the chart label', async () => {
   const mixed = { ...PROGRESS, nhpt_trend: [{ date: '2026-08-01', total_s: 68, kind: 'sample' }, { date: '2026-09-12', total_s: 41.2, kind: 'sample' }, { date: '2026-09-25', total_s: 38.5, kind: 'live' }] }
   mockApi({ ...BASE, '/api/progress': mixed })

@@ -103,6 +103,8 @@ export function Progress() {
 
   const shown = (sessions ?? []).filter((s) => !isHiddenSession(s))
   const counted = shown.filter((s) => !isReplaySession(s))
+  // A replay is listed but never charted; an empty chart says so when one of that exercise exists.
+  const replayNote = (mode: string) => (shown.some((s) => isReplaySession(s) && s.mode === mode) ? ' Replays are listed below, not charted.' : '')
   const allDates = [...p.verified_per_session.map((v) => v.date), ...counted.map((s) => s.date), ...p.nhpt_trend.map((t) => t.date)]
   const from = since(allDates, WEEKS[range])
   const inRange = (date: string) => !from || date >= from
@@ -215,7 +217,7 @@ export function Progress() {
               nhPts.map((q, i) => dot(q, trend[i].kind === 'sample' ? 'pg-dot-s' : '', i)),
             )
           ) : (
-            <p className="pg-empty">No assessments yet.</p>
+            <p className="pg-empty">{`No assessments yet.${replayNote('nhpt')}`}</p>
           )}
           {trend.length > 0 && (
             <div className="pg-xl">
@@ -238,7 +240,7 @@ export function Progress() {
               })}
             </div>
           ) : (
-            <p className="pg-empty">No Waiter – cup sessions in this range.</p>
+            <p className="pg-empty">{`No Waiter – cup sessions in this range.${replayNote('cup')}`}</p>
           )}
           {cupRows.length > 0 && (
             <div className="pg-xl">
@@ -265,7 +267,7 @@ export function Progress() {
               armPts.map((q, i) => dot(q, armRows[i].sample ? 'pg-dot-s' : '', i)),
             )
           ) : (
-            <p className="pg-empty">No arm sessions in this range.</p>
+            <p className="pg-empty">{`No arm sessions in this range.${replayNote('arm')}`}</p>
           )}
           {armRows.length > 0 && (
             <div className="pg-xl">
