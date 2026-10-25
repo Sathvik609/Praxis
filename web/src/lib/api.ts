@@ -125,7 +125,7 @@ export const api = {
   replayList: () => get<{ clips: { id: string; mode: string; sheet: string; path: string; synthetic: boolean }[] }>('/api/replay/list').then((r) => r.clips),
   /** A demo-only exercise the patient ticked: logged as self-reported, never as a verified rep. */
   selfReport: (exercise: string, sets = 1) => post<SelfReport>('/api/self_report', { exercise, sets }),
-  plan: (pain: number) => get<PlanView>(`/api/plan?pain=${Math.max(0, Math.min(10, Math.round(pain)))}`),
+  plan: (pain: number, continueGently = false) => get<PlanView>(`/api/plan?pain=${Math.max(0, Math.min(10, Math.round(pain)))}${continueGently ? '&continue_gently=true' : ''}`),
   checkin: (body: CheckinBody) => post<CheckinResult>('/api/checkin', body),
   /** Screen 12. No range: the Mon–Sun week holding the service's today. */
   calendar: (range?: { from: string; to: string }) => get<Calendar>(`/api/calendar${range ? `?from=${range.from}&to=${range.to}` : ''}`),

@@ -243,6 +243,17 @@ test('a day stopped at check-in lets you watch but not start', async () => {
   expect(screen.getByTestId('where')).toHaveTextContent('/details/choose')
 })
 
+test('25 Oct cross-check: a pain-rest day offers to check in again from the demo, as Choose does', async () => {
+  mockApi({ '/api/prescription': PRESCRIPTION })
+  seedDay({ checkin: { pain: 8 }, stopped: 'rest' })
+  await render(<DemoAt id="abduction" />)
+  finishClip()
+  const modal = screen.getByRole('dialog', { name: 'Before you start' })
+  expect(within(modal).queryByText(/next check-in allows/)).toBeNull()
+  await userEvent.click(within(modal).getByRole('button', { name: 'check in again' }))
+  expect(screen.getByTestId('where')).toHaveTextContent('/details/checkin')
+})
+
 // 13 Oct team test: returning testers wanted to go straight on without watching the clip.
 test('Skip demo goes straight on to camera setup without waiting for the clip', async () => {
   mockApi({ '/api/prescription': PRESCRIPTION })

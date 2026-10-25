@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { readDay } from '../../lib/day'
 import { ME, PRESCRIPTION, SESSION, mockApi } from '../../test/api-mock'
 
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
@@ -16,7 +17,7 @@ async function renderHome() {
     <MemoryRouter initialEntries={['/']}>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/details/choose" element={<div>CHOOSE</div>} />
+        <Route path="/details/choose" element={<><div>CHOOSE</div><Search /></>} />
         <Route path="/details/demo" element={<><div>DEMO</div><Search /></>} />
         <Route path="/session" element={<div>SESSION</div>} />
         <Route path="/details/progress" element={<div>PROGRESS</div>} />
@@ -80,6 +81,38 @@ test('25 Oct judge walkthrough: on a rest day the card says so, and practice is 
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Rest day$/)
   expect(screen.getByText(/Rest is part of your plan\. You can still practise if you like\./)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
+})
+
+test('25 Oct cross-check: Start session on the peg-test day opens Choose with the peg test selected', async () => {
+  const sunday = { ...day('2026-10-11', 6, 'today'), planned: false, nhpt_due: true, minutes: 0, exercises: [{ id: 'nhpt', name: 'Nine-Hole Peg Test' }] }
+  mockApi(routes({ '/api/calendar': { ...CALENDAR, today: '2026-10-11', days: [...WEEK_DAYS.slice(0, 6).map((d) => ({ ...d, is_today: false })), sunday] } }))
+  await renderHome()
+  fireEvent.click(screen.getByRole('button', { name: 'Start session' }))
+  expect(screen.getByTestId('search')).toHaveTextContent('?next=nhpt')
+})
+
+const checkin = (pain: number, extra: Record<string, unknown> = {}) => ({ pain, location: '', energy: 'ok', minutes: 20, new_symptoms: false, side: 'left', tier: pain >= 7 ? 'rest' : 'full', flagged: pain >= 7, reasons: [], synced: true, at: new Date().toISOString(), ...extra })
+
+test('25 Oct cross-check: after a check-in that says rest, Home says rest today instead of offering the full day', async () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: checkin(8) }))
+  await renderHome()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Rest today$/)
+  expect(screen.getByText(/Your check-in says rest today\. You can still watch the demos\./)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Start session' })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'See the exercises' }))
+  expect(screen.getByText('CHOOSE')).toBeInTheDocument()
+})
+
+test('25 Oct cross-check: Continue gently keeps the day on Home; a stop rule ends it', async () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: checkin(8, { continue_gently: true, tier: 'gentle' }) }))
+  const { unmount } = await renderHome()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Arm out to the side \+ Waiter – cup$/)
+  expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
+  unmount()
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: checkin(2), stopped: 'session' }))
+  await renderHome()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Rest today$/)
+  expect(screen.getByText(/A stop rule ended today's practice\./)).toBeInTheDocument()
 })
 
 test('25 Oct judge walkthrough: after choosing the right side at check-in, Home names the right side too', async () => {

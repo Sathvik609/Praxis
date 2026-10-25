@@ -97,6 +97,9 @@ def test_api_plan_returns_the_tiered_day(client):
     assert body["tier"] == "gentle" and [i["id"] for i in body["items"]] == list(DAY_ORDER)
     assert client.get("/api/plan?pain=9").json()["items"] == []
     assert client.get("/api/plan").json()["tier"] == "full"
+    # 25 Oct: the coach chat on a Continue-gently day called it a rest day.
+    gentle = client.get("/api/plan?pain=8&continue_gently=true").json()
+    assert gentle["tier"] == "gentle" and [i["id"] for i in gentle["items"]] == list(DAY_ORDER)
 
 
 def test_web_mirror_matches():

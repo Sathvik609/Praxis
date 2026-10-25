@@ -233,7 +233,15 @@ function DemonstrationFor() {
               )}
             </dl>
             {stopped ? (
-              <p className="dth-note dth-note-warn">No exercises today: you can watch, but nothing starts until your next check-in allows it.</p>
+              <p className="dth-note dth-note-warn">
+                No exercises today: you can watch the demo.
+                {day.stopped === 'rest' && (
+                  <>
+                    {' '}If your pain has eased,{' '}
+                    <button type="button" className="lib-rest-link" onClick={() => nav('/details/checkin')}>check in again</button>.
+                  </>
+                )}
+              </p>
             ) : demo ? (
               <p role="status" className="dth-note">
                 {tickError

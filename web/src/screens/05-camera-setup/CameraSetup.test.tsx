@@ -327,6 +327,15 @@ test('a stopped day never opens the camera', () => {
   expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
+test('25 Oct cross-check: a pain-rest day keeps the camera off and offers to check in again', () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ date: todayKey(), checkin: { pain: 8, new_symptoms: false, tier: 'rest', flagged: true, synced: true, side: 'left', minutes: 14 }, done: [], demosSeen: [], current: null, finished: [], stopped: 'rest' }))
+  const start = mockStream(null)
+  renderSetup('/setup?exercise=abduction')
+  expect(start).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Check in again' }))
+  expect(screen.getByText('AT /details/checkin')).toBeInTheDocument()
+})
+
 test('passing checks left over with the camera off never auto-continue: Continue anyway, no countdown', () => {
   vi.useFakeTimers()
   mockStream(TABLE_PASS)

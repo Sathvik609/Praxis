@@ -103,3 +103,9 @@ test('no push to talk: no mic button, the input takes typed text', async () => {
   expect(screen.queryByRole('button', { name: /talk|listening/i })).toBeNull()
   expect(screen.getByRole('textbox', { name: 'Message the coach' })).toHaveAttribute('placeholder', 'Type a message…')
 })
+
+test('25 Oct: on a Continue-gently day the chat asks for the gentle plan, not a rest day', async () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ date: new Date().toLocaleDateString('en-CA'), checkin: { pain: 8, location: '', energy: 'ok', minutes: 20, new_symptoms: false, continue_gently: true, side: 'left', tier: 'gentle', flagged: true, reasons: [], synced: true, at: new Date().toISOString() }, current: null, done: [], finished: [], stopped: null, demosSeen: [] }))
+  const { fetchMock } = await renderChat()
+  expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/plan?pain=8&continue_gently=true'))).toBe(true)
+})

@@ -64,7 +64,12 @@ function CameraSetupFor() {
             <p className="text-lg text-muted">The camera stays off.</p>
           </Card>
         </div>
-        <FlowBar step={3} label="Camera setup" right={<Button onClick={() => nav('/details')}>Back to Home</Button>} />
+        <FlowBar
+          step={3}
+          label="Camera setup"
+          left={day.stopped === 'rest' ? <Button variant="secondary" onClick={() => nav('/details/checkin')}>Check in again</Button> : undefined}
+          right={<Button onClick={() => nav('/details')}>Back to Home</Button>}
+        />
       </div>
     )
   }

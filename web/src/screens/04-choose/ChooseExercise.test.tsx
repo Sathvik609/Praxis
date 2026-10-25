@@ -110,7 +110,8 @@ test('full dose keeps the locked cup wording', () => {
 test('pain 7 or more is a rest day: every card says Resting today, nothing starts, one way back home', () => {
   checkin(8)
   renderChoose()
-  expect(screen.getByText(/Rest the arm today\. Nothing here will start until your pain is below 7\./)).toBeInTheDocument()
+  expect(screen.getByText(/Rest the arm today\. Sessions stay closed today\./)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/until your pain is below 7/)
   expect(screen.getByText(/You can still watch the demos\./)).toBeInTheDocument()
   expect(screen.getAllByText('Resting today')).toHaveLength(3)
   expect(screen.queryByRole('button', { name: /^Start session/ })).not.toBeInTheDocument()
@@ -118,11 +119,12 @@ test('pain 7 or more is a rest day: every card says Resting today, nothing start
   expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
-test('25 Oct team test: on a rest day each card still opens its demo, and no sheet to print', () => {
+test('25 Oct team test: on a rest day each card still opens its demo, and the sheets can still be printed', () => {
   checkin(8)
   renderChoose()
   expect(screen.getAllByRole('button', { name: /^Watch the demo/ })).toHaveLength(3)
-  expect(screen.queryByRole('link', { name: /^Print the sheet/ })).not.toBeInTheDocument()
+  // Settings › Equipment and sheets sends people here, so the sheets stay on a rest day too
+  expect(screen.getByRole('link', { name: 'Print the sheet: Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
   fireEvent.click(screen.getByRole('button', { name: 'Watch the demo: Waiter – cup' }))
   expect(screen.getByText(/^AT \/details\/demo\?exercise=cup/)).toBeInTheDocument()
 })

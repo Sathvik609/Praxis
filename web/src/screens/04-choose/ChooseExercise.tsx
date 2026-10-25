@@ -68,7 +68,7 @@ export function ChooseExercise() {
                 ? 'You told us something is new or worse. No exercises today, until your therapist has looked at it.'
                 : day.stopped === 'session'
                   ? "A stop rule ended today's practice. Rest the arm today."
-                  : 'Rest the arm today. Nothing here will start until your pain is below 7.'}
+                  : 'Rest the arm today. Sessions stay closed today.'}
               {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
               <span className="lib-rest-more"> You can still watch the demos.</span>
               {day.stopped !== 'session' && (
@@ -129,7 +129,8 @@ export function ChooseExercise() {
                           Start session
                         </button>
                       )}
-                      {e.sheetPdf && !rest && (
+                      {/* Shown on a rest day too, beside Watch the demo: Settings › Equipment and sheets opens this page. */}
+                      {e.sheetPdf && (
                         <a className="lib-cta lib-cta-2 inline-flex items-center justify-center" href={e.sheetPdf} target="_blank" rel="noopener" aria-label={`Print the sheet: ${e.name}`}>
                           Print the sheet
                         </a>

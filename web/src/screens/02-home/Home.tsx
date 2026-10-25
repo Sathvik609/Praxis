@@ -13,7 +13,7 @@ import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
 import { prefersReducedMotion } from '../../lib/motion'
 import { plural } from '../../lib/plural'
 import { REGIONS, exerciseById, type ExerciseId } from '../../lib/seed'
-import { demoUrl, readSide } from '../../lib/day'
+import { demoUrl, readDay, readSide, type Day } from '../../lib/day'
 import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
@@ -23,13 +23,21 @@ const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
 
 /** The practice card follows today on the calendar (25 Oct: on the Sunday peg-test day and on
  *  rest days it used to say Arm out to the side + Waiter – cup). Before the calendar loads, or
- *  on a day it lists nothing for, it shows the default day order. */
-function todayCard(calendar: Calendar | null | undefined): { title: string; sub: string } {
+ *  on a day it lists nothing for, it shows the default day order. Today's check-in comes first:
+ *  a check-in that says rest (without Continue gently) or a stop rule makes it a rest day, and the
+ *  button only opens the exercises (their demos), as Choose does on such a day. */
+type TodayCard = { title: string; sub: string; action: string; to: string }
+function todayCard(calendar: Calendar | null | undefined, day: Day): TodayCard {
+  if (day.stopped != null || day.checkin?.tier === 'rest') {
+    const sub = day.stopped === 'session' ? "A stop rule ended today's practice. Rest the arm today." : 'Your check-in says rest today. You can still watch the demos.'
+    return { title: 'Rest today', sub, action: 'See the exercises', to: '/details/choose' }
+  }
   const today = calendar?.days.find((d) => d.is_today)
-  if (today && !today.planned && !today.nhpt_due) return { title: 'Rest day', sub: 'Rest is part of your plan. You can still practise if you like.' }
+  if (today && !today.planned && !today.nhpt_due) return { title: 'Rest day', sub: 'Rest is part of your plan. You can still practise if you like.', action: 'Start session', to: '/details/choose' }
   const names = today?.exercises.length ? today.exercises.map((e) => e.name) : DAY_ORDER.map((id) => exerciseById(id)?.name ?? id)
-  if (today && !today.planned) return { title: names.join(' + '), sub: 'Weekly test · you need 9 pegs and the printed peg sheet' }
-  return { title: names.join(' + '), sub: `About ${today?.minutes || DAY_MINUTES} min · you need a cup and the printed target sheet` }
+  if (today && !today.planned) return { title: names.join(' + '), sub: 'Weekly test · you need 9 pegs and the printed peg sheet', action: 'Start session', to: '/details/choose?next=nhpt' }
+  const pegs = today?.nhpt_due ? ' · peg test today: 9 pegs and the peg sheet' : ''
+  return { title: names.join(' + '), sub: `About ${today?.minutes || DAY_MINUTES} min · you need a cup and the printed target sheet${pegs}`, action: 'Start session', to: '/details/choose' }
 }
 
 /** Screen 02 · Home (design v2, designers' 6 Oct artifact). Next practice, this week from
@@ -56,7 +64,8 @@ export function Home() {
   const { data: progress } = useApi(() => api.progress())
   const { data: rx } = useApi(() => api.prescription())
   const { data: calendar } = useApi(() => api.calendar())
-  const card = todayCard(calendar)
+  const [day] = useState<Day>(readDay)
+  const card = todayCard(calendar, day)
   const view = areaSummary(focus, { sessions, progress, rx, calendar, me })
   const area = 'name' in view ? view : null
   const headline = area?.headline ?? 'Nothing measured here'
@@ -79,7 +88,7 @@ export function Home() {
           </div>
           <h1 className="text-3xl text-white">{card.title}</h1>
           <p className="mt-1 text-white/80">{card.sub}</p>
-          <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav('/details/choose')}>Start session</Button>
+          <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav(card.to)}>{card.action}</Button>
           <Button full variant="secondary" className="mt-3 hero-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
         </Card>

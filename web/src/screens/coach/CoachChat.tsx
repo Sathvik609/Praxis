@@ -39,7 +39,7 @@ function ChatBody({ onBegin }: { onBegin: (id: string) => void }) {
   const nav = useNavigate()
   const [day] = useState<Day>(readDay)
   const pain = day.checkin?.pain ?? readCheckinPain()
-  const plan = useApi(() => api.plan(pain ?? 0))
+  const plan = useApi(() => api.plan(pain ?? 0, !!day.checkin?.continue_gently))
   const calendar = useApi(() => api.calendar())
   const rx = useApi(() => api.prescription())
   const sessions = useApi(() => api.sessions())
