@@ -1,0 +1,95 @@
+{
+  "source": "Hosted Railway build, 24 Oct 2026, one teammate (pseudonym T1) on a home laptop webcam. Stored session summaries only; no frames exist.",
+  "sessions": [
+    {
+      "session": "adefd6629d72",
+      "tester": "T1",
+      "mode": "nhpt",
+      "date": "2026-10-24",
+      "status": "complete",
+      "latency_ms": {
+        "capture_to_event_p50": 177.4,
+        "capture_to_event_p95": 251.8,
+        "proc_p50": 55.1,
+        "proc_p95": 75.2,
+        "event_to_cue_p50": 0.8,
+        "event_to_cue_p95": 1.2,
+        "frames": 376,
+        "dropped": 7,
+        "cues": 2
+      }
+    },
+    {
+      "session": "d8bf2d826516",
+      "tester": "T1",
+      "mode": "cup",
+      "date": "2026-10-24",
+      "status": "ended_early",
+      "latency_ms": {
+        "capture_to_event_p50": 146.6,
+        "capture_to_event_p95": 1128.5,
+        "proc_p50": 27.2,
+        "proc_p95": 37.2,
+        "event_to_cue_p50": 0.9,
+        "event_to_cue_p95": 1.2,
+        "frames": 2066,
+        "dropped": 19,
+        "cues": 6
+      }
+    },
+    {
+      "session": "dac2ea2017c0",
+      "tester": "T1",
+      "mode": "cup",
+      "date": "2026-10-24",
+      "status": "ended_early",
+      "latency_ms": {
+        "capture_to_event_p50": 131.8,
+        "capture_to_event_p95": 659.7,
+        "proc_p50": 7.5,
+        "proc_p95": 10.2,
+        "event_to_cue_p50": null,
+        "event_to_cue_p95": null,
+        "frames": 220,
+        "dropped": 7,
+        "cues": 0
+      }
+    },
+    {
+      "session": "a7745e4bb66d",
+      "tester": "T1",
+      "mode": "cup",
+      "date": "2026-10-24",
+      "status": "ended_early",
+      "latency_ms": {
+        "capture_to_event_p50": 144.4,
+        "capture_to_event_p95": 225.8,
+        "proc_p50": 18.6,
+        "proc_p95": 38.6,
+        "event_to_cue_p50": 1.2,
+        "event_to_cue_p95": 1.6,
+        "frames": 1283,
+        "dropped": 17,
+        "cues": 13
+      }
+    },
+    {
+      "session": "c77639d9dec7",
+      "tester": "T1",
+      "mode": "cup",
+      "date": "2026-10-24",
+      "status": "ended_early",
+      "latency_ms": {
+        "capture_to_event_p50": 136.8,
+        "capture_to_event_p95": 204.9,
+        "proc_p50": 14.2,
+        "proc_p95": 34.4,
+        "event_to_cue_p50": 0.8,
+        "event_to_cue_p95": 1.7,
+        "frames": 4712,
+        "dropped": 5,
+        "cues": 8
+      }
+    }
+  ]
+}

@@ -25,7 +25,7 @@ Go to Settings (the gear in the left rail) → **Demo and judging** → **Show t
 
 Go to Settings → Demo and judging → **Replay a recorded session** (or tap **No camera? Use a recorded session** on any camera setup screen) and pick a clip. There are clips for Waiter – cup and the peg test; Arm out to the side has no replay clip, because the real arm videos we measure on (REHAB24-6) can't be redistributed.
 
-<img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two synthetic render clips, Nine-Hole Peg Test and Waiter – cup">
+<img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two computer-made 3-D clips, Nine-Hole Peg Test and Waiter – cup">
 
 | Clip | What to watch |
 |---|---|
