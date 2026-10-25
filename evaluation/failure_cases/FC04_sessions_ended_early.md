@@ -18,7 +18,8 @@ short scripted checks of the flow (3.0–5.4 s of active time in five of them), 
 The human early endings follow the setup pause (FC01) or a very short try.
 
 ## What we changed
-FC01's 6 s hips gate is meant to remove the most common trigger. `4f8c384` (13 Oct, during this
+FC01's 6 s hips gate (21 Oct) and the 25 Oct change that stops the front view needing the hips
+are meant to remove the most common trigger. `5c57dec` (13 Oct, during this
 test) made End always end and store the session as `ended_early`.
 
 ## Status

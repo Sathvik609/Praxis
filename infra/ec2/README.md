@@ -1,6 +1,6 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
-Status 21 Oct 2026: **rebuilt in the Praxis-Team management account and verified, now stopped.**
+Status 25 Oct 2026: **latest code deployed (through 38d406b), instance stopped until submission.**
 `<instance-id>` (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
 `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
 address survives stop/start), a CloudFront-only security group, HTTPS at
@@ -14,11 +14,7 @@ address survives stop/start), a CloudFront-only security group, HTTPS at
 - **Ways in (both tested 21 Oct):** the account owner's root login and one IAM admin user, both
   with MFA. CloudShell (console, us-east-2) has the AWS CLI with the signed-in identity; the
   laptop's local AWS keys are not used.
-- **Why not the old member account:** the 11 Oct build (`<instance-id>`,
-  CloudFront `<cloudfront-id>`, `dl8xykmg8ki61.cloudfront.net`) lives in that member account, which
-  became unreachable on 21 Oct (no OrganizationAccountAccessRole; root switch-role, IAM
-  switch-role and member email update all denied; its Builder ID portal login failed). Its server
-  was closed by the user on 21 Oct (reopenable for 90 days, then deleted).
+- **Earlier build:** an 11 Oct build in another account is retired; this account holds the only judge build.
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
   so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh <elastic-ip> --agent`.
@@ -62,7 +58,7 @@ To allow edits from a browser, add `PRAXIS_THERAPIST_TOKEN=<random>` to the root
 `therapist_writes: token | local_only`.
 
 ## Cost controls (10 Oct)
-Budget `praxis-monthly-50` (alerts only since the 21 Oct rebuild; the 11 Oct SCPs apply to the member account, not here); c8g.large $0.0798/h + COOL $0.01/h after the
+Budget `praxis-monthly-50` (alerts only); c8g.large $0.0798/h + COOL $0.01/h after the
 7-day trial + public IPv4 $0.005/h; stopped between work sessions; on 24/7 from submission to 10 Nov (~$41). The agent
 has a daily run cap (`PRAXIS_AGENT_DAILY_RUNS`) and an Anthropic console spend limit.
 
@@ -135,5 +131,7 @@ metrics are always present: `Heartbeat`, `ActiveSessions`, `cpu_usage_active`,
 exercise/mode pair in use, plus 5 agent names) are billed pro rata only for the hours they get
 data. A judging month of a few dozen sessions therefore adds well under $1, even beyond the free
 tier ($0.30 per metric-month). Logs are about 1 MB a day (heartbeats plus access logs) at
-$0.50/GB. If nothing were free, the worst case would be about $3 a month for the dashboard plus
-$0.40 for the alarms. The CPU and status-check alarms use the free `AWS/EC2` metrics.
+$0.50/GB, a few cents a month. So the expected cost is under $1 a month. If nothing were free,
+the worst case would be about $5–6 a month: $3 for the dashboard, $0.40 for the four alarms,
+$1.50 for the five always-present metrics and under $1 for the rest. The CPU and status-check
+alarms use the free `AWS/EC2` metrics.

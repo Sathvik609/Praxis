@@ -10,10 +10,7 @@ Moderated usability test and therapist interview (evidence for report §8.7 and 
 | `therapist_interview.md` | 20–30 min guide + six-item questionnaire for a PT/OT |
 | `tasks_template.csv`, `issues_template.csv`, `therapist_template.csv` | copy to `tasks.csv`, `issues.csv`, `therapist.csv` |
 
-**Online form (optional):** https://claude.ai/artifact/Umw2ntQwxSAK6iaBheMAwW. It is the same
-tasks, SUS and therapist items on a phone, with per-task timers. It saves to a shared store and
-its Results tab gives the three CSVs ready to paste. The page is private to its owner until
-shared with the team (Share menu). It holds code names only.
+**Not run for this submission** (no SUS responses, no sessions; `docs/TECHNICAL_REPORT.md` §8.7).
 
 ```bash
 cd services/session

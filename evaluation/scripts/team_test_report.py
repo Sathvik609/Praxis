@@ -42,16 +42,16 @@ EXERCISE = {"arm": "Arm out to the side", "cup": "Waiter – cup", "nhpt": "Nine
 HEADER = ("15 live sessions, 4 testers including automated agent-driven sessions; team shake-down "
           "on the 13 Oct build, not a usability study; small numbers")
 
-# What changed afterwards (21 Oct, Phase 2, merged in 42e0286 / e80f138, then 9034336). Text only;
+# What changed afterwards (21 Oct, Phase 2, merged in 0629944 / ddee504, then 44dc5d3). Text only;
 # the effect on these sessions is computed below where the stored events allow it.
 FIXES = [
-    ("dea830d", "Arm setup gate: `hips_out_of_view` must hold for `HIPS_BLOCK_S` before the setup pause (other view gates keep `SETUP_BLOCK_S`); `setup_blocked` carries the visibility numbers"),
-    ("dea830d", "Hike cue rationing in the rule coach: at most `HIKE_CUES_PER_SET` captions per set, `HIKE_CUE_GAP_S` apart; detection, events, counts and stop rules unchanged"),
-    ("004009b", "Review labels are exercise-aware: the arm's `setup_blocked` reads \"camera view check paused the set\" (the arm has no sheet), counted by setup pauses, with the failing checks listed; hike reported as a flag"),
-    ("12145c3", "Agent tool calls: guardrail refusals (stale, no_change, ...) are traced with `error_kind` + `refused` and counted apart from failures; the feedback answers are a typed event so the end-of-session note always has evidence to cite"),
-    ("ec98186", "Socket-close instrumentation: every live socket writes a `socket_close` trace row (saved, close code, agent run in flight, seconds since the last agent run); `/api/review` counts sockets that closed before their session was saved"),
-    ("1c93fc4", "Therapist-only writes: schedule changes need `PRAXIS_THERAPIST_TOKEN` (the shared review site could change the prescription)"),
-    ("9034336", "Agent pause ordering: after the fix line, `recalibrate` alone, wait, then `request_resume`; never stop after the fix line. Verified 15/15 scenarios and covered_marker 3/3 (`agent_recheck_2026-10-21_all.md`, `agent_recheck_2026-10-21_covered_marker_x3.md`)"),
+    ("3dd3c56", "Arm setup gate: `hips_out_of_view` must hold for `HIPS_BLOCK_S` before the setup pause (other view gates keep `SETUP_BLOCK_S`); `setup_blocked` carries the visibility numbers"),
+    ("3dd3c56", "Hike cue rationing in the rule coach: at most `HIKE_CUES_PER_SET` captions per set, `HIKE_CUE_GAP_S` apart; detection, events, counts and stop rules unchanged"),
+    ("ffc6341", "Review labels are exercise-aware: the arm's `setup_blocked` reads \"camera view check paused the set\" (the arm has no sheet), counted by setup pauses, with the failing checks listed; hike reported as a flag"),
+    ("2c311a0", "Agent tool calls: guardrail refusals (stale, no_change, ...) are traced with `error_kind` + `refused` and counted apart from failures; the feedback answers are a typed event so the end-of-session note always has evidence to cite"),
+    ("b1fe321", "Socket-close instrumentation: every live socket writes a `socket_close` trace row (saved, close code, agent run in flight, seconds since the last agent run); `/api/review` counts sockets that closed before their session was saved"),
+    ("a24aa1f", "Therapist-only writes: schedule changes need `PRAXIS_THERAPIST_TOKEN` (the shared review site could change the prescription)"),
+    ("44dc5d3", "Agent pause ordering: after the fix line, `recalibrate` alone, wait, then `request_resume`; never stop after the fix line. Verified 15/15 scenarios and covered_marker 3/3 (`agent_recheck_2026-10-21_all.md`, `agent_recheck_2026-10-21_covered_marker_x3.md`)"),
 ]
 
 
@@ -303,11 +303,11 @@ def render(r: dict[str, Any]) -> str:
           f"tokens {sv['tokens']['input']} in / {sv['tokens']['output']} out / {sv['tokens']['cache_read']} cache read / {sv['tokens']['cache_write']} cache write; est. ${sv['cost_usd']:.2f} at list price.",
           f"- Tool calls failed as reported by the 13 Oct review: {_d(sv['tool_failures'])} ({sum(sv['tool_failures'].values())}).",
           f"- Trace files kept for {tr['sessions']} sessions ({', '.join(tr['groups'])} only): {tr['runs']} runs ({_d(tr['outcomes'])}), {tr['tool_calls']} agent tool calls, "
-          f"first action median {tr['first_action_ms_p50'] / 1000:.1f} s, est. ${tr['cost_usd_list_price']:.2f}. Re-classified with the 21 Oct rule (12145c3): "
+          f"first action median {tr['first_action_ms_p50'] / 1000:.1f} s, est. ${tr['cost_usd_list_price']:.2f}. Re-classified with the 21 Oct rule (2c311a0): "
           f"{len(tr['refused_by_guardrail'])} refused by a guardrail ("
           + ", ".join(f"`{x['tool']}` {x['kind']} in `{x['session']}`" for x in tr["refused_by_guardrail"])
           + f"), {len(tr['failed'])} real failures in these traces.",
-          "- The fourth reported failure (`write_session_summary`) is in an automated session whose trace is not in the snapshot; commit 12145c3 identifies it as `098b067da2b5`, a session ended before any check-in or OpenCV event, so the note had no evidence id to cite (fixed there).",
+          "- The fourth reported failure (`write_session_summary`) is in an automated session whose trace is not in the snapshot; commit 2c311a0 identifies it as `098b067da2b5`, a session ended before any check-in or OpenCV event, so the note had no evidence id to cite (fixed there).",
           "", "## Latency (browser-measured, per session p50, median across sessions)", "",
           "| | capture → event p50 (ms) | event → cue p50 (ms) |", "|---|---:|---:|"]
     for grp in GROUPS:

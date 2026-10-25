@@ -344,7 +344,7 @@ def main(argv=None) -> int:
                      "they were re-counted); a seat whose grasp was not seen is counted unverified (grasp_not_seen) instead of "
                      "being dropped, and an inferred timer start is labelled; the cup is found from a circle fit to its blue ring's "
                      "camera-side edge (the ring seen from a laptop angle is a crescent under the 30 mm disc gate) with a session-learned "
-                     "radius (tests/test_cup3d.py). No threshold was loosened. Before = the perception code at commit 38b7ec9."),
+                     "radius (tests/test_cup3d.py). No threshold was loosened. Before = the perception code at commit 008e236."),
     }
     out.mkdir(parents=True, exist_ok=True)
     name = f"synthetic3d_v0{('_' + args.tag) if args.tag else ''}"

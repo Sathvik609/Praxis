@@ -3,11 +3,13 @@
 **Source:** 2-D robustness renders (OpenCV-drawn sheet, image-space perturbations; **not real-camera evidence**) · **Status:** open (physics / by design)
 
 ## What happened
-Out of 81 NHPT and 91 cup conditions, the first fix failed on 7 and 8, and occupancy / cup
-position was wrong on 9 of 74 and 10 of 77 calibrated ones. The named misses:
+Out of 81 NHPT and 91 cup conditions (25 Oct run), the first fix failed on 7 and 8, and
+occupancy / cup position was wrong on 13 of 74 and 6 of 77 calibrated ones. (The NHPT count rose
+from 9 because of the 24 Oct still-board rule: the sweep scores one cold frame, so with a hand
+already over the grid a peg waits; in a session the pegs are seated first.) The named misses:
 - Motion blur ≥ 9 px and defocus radius ≥ 5 px destroy the ArUco codes: no first fix.
-- Defocus r5 on the NHPT sheet: the setup row says "Image is blurry…" from the lighting check, which the sweep marks as the wrong row (the one wrong row of 81).
-- Paper curled so its ends rise 20 mm: on the NHPT sheet holes 4 and 8 read wrong (target error 7.81 mm); on the cup sheet the target error reaches 10.64 mm, the worst in the sweep; nothing flags it.
+- Defocus r5: the setup row says "Image is blurry…" from the lighting check, which the sweep marks as the wrong row (the one wrong row of 81 on the NHPT sheet and of 91 on the cup sheet).
+- Paper curled so its ends rise 20 mm: on the NHPT sheet holes 0, 4 and 8 read wrong, with one phantom (target error 7.81 mm); on the cup sheet the target error reaches 10.64 mm, the worst in the sweep; nothing flags it.
 - Black pegs (and a black cup band): wrong occupancy even after tap-to-sample; there is no colour to segment.
 
 ## Evidence

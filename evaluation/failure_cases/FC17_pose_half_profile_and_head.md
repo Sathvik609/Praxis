@@ -19,9 +19,11 @@ person detector anchors on the face, so the pose stage needs the head even thoug
 reads the face.
 
 ## Why we did not change more
-No yaw-labelled data of seated patients. The setup copy that should say "keep your head in view"
-for Arm out to the side is not changed (`docs/RISKS.md`, 2026-10-11); the setup checklist's pose
-row already fails when no pose is found.
+No yaw-labelled data of seated patients. For the head, the copy was changed instead: since
+11 Oct (`38abb45`) the camera-setup placement text for Arm out to the side asks for the head in
+view ("Your face is never analysed, but the camera finds you by your head",
+`web/src/screens/05-camera-setup/SetupDiagram.tsx`), and so do the person hint and the live status
+line; the setup checklist's pose row fails when no pose is found.
 
 ## Status
 Open. Possibly involved in FC03 (low peaks), unproven.

@@ -1,6 +1,6 @@
 # How the agent coach works
 
-At checkpoints, Claude (Sonnet 5.5 via the Anthropic API, not Amazon Bedrock) calls OpenCV 5 tools on the latest camera frame, and what the tools report decides its next call. The figure shows one real run. Code: `services/session/praxis_session/agent/` (tools, MCP servers, planners, metrics, daily cap) and `coach/agent.py`. Dated results are in the [Changelog](#changelog-dated-results) at the end of this file.
+At checkpoints, our agent (Claude Sonnet 5.5 via the Anthropic API) calls OpenCV 5 tools on the latest camera frame, and what the tools report decides its next call. The figure shows one real run. Code: `services/session/praxis_session/agent/` (tools, MCP servers, planners, metrics, daily cap) and `coach/agent.py`. Dated results are in the [Changelog](#changelog-dated-results) at the end of this file.
 
 ![Green cup, before and after: check_setup reports the target unseen, the agent re-samples the cup colour, OpenCV then detects the cup, the resume prompt passes a fresh check, and the next reach is verified](img/agent_qualifier_green_cup.svg)
 
@@ -26,7 +26,7 @@ The rule coach alone never re-samples the cup, and no reach is verified after th
 | `covered_marker` × 3 after the fix | **3/3**. Before the fix it passed 1/3: the agent named the fix and ended the run without `recalibrate` + `request_resume`. The prompt now says the fix line is not the end of a pause run. | `agent_recheck_2026-10-21_covered_marker_x3.md` |
 | `green_cup` + `covered_marker` on fresh frames (harness fix below) | 2/2. `check_setup` frame age 0.04 s and 0.05 s; `recalibrate` saw 3 new frames each time | `agent_recheck_2026-10-21_green_cup_covered_marker.md` |
 | `mixed_signals` × 3 (judgement scenario, new 21 Oct) | **0/3, fails.** See below. | `agent_recheck_2026-10-21_mixed_signals_x3.md` |
-| Real video, REHAB24-6 through the product pipeline (12 Oct, × 2, 40 sessions) | Set reviews where motion capture confirms a fault: the fault was named and corrected in **41/44**. Unsupported claims: **16/83** for Claude vs **43/79** for the rule coach alone. A smaller dose was offered (Yes / Keep) on **19/44** faulty sets vs **0/22** for the rule coach. Real wrong-view pauses: the fix was named 26/26, and no resume was offered while the view was still wrong (26/26). 0 guardrail violations. $0.050 per session. | `evaluation/results/agent_video_v0.md` |
+| Real video, REHAB24-6 through the product pipeline (12 Oct, × 2, 40 sessions) | Our agent named a fault that motion capture confirmed, and gave a correction, in **41 of 44** set reviews (patient taps simulated). Unsupported claims: **16/83** for Claude vs **43/79** for the rule coach alone. A smaller dose was offered (Yes / Keep) on **19/44** faulty sets vs **0/22** for the rule coach. Real wrong-view pauses: the fix was named 26/26, and no resume was offered while the view was still wrong (26/26). 0 guardrail violations. $0.050 per session. | `evaluation/results/agent_video_v0.md` |
 
 **What the synthetic suite shows, and what it does not.** In `agent_ablation_v0.md` the scripted planner and Claude score the same on the 15 plumbing scenarios. That is by design: the scripted planner makes fixed, per-scenario tool calls, so those scenarios test the tools, MCP transport, guardrails, fallbacks and approval path, not the model's judgement. Judgement shows in two places:
 - **Real video.** In the ablation's real-video block, the scripted agent praises all 22/22 faulty sets. Claude names a fault motion capture confirms in 41/44 sets, and its claims are unsupported less often than the rule coach's (16/83 vs 43/79). Those numbers are computed from `agent_video_v0*.json` by `agent_eval.py`.
@@ -67,7 +67,7 @@ Rows read "Claude agent · Anthropic API (dev)" because that was the label strin
 
 ## What it is
 
-A hybrid coach. The deterministic rule coach keeps every in-rep cue (instant, offline). At **checkpoints** Claude (Sonnet 5.5 via the Anthropic API, through Strands Agents) runs a short perceive → decide → act → re-perceive loop with **OpenCV 5 tools**, and anything that changes the session becomes a **prompt the patient must accept**. Stop rules run first, always, and nothing the agent does can override them.
+A hybrid coach. The deterministic rule coach keeps every in-rep cue (instant, offline). At **checkpoints** our agent (Claude Sonnet 5.5 via the Anthropic API, through Strands Agents) runs a short perceive → decide → act → re-perceive loop with **OpenCV 5 tools**, and anything that changes the session becomes a **prompt the patient must accept**. Stop rules run first, always, and nothing the agent does can override them.
 
 | Checkpoint (trigger) | The agent's job |
 |---|---|
@@ -83,31 +83,31 @@ A hybrid coach. The deterministic rule coach keeps every in-rep cue (instant, of
 
 ```mermaid
 flowchart TD
-    B[Browser: JPEG frames, taps] -->|WebSocket| P[SessionPipeline<br/>OpenCV 5: ArUco, homography,<br/>warp, HSV, cv2.dnn hand/pose]
+    B["Browser: JPEG frames, taps"] -->|WebSocket| P["SessionPipeline<br/>OpenCV 5: ArUco, homography,<br/>warp, HSV, cv2.dnn hand/pose"]
     P -->|JSON events| S[CoachSession]
-    S --> SR{Stop rules<br/>first, always}
-    SR -->|stop / pause / rest + therapist flag| OUT
-    SR --> RC[RuleCoach<br/>in-rep cues]
-    RC --> OUT[coach events<br/>source: rule]
-    S -->|checkpoint| AC[AgentCoach<br/>background task, one run at a time,<br/>≤ 6 tool calls, ≤ 15 s (pause 25 s), ≤ 12 runs,<br/>daily cap]
-    AC -->|agent_status thinking| OUT
-    AC -->|one JSON line per run / error| LOG[stdout → CloudWatch<br/>GET /api/agent/metrics]
+    S --> SR{"Stop rules<br/>first, always"}
+    SR -->|"stop / pause / rest + therapist flag"| OUT
+    SR --> RC["RuleCoach<br/>in-rep cues"]
+    RC --> OUT["coach events<br/>source: rule"]
+    S -->|checkpoint| AC["AgentCoach<br/>background task, one run at a time,<br/>≤ 6 tool calls, ≤ 15 s (pause 25 s), ≤ 12 runs,<br/>daily cap"]
+    AC -->|"agent_status thinking"| OUT
+    AC -->|"one JSON line per run / error"| LOG["stdout (CloudWatch optional:<br/>deploy.sh --cloudwatch, not run on AWS)<br/>GET /api/agent/metrics"]
     AC --> PL{Planner}
-    PL -->|PRAXIS_AGENT=anthropic| ST[Strands Agent<br/>Claude via the Anthropic API]
-    PL -->|scripted - tests, CI| SC[ScriptedPlanner]
-    ST -->|MCP streamable HTTP<br/>+ X-Praxis-MCP-Token| G[MCPAccessGuard<br/>loopback or token, else 403]
+    PL -->|"PRAXIS_AGENT=anthropic"| ST["Strands Agent<br/>Claude via the Anthropic API"]
+    PL -->|"scripted (tests, CI)"| SC[ScriptedPlanner]
+    ST -->|"MCP streamable HTTP<br/>+ X-Praxis-MCP-Token"| G["MCPAccessGuard<br/>loopback or token, else 403"]
     SC --> G
-    G --> MCP[/mcp/perception · /mcp/exertion · /mcp/coach<br/>FastMCP in the same app/]
-    ST -. MCP connect fails .-> DIR[same functions as<br/>direct Strands tools]
-    SC -. MCP down .-> DIR
-    MCP --> T[agent/tools.py · invoke<br/>AUTONOMY policy, budgets, evidence,<br/>clamps, no pixels]
+    G --> MCP["/mcp/perception · /mcp/exertion · /mcp/coach<br/>FastMCP in the same app"]
+    ST -.->|"MCP connect fails"| DIR["same functions as<br/>direct Strands tools"]
+    SC -.->|"MCP down"| DIR
+    MCP --> T["agent/tools.py · invoke<br/>AUTONOMY policy, budgets, evidence,<br/>clamps, no pixels"]
     DIR --> T
-    T -->|check_setup · recalibrate ·<br/>resample_target_colour<br/>on the latest frame in memory| P
-    T -->|read; set_session_plan| S
-    T -->|coach actions become intents| Q[(intents queue)]
-    Q -->|drained by the socket loop:<br/>every frame, command and 250 ms;<br/>stop check again| OUT2[coach events source: agent<br/>prompts · commands · agent_status]
-    OUT2 -->|prompt: Yes / Keep / Why| B
-    B -->|answer accept| APPLY[pipeline.command<br/>clamped again] --> OUT3[command source: agent]
+    T -->|"check_setup · recalibrate ·<br/>resample_target_colour<br/>on the latest frame in memory"| P
+    T -->|"read; set_session_plan"| S
+    T -->|"coach actions become intents"| Q[("intents queue")]
+    Q -->|"drained by the socket loop:<br/>every frame, command and 250 ms;<br/>stop check again"| OUT2["coach events source: agent<br/>prompts · commands · agent_status"]
+    OUT2 -->|"prompt: Yes / Keep / Why"| B
+    B -->|"answer accept"| APPLY["pipeline.command<br/>clamped again"] --> OUT3["command source: agent"]
 ```
 
 ## Tools (one implementation, three servers)
@@ -188,7 +188,7 @@ One table, `agent/tools.py` `AUTONOMY` (policy version `2026-10-21.1`, in every 
 
 ## Observability
 
-- **Logs.** `agent/metrics.py` prints one JSON object per line on stdout at every run end — `{"evt":"agent_run","ts","session","trigger","outcome","ms","first_action_ms","tool_calls","actions","tokens","input_tokens","output_tokens","transport","model","cost_usd_est","policy_version"}` — and per agent error — `{"evt":"agent_error","session","trigger","error_kind","message","fallback"}` (timeout, mcp → direct, daily_cap, auth, rate_limit, …). One object per line, so CloudWatch Logs (systemd journal on the EC2 box) can filter without a parser, e.g. `{ $.evt = "agent_run" && $.outcome = "error" }`. No patient text, frames or keys.
+- **Logs.** `agent/metrics.py` prints one JSON object per line on stdout at every run end — `{"evt":"agent_run","ts","session","trigger","outcome","ms","first_action_ms","tool_calls","actions","tokens","input_tokens","output_tokens","cache_read_tokens","cache_write_tokens","transport","model","cost_usd_est","policy_version","provider"}` — and per agent error — `{"evt":"agent_error","session","trigger","error_kind","message","fallback","provider"}` (timeout, mcp → direct, daily_cap, auth, rate_limit, …). One object per line, so CloudWatch Logs can filter without a parser if it is turned on (optional: `infra/ec2/deploy.sh --cloudwatch`, built but not run on AWS; without it the lines stay in the systemd journal on the EC2 box), e.g. `{ $.evt = "agent_run" && $.outcome = "error" }`. No patient text, frames or keys.
 - **Metrics.** `GET /api/agent/metrics` → today's (UTC) runs (11 Oct: real runs only; daily-cap refusals are `blocked_by_cap`, so `runs_today` matches the cap's own count), `by_outcome`, `errors_by_kind`, first-action p50/p95, mean tool calls, `fallbacks` (`direct_tools`, `rule_coach`), tokens, estimated cost, sessions, and the daily-cap status (`runs_today`, `daily_runs_limit`, `reached`), plus mode, model and policy version. In memory since the last restart.
 - **Trace.** Per session `traces/<id>.jsonl` and `/api/trace`: `agent_run` (start/end, `policy_version`, outcome `done | stale | error | cancelled`), `tool` (server, name, args, ok, ms, transport, `autonomy`, result summary, and for the OpenCV tools an `opencv` digest: failing checks, first hint, markers found/missing, homography error, tilt, lighting, target seen; before/after for a re-sample), `agent_error`, `agent_drop`, `agent_skip`, `resume_blocked`, `praise_suppressed`, `resample`, `plan`, `coach_note`; agent `decide` rows carry the `run` and `tool` that made them, and `answer` rows the prompt id, so one chain reads event → `agent_run` → `tool` (OpenCV result) → `decide` / `action` → `answer`.
 
@@ -235,11 +235,13 @@ curl -s localhost:8000/api/agent/metrics | jq
   - Synthetic, scripted / Claude / rule-only: specific fix named 6/6 / 6/6 / 1/6; resume gated by a fresh camera check 5/5 / 5/5 / 0/5; non-blue cup recovered 1/1 / 1/1 / 0/1; plan with evidence 2/2 / 2/2 / 0/2; report note 1/1 / 1/1 / 0/1; conflicting evidence weighed 0/1 / 0/1 / 0/1 (Claude 0/3 over three repeats); unsafe actions 0 / 0 / 0. The scripted planner and Claude are identical on the plumbing scenarios by design.
   - Real-video block, computed from `agent_video_v0*.json`: unsupported claims 16/83 (Claude) vs 43/79 (rule-only); smaller dose offered on a faulty set 19/44 vs 0/22 (scripted 0/22); fault named and corrected 41/44 vs 22/22 in-rep (scripted 0/22, which praises every set).
 - `--repeat N`: each scenario N times; per-scenario pass rate, overall pass rate with a Wilson 95 % interval, first-action p50/p95, tokens and cost per session.
-- `--planner anthropic --yes [--model claude-haiku-5-5]` is the model run (the estimate is printed first and is an upper bound without the cache discount; measured 12 Oct with caching: $0.56 for 15 scenarios × 2 on Sonnet 5.5, $0.03 on Haiku 5.5; 11 Oct without caching: $3.22 for 15 × 3 on Sonnet 5). Each real-model file is `agent_v0_anthropic[_<model>].{md,json}`, and `agent_models_v0.md` puts them side by side. Each row carries `errors_detail` (kind, message) so a miss is diagnosable without the trace.
+- `--planner anthropic --yes [--model claude-haiku-5-5]` is the model run (the estimate is printed first and is an upper bound without the cache discount; measured 12 Oct with caching: $0.56 for 15 scenarios × 2 on Sonnet 5.5, $0.03 on Haiku 5.5; 11 Oct without caching: $3.25 for 15 × 3 on Sonnet 5). Each real-model file is `agent_v0_anthropic[_<model>].{md,json}`, and `agent_models_v0.md` puts them side by side. Each row carries `errors_detail` (kind, message) so a miss is diagnosable without the trace.
 
 ### Real video (12 Oct): REHAB24-6 through the product pipeline
 
 `evaluation/scripts/agent_video_eval.py` → `evaluation/results/agent_video_v0.{md,json}` (+ `_haiku-5-5`, `_scripted`, `_rule`), traces `traces/agent/video/<model>/`. Real RGB recordings of REHAB24-6 Ex1 (sideways arm raise; 9 healthy adults in a motion-capture lab; CC BY-NC, evaluation only) are decoded with OpenCV, sub-sampled to 15 fps, JPEG round-tripped like the browser, and fed frame by frame to the same `SessionPipeline` + stop rules + rule coach + `AgentCoach` (tools over streamable-HTTP MCP) the Replay socket builds. Agent runs are background tasks as live (frames paced at real time while one is in flight). The patient's taps are simulated, identically for every planner. 20 cases: 9 sessions over each recording's front-view block (2 sets of 5 = the 5 correct then the 5 deliberately wrong repetitions), 5 of which run on into the subject's **real turn to half-profile**; 8 recordings that are side-on or half-profile from the first frame (Camera18 / Camera17); 3 **induced** perturbations (frames cropped at 80 % of the shoulder-to-hip distance from set 2 on, hips out of view; the simulated patient fixes the framing when the agent recalibrates after its spoken fix, or 4 s after the pause text for the rule coach). Ground truth the agent never sees: the physiotherapist's correct/incorrect label and motion-capture facts per set (peak > 100° = over the 90° ceiling, hold < 2.5 s at ≥ 85°, peak < 85°, shoulder hike by the product's own angle-aware limit: mocap shoulder rise over the rest baseline above `hike_allowance(angle)` at the same frame for 3 scored frames in a row, trunk lean change > 12°; bent elbow and arm-forward, which a front-view shoulder angle cannot measure).
+
+This run (12 Oct) predates the 25 Oct arm fix (`2d991a8`): the front view no longer needs the hips, so the induced hips-out crops below would not cause the same setup pause today (not re-run).
 
 | Metric (Wilson 95 %) | Claude Sonnet 5.5 (default, ×2) | Claude Haiku 5.5 (×2) | Scripted agent | Rule coach only |
 |---|---|---|---|---|
@@ -278,7 +280,7 @@ Criteria, in order: task success, then cost, then latency, with **0 guardrail vi
 
 ### Cost during judging
 
-The agent runs on the Anthropic API key in `services/session/.env` (credits until 2 Nov 2026, then a paid balance of about $86 on the same key). Measured with prompt caching on Claude Sonnet 5.5: **$0.013 per agent run**, **$0.050 per real-video session** (~4 runs: check-in, two set reviews or a pause, the report note) and $0.019 per synthetic scenario session. The daily cap `PRAXIS_AGENT_DAILY_RUNS` (default 100 runs per UTC day, all sessions together) bounds the worst case at **100 × $0.013 ≈ $1.30 a day** (≈ 25 full sessions); over the cap the rule coach coaches alone. For 2–9 Nov (after the credits) that is at most ≈ $11 of the ≈ $86 balance; a cap of 300 would allow ≈ $4 a day (≈ $31 over the same 8 days). `GET /api/agent/metrics` shows today's runs, cost estimate (at the model's list price, cache reads and writes included) and the cap status; a restart resets the in-memory count, so the Anthropic console spend limit stays the backstop.
+The agent runs on an Anthropic API key: `services/session/.env` on a laptop, `/etc/praxis/agent.env` on the judge server (copied there by `infra/ec2/deploy.sh --agent`). Promotional credits cover it until 2 Nov 2026, then the key's paid balance. Measured with prompt caching on Claude Sonnet 5.5: **$0.013 per agent run**, **$0.050 per real-video session** (~4 runs: check-in, two set reviews or a pause, the report note) and $0.019 per synthetic scenario session. The daily cap `PRAXIS_AGENT_DAILY_RUNS` (default 100 runs per UTC day, all sessions together) bounds the worst case at **100 × $0.013 ≈ $1.30 a day** (≈ 25 full sessions); over the cap the rule coach coaches alone. For 2–10 Nov (after the credits, until judging ends) that is at most ≈ $12; a cap of 300 would allow ≈ $4 a day (≈ $35 over the same 9 days). `GET /api/agent/metrics` shows today's runs, cost estimate (at the model's list price, cache reads and writes included) and the cap status; a restart resets the in-memory count, so the Anthropic console spend limit stays the backstop.
 
 ## Changelog (dated results)
 
@@ -297,7 +299,7 @@ Newest first. Each entry is the result as it stood that day; the result files na
 
 **10 Oct, 12 scenarios × 3:** 32/36 (0.889, 95 % Wilson 0.747–0.956), 0 guardrail violations; misses mcp_down 1/3 (over-literal check), falling_peaks 2/3, green_cup 2/3 (cause not named). Superseded by the 11 Oct run; the file was regenerated, not edited.
 
-**10 Oct, the first real-Claude run: the nine-scenario set before the hardening changes.** It was committed as `evaluation/results/agent_v0_anthropic.{md,json}` and `traces/agent/anthropic/` (commit `542e93a`). Those paths were overwritten by the later Sonnet 5 runs and now hold the 12 Oct Sonnet 5 re-run, so the nine-scenario results survive only in git history. Results: task success 9/9, correct perception tool before every action 7/7, guardrail violations 0, fallback 2/2 (model timeout → rule coach; MCP down → direct tools), human approval respected 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens per session. Repeated: four consecutive full runs with the final prompt were 9/9 each (36/36). The first runs that day were 7/9 and 8/9; the misses were prompt gaps, fixed in `agent/model.py` and `perception/quality.py` without changing any scenario expectation except one that was too weak (covered_marker now requires the spoken fix to name the **bottom-right** corner instead of matching any "2"):
+**10 Oct, the first real-Claude run: the nine-scenario set before the hardening changes.** It was committed as `evaluation/results/agent_v0_anthropic.{md,json}` and `traces/agent/anthropic/` (commit `31453ee`). Those paths were overwritten by the later Sonnet 5 runs and now hold the 12 Oct Sonnet 5 re-run, so the nine-scenario results survive only in git history. Results: task success 9/9, correct perception tool before every action 7/7, guardrail violations 0, fallback 2/2 (model timeout → rule coach; MCP down → direct tools), human approval respected 5/5, checkpoint → first action p50 / p95 ≈ 3.9 / 6.3 s, ~19.7k tokens per session. Repeated: four consecutive full runs with the final prompt were 9/9 each (36/36). The first runs that day were 7/9 and 8/9; the misses were prompt gaps, fixed in `agent/model.py` and `perception/quality.py` without changing any scenario expectation except one that was too weak (covered_marker now requires the spoken fix to name the **bottom-right** corner instead of matching any "2"):
 - setup recovery now reads `get_set_summary` first, so a hand covering the cup (every setup check passing) is named as the cause instead of "everything looks good";
 - compensation on most reps of a set (lean / hiking) → correct the form **and** propose a smaller target;
 - `text` and `reason` are patient-facing: plain words, no "rms" or marker ids; setup hints name the sheet corner (`quality.corner_name`);

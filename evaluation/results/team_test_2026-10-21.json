@@ -2,7 +2,7 @@
  "header": "15 live sessions, 4 testers including automated agent-driven sessions; team shake-down on the 13 Oct build, not a usability study; small numbers",
  "meta": {
   "what": "Team shake-down test of the hosted review build (Railway, PRAXIS_TEAM_TEST=1), not a usability study",
-  "build": "13 Oct 2026 build (the 13 Oct handoff names 4afb8f0 as live; /health does not report a commit). The 21 Oct Phase 2 fixes were NOT deployed there.",
+  "build": "13 Oct 2026 build (the 13 Oct handoff names the End session, lag and Skip demo fixes (5c57dec–d96fb88) as live; /health does not report a commit). The 21 Oct Phase 2 fixes were NOT deployed there.",
   "sessions_run": "2026-10-12 to 2026-10-15",
   "snapshot_taken": "2026-10-21",
   "source": "https://team-test.example — GET only: /api/sessions (listing), /api/sessions/{id} (summary + stored events, one file per session in sessions/), /api/trace?session={id}&n=100000 (traces/, only the sessions still in the server's memory), /api/review (review_server.json, the server's own aggregate, which read every trace file on its disk)",
@@ -17,7 +17,7 @@
   "pseudonymisation": "real tester names replaced by T1-T3 everywhere (username, trace user, review keys); the mapping is not committed. No free-text notes from people exist in the snapshot (the only feedback 'detail' text is test-claude's 'automated check by Claude (synthetic clip)'). Self-reported pain/effort answers are kept because stop rules depend on them.",
   "pixels": "none: the service never stores frames; these files hold events, summaries and trace rows only (checked by tests/test_team_test_report.py: no inline image, base64 or JPEG payloads)",
   "traces_note": "traces/ holds 6 of 15 sessions (all T1): the other sessions' traces were no longer in the server's memory and /api/trace serves memory only. Agent totals over all 15 sessions therefore come from review_server.json.",
-  "socket_close": "not recorded: the 13 Oct build predates the socket_close trace row (ec98186, 21 Oct)"
+  "socket_close": "not recorded: the 13 Oct build predates the socket_close trace row (b1fe321, 21 Oct)"
  },
  "groups": {
   "human": {
@@ -1359,31 +1359,31 @@
  },
  "fixes_21oct": [
   {
-   "commit": "dea830d",
+   "commit": "3dd3c56",
    "what": "Arm setup gate: `hips_out_of_view` must hold for `HIPS_BLOCK_S` before the setup pause (other view gates keep `SETUP_BLOCK_S`); `setup_blocked` carries the visibility numbers"
   },
   {
-   "commit": "dea830d",
+   "commit": "3dd3c56",
    "what": "Hike cue rationing in the rule coach: at most `HIKE_CUES_PER_SET` captions per set, `HIKE_CUE_GAP_S` apart; detection, events, counts and stop rules unchanged"
   },
   {
-   "commit": "004009b",
+   "commit": "ffc6341",
    "what": "Review labels are exercise-aware: the arm's `setup_blocked` reads \"camera view check paused the set\" (the arm has no sheet), counted by setup pauses, with the failing checks listed; hike reported as a flag"
   },
   {
-   "commit": "12145c3",
+   "commit": "2c311a0",
    "what": "Agent tool calls: guardrail refusals (stale, no_change, ...) are traced with `error_kind` + `refused` and counted apart from failures; the feedback answers are a typed event so the end-of-session note always has evidence to cite"
   },
   {
-   "commit": "ec98186",
+   "commit": "b1fe321",
    "what": "Socket-close instrumentation: every live socket writes a `socket_close` trace row (saved, close code, agent run in flight, seconds since the last agent run); `/api/review` counts sockets that closed before their session was saved"
   },
   {
-   "commit": "1c93fc4",
+   "commit": "a24aa1f",
    "what": "Therapist-only writes: schedule changes need `PRAXIS_THERAPIST_TOKEN` (the shared review site could change the prescription)"
   },
   {
-   "commit": "9034336",
+   "commit": "44dc5d3",
    "what": "Agent pause ordering: after the fix line, `recalibrate` alone, wait, then `request_resume`; never stop after the fix line. Verified 15/15 scenarios and covered_marker 3/3 (`agent_recheck_2026-10-21_all.md`, `agent_recheck_2026-10-21_covered_marker_x3.md`)"
   }
  ]

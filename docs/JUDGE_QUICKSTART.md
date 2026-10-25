@@ -10,7 +10,7 @@ This takes five minutes and needs no install. If you have a webcam, you can try 
 
 This is our AWS deployment. It is an EC2 c8g.large (Graviton4) in us-east-2, launched from the COOL AMI. It runs the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To check what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
 
-We keep the endpoint up for the judging period: it is started for judging when we submit and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). If it does not answer, please use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
+The endpoint is up from submission until 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST); the instance is stopped until we submit. If it does not answer, please use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
 
 ## 2. Turn on the judge view (10 s)
 
@@ -25,11 +25,11 @@ Go to Settings (the gear in the left rail) → **Demo and judging** → **Show t
 
 Go to Settings → Demo and judging → **Replay a recorded session** (or tap **No camera? Use a recorded session** on any camera setup screen) and pick a clip. There are clips for Waiter – cup and the peg test; Arm out to the side has no replay clip, because the real arm videos we measure on (REHAB24-6) can't be redistributed.
 
-<img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two computer-made 3-D clips, Nine-Hole Peg Test and Waiter – cup">
+<img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two computer-made clips (OpenCV renders), Nine-Hole Peg Test and Waiter – cup">
 
 | Clip | What to watch |
 |---|---|
-| `synthetic_cup_01` (Waiter – cup) | ArUco calibration → warped target sheet → finding the cup base → reach state machine. 32 reaches over 2 slow and 2 fast arcs. Watch the verified vs unverified counts and the progression prompt (Yes / Not yet / Why) before the fast arcs. On the AWS endpoint, also watch the Claude agent coach's lines at the end of each arc (`source: agent` in the trace). |
+| `synthetic_cup_01` (Waiter – cup) | ArUco calibration → warped target sheet → finding the cup base → reach state machine. 32 reaches over 2 slow and 2 fast arcs. Watch the verified vs unverified counts and the progression prompt (Yes, go faster / Keep pace / Why?) before the fast arcs. On the AWS endpoint, also watch our agent's lines at the end of each arc (`source: agent` in the trace). |
 | `synthetic_nhpt_01` (Nine-Hole Peg Test) | Board warp, Hough holes, HSV + contour pegs, masked `matchTemplate` occupancy, the peg state machine, the NHPT timer and per-peg splits. |
 
 The replay clips are rendered, not filmed, so they show the pipeline working, not real-world accuracy (report §8.1). A replayed session gets a report just like a live one, but it is never counted in progress, adherence or trends.
@@ -63,7 +63,8 @@ The camera feed is processed in memory on the server and never stored. The red *
 git clone https://github.com/Sathvik609/Praxis.git praxis && cd praxis
 cd services/session && uv sync && uv run python tools/fetch_models.py   # SHA256-pinned Apache-2.0 ONNX models
 uv run uvicorn praxis_session.main:app --port 8000
-cd ../../web && pnpm install && pnpm dev                                # → http://localhost:5173
+# in a second terminal, from the repo root
+cd web && pnpm install && pnpm dev                                      # → http://localhost:5173
 ```
 
 In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_AGENT=anthropic` and an API key are set ([`docs/DEVELOPING.md`](DEVELOPING.md) → Agent coach). The rule coach and every stop rule work without it.
@@ -76,7 +77,7 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 | Runs on AWS Graviton with COOL | report §7, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
 | OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl` (Sonnet 5, 11 Oct; Sonnet 5.5 run in `traces/agent/anthropic-sonnet-5-5/`), [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
-| Agent evaluation: Claude Sonnet 5.5 on real video (REHAB24-6, 40 sessions) and on 15 scripted scenarios (15/15, 0 guardrail violations; a harder 16th, `mixed_signals`, fails 0/3), plus the same runs with the agent off | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
+| Agent evaluation: Claude Sonnet 5.5 on real video (REHAB24-6, 40 sessions) and on 15 scripted scenarios (15/15, 0 guardrail violations; a harder 16th, `mixed_signals`, passes 0 of 3 runs), plus the same runs with the agent off | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
 | Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
 | Camera robustness (107 rendered conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
 | Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §9.1 |

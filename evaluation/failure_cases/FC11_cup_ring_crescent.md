@@ -19,7 +19,14 @@ near half shows as a crescent, smaller than the 30 mm disc the detector expected
 camera-side edge, which is the cup's bottom edge lying on the paper, giving the base centre; the
 session learns the cup's radius from tight fits and uses partly hidden bands for the centre only.
 
+`4bbfa37` (24 Oct, from the team's real sessions, where the cup state did not change once in
+1,751 frames): the sheet seen at the first fix is kept as a reference, and a cup of any
+colour is found as what changed from the empty sheet, with the base fitted to the camera-side edge
+of its silhouette (`services/session/tests/test_cup_any_colour.py`).
+
 ## Status
-Fixed on the renders: rep F1 0.80 (P 1.0 / R 0.67), 127 verified / 2 unverified (`marker_lost`).
-Reach times still run long (MAE 773 ms, bias +760 ms) because the gripping hand hides the band at
-grasp and release. The remaining misses are FC13 and FC14.
+Fixed on the renders: rep F1 0.80 (P 1.0 / R 0.67), 127 verified / 2 unverified (`marker_lost`)
+on 12 Oct. On the 24 and 25 Oct builds: **0.79 (P 0.95 / R 0.68), 131 of 192 reaches, 138
+verified / 0 unverified**; 7 extra reports, 5 of them in `cup3d_06`, which counts dot 2 again
+(cause open). Reach times still run long (MAE 720 ms, bias +637 ms) because the gripping hand
+hides the cup at grasp and release. The other misses are FC13 and FC14.

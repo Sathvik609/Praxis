@@ -1,6 +1,6 @@
 # FC02 — Shoulder-hike correction on nearly every rep
 
-**Source:** team test on the hosted 13 Oct build (people) · **Status:** mitigated (cue rationed; detection unchanged)
+**Source:** team test on the hosted 13 Oct build (people) · **Status:** mitigated (cue rationed; since 25 Oct the flag needs both hips)
 
 ## What happened
 `shoulder_hiking` fired 31 times in 5 of 12 Arm out to the side sessions, at arm angles of
@@ -21,11 +21,17 @@ That one tester produced 30 of 31 flags points at that person's posture or set-u
 the threshold.
 
 ## What we changed
-`dea830d` (21 Oct): the rule coach says the hike correction at most `HIKE_CUES_PER_SET` = 2 times
+`3dd3c56` (21 Oct): the rule coach says the hike correction at most `HIKE_CUES_PER_SET` = 2 times
 per set, `HIKE_CUE_GAP_S` = 20 s apart. On the same stored events that is 14 captions instead of
 31 (computed by `team_test_report.py` with the shipped constants; 13 for the humans, 1 automated).
 Detection, events, counts in the report and stop rules are unchanged, and stored events now keep
 `hike` and `limit`.
+
+`2d991a8` (25 Oct): the flag now needs both hips in view as well as both shoulders, because the
+hike is measured in trunk lengths (shoulder to hip); with the hips guessed below a laptop's frame
+the number was noise. On REHAB24-6 cropped to laptop framing it fired once in 35 reps with the
+hips out of frame, and not at all with the full body or the hips at the bottom edge (`evaluation/results/rehab24_laptop_framing_v0.md`).
+A seated patient whose hips are out of frame now gets no hike flag at all.
 
 ## Why the threshold was not raised
 No hike magnitudes and no labels from this test, and the REHAB24-6 held-out numbers support the

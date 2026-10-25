@@ -6,11 +6,11 @@ This page has three diagrams for judges:
 2. the OpenCV 5 pipeline for each exercise;
 3. one real agent loop where the OpenCV output changes what the agent does next.
 
-Every module and function named here exists in `services/session/praxis_session/` (checked again on 24 Oct 2026).
+Every module and function named here exists in `services/session/praxis_session/` (checked again on 25 Oct 2026).
 
-**How to read the diagrams.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.**
+**How to read the diagrams.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned or not yet running on AWS.**
 
-Since 11 Oct 2026 the session service runs on AWS. We rebuilt it on 21 Oct in a new account. It is a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS. The COOL vs stock benchmark is in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
+Since 11 Oct 2026 the session service runs on AWS. We rebuilt it on 21 Oct in a new account. It is a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS. The COOL vs stock benchmark is in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). Our agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
@@ -20,7 +20,7 @@ flowchart LR
         CAM["Laptop built-in camera<br/>640×480 JPEG, ack-paced, 12 fps ceiling<br/>8-byte capture-time prefix"]
         UI["Screens 03–11<br/>captions, prompts Yes / Not yet,<br/>Take a rest · Pain · End session"]
         AV["Three.js avatar<br/>Blender GLB + AnimationMixer<br/>reference only, never scores"]
-        TR["Show trace panel<br/>Settings › Show technical details"]
+        TR["Show trace panel<br/>Settings › Demo and judging ›<br/>Show technical details"]
     end
 
     subgraph SVC["Session service · one Python 3.12 process · FastAPI (main.py)"]
@@ -38,7 +38,7 @@ flowchart LR
         EX["Exertion (exertion.py)<br/>behavioural index"]
         SR{"StopRules (stop_rules.py)<br/>run first, always"}
         RC["RuleCoach (coach/rules.py)<br/>every in-rep cue"]
-        subgraph AG["Agent coach (built; off by default)"]
+        subgraph AG["Agent coach · built, off by default locally, on in the hosted build"]
             AC["AgentCoach (coach/agent.py)<br/>at checkpoints only"]
             PL["StrandsPlanner · Claude Sonnet 5.5<br/>Anthropic API (prompt-cached)"]
             MCP["FastMCP 3.4 servers in-app<br/>/mcp/perception · /mcp/exertion · /mcp/coach<br/>loopback or X-Praxis-MCP-Token, else 403"]
@@ -79,7 +79,7 @@ flowchart LR
         CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
     end
-    ANT["Anthropic API<br/>Claude (the agent's only model provider;<br/>Bedrock is not used)"]
+    ANT["Anthropic API<br/>Claude · the agent's only model provider,<br/>no Bedrock"]
 
     UI -->|"HTTPS / WSS"| CF --> EC2
     SVC ==>|"infra/ec2/deploy.sh: same code,<br/>cv2 = COOL"| EC2
@@ -93,15 +93,15 @@ flowchart LR
     class S3,CW,CDK planned
 ```
 
-**What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). Amazon Bedrock is not used, and `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
+**What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
 
-**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). We tested it offline with `ScriptedPlanner` (in CI) and since 10 Oct against real Claude through the Anthropic API (Sonnet 5.5 since 21 Oct). The real-model run below includes (`docs/AGENT.md`):
+**Agent status.** Our agent is built (29 Sep). It is off by default locally (`PRAXIS_AGENT=off`) and on in the hosted build (`deploy.sh --agent`). We tested it offline with `ScriptedPlanner` (in CI) and since 10 Oct against real Claude through the Anthropic API (Sonnet 5.5 since 12 Oct). The real-model run below includes (`docs/AGENT.md`):
 
 - MCP access control, quoted patient text, the camera-checked resume, the praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct);
 - the 11 Oct audit fixes: closing the socket cancels the agent run, feedback replaces stale checkpoints, and ended sessions are read-only for the agent.
 
 > **Real model:** the default is Claude Sonnet 5.5 via the Anthropic API. We picked it over Sonnet 5 and Haiku 5.5 after measuring them side by side (`docs/AGENT.md` § Model choice).
-> - **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions. It corrected a fault confirmed by motion capture in 41/44 set reviews. It named the specific fix on 26/26 real wrong-view pauses, and offered no resume while the view stayed wrong. 0 guardrail violations, $0.050 per session.
+> - **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions. It named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated). It named the specific fix on 26/26 real wrong-view pauses, and offered no resume while the view stayed wrong. 0 guardrail violations, $0.050 per session.
 > - Synthetic, 15 scenarios, latest run (21 Oct): 15/15, 0 guardrail violations, first action p50/p95 3.7/6.2 s, $0.020 per session. A harder 16th scenario (`mixed_signals`) fails 0/3 and stays open.
 > - Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
 
@@ -116,7 +116,7 @@ flowchart TB
     subgraph SHEET["Shared by the two sheet tasks · perception/calibration.py + quality.py"]
         A1["cv2.cvtColor BGR→GRAY"]
         A2["cv2.aruco.ArucoDetector.detectMarkers<br/>DICT_4X4_50 ids 0–3, CORNER_REFINE_SUBPIX"]
-        A3["cv2.findHomography px → sheet mm<br/>4 markers fresh · 3 markers cv2.RANSAC partial ·<br/>1–2 markers that have not moved: held · otherwise held ≤ 1.5 s"]
+        A3["cv2.findHomography px → sheet mm<br/>4 markers fresh · 3 markers cv2.RANSAC partial ·<br/>1–2 markers that have not moved: held · 2 moved markers: refit ·<br/>otherwise held ≤ 1.5 s"]
         A4["cv2.solvePnP SOLVEPNP_IPPE + cv2.Rodrigues<br/>camera tilt_deg, setup check ≤ 50° (laptop screen tilted forward)"]
         A5["quality: cv2.Laplacian sharpness, mean luma,<br/>marker jitter, task area in view"]
         A1 --> A2 --> A3 --> A4
@@ -181,7 +181,7 @@ Some notes so the diagram is not read as more than it is:
 
 ## 3. Agent workflow: one perception → decision → action loop
 
-This diagram follows the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). The scenario hides ArUco marker 2 in the frame the tools see, and sends three `reach_complete` events marked unverified (`marker_lost`). In a live session, `marker_lost` means the sheet could not be tracked: no marker in view (or the visible ones moved) for more than 1.5 s. One covered marker leaves a three-marker RANSAC fit, and one or two markers that have not moved keep the last fix for as long as they stay put.
+This diagram follows the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). The scenario hides ArUco markers 2 and 3 (the two bottom corners, where a resting forearm would lie) in the frame the tools see, and sends three `reach_complete` events marked unverified (`marker_lost`). In a live session, `marker_lost` means the sheet could not be tracked: no marker in view (or the visible ones moved) for more than 1.5 s. One covered marker leaves a three-marker RANSAC fit. Since 24 Oct, two covered markers also hold the fix as long as the other two have not moved (and two that have moved refit it), so live this case is rarer than in the scenario; the scenario still tests the tool path.
 
 Here is what happens. The stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, tells the patient the specific fix, recalibrates, and asks whether to resume. Only the patient's "Yes" resumes the session.
 
@@ -193,12 +193,12 @@ sequenceDiagram
     participant PL as SessionPipeline (OpenCV 5)
     participant SR as StopRules
     participant CS as CoachSession
-    participant AG as AgentCoach + Claude (Strands)
+    participant AG as Our agent · AgentCoach + Claude (Strands)
     participant T as MCP tools (agent/tools.py)
 
     P->>B: forearm and cup cover the sheet's markers
     B->>PL: JPEG frames
-    Note over PL: Calibrator: 4 markers fresh, 3 partial RANSAC,<br/>1–2 unmoved markers held, none held ≤ 1.5 s, then uncalibrated
+    Note over PL: Calibrator: 4 markers fresh, 3 partial RANSAC,<br/>1–2 unmoved markers held, 2 moved markers: refit,<br/>none held ≤ 1.5 s, then uncalibrated
     PL->>CS: reach_complete verified:false reason:marker_lost (×3)
     CS->>SR: on_events (runs before any coach)
     SR-->>CS: pause rule failed_reps + therapist_flag
@@ -208,8 +208,8 @@ sequenceDiagram
     T-->>AG: 3 reps, 0 verified, reasons marker_lost
     AG->>T: check_setup
     T->>PL: fresh Calibrator.run on latest in-memory frame<br/>(cv2.aruco + cv2.findHomography + solvePnP + quality)
-    T-->>AG: markers check: "Markers missing: 2 …", first_hint
-    AG->>T: speak("Markers missing: 2. Flatten the sheet and keep it in view.", cue correct)
+    T-->>AG: markers [0,1] found, [2,3] missing · first_hint "The markers in the bottom-right corner (2),<br/>bottom-left corner (3) are covered or creased: clear and flatten them."
+    AG->>T: speak "The markers in the bottom-right corner (2), bottom-left corner (3)<br/>are covered or creased: clear and flatten them." · cue correct
     Note over T: guardrails: evidence ids must be in this session's ring,<br/>≤ 160 chars, ≤ 1 per 4 s, ≤ 6 calls per run
     P->>B: moves the forearm, flattens the sheet
     AG->>T: recalibrate
@@ -244,7 +244,7 @@ Who controls what in this loop:
 | Privacy | No tool result, trace row or model message holds pixels (`assert_no_pixels` on every result). | `agent/tools.py` |
 | Failure | On a model error, timeout or refusal: `agent_error`, `agent_status offline`, and the rule coach carries on. If MCP is down, the same functions are called directly as tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
 
-`pause:perception` (tracking lost for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a pop-up. `pause:setup` follows the same path too. It happens in Arm out to the side when the pose is seen but the view check fails for 3 s, for example when the patient stands side-on. Here the pose facts (`facing` vs `needed_view`, both shoulders, elbow, trunk lean) are used to name the fix (`arm_setup` scenario). Since 25 Oct the hips do not need to be in view for Arm out to the side.
+`pause:perception` (tracking lost for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a pop-up. `pause:setup` follows the same path too. It happens in Arm out to the side when the pose is seen but the view check fails: 3 s turned away from the camera (for example standing side-on), or 6 s with the practising shoulder or elbow out of view. Here the pose facts (`facing` vs `needed_view`, both shoulders, elbow, trunk lean) are used to name the fix (`arm_setup` scenario). Since 25 Oct the hips do not need to be in view for Arm out to the side.
 
 ### 3.1 Active perception: the camera result changes the next tool call (green cup)
 

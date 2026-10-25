@@ -7,12 +7,13 @@ This folder holds the datasets, the scripts that regenerate every number, the re
 
 | What | Data | Result | File |
 |---|---|---|---|
-| Arm out to the side, angle and reps | REHAB24-6, real lab video (8 healthy adults, 88 front-view reps) vs motion capture | angle MAE 3.8°, rep F1 0.96 | `results/rehab24_v0.md` |
+| Arm out to the side, angle and reps | REHAB24-6, real lab video vs motion capture (front view: 8 of its 9 healthy adults, 88 reps) | angle MAE 3.8°, rep F1 0.96 | `results/rehab24_v0.md` |
 | The same, cropped to laptop framing | REHAB24-6, 35 reps, hips at or below the frame edge | rep F1 0.91–0.93, angle MAE 5.0–7.5° | `results/rehab24_laptop_framing_v0.md` |
-| Agent coach on real video | REHAB24-6 through the product, 40 sessions | fault corrected in 41/44 set reviews, 0 guardrail violations | `results/agent_video_v0.md` |
+| Agent coach on real video | REHAB24-6 through the product, 40 sessions | our agent named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); 0 guardrail violations | `results/agent_video_v0.md` |
 | Agent coach, scripted scenarios | 15 scenarios, Claude Sonnet 5.5 (21 Oct) | 15/15; the harder `mixed_signals` fails 0/3 | `results/agent_recheck_2026-10-21_all.md` |
 | NHPT and Waiter – cup | synthetic 3-D Blender renders | NHPT F1 0.97, total-time MAE 1.2 s; cup F1 0.79, reach-time MAE 0.7 s | `results/synthetic3d_v0.md` |
-| Camera robustness | 107 rendered conditions | see file | `results/robustness_v0.md` |
+| Camera robustness | 2-D renders: 81 NHPT and 91 cup sheet conditions | first fix 74/81 and 83/91; all holes right 61/74, cup found within 10 mm 71/77; setup advice right 80/81 and 90/91 | `results/robustness_v0.md` |
+| Live sessions, speed only | hosted build, 24 Oct, one teammate, 5 sessions (4 cup, 1 NHPT) | capture → event p50 132–177 ms; server processing p95 10–75 ms; not accuracy | `results/live_sessions_2026-10-24.md` |
 
 The NHPT and the cup have no labelled real-camera number yet. Our own live sessions stored events only, no video.
 
@@ -51,6 +52,9 @@ The NHPT and the cup have no labelled real-camera number yet. Our own live sessi
   and events, 6 traces, the server's `/api/review` summary and `meta.json` (where the data came from).
   Testers are pseudonymised (T1–T3; `test-claude` = automated, Claude-driven, synthetic clip). No frames
   exist. Not labelled.
+- `data/live_sessions_2026-10-24/`: the latency blocks of 5 stored sessions from one teammate (T1) on
+  the hosted build, 24 Oct (home laptop webcam, real pegs and a real cup). Speed only: no frames, no
+  labels, and the sessions ran before the 24–25 Oct fixes.
 
 ## Tools (`services/session/tools/`, run from `services/session`)
 
@@ -69,6 +73,7 @@ The NHPT and the cup have no labelled real-camera number yet. Our own live sessi
   `rehab24_thresholds.py` derives the shoulder-hike allowance and the front-view gate.
 - `agent_video_eval.py`: the agent coach end to end on REHAB24-6 → `results/agent_video_v0.md`.
 - `robustness.py`: the rendered camera-robustness sweep → `results/robustness_v0.md`.
+- `live_sessions_report.py`: latency of the 24 Oct live sessions → `results/live_sessions_2026-10-24.md` (speed only).
 
 - `eval.py [--dataset DIR]`: replays every manifest entry through the same pipeline the app uses,
   **at product defaults** (`--debounce 2 --clear 3`, the values the app ships with). Change them only to
@@ -102,14 +107,15 @@ The NHPT and the cup have no labelled real-camera number yet. Our own live sessi
   `results/team_test_2026-10-21.{md,json}`. Per exercise it shows verified / unverified / missed, setup
   pauses, sessions ended early, hike flags (and the captions the 21 Oct rationing would show), therapist
   flags, and agent runs / refused vs failed tool calls / latency / cost. Human testers and automated
-  sessions are always kept apart. It also lists what Phase 2 (21 Oct) changed. `--check` fails if the
+  sessions are always kept apart. It also lists what the 21 Oct fixes changed. `--check` fails if the
   committed output differs.
 - `agent_eval.py` + `agent/scenarios/*.json`: the agent coach's 16 scenarios (covered marker,
   dim light, three unverified, falling peaks + exertion, repeated lean, pain stop mid-run, model
   timeout, MCP down, clean session, and seven more listed in `docs/AGENT.md`). They run through the real session, OpenCV setup checks on synthetic
   frames, the tools and the guardrails. `--planner scripted` (CI, free) writes `results/agent_v0.{md,json}`
   and sample traces to `traces/agent/`. `--planner anthropic --yes` runs Claude and writes
-  `results/agent_v0_anthropic.{md,json}` (it prints an estimated cost first). The scripted numbers
+  `results/agent_v0_anthropic_sonnet-5-5.{md,json}` for the default model (`--model` picks another;
+  `agent_v0_anthropic.{md,json}` is kept for Claude Sonnet 5) and prints an estimated cost first. The scripted numbers
   check plumbing and guardrails, not model judgement. `agent/make_scenarios.py` regenerates
   the JSON.
 

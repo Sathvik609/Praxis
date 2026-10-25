@@ -24,6 +24,6 @@ MediaPipe-style region tracking (the next region comes from the previous landmar
 runs only when tracking is lost), crop scale 1.25, and an off-frame region now means "no pose".
 
 ## Status
-Fixed on this dataset: pose found 100 %, frame MAE 3.81°, rep-peak MAE 3.83°, rep F1 0.93,
-movement F1 0.97. Standing adults several metres from a lab camera, not a seated patient at a
+Fixed on this dataset: pose found 100 %, frame MAE 3.81°, rep-peak MAE 3.83°, rep F1 0.96
+(0.93 before the 25 Oct laptop-framing fix, FC01), movement F1 0.97. Standing adults several metres from a lab camera, not a seated patient at a
 laptop; re-check on dataset v1.

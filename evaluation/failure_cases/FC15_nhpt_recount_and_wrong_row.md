@@ -4,14 +4,16 @@
 
 ## What happened
 Before the 12 Oct fixes the forearm passing over seated pegs flipped them to empty, and they were
-counted again when it moved on. After the fixes 14 extra NHPT reports remain on 90 pegs: 10
-re-count a seated hole after the hand hid it, and 4 put a peg in another row's hole at 42–50° of
-camera tilt.
+counted again when it moved on. After them 14 extra NHPT reports remained on 90 pegs (12 Oct). On
+the 25 Oct build 6 remain, in 4 of 10 clips, all at 40–50° of camera tilt (`nhpt3d_01`, `02`,
+`04`, `07`; 3 of them in `nhpt3d_07`). Read against the labels: 2 report a hole that was already
+seated a second time, and 4 report a hole before its own peg arrived, each within 0.5 s of a peg
+being seated in another hole.
 
 ## Evidence
-`evaluation/results/synthetic3d_v0.md` (NHPT FP 14; "Misses with reasons": extra reports per clip)
-and `synthetic3d_v0_before_fix.md`; the 10 / 4 breakdown is read from that miss list in
-`docs/TECHNICAL_REPORT.md` §8.1 and `docs/RISKS.md` (2026-10-12).
+`evaluation/results/synthetic3d_v0.md` (NHPT FP 6; "Misses with reasons": extra reports per clip)
+and `synthetic3d_v0_before_fix.md`. The 2 / 4 breakdown is our reading of that miss list against
+the labelled seat times in the same file.
 
 ## Why
 A hand over a hole makes it look empty; a hole whose state flips back and forth produces a new
@@ -19,8 +21,10 @@ seat. At steep angles a standing peg's top projects onto the next row's hole (FC
 
 ## What we changed
 12 Oct (`services/session/tests/test_nhpt.py`, `test_parallax.py`): a hole keeps its state while
-something covers it.
+something covers it. 25 Oct (`4b6f6b2`): the test ends when nine **different** holes are filled,
+so a hole counted twice no longer ends the test early (before, one clip counted one hole three
+times and ended before all nine holes were filled).
 
 ## Status
-Partly fixed. The remaining re-counts happen when the hand hides a hole for only part of the
-time; not changed further before real recordings.
+Partly fixed: 6 extra reports remain, and they no longer end the test early (10 of 10 clips
+finish). Not changed further before real recordings.

@@ -1,6 +1,6 @@
 # FC18 — Shoulder-hike flag on every correct rep (REHAB24-6)
 
-**Source:** REHAB24-6 real RGB video + mocap · **Status:** fixed on REHAB24-6; still fires in the team test (FC02)
+**Source:** REHAB24-6 real RGB video + mocap · **Status:** fixed on REHAB24-6; fired often in the 13 Oct team test (FC02)
 
 ## What happened
 With the fixed 0.08 trunk-length limit, `shoulder_hiking` flagged 47 of 47 correct front-view
@@ -22,4 +22,6 @@ held-out 0 of 22 (swapped fold 0 of 25).
 
 ## Status
 Fixed on this dataset, which labels no shrugs, so sensitivity is unmeasured (incorrect reps
-flagged fell to 2 of 41). The same allowance still fired 31 times on seated teammates (FC02).
+flagged fell to 2 of 41). The same allowance still fired 31 times on seated teammates in the 13 Oct
+team test (FC02). Since 25 Oct (`2d991a8`) the flag also needs both hips in view, so a seated
+patient whose hips are below a laptop's frame gets no hike flag; not yet re-tested live.

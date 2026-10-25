@@ -102,10 +102,10 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 |---|---|---|
 | Arm angle on **real video** (REHAB24-6, a public lab dataset: 8 healthy adults, 88 reps) vs motion capture | angle error (MAE) 3.8°, rep F1 0.96 | [rehab24_v0.md](evaluation/results/rehab24_v0.md) |
 | Same videos cropped to **laptop framing** (hips at or below the bottom edge) | rep F1 0.91–0.93 (34–35 of 35 reps found), angle error 5.0–7.5°. Before our 25 Oct fix: F1 0.28–0.76 | [rehab24_laptop_framing_v0.md](evaluation/results/rehab24_laptop_framing_v0.md) |
-| Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions) | Corrected a confirmed fault in 41/44 set reviews, 0 guardrail breaks, first action 3.7 s median, $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
-| Our agent on scripted scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
-| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, all fixed and re-tested on renders: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. Speed in 4 real cup sessions: camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
-| Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Computer-made 3-D videos, not real people. Peg test: F1 0.97, total time off by 1.2 s on average. Cup: F1 0.79, reach time off by 0.7 s | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
+| Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions) | Named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); 0 guardrail breaks; first action 3.7 s median; about $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
+| Our agent on 15 synthetic test scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
+| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, fixed and re-tested on renders, not yet re-tested live: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. Speed in 4 real cup sessions: camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
+| Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Computer-made 3-D videos, not real people. Peg test: F1 0.97, total time off by 1.2 s on average; most seats (90 of 96) are counted but marked unverified (grasp not seen). Cup: F1 0.79, reach time off by 0.7 s | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
 | COOL vs stock OpenCV, same c8g.large | 1.2–1.6× faster on colour threshold, contours, Hough and template matching; 9–14 % slower on JPEG decode, ArUco, warp and the hand model; about even on a full frame | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
 
 ## Where it fails
@@ -124,7 +124,8 @@ Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISK
 ```bash
 cd services/session && uv sync && uv run python tools/fetch_models.py   # Python 3.12 + uv, OpenCV Zoo models
 uv run uvicorn praxis_session.main:app --port 8000                       # → http://127.0.0.1:8000/health
-cd ../../web && pnpm install && pnpm dev                                  # → http://localhost:5173
+# in a second terminal, from the repo root
+cd web && pnpm install && pnpm dev                                        # → http://localhost:5173
 ```
 
 Print [the peg sheet](docs/sheets/nhpt_board.pdf) or [the cup sheet](docs/sheets/cup_targets.pdf) at 100 %. No webcam: Settings → Replay a recorded session. Tests: `uv run pytest -q` (service) and `pnpm test` (web). Agent, evaluation, Docker and deploy commands: [docs/DEVELOPING.md](docs/DEVELOPING.md).
@@ -136,7 +137,7 @@ services/session/   FastAPI + OpenCV 5 + safety rules + coach + agent tools (one
 web/                React + TypeScript web app, Three.js mannequin
 evaluation/         datasets, scripts that regenerate every number, results
 benchmark/          COOL vs stock OpenCV
-infra/ec2/          AWS deploy script and CloudWatch setup
+infra/ec2/          AWS deploy script and CloudWatch setup (CloudWatch not yet run on AWS)
 docs/               report (+ PDF), quickstart, diagrams, agent, licences, risks, sheets
 ```
 

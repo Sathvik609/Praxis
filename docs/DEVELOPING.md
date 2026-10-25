@@ -17,15 +17,15 @@ cd services/session && uv sync && uv run python tools/fetch_models.py && uv run 
 
 # 2. Web app (pnpm). No sign-in: the app opens straight on Home (`/` redirects to `/details`).
 cd web && pnpm install && pnpm dev
-#    → http://localhost:5173/details  Home (affected areas) → Start session → Choose → Demonstration → check-in · /demo?exercise=cup&side=left shows the demonstration
-#    → http://localhost:5173/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
+#    → http://localhost:5173/details  Home (affected areas) → Start session → Choose → Demonstration → check-in · /details/demo?exercise=cup&side=left shows the demonstration
+#    → http://localhost:5173/details/setup?exercise=nhpt  (Vite picks the next port if 5173 is busy)
 #    Click Allow on the camera prompt. Lay the printed NHPT sheet flat 25–35 cm in front of the
 #    laptop and tilt the screen forward until the whole sheet shows (laptop camera only):
-#    the checklist turns Pass and "Continue to demonstration" unlocks.
+#    the checklist ticks over and "Continue" starts the session (setup never blocks: "Continue anyway").
 #    → http://localhost:5173/session?hand=left            runs the Nine-Hole Peg Test live.
 #      Pegs are found by colour. Bright pegs on a white sheet work out of the box; for wooden
 #      or pale pegs, or a coloured/wooden board, seat one peg and tap that hole in the Board view
-#      ("Tap a seated peg to sample its colour") — the service samples a 6 mm patch and uses a
+#      ("Pegs not showing? Seat one and tap that hole to sample its colour.") — the service samples a 6 mm patch and uses a
 #      ±12° hue window from then on (WebSocket command {"cmd":"sample_colour","hole":k}), or press
 #      "Pegs not found? Tap a peg on the picture" and tap a peg on the camera view.
 #    → http://localhost:5173/session?exercise=cup&side=left runs Waiter – cup (any cup: keep it beside the sheet until the four corners are found, then on dot 1;

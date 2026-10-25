@@ -22,8 +22,12 @@ simply have ended a first look. But the stored events cannot say whether the she
 calibrated or the cup / pegs ever seen, and the cup tester reported pain 6 and "hard".
 
 ## What we changed
-Nothing yet. FC13 and FC14 (renders) are known ways for these exercises to see nothing at the
-start, but there is no evidence either happened here.
+Nothing for these two sessions: their cause is not recorded. FC13 and FC14 (renders) are known
+ways for these exercises to see nothing at the start, but there is no evidence either happened
+here. The later team sessions (23–24 Oct) did record why sheet tasks saw nothing: real pegs
+without a strong colour (`pegs_detected` 0) and an ordinary cup that never changed state. Both
+were fixed in `4bbfa37` (24 Oct: change from the empty board and the empty sheet; FC11, FC14) and
+checked on synthetic frames and renders only (`docs/TECHNICAL_REPORT.md` §8.1.1).
 
 ## Status
 Open. In the next team test, ask sheet-exercise testers to run the full task, and read the

@@ -3,10 +3,11 @@
 **Source:** synthetic 3-D renders (**not real-camera evidence**) · **Status:** open (render limit; real-hand rate unmeasured)
 
 ## What happened
-The OpenCV Zoo palm-detection + hand-landmark models found a hand on 3.1 % of cup frames and
-8.9 % of NHPT frames. Of 91 NHPT reports, 5 were verified and 86 unverified (`grasp_not_seen` 45,
-`no_hand_near_hole` 41); verified agreement on matched pegs was 0.065. Most inferred timer starts
-miss the first transfer (≈1.5 s).
+The OpenCV Zoo palm-detection + hand-landmark models found a hand on 2.9 % of cup frames and
+8.8 % of NHPT frames (25 Oct renders). Of 96 NHPT reports, 6 were verified and 90 unverified
+(`grasp_not_seen` 64, `no_hand_near_hole` 26); verified agreement on matched pegs was 0.056. The
+timer start was inferred in 7 of 10 clips, and every reported total runs short of the labelled one
+(NHPT total MAE 1.17 s). On 12 Oct the figures were 3.1 % and 8.9 %, 5 verified of 91.
 
 ## Evidence
 `evaluation/results/synthetic3d_v0.md` ("Unverified reasons and coverage", "hand model frames"
