@@ -1,15 +1,32 @@
 # Evaluation
 
-This folder holds our labelled datasets, the scripts that regenerate every number, the result tables and the failure cases.
+This folder holds the datasets, the scripts that regenerate every number, the result tables and the failure cases.
 **Recording real sessions? Follow `PROTOCOL.md` step by step.**
 
+## Results at a glance
+
+| What | Data | Result | File |
+|---|---|---|---|
+| Arm out to the side, angle and reps | REHAB24-6, real lab video (8 healthy adults, 88 front-view reps) vs motion capture | angle MAE 3.8°, rep F1 0.96 | `results/rehab24_v0.md` |
+| The same, cropped to laptop framing | REHAB24-6, 35 reps, hips at or below the frame edge | rep F1 0.91–0.93, angle MAE 5.0–7.5° | `results/rehab24_laptop_framing_v0.md` |
+| Agent coach on real video | REHAB24-6 through the product, 40 sessions | fault corrected in 41/44 set reviews, 0 guardrail violations | `results/agent_video_v0.md` |
+| Agent coach, scripted scenarios | 15 scenarios, Claude Sonnet 5.5 (21 Oct) | 15/15; the harder `mixed_signals` fails 0/3 | `results/agent_recheck_2026-10-21_all.md` |
+| NHPT and Waiter – cup | synthetic 3-D Blender renders | NHPT F1 0.97, total-time MAE 1.2 s; cup F1 0.79, reach-time MAE 0.7 s | `results/synthetic3d_v0.md` |
+| Camera robustness | 107 rendered conditions | see file | `results/robustness_v0.md` |
+
+The NHPT and the cup have no labelled real-camera number yet. Our own live sessions stored events only, no video.
+
 ## Datasets
+
+- `external/rehab24_6/` (git-ignored): REHAB24-6 [Černek et al. 2024, CC BY-NC 4.0], fetched by
+  `services/session/tools/fetch_rehab24.py`. We use its arm-abduction exercise: real RGB video of 9 healthy
+  adults with motion capture and a physiotherapist's rep labels. Evaluation only, never redistributed; only derived numbers are committed.
 
 - `dataset_v0/`: synthetic only (`"synthetic": true`). It has an OpenCV-rendered NHPT clip, a rendered
   Waiter – cup clip, and a front-view landmark stream for Arm out to the side (we use landmarks here
   because the pose DNN cannot see a drawn figure). `scripts/make_dataset_v0.py` regenerates them.
   They check the pipeline, not real-world accuracy.
-- `dataset_v1/`: real recordings (`"synthetic": false`), made with `PROTOCOL.md`. Layout:
+- `dataset_v1/` (not recorded yet): real recordings (`"synthetic": false`), made with `PROTOCOL.md`. Layout:
   `raw/<participant>/<exercise>/<timestamp>.{mp4,json,labels.json,pred.json}` (the clip, a sidecar,
   the ground truth and the cached pipeline events), `consent/<participant>_<date>.json` and `manifest.json`.
   Clips (`.mp4`) are git-ignored and deleted after 30 days. Everything else is committed, so the
@@ -30,7 +47,7 @@ This folder holds our labelled datasets, the scripts that regenerate every numbe
   error. For Arm out to the side it also has the goniometer-app angle (`peak_deg_goniometer`) and
   trunk lean / shoulder hike.
 - `data/team_test_2026-10-21/`: the team shake-down on the hosted 13 Oct build (15 live
-  sessions, 12–15 Oct; snapshot taken 21 Oct, GET requests only). It has the stored session summaries
+  sessions, 12–15 Oct: 8 by three of us, 7 automated; snapshot taken 21 Oct, GET requests only). It has the stored session summaries
   and events, 6 traces, the server's `/api/review` summary and `meta.json` (where the data came from).
   Testers are pseudonymised (T1–T3; `test-claude` = automated, Claude-driven, synthetic clip). No frames
   exist. Not labelled.
@@ -45,6 +62,13 @@ This folder holds our labelled datasets, the scripts that regenerate every numbe
 | `dataset_v1.py status` / `validate` / `manifest` | progress to 300 reps / 5 participants; check labels; write the manifest |
 
 ## Scripts (`evaluation/scripts/`)
+
+- `rehab24_eval.py`: runs the REHAB24-6 arm-abduction videos through the product's `SessionPipeline` and
+  scores angle and reps against motion capture → `results/rehab24_v0.{md,json}` (~15 min on 4 cores).
+  `rehab24_laptop_framing.py` does the same on frames cropped like a laptop camera;
+  `rehab24_thresholds.py` derives the shoulder-hike allowance and the front-view gate.
+- `agent_video_eval.py`: the agent coach end to end on REHAB24-6 → `results/agent_video_v0.md`.
+- `robustness.py`: the rendered camera-robustness sweep → `results/robustness_v0.md`.
 
 - `eval.py [--dataset DIR]`: replays every manifest entry through the same pipeline the app uses,
   **at product defaults** (`--debounce 2 --clear 3`, the values the app ships with). Change them only to

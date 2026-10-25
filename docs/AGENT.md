@@ -77,7 +77,7 @@ A hybrid coach. The deterministic rule coach keeps every in-rep cue (instant, of
 | `nhpt_complete` | `get_set_summary` (its `nhpt` block: total time, the nine per-peg splits, slowest/fastest peg), then explain the result plainly, no norms, no clinical claims |
 | `feedback` (session end) | `write_session_summary` (a coach note in the report). Supersedes any checkpoint still pending, and is the one checkpoint that also runs after a stop, so the note can explain the stop (only reads and the note are allowed then) |
 
-`pause:setup` (10 Oct): in Arm out to the side, a view gate held for 3 s while the pose model sees the patient (side-on for a front-view lift, hips out of view) emits `setup_blocked`; the stop rules pause with the specific fix ("Face the camera with both shoulders in view."). No therapist flag; it needs a tap or the agent's camera-checked resume prompt.
+`pause:setup` (10 Oct): in Arm out to the side, a view gate held while the pose model sees the patient (3 s side-on for a front-view lift; 6 s with the practising shoulder or elbow out of view, which the code still calls `hips_out_of_view` although since 25 Oct the hips themselves may be out of frame) emits `setup_blocked`; the stop rules pause with the specific fix ("Face the camera with both shoulders in view."). No therapist flag; it needs a tap or the agent's camera-checked resume prompt.
 
 ## Workflow
 

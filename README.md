@@ -70,8 +70,8 @@ Sources: [report §1](docs/TECHNICAL_REPORT.md).
     <td><img src="docs/img/agent_qualifier_green_cup.svg" alt="One agent run: the cup is not seen, the agent re-samples its colour, OpenCV finds it and the next reach is verified"></td>
   </tr>
   <tr>
-    <td valign="top"><b>Arm angle</b><br><sub>OpenCV Zoo hand and pose models give the shoulder angle (smoothed, capped at 90°) and flag leaning or hiking the shoulder. The mannequin only shows the move; it never scores.<br><code>cv2.dnn</code><br><a href="services/session/praxis_session/perception/pose.py">pose.py</a> · <a href="services/session/praxis_session/perception/arm_fsm.py">arm_fsm.py</a></sub></td>
-    <td valign="top"><b>Safety rules first, then the coach</b><br><sub>Pain, leaning, unchecked reps or losing you on camera pause or stop the session and flag the therapist, before any coach sees the event. Every cue traces back to an OpenCV event.<br><a href="services/session/praxis_session/stop_rules.py">stop_rules.py</a> · <a href="services/session/praxis_session/coach/rules.py">coach/rules.py</a></sub></td>
+    <td valign="top"><b>Arm angle</b><br><sub>The OpenCV Zoo pose model gives the shoulder angle (smoothed; the target is capped at 90°) and flags leaning or a hiked shoulder when the hips are in view. The mannequin only shows the move; it never scores.<br><code>cv2.dnn</code><br><a href="services/session/praxis_session/perception/pose.py">pose.py</a> · <a href="services/session/praxis_session/perception/arm_fsm.py">arm_fsm.py</a></sub></td>
+    <td valign="top"><b>Safety rules first, then the coach</b><br><sub>Pain, repeated leaning, repeated missed or unverified reps, or losing you on camera pause or stop the session and flag the therapist, before any coach sees the event. Every cue traces back to an OpenCV event.<br><a href="services/session/praxis_session/stop_rules.py">stop_rules.py</a> · <a href="services/session/praxis_session/coach/rules.py">coach/rules.py</a></sub></td>
     <td valign="top"><b>Our agent (optional)</b><br><sub>Claude Sonnet 5.5 runs at checkpoints and calls OpenCV tools over MCP. It gets numbers and short text, never frames. Every dose change is a prompt the patient accepts.<br><a href="services/session/praxis_session/agent/tools.py">agent/tools.py</a> · <a href="docs/AGENT.md">AGENT.md</a></sub></td>
   </tr>
 </table>
@@ -101,20 +101,20 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 | What | Result | Evidence |
 |---|---|---|
 | Arm angle on **real video** (REHAB24-6, a public lab dataset: 8 healthy adults, 88 reps) vs motion capture | angle error (MAE) 3.8°, rep F1 0.96 | [rehab24_v0.md](evaluation/results/rehab24_v0.md) |
-| Same videos cropped to **laptop framing** (hips at or below the bottom edge) | 34–35 of 35 reps found, angle error 5.0–7.5° (before our 25 Oct fix: 6–24 of 35) | [rehab24_laptop_framing_v0.md](evaluation/results/rehab24_laptop_framing_v0.md) |
+| Same videos cropped to **laptop framing** (hips at or below the bottom edge) | rep F1 0.91–0.93 (34–35 of 35 reps found), angle error 5.0–7.5°. Before our 25 Oct fix: F1 0.28–0.76 | [rehab24_laptop_framing_v0.md](evaluation/results/rehab24_laptop_framing_v0.md) |
 | Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions) | Corrected a confirmed fault in 41/44 set reviews, 0 guardrail breaks, first action 3.7 s median, $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
 | Our agent on scripted scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
 | Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, all fixed and re-tested on renders: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. No stopwatch-checked number yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) |
-| Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Peg test: F1 0.97, total time within 1.2 s. Cup: F1 0.79 | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md), [robustness_v0.md](evaluation/results/robustness_v0.md) |
-| COOL vs stock OpenCV, same c8g.large | 1.2–1.6× faster on threshold, contours, Hough, template matching; about even on a full frame | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
+| Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Synthetic. Peg test: F1 0.97, total time off by 1.2 s on average. Cup: F1 0.79, reach time off by 0.7 s | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
+| COOL vs stock OpenCV, same c8g.large | 1.2–1.6× faster on colour threshold, contours, Hough and template matching; 9–14 % slower on JPEG decode, ArUco, warp and the hand model; about even on a full frame | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
 
 ## Where it fails
 
 - Measured real-video accuracy exists only for **Arm out to the side**, and only on healthy adults in a lab. We store no video, so our own live sessions have no labelled ground truth.
-- **The peg test and cup have no stopwatch-checked real number yet.** On the 3-D renders the cup still misses about a third of reaches; the failures are listed in [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md).
+- **The peg test and cup have no stopwatch-checked real number yet.** On the 3-D renders the cup still misses about a third of reaches, almost all in a dim room and at a very flat 20° screen tilt; the failures are listed in [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md).
 - With the hips out of view, Arm out to the side still counts reps, but it cannot check shoulder hiking or leaning, and the angle is less accurate.
 - Angles are relative to the camera, not clinical goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
-- No usability (SUS) study and no patients. Our team test was 15 live sessions by 3 people plus 1 automated agent-driven run ([team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md)).
+- No usability (SUS) study and no patients. Our own testing was 17 saved live sessions by 3 of us (13–24 Oct) plus 7 automated runs; the 21 Oct snapshot is in [team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md).
 - On AWS we use EC2 (COOL AMI) and CloudFront. S3 storage and a one-command CDK deploy are not built, and the hosted app has no sign-in.
 
 Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISKS.md).

@@ -32,7 +32,7 @@ Go to Settings → Demo and judging → **Replay a recorded session** (or tap **
 | `synthetic_cup_01` (Waiter – cup) | ArUco calibration → warped target sheet → finding the cup base → reach state machine. 32 reaches over 2 slow and 2 fast arcs. Watch the verified vs unverified counts and the progression prompt (Yes / Not yet / Why) before the fast arcs. On the AWS endpoint, also watch the Claude agent coach's lines at the end of each arc (`source: agent` in the trace). |
 | `synthetic_nhpt_01` (Nine-Hole Peg Test) | Board warp, Hough holes, HSV + contour pegs, masked `matchTemplate` occupancy, the peg state machine, the NHPT timer and per-peg splits. |
 
-The replays are **OpenCV-rendered synthetic clips** (labelled "Replay"). They show that the pipeline works. They are not evidence of real-world accuracy (report §8.1). A replayed session gets a report just like a live one, but it is never counted in progress, adherence or trends.
+The replay clips are rendered, not filmed, so they show the pipeline working, not real-world accuracy (report §8.1). A replayed session gets a report just like a live one, but it is never counted in progress, adherence or trends.
 
 <table><tr>
 <td width="50%"><img src="img/screens/replay_nhpt.png" alt="Nine-Hole Peg Test replay: holes and seated pegs on the warped board, the timer from first peg lift, 4 of 9 seated, the coach caption and the Replay badge"></td>
@@ -48,10 +48,10 @@ The camera feed is processed in memory on the server and never stored. The red *
 
 **Arm out to the side** needs no printout:
 1. Home → **Start session** → **Arm out to the side** → watch the demonstration → answer the check-in (pain 0–10).
-2. Camera setup: put the laptop on a table about 2 m away, facing you, so your head, shoulders and hips are in view. We never analyse the face, but the pose model finds a person by the head. If your head is cropped out, nothing is detected (we measured this, report §8.4).
+2. Camera setup: stand or sit about 2–2.5 m from the laptop, facing it, so your head, both shoulders and both elbows are in view. Your hips can be out of the picture. We never analyse the face, but the pose model finds a person by the head, so keep it in view (report §8.4).
 3. Lift your arm out to the side to about shoulder height, hold for 3 s, then lower it. The angle shown is a progress estimate relative to the camera, not a clinical measurement. The 90° ceiling is enforced in code.
 4. Things to try:
-   - Lean your trunk sideways while lifting. A posture correction appears, and the third lean pauses the set and flags the therapist.
+   - Lean your trunk sideways while lifting. A posture correction appears, and the third lean pauses the set and flags the therapist. This check needs your hips in view, so step back for it.
    - Walk out of view. The session pauses and says why, then carries on when you come back.
    - Tap **Pain / feel unwell** and give a 7 or higher. This stops the session.
 
@@ -76,8 +76,8 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 | Runs on AWS Graviton with COOL | report §7, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
 | OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl` (Sonnet 5, 11 Oct; Sonnet 5.5 run in `traces/agent/anthropic-sonnet-5-5/`), [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
-| Agent evaluation: real Claude Sonnet 5.5 on 15 synthetic scenarios (21 Oct: 15/15, 0 guardrail violations; the 16th, the `mixed_signals` judgement scenario, fails 0/3, see [`docs/AGENT.md`](AGENT.md)), on real video (REHAB24-6, 40 sessions), and the rule-only ablation (the same runs with the agent off) | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
+| Agent evaluation: Claude Sonnet 5.5 on real video (REHAB24-6, 40 sessions) and on 15 scripted scenarios (15/15, 0 guardrail violations; a harder 16th, `mixed_signals`, fails 0/3), plus the same runs with the agent off | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
 | Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
-| Camera robustness (107 synthetic conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
+| Camera robustness (107 rendered conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |
 | Safety lives in code | `services/session/praxis_session/stop_rules.py`, `prescription.py` (clamps), report §9.1 |
 | What is not done yet | report §10 (Limitations) |

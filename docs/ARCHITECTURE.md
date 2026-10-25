@@ -100,9 +100,9 @@ flowchart LR
 - MCP access control, quoted patient text, the camera-checked resume, the praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct);
 - the 11 Oct audit fixes: closing the socket cancels the agent run, feedback replaces stale checkpoints, and ended sessions are read-only for the agent.
 
-> **Real model (12 Oct):** the default is Claude Sonnet 5.5 via the Anthropic API. We picked it over Sonnet 5 and Haiku 5.5 after measuring them side by side (`docs/AGENT.md` § Model choice).
+> **Real model:** the default is Claude Sonnet 5.5 via the Anthropic API. We picked it over Sonnet 5 and Haiku 5.5 after measuring them side by side (`docs/AGENT.md` § Model choice).
 > - **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions. It corrected a fault confirmed by motion capture in 41/44 set reviews. It named the specific fix on 26/26 real wrong-view pauses, and offered no resume while the view stayed wrong. 0 guardrail violations, $0.050 per session.
-> - Synthetic, 15 scenarios × 2: 28/30, 0 guardrail violations, first action p50/p95 4.2/6.5 s. The 11 Oct Sonnet 5 run was 45/45 (15 × 3).
+> - Synthetic, 15 scenarios, latest run (21 Oct): 15/15, 0 guardrail violations, first action p50/p95 3.7/6.2 s, $0.020 per session. A harder 16th scenario (`mixed_signals`) fails 0/3 and stays open.
 > - Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
 
 ## 2. OpenCV 5 pipeline per exercise
@@ -116,7 +116,7 @@ flowchart TB
     subgraph SHEET["Shared by the two sheet tasks · perception/calibration.py + quality.py"]
         A1["cv2.cvtColor BGR→GRAY"]
         A2["cv2.aruco.ArucoDetector.detectMarkers<br/>DICT_4X4_50 ids 0–3, CORNER_REFINE_SUBPIX"]
-        A3["cv2.findHomography px → sheet mm<br/>4 markers fresh · 3 markers cv2.RANSAC partial · else held ≤ 1.5 s"]
+        A3["cv2.findHomography px → sheet mm<br/>4 markers fresh · 3 markers cv2.RANSAC partial ·<br/>1–2 markers that have not moved: held · otherwise held ≤ 1.5 s"]
         A4["cv2.solvePnP SOLVEPNP_IPPE + cv2.Rodrigues<br/>camera tilt_deg, setup check ≤ 50° (laptop screen tilted forward)"]
         A5["quality: cv2.Laplacian sharpness, mean luma,<br/>marker jitter, task area in view"]
         A1 --> A2 --> A3 --> A4
@@ -126,7 +126,7 @@ flowchart TB
     subgraph NHPT["Nine-Hole Peg Test · perception/board.py, peg_fsm.py, nhpt.py"]
         N1["BoardState.warp: cv2.warpPerspective<br/>canonical 3 px/mm"]
         N2["detect_holes: cv2.GaussianBlur + cv2.HoughCircles<br/>once, cached, snapped to spec"]
-        N3["peg_mask: cv2.cvtColor HSV + cv2.inRange<br/>minus skin band, minus hand box"]
+        N3["peg_mask: cv2.cvtColor HSV + cv2.inRange<br/>+ cv2.absdiff change from the empty board (uncoloured pegs)<br/>minus skin band, minus hand box"]
         N4["peg_blobs: cv2.findContours + cv2.moments"]
         N5["hole_scores: disc fraction,<br/>masked cv2.matchTemplate TM_CCOEFF_NORMED tie-break"]
         N6["PegFSM at_source → grasped → in_transit →<br/>over_target → seated → hand_clear · NHPT timer"]
@@ -137,8 +137,8 @@ flowchart TB
 
     subgraph CUPS["Waiter – cup · perception/cup.py"]
         C1["CupSheetState.warp: cv2.warpPerspective<br/>canonical 2 px/mm"]
-        C2["cup_mask: HSV cv2.inRange<br/>+ cv2.morphologyEx MORPH_OPEN"]
-        C3["cup_mm: cv2.findContours + cv2.contourArea<br/>+ cv2.moments → base centroid mm"]
+        C2["cup_mask: HSV cv2.inRange + cv2.morphologyEx MORPH_OPEN<br/>no colour match: cv2.absdiff change from the empty sheet"]
+        C3["cup_mm: cv2.findContours + circle fit to the base edge<br/>(on the paper) → base centre mm"]
         C4["CupFSM at_dot → lifted → in_transit →<br/>over_dot → placed → hand_clear"]
         C1 --> C2 --> C3 --> C4
     end
@@ -176,12 +176,12 @@ Some notes so the diagram is not read as more than it is:
 
 - A rep the camera could not check is **unverified, not failed**. Examples: `reach_complete` with `cup_occluded` or `marker_lost`, and NHPT `rep_complete` with `no_hand_near_hole`. Performance misses (`target_missed`, `hold_too_short`) are counted separately.
 - Arm angles are progress numbers measured in the image, relative to the camera. They are **never goniometry** (clinical joint-angle measurement). From the front view, abduction cannot be told apart from a lift in the scaption plane.
-- Every threshold above was tuned on synthetic renders (`perception/synth.py`) and synthetic landmark streams. Real-camera accuracy is unmeasured until dataset v1 (`docs/PLAN.md` Phase 9).
+- The sheet-task thresholds (HSV windows, Hough, hand gates) were tuned on renders and fixed after our live team sessions; they have no labelled real-camera accuracy yet. The arm's hike allowance and front-view gate were set from REHAB24-6 real video (`evaluation/results/rehab24_thresholds_v0.md`).
 - The hidden exercises (Pendulum, Arm to the front, Rotate out, Rotate in) still have code in `ArmFSM` and the registry. But `visible: False` keeps them off every screen, and the socket refuses them (`not_offered`).
 
 ## 3. Agent workflow: one perception → decision → action loop
 
-This diagram follows the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). The scenario hides ArUco marker 2 in the frame the tools see, and sends three `reach_complete` events marked unverified (`marker_lost`). In a live session, `marker_lost` means fewer than three markers were seen for more than 1.5 s. If only one marker is covered, tracking carries on with a three-marker RANSAC fit.
+This diagram follows the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). The scenario hides ArUco marker 2 in the frame the tools see, and sends three `reach_complete` events marked unverified (`marker_lost`). In a live session, `marker_lost` means the sheet could not be tracked: no marker in view (or the visible ones moved) for more than 1.5 s. One covered marker leaves a three-marker RANSAC fit, and one or two markers that have not moved keep the last fix for as long as they stay put.
 
 Here is what happens. The stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, tells the patient the specific fix, recalibrates, and asks whether to resume. Only the patient's "Yes" resumes the session.
 
@@ -198,7 +198,7 @@ sequenceDiagram
 
     P->>B: forearm and cup cover the sheet's markers
     B->>PL: JPEG frames
-    Note over PL: Calibrator: 4 markers fresh, 3 partial RANSAC,<br/>fewer than 3 held ≤ 1.5 s, then uncalibrated
+    Note over PL: Calibrator: 4 markers fresh, 3 partial RANSAC,<br/>1–2 unmoved markers held, none held ≤ 1.5 s, then uncalibrated
     PL->>CS: reach_complete verified:false reason:marker_lost (×3)
     CS->>SR: on_events (runs before any coach)
     SR-->>CS: pause rule failed_reps + therapist_flag
@@ -231,24 +231,24 @@ Who controls what in this loop:
 
 | Layer | What it does here | Code |
 |---|---|---|
-| Stop rules | Pause and flag the therapist after three unverified reps. Also on pain ≥ 7, new/worse symptoms, trunk lean ×3, high exertion for 60 s, and perception loss. Runs before any coach. | `stop_rules.py` `StopRules.on_events`, `on_exertion`, `on_checkin`, `on_pain` |
+| Stop rules | Pause and flag the therapist after three unverified reps (a peg the board saw seated does not count). Also: pain ≥ 7 in session stops; three missed reps in a row and 60 s of high exertion give a rest; three trunk leans and lost tracking pause. Runs before any coach. | `stop_rules.py` `StopRules.on_events`, `on_exertion`, `on_checkin`, `on_pain` |
 | Checkpoint | Only these start an agent run: `checkin`, `set_complete`, `arc_complete`, `nhpt_complete`, `pause:failed_reps`, `pause:perception`, `pause:setup`, `feedback`. | `session.py` `CHECKPOINT_EVENTS`, `CHECKPOINT_PAUSES` |
 | Autonomy | One table marks each tool as `autonomous`, `forbidden_after_stop`, `patient_approval` or `never`. `invoke` enforces it, and every `agent_run` row records `policy_version`. | `agent/tools.py` `AUTONOMY`, `invoke` |
 | Plan | `set_session_plan` runs at check-in. Changing the plan needs new evidence ids and a `because`. It shows up as `plan` trace rows and as `summary.coach.plan` in the report. | `agent/tools.py`, `session.py` `set_plan` |
 | Evidence | Every coach tool must cite event ids that exist in this session's ring buffer, or the call is refused. | `agent/tools.py` `_action_guard` |
 | Clamps | Dose changes (`propose_adjustment`) are clamped to the prescription by `prescription.clamp` and turned into a Yes / Keep / Why prompt. On Yes, `SessionPipeline.command` clamps them again. | `agent/tools.py`, `prescription.py`, `pipeline.py` |
-| Budgets | ≤ 6 tool calls and ≤ 15 s per run, ≤ 60 calls and ≤ 12 runs per session; rest ≤ 120 s. | `agent/tools.py` constants, `agent/model.py` `RUN_TIMEOUT_S`, `coach/agent.py` |
+| Budgets | ≤ 6 tool calls and ≤ 15 s per run (25 s for a pause run), ≤ 60 calls and ≤ 12 runs per session; rest 10–120 s. | `agent/tools.py` constants, `agent/model.py` `RUN_TIMEOUT_S`, `coach/agent.py` |
 | Human approval | A resume or a dose change happens only when the patient taps to accept. A resume is offered only after a fresh `check_setup` passes. Saying no changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt`; `agent/tools.py` `request_resume` |
 | Security | MCP routes accept only loopback requests without proxy headers, or requests with the per-process `X-Praxis-MCP-Token`. Patient text reaches the model only as length-capped, quoted data. | `agent/mcp_server.py` `MCPAccessGuard`; `agent/model.py` `quote_patient_text` |
 | Observability | One JSON log line at the end of each run and for each error. With `PRAXIS_EMF=1` it adds CloudWatch EMF metrics (runs, fallbacks, errors, cost estimate, first action). Also `/api/agent/metrics`. Session/ops lines and the CloudWatch agent, dashboard and alarms are in `infra/ec2/README.md` (built, not yet verified on AWS). | `agent/metrics.py`, `ops.py`, `main.py` |
 | Privacy | No tool result, trace row or model message holds pixels (`assert_no_pixels` on every result). | `agent/tools.py` |
 | Failure | On a model error, timeout or refusal: `agent_error`, `agent_status offline`, and the rule coach carries on. If MCP is down, the same functions are called directly as tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
 
-`pause:perception` (tracking lost for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a pop-up. `pause:setup` follows the same path too. It happens in Arm out to the side when the pose is seen but the view check fails for 3 s, for example when the patient stands side-on. Here the pose facts (`facing` vs `needed_view`, both shoulders, hips, trunk lean) are used to name the fix (`arm_setup` scenario).
+`pause:perception` (tracking lost for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a pop-up. `pause:setup` follows the same path too. It happens in Arm out to the side when the pose is seen but the view check fails for 3 s, for example when the patient stands side-on. Here the pose facts (`facing` vs `needed_view`, both shoulders, elbow, trunk lean) are used to name the fix (`arm_setup` scenario). Since 25 Oct the hips do not need to be in view for Arm out to the side.
 
 ### 3.1 Active perception: the camera result changes the next tool call (green cup)
 
-Scenario `evaluation/agent/scenarios/green_cup.json` (trace `traces/agent/green_cup.jsonl`): the patient uses a green cup. The default HSV colour band looks for the blue base, so the cup is never seen. With the hand model on, placements are worked out from the hand position and reported as unverified (`cup_occluded`). Three in a row pause the session.
+Scenario `evaluation/agent/scenarios/green_cup.json` (trace `traces/agent/green_cup.jsonl`): the patient uses a green cup. The default HSV colour band looks for the blue base, so the cup is never seen. (Since 24 Oct a live session also finds a cup of any colour by its change from the empty sheet, so this case is now rarer; the scenario still tests the tool path.) With the hand model on, placements are worked out from the hand position and reported as unverified (`cup_occluded`). Three in a row pause the session.
 
 ```mermaid
 sequenceDiagram
