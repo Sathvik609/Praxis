@@ -98,7 +98,7 @@ def test_wood_grain_specks_are_not_loose_pegs():
 
 def _fingers(frame, P, x, y, n=3):
     """Fingertips and their shadow over the board, no palm: the small pieces a real hand leaves
-    when most of it is off the sheet (team test 24 Oct, Rinky: 9 'pegs' from one)."""
+    when most of it is off the sheet (team test 24 Oct: 9 'pegs' from one)."""
     for i in range(n):
         fx = x - 10.0 + 10.0 * i
         a = np.linspace(0, 2 * np.pi, 20, endpoint=False)

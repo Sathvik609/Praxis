@@ -3,7 +3,7 @@ import { cleanTester, readTester, testerParams, writeTester } from './tester'
 beforeEach(() => localStorage.clear())
 
 it('cleans names like the service does', () => {
-  expect(cleanTester('  Ravi K! ')).toBe('ravi k')
+  expect(cleanTester('  Sam K! ')).toBe('sam k')
   expect(cleanTester('x'.repeat(40))).toBe('x'.repeat(24))
   expect(cleanTester('!!!')).toBeNull()
 })

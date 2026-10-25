@@ -1,7 +1,7 @@
 """Waiter – cup with an ordinary cup (24 Oct 2026, team test).
 
 The cup was found only by a blue tape ring round its base, and the app never asked for one: the
-team's real cup sessions logged no state change at all (shruthi, 1751 frames). The empty sheet
+team's real cup sessions logged no state change at all (one teammate, 1751 frames). The empty sheet
 seen at the session's first fix is now kept as a reference, and a cup of any colour (a white mug
 included) is what changed on it; its camera-side bottom edge gives the base, as for the band.
 """
@@ -83,7 +83,7 @@ def _ref_state(tilt=40):
 
 
 def test_a_hand_on_the_sheet_is_not_a_cup():
-    # team test 24 Oct (Rinky): the cup jumped between dots while her hand was on the sheet
+    # team test 24 Oct: the cup jumped between dots while the hand was on the sheet
     cal, cs = _ref_state()
     P = view_camera(CUP_TARGETS, SIZE, 40, 5.0, 1.0, focal_per_width=0.85)
     for x, y in [(90.0, 110.0), (150.0, 95.0), (210.0, 110.0)]:

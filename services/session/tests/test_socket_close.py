@@ -59,10 +59,10 @@ def test_the_review_counts_live_sockets_closed_before_their_session_was_saved(tm
     d = tmp_path / "t"
     d.mkdir()
     rows = {
-        "drop1": [{"kind": "session", "mode": "arm", "exercise": "abduction", "user": "rinky"},
+        "drop1": [{"kind": "session", "mode": "arm", "exercise": "abduction", "user": "tester a"},
                   {"kind": "agent_run", "phase": "end", "ts": 100.0},
                   {"kind": "socket_close", "saved": False, "close_code": 1006, "source": "live", "agent_run_in_flight": None, "s_since_agent_run": 21.0, "ts": 121.0}],
-        "drop2": [{"kind": "session", "mode": "arm", "exercise": "abduction", "user": "abhi"},
+        "drop2": [{"kind": "session", "mode": "arm", "exercise": "abduction", "user": "tester b"},
                   {"kind": "socket_close", "saved": False, "close_code": 1001, "source": "live", "agent_run_in_flight": "checkin", "s_since_agent_run": None}],
         "saved": [{"kind": "session", "mode": "cup"}, {"kind": "socket_close", "saved": True, "close_code": 1000, "source": "live"}],
         "replay": [{"kind": "session", "mode": "cup"}, {"kind": "socket_close", "saved": False, "close_code": 1000, "source": "replay"}],
@@ -76,6 +76,6 @@ def test_the_review_counts_live_sockets_closed_before_their_session_was_saved(tm
     u = r["unsaved_sockets"]
     assert u["count"] == 2 and u["close_codes"] == {"1006": 1, "1001": 1}
     assert u["agent_run_in_flight"] == 1 and u["within_30s_of_agent_run"] == 1
-    assert u["testers"] == {"rinky": 1, "abhi": 1}
+    assert u["testers"] == {"tester a": 1, "tester b": 1}
     md = render_md(r)
     assert "Sockets closed before the session was saved: 2" in md and "1006 ×1" in md

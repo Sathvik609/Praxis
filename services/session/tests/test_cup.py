@@ -250,7 +250,7 @@ def test_never_seen_resting_stays_unverified():
 
 
 def test_before_the_cup_is_on_a_dot_the_next_dot_is_dot_1():
-    # team test 24 Oct (Rinky): the cup started beside the sheet and the screen already
+    # team test 24 Oct: the cup started beside the sheet and the screen already
     # highlighted dot 2, so every count looked one dot ahead
     fsm = CupFSM(clear_frames=2)
     fsm.step(obs(0.0))
