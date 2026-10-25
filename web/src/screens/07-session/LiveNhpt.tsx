@@ -82,6 +82,9 @@ export function LiveNhpt() {
   const label = statusLabel(status, 'nhpt')
   const live = status === 'tracking' || status === 'replay'
   const complete = events.find((e) => e.type === 'nhpt_complete') as NhptComplete | undefined
+  // nhpt_complete can arrive before the frame that counts the ninth peg (the session ends on it),
+  // so a finished test takes its count from the completion event's own pegs.
+  const pegsDone = Math.max(frame?.nhpt?.pegs_done ?? 0, complete?.pegs?.length ?? 0)
 
   const finish = (endedEarly: boolean, reason?: EndReason | StopEnd) => {
     flow.finish(endedEarly, reason, {
@@ -90,7 +93,7 @@ export function LiveNhpt() {
       total_s: complete?.total_s ?? frame?.nhpt?.total_s ?? null,
       splits_s: complete?.splits_s ?? [],
       pegs: complete?.pegs ?? [],
-      pegs_done: frame?.nhpt?.pegs_done ?? 0,
+      pegs_done: pegsDone,
       ended_early: endedEarly,
     })
   }
@@ -106,7 +109,6 @@ export function LiveNhpt() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow.replayOver])
 
-  const pegsDone = frame?.nhpt?.pegs_done ?? 0
   // Occupancy is the peg test's verification; a peg is unverified only when the service says so
   // (`unverified_total`) or a rep_complete arrives with `verified: false`.
   const pegsUnverified = Number((frame?.nhpt as { unverified_total?: number } | undefined)?.unverified_total ?? events.filter((e) => e.type === 'rep_complete' && e.verified === false).length)
@@ -214,7 +216,7 @@ export function LiveNhpt() {
           unit="s"
           metricSub={started ? 'from first peg lift' : 'waits for first peg lift'}
           head={`${pegsDone} of 9 seated`}
-          headRight={nextHole != null ? `next: hole ${nextHole + 1}` : !frame?.calibrated ? 'sheet not in view' : pegsDone >= 9 ? 'board full' : 'any hole'}
+          headRight={pegsDone >= 9 ? 'board full' : nextHole != null ? `next: hole ${nextHole + 1}` : !frame?.calibrated ? 'sheet not in view' : 'any hole'}
           dots={{ label: `${pegsDone} of 9 pegs seated`, items: Array.from({ length: 9 }, (_, i) => (i < pegsDone ? 'done' : i === pegsDone && started ? 'now' : 'todo')) }}
           extra={<ExertionChip exertion={coach.exertion} compact />}
           verified={pegsDone - unv}

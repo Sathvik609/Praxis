@@ -379,9 +379,12 @@ async function nhpt() {
     const tEnd = truth.filter((m) => m.what === 'seated').at(-1).t
     const truthTotal = tEnd - tStart
     const done = page.events('nhpt_complete').at(-1) ?? page.events('assessment_complete').at(-1)
-    const holes = page.events('rep_complete').map((e) => e.hole)
+    // count the test's own per-peg splits: the session ends on nhpt_complete (ninth seat), so the
+    // ninth rep_complete (fired once the hand is clear) never arrives
+    const holes = page.events('nhpt_split').map((e) => e.hole)
     const seated = holes.length
-    check('nhpt: nine pegs counted live, each hole once', r.done && seated === 9 && new Set(holes).size === 9, `rep_complete holes ${holes}; screen "${(/\d of 9 seated/.exec(t) ?? [''])[0]}"`)
+    const onScreen = (/\d of 9 seated/.exec(t) ?? [''])[0]
+    check('nhpt: nine pegs counted live, each hole once', r.done && seated === 9 && new Set(holes).size === 9 && onScreen === '9 of 9 seated', `nhpt_split holes ${holes}; screen "${onScreen}"`)
     const timer = page.events('frame').map((f) => f.nhpt?.elapsed_s ?? f.timer?.elapsed_s).filter((x) => x != null)
     check('nhpt: timer runs (elapsed increases)', timer.length > 5 && timer.at(-1) > timer[0], `first ${timer[0]} last ${timer.at(-1)}`)
     note(`nhpt truth total ${truthTotal.toFixed(2)} s (clip)`)
@@ -501,6 +504,8 @@ async function replay() {
           }
         },
       })
+      // the ninth rep_complete fires once the hand is clear, a moment after "9 of 9 seated"
+      for (let i = 0; ex === 'nhpt' && i < 10 && page.events().filter((e) => e.type === 'rep_complete').length < 9; i++) await sleep(500)
       await shot(page, `replay_${ex}`)
       const reps = page.events().filter((e) => e.type === (ex === 'nhpt' ? 'rep_complete' : 'reach_complete')).length
       check(`replay ${clip}: runs to the end with counts`, r.done && reps >= (ex === 'nhpt' ? 9 : 28), `${reps} rep events${ex === 'cup' ? `, progression accepted ${accepted}` : ''}`)

@@ -166,6 +166,18 @@ test('navigates to the report when the test completes', () => {
   expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
+test('the seated count reads 9 of 9 when nhpt_complete lands before the frame that counts the ninth peg', () => {
+  const pegs = Array.from({ length: 9 }, (_, i) => ({ peg: i + 1, hole: i, t: 10 + i, split_s: 1 }))
+  mockStream([
+    { ...frame, nhpt: { ...frame.nhpt, state: 'seated', reps: 8, pegs_done: 8 } },
+    { type: 'nhpt_complete', t: 12, id: 3, total_s: 20.4, splits_s: pegs.map((p) => p.split_s), pegs },
+  ])
+  renderAt('/session?hand=left')
+  // the feedback dialog opens on top; the progress card behind it still shows the count
+  expect(document.body.textContent?.match(/\d of 9 seated/g)).toEqual(['9 of 9 seated'])
+  expect(document.body).toHaveTextContent('board full')
+})
+
 test('a peg test finished at the 9th peg is not finished again when the recording ends', () => {
   const send = mockStream([frame, { type: 'nhpt_complete', t: 12, id: 3, total_s: 41.2, splits_s: [4, 5], pegs: [] }, { type: 'replay_end', t: 13, id: 4, clip: 'synthetic_nhpt_01', frames: 130 }])
   renderAt('/session?hand=left&replay=synthetic_nhpt_01')

@@ -174,7 +174,8 @@ class Page {
       const isNear = (e) => {
         if (!near) return true
         for (let p = e; p; p = p.parentElement) {
-          if ((p.innerText || '').includes(near)) return [...p.querySelectorAll(e.tagName)].filter((o) => norm(o.innerText) === norm(e.innerText)).length === 1
+          // case-blind: card titles are shown in capitals (innerText follows text-transform)
+          if ((p.innerText || '').toLowerCase().includes(near.toLowerCase())) return [...p.querySelectorAll(e.tagName)].filter((o) => norm(o.innerText) === norm(e.innerText)).length === 1
         }
         return false
       }
