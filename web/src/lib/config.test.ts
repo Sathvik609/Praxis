@@ -22,7 +22,10 @@ describe('deploymentLabel', () => {
   it('names AWS Graviton + COOL when the service reports the COOL build', () => {
     const d = deploymentLabel(cool, 'd235zashbh751z.cloudfront.net')
     expect(d.title).toBe('Running on AWS Graviton · COOL OpenCV 5.1.0-dev')
-    expect(d.sub).toMatch(/Other AWS cloud services are off/)
+    // true of the EC2 build: CloudFront in front, SQLite on the instance, no other AWS call from
+    // the app (PRAXIS_CLOUD_ENABLED=1 there only sets /health mode; CloudWatch is not claimed)
+    expect(d.sub).toMatch(/^HTTPS through Amazon CloudFront\. Session records are kept on this server; the app calls no other AWS service\./)
+    expect(d.sub).not.toMatch(/CloudWatch|services are off/)
     expect(d.sub).toMatch(/processed on the Praxis service in memory, never stored/)
   })
   it('says the laptop edge build when the service runs locally', () => {

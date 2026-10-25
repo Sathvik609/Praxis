@@ -102,8 +102,8 @@ describe('one source of truth for the step text', () => {
     expect(stepTexts('abduction', { holdS: 2 })![2]).toMatch(/Hold for 2 s/)
   })
 
-  test('the cup step-5 caption is the artifact text, verbatim (ruling R11)', () => {
-    expect(stepTexts('waiter_cup')![4]).toBe("Go across and back once slowly — that's one set. Then once more, quicker")
+  test('the cup step-5 caption matches the dose: 2 slow arcs, then 2 fast (one arc = across and back)', () => {
+    expect(stepTexts('waiter_cup')![4]).toBe('Across and back twice slowly, then twice more, quicker')
   })
 
   test('the cup and peg steps follow the animation: every caption change lines up with the motion', () => {

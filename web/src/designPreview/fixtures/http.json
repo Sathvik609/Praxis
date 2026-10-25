@@ -458,8 +458,8 @@
      "new_symptoms": false
     },
     "next_practice": {
-     "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
-     "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+     "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+     "proposal": "keep the arcs your plan assigns; keep the hand clear after each placement",
      "level_change": false
     },
     "delivery": "queued · not yet delivered",
@@ -605,8 +605,8 @@
      "new_symptoms": false
     },
     "next_practice": {
-     "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
-     "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+     "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+     "proposal": "keep the arcs your plan assigns; keep the hand clear after each placement",
      "level_change": false
     },
     "delivery": "queued · not yet delivered",
@@ -678,7 +678,7 @@
      "new_symptoms": false
     },
     "next_practice": {
-     "text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.",
+     "text": "Session ended by a stop rule. Rest the arm today; your therapist has been flagged.",
      "proposal": "review with clinician",
      "level_change": false
     },
@@ -2878,7 +2878,7 @@
    },
    {
     "tool": "speak",
-    "text": "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.",
+    "text": "Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder.",
     "ui": {},
     "label": "Rule-based coach · LLM agent pending",
     "source": "rule",
@@ -4572,8 +4572,8 @@
    "new_symptoms": false
   },
   "next_practice": {
-   "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
-   "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+   "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+   "proposal": "keep the arcs your plan assigns; keep the hand clear after each placement",
    "level_change": false
   },
   "delivery": "queued · not yet delivered",
@@ -4721,8 +4721,8 @@
    "new_symptoms": false
   },
   "next_practice": {
-   "text": "Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.",
-   "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement",
+   "text": "Continue your assigned plan. No level change — that needs Dr. Rao.",
+   "proposal": "keep the arcs your plan assigns; keep the hand clear after each placement",
    "level_change": false
   },
   "delivery": "queued · not yet delivered",
@@ -4795,7 +4795,7 @@
    "new_symptoms": false
   },
   "next_practice": {
-   "text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.",
+   "text": "Session ended by a stop rule. Rest the arm today; your therapist has been flagged.",
    "proposal": "review with clinician",
    "level_change": false
   },

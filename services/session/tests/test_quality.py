@@ -172,3 +172,11 @@ def test_blur_threshold_passes_a_real_webcam_and_catches_real_blur():
     assert lighting(cv2.GaussianBlur(f, (0, 0), 1.5))["ok"] is True  # ~22: mild softness passes
     blurry = lighting(cv2.GaussianBlur(f, (0, 0), 2.5))  # ~5
     assert blurry["ok"] is False and "blurry" in blurry["hint"]
+
+
+def test_no_sheet_person_hint_asks_for_head_shoulders_and_elbows_not_hips():
+    """25 Oct: Arm out to the side scores from the front with the hips out of a laptop's frame."""
+    cal = Calibrator(NHPT_BOARD).run(np.zeros((480, 640, 3), np.uint8))
+    rows = build_checks(cal, {"ok": True, "hint": None}, {"ok": True}, {"ok": None}, {"present": False}, needs_sheet=False)
+    person = {r["id"]: r for r in rows}["person"]
+    assert person["hint"] == "Face the camera with your head, both shoulders and both elbows in view."

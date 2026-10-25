@@ -71,3 +71,8 @@ test('anticipation dips before a lift and overshoot settles after a placement', 
   for (let t = 0.02; t < 0.4; t += 0.02) if (sample(clip, t).angles.lShoulder[0] > rest + 0.5 * D) dipped = true
   expect(dipped).toBe(true)
 })
+
+test('the cup clip step-5 caption matches the dose (no "as fast as you can")', () => {
+  const captions = CLIPS.cup.keys.map((k) => k.caption).filter(Boolean)
+  expect(captions).toContain('Step 5 of 5 · do that twice slowly, then twice more, as fast as you comfortably can')
+})

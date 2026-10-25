@@ -144,7 +144,7 @@ export function Therapist() {
             <Card title={`Prescription (v${rx?.version ?? 3})`} action={<Chip tone="neutral">Dose read-only</Chip>}>
               <section aria-label="Prescription">
                 <ul className="divide-y divide-line text-lg">
-                  <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">Arm strengthening</Chip></li>
+                  <li className="flex justify-between gap-2 py-2"><span>Arm out to the side · {String(rx?.exercises.abduction?.sets ?? 2)}×{String(rx?.exercises.abduction?.reps ?? 8)} · hold {String(rx?.exercises.abduction?.hold_s ?? 3)} s · ≤{String(rx?.exercises.abduction?.ceiling_deg ?? 90)}°</span><Chip tone="mint">Arm strengthening</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Waiter – cup · {String(rx?.exercises.cup?.slow_arcs ?? 2)} slow + {String(rx?.exercises.cup?.fast_arcs ?? 2)} fast arcs</span><Chip tone="mint">Coordination</Chip></li>
                   <li className="flex justify-between gap-2 py-2"><span>Nine-Hole Peg Test</span><Chip tone="mint">Assessment</Chip></li>
                   <li className="py-2">Practice days · {daysLabel(schedule.practice_days)} · peg test {WEEKDAYS[schedule.nhpt_day]}</li>

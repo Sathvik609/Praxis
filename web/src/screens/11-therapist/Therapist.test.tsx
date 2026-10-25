@@ -36,6 +36,8 @@ test('therapist dashboard has a clinician header, lists patients, open flags, pr
   for (const chip of ['Arm strengthening', 'Coordination', 'Assessment']) expect(within(rx).getByText(chip)).toHaveClass('ui-chip')
   expect(rx).toHaveTextContent(/4–6 gentle \(side lift 2×6 hold 2 s ≤60°/)
   expect(rx.textContent).not.toMatch(/≤90°, no fast/)
+  // the hold says its unit
+  expect(rx).toHaveTextContent(/Arm out to the side · 2×8 · hold 3 s · ≤90°/)
   expect(header).toHaveClass('th-head')
   expect(document.querySelector('.th-grid')).not.toBeNull()
   expect(screen.getByText('86')).toBeInTheDocument()

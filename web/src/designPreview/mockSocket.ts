@@ -152,7 +152,7 @@ export class PreviewSessionSocket extends EventTarget {
         if (pain >= PAIN_STOP && !this.stopped) {
           this.halt()
           this.stopped = true
-          this.deliver(this.event('stop', { rule: 'pain', pain, text: `Pain ${pain}/10 is at your stop level. Session ended and saved; your therapist is flagged.` }))
+          this.deliver(this.event('stop', { rule: 'pain', pain, text: `Pain ${pain}/10 is at or above your stop level. Session ended and saved; your therapist is flagged.` }))
           this.stop = { t: this.lastT, rule: 'pain', detail: `pain ${pain}/10 reported (stop level ${PAIN_STOP})` }
           this.deliver(this.event('therapist_flag', { rule: 'pain', detail: this.stop.detail }))
         }

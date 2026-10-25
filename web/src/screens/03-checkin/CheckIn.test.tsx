@@ -150,6 +150,7 @@ test("today's check-in is reused: one tap continues; checking in again is offere
   mockApi({ '/api/prescription': PRESCRIPTION })
   renderCheckIn()
   expect(screen.getByRole('heading', { name: 'You checked in today' })).toBeInTheDocument()
+  expect(screen.getByText(/^Practising side: Left arm ·/)).toBeInTheDocument()
   expect(screen.getByText(/Pain 5/)).toBeInTheDocument()
   expect(screen.getByText('Gentle day')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Check in again' }))

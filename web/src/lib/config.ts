@@ -18,15 +18,17 @@ export function processingPlace(hostname: string = location.hostname): string {
 export const DESIGN_PREVIEW = import.meta.env.MODE === 'design'
 
 /** Where this build runs, for Settings › Demo and judging. Claims AWS only when the service's
- *  `/health` reports COOL's OpenCV build (the Graviton instance from the COOL AMI); the other
- *  AWS cloud services stay off there (`PRAXIS_CLOUD_ENABLED=0`). */
+ *  `/health` reports COOL's OpenCV build (the Graviton instance from the COOL AMI). That build
+ *  sits behind CloudFront and keeps its SQLite store on the instance; `PRAXIS_CLOUD_ENABLED=1`
+ *  there only sets `/health` mode, and `PRAXIS_EMF=1` only formats log lines, so the app itself
+ *  calls no other AWS service. CloudWatch is not claimed (its agent is an optional deploy step). */
 export function deploymentLabel(
   health: { status?: string; opencv_version?: string; opencv_build?: { version: string; cool: boolean } } | null | undefined,
   hostname: string = location.hostname,
 ): { title: string; sub: string } {
   const video = `Video is ${processingPlace(hostname)}.`
   if (health?.opencv_build?.cool) {
-    return { title: `Running on AWS Graviton · COOL OpenCV ${health.opencv_build.version}`, sub: `Other AWS cloud services are off in this build. ${video}` }
+    return { title: `Running on AWS Graviton · COOL OpenCV ${health.opencv_build.version}`, sub: `HTTPS through Amazon CloudFront. Session records are kept on this server; the app calls no other AWS service. ${video}` }
   }
   if (LOCAL_HOSTS.has(hostname)) return { title: 'Edge mode · this laptop', sub: `AWS cloud services are off. ${video}` }
   return { title: 'Hosted review build · AWS cloud services off', sub: video }

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Calendar as CalendarData, CalendarDay, CalendarSession } from '../../lib/api'
 import { addDays, weekday } from '../../lib/calendar'
+import { readDay } from '../../lib/day'
 import { mockApi } from '../../test/api-mock'
 import { Calendar } from './Calendar'
 
@@ -178,4 +179,23 @@ test('the service being down says so', async () => {
   mockApi({})
   renderCalendar()
   expect(await screen.findByRole('alert')).toHaveTextContent(/Could not load your calendar/)
+})
+
+const checkin = (pain: number, extra: Record<string, unknown> = {}) => ({ pain, location: '', energy: 'ok', minutes: 20, new_symptoms: false, side: 'left', tier: pain >= 7 ? 'rest' : 'full', flagged: pain >= 7, reasons: [], synced: true, at: new Date().toISOString(), ...extra })
+
+test('25 Oct: the Today card follows a rest check-in or a stop rule, as Home does', async () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: checkin(8) }))
+  mockApi(ROUTES)
+  const { unmount } = renderCalendar()
+  let today = await screen.findByRole('region', { name: 'Today' })
+  expect(within(today).getByRole('heading', { name: 'Rest today' })).toBeInTheDocument()
+  expect(today).toHaveTextContent('Your check-in says rest today. You can still watch the demos.')
+  expect(today).not.toHaveTextContent(/About 10 min/)
+  unmount()
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: checkin(2), stopped: 'session' }))
+  renderCalendar()
+  today = await screen.findByRole('region', { name: 'Today' })
+  expect(within(today).getByRole('heading', { name: 'Rest today' })).toBeInTheDocument()
+  expect(today).toHaveTextContent("A stop rule ended today's practice. Rest the arm today.")
+  localStorage.clear()
 })

@@ -94,7 +94,7 @@ class StopRules:
         if pain >= self.th.pain_max and not self.stopped:
             self.stopped = True
             return [
-                make_event("stop", t=t, rule="pain", pain=pain, text=f"Pain {pain}/10 is at your stop level. Session ended and saved; your therapist is flagged."),
+                make_event("stop", t=t, rule="pain", pain=pain, text=f"Pain {pain}/10 is at or above your stop level. Session ended and saved; your therapist is flagged."),
                 self._flag(t, "pain", f"pain {pain}/10 reported (stop level {self.th.pain_max})"),
             ]
         return []
@@ -111,7 +111,7 @@ class StopRules:
                 self._lean_seen = count
                 if count - self._lean_base >= self.th.lean_events:
                     self._lean_base = count
-                    out.append(make_event("pause", t=e.t, rule="lean", text="You're leaning to lift. Let's pause, sit tall, and lower the target a little."))
+                    out.append(make_event("pause", t=e.t, rule="lean", text="You're leaning to lift. Let's pause, sit tall, and lift a little lower."))
                     out.append(self._flag(e.t, "lean", f"trunk lean > {self.th.lean_deg:g}° in {count} lifts ({self.th.lean_events} since the last lean pause)"))
             elif e.type in ("rep_complete", "reach_complete"):
                 if e.payload.get("verified") is not False:

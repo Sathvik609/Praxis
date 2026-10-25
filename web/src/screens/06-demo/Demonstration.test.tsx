@@ -168,7 +168,8 @@ test('quick pain check at 7+ can continue gently: posted with continue_gently, t
   const check = screen.getByRole('dialog', { name: 'Quick pain check' })
   await userEvent.click(within(check).getByRole('radio', { name: '8' }))
   await userEvent.click(within(check).getByRole('button', { name: 'Continue to setup' }))
-  await screen.findByRole('dialog', { name: 'Rest today' })
+  // rest is advised, not "stopped": Continue gently is offered right below
+  expect(await screen.findByRole('dialog', { name: 'Rest today' })).toHaveAccessibleDescription('Rest is advised today.')
   fetchMock.mockClear()
   mockApi({ '/api/prescription': PRESCRIPTION, '/api/checkin': { tier: 'gentle', flagged: true, reasons: [] } })
   await userEvent.click(screen.getByRole('button', { name: 'Continue gently' }))

@@ -23,7 +23,7 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.getByText('17')).toBeInTheDocument()
   expect(screen.getByText('86')).toBeInTheDocument()
   expect(screen.getByText('verified movements')).toBeInTheDocument()
-  expect(screen.getByText('unverified (hand hid cup)')).toBeInTheDocument()
+  expect(screen.getByText('unverified (hand or marker hidden)')).toBeInTheDocument()
   expect(screen.getByText('High confidence')).toBeInTheDocument()
   expect(screen.getByText('Medium confidence')).toBeInTheDocument()
   // P0 items the artifact dropped are kept small (ruling R7)
@@ -106,7 +106,7 @@ test('explanatory copy is trimmed; honesty labels stay', async () => {
   expect(screen.getByText('Ended early')).toBeInTheDocument()
   expect(screen.getByText('Replay · not counted')).toBeInTheDocument()
   expect(screen.getByText('verified movements')).toBeInTheDocument()
-  expect(screen.getByText('unverified (hand hid cup)')).toBeInTheDocument()
+  expect(screen.getByText('unverified (hand or marker hidden)')).toBeInTheDocument()
 })
 
 test('the meta line reads date · title and the status chip says Complete', async () => {
@@ -245,8 +245,10 @@ test('side comes from the camera summary only, never the check-in, feedback or t
 test('a cup session counts wrong-dot placements from the service', async () => {
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, camera: { ...SESSION.summary.camera, wrong_dot: 2 } } }, '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByText('wrong dot')).toBeInTheDocument()
-  expect(screen.getByText('wrong dot').closest('div')!.parentElement).toHaveTextContent('2')
+  expect(await screen.findByText('wrong dots')).toBeInTheDocument()
+  expect(screen.getByText('wrong dots').closest('div')!.parentElement).toHaveTextContent('2')
+  // the column's extras line counts them too
+  expect(document.body.textContent).toMatch(/· 2 wrong dots/)
 })
 
 test('the report loads only its own session and the profile (no simulated cup run)', async () => {

@@ -106,3 +106,15 @@ test('an old report opened from history shows no day controls and keeps its next
   expect(screen.queryByText('Not done yet')).not.toBeInTheDocument()
   expect(screen.getByRole('img', { name: /reach time/i })).toBeInTheDocument()
 })
+
+test('on a gentle day the exercise columns show the gentle dose, the same as Next practice', async () => {
+  storeDay({ current: 'abduction', checkin: { ...CHECKIN, pain: 5, tier: 'gentle' } })
+  mockApi({ '/api/sessions/abc': armSession, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByRole('button', { name: 'Start session' })
+  const done = screen.getByText('3 verified · 0 unverified').closest('.rp-ex') as HTMLElement
+  expect(within(done).getByText('2 sets of 6 · hold 2 s · up to 60°')).toBeInTheDocument()
+  const pend = screen.getByText('Not done yet').closest('.rp-ex') as HTMLElement
+  expect(within(pend).getByText('2 slow arcs only')).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/2 slow arcs, then 2 fast|2 sets of 8/)
+})

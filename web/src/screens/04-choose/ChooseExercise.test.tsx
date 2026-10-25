@@ -110,7 +110,7 @@ test('full dose keeps the locked cup wording', () => {
 test('pain 7 or more is a rest day: every card says Resting today, nothing starts, one way back home', () => {
   checkin(8)
   renderChoose()
-  expect(screen.getByText(/Rest the arm today\. Sessions stay closed today\./)).toBeInTheDocument()
+  expect(screen.getByText(/Rest the arm today; sessions stay closed\./)).toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/until your pain is below 7/)
   expect(screen.getByText(/You can still watch the demos\./)).toBeInTheDocument()
   expect(screen.getAllByText('Resting today')).toHaveLength(3)

@@ -68,7 +68,7 @@ export function ChooseExercise() {
                 ? 'You told us something is new or worse. No exercises today, until your therapist has looked at it.'
                 : day.stopped === 'session'
                   ? "A stop rule ended today's practice. Rest the arm today."
-                  : 'Rest the arm today. Sessions stay closed today.'}
+                  : 'Rest the arm today; sessions stay closed.'}
               {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
               <span className="lib-rest-more"> You can still watch the demos.</span>
               {day.stopped !== 'session' && (

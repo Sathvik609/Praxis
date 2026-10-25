@@ -36,7 +36,7 @@ type Cue = 'lean' | 'ceiling' | null
 
 function caption(f: FrameEvent | null, lost: boolean, cue: Cue, view: 'side' | 'front', swing: boolean): string {
   if (lost) return statusLabel('lost', 'arm', view).coach ?? ''
-  if (cue === 'lean') return "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder."
+  if (cue === 'lean') return "Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder."
   if (cue === 'ceiling') return 'Stop at shoulder height — no higher than the line.'
   const a = f?.arm
   if (!a) return 'Getting the camera ready.'

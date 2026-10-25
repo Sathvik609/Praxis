@@ -70,9 +70,10 @@ def _next_practice(summary: dict[str, Any], clinician: str) -> dict[str, Any]:
         # is not the patient's practice and changes nothing in the plan.
         return {"text": "This was a replay of a saved clip. It is not part of your practice and does not change your plan.", "proposal": "none (replay)", "level_change": False}
     if summary.get("stopped"):
-        return {"text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.", "proposal": "review with clinician", "level_change": False}
+        return {"text": "Session ended by a stop rule. Rest the arm today; your therapist has been flagged.", "proposal": "review with clinician", "level_change": False}
     if mode == "cup":
-        return {"text": f"Continue your assigned plan. Fast arcs stay on. No level change — that needs {clinician}.", "proposal": "keep 2 slow + 2 fast arcs; keep the hand clear after each placement", "level_change": False}
+        # No "Fast arcs stay on." (25 Oct review): a gentle day runs 2 slow arcs, and "Keep pace" skips the fast ones.
+        return {"text": f"Continue your assigned plan. No level change — that needs {clinician}.", "proposal": "keep the arcs your plan assigns; keep the hand clear after each placement", "level_change": False}
     if mode == "arm":
         return {"text": f"Continue your assigned plan. No level change — that needs {clinician}.", "proposal": "keep hold at 3 s, watch leaning" if cam.get("posture_cues") else "keep hold at 3 s", "level_change": False}
     return {"text": "Assessment recorded. Practice continues on the assigned plan.", "proposal": "repeat the peg test weekly, same board and camera setup", "level_change": False}

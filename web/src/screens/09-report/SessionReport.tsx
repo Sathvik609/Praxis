@@ -217,6 +217,9 @@ export function SessionReport() {
   const activeSum = activeParts.reduce((a, c) => a + (Number(c.active_s) || 0), 0)
 
   const reportOf = (x: ExerciseId) => [...(dayRun?.finished ?? [])].reverse().find((f) => f.exercise === x)
+  // The run's tier: the columns show the dose this day actually ran, as Next practice does.
+  const runTier = dayRun?.checkin?.tier ?? 'full'
+  const doseOf = (e: ReturnType<typeof exerciseById>) => (e ? doseFor(e, runTier) : undefined)
   const srcFor = (x: ExerciseId) => {
     const rec = x === thisId ? s : otherOf(x)
     if (!rec?.summary || isHiddenSession(rec)) return null
@@ -238,7 +241,7 @@ export function SessionReport() {
       return (
         <div className="rp-ex" key={x}>
           <div className="rp-ex-h"><b>{e?.name ?? x}</b><Chip tone="mint">Done</Chip></div>
-          <p className="rp-ex-sub">{e?.dose}</p>
+          <p className="rp-ex-sub">{doseOf(e)}</p>
           <div className="rp-done-other">
             <Check aria-hidden size={18} />
             <span>Done today</span>
@@ -248,14 +251,14 @@ export function SessionReport() {
       )
     }
     const rep = x !== thisId ? reportOf(x) : undefined
-    return barsCol(x, { name: e?.name ?? armName, dose: e?.dose, c: src.c, counts: [src.c.verified ?? 0, src.c.unverified ?? 0], isCup: src.isCup, vals: src.vals, ver: src.ver, tgt: src.tgt, link: rep ? `/details/report/${rep.reportId}` : undefined })
+    return barsCol(x, { name: e?.name ?? armName, dose: doseOf(e), c: src.c, counts: [src.c.verified ?? 0, src.c.unverified ?? 0], isCup: src.isCup, vals: src.vals, ver: src.ver, tgt: src.tgt, link: rep ? `/details/report/${rep.reportId}` : undefined })
   }
   /** One exercise column (artifact `rp-ex`): its own verified · unverified counts and per-rep bars. */
   const barsCol = (key: string, o: { name: string; dose?: string; c: Camera; counts: [number, number]; isCup: boolean; vals: number[]; ver?: boolean[] | null; tgt?: number | null; link?: string }) => {
     const { c, isCup, vals, ver, tgt } = o
     const max = Math.max(tgt ?? 0, ...vals, 1) * 1.08
     const posture = postureOf(c)
-    const extras = [`${coverageOf(c)}% tracking coverage`, `${posture} ${plural(posture, 'posture cue')}`, ...(isCup && c.wrong_dot != null ? [`${c.wrong_dot} wrong dot`] : [])].join(' · ')
+    const extras = [`${coverageOf(c)}% tracking coverage`, `${posture} ${plural(posture, 'posture cue')}`, ...(isCup && c.wrong_dot != null ? [`${c.wrong_dot} ${plural(c.wrong_dot, 'wrong dot')}`] : [])].join(' · ')
     return (
       <div className="rp-ex" key={key}>
         <div className="rp-ex-h">
@@ -299,7 +302,7 @@ export function SessionReport() {
     return (
       <div className="rp-ex rp-ex-pend" key={x}>
         <div className="rp-ex-h"><b>{e?.name ?? x}</b><Chip tone="neutral">Not done yet</Chip></div>
-        <p className="rp-ex-sub">{e?.dose}</p>
+        <p className="rp-ex-sub">{doseOf(e)}</p>
         <div className="rp-empty">
           <div className="rp-ghost" aria-hidden>
             {[5, 7, 6, 8, 6, 7, 5, 8, 7, 6, 7, 8].map((h, i) => <i key={i} style={{ height: `${h * 10}%` }} />)}
@@ -393,11 +396,11 @@ export function SessionReport() {
             <>
               <Stat value={mmss(cam.active_s)} label="active · rest excluded" />
               <Stat value={String(cam.verified ?? 0)} label={`verified ${plural(cam.verified ?? 0, 'movement')}`} />
-              <Stat value={String(cam.unverified ?? 0)} label={isCupSession ? 'unverified (hand hid cup)' : 'unverified'} tone={cam.unverified ? 'amber' : 'default'} />
+              <Stat value={String(cam.unverified ?? 0)} label={isCupSession ? 'unverified (hand or marker hidden)' : 'unverified'} tone={cam.unverified ? 'amber' : 'default'} />
               <Stat value={String(coverageOf(cam))} unit="%" label="tracking coverage" />
               <Stat value={String(postureOf(cam))} label={plural(postureOf(cam), 'posture cue')} />
               {aboveCeiling !== undefined && <Stat value={String(aboveCeiling)} label={`${plural(aboveCeiling, 'lift')} above ${ceilingOf(cam)}°`} tone={aboveCeiling ? 'amber' : 'default'} />}
-              {isCupSession && cam.wrong_dot != null && <Stat value={String(cam.wrong_dot)} label="wrong dot" />}
+              {isCupSession && cam.wrong_dot != null && <Stat value={String(cam.wrong_dot)} label={plural(cam.wrong_dot, 'wrong dot')} />}
             </>
           )}
         </div>
@@ -482,7 +485,7 @@ export function SessionReport() {
                   <span className="rp-nx-tag">{libTags(nx)[1]}</span>
                 </div>
                 <dl className="rp-nx-rows">
-                  <div><dt>Your target</dt><dd>{doseFor(nx, dayRun?.checkin?.tier ?? 'full')}</dd></div>
+                  <div><dt>Your target</dt><dd>{doseFor(nx, runTier)}</dd></div>
                   {need && <div><dt>You'll need</dt><dd>{need}</dd></div>}
                   {nx.watchFor && <div><dt>Watch for</dt><dd>{nx.watchFor}</dd></div>}
                   <div><dt>Time</dt><dd>{`About ${Math.round(DAY_MINUTES / DAY_ORDER.length)} min · demonstration, then camera setup`}</dd></div>

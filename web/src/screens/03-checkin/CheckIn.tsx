@@ -96,7 +96,7 @@ export function CheckIn() {
               <span>Pain {c.pain}</span>
               <Chip tone={TIER_TONE[c.tier]}>{TIER_TEXT[c.tier].chip}</Chip>
             </p>
-            <p className="text-lg">Practising side: {c.side} arm · {c.minutes < 14 ? 'shorter day, one exercise' : 'full day'}</p>
+            <p className="text-lg">Practising side: {c.side === 'right' ? 'Right' : 'Left'} arm · {c.minutes < 14 ? 'shorter day, one exercise' : 'full day'}</p>
             {c.continue_gently && <p className="text-lg">You chose to continue gently. Stop if it hurts more.</p>}
             {!c.synced && <p className="text-lg text-muted">{therapistLine(c)}</p>}
           </Card>

@@ -228,6 +228,14 @@ export function therapistLine(c: DayCheckin | null): string {
   return 'Saved with your practice record.'
 }
 
+/** Why today is a rest day on this device, in the words Home and the Calendar show, or null:
+ *  a stop rule ended today's practice, or the check-in said rest (without Continue gently). */
+export function restTodayLine(d: Day): string | null {
+  if (d.stopped === 'session') return "A stop rule ended today's practice. Rest the arm today."
+  if (d.stopped != null || d.checkin?.tier === 'rest') return 'Your check-in says rest today. You can still watch the demos.'
+  return null
+}
+
 /** Settings › Reset today's check-in: forget today's day on this device (check-in, run, demos)
  *  and the session's copy of the check-in, so the next session starts with a fresh check-in.
  *  A stopped day stays stopped: stop rules override everything (CLAUDE.md §1), so a patient

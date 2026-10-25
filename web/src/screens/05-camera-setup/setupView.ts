@@ -79,7 +79,7 @@ function specs(view: Exclude<SetupView, 'table'>, side: Side, pendulum: boolean)
       camera,
       { id: 'person', label: 'One person in view', hint: 'Sit facing the camera with your upper body in the picture.' },
       { id: 'front_view', label: 'You face the camera', hint: 'Turn your chair so you face the camera straight on.', self: true, yes: "Yes, I'm facing it" },
-      { id: 'upper_in_view', label: 'Both shoulders and both hands in view', hint: 'Move back until both hands fit with your arms out to the side.', self: true, yes: 'Yes, both hands fit' },
+      { id: 'upper_in_view', label: 'Both shoulders and both elbows in view', hint: 'Move back until both elbows fit with your arms out to the side.', self: true, yes: 'Yes, both elbows fit' },
       lighting,
     ]
   }

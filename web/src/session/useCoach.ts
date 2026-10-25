@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PraxisEvent } from '../lib/events'
-import { coachLabel, coachSource, latestAgentStatus, promptKind, type CoachSource, type Prompt } from './agent'
+import { coachLabel, coachSource, latestAgentStatus, promptKind, RULE_LABEL_WITH_AGENT, type CoachSource, type Prompt } from './agent'
 
 export type { Prompt } from './agent'
 
@@ -95,13 +95,19 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
     : null
 
   const lastRule = [...coachEvents].reverse().find((e) => coachSource(e) === 'rule')
+  // Before the first rule cue: the service's session_start label (sent only with the agent
+  // on), else plain "Rule-based coach" once any agent event shows the agent is on. "LLM agent
+  // pending" only while nothing says the agent is on.
+  const start = [...events].reverse().find((e) => e.type === 'session_start' && typeof e.label === 'string' && e.label)
+  const agentOn = events.some((e) => e.type === 'agent_status') || coachEvents.some((e) => coachSource(e) === 'agent')
+  const ruleLabel = lastRule ? coachLabel(lastRule) : start ? String(start.label) : agentOn ? RULE_LABEL_WITH_AGENT : coachLabel(null)
 
   return {
     caption,
     /** Which coach said the caption (legacy events without `source` are the rule coach). */
     captionSource: coachSource(caption),
     /** Label for the screen's own state captions: the rule coach's latest label. */
-    ruleLabel: coachLabel(lastRule),
+    ruleLabel,
     agent: latestAgentStatus(events),
     prompt,
     dismissPrompt: () => promptEvent && setDismissed((s) => new Set(s).add(promptEvent.id)),

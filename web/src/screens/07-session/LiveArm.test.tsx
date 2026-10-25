@@ -69,7 +69,8 @@ test('trunk lean over 12° is amber and says "leaning" so colour is never alone'
 test('posture cue appears after a compensation_lean event in the watch tone; the figure dims', () => {
   mockStream([frame, { type: 'compensation_lean', t: 11, id: 2, lean_deg: 15, count: 1, flagged: false }])
   renderAt('/session?exercise=abduction&side=left')
-  expect(screen.getByText(/Sit tall/)).toBeInTheDocument()
+  // the front view sees a sideways lean, not a backward one
+  expect(screen.getByText("Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder.")).toBeInTheDocument()
   expect(screen.getByText('Coach · posture')).toBeInTheDocument()
   expect(screen.getByText(/Sit tall/).closest('section')).toHaveClass('sx-coach-watch')
   expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()

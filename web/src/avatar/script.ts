@@ -51,8 +51,8 @@ export function stepTexts(action: GlbAction, o: ScriptOpts = {}): string[] | nul
         'Take hold of the cup with your weaker hand',
         'Lift it, move it to the next dot and set it down, dot by dot to 5',
         'After dot 5, come back the same way to dot 1',
-        // Design v2 (6 Oct, ruling R11): the artifact's text, verbatim.
-        "Go across and back once slowly — that's one set. Then once more, quicker",
+        // 25 Oct: one arc is across and back, so the dose (2 slow, then 2 fast) reads as twice each.
+        'Across and back twice slowly, then twice more, quicker',
       ]
     case 'nhpt':
       return [

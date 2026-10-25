@@ -31,12 +31,12 @@ function renderProgress() {
 const ready = () => screen.findByRole('heading', { name: /Nine-Hole Peg Test/ })
 const cupBars = () => screen.getByRole('img', { name: /^Waiter – cup/ })
 
-test('header: the range pill is Last 4 weeks / All activities; no task pill and no same-setup checkbox', async () => {
+test('header: the range pill is Last 4 weeks / All time; no task pill and no same-setup checkbox', async () => {
   mockApi(BASE)
   renderProgress()
   expect(screen.getByText(/Loading your progress/)).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: 'Progress and history' })).toBeInTheDocument()
-  expect(within(screen.getByLabelText('Range')).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Last 4 weeks', 'All activities'])
+  expect(within(screen.getByLabelText('Range')).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Last 4 weeks', 'All time'])
   expect(screen.queryByLabelText('Task')).not.toBeInTheDocument()
   expect(screen.queryByLabelText(/Compare same setup only/)).not.toBeInTheDocument()
 })
@@ -182,12 +182,12 @@ test('a flag in the session summary also counts', async () => {
   expect(await screen.findByText('Stopped early · pain 8 · flag for your therapist · queued')).toBeInTheDocument()
 })
 
-test('range: the July session shows only under All activities', async () => {
+test('range: the July session shows only under All time', async () => {
   mockApi(BASE)
   renderProgress()
   await ready()
   expect(cupBars()).not.toHaveAccessibleName(/10 Jul/)
-  fireEvent.click(screen.getByRole('radio', { name: 'All activities' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'All time' }))
   expect(cupBars()).toHaveAccessibleName(/10 Jul 5 verified/)
 })
 

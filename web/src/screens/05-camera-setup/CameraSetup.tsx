@@ -57,7 +57,7 @@ function CameraSetupFor() {
               {day.stopped === 'new_symptoms'
                 ? 'You told us something is new or worse. Rest the arm until your therapist has looked at it.'
                 : day.stopped === 'rest'
-                  ? 'Your pain today is at your stop level. Rest the arm today.'
+                  ? 'Your pain today is at or above your stop level. Rest the arm today.'
                   : "A stop rule ended today's practice. Rest the arm today."}
               {day.checkin && day.stopped !== 'session' ? ` ${therapistLine(day.checkin)}` : ''}
             </p>

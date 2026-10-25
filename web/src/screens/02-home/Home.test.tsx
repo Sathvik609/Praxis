@@ -70,7 +70,7 @@ test('25 Oct judge walkthrough: on the weekly peg-test day the card says the peg
   mockApi(routes({ '/api/calendar': { ...CALENDAR, today: '2026-10-11', days: [...WEEK_DAYS.slice(0, 6).map((d) => ({ ...d, is_today: false, status: d.status === 'today' ? 'done' : d.status })), sunday] } }))
   await renderHome()
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Nine-Hole Peg Test$/)
-  expect(screen.getByRole('heading', { level: 1 }).nextElementSibling).toHaveTextContent(/^Weekly test · you need 9 pegs and the printed peg sheet$/)
+  expect(screen.getByRole('heading', { level: 1 }).nextElementSibling).toHaveTextContent(/^Weekly test · you need a pegboard, 9 pegs and the printed peg sheet$/)
   expect(screen.getByRole('link', { name: /printed peg sheet/ })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
   expect(screen.queryByRole('link', { name: /target sheet/ })).not.toBeInTheDocument()
   expect(screen.queryByText(/About 10 min/)).not.toBeInTheDocument()
@@ -200,6 +200,10 @@ test('the area card header shows the status word as text once something is measu
   const elbow = screen.getByRole('tabpanel', { name: 'Left elbow details' })
   expect(within(elbow).queryByText('Stable')).not.toBeInTheDocument()
   expect(within(elbow).getByText('The camera does not measure the elbow in this program.')).toBeInTheDocument()
+  // nothing measures the elbow: its tab says so in words, never "Stable" (colour is not alone)
+  const tab = screen.getByRole('tab', { name: /Left elbow/ })
+  expect(tab).toHaveTextContent('Not measured')
+  expect(document.body.textContent).not.toMatch(/Stable/)
 })
 
 test('once an arm session is measured the shoulder card shows its status word as text', async () => {
@@ -299,6 +303,8 @@ test('the next-practice card marks where to start, how to go on, and that the re
   expect(within(card).getByText('Start here')).toBeInTheDocument() // in words, not only the highlight
   expect(start).toHaveClass('start-here')
   expect(card).toHaveTextContent(/each step tells you what to do next/i)
-  expect(card).toHaveTextContent(/explore/i)
+  expect(card).toHaveTextContent(/explore the platform from the menu\./i)
+  // the menu is not always on the left (it collapses on small screens)
+  expect(card).not.toHaveTextContent(/menu on the left/)
   expect(screen.queryByRole('button', { name: /Hide/ })).not.toBeInTheDocument()
 })

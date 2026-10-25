@@ -192,3 +192,15 @@ def test_nhpt_pegs_the_board_saw_seated_never_pause_the_timed_test():
     peg = lambda t, r: make_event("rep_complete", t=t, verified=False, reason=r, hole=t, target="hole")  # noqa: E731
     assert sr.on_events([peg(1, "grasp_not_seen"), peg(2, "no_hand_near_hole"), peg(3, "no_hand_near_hole"),
                          peg(4, "grasp_not_seen"), peg(5, "no_hand_near_hole"), peg(6, "no_hand_near_hole")]) == []
+
+
+def test_stop_and_lean_pause_wording():
+    """25 Oct review: pain 8 is above a stop level of 7, not "at" it; the lean pause asks for a
+    lower lift in the patient's words."""
+    sr = StopRules(SEED_PRESCRIPTION)
+    stop = sr.on_pain(8, t=1.0)[0]
+    assert stop.payload["text"] == "Pain 8/10 is at or above your stop level. Session ended and saved; your therapist is flagged."
+    sr2 = StopRules(SEED_PRESCRIPTION)
+    leans = [make_event("compensation_lean", t=float(i), lean_deg=16.0, count=i + 1, flagged=False) for i in range(3)]
+    pause = [e for e in sr2.on_events(leans) if e.type == "pause"][0]
+    assert pause.payload["text"] == "You're leaning to lift. Let's pause, sit tall, and lift a little lower."

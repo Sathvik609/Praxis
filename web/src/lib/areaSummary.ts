@@ -5,7 +5,7 @@
  *  - hand: the peg-test trend from `/api/progress` (sample points stay labelled and never enter
  *    a delta), the last Waiter – cup session's verified reaches, the weekly test day;
  *  - elbow: nothing in the program measures it, so it says so.
- *  Status (Focus / Watch / Stable) is set by the program (seed `REGIONS`); headlines are
+ *  Status (Focus / Watch / Not measured) is set by the program (seed `REGIONS`); headlines are
  *  derived. Design review 21 Oct: no everyday goal, trend line or program list on the card. */
 import { sessionSource, type Calendar, type Patient, type Prescription, type Progress, type SessionRecord } from './api'
 import { WEEKDAYS, mondayOf, addDays } from './calendar'
@@ -35,7 +35,9 @@ export type AreaView = {
 export type AreaEmpty = { empty: string }
 export type AreaSources = { sessions?: SessionRecord[] | null; progress?: Progress | null; rx?: Prescription | null; calendar?: Calendar | null; me?: Patient | null }
 
-export const STATUS_WORD: Record<AreaStatus, string> = { focus: 'Focus', watch: 'Watch', stable: 'Stable' }
+/** `stable` is the elbow, which nothing in this program measures: its word says so (25 Oct
+ *  review: "Stable" claimed a reading nobody took). The hotspot keeps its colour. */
+export const STATUS_WORD: Record<AreaStatus, string> = { focus: 'Focus', watch: 'Watch', stable: 'Not measured' }
 export const ELBOW_EMPTY = 'The camera does not measure the elbow in this program.'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -138,7 +140,7 @@ function hand(d: AreaSources): AreaView {
       value: fmtV(latest.value),
       unit: 's',
       caption: `${dayMonth(latest.date)}${delta && delta.tone !== 'flat' ? ` · ${delta.text}` : ''}${latest.sample ? ' · sample' : ''}`,
-      detail: delta && live.length > 1 ? `${delta.text} than your first test on ${dayMonth(live[0].date)}` : `Nine-Hole Peg Test · ${dayMonth(latest.date)}`,
+      detail: delta && live.length > 1 ? `${delta.tone === 'flat' ? 'Same as' : `${delta.text} than`} your first test on ${dayMonth(live[0].date)}` : `Nine-Hole Peg Test · ${dayMonth(latest.date)}`,
     },
     empty: latest ? undefined : 'Your peg test time shows here after your first Nine-Hole Peg Test.',
     tiles: [

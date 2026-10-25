@@ -79,3 +79,10 @@ test('design v2 library: each visible exercise carries the artifact\'s eyebrow a
   expect(EXERCISES.find((e) => e.id === 'cup')?.dose).toBe('2 slow arcs, then 2 fast')
   expect(EXERCISES.find((e) => e.id === 'abduction')?.gentleDose).toMatch(/up to 60°/)
 })
+
+test('the cup steps and the peg dose say what the app runs (25 Oct review)', () => {
+  // one arc = across and back; the dose is 2 slow arcs, then 2 fast
+  expect(exerciseById('cup')?.steps?.[4]).toBe('Do that twice slowly, then twice more, as fast as you comfortably can')
+  // the app times one try with one hand
+  expect(exerciseById('nhpt')?.dose).toBe('One timed try · once a week')
+})

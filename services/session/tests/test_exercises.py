@@ -237,3 +237,10 @@ def test_reference_targets_are_clamped_to_the_in_code_ceiling():
     assert reg["flexion"].target_deg == 70.0
     # demo entries have nothing to score, so a reference never gives them a target
     assert reg["internal_rotation"] == ex_mod.build_registry({})["internal_rotation"]
+
+
+def test_peg_test_dose_is_one_timed_try():
+    """The app times one try with one hand (25 Oct review: "with each hand" was not true)."""
+    from praxis_session.perception.exercises import get
+
+    assert get("nhpt").dose == "One timed try"

@@ -266,3 +266,29 @@ def test_hike_cue_gap_applies_inside_one_batch_of_events():
     c = RuleCoach()
     d = c.decide(arm_ctx([hike(5.0), hike(6.0)], 6.0))
     assert [x.cue_id for x in d] == ["arm_hike"]
+
+
+def test_cup_done_counts_the_arcs_that_ran():
+    """A gentle day runs 2 slow arcs: "All four arcs done" was wrong there (25 Oct review)."""
+    gentle = RuleCoach().decide(ctx("cup", [make_event("cup_complete", t=40.0, arcs=2, reaches=[])], 40.0))
+    assert gentle[0].cue_id == "cup_done" and gentle[0].text == "Both arcs done. Lovely work."
+    full = RuleCoach().decide(ctx("cup", [make_event("cup_complete", t=80.0, arcs=4, reaches=[])], 80.0))
+    assert full[0].text == "All four arcs done. Lovely work."
+
+
+def test_lean_cue_names_the_sideways_lean_the_front_view_sees():
+    e = make_event("compensation_lean", t=10.0, lean_deg=15.0, count=1, flagged=False)
+    d = RuleCoach().decide(ctx("arm", [e], 10.0, snapshot=arm_snap("abduction", hold_s=3.0)))
+    assert d[0].text == "Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder."
+
+
+def test_hold_cues_say_seconds():
+    snap = arm_snap("abduction", hold_s=3.0)
+    short = RuleCoach().decide(ctx("arm", [make_event("hold_too_short", t=5.0)], 5.0, snapshot=snap))
+    assert short[0].text.endswith("hold for 3 seconds.")
+    miss = make_event("rep_complete", t=8.0, set=1, rep=1, peak_deg=80, hold_s=1.0, verified=False, reason="hold_too_short")
+    un = RuleCoach().decide(ctx("arm", [miss], 8.0, snapshot=snap))
+    assert "the hold was under 3 seconds" in un[0].text and un[0].text.endswith("hold for 3 seconds.")
+    lean = make_event("compensation_lean", t=10.0, lean_deg=15.0, count=2, flagged=False)
+    reg = [x for x in RuleCoach().decide(ctx("arm", [lean], 10.0, snapshot=snap)) if x.action == "regress"]
+    assert "hold for 2 seconds instead of 3" in reg[0].text

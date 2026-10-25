@@ -204,7 +204,7 @@ export function Progress() {
     <div className="pg">
       <div className="pg-head">
         <h1 className="text-4xl">Progress and history</h1>
-        <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: 'all', label: 'All activities' }]} />
+        <Pill ariaLabel="Range" size="sm" value={range} onChange={setRange} options={[{ value: '4w', label: 'Last 4 weeks' }, { value: 'all', label: 'All time' }]} />
       </div>
       <div className="pg-row1">
         <Card className="pg-card" title={tt('Nine-Hole Peg Test', `${me?.side ? `${me.side} · ` : ''}lower is better`)} action={sampleChip(sampleTrend.length > 0)}>

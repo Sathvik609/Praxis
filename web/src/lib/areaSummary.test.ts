@@ -126,3 +126,8 @@ it('design review 21 Oct: the area view carries no everyday goal, trend line or 
     expect(JSON.stringify(v)).not.toMatch(/Use a cup on my own/)
   }
 })
+
+it('a flat peg-test trend reads "Same as your first test", never "No change than"', () => {
+  const v = areaSummary('lWrist', fx({ progress: { nhpt_trend: [{ date: '2026-09-20', total_s: 45, kind: 'live' }, { date: '2026-10-02', total_s: 45, kind: 'live' }] } })) as AreaView
+  expect(v.now!.detail).toBe('Same as your first test on 20 Sep')
+})

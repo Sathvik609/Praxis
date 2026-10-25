@@ -29,7 +29,7 @@ def test_headline_numbers_split_human_and_automated():
     assert r["groups"]["human"]["sessions"] + r["groups"]["automated"]["sessions"] == 15
     assert (arm["all"]["setup_blocked_events"], arm["all"]["sessions_with_setup_blocked"]) == (14, 9)
     assert (arm["all"]["hike_events"], arm["all"]["sessions_with_hike"]) == (31, 5)
-    assert arm["all"]["hike_cues_21oct"] == 14  # dea830d: 31 -> 14 on the same events
+    assert arm["all"]["hike_cues_21oct"] == 14  # 3dd3c56: 31 -> 14 on the same events
     assert (arm["human"]["verified"], arm["human"]["reps"]) == (23, 37)
     tr = r["agent"]["traces"]
     assert len(tr["refused_by_guardrail"]) == 3 and tr["failed"] == []

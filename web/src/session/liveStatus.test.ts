@@ -41,6 +41,9 @@ test('arm status text follows the exercise view: side view turns sideways, front
     expect(l.feed).not.toMatch(/side to the camera/)
   }
   expect(statusLabel('lost', 'arm', 'front').coach).toMatch(/both shoulders/)
+  // 25 Oct: the front view needs the head, shoulders and elbows; the hips may be out of frame
+  expect(statusLabel('calibrating', 'arm', 'front').coach).toBe('Face the camera with your head, both shoulders and both elbows in view.')
+  expect(statusLabel('lost', 'arm', 'front').coach).toBe('I cannot see both shoulders. Face the camera with your head, both shoulders and both elbows in view.')
 })
 
 test('table tasks (cup, NHPT) talk about the sheet markers; arm defaults to the side view', () => {

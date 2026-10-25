@@ -13,7 +13,7 @@ import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
 import { prefersReducedMotion } from '../../lib/motion'
 import { plural } from '../../lib/plural'
 import { REGIONS, exerciseById, type ExerciseId } from '../../lib/seed'
-import { demoUrl, readDay, readSide, type Day } from '../../lib/day'
+import { demoUrl, readDay, readSide, restTodayLine, type Day } from '../../lib/day'
 import { CoachChat } from '../coach/CoachChat'
 import { AreaDetail } from './AreaDetail'
 import { StageMinis } from './StageMinis'
@@ -36,14 +36,12 @@ function sheetLink(id: ExerciseId, text: string) {
   )
 }
 function todayCard(calendar: Calendar | null | undefined, day: Day): TodayCard {
-  if (day.stopped != null || day.checkin?.tier === 'rest') {
-    const sub = day.stopped === 'session' ? "A stop rule ended today's practice. Rest the arm today." : 'Your check-in says rest today. You can still watch the demos.'
-    return { title: 'Rest today', sub, action: 'See the exercises', to: '/details/choose' }
-  }
+  const rest = restTodayLine(day)
+  if (rest) return { title: 'Rest today', sub: rest, action: 'See the exercises', to: '/details/choose' }
   const today = calendar?.days.find((d) => d.is_today)
   if (today && !today.planned && !today.nhpt_due) return { title: 'Rest day', sub: 'Rest is part of your plan. You can still practise if you like.', action: 'Start session', to: '/details/choose' }
   const names = today?.exercises.length ? today.exercises.map((e) => e.name) : DAY_ORDER.map((id) => exerciseById(id)?.name ?? id)
-  if (today && !today.planned) return { title: names.join(' + '), sub: <>Weekly test · you need 9 pegs and the {sheetLink('nhpt', 'printed peg sheet')}</>, action: 'Start session', to: '/details/choose?next=nhpt' }
+  if (today && !today.planned) return { title: names.join(' + '), sub: <>Weekly test · you need a pegboard, 9 pegs and the {sheetLink('nhpt', 'printed peg sheet')}</>, action: 'Start session', to: '/details/choose?next=nhpt' }
   const pegs = today?.nhpt_due ? <> · peg test today: 9 pegs and the {sheetLink('nhpt', 'peg sheet')}</> : null
   return { title: names.join(' + '), sub: <>About {today?.minutes || DAY_MINUTES} min · you need a cup and the {sheetLink('cup', 'printed target sheet')}{pegs}</>, action: 'Start session', to: '/details/choose' }
 }
@@ -98,7 +96,7 @@ export function Home() {
           <p className="mt-1 text-white/80">{card.sub}</p>
           <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav(card.to)}>{card.action}</Button>
           <Button full variant="secondary" className="mt-3 hero-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
-          <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
+          <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu.</p>
         </Card>
 
         <Card className="wk-card" title="This week" action={week.some((d) => d.sample) ? <Chip tone="neutral">Sample history</Chip> : undefined}>

@@ -122,7 +122,7 @@ function checkin(b: CheckinBody): CheckinResult {
   const stop = state.rx.stop_rules.pain_max
   const tier: CheckinResult['tier'] = pain >= stop ? 'rest' : pain >= 4 ? 'gentle' : 'full'
   const reasons: string[] = []
-  if (tier === 'rest') reasons.push(`pain ${pain}/10 is at your stop level (${stop}): rest today`)
+  if (tier === 'rest') reasons.push(`pain ${pain}/10 is at or above your stop level (${stop}): rest today`)
   else if (tier === 'gentle') reasons.push(`pain ${pain}/10: gentle dose today`)
   if (b.new_symptoms) reasons.push('new or worse symptoms since last time')
   const flagged = tier === 'rest' || !!b.new_symptoms
@@ -165,8 +165,8 @@ function selfReport(b: { exercise?: string }): unknown {
 
 function nextPractice(summary: SessionRecord['summary']): SessionRecord['next_practice'] {
   const cam = summary.camera ?? {}
-  if (summary.stopped) return { text: 'Session ended by a stop rule. Continue only after your therapist reviews the flag.', proposal: 'review with clinician', level_change: false }
-  if (summary.mode === 'cup') return { text: 'Continue your assigned plan. Fast arcs stay on. No level change — that needs Dr. Rao.', proposal: 'keep 2 slow + 2 fast arcs; keep the hand clear after each placement', level_change: false }
+  if (summary.stopped) return { text: 'Session ended by a stop rule. Rest the arm today; your therapist has been flagged.', proposal: 'review with clinician', level_change: false }
+  if (summary.mode === 'cup') return { text: 'Continue your assigned plan. No level change — that needs Dr. Rao.', proposal: 'keep the arcs your plan assigns; keep the hand clear after each placement', level_change: false }
   if (summary.mode === 'arm') return { text: 'Continue your assigned plan. No level change — that needs Dr. Rao.', proposal: cam.posture_cues ? 'keep hold at 3 s, watch leaning' : 'keep hold at 3 s', level_change: false }
   return { text: 'Assessment recorded. Practice continues on the assigned plan.', proposal: 'repeat the peg test weekly, same board and camera setup', level_change: false }
 }

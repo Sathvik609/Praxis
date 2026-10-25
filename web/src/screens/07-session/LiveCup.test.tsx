@@ -233,6 +233,17 @@ test('completion, first lift and slow-arc facts hold after the one-off events le
   expect(screen.getByRole('dialog', { name: 'How was your practice?' })).toBeInTheDocument()
 })
 
+test('the finished caption counts the arcs that ran (two on a gentle day, four on a full day)', () => {
+  const fin = (arcs: number) => ({ ...frame, cup: { ...frame.cup, finished: true, arcs_done: arcs, arcs_planned: { slow: 2, fast: arcs - 2 }, expected_next: null } })
+  mockStream([fin(2)])
+  const view = renderAt('/session?exercise=cup&side=left')
+  expect(document.body.textContent).toMatch(/Both arcs done\. Lovely work\./)
+  expect(document.body.textContent).not.toMatch(/four arcs/)
+  mockStream([fin(4)])
+  view.rerender(tree('/session?exercise=cup&side=left'))
+  expect(document.body.textContent).toMatch(/All four arcs done\. Lovely work\./)
+})
+
 test('the arc direction and the dots of the current arc survive the window', () => {
   const T0 = 1_790_000_000
   const all: Record<string, unknown>[] = [

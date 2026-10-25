@@ -33,7 +33,7 @@ test('paused overlay carries the coach cue said during the pause and an open coa
 test('stopped overlay names the rule and says the therapist is flagged once, in the service\'s words', () => {
   // 10 Oct walkthrough: the service's stop text and a fixed web line both said "saved" and
   // "therapist is flagged". The service writes the flag with the stop, so its text is the one statement.
-  const text = 'Pain 8/10 is at your stop level. Session ended and saved; your therapist is flagged.'
+  const text = 'Pain 8/10 is at or above your stop level. Session ended and saved; your therapist is flagged.'
   render(<SessionOverlay overlay={{ kind: 'stopped', rule: 'pain', text }} onResume={vi.fn()} onEnd={vi.fn()} />)
   expect(screen.getByRole('alertdialog', { name: 'Session ended · pain at stop level' })).toBeInTheDocument() // a stop is announced as an alert
   expect(screen.getByText(text)).toBeInTheDocument()

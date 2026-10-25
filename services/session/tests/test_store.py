@@ -393,3 +393,15 @@ def test_a_session_the_patient_ended_is_stored_as_ended_early(tmp_path):
     st.save_session(_summary(session_id="c1"), checkin={}, feedback={"ended_early": False, "end_reason": None}, events=[])
     assert st.session("e1")["status"] == "ended_early"
     assert st.session("c1")["status"] == "complete"
+
+
+def test_next_practice_never_claims_fast_arcs_and_a_stop_says_rest_today(tmp_path):
+    """25 Oct review: "Fast arcs stay on." was wrong on a gentle day (2 slow arcs) and after
+    "Keep pace"; the stop-rule line told the patient to wait for a review the app never asks for."""
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    st.save_session(_summary(session_id="c1", mode="cup"), {}, {}, [])
+    nx = st.session("c1")["next_practice"]
+    assert "fast" not in nx["text"].lower() and "fast" not in nx["proposal"].lower()
+    st.save_session(_summary(session_id="s1", mode="cup", stopped=True), {}, {}, [])
+    assert st.session("s1")["next_practice"]["text"] == "Session ended by a stop rule. Rest the arm today; your therapist has been flagged."

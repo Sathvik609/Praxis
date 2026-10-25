@@ -123,7 +123,7 @@ function cupClip(): Clip {
   hop(1, 0)
   keys.push({ t: t + 0.25, pose: at(0), pinch: 0, hold: true, carry: null, parked: 0 })
   keys.push({ t: t + 0.5, pose: lifted(0), target: null })
-  keys.push({ t: t + 1.4, pose: reach(LAP), hold: true, step: 5, caption: 'Step 5 of 5 · repeat twice, then twice as fast as you can' })
+  keys.push({ t: t + 1.4, pose: reach(LAP), hold: true, step: 5, caption: 'Step 5 of 5 · do that twice slowly, then twice more, as fast as you comfortably can' })
   keys.push({ t: t + 2.6, pose: reach(LAP), hold: true })
   return { name: 'cup', duration: t + 2.6, loop: false, camera: 'front', side: 'left', steps: 5, keys, pathJoint: 'lHand', props: ['table', 'cupSheet', 'cup'] }
 }

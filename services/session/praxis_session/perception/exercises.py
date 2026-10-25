@@ -113,7 +113,7 @@ class Exercise:
     @property
     def dose(self) -> str:
         if self.kind == "timed":
-            return "One timed try with each hand"
+            return "One timed try"
         if self.kind == "arcs":
             if not self.fast_arcs:
                 return f"{self.slow_arcs} slow arcs only"

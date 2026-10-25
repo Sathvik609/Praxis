@@ -57,6 +57,21 @@ PHRASES: dict[str, list[str]] = {
 }
 
 
+def _secs(v: float) -> str:
+    """"3 seconds", "1 second": hold cues say their unit (25 Oct review)."""
+    return f"{v:g} second{'' if v == 1 else 's'}"
+
+
+def _arcs_done(n: object) -> str:
+    """"Both arcs done." on a gentle day (2 slow arcs), "All four arcs done." on a full day."""
+    k = int(n) if isinstance(n, (int, float)) else 0
+    if k == 1:
+        return "Arc done."
+    if k == 2:
+        return "Both arcs done."
+    return f"All {({3: 'three', 4: 'four'}).get(k, k)} arcs done."
+
+
 class RuleCoach:
     name = "rules"
 
@@ -150,7 +165,7 @@ class RuleCoach:
                     ]
                 return [self._arc_summary(p, cup, ev)]
             if e.type == "cup_complete":
-                return [Decision("instruct", "cup_done", "All four arcs done. Lovely work.", "cup complete", ev)]
+                return [Decision("instruct", "cup_done", f"{_arcs_done(p.get('arcs'))} Lovely work.", f"cup complete, {p.get('arcs')} arcs", ev)]
         if m == "arm":
             ex = self._exercise(ctx, p)
             if e.type in ("exercise_start", "set_complete"):
@@ -175,7 +190,7 @@ class RuleCoach:
                 if to == "return":
                     return [Decision("instruct", "arm_lower", self._phrase("arm_lower"), "returning", ev)]
             if e.type == "compensation_lean":
-                out = [Decision("correct", "arm_lean", "Sit tall — you're leaning back to lift. Lower the arm a little and lift from the shoulder.", f"trunk lean {p.get('lean_deg')}°", ev)]
+                out = [Decision("correct", "arm_lean", "Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder.", f"trunk lean {p.get('lean_deg')}°", ev)]
                 # Regress on the second lean: the stop rule pauses on the third
                 # (`stop_rules.lean_events`) before the coach ever sees it (24 Sep review).
                 if int(p.get("count") or 0) >= regress_at_lean(ctx.prescription) and ex.kind == "hold" and not self._regressed_hold:
@@ -195,7 +210,7 @@ class RuleCoach:
                 # Not a stop rule: the rep still counts; the patient is reminded of the line.
                 return [Decision("correct", "arm_above_ceiling", self._phrase("arm_above_ceiling"), f"lift {p.get('angle_deg')}° past the {p.get('ceiling_deg')}° ceiling (rep {p.get('rep')})", ev)]
             if e.type == "hold_too_short":
-                return [Decision("correct", "arm_short_hold", f"A little longer at the top next time — hold for {self._hold(ctx, ex):g}.", "hold too short", ev)]
+                return [Decision("correct", "arm_short_hold", f"A little longer at the top next time — hold for {_secs(self._hold(ctx, ex))}.", "hold too short", ev)]
             if e.type == "target_missed":
                 return [Decision("correct", "arm_missed", "Nearly — a touch higher, up to the line.", "target missed", ev)]
             if e.type == "rep_complete":
@@ -204,10 +219,10 @@ class RuleCoach:
                     return [Decision("instruct", "arm_rep", self._phrase("arm_rep", rep=p.get("rep"), reps=reps), "verified rep", ev)]
                 why = {
                     "target_missed": "it stopped short of the line",
-                    "hold_too_short": f"the hold was under {self._hold(ctx, ex):g}",
+                    "hold_too_short": f"the hold was under {_secs(self._hold(ctx, ex))}",
                     "swing_too_small": "the swing was very small",
                 }.get(str(p.get("reason")), "I couldn't verify it")
-                nudge = "Next one, a little more swing — still loose." if ex.kind == "oscillation" else f"Next one, up to the line and hold for {self._hold(ctx, ex):g}."
+                nudge = "Next one, a little more swing — still loose." if ex.kind == "oscillation" else f"Next one, up to the line and hold for {_secs(self._hold(ctx, ex))}."
                 return [Decision("correct", "arm_unverified", f"That one didn't count: {why}. {nudge}", f"unverified rep ({p.get('reason')})", ev)]
             if e.type == "set_complete":
                 return [self._set_summary(p, ev)]
@@ -242,7 +257,7 @@ class RuleCoach:
             return None
         return Decision(
             "regress", "arm_regress_hold",
-            f"Let's make it easier: hold for {hold:g} instead of {current:g}, still no higher than the shoulder.",
+            f"Let's make it easier: hold for {_secs(hold)} instead of {current:g}, still no higher than the shoulder.",
             f"{count} lean events in {ex.name}; hold_s {current:g} → {hold:g}, clamped to {ex.rx}.hold_s within the prescription",
             ev, {"apply": {ex.rx: {"hold_s": hold}}},
             tool_calls=[{"tool": "get_prescription", "result": {f"{ex.rx}.hold_s": ctx.prescription.allowed_adaptations[ex.rx]["hold_s"]}}],

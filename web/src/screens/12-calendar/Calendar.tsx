@@ -5,6 +5,7 @@ import { Chip } from '../../design/Chip'
 import { Check, ChevronLeft, ChevronRight } from '../../design/Icon'
 import { Pill } from '../../design/Pill'
 import { api, type Calendar as CalendarData, type CalendarDay } from '../../lib/api'
+import { readDay, restTodayLine } from '../../lib/day'
 import { WEEKDAYS, dayLines, longDate, mondayOf, monthLabel, rangeFor, rangeLabel, sameMonth, shift, shortDate, type View } from '../../lib/calendar'
 import { plural } from '../../lib/plural'
 import { exerciseById } from '../../lib/seed'
@@ -176,10 +177,13 @@ export function Calendar() {
   )
 }
 
+/** Today's check-in and stop rules come first, as on Home (`restTodayLine`): a rest check-in or a
+ *  stop rule makes today "Rest today" whatever the schedule planned (25 Oct review). */
 function TodayCard({ day, today }: { day: CalendarDay | null; today: string }) {
-  const plan = day?.exercises.filter((e) => e.id !== 'nhpt') ?? []
-  const peg = !!day?.nhpt_due
-  const title = plan.length ? plan.map((e) => e.name).join(' + ') : peg ? 'Nine-Hole Peg Test' : 'Rest day'
+  const [rest] = useState(() => restTodayLine(readDay()))
+  const plan = rest ? [] : day?.exercises.filter((e) => e.id !== 'nhpt') ?? []
+  const peg = !rest && !!day?.nhpt_due
+  const title = rest ? 'Rest today' : plan.length ? plan.map((e) => e.name).join(' + ') : peg ? 'Nine-Hole Peg Test' : 'Rest day'
   const kit = [...plan, ...(peg ? [{ id: 'nhpt', name: '' }] : [])].map((e) => exerciseById(e.id)?.equipment).filter(Boolean)
   const done = day?.sessions.filter((s) => s.source === 'live') ?? []
   return (
@@ -187,7 +191,7 @@ function TodayCard({ day, today }: { day: CalendarDay | null; today: string }) {
       <div className="text-white/80">Today · {shortDate(today)}</div>
       <h2 className="mt-1 text-3xl text-white">{title}</h2>
       <p className="mt-1 text-white/85">
-        {plan.length ? `About ${day?.minutes ?? 10} min · ${kit.join(' · ')}` : peg ? `Weekly assessment · ${kit.join(' · ')}` : 'Rest days are part of the plan.'}
+        {rest ?? (plan.length ? `About ${day?.minutes ?? 10} min · ${kit.join(' · ')}` : peg ? `Weekly assessment · ${kit.join(' · ')}` : 'Rest days are part of the plan.')}
       </p>
       {plan.length > 0 && peg && <p className="text-white/85">Peg test (weekly) today too.</p>}
       {done.length > 0 && <p className="mt-2 font-bold text-white">Done today ✓ · {day?.minutes_done ?? 0} min with the camera</p>}

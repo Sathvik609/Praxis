@@ -63,6 +63,19 @@ test('legacy coach events (no source) read as the rule coach with their own labe
   expect(result.current.ruleLabel).toBe('Rule-based coach · LLM agent pending')
 })
 
+test('with the agent on, the rule label before any rule cue is plain "Rule-based coach"', () => {
+  // the service's session_start carries the rule label when the agent is configured
+  const start = { type: 'session_start', t: 0, id: 1, session_id: 's', mode: 'cup', label: 'Rule-based coach', agent: { mode: 'anthropic' } } as PraxisEvent
+  expect(renderHook(() => useCoach([start])).result.current.ruleLabel).toBe('Rule-based coach')
+  // an agent_status or agent cue alone also means the agent is on
+  const status = { type: 'agent_status', t: 1, id: 2, state: 'idle', label: 'Claude agent' } as PraxisEvent
+  expect(renderHook(() => useCoach([status])).result.current.ruleLabel).toBe('Rule-based coach')
+  const agentCue = coach(3, { source: 'agent', label: 'Claude agent · Anthropic API' })
+  expect(renderHook(() => useCoach([agentCue])).result.current.ruleLabel).toBe('Rule-based coach')
+  // agent off: nothing says otherwise, so "LLM agent pending"
+  expect(renderHook(() => useCoach([])).result.current.ruleLabel).toBe('Rule-based coach · LLM agent pending')
+})
+
 test('agent_status events surface as the agent state', () => {
   const { result } = renderHook(() => useCoach([{ type: 'agent_status', t: 1, id: 1, state: 'thinking', trigger: 'set_complete', label: 'Claude agent · Anthropic API' } as PraxisEvent]))
   expect(result.current.agent?.state).toBe('thinking')

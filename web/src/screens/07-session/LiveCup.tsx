@@ -28,12 +28,21 @@ import { TracePanel } from './TracePanel'
 
 type CupComplete = PraxisEvent & { arcs: number; reaches: { verified?: boolean }[] }
 
+/** "Both arcs done." on a gentle day (2 slow arcs), "All four arcs done." on a full day: the arcs
+ *  that actually ran (service `rules.py` `cup_done` says the same). */
+function arcsDone(n: number | undefined): string {
+  const k = Number(n) || 0
+  if (k === 1) return 'Arc done.'
+  if (k === 2) return 'Both arcs done.'
+  return `All ${['three', 'four'][k - 3] ?? k} arcs done.`
+}
+
 function caption(f: FrameEvent | null, lost: boolean, asking: boolean): string {
   if (lost) return 'I lost the sheet. Keep all four corner markers in view.'
   if (!f?.cup) return 'Getting the camera ready.'
   const c = f.cup
   if (c.dot == null) return 'Place the cup on dot 1, then rest your hand in your lap.'
-  if (c.finished) return 'All four arcs done. Lovely work.'
+  if (c.finished) return `${arcsDone(c.arcs_done)} Lovely work.`
   if (c.awaiting_phase && asking) return 'Two slow arcs verified. Take a breath while you decide about the fast arcs.'
   if (c.state === 'placed' || c.state === 'over_dot') return `Cup on dot ${c.dot + 1} — good. Let your hand come back to your lap${c.expected_next != null ? `, then reach for dot ${c.expected_next + 1}` : ''}.`
   if (c.expected_next != null) return `Reach and move the cup to dot ${c.expected_next + 1}, one at a time.`
