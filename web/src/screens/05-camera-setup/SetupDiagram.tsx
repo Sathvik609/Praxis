@@ -203,7 +203,7 @@ export function placementCopy(view: SetupView, side: string, pendulum: boolean):
   if (view === 'front')
     return {
       heading: 'Place the camera in front of you',
-      body: 'Put your laptop on a table at about your chest height when seated, and sit 2–2.5 m back facing it, so your head, both shoulders, both hands and your hips fit when you lift your arms out to the side. Your face is never analysed, but the camera finds you by your head.',
+      body: 'Put your laptop on a table at about your chest height when seated, and sit 2–2.5 m back facing it, so your head, both shoulders and both elbows fit when you lift your arms out to the side. Your hips can be out of the picture. Your face is never analysed, but the camera finds you by your head.',
     }
   if (pendulum)
     return {

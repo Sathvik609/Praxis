@@ -299,6 +299,8 @@ def arm_angles(res: PoseResult, side: str) -> dict:
         "front_view_ok": sep >= FRONT_SEP_MIN,
         "shoulder_sep_norm": round(sep, 3),
         "visibility": round(float(np.min(vis[angle_joints])), 2),
+        # Front-view exercises gate on this instead (25 Oct): the practising shoulder and elbow.
+        "arm_visibility": round(float(min(vis[SHOULDER[i]], vis[ELBOW[i]])), 2),
         "hip_visibility": round(float(np.min(vis[[HIP[i], HIP[j]]])), 2),
         "shoulders_visibility": round(float(np.min(vis[[SHOULDER[i], SHOULDER[j]]])), 2),
     }

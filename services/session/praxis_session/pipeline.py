@@ -887,7 +887,9 @@ class SessionPipeline:
             shoulder_hike_norm=0.0 if angles is None else angles["shoulder_hike_norm"],
             view_ok=bool(angles and angles["view_ok"]),
             front_view_ok=None if angles is None else bool(angles["front_view_ok"]),
-            visibility=1.0 if angles is None else angles["visibility"],
+            # Front view (Arm out to the side) needs the shoulder and elbow, not the hips, which a
+            # laptop camera usually cuts off (25 Oct); the side-view lifts keep shoulder/elbow/hip.
+            visibility=1.0 if angles is None else angles["arm_visibility" if ex.view == "front" else "visibility"],
             hip_visibility=1.0 if angles is None else angles["hip_visibility"],
             shoulders_visibility=1.0 if angles is None else angles["shoulders_visibility"],
         )

@@ -482,3 +482,30 @@ def test_the_shipped_curve_is_the_one_the_script_fitted():
     fit = json.loads(res.read_text())["hike"]
     assert [tuple(k) for k in fit["shipped_curve"]] == [tuple(k) for k in HEALTHY_HIKE_CURVE]
     assert fit["margin"] == HIKE_MARGIN and fit["persist_frames"] == HIKE_PERSIST_FRAMES
+
+
+# ---- 25 Oct: laptop framing (team test 23 Oct: hips below the frame) ---------------------
+def test_a_flicker_over_the_start_line_is_not_a_missed_rep():
+    """Landmark jitter at rest (hips guessed off-frame) crossed the start line for 0.3-0.6 s and
+    was counted as a missed rep with a 32-46 deg peak; under MIN_LIFT_S it is not a lift."""
+    fsm = ArmFSM("abduction", sets=1, reps_per_set=8)
+    flicker = [(10.0, 0.0, 0.0)] * 8 + [(42.0, 0.0, 0.0)] * 6 + [(10.0, 0.0, 0.0)] * 8
+    evs, t = run_obs(fsm, flicker * 3, front_view_ok=True)
+    assert "rep_complete" not in types(evs) and "target_missed" not in types(evs)
+    assert fsm.state == "start_pose" and fsm.rep == 0
+    # a slow lift that falls short is still a missed rep
+    evs, _ = run_obs(fsm, rep_profile(50, 0.5), t, front_view_ok=True)
+    reps = [e.payload for e in evs if e.type == "rep_complete"]
+    assert len(reps) == 1 and reps[0]["reason"] == "target_missed"
+
+
+def test_hike_needs_visible_hips():
+    """The hike is in trunk lengths (shoulder to hip): with the hips guessed off-frame the
+    number is noise, so it is not judged (the 23 Oct session flagged a hike at 26 deg)."""
+    shrug = [(a, 0.0, 0.3 if a > 60 else 0.0) for a, _l, _h in [(5.0, 0, 0)] * 12 + rep_profile(90, 1.2)]
+    seen = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1, hike_limit=0.08)
+    evs, _ = run_obs(seen, shrug)
+    assert "shoulder_hiking" in types(evs)
+    guessed = ArmFSM(target_deg=90, hold_s=1.0, sets=1, reps_per_set=1, hike_limit=0.08)
+    evs, _ = run_obs(guessed, shrug, hip_visibility=0.3)
+    assert "shoulder_hiking" not in types(evs) and types(evs).count("rep_complete") == 1

@@ -409,6 +409,36 @@ def test_arm_frame_carries_gate_and_freezes_when_frontal():
     assert p.process_pose(None, t=10.1, frame_index=101)[0].to_dict()["arm"]["gate"] is None
 
 
+def test_front_view_lift_is_scored_with_the_hips_below_the_frame():
+    """25 Oct: Arm out to the side needs the shoulder and elbow, not the hips. On a laptop the
+    hips sit below the frame (BlazePose still places them, at low visibility); the set used to
+    freeze with `hips_out_of_view` (9 of 14 team sessions)."""
+    from praxis_session.perception.pose import PoseResult
+    from tests.test_pose import figure
+
+    p = SessionPipeline(
+        mode="arm", sheet="none", use_hand=False, use_pose=False, side="left",
+        exercise="abduction", tier="gentle", sets=1, reps=1,
+    )
+    vis = np.ones(33, np.float32)
+    vis[[23, 24]] = 0.2
+    profile = [5 + 60 * i / 15 for i in range(16)] + [65] * 40 + [65 - 60 * i / 15 for i in range(16)] + [5] * 8
+    evs = []
+    for i, ang in enumerate(profile):
+        res = PoseResult(landmarks_px=figure(ang, frontal=True), visibility=vis,
+                         world=np.zeros((33, 3), np.float32), conf=0.9)
+        evs += p.process_pose(res, t=i / 15.0, frame_index=i)
+    frames = [e.to_dict() for e in evs if e.type == "frame"]
+    assert all(f["arm"]["gate"] is None for f in frames)
+    assert [e.type for e in evs].count("rep_complete") == 1
+    # the shoulder or elbow out of view still freezes it
+    vis[13] = 0.2
+    res = PoseResult(landmarks_px=figure(5, frontal=True), visibility=vis,
+                     world=np.zeros((33, 3), np.float32), conf=0.9)
+    p2 = SessionPipeline(mode="arm", sheet="none", use_hand=False, use_pose=False, side="left", exercise="abduction")
+    assert p2.process_pose(res, t=0.0, frame_index=0)[0].to_dict()["arm"]["gate"] == "hips_out_of_view"
+
+
 def test_arm_setup_needs_no_sheet():
     """Arm to the front uses no printed sheet: calibration for it must not require markers or
     the task area, and must never report perception loss for missing markers (audit A3)."""

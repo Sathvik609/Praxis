@@ -1,0 +1,66 @@
+{
+  "name": "rehab24_laptop_framing_v0",
+  "generated_on": "2026-10-25",
+  "cv2_version": "5.0.0",
+  "pipeline_fingerprint": "e84c40750c1d",
+  "recordings": [
+    "PM_000",
+    "PM_001",
+    "PM_012",
+    "PM_023"
+  ],
+  "framings": {
+    "full": {
+      "labelled_reps": 35,
+      "rep": {
+        "tp": 35,
+        "fp": 3,
+        "fn": 0,
+        "precision": 0.9211,
+        "recall": 1.0,
+        "f1": 0.9589
+      },
+      "reps_under_1s": 0,
+      "gate_open_rate": 1.0,
+      "angle_mae_deg": 3.47,
+      "angle_p95_deg": null,
+      "shoulder_hiking": 0,
+      "setup_blocked": 1
+    },
+    "hips_at_edge": {
+      "labelled_reps": 35,
+      "rep": {
+        "tp": 34,
+        "fp": 4,
+        "fn": 1,
+        "precision": 0.8947,
+        "recall": 0.9714,
+        "f1": 0.9315
+      },
+      "reps_under_1s": 0,
+      "gate_open_rate": 0.835,
+      "angle_mae_deg": 4.95,
+      "angle_p95_deg": null,
+      "shoulder_hiking": 0,
+      "setup_blocked": 0
+    },
+    "hips_out": {
+      "labelled_reps": 35,
+      "rep": {
+        "tp": 35,
+        "fp": 7,
+        "fn": 0,
+        "precision": 0.8333,
+        "recall": 1.0,
+        "f1": 0.9091
+      },
+      "reps_under_1s": 3,
+      "gate_open_rate": 0.847,
+      "angle_mae_deg": 7.5,
+      "angle_p95_deg": null,
+      "shoulder_hiking": 1,
+      "setup_blocked": 1
+    }
+  },
+  "citation": "\u010cernek, A., Sedmidubsky, J., Budikova, P.: REHAB24-6: Physical Therapy Dataset for Analyzing Pose Estimation Methods. 17th International Conference on Similarity Search and Applications (SISAP 2024), Springer LNCS. Data: Zenodo, doi:10.5281/zenodo.13305826, CC BY-NC 4.0."
+}

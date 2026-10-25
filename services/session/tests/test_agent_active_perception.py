@@ -148,9 +148,10 @@ def test_tool_rejects_a_target_that_is_not_this_task(tmp_path):
 
 
 # ---- arm: pose facts and the setup pause ------------------------------------------------
-def pose(frontal=True, lean=0.0, hips_vis=1.0):
+def pose(frontal=True, lean=0.0, hips_vis=1.0, elbows_vis=1.0):
     vis = np.ones(33, np.float32)
     vis[[23, 24]] = hips_vis
+    vis[[13, 14]] = elbows_vis
     return PoseResult(landmarks_px=figure(5.0, lean_deg=lean, frontal=frontal), visibility=vis, world=np.zeros((33, 3), np.float32), conf=0.9)
 
 
@@ -176,7 +177,9 @@ def test_a_brief_hips_out_of_view_dip_does_not_pause_but_a_held_one_does(tmp_pat
     """21 Oct team test: all 14 `setup_blocked` on Arm out to the side were `hips_out_of_view`
     (none `turn_front`), most mid-set on a laptop with reps verified right after the resume. The
     hips gate now needs HIPS_BLOCK_S before it pauses; the scoring freeze itself is unchanged,
-    and the event carries the visibility numbers so the next test shows how close it was."""
+    and the event carries the visibility numbers so the next test shows how close it was.
+    25 Oct: Arm out to the side no longer needs the hips at all (a laptop cuts them off); the
+    same gate, still named `hips_out_of_view`, now fires on the shoulder or elbow."""
     from praxis_session.pipeline import HIPS_BLOCK_S
 
     assert HIPS_BLOCK_S > SETUP_BLOCK_S
@@ -184,8 +187,13 @@ def test_a_brief_hips_out_of_view_dip_does_not_pause_but_a_held_one_does(tmp_pat
     s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="arm3", exercise="abduction")
     blocked, paused = [], []
     i = 0
-    for _ in range(int((HIPS_BLOCK_S - 1.0) / 0.1)):  # held 1 s short of the pause
+    for _ in range(int((HIPS_BLOCK_S + 1.0) / 0.1)):  # hips below the frame: no gate at all
         evs = p.process_pose(pose(hips_vis=0.3), 0.1 * i, i)
+        blocked += [e for e in evs if e.type == "setup_blocked"]
+        i += 1
+    assert blocked == [] and p.last_pose["gate"] is None
+    for _ in range(int((HIPS_BLOCK_S - 1.0) / 0.1)):  # held 1 s short of the pause
+        evs = p.process_pose(pose(elbows_vis=0.3), 0.1 * i, i)
         blocked += [e for e in evs if e.type == "setup_blocked"]
         paused += [e for e in s.on_events(evs, snapshot=p.snapshot(), t=0.1 * i) if e.type == "pause"]
         i += 1
@@ -193,14 +201,14 @@ def test_a_brief_hips_out_of_view_dip_does_not_pause_but_a_held_one_does(tmp_pat
     p.process_pose(pose(), 0.1 * i, i)  # the hips come back for one frame: a new episode
     i += 1
     for _ in range(int(HIPS_BLOCK_S / 0.1) + 5):
-        evs = p.process_pose(pose(hips_vis=0.3), 0.1 * i, i)
+        evs = p.process_pose(pose(elbows_vis=0.3), 0.1 * i, i)
         blocked += [e for e in evs if e.type == "setup_blocked"]
         paused += [e for e in s.on_events(evs, snapshot=p.snapshot(), t=0.1 * i) if e.type == "pause"]
         i += 1
     assert len(blocked) == 1 and len(paused) == 1 and s.pause_rule == "setup"
     b = blocked[0].payload
     assert b["reason"] == "hips_out_of_view" and b["held_s"] >= HIPS_BLOCK_S
-    assert b["visibility"] == 0.3 and b["hip_visibility"] == 0.3 and b["shoulders_visibility"] == 1.0
+    assert b["visibility"] == 0.3 and b["hip_visibility"] == 1.0 and b["shoulders_visibility"] == 1.0
     # the stored event (a trace line) keeps the numbers, not only the reason
     row = next(r for r in s.trace.tail(500) if r["kind"] == "event" and r.get("type") == "setup_blocked")
     assert row["reason"] == "hips_out_of_view" and row["visibility"] == 0.3 and row["held_s"] >= HIPS_BLOCK_S

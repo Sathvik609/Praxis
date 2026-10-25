@@ -1,15 +1,15 @@
 {
  "name": "rehab24_v0",
- "pipeline_fingerprint": "68a03c2a4fa5",
+ "pipeline_fingerprint": "e84c40750c1d",
  "dataset": "REHAB24-6 Ex1 (arm abduction)",
  "version": "v0",
  "citation": "\u010cernek, A., Sedmidubsky, J., Budikova, P.: REHAB24-6: Physical Therapy Dataset for Analyzing Pose Estimation Methods. 17th International Conference on Similarity Search and Applications (SISAP 2024), Springer LNCS. Data: Zenodo, doi:10.5281/zenodo.13305826, CC BY-NC 4.0.",
  "licence": "CC BY-NC 4.0, evaluation only, never redistributed",
- "generated_on": "2026-10-12",
+ "generated_on": "2026-10-25",
  "cv2_version": "5.0.0",
- "python": "3.12.14",
+ "python": "3.12.12",
  "host": "Darwin arm64",
- "wall_s": 3211.4,
+ "wall_s": 4255.6,
  "settings": {
   "stride": 2,
   "fps_in": 30.0,
@@ -200,17 +200,17 @@
    },
    "fsm": {
     "tp": 88,
-    "fp": 13,
+    "fp": 8,
     "fn": 0,
-    "precision": 0.8713,
+    "precision": 0.9167,
     "recall": 1.0,
-    "f1": 0.9312
+    "f1": 0.9565
    },
    "fsm_verified": 16,
    "fsm_reasons": {
     "hold_too_short": 77,
     "verified": 16,
-    "target_missed": 8
+    "target_missed": 3
    },
    "fsm_peak_err": {
     "ref_cam": {
@@ -350,7 +350,7 @@
     "above_ceiling": 86,
     "perception_lost": 0,
     "setup_blocked": 3,
-    "target_missed": 8,
+    "target_missed": 3,
     "hold_too_short": 77
    }
   },
@@ -783,17 +783,17 @@
     "correct_min": 109.7
    },
    "fsm": {
-    "tp": 81,
-    "fp": 7,
-    "fn": 99,
-    "precision": 0.9205,
-    "recall": 0.45,
-    "f1": 0.6045
+    "tp": 80,
+    "fp": 6,
+    "fn": 100,
+    "precision": 0.9302,
+    "recall": 0.4444,
+    "f1": 0.6015
    },
    "fsm_verified": 5,
    "fsm_reasons": {
     "hold_too_short": 72,
-    "target_missed": 11,
+    "target_missed": 9,
     "verified": 5
    },
    "fsm_peak_err": {
@@ -927,14 +927,14 @@
    "hike_allow_first_below_90": 2,
    "hike_flagged_reps": 18,
    "hike_flagged_correct": 11,
-   "correct_matched": 38,
+   "correct_matched": 37,
    "events": {
     "compensation_lean": 0,
     "shoulder_hiking": 18,
     "above_ceiling": 66,
     "perception_lost": 1,
     "setup_blocked": 19,
-    "target_missed": 12,
+    "target_missed": 10,
     "hold_too_short": 72
    }
   }
@@ -1111,17 +1111,17 @@
    },
    "fsm": {
     "tp": 53,
-    "fp": 8,
+    "fp": 5,
     "fn": 0,
-    "precision": 0.8689,
+    "precision": 0.9138,
     "recall": 1.0,
-    "f1": 0.9298
+    "f1": 0.955
    },
    "fsm_verified": 8,
    "fsm_reasons": {
     "hold_too_short": 47,
-    "target_missed": 6,
-    "verified": 8
+    "verified": 8,
+    "target_missed": 3
    },
    "fsm_peak_err": {
     "ref_cam": {
@@ -1261,7 +1261,7 @@
     "above_ceiling": 49,
     "perception_lost": 0,
     "setup_blocked": 2,
-    "target_missed": 6,
+    "target_missed": 3,
     "hold_too_short": 47
    }
   },
@@ -1436,17 +1436,16 @@
    },
    "fsm": {
     "tp": 35,
-    "fp": 5,
+    "fp": 3,
     "fn": 0,
-    "precision": 0.875,
+    "precision": 0.9211,
     "recall": 1.0,
-    "f1": 0.9333
+    "f1": 0.9589
    },
    "fsm_verified": 8,
    "fsm_reasons": {
     "hold_too_short": 30,
-    "verified": 8,
-    "target_missed": 2
+    "verified": 8
    },
    "fsm_peak_err": {
     "ref_cam": {
@@ -1586,7 +1585,7 @@
     "above_ceiling": 37,
     "perception_lost": 0,
     "setup_blocked": 1,
-    "target_missed": 2,
+    "target_missed": 0,
     "hold_too_short": 30
    }
   }
@@ -1786,16 +1785,15 @@
     },
     "fsm": {
      "tp": 31,
-     "fp": 6,
+     "fp": 3,
      "fn": 0,
-     "precision": 0.8378,
+     "precision": 0.9118,
      "recall": 1.0,
-     "f1": 0.9118
+     "f1": 0.9538
     },
     "fsm_verified": 5,
     "fsm_reasons": {
      "hold_too_short": 29,
-     "target_missed": 3,
      "verified": 5
     },
     "fsm_peak_err": {
@@ -1931,7 +1929,7 @@
      "above_ceiling": 32,
      "perception_lost": 0,
      "setup_blocked": 0,
-     "target_missed": 3,
+     "target_missed": 0,
      "hold_too_short": 29
     }
    },
@@ -2107,39 +2105,39 @@
      "correct_min": 116.4
     },
     "fsm": {
-     "tp": 15,
-     "fp": 27,
-     "fn": 16,
-     "precision": 0.3571,
-     "recall": 0.4839,
-     "f1": 0.411
+     "tp": 12,
+     "fp": 15,
+     "fn": 19,
+     "precision": 0.4444,
+     "recall": 0.3871,
+     "f1": 0.4138
     },
     "fsm_verified": 1,
     "fsm_reasons": {
-     "target_missed": 28,
+     "target_missed": 13,
      "verified": 1,
      "hold_too_short": 13
     },
     "fsm_peak_err": {
      "ref_cam": {
-      "n": 10,
-      "mae": 26.48,
-      "bias": -26.48,
-      "rmse": 31.71,
-      "p95_abs": 55.17,
-      "sd": 18.38,
-      "loa_low": -62.51,
-      "loa_high": 9.54
+      "n": 9,
+      "mae": 22.83,
+      "bias": -22.83,
+      "rmse": 25.66,
+      "p95_abs": 42.91,
+      "sd": 12.42,
+      "loa_low": -47.17,
+      "loa_high": 1.5
      },
      "ref_frontal": {
-      "n": 10,
-      "mae": 18.54,
-      "bias": -18.0,
-      "rmse": 25.18,
-      "p95_abs": 46.94,
-      "sd": 18.56,
-      "loa_low": -54.38,
-      "loa_high": 18.38
+      "n": 9,
+      "mae": 14.44,
+      "bias": -14.38,
+      "rmse": 18.65,
+      "p95_abs": 34.97,
+      "sd": 12.59,
+      "loa_low": -39.07,
+      "loa_high": 10.3
      }
     },
     "movement": {
@@ -2249,16 +2247,16 @@
      "p95": 123.215
     },
     "hike_allow_first_below_90": 0,
-    "hike_flagged_reps": 11,
-    "hike_flagged_correct": 5,
-    "correct_matched": 8,
+    "hike_flagged_reps": 10,
+    "hike_flagged_correct": 4,
+    "correct_matched": 6,
     "events": {
      "compensation_lean": 1,
      "shoulder_hiking": 29,
      "above_ceiling": 8,
      "perception_lost": 15,
      "setup_blocked": 4,
-     "target_missed": 28,
+     "target_missed": 13,
      "hold_too_short": 13
     }
    },
@@ -2513,7 +2511,7 @@
     }
    }
   },
-  "reading": "**The head must be in frame.** Pose found on 100% of frames with the head visible, 51% with the head masked and 0% with it cropped out; the poses found with the head masked are mostly wrong (frame MAE 25.97\u00b0 where the gate opened, rep F1 0.411). Our code never reads the face, but the pose stage does: the MediaPipe person detector anchors on the face and upper body before the landmark model runs, and region tracking cannot start without it."
+  "reading": "**The head must be in frame.** Pose found on 100% of frames with the head visible, 51% with the head masked and 0% with it cropped out; the poses found with the head masked are mostly wrong (frame MAE 25.97\u00b0 where the gate opened, rep F1 0.4138). Our code never reads the face, but the pose stage does: the MediaPipe person detector anchors on the face and upper body before the landmark model runs, and region tracking cannot start without it."
  },
  "rows": [
   {
@@ -4032,15 +4030,14 @@
    ],
    "fsm": {
     "tp": 10,
-    "fp": 2,
+    "fp": 1,
     "fn": 0,
-    "precision": 0.8333,
+    "precision": 0.9091,
     "recall": 1.0,
-    "f1": 0.9091,
+    "f1": 0.9524,
     "verified": 0,
     "reasons": {
-     "hold_too_short": 11,
-     "target_missed": 1
+     "hold_too_short": 11
     },
     "above_ceiling": 11
    },
@@ -4154,7 +4151,7 @@
     "above_ceiling": 11,
     "perception_lost": 0,
     "setup_blocked": 0,
-    "target_missed": 1,
+    "target_missed": 0,
     "hold_too_short": 11
    }
   },
@@ -5074,14 +5071,13 @@
    ],
    "fsm": {
     "tp": 10,
-    "fp": 1,
+    "fp": 0,
     "fn": 0,
-    "precision": 0.9091,
+    "precision": 1.0,
     "recall": 1.0,
-    "f1": 0.9524,
+    "f1": 1.0,
     "verified": 0,
     "reasons": {
-     "target_missed": 1,
      "hold_too_short": 10
     },
     "above_ceiling": 10
@@ -5196,7 +5192,7 @@
     "above_ceiling": 10,
     "perception_lost": 0,
     "setup_blocked": 1,
-    "target_missed": 1,
+    "target_missed": 0,
     "hold_too_short": 10
    }
   },
@@ -5761,16 +5757,15 @@
    ],
    "fsm": {
     "tp": 10,
-    "fp": 2,
+    "fp": 1,
     "fn": 0,
-    "precision": 0.8333,
+    "precision": 0.9091,
     "recall": 1.0,
-    "f1": 0.9091,
+    "f1": 0.9524,
     "verified": 3,
     "reasons": {
      "verified": 3,
-     "hold_too_short": 8,
-     "target_missed": 1
+     "hold_too_short": 8
     },
     "above_ceiling": 11
    },
@@ -5870,7 +5865,7 @@
     "above_ceiling": 11,
     "perception_lost": 0,
     "setup_blocked": 0,
-    "target_missed": 1,
+    "target_missed": 0,
     "hold_too_short": 8
    }
   },
@@ -6524,15 +6519,15 @@
     null
    ],
    "fsm": {
-    "tp": 3,
+    "tp": 2,
     "fp": 0,
-    "fn": 7,
+    "fn": 8,
     "precision": 1.0,
-    "recall": 0.3,
-    "f1": 0.4615,
+    "recall": 0.2,
+    "f1": 0.3333,
     "verified": 0,
     "reasons": {
-     "target_missed": 2,
+     "target_missed": 1,
      "hold_too_short": 1
     },
     "above_ceiling": 0
@@ -6562,7 +6557,7 @@
     },
     {
      "correct": true,
-     "matched": true,
+     "matched": false,
      "lean": false,
      "hike": false
     },
@@ -6625,7 +6620,7 @@
     "above_ceiling": 0,
     "perception_lost": 0,
     "setup_blocked": 5,
-    "target_missed": 2,
+    "target_missed": 1,
     "hold_too_short": 1
    }
   },
@@ -7043,15 +7038,14 @@
    ],
    "fsm": {
     "tp": 11,
-    "fp": 2,
+    "fp": 1,
     "fn": 0,
-    "precision": 0.8462,
+    "precision": 0.9167,
     "recall": 1.0,
-    "f1": 0.9167,
+    "f1": 0.9565,
     "verified": 0,
     "reasons": {
-     "hold_too_short": 12,
-     "target_missed": 1
+     "hold_too_short": 12
     },
     "above_ceiling": 11
    },
@@ -7173,7 +7167,7 @@
     "above_ceiling": 11,
     "perception_lost": 0,
     "setup_blocked": 1,
-    "target_missed": 1,
+    "target_missed": 0,
     "hold_too_short": 12
    }
   },
@@ -9667,15 +9661,14 @@
    ],
    "fsm": {
     "tp": 10,
-    "fp": 3,
+    "fp": 1,
     "fn": 0,
-    "precision": 0.7692,
+    "precision": 0.9091,
     "recall": 1.0,
-    "f1": 0.8696,
+    "f1": 0.9524,
     "verified": 5,
     "reasons": {
      "hold_too_short": 6,
-     "target_missed": 2,
      "verified": 5
     },
     "above_ceiling": 9
@@ -9790,7 +9783,7 @@
     "above_ceiling": 9,
     "perception_lost": 0,
     "setup_blocked": 0,
-    "target_missed": 2,
+    "target_missed": 0,
     "hold_too_short": 6
    }
   },
@@ -11925,14 +11918,14 @@
   },
   "after": {
    "name": "rehab24_v0",
-   "pipeline_fingerprint": "68a03c2a4fa5",
+   "pipeline_fingerprint": "e84c40750c1d",
    "views": {
     "front": {
      "gate_open_rate": 1.0,
      "frame_mae": 3.81,
      "frames_scored": 7001,
-     "fsm_f1": 0.9312,
-     "reps_counted": 101,
+     "fsm_f1": 0.9565,
+     "reps_counted": 96,
      "hike_events": 2,
      "correct_flagged": 0,
      "correct_matched": 47,
@@ -11943,8 +11936,8 @@
      "gate_open_rate": 0.3438,
      "frame_mae": 12.19,
      "frames_scored": 4627,
-     "fsm_f1": 0.6045,
-     "reps_counted": 88,
+     "fsm_f1": 0.6015,
+     "reps_counted": 86,
      "hike_events": 18
     },
     "side": {

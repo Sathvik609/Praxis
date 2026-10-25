@@ -32,8 +32,13 @@ shoulder/elbow/hip visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_vi
 Compensation checks run for `kind="hold"` only: the pendulum is done leaning forward on purpose,
 so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
 `compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
-`shoulder_hiking` needs both shoulders visible. A seated patient with the hips behind a desk
-therefore gets no lean flags.
+`shoulder_hiking` needs both shoulders and both hips visible (the hike is in trunk lengths). A
+seated patient with the hips behind a desk or below a laptop's frame therefore gets no lean or
+hike flags. Front-view exercises gate on the practising shoulder and elbow only (the pipeline
+passes that visibility; 25 Oct): BlazePose still places hips just below the frame well enough
+for the angle (REHAB24-6 cropped to laptop framing, `docs/TECHNICAL_REPORT.md`), so a missing
+hip no longer freezes Arm out to the side. A dip under the start line within `MIN_LIFT_S` of
+leaving it is not a rep.
 
 Shoulder hike is angle-aware (12 Oct): healthy abduction raises the shoulder with the arm
 (scapulohumeral rhythm), so the fixed limit used until 11 Oct (0.08 trunk lengths over the rest
@@ -81,6 +86,11 @@ HEALTHY_HIKE_CURVE: tuple[tuple[float, float], ...] = (
 )
 HIKE_MARGIN = 0.05  # trunk lengths (~2.5 cm on a 50 cm trunk) above the healthy p95
 HIKE_PERSIST_FRAMES = 3  # consecutive scored frames over the allowance (~0.2-0.3 s)
+# A lift that drops back under the start line sooner than this, without reaching the target, is
+# not a rep (25 Oct, team test 23 Oct: with the hips guessed below a laptop's frame, landmark
+# jitter at rest crossed the start line for 0.3-0.6 s and was counted as a missed rep with a
+# 32-46 deg peak). No labelled REHAB24-6 lift is shorter than 1 s.
+MIN_LIFT_S = 0.8
 
 
 def hike_allowance(
@@ -386,7 +396,11 @@ class ArmFSM:
                 )
             )
         hike = obs.shoulder_hike_norm - self._hike_baseline
-        shoulders_seen = obs.shoulders_visibility >= MIN_VISIBILITY
+        # The hike is in trunk lengths (shoulder to hip), so it needs the hips as well as both
+        # shoulders: with the hips guessed below the frame the number is noise (25 Oct).
+        shoulders_seen = (
+            obs.shoulders_visibility >= MIN_VISIBILITY and obs.hip_visibility >= MIN_VISIBILITY
+        )
         angle = float(obs.shoulder_deg or 0.0)
         limit = (
             self.hike_limit
@@ -544,6 +558,8 @@ class ArmFSM:
             self._t_hold = obs.t
             evs.append(self._go("hold", obs.t))
             return evs
+        if obs.shoulder_deg < self.start_below_deg and obs.t - self._t_move < MIN_LIFT_S:
+            return [self._go("start_pose", obs.t)]  # a flicker over the start line, not a lift
         if obs.shoulder_deg < self.start_below_deg and self._peak > self.start_below_deg + 5:
             self._reason = "target_missed"
             evs = [
