@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- Source of docs/img/praxis_banner.png (README top and the GitHub social preview, 1280x640). Remake (from the repo root):
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+    --force-device-scale-factor=2 --window-size=1280,640 \
+    --screenshot=docs/img/praxis_banner.png docs/img/praxis_banner.html
+-->
+<html><head><meta charset="utf-8"><style>
+  body { margin: 0; width: 1280px; height: 640px; overflow: hidden; color: #e8edf7;
+         background: radial-gradient(circle at 78% 40%, #13254D 0%, #060A14 70%);
+         font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  .left { position: absolute; left: 72px; top: 0; bottom: 0; width: 470px;
+          display: flex; flex-direction: column; justify-content: center; }
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .brand img { width: 84px; height: 84px; }
+  h1 { margin: 0; font-size: 76px; font-weight: 800; letter-spacing: -1px; }
+  p { margin: 30px 0 0; font-size: 30px; line-height: 1.32; color: #dfe6f5; }
+  .small { margin-top: 26px; font-size: 21px; color: #9aa8c4; }
+  .shot { position: absolute; left: 590px; top: 96px; width: 760px; border-radius: 18px;
+          border: 2px solid #2a3a63; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+</style></head><body>
+  <div class="left">
+    <div class="brand"><img src="../../web/public/favicon.svg" alt=""><h1>Praxis</h1></div>
+    <p>A camera coach for the arm and shoulder exercises your therapist gave you.</p>
+    <div class="small">Laptop camera · printed sheet · OpenCV 5</div>
+  </div>
+  <img class="shot" src="screens/home.png" alt="">
+</body></html>

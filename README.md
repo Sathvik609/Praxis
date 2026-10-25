@@ -1,6 +1,4 @@
-<h1 align="center">Praxis</h1>
-
-<p align="center"><b>A coach that watches the arm and shoulder exercises your therapist gave you, at home. One laptop camera, a printed sheet, OpenCV 5.</b></p>
+<p align="center"><img src="docs/img/praxis_banner.png" alt="Praxis: a camera coach for the arm and shoulder exercises your therapist gave you. Laptop camera, printed sheet, OpenCV 5."></p>
 
 <p align="center">
   <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
@@ -21,13 +19,10 @@
 
 <p align="center"><img src="docs/img/screens/replay_cup.png" width="860" alt="Waiter – cup in Replay: OpenCV finds the four corner markers and the five dots on the printed sheet, the mannequin shows the move, the coach's caption and the verified and unverified counts"></p>
 
-| | |
-|---|---|
-| Live app | <https://d235zashbh751z.cloudfront.net> (AWS Graviton4 with COOL OpenCV). No webcam? Settings → **Replay a recorded session** |
-| Five-minute guide | [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md) |
-| Technical report | [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md), also as [PDF](docs/Praxis_Technical_Report.pdf) |
-| Diagrams | [simple](docs/img/architecture_simple.png), [detailed: system, OpenCV per exercise, agent loop](docs/ARCHITECTURE.md) |
-| Evaluation | [evaluation/README.md](evaluation/README.md), every table in [evaluation/results/](evaluation/results/) |
+- **Live app:** <https://d235zashbh751z.cloudfront.net> (AWS Graviton4 with COOL). No webcam? Settings → **Replay a recorded session**.
+- **Five-minute guide:** [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md)
+- **Technical report:** [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md), also as [PDF](docs/Praxis_Technical_Report.pdf)
+- **Diagrams:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · **Evaluation:** [evaluation/README.md](evaluation/README.md)
 
 Praxis helps people do the shoulder, arm and hand exercises their therapist prescribed. There are three: **Arm out to the side**, **Waiter – cup** (moving a cup across five printed dots) and the **Nine-Hole Peg Test** (a weekly timed test). OpenCV 5 checks each rep from the laptop camera. Hard-coded safety rules check every event first. Then a coach gives a short cue that stays inside the prescription.
 
@@ -95,13 +90,6 @@ Sources: [report §1](docs/TECHNICAL_REPORT.md).
 
 <p align="center"><img src="docs/img/architecture_simple.png" alt="Patient's laptop sends camera frames to one Python service (OpenCV 5, safety rules, coach, events only saved) on EC2 Graviton4 from the COOL AMI; the service sends back events, captions and prompts, never video; at checkpoints it calls Claude on the Anthropic API with numbers and short text"></p>
 
-| Part | What it is |
-|---|---|
-| Patient's laptop | A web page (React, TypeScript, Three.js mannequin). Sends small camera frames, shows captions and prompts. |
-| One Python service | FastAPI with OpenCV 5, the safety rules and the coach in one process. On AWS: EC2 c8g.large (Graviton4) from the COOL AMI behind CloudFront. Or on the laptop itself, and then no frame leaves it. |
-| Saved data | SQLite: sessions, events, flags and the decision trace. Never frames. |
-| Anthropic API | Claude Sonnet 5.5 for our agent, off unless turned on. |
-
 ### Architecture 2: our agent's loop
 
 <p align="center"><img src="docs/img/agent_loop_simple.png" alt="1 OpenCV sees a checkpoint, 2 safety rules run first, 3 our agent calls OpenCV tools over MCP (check_setup, get_set_summary, recalibrate, resample_target_colour) and picks one action inside the prescription, 4 the patient decides; the next OpenCV result shows whether it worked"></p>
@@ -114,17 +102,17 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 |---|---|---|
 | Arm angle on **real video** (REHAB24-6, a public lab dataset: 8 healthy adults, 88 reps) vs motion capture | angle error (MAE) 3.8°, rep F1 0.93 | [rehab24_v0.md](evaluation/results/rehab24_v0.md) |
 | Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions) | Corrected a confirmed fault in 41/44 set reviews, 0 guardrail breaks, first action 3.7 s median, $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
-| Our agent on scripted scenarios | 15/15 plumbing scenarios. The newer `mixed_signals` judgement scenario **fails 0/3**: an open finding | [AGENT.md](docs/AGENT.md) |
+| Our agent on scripted scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
 | Nine-Hole Peg Test and Waiter – cup | **Synthetic only**, no real-camera number. Flat renders, a 107-condition robustness sweep and 3-D Blender renders | [dataset_v0.md](evaluation/results/dataset_v0.md), [robustness_v0.md](evaluation/results/robustness_v0.md), [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
 | COOL vs stock OpenCV, same c8g.large | 1.2–1.6× faster on threshold, contours, Hough, template matching; about even on a full frame | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
 
 ## Where it fails
 
-- Real-video accuracy exists only for **Arm out to the side**, and only on healthy adults in a lab. We did not record our own sessions.
+- Real-video accuracy exists only for **Arm out to the side**, and only on healthy adults in a lab. We have no labelled recordings of our own.
 - **The peg test and the cup are checked on synthetic renders only.** On the 3-D renders the cup still misses about a third of reaches, and the failures are listed in [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md).
 - Angles are relative to the camera, not clinical goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
 - No usability (SUS) study and no patients. Our team test was 15 live sessions by 3 people plus 1 automated agent-driven run ([team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md)).
-- On AWS: EC2 + COOL + CloudFront. S3 and CDK are not built; CloudWatch is built but not verified on AWS. No Bedrock. The hosted build has no sign-in.
+- On AWS we use EC2 (COOL AMI) and CloudFront. S3 storage and a one-command CDK deploy are not built, and the hosted app has no sign-in.
 
 Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISKS.md).
 
