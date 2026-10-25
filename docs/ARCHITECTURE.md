@@ -95,7 +95,7 @@ flowchart LR
 
 **What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). Amazon Bedrock is not used, and `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
 
-**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). We tested it offline with `ScriptedPlanner` (in CI) and, as of 10 Oct, we are running it against real Claude through the Anthropic API. The real-model run below includes (`docs/AGENT.md`):
+**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). We tested it offline with `ScriptedPlanner` (in CI) and since 10 Oct against real Claude through the Anthropic API (Sonnet 5.5 since 21 Oct). The real-model run below includes (`docs/AGENT.md`):
 
 - MCP access control, quoted patient text, the camera-checked resume, the praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct);
 - the 11 Oct audit fixes: closing the socket cancels the agent run, feedback replaces stale checkpoints, and ended sessions are read-only for the agent.

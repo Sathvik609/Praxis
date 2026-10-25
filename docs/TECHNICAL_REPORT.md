@@ -25,11 +25,11 @@ How it works, briefly:
 
 What is measured and what is not, in one place:
 
-| Area | Status (21 Oct 2026) |
+| Area | Status (25 Oct 2026) |
 |---|---|
-| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 934 service tests (one skipped) and 1019 web tests pass (24 Oct); CI on every push |
+| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 937 service tests (25 Oct) and 1019 web tests (24 Oct) pass; CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; Claude Sonnet 5.5 via the Anthropic API. **On real video** (REHAB24-6 run through the product pipeline, 40 sessions): a fault confirmed by motion capture was corrected in 41/44 set reviews, the fix was named on 26/26 real wrong-view pauses, **0 guardrail violations**. Synthetic, 15 scenarios, 21 Oct recheck: 15/15, 0 violations (§8.3) |
-| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; stopped between work sessions, started for judging 24 Oct–10 Nov). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). We checked the 21 Oct rebuild with `/health`, a replay and 3 agent runs |
+| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; stopped between work sessions, started for judging from submission through 10 Nov). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). We checked the 21 Oct rebuild with `/health`, a replay and 3 agent runs |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.93** (§8.4, after the 12 Oct threshold changes). It exposed two pose defects, both now fixed. NHPT and Waiter – cup: synthetic only (§8.1). Our own-recordings protocol is built but not run (§8.6). |
 | Usability (SUS), patient or therapist pilots | not run. A team shake-down on the hosted build did run (15 live sessions, 4 testers including automated agent-driven sessions). It is not a usability study (§8.7) |
 | S3, CDK | not built (§7.4). The agent runs on Claude via the Anthropic API; Bedrock is not used |
@@ -85,7 +85,7 @@ We searched and found no webcam product that times the Nine-Hole Peg Test at hom
 **What is new in Praxis:**
 - **A printed sheet as a measuring tool.** Four ArUco markers turn an A4 page into a calibrated plane (px ↔ mm, with the reprojection error reported). This is what lets a laptop camera time a Nine-Hole Peg Test peg by peg and measure cup reaches dot to dot, with no wearable.
 - **An agent whose tools are OpenCV.** The agent does more than read events. It can re-run calibration on the current frame, re-sample the target's colour, and re-check the camera before it offers to resume. The vision result decides its next tool call (§6.3).
-- **Safety outside the model.** Stop rules, clamps and the autonomy table are code, and the model cannot talk its way past them. The tests show this: 0 guardrail violations over 45 real-model runs, including a prompt-injection scenario.
+- **Safety outside the model.** Stop rules, clamps and the autonomy table are code, and the model cannot talk its way past them. The tests show this: On the shipped model (Claude Sonnet 5.5): 0 guardrail violations over the 15 synthetic scenarios, including a prompt-injection one, and 40 real-video sessions.
 - **Honest perception.** Verified, unverified and missed are separate outcomes, each with a reason. Tracking loss pauses the session with the reason on screen, and the session resumes by itself when tracking comes back.
 
 ## 4. System architecture
@@ -126,7 +126,7 @@ flowchart LR
 
 The camera-setup screen says where processing happens. **Replay mode** pushes a recorded clip through the same pipeline and coach with no webcam. It is the judges' fallback and is badged "Replay" everywhere.
 
-**Stack.** Python 3.12, FastAPI, `opencv-python-headless==5.0.0.93` (pinned; COOL's build on AWS), NumPy, Strands Agents SDK + FastMCP 3.4 (MCP streamable HTTP, spec 2025-06-18), SQLite. React 19 + TypeScript + Vite, Radix, Tailwind 4, Three.js (a Blender-built GLB avatar, generated in code). Every dependency is pinned (`uv.lock`, `pnpm-lock.yaml`), and the ONNX models are pinned by SHA-256 hash.
+**Stack.** Python 3.12, FastAPI, `opencv-python-headless==5.0.0.93` (pinned, for local runs; on AWS the service uses the COOL AMI's own OpenCV 5.1.0-dev build), NumPy, Strands Agents SDK + FastMCP 3.4 (MCP streamable HTTP, spec 2025-06-18), SQLite. React 19 + TypeScript + Vite, Radix, Tailwind 4, Three.js (a Blender-built GLB avatar, generated in code). Every dependency is pinned (`uv.lock`, `pnpm-lock.yaml`), and the ONNX models are pinned by SHA-256 hash.
 
 ## 5. OpenCV 5 implementation
 
@@ -204,7 +204,7 @@ At checkpoints (check-in, end of a set or arc, a stop-rule pause, NHPT complete,
 - `recalibrate` resets the calibrator or pose gate and reports the next frames.
 - `resample_target_colour` warps the sheet, samples HSV where the target should be, and applies the new colour window **only if `inRange` + `findContours` then find the target where they failed before**.
 
-**OpenCV output changes the next action.** This is from the real-Claude trace `traces/agent/anthropic/covered_marker.jsonl`:
+**OpenCV output changes the next action.** This is from the real-Claude trace `traces/agent/anthropic/covered_marker.jsonl` (11 Oct, Claude Sonnet 5; the 21 Oct Sonnet 5.5 run of the same scenario is in `traces/agent/anthropic-sonnet-5-5/`):
 
 ```
 stop rule    failed_reps: "Three in a row I couldn't verify. Let's pause and check the setup."
@@ -381,7 +381,7 @@ The team's review of that session found the count itself was wrong: only one rea
 A deeper synthetic run followed the same day. For the NHPT it was 30 full tests: red, wooden, white-on-wood, grey and grey-on-wood pegs, each at 20°, 35° and 45° of camera tilt with two random seeds, with fingertips sweeping over the board and pauses between pegs. Fingertips held still for 0.5 s over empty holes are quiet, so the quiet rule alone let them through and gave a false split (timer 3.75 s short). So a hole filled by change alone also counts only when less than 30 % of it is stray change, meaning change components with more than 40 % of their area outside the peg footprints (fingers, shadows). This blocks new seats only; a seated peg the fingers touch stays seated. (Removing those pixels from the peg mask instead merged seated pegs with fingers and double-counted at 35° and 45°: 11 of the first 25 failed.) With both rules 29 of 30 pass with 9 pegs, no doubles and no drops, and the timer is within −0.75 to +2 s. The frozen-finger case now counts nothing extra (timer −0.75 s, the same inferred-start offset as clean runs). The one failure is white pegs on a wooden board at 45° (one hole counted twice, one missed). The paper normalisation tints the wood there, which is a known limit. For the cup it was 36 runs (white, red, green and blue-band cups at 30°, 40° and 50°, with 0 to 2 stray readings per placement). All 36 count the right eight dots in order with no wrong-dot or unverified reps, and each placement is counted at most 0.25 s after the cup is still with the hand clear. To get there, the "cup still" and "hand clear" waits now overlap instead of running one after the other, and stillness is measured from where the cup settled, not from the last reading. Arm out to the side was re-run on REHAB24-6 with no change (3.81° MAE, rep F1 0.931, pose found in 100 % of frames). The team's arm sessions with 0 verified reps were real short holds (0.3 to 1.2 s against the 3 s hold), not missed reps.
 
 ### 8.2 Latency (`evaluation/results/latency_v0.md`)
-These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced), on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). This does **not** include the JPEG encode in the browser, the network hop or rendering. The live screens show a browser-side p50/p95, which we will report from real sessions. The agent's first action takes 4.2 / 6.5 s on the synthetic scenarios and 3.8 / 6.4 s on real video (§8.3). That is why it works at checkpoints and never on in-rep cues.
+These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced), on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). This does **not** include the JPEG encode in the browser, the network hop or rendering. The live screens show a browser-side p50/p95, which we will report from real sessions. The agent's first action takes 3.7 / 6.2 s on the synthetic scenarios and 3.7 / 5.8 s on real video (Sonnet 5.5, §8.3). That is why it works at checkpoints and never on in-rep cues.
 
 ### 8.3 Agent coach (`evaluation/results/agent_video_v0.md`, `agent_models_v0.md`, `agent_ablation_v0.md`)
 `evaluation/scripts/agent_eval.py` runs 16 scenarios built from synthetic OpenCV frames, injected pose landmarks and scripted event streams. They cover:
@@ -549,7 +549,7 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise idea
 ## 10. Limitations and next steps
 
 - **Real-world accuracy is partial.** Arm out to the side is measured on a public lab dataset of healthy adults (§8.4), not on patients or a laptop camera. NHPT and Waiter – cup are synthetic-only: HSV ranges, Hough parameters, hand thresholds and their state machines are tuned on renders. Dataset v1 is next (§8.6).
-- **Angles are camera-relative.** Abduction from the front view is an estimate in the image plane, not goniometry. It agrees with motion capture to 3.8° MAE when the subject faces the camera (§8.4) and reads ~10° low at 45°. It has not been compared with a goniometer.
+- **Angles are camera-relative.** Abduction from the front view is an estimate in the image plane, not goniometry. It agrees with motion capture to 3.8° MAE when the subject faces the camera (§8.4) and reads ~12° low at 45°. It has not been compared with a goniometer.
 - **Shoulder-hike flag.** It is now angle-aware and no longer fires on healthy REHAB24-6 lifts (0 / 22 held-out correct reps, §8.4). But its sensitivity to a real shrug is unmeasured: the curve comes from healthy standing adults, and only synthetic shrugs are tested. The front-view gate now scores a patient turned up to ~20° (and 93 % of frames at 20–30°), at the cost of an angle that reads low between 30° and 45° (`rehab24_thresholds_v0.md`). The head must also be in frame for the pose stage to work. In the 21 Oct team shake-down (laptop, seated; 4 testers including automated agent-driven sessions, [`team_test_2026-10-21.md`](../evaluation/results/team_test_2026-10-21.md)), the hike flag still fired well below 90° of arm angle on most reps, where the REHAB24-6 allowance almost never fires. We don't know the cause (seated posture, trunk length from partly hidden hips, or real shrugs), because at that time the stored events kept only the angle. They now keep the hike value and its allowance. The threshold stays unchanged until we have those numbers.
 - **Parallax.** The sheet homography assumes a flat plane. Since 12 Oct the NHPT models peg height (a seat column from a single-view camera calibration), and the cup is located by its base edge, which lies on the paper. Both are checked on 3-D renders only (§8.1.1). Both assume the standard 32 mm peg and a board up to ~12 mm, and the 50° tilt advice is still based on geometry alone. Hands above the sheet still project off (the pinch, hand-near-hole and hand-clear gates work in the sheet plane).
 - **Session start on the cup sheet.** The cup standing on dot 1, as the instructions say, hides the corner marker behind it at laptop angles. The first fix needs all four markers (locked), so the first reach or two are lost. At ~20° the cup and the resting hand can hide a corner for the whole run (§8.1.1).
@@ -566,8 +566,8 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise idea
 
 | What | Command |
 |---|---|
-| Service tests (760) | `cd services/session && uv sync && uv run pytest -q` |
-| Web tests (960), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
+| Service tests (937) | `cd services/session && uv sync && uv run pytest -q` |
+| Web tests (1019), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
 | Run locally | `uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000`; `pnpm dev` |
 | Replay without a webcam | app: Settings → Demo and judging → Replay; or `uv run python -m praxis_session.replay` |
 | Pipeline numbers (§8.1) | `uv run python ../../evaluation/scripts/eval.py` |

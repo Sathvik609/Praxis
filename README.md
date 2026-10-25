@@ -123,7 +123,7 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 - Real-video accuracy exists only for **Arm out to the side**, and only on healthy adults in a lab. We did not record our own sessions.
 - **The peg test and the cup are checked on synthetic renders only.** On the 3-D renders the cup still misses about a third of reaches, and the failures are listed in [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md).
 - Angles are relative to the camera, not clinical goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
-- No usability (SUS) study and no patients. Our team test was 15 live sessions by 4 testers ([team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md)).
+- No usability (SUS) study and no patients. Our team test was 15 live sessions by 3 people plus 1 automated agent-driven run ([team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md)).
 - On AWS: EC2 + COOL + CloudFront. S3 and CDK are not built; CloudWatch is built but not verified on AWS. No Bedrock. The hosted build has no sign-in.
 
 Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISKS.md).

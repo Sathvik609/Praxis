@@ -25,6 +25,8 @@
   .line.r::after, .line.l::before { content: ""; position: absolute; top: -6px; border: 7px solid transparent; }
   .line.r::after { right: -12px; border-left: 10px solid #6d8fe8; }
   .line.l::before { left: -12px; border-right: 10px solid #6d8fe8; }
+  .aws { flex: 1; border: 2px dashed #FF9900; border-radius: 18px; padding: 40px 12px 12px; position: relative; }
+  .awslabel { position: absolute; top: 9px; left: 18px; color: #FFB347; font-size: 17px; font-weight: 700; }
   .foot { padding: 30px 40px 0; color: #9aa8c4; font-size: 17px; }
 </style></head><body>
 <div class="wrap">
@@ -42,13 +44,16 @@
     <div class="link"><div class="line l"></div>events, captions,<br>prompts. Never video<div class="num">2</div></div>
   </div>
 
-  <div class="box" style="flex:1;">
+  <div class="aws">
+  <div class="awslabel">AWS · CloudFront → EC2 c8g.large Graviton4 · COOL AMI</div>
+  <div class="box">
     <h2>One Python service</h2>
-    <div class="sub">On AWS: EC2 c8g.large (Graviton4) from the COOL AMI, behind CloudFront HTTPS.<br>Or on the laptop itself, and then no frame leaves it.</div>
+    <div class="sub">OpenCV 5 is COOL's build on Graviton4. The same service also runs on a laptop, and then no frame leaves it.</div>
     <div class="row"><b class="ocv">OpenCV 5</b><br><span>sheet markers → millimetres, holes and pegs, cup on the dots, hand and pose models (cv2.dnn)</span></div>
     <div class="row"><b class="safe">Safety rules, first</b><br><span>pain, leaning, unchecked reps, losing you on camera: pause or stop, and flag the therapist</span></div>
     <div class="row"><b>Coach</b><br><span>a rule coach for every cue, or the agent at checkpoints, calling OpenCV tools over MCP</span></div>
     <div class="row"><b>Saved: events only</b> <span class="mono">sessions · events · flags · trace</span><br><span>Frames are processed in memory and dropped.</span></div>
+  </div>
   </div>
 
   <div class="links">

@@ -10,7 +10,7 @@ This takes five minutes and needs no install. If you have a webcam, you can try 
 
 This is our AWS deployment. It is an EC2 c8g.large (Graviton4) in us-east-2, launched from the COOL AMI. It runs the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To check what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
 
-We keep the endpoint up for the judging period: it is started for judging from 24 Oct and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). If it does not answer, please use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
+We keep the endpoint up for the judging period: it is started for judging when we submit and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). If it does not answer, please use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
 
 ## 2. Turn on the judge view (10 s)
 
@@ -75,7 +75,7 @@ In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_A
 | OpenCV 5 does the real vision work | [`docs/TECHNICAL_REPORT.md`](TECHNICAL_REPORT.md) §5, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §2, `services/session/praxis_session/perception/` |
 | Runs on AWS Graviton with COOL | report §7, `/health` above, `infra/ec2/deploy.sh` |
 | COOL vs stock OpenCV, measured | [`benchmark/results/cool_vs_stock_c8g.md`](../benchmark/results/cool_vs_stock_c8g.md) (regenerate: `benchmark/cool_bench.py`) |
-| OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl`, [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
+| OpenCV output changes the agent's next action | `traces/agent/anthropic/covered_marker.jsonl` (Sonnet 5, 11 Oct; Sonnet 5.5 run in `traces/agent/anthropic-sonnet-5-5/`), [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) §3 |
 | Agent evaluation: real Claude Sonnet 5.5 on 15 synthetic scenarios (21 Oct: 15/15, 0 guardrail violations; the 16th, the `mixed_signals` judgement scenario, fails 0/3, see [`docs/AGENT.md`](AGENT.md)), on real video (REHAB24-6, 40 sessions), and the rule-only ablation (the same runs with the agent off) | [`evaluation/results/agent_recheck_2026-10-21_all.md`](../evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_video_v0.md`](../evaluation/results/agent_video_v0.md), [`agent_ablation_v0.md`](../evaluation/results/agent_ablation_v0.md), report §8.3 |
 | Arm angle on real video vs motion capture (REHAB24-6) | [`evaluation/results/rehab24_v0.md`](../evaluation/results/rehab24_v0.md), report §8.4 |
 | Camera robustness (107 synthetic conditions) and the browser run with a simulated camera | [`evaluation/results/robustness_v0.md`](../evaluation/results/robustness_v0.md), `web/scripts/e2e-fake-camera.mjs`, report §8.1 and §8.5 |

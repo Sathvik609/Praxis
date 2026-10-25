@@ -50,7 +50,7 @@ infra/ec2/deploy.sh <instance-public-dns> --agent    # Claude agent on (key from
 Needs the ssh key `~/.ssh/praxis-aws` (its public half is imported into EC2 as key pair
 `praxis-aws`) and the instance's security group allowing port 22 from your IP and 8000 from
 CloudFront. The script builds the web app, rsyncs the service, installs, restarts and prints:
-`opencv 5.0.0 · aarch64 · COOL=True · dnn=True`.
+`opencv 5.1.0-dev · aarch64 · COOL=True · dnn=True` (COOL's own build).
 
 ## Therapist-only writes (21 Oct)
 Edit practice days and Mark reviewed need `PRAXIS_THERAPIST_TOKEN` (header

@@ -80,9 +80,9 @@ This folder holds our labelled datasets, the scripts that regenerate every numbe
   flags, and agent runs / refused vs failed tool calls / latency / cost. Human testers and automated
   sessions are always kept apart. It also lists what Phase 2 (21 Oct) changed. `--check` fails if the
   committed output differs.
-- `agent_eval.py` + `agent/scenarios/*.json`: the agent coach's nine scenarios (covered marker,
+- `agent_eval.py` + `agent/scenarios/*.json`: the agent coach's 16 scenarios (covered marker,
   dim light, three unverified, falling peaks + exertion, repeated lean, pain stop mid-run, model
-  timeout, MCP down, clean session). They run through the real session, OpenCV setup checks on synthetic
+  timeout, MCP down, clean session, and seven more listed in `docs/AGENT.md`). They run through the real session, OpenCV setup checks on synthetic
   frames, the tools and the guardrails. `--planner scripted` (CI, free) writes `results/agent_v0.{md,json}`
   and sample traces to `traces/agent/`. `--planner anthropic --yes` runs Claude and writes
   `results/agent_v0_anthropic.{md,json}` (it prints an estimated cost first). The scripted numbers
