@@ -67,7 +67,8 @@ from praxis_session.perception.quality import (
 GATE_HINTS = {
     "turn_front": "Face the camera with both shoulders in view.",
     "turn_side": "Turn side-on so your practising shoulder faces the camera.",
-    "hips_out_of_view": "Move the camera back or down so your shoulder, elbow and hips are in view.",
+    # The name is from before 25 Oct: in the front view it now fires on the shoulder or elbow only.
+    "hips_out_of_view": "Move back a little so your shoulders and elbows are in view.",
 }
 SETUP_BLOCK_S = 3.0  # a view gate (turned from the camera) held this long while the pose is seen -> setup_blocked
 # 21 Oct team test (14/14 setup_blocked were hips_out_of_view, most mid-set on a laptop, with reps
@@ -425,8 +426,11 @@ class SessionPipeline:
             checks = [
                 _row("person", "Person in view", present, "Sit so your upper body is in the picture."),
                 _row("view", "Facing the camera the right way", None if not present else gate not in ("turn_front", "turn_side"), GATE_HINTS.get(str(gate))),
-                _row("hips", "Hips in view", None if not present else gate != "hips_out_of_view", GATE_HINTS["hips_out_of_view"]),
-                _row("pose", "Shoulder, elbow and hip visible", None if not present else (vis is not None and vis >= 0.5), "Move back a little so your shoulder, elbow and hip are all in view."),
+                # One row for the gate the set actually pauses on (front view: shoulder and elbow,
+                # the hips may be out of frame since 25 Oct; side view: shoulder, elbow and hip).
+                _row("arm", "Shoulder and elbow in view" if pose.get("needed_view") == "front" else "Shoulder, elbow and hip in view",
+                     None if not present else gate != "hips_out_of_view",
+                     GATE_HINTS["hips_out_of_view"] if pose.get("needed_view") == "front" else "Move back a little so your shoulder, elbow and hip are all in view."),
                 _row("shoulders", "Both shoulders visible", None if not present or sh_vis is None else sh_vis >= 0.5, "Sit so both shoulders are in the picture."),
                 _row("posture", "Sitting upright", None if not present or lean is None else abs(float(lean)) <= lean_max, "Sit up tall with your back against the chair before you lift."),
             ]

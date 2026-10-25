@@ -47,7 +47,7 @@ DONE: dict[str, str] = {
 
 # Short in-rep cues (spoken while the patient moves); milestones keep full sentences.
 PHRASES: dict[str, list[str]] = {
-    "cup_onto_dot": ["Dot {n}. Good.", "Onto {n}.", "{n}, nice and level.", "Dot {n}, steady."],
+    "cup_onto_dot": ["Dot {n}. Good.", "On {n}.", "{n}, nice and level.", "Dot {n}, steady."],
     "arm_lift": ["Lift slowly to the line.", "Up to the line, slowly.", "Lift, no higher than your shoulder."],
     "arm_swing": ["Let it swing, loose and easy.", "Gentle swings — let the weight do it.", "Swing it, don't lift it."],
     "arm_hold": ["Hold… three.", "Hold it there. Three."],

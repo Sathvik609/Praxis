@@ -173,6 +173,22 @@ def test_arm_check_setup_gives_concrete_pose_facts():
     assert r["all_pass"] and r["measures"]["facing"] == "front"
 
 
+def test_arm_check_setup_passes_with_the_hips_below_the_frame():
+    """25 Oct: Arm out to the side measures with the hips out of a laptop's frame, so the agent's
+    check and the pause hint must not ask the patient to bring the hips into view."""
+    from praxis_session.pipeline import GATE_HINTS
+
+    p = arm_pipeline()
+    p.process_pose(pose(hips_vis=0.1), 0.0, 0)
+    r = p.check_setup()
+    assert r["all_pass"] and r["first_hint"] is None
+    assert not any("hip" in c["label"].lower() for c in r["checks"])
+    p.process_pose(pose(hips_vis=0.1, elbows_vis=0.1), 0.1, 1)
+    r = p.check_setup()
+    assert r["failing"] == ["arm"] and "elbow" in r["first_hint"].lower() and "hip" not in r["first_hint"].lower()
+    assert "hip" not in GATE_HINTS["hips_out_of_view"].lower()
+
+
 def test_a_brief_hips_out_of_view_dip_does_not_pause_but_a_held_one_does(tmp_path):
     """21 Oct team test: all 14 `setup_blocked` on Arm out to the side were `hips_out_of_view`
     (none `turn_front`), most mid-set on a laptop with reps verified right after the resume. The
