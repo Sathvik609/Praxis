@@ -35,7 +35,7 @@ Go to Settings → Demo and judging → **Replay a recorded session** and pick a
 The replays are **OpenCV-rendered synthetic clips** (labelled "Replay"). They show that the pipeline works. They are not evidence of real-world accuracy (report §8.1). A replayed session gets a report just like a live one, but it is never counted in progress, adherence or trends.
 
 <table><tr>
-<td width="50%"><img src="img/screens/replay_nhpt.png" alt="Nine-Hole Peg Test replay: holes and seated pegs on the warped board, the timer from first peg lift, 5 of 9 seated, the coach caption and the Replay badge"></td>
+<td width="50%"><img src="img/screens/replay_nhpt.png" alt="Nine-Hole Peg Test replay: holes and seated pegs on the warped board, the timer from first peg lift, 4 of 9 seated, the coach caption and the Replay badge"></td>
 <td width="50%"><img src="img/screens/report_cup.png" alt="Session report after the Waiter – cup replay, marked Replay · not counted, with verified and unverified movements and reach time per dot"></td>
 </tr><tr>
 <td><sub>NHPT replay mid-run (Replay badge top right)</sub></td>

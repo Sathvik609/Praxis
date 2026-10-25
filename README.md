@@ -29,7 +29,7 @@ Safety comes first: hard-coded stop rules check every event before the coach see
     <td><sub><b>Waiter – cup</b> · Replay of a synthetic clip: OpenCV overlay, coach caption, verified / unverified counts</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/img/screens/replay_nhpt.png" alt="Replay of the Nine-Hole Peg Test: detected holes and seated pegs on the warped board, timer from first peg lift, 5 of 9 seated, rule coach caption and the Replay badge"></td>
+    <td><img src="docs/img/screens/replay_nhpt.png" alt="Replay of the Nine-Hole Peg Test: detected holes and seated pegs on the warped board, timer from first peg lift, 4 of 9 seated, rule coach caption and the Replay badge"></td>
     <td><img src="docs/img/screens/replay_cup_trace.png" alt="Judge view: the decision trace listing OpenCV events, the coach decision with the evidence event id and the spoken action, with timestamps and latency"></td>
     <td><img src="docs/img/screens/report_cup.png" alt="Session report: active time, verified and unverified movements, tracking coverage, reach time per dot, exertion and the coach notes, marked Replay, not counted"></td>
   </tr>
@@ -41,15 +41,15 @@ Safety comes first: hard-coded stop rules check every event before the coach see
 </table>
 
 <details>
-<summary>More screens: dark theme, progression prompt, Replay picker, therapist view</summary>
+<summary>More screens: check-in, progression prompt, Replay picker, therapist view</summary>
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/img/screens/home_dark.png" alt="Home in the dark theme (sample data)"></td>
+    <td width="50%"><img src="docs/img/screens/checkin.png" alt="Before you start: pain from 0 to 10 with the key 0–3 full session, 4–6 lighter session, 7–10 rest advised, where it hurts, which arm, energy and time"></td>
     <td width="50%"><img src="docs/img/screens/replay_cup_progression.png" alt="Progression prompt during Waiter – cup: Ready to go faster? Inside your program, with the evidence it is based on and Yes, Keep pace and Why buttons"></td>
   </tr>
   <tr>
-    <td><sub>Home, dark theme</sub></td>
+    <td><sub>Check-in: your pain sets the dose for today</sub></td>
     <td><sub>Progression prompt: the coach suggests a change inside the prescription and the patient decides</sub></td>
   </tr>
   <tr>
