@@ -1,8 +1,16 @@
-# Praxis — Architecture
+# Praxis: Architecture
 
-Three diagrams for judges: (1) the whole system, (2) the OpenCV 5 pipeline per exercise, (3) one concrete agent loop where OpenCV output changes what the agent does next. Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
+This page has three diagrams for judges:
 
-**Legend.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.** Since 11 Oct 2026 the session service runs on AWS (rebuilt on 21 Oct in a new account): a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS, with the COOL vs stock benchmark in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
+1. the whole system;
+2. the OpenCV 5 pipeline for each exercise;
+3. one real agent loop where the OpenCV output changes what the agent does next.
+
+Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
+
+**How to read the diagrams.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.**
+
+Since 11 Oct 2026 the session service runs on AWS. We rebuilt it on 21 Oct in a new account. It is a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS. The COOL vs stock benchmark is in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). The agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
@@ -85,15 +93,21 @@ flowchart LR
     class S3,CW,CDK planned
 ```
 
-**What runs where today.** Edge mode: everything above the AWS box runs on one laptop, and the same service runs on the c8g instance for the hosted judge endpoint (AWS box) (`uv run uvicorn praxis_session.main:app`), or in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop no frame leaves the machine; on Railway frames travel over TLS to the container and are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API from wherever the service runs (laptop or the c8g instance); Amazon Bedrock is not used, and `PRAXIS_AGENT=bedrock` resolves to the rule coach alone (12 Oct).
+**What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped (`docs/RISKS.md`, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). Amazon Bedrock is not used, and `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
 
-**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). It has been tested offline with `ScriptedPlanner` (CI) and, as of 10 Oct, is being run against real Claude through the Anthropic API. MCP access control, quoted patient text, camera-checked resume, praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct) and the 11 Oct audit fixes (socket close cancels the agent run, feedback supersedes stale checkpoints, ended sessions read-only for the agent) are in the real-model run below (`docs/AGENT.md`).
+**Agent status.** The agent coach is built (29 Sep) and is off by default (`PRAXIS_AGENT=off`). We tested it offline with `ScriptedPlanner` (in CI) and, as of 10 Oct, we are running it against real Claude through the Anthropic API. The real-model run below includes (`docs/AGENT.md`):
 
-> **Real model (12 Oct):** default Claude Sonnet 5.5 via the Anthropic API, chosen over Sonnet 5 and Haiku 5.5 in a measured comparison (`docs/AGENT.md` § Model choice). **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions, a motion-capture-confirmed fault corrected in 41/44 set reviews, the specific fix named on 26/26 real wrong-view pauses with no resume offered while the view stayed wrong, 0 guardrail violations, $0.050 per session. Synthetic, 15 scenarios × 2: 28/30, 0 guardrail violations, first action p50/p95 4.2/6.5 s. The 11 Oct Sonnet 5 run was 45/45 (15 × 3). Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
+- MCP access control, quoted patient text, the camera-checked resume, the praise limit, metrics, the session plan, the autonomy table and `resample_target_colour` (10 Oct);
+- the 11 Oct audit fixes: closing the socket cancels the agent run, feedback replaces stale checkpoints, and ended sessions are read-only for the agent.
+
+> **Real model (12 Oct):** the default is Claude Sonnet 5.5 via the Anthropic API. We picked it over Sonnet 5 and Haiku 5.5 after measuring them side by side (`docs/AGENT.md` § Model choice).
+> - **On real video** (REHAB24-6 through this pipeline, `evaluation/results/agent_video_v0.md`): 40 sessions. It corrected a fault confirmed by motion capture in 41/44 set reviews. It named the specific fix on 26/26 real wrong-view pauses, and offered no resume while the view stayed wrong. 0 guardrail violations, $0.050 per session.
+> - Synthetic, 15 scenarios × 2: 28/30, 0 guardrail violations, first action p50/p95 4.2/6.5 s. The 11 Oct Sonnet 5 run was 45/45 (15 × 3).
+> - Agent vs rule-only: `evaluation/results/agent_ablation_v0.md`.
 
 ## 2. OpenCV 5 pipeline per exercise
 
-`SessionPipeline.process(frame_bgr, t, frame_index)` picks the mode the socket was opened with. Each mode returns one `frame` event per frame (overlay geometry in frame pixels, never pixels themselves) plus the state-machine events below. Module docstrings note `cv2.__version__` (5.0.0, `opencv-python-headless==5.0.0.93`).
+`SessionPipeline.process(frame_bgr, t, frame_index)` uses the mode the socket was opened with. Each mode returns one `frame` event per frame plus the state-machine events below. The `frame` event holds overlay geometry in frame pixel coordinates, never the pixels themselves. Module docstrings note `cv2.__version__` (5.0.0, `opencv-python-headless==5.0.0.93`).
 
 ```mermaid
 flowchart TB
@@ -158,16 +172,18 @@ flowchart TB
     A3 --> EP["calibration source fresh/partial/held · setup_checks ·<br/>perception_lost after 20 uncalibrated frames · perception_regained"]
 ```
 
-Notes that keep the diagram honest:
+Some notes so the diagram is not read as more than it is:
 
-- A rep the camera could not check is **unverified, not failed**: `reach_complete` with `cup_occluded` or `marker_lost`, NHPT `rep_complete` with `no_hand_near_hole`. Performance misses (`target_missed`, `hold_too_short`) are a separate count.
-- Arm angles are image-plane, camera-relative progress numbers, **never goniometry**. Abduction from the front view cannot be told apart from a scaption-plane lift.
+- A rep the camera could not check is **unverified, not failed**. Examples: `reach_complete` with `cup_occluded` or `marker_lost`, and NHPT `rep_complete` with `no_hand_near_hole`. Performance misses (`target_missed`, `hold_too_short`) are counted separately.
+- Arm angles are progress numbers measured in the image, relative to the camera. They are **never goniometry** (clinical joint-angle measurement). From the front view, abduction cannot be told apart from a lift in the scaption plane.
 - Every threshold above was tuned on synthetic renders (`perception/synth.py`) and synthetic landmark streams. Real-camera accuracy is unmeasured until dataset v1 (`docs/PLAN.md` Phase 9).
-- The hidden exercises (Pendulum, Arm to the front, Rotate out, Rotate in) still have code in `ArmFSM` and the registry, but `visible: False` keeps them off every screen and the socket refuses them (`not_offered`).
+- The hidden exercises (Pendulum, Arm to the front, Rotate out, Rotate in) still have code in `ArmFSM` and the registry. But `visible: False` keeps them off every screen, and the socket refuses them (`not_offered`).
 
 ## 3. Agent workflow: one perception → decision → action loop
 
-The diagram traces the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner): the scenario hides ArUco marker 2 in the frame the tools see and feeds three `reach_complete` events marked unverified (`marker_lost`). In a live session `marker_lost` means fewer than three markers for more than 1.5 s; a single covered marker is ridden through with a three-marker RANSAC fit. Stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, says the specific fix, recalibrates, and asks the patient whether to resume. Only the patient's "Yes" resumes the session.
+This diagram follows the committed scenario `evaluation/agent/scenarios/covered_marker.json` (trace `traces/agent/covered_marker.jsonl`, scripted planner). The scenario hides ArUco marker 2 in the frame the tools see, and sends three `reach_complete` events marked unverified (`marker_lost`). In a live session, `marker_lost` means fewer than three markers were seen for more than 1.5 s. If only one marker is covered, tracking carries on with a three-marker RANSAC fit.
+
+Here is what happens. The stop rules pause the session before the agent sees anything. The agent then runs OpenCV on the latest frame, tells the patient the specific fix, recalibrates, and asks whether to resume. Only the patient's "Yes" resumes the session.
 
 ```mermaid
 sequenceDiagram
@@ -211,28 +227,28 @@ sequenceDiagram
     CS->>B: resume · "Thanks. Carrying on from where we stopped."
 ```
 
-Where control sits in this loop:
+Who controls what in this loop:
 
 | Layer | What it does here | Code |
 |---|---|---|
-| Stop rules | Pause + therapist flag on three unverified reps; also pain ≥ 7, new/worse symptoms, trunk lean ×3, exertion high 60 s, perception loss. Runs before any coach. | `stop_rules.py` `StopRules.on_events`, `on_exertion`, `on_checkin`, `on_pain` |
-| Checkpoint | Only `checkin`, `set_complete`, `arc_complete`, `nhpt_complete`, `pause:failed_reps`, `pause:perception`, `pause:setup`, `feedback` start an agent run. | `session.py` `CHECKPOINT_EVENTS`, `CHECKPOINT_PAUSES` |
-| Autonomy | One table: each tool is `autonomous`, `forbidden_after_stop`, `patient_approval` or `never`; `invoke` enforces it and every `agent_run` row carries `policy_version`. | `agent/tools.py` `AUTONOMY`, `invoke` |
-| Plan | `set_session_plan` at check-in; a revision needs new evidence ids and a `because`; `plan` trace rows; `summary.coach.plan` in the report. | `agent/tools.py`, `session.py` `set_plan` |
-| Evidence | Every coach tool must cite event ids that exist in this session's ring, or the call is refused. | `agent/tools.py` `_action_guard` |
-| Clamps | Dose changes (`propose_adjustment`) are clamped by `prescription.clamp`, become a Yes / Keep / Why prompt, and are clamped again by `SessionPipeline.command` on Yes. | `agent/tools.py`, `prescription.py`, `pipeline.py` |
+| Stop rules | Pause and flag the therapist after three unverified reps. Also on pain ≥ 7, new/worse symptoms, trunk lean ×3, high exertion for 60 s, and perception loss. Runs before any coach. | `stop_rules.py` `StopRules.on_events`, `on_exertion`, `on_checkin`, `on_pain` |
+| Checkpoint | Only these start an agent run: `checkin`, `set_complete`, `arc_complete`, `nhpt_complete`, `pause:failed_reps`, `pause:perception`, `pause:setup`, `feedback`. | `session.py` `CHECKPOINT_EVENTS`, `CHECKPOINT_PAUSES` |
+| Autonomy | One table marks each tool as `autonomous`, `forbidden_after_stop`, `patient_approval` or `never`. `invoke` enforces it, and every `agent_run` row records `policy_version`. | `agent/tools.py` `AUTONOMY`, `invoke` |
+| Plan | `set_session_plan` runs at check-in. Changing the plan needs new evidence ids and a `because`. It shows up as `plan` trace rows and as `summary.coach.plan` in the report. | `agent/tools.py`, `session.py` `set_plan` |
+| Evidence | Every coach tool must cite event ids that exist in this session's ring buffer, or the call is refused. | `agent/tools.py` `_action_guard` |
+| Clamps | Dose changes (`propose_adjustment`) are clamped to the prescription by `prescription.clamp` and turned into a Yes / Keep / Why prompt. On Yes, `SessionPipeline.command` clamps them again. | `agent/tools.py`, `prescription.py`, `pipeline.py` |
 | Budgets | ≤ 6 tool calls and ≤ 15 s per run, ≤ 60 calls and ≤ 12 runs per session; rest ≤ 120 s. | `agent/tools.py` constants, `agent/model.py` `RUN_TIMEOUT_S`, `coach/agent.py` |
-| Human approval | Resume and every dose change happen only on the patient's tap; a resume is offered only after a fresh passing `check_setup`. Decline changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt`; `agent/tools.py` `request_resume` |
-| Security | MCP routes: loopback without proxy headers, or the per-process `X-Praxis-MCP-Token`; patient text reaches the model only as capped, quoted data. | `agent/mcp_server.py` `MCPAccessGuard`; `agent/model.py` `quote_patient_text` |
-| Observability | One JSON log line per run end and per error, with CloudWatch EMF metrics (runs, fallbacks, errors, cost estimate, first action) when `PRAXIS_EMF=1`; `/api/agent/metrics`. Session/ops lines and the CloudWatch agent, dashboard and alarms: `infra/ec2/README.md` (built, not yet verified on AWS). | `agent/metrics.py`, `ops.py`, `main.py` |
+| Human approval | A resume or a dose change happens only when the patient taps to accept. A resume is offered only after a fresh `check_setup` passes. Saying no changes nothing. | `session.py` `on_answer`, `_answer_agent_prompt`; `agent/tools.py` `request_resume` |
+| Security | MCP routes accept only loopback requests without proxy headers, or requests with the per-process `X-Praxis-MCP-Token`. Patient text reaches the model only as length-capped, quoted data. | `agent/mcp_server.py` `MCPAccessGuard`; `agent/model.py` `quote_patient_text` |
+| Observability | One JSON log line at the end of each run and for each error. With `PRAXIS_EMF=1` it adds CloudWatch EMF metrics (runs, fallbacks, errors, cost estimate, first action). Also `/api/agent/metrics`. Session/ops lines and the CloudWatch agent, dashboard and alarms are in `infra/ec2/README.md` (built, not yet verified on AWS). | `agent/metrics.py`, `ops.py`, `main.py` |
 | Privacy | No tool result, trace row or model message holds pixels (`assert_no_pixels` on every result). | `agent/tools.py` |
-| Failure | Model error, timeout or refusal → `agent_error`, `agent_status offline`, the rule coach carries on. MCP down → same functions as direct tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
+| Failure | On a model error, timeout or refusal: `agent_error`, `agent_status offline`, and the rule coach carries on. If MCP is down, the same functions are called directly as tools (`transport: direct`). | `coach/agent.py`, `agent/model.py` |
 
-`pause:perception` (lost tracking for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a modal. `pause:setup` (Arm out to the side: the pose is seen but the view gate holds for 3 s, e.g. side-on) follows it too, with the pose facts (`facing` vs `needed_view`, both shoulders, hips, trunk lean) naming the fix (`arm_setup` scenario).
+`pause:perception` (tracking lost for about 3 s) follows the same `check_setup → speak → recalibrate → request_resume` path. A perception pause also clears itself when `perception_regained` arrives, so the patient is never stuck behind a pop-up. `pause:setup` follows the same path too. It happens in Arm out to the side when the pose is seen but the view check fails for 3 s, for example when the patient stands side-on. Here the pose facts (`facing` vs `needed_view`, both shoulders, hips, trunk lean) are used to name the fix (`arm_setup` scenario).
 
 ### 3.1 Active perception: the camera result changes the next tool call (green cup)
 
-Scenario `evaluation/agent/scenarios/green_cup.json` (trace `traces/agent/green_cup.jsonl`): the patient uses a green cup. The default HSV band looks for the blue base, so the cup is never seen; with the hand model on, placements are inferred from the hand and reported unverified (`cup_occluded`), and three in a row pause the session.
+Scenario `evaluation/agent/scenarios/green_cup.json` (trace `traces/agent/green_cup.jsonl`): the patient uses a green cup. The default HSV colour band looks for the blue base, so the cup is never seen. With the hand model on, placements are worked out from the hand position and reported as unverified (`cup_occluded`). Three in a row pause the session.
 
 ```mermaid
 sequenceDiagram
@@ -257,6 +273,6 @@ sequenceDiagram
     PL->>CS: cup moves dot 0 → dot 1: reach_complete verified:true
 ```
 
-With the agent off, the same scenario stays paused with a generic message and no reach is ever verified (`evaluation/results/agent_ablation_v0.md`).
+With the agent off, the same scenario stays paused with a generic message, and no reach is ever verified (`evaluation/results/agent_ablation_v0.md`).
 
 More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/ENGINEERING_NOTES.md` §2–§4.

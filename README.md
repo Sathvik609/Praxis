@@ -1,6 +1,6 @@
 <h1 align="center">Praxis</h1>
 
-<p align="center"><b>An agentic vision coach for therapist-prescribed arm and shoulder rehab at home: one laptop camera, a printed sheet, OpenCV 5.</b></p>
+<p align="center"><b>An agentic vision coach for arm and shoulder rehab at home, for exercises a therapist has prescribed. One laptop camera, a printed sheet, OpenCV 5.</b></p>
 
 <p align="center">
   <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
@@ -11,9 +11,11 @@
   <img alt="Not a medical device" src="https://img.shields.io/badge/not%20a-medical%20device-C0362C">
 </p>
 
-Praxis is a vision coach for upper-limb rehab at home. A patient does exercises their therapist prescribed in front of a laptop's built-in camera, with a printed A4 sheet and a cup or a few pegs. OpenCV 5 measures each repetition, hard-coded stop rules run first, and a coach (a deterministic rule coach, plus an optional Claude agent that calls OpenCV tools over MCP) gives cues within the prescription. Three exercises: **Arm out to the side** (shoulder abduction), **Waiter – cup** (a GRASP coordination task) and the **Nine-Hole Peg Test** (weekly assessment). Team Praxis' entry in the **OpenCV AI Competition 2026 (powered by AWS)**.
+Praxis helps people do the upper-limb (shoulder, arm and hand) exercises their therapist prescribed, at home. The patient works in front of a laptop's built-in camera with a printed A4 sheet and a cup or a few pegs. OpenCV 5 checks each repetition and a coach gives short cues that stay inside the prescription. To try it, open the live build at https://d235zashbh751z.cloudfront.net or follow our five-minute [`docs/JUDGE_QUICKSTART.md`](docs/JUDGE_QUICKSTART.md).
 
-> Praxis is an adherence and coaching aid. **It is not a medical device.** The therapist prescribes; the coach proposes within the prescription; stop rules in code always win. Video is processed in memory and never stored by default.
+Safety comes first: hard-coded stop rules check every event before the coach sees it. There are two coaches. One is a deterministic rule coach. The other is an optional Claude agent that calls OpenCV tools over MCP (Model Context Protocol, a standard way for an AI model to call tools). There are three exercises: **Arm out to the side** (shoulder abduction), **Waiter – cup** (a GRASP coordination task) and the **Nine-Hole Peg Test (NHPT)** (a weekly assessment). This is Team Praxis' entry in the OpenCV AI Competition 2026 (powered by AWS).
+
+> Praxis is an adherence and coaching aid. **It is not a medical device.** The therapist prescribes, the coach suggests changes inside that prescription, and the stop rules in code always win. Video is processed in memory and is never stored by default.
 
 <table>
   <tr>
@@ -48,7 +50,7 @@ Praxis is a vision coach for upper-limb rehab at home. A patient does exercises 
   </tr>
   <tr>
     <td><sub>Home, dark theme</sub></td>
-    <td><sub>Progression prompt: the coach proposes within the prescription and the patient decides</sub></td>
+    <td><sub>Progression prompt: the coach suggests a change inside the prescription and the patient decides</sub></td>
   </tr>
   <tr>
     <td><img src="docs/img/screens/replay_picker.png" alt="Settings, Replay a recorded session: two synthetic render clips, Nine-Hole Peg Test and Waiter – cup"></td>
@@ -62,45 +64,45 @@ Praxis is a vision coach for upper-limb rehab at home. A patient does exercises 
 
 </details>
 
-Screenshots are from the app at 1280 × 800 with no webcam: the sessions are **Replay** runs of synthetic clips through the same pipeline, and Home and the therapist view show the built-in sample data.
+We took these screenshots at 1280 × 800 with no webcam. The sessions are **Replay** runs of synthetic clips through the same pipeline. Home and the therapist view show the built-in sample data.
 
 ## Why it matters
 
-From [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §1 (references there):
+From [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §1 (the references are listed there):
 
-- **Arm deficits after stroke are common and persistent.** More than 70 % of people who have a stroke have upper-limb deficits [2], and in a cohort of 102 patients with arm paresis only 11.6 % had complete functional recovery of the arm at six months [3].
-- **Recovery needs repetitions that clinic time does not provide.** Across 312 observed therapy sessions, task-specific arm practice happened in only 51 % of them and averaged 32 repetitions when it did [5]; the rest is meant to happen at home, where non-adherence to self-managed physical therapy can reach 70 % [6].
-- **Home programs work when people do them, but home gives no feedback.** GRASP, a self-administered arm program, improved arm function by 6.2 CAHAI points over an education control in a trial of 103 stroke inpatients [2]. At home nobody checks the quality of a rep, the dose on a bad day, or tells the therapist until the next visit.
+- Arm problems after a stroke are common and they last. More than 70 % of people who have a stroke have upper-limb deficits [2]. In a group of 102 patients with arm paresis (weakness), only 11.6 % had their arm fully recover its function at six months [3].
+- Recovery needs more repetitions than clinic time gives. Across 312 observed therapy sessions, task-specific arm practice happened in only 51 % of them, and averaged 32 repetitions when it did [5]. The rest is meant to happen at home, where up to 70 % of people do not stick to their self-managed physical therapy [6].
+- Home programs work when people do them, but at home there is no feedback. GRASP is an arm program people do on their own. In a trial of 103 stroke inpatients, it improved arm function by 6.2 CAHAI points (an arm and hand activity scale) more than an education control [2]. At home, nobody checks how well a rep was done or how much to do on a bad day, and the therapist does not hear about it until the next visit.
 
 ## Try it
 
-- **Live (AWS Graviton4 c8g + COOL OpenCV, HTTPS): https://d235zashbh751z.cloudfront.net**. The instance is stopped between work sessions; it is started for judging from 24 Oct and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). `/health` shows `opencv_build.cool: true` and `arch: aarch64`.
-- **Where to start:** on Home, the next-practice card is marked **Start here**; Start session walks through each step, and everything else can be explored from the left menu.
-- **Starts from zero:** a fresh install has no history; every number on Home, Progress and the therapist view comes from sessions run on it. The illustrative sample history (patient "Alex M.", September sessions, labelled Sample) loads only with `PRAXIS_SAMPLE_HISTORY=1`.
-- **No webcam?** Settings → Demo and judging → **Replay a recorded session** runs a recorded clip through the identical pipeline (labelled "Replay"; the clips are synthetic renders).
+- **Live: https://d235zashbh751z.cloudfront.net** (AWS Graviton4 c8g with COOL OpenCV, over HTTPS). We stop the instance between work sessions. It is started for judging from 24 Oct and kept up through 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). `/health` shows `opencv_build.cool: true` and `arch: aarch64`.
+- Where to start: on Home, the next-practice card is marked **Start here**. Start session walks you through each step. You can reach everything else from the left menu.
+- It starts empty. A fresh install has no history, so every number on Home, Progress and the therapist view comes from sessions run on it. The made-up sample history (patient "Alex M.", September sessions, labelled Sample) loads only with `PRAXIS_SAMPLE_HISTORY=1`.
+- No webcam? Go to Settings → Demo and judging → **Replay a recorded session**. It runs a recorded clip through the same pipeline (labelled "Replay"; the clips are synthetic renders).
 - Five-minute walkthrough: [`docs/JUDGE_QUICKSTART.md`](docs/JUDGE_QUICKSTART.md).
 
 ## How it works
 
 ![Praxis system architecture: browser, OpenCV 5 session service, stop rules, rule and agent coach, trace and SQLite, AWS EC2 + COOL + CloudFront](docs/img/architecture.svg)
 
-The diagram is exported from [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §1 (dashed boxes are planned, not built).
+This diagram is exported from [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §1. Dashed boxes are planned and not built.
 
 <p align="center"><img src="docs/img/agent_qualifier_green_cup.svg" alt="Green cup, before and after: check_setup reports the target unseen, the agent re-samples the cup colour, OpenCV then detects the cup, the resume prompt passes a fresh check, and the next reach is verified"></p>
 
-One real agent run (Claude Sonnet 5.5, synthetic frames, 21 Oct): `check_setup` reports the cup unseen, so the agent re-samples the cup colour, OpenCV then detects it, the resume prompt passes a fresh check and the next reach is verified; the rule coach alone never re-samples the cup. Every value is copied from the trace, line by line, in [`docs/AGENT.md`](docs/AGENT.md).
+Here is one real agent run (Claude Sonnet 5.5, synthetic frames, 21 Oct). `check_setup` reports that the cup is not seen, so the agent re-samples the cup colour. OpenCV then detects the cup, the resume prompt passes a fresh check, and the next reach is verified. The rule coach on its own never re-samples the cup. Every value is copied line by line from the trace in [`docs/AGENT.md`](docs/AGENT.md).
 
-**Built with:** OpenCV 5 (`cv2.aruco` + `findHomography` sheet calibration, `HoughCircles`, HSV `inRange` + `findContours`, masked `matchTemplate`, OpenCV Zoo hand and pose ONNX models via `cv2.dnn`) · FastAPI · React + TypeScript + Three.js · Strands Agents + FastMCP · Claude via the Anthropic API · AWS EC2 Graviton4 (c8g) from the COOL AMI behind CloudFront.
+Built with: OpenCV 5 (`cv2.aruco` + `findHomography` sheet calibration, `HoughCircles`, HSV `inRange` + `findContours`, masked `matchTemplate`, OpenCV Zoo hand and pose ONNX models via `cv2.dnn`) · FastAPI · React + TypeScript + Three.js · Strands Agents + FastMCP · Claude via the Anthropic API · AWS EC2 Graviton4 (c8g) from the COOL AMI behind CloudFront.
 
 ## Headline results
 
 | What | Result | Evidence |
 |---|---|---|
-| Arm angle on **real video** (REHAB24-6, public lab dataset, 8 healthy adults facing the camera, 88 reps) vs motion capture | angle MAE **3.8°**, rep-peak MAE 3.8°, rep F1 **0.93** | [`evaluation/results/rehab24_v0.md`](evaluation/results/rehab24_v0.md), [`rehab24_thresholds_v0.md`](evaluation/results/rehab24_thresholds_v0.md) |
-| COOL vs the stock OpenCV wheel, same c8g.large (11 Oct) | **1.2–1.6×** faster on HSV threshold, contours, Hough and template matching; full classical frame 1.03× (NHPT) and 0.94× (cup); slower on decode, ArUco, warp and the DNN | [`benchmark/results/cool_vs_stock_c8g.md`](benchmark/results/cool_vs_stock_c8g.md) |
-| Claude agent (Sonnet 5.5, Anthropic API) on **real video** (REHAB24-6 through the product pipeline, 40 sessions, simulated taps) | fault confirmed by motion capture corrected in **41/44** set reviews; fix named on **26/26** wrong-view pauses; **0** guardrail violations; first action p50/p95 3.7/5.8 s; $0.050 per session | [`evaluation/results/agent_video_v0.md`](evaluation/results/agent_video_v0.md) |
-| Claude agent on synthetic scenarios (21 Oct recheck of the 15 plumbing scenarios, current build) | **15/15**, 0 guardrail violations. The suite is now 16: the new `mixed_signals` judgement scenario **fails 0/3** on Sonnet 5.5, an open finding ([`docs/AGENT.md`](docs/AGENT.md)) | [`agent_recheck_2026-10-21_all.md`](evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_recheck_2026-10-21_mixed_signals_x3.md`](evaluation/results/agent_recheck_2026-10-21_mixed_signals_x3.md) |
-| Nine-Hole Peg Test and Waiter – cup | **synthetic only.** No real-camera accuracy number. Pipeline validation on renders (NHPT rep F1 1.0, cup reach F1 0.984), 107-condition robustness sweep, 3-D renders | [`dataset_v0.md`](evaluation/results/dataset_v0.md), [`robustness_v0.md`](evaluation/results/robustness_v0.md), [`synthetic3d_v0.md`](evaluation/results/synthetic3d_v0.md) |
+| Arm angle on **real video** (REHAB24-6, a public lab dataset: 8 healthy adults facing the camera, 88 reps) vs motion capture | angle MAE (mean absolute error) 3.8°, rep-peak MAE 3.8°, rep F1 0.93 | [`evaluation/results/rehab24_v0.md`](evaluation/results/rehab24_v0.md), [`rehab24_thresholds_v0.md`](evaluation/results/rehab24_thresholds_v0.md) |
+| COOL vs the stock OpenCV wheel, same c8g.large (11 Oct) | 1.2–1.6× faster on HSV threshold, contours, Hough and template matching. Full classical frame: 1.03× (NHPT) and 0.94× (cup). Slower on decode, ArUco, warp and the DNN | [`benchmark/results/cool_vs_stock_c8g.md`](benchmark/results/cool_vs_stock_c8g.md) |
+| Claude agent (Sonnet 5.5, Anthropic API) on **real video** (REHAB24-6 run through the product pipeline, 40 sessions, simulated taps) | Corrected a fault (confirmed by motion capture) in 41/44 set reviews. Named the fix on 26/26 wrong-view pauses. 0 guardrail violations. First action p50/p95 3.7/5.8 s. $0.050 per session | [`evaluation/results/agent_video_v0.md`](evaluation/results/agent_video_v0.md) |
+| Claude agent on synthetic scenarios (21 Oct recheck of the 15 plumbing scenarios, current build) | 15/15, 0 guardrail violations. The suite now has 16: the new `mixed_signals` judgement scenario **fails 0/3** on Sonnet 5.5. This is an open finding ([`docs/AGENT.md`](docs/AGENT.md)) | [`agent_recheck_2026-10-21_all.md`](evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_recheck_2026-10-21_mixed_signals_x3.md`](evaluation/results/agent_recheck_2026-10-21_mixed_signals_x3.md) |
+| Nine-Hole Peg Test and Waiter – cup | **Synthetic only.** We have no real-camera accuracy number. Pipeline checks on renders (NHPT rep F1 1.0, cup reach F1 0.984), a 107-condition robustness sweep, 3-D renders | [`dataset_v0.md`](evaluation/results/dataset_v0.md), [`robustness_v0.md`](evaluation/results/robustness_v0.md), [`synthetic3d_v0.md`](evaluation/results/synthetic3d_v0.md) |
 
 ## Run it locally (edge mode, no frame leaves the laptop)
 
@@ -110,15 +112,15 @@ uv run uvicorn praxis_session.main:app --port 8000                        # → 
 cd ../../web && pnpm install && pnpm dev                                   # → http://localhost:5173
 ```
 
-Print the sheets at 100 % first: [`docs/sheets/nhpt_board.pdf`](docs/sheets/nhpt_board.pdf), [`docs/sheets/cup_targets.pdf`](docs/sheets/cup_targets.pdf). The agent coach is off unless you set `PRAXIS_AGENT=anthropic` and an API key (see [Agent coach](#agent-coach-claude--opencv-tools-over-mcp-optional)). More commands below.
+Print the sheets at 100 % first: [`docs/sheets/nhpt_board.pdf`](docs/sheets/nhpt_board.pdf), [`docs/sheets/cup_targets.pdf`](docs/sheets/cup_targets.pdf). The agent coach stays off unless you set `PRAXIS_AGENT=anthropic` and an API key (see [Agent coach](#agent-coach-claude--opencv-tools-over-mcp-optional)). More commands are below.
 
 ## Honest limits
 
-- Real-video accuracy exists for **Arm out to the side only**, on healthy adults in a motion-capture lab, not patients at a laptop. The team did not record its own sessions.
-- **NHPT and Waiter – cup are validated on synthetic renders only.**
-- Angles are camera-relative estimates, not goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
-- No usability (SUS) study and no patients. A team shake-down on the hosted build ran: 15 live sessions, 4 testers including automated agent-driven sessions; a team shake-down, not a usability study ([`evaluation/results/team_test_2026-10-21.md`](evaluation/results/team_test_2026-10-21.md)).
-- AWS is EC2 + COOL + CloudFront. S3 and CDK are not built; CloudWatch is built but not yet verified on AWS. The agent runs on Claude via the Anthropic API; Bedrock is not used.
+- We only have real-video accuracy for **Arm out to the side**, and only on healthy adults in a motion-capture lab, not patients at a laptop. We did not record our own sessions.
+- **NHPT and Waiter – cup are only validated on synthetic renders.**
+- Angles are estimates relative to the camera, not goniometry (clinical joint-angle measurement). The printed peg sheet is a timing aid, not the clinical instrument.
+- There was no usability (SUS) study and no patients. We did a team shake-down on the hosted build: 15 live sessions, 4 testers, including automated agent-driven sessions. It was a team shake-down, not a usability study ([`evaluation/results/team_test_2026-10-21.md`](evaluation/results/team_test_2026-10-21.md)).
+- On AWS we use EC2 + COOL + CloudFront. S3 and CDK are not built. CloudWatch is built but not yet verified on AWS. The agent runs on Claude via the Anthropic API; Bedrock is not used.
 - The hosted build has no sign-in and holds sample data only.
 
 Full list: [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §10 and [`docs/RISKS.md`](docs/RISKS.md).
@@ -214,7 +216,16 @@ Tests: `uv run pytest -q` and `uv run ruff check .` (session) · `pnpm test && p
 
 #### Browser end-to-end check with a simulated camera
 
-A real Chrome plays an OpenCV-rendered clip as its webcam (`--use-file-for-fake-video-capture`), so camera setup → detection → session → coach → feedback → report runs exactly as a judge sees it, with no person and no printout. The clips show what a laptop camera sees of a printed sheet 25–35 cm in front of it (~40° tilt, upside down in the raw frame, sensor noise): the NHPT run, Waiter – cup (2 slow + 2 fast arcs), the sheet leaving the view for 4 s, a fingertip on one corner marker (setup), a hand over the two near corners mid-session (agent run), and too dark / blurred / half-out-of-frame setups. Synthetic: this validates the product path, not real-world accuracy.
+A real Chrome plays an OpenCV-rendered clip as if it were its webcam (`--use-file-for-fake-video-capture`). This way the whole path runs exactly as a judge sees it: camera setup → detection → session → coach → feedback → report, with no person and no printout. The clips show what a laptop camera sees of a printed sheet 25–35 cm in front of it (~40° tilt, upside down in the raw frame, sensor noise). They cover:
+
+- the NHPT run
+- Waiter – cup (2 slow + 2 fast arcs)
+- the sheet leaving the view for 4 s
+- a fingertip on one corner marker (setup)
+- a hand over the two near corners mid-session (agent run)
+- setups that are too dark, blurred or half out of frame
+
+This is synthetic. It checks the product path, not real-world accuracy.
 
 ```bash
 cd services/session && uv run python tools/make_fake_camera.py      # ~3 min, writes evaluation/fake_camera/ (git-ignored)
@@ -224,11 +235,20 @@ cd ../../web && node scripts/e2e-fake-camera.mjs --origin http://127.0.0.1:8100 
 #   --only setup,arm,nhpt,cup,loss,replay (default) · agent (needs PRAXIS_AGENT=anthropic on the service: real model calls, a few cents) · --headed
 ```
 
-It checks the setup rows and the hint the patient sees for each failure, the overlay geometry against where the renderer put the sheet (and that the canvas mirrors with the video while the frames sent stay unmirrored), live counts, the timer and splits, captions, the trace and latency line, perception loss with pause and resume, replay, and the report. Screenshots, the service's events per run and `results.json` land in `--out`; the exit code is 1 when a check fails.
+It checks:
+
+- the setup rows, and the hint the patient sees for each failure
+- the overlay geometry against where the renderer put the sheet (and that the canvas mirrors with the video while the frames sent stay unmirrored)
+- live counts, the timer and splits, and captions
+- the trace and the latency line
+- perception loss with pause and resume
+- replay, and the report
+
+Screenshots, the service's events for each run and `results.json` are saved in `--out`. The exit code is 1 when a check fails.
 
 ### Agent coach (Claude + OpenCV tools over MCP, optional)
 
-Off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). With it on, Claude Sonnet 5.5 (Strands Agents) runs at checkpoints — check-in, end of a set/arc, a stop-rule pause after unverified reps or lost tracking, peg-test end, session end — and calls OpenCV 5 tools served by FastMCP at `/mcp/perception`, `/mcp/exertion`, `/mcp/coach` (streamable HTTP, same port). Every dose change and every resume is a prompt the patient accepts; stop rules still run first. Details and the workflow diagram: `docs/AGENT.md`.
+This is off by default (`PRAXIS_AGENT=off`: rule coach only, exactly as before). When it is on, Claude Sonnet 5.5 (through Strands Agents) runs at checkpoints: check-in, the end of a set or arc, a stop-rule pause after unverified reps or lost tracking, the end of the peg test, and the end of the session. It calls OpenCV 5 tools served by FastMCP at `/mcp/perception`, `/mcp/exertion` and `/mcp/coach` (streamable HTTP, same port). Every dose change and every resume is a prompt the patient has to accept. Stop rules still run first. Details and the workflow diagram are in `docs/AGENT.md`.
 
 ```bash
 cd services/session
@@ -242,7 +262,7 @@ uv run python ../../evaluation/scripts/agent_eval.py --planner anthropic --yes  
 curl -s localhost:8000/api/agent/metrics   # runs today, outcomes, errors, first-action p50/p95, cap
 ```
 
-Agent results and the model choice: report §8.3, [`docs/AGENT.md`](docs/AGENT.md). The agent on real video:
+Agent results and why we chose this model: report §8.3 and [`docs/AGENT.md`](docs/AGENT.md). To run the agent on real video:
 
 ```bash
 uv run python ../../evaluation/scripts/agent_video_eval.py --planner rule                    # real video, free (needs tools/fetch_rehab24.py)
@@ -254,24 +274,39 @@ uv run --env-file .env python ../../evaluation/scripts/agent_video_eval.py --pla
 <details>
 <summary>Show deploy details (single origin, team-test mode, therapist-only writes, Docker)</summary>
 
-The image builds the web app and serves it from the session service, so the browser talks to **one origin** for the page, `/api`, `/health`, `/events` and the WebSocket (`/ws/session`). Build context is the repo root; models are fetched (SHA256-pinned) at build time; the SQLite store lives in `/app/data` (ephemeral unless a volume is mounted). `PORT` is honoured; `railway.json` points Railway at the Dockerfile and the `/health` check.
+The image builds the web app and serves it from the session service. So the browser talks to **one origin** for the page, `/api`, `/health`, `/events` and the WebSocket (`/ws/session`). The build context is the repo root. Models are fetched (SHA256-pinned) at build time. The SQLite store lives in `/app/data` and does not persist unless a volume is mounted. `PORT` is honoured, and `railway.json` points Railway at the Dockerfile and the `/health` check.
 
-**Team test (review build only).** With `PRAXIS_TEAM_TEST=1` the app asks each browser once "Who's testing?" (a name, no password; **Skip** saves the sessions as `guest`) and saves every session under it. `GET /api/review?format=md` (also Settings › Demo and judging › Team test report) lists, per exercise and tester, verified/unverified reps and why, tracking losses and which marker or body part went missing, stop rules that fired, coach corrections and the screen-08 answers, with the most widespread problems first (`praxis_session/review.py`). With the agent on (`PRAXIS_AGENT=anthropic`) an "AI coach" section reads each session's trace: runs and outcomes, triggers, tools called and failed (a guardrail refusal, e.g. a stale run or a dose already in force, is listed apart from a failure), MCP vs direct transport, errors (the rule coach takes over), dropped output, checkpoint → first action time, tokens and an estimated cost. Live sessions only; replays and the sample history are not counted. A session is stored only when its feedback arrives, so the review also counts live sockets that closed before that (close code, agent run in flight, seconds since the last agent run; trace row `socket_close`). On Railway the store sits on a volume at `/app/data`, so it survives redeploys; the service runs in US East (`us-east4-eqdc4a`, moved from Amsterdam on 13 Oct to cut live-frame lag). The flag is off by default and on the judge build.
+**Team test (review build only).** With `PRAXIS_TEAM_TEST=1`, the app asks each browser once "Who's testing?" (a name, no password; **Skip** saves the sessions as `guest`) and saves every session under that name. `GET /api/review?format=md` (also in Settings › Demo and judging › Team test report) lists, for each exercise and tester:
 
-**Therapist-only writes (21 Oct).** There is no sign-in (Cognito is deferred), so the two therapist actions, Edit practice days (`PUT /api/prescription/schedule`) and Mark reviewed (`POST /api/flags/{id}/reviewed`), are guarded by `PRAXIS_THERAPIST_TOKEN`: with it set, only a request carrying `X-Praxis-Therapist-Token: <token>` writes; unset (the default), only a local request with no proxy headers writes (your laptop), and every request through Railway, CloudFront or the EC2 proxy gets 403, which the therapist screen shows as "Therapist only … Nothing was changed". To edit from a browser on a hosted build, set the token on the server and, in that browser's console, `localStorage.setItem('praxis.therapistToken', '<token>')`. `/health` says which rule is active (`therapist_writes: token | local_only`). Reads and the patient's own writes (check-in, goal log, self-report, feedback edit) stay open.
+- verified and unverified reps, and why
+- tracking losses, and which marker or body part went missing
+- stop rules that fired
+- coach corrections
+- the screen-08 answers
+
+The most widespread problems come first (`praxis_session/review.py`). With the agent on (`PRAXIS_AGENT=anthropic`), an "AI coach" section reads each session's trace. It shows runs and outcomes, triggers, tools called and tools that failed (a guardrail refusal, for example a stale run or a dose already in force, is listed separately from a failure), MCP vs direct transport, errors (the rule coach takes over), dropped output, time from checkpoint to first action, tokens and an estimated cost. Only live sessions count; replays and the sample history do not. A session is stored only when its feedback arrives, so the review also counts live sockets that closed before that (close code, whether an agent run was in flight, seconds since the last agent run; trace row `socket_close`). On Railway the store sits on a volume at `/app/data`, so it survives redeploys. The service runs in US East (`us-east4-eqdc4a`); we moved it from Amsterdam on 13 Oct to cut live-frame lag. The flag is off by default and on in the judge build.
+
+**Therapist-only writes (21 Oct).** There is no sign-in (Cognito is deferred). So the two therapist actions, Edit practice days (`PUT /api/prescription/schedule`) and Mark reviewed (`POST /api/flags/{id}/reviewed`), are guarded by `PRAXIS_THERAPIST_TOKEN`:
+
+- If it is set, only a request carrying `X-Praxis-Therapist-Token: <token>` can write.
+- If it is unset (the default), only a local request with no proxy headers can write (your laptop). Every request through Railway, CloudFront or the EC2 proxy gets 403, and the therapist screen shows "Therapist only … Nothing was changed".
+
+To edit from a browser on a hosted build, set the token on the server and run `localStorage.setItem('praxis.therapistToken', '<token>')` in that browser's console. `/health` says which rule is active (`therapist_writes: token | local_only`). Reads and the patient's own writes (check-in, goal log, self-report, feedback edit) stay open.
 
 ```bash
 docker build -f services/session/Dockerfile -t praxis .
 docker run -p 8000:8000 praxis            # → http://127.0.0.1:8000/
 ```
 
-Locally you can serve a build the same way without Docker: `cd web && pnpm build`, then start uvicorn with `PRAXIS_WEB_DIST=../../web/dist`. This is still the **edge build** (`PRAXIS_CLOUD_ENABLED=0`, rule-based coach); hosting it remotely means webcam frames travel to the host over TLS, where they are processed in memory and discarded, never stored. The AWS cloud mode is separate: Graviton4 c8g + COOL OpenCV behind CloudFront HTTPS (`infra/ec2/`, `docs/ENGINEERING_NOTES.md` §5).
+You can also serve a build locally without Docker: `cd web && pnpm build`, then start uvicorn with `PRAXIS_WEB_DIST=../../web/dist`. This is still the **edge build** (`PRAXIS_CLOUD_ENABLED=0`, rule-based coach). If you host it remotely, webcam frames travel to the host over TLS, where they are processed in memory and thrown away, never stored. The AWS cloud mode is separate: Graviton4 c8g + COOL OpenCV behind CloudFront HTTPS (`infra/ec2/`, `docs/ENGINEERING_NOTES.md` §5).
 
 </details>
 
 ### Static design preview (for designers; not the product)
 
-`cd web && pnpm build:design` (optionally `--outDir <dir>`) builds a click-through copy of the app into `web/dist-design/` that needs **no service and no camera**: relative asset URLs, hash routing, unminified output. Only `--mode design` includes `src/designPreview/`; `pnpm build` is unchanged. Every screen reads fixtures captured from the live service (`node scripts/capture-design-fixtures.mjs`); sessions replay recorded event streams (NHPT and Waiter – cup: the synthetic replay clips recorded over the service's WebSocket; Arm out to the side and Camera setup: the service's pipeline run offline on synthetic input, `uv run python ../../web/scripts/record-design-streams.py` from `services/session`). The camera shows a labelled placeholder and every page carries a "Design preview · sample data · no camera" tab. Nothing is measured or stored; writes (flag reviewed, schedule edit, check-in) live in page memory until reload.
+`cd web && pnpm build:design` (optionally `--outDir <dir>`) builds a click-through copy of the app into `web/dist-design/`. It needs **no service and no camera**. It uses relative asset URLs, hash routing and unminified output. Only `--mode design` includes `src/designPreview/`; `pnpm build` is unchanged.
+
+Every screen reads fixtures captured from the live service (`node scripts/capture-design-fixtures.mjs`). Sessions replay recorded event streams. For NHPT and Waiter – cup, these are the synthetic replay clips recorded over the service's WebSocket. For Arm out to the side and Camera setup, they come from the service's pipeline run offline on synthetic input (`uv run python ../../web/scripts/record-design-streams.py` from `services/session`). The camera shows a labelled placeholder, and every page has a "Design preview · sample data · no camera" tab. Nothing is measured or stored. Writes (flag reviewed, schedule edit, check-in) live in page memory until you reload.
 
 ### Layout
 
@@ -294,6 +329,6 @@ Team Praxis: Rinky · Shruthi · Sathvik
 
 Third-party models, datasets, fonts and GRASP attribution: [`docs/LICENSES.md`](docs/LICENSES.md).
 
-GRASP concepts are paraphrased from UBC / Heart & Stroke material with our own illustrations. The real-motion avatar clips derive from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0); only derived joint angles are in the repo.
+We paraphrased the GRASP ideas from UBC / Heart & Stroke material and drew our own illustrations. The real-motion avatar clips come from UI-PRMD (Vakanski et al. 2018, ODC PDDL 1.0) and IntelliRehabDS (Miron et al. 2021, CC BY 4.0). Only the derived joint angles are in the repo.
 
 Praxis code is released under the [MIT License](LICENSE). Third-party models, datasets, fonts and GRASP material keep their own terms.
