@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { applyTheme, getTheme, type Theme } from '../../app/theme'
 import { arrowSelect } from '../../design/arrowKeys'
 import { Button } from '../../design/Button'
@@ -37,7 +37,9 @@ export function Settings() {
   const [guidance, setGuidance] = useState<Guidance>(() => readGuidance())
   const [prefs, setPrefs] = useState<Prefs>(() => readPrefs())
   const [day, setDay] = useState<Day>(() => readDay())
-  const [replayOpen, setReplayOpen] = useState(false)
+  // ?replay=1: "No camera? Use a recorded session" on camera setup opens the list directly
+  const { search } = useLocation()
+  const [replayOpen, setReplayOpen] = useState(() => new URLSearchParams(search).get('replay') === '1')
   const [note, setNote] = useState('')
   const { data: me, error: meError } = useApi(() => api.me())
   const { data: clips, error: clipsError } = useApi(() => api.replayList())
@@ -149,7 +151,7 @@ export function Settings() {
           </Card>
           <Card title="Help">
             <ul className="st-list">
-              <SettingsRow title="Camera and microphone setup" sub="Laptop camera only · step-by-step with pictures" to={setupUrl('abduction', side)} />
+              <SettingsRow title="Camera setup" sub="Laptop camera only · step-by-step with pictures" to={setupUrl('abduction', side)} />
               <SettingsRow title="Equipment and substitutes" sub="What to use if something is missing" to="/details/choose" />
             </ul>
           </Card>
@@ -157,7 +159,7 @@ export function Settings() {
       </div>
 
       <Overlay open={replayOpen} title="Replay a recorded session" description="Recorded clips run through the same pipeline." onClose={() => setReplayOpen(false)} className="w-[min(620px,92vw)]">
-        <p className="mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live.</p>
+        <p className="mt-2 text-muted">No webcam needed. The recording runs through the identical OpenCV pipeline and coach; the session shows a Replay badge instead of Live. The screen draws what OpenCV found (markers, holes, pegs, cup), not the video itself.</p>
         <ul className="st-list mt-4">
           {/* The service never lists a hidden exercise's clip (28 Sep); filtered here too. */}
           {(clips ?? [])

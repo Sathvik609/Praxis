@@ -73,8 +73,8 @@ test('proposal in plain words, with the program range and the clamp note', () =>
 })
 
 test('health lines: off, Anthropic API with and without MCP, Haiku 5.5, not ready with a reason', () => {
-  expect(healthLines(undefined)).toEqual({ title: 'Off — rule-based coach', details: [] })
-  expect(healthLines({ mode: 'off', model: '', mcp: false, ready: false })).toEqual({ title: 'Off — rule-based coach', details: [] })
+  expect(healthLines(undefined)).toEqual({ title: 'Rule-based coach (AI agent off)', details: [] })
+  expect(healthLines({ mode: 'off', model: '', mcp: false, ready: false })).toEqual({ title: 'Rule-based coach (AI agent off)', details: [] })
   expect(healthLines({ mode: 'anthropic', model: 'claude-sonnet-5', mcp: true, ready: true })).toEqual({ title: 'Claude Sonnet 5 via Anthropic API', details: ['MCP tools connected'] })
   expect(healthLines({ mode: 'anthropic', model: 'claude-haiku-5-5', mcp: false, ready: true }).title).toBe('Claude Haiku 5.5 via Anthropic API')
   expect(healthLines({ mode: 'anthropic', model: 'x', mcp: false, ready: true }).details).toEqual(['Tools called directly (MCP not connected)'])

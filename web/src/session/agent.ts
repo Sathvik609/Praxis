@@ -102,7 +102,7 @@ export function proposalContext(p: Proposal, program: ProgramLike, running: Reco
 
 /** Settings > Coach. */
 export function healthLines(h: AgentHealth | null | undefined): { title: string; details: string[] } {
-  if (!h || h.mode === 'off') return { title: 'Off — rule-based coach', details: [] }
+  if (!h || h.mode === 'off') return { title: 'Rule-based coach (AI agent off)', details: [] }
   const model = modelName(h.model) || h.model
   const title =
     h.mode === 'scripted' ? 'Scripted agent (test) — no model calls' : `Claude ${model} via Anthropic API`

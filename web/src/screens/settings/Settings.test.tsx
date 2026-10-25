@@ -5,9 +5,9 @@ import { ME, mockApi } from '../../test/api-mock'
 import { Settings } from './Settings'
 
 /** Render, then let the three service calls (profile, replay list, health) settle. */
-async function renderSettings() {
+async function renderSettings(path = '/settings') {
   const r = render(
-    <MemoryRouter initialEntries={['/settings']}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/settings" element={<Settings />} />
         <Route path="/session" element={<div>SESSION</div>} />
@@ -82,6 +82,15 @@ test('replay clips open in a modal with the synthetic label and start a replay s
   expect(within(dialog).getByText(/identical OpenCV pipeline/)).toBeInTheDocument()
   fireEvent.click(within(dialog).getByRole('button', { name: 'Replay Nine-Hole Peg Test' }))
   expect(screen.getByText('SESSION')).toBeInTheDocument()
+})
+
+test('?replay=1 (No camera? from camera setup) opens the replay list straight away', async () => {
+  mockApi({ '/api/replay/list': { clips: [NHPT_CLIP] } })
+  await renderSettings('/settings?replay=1')
+  const dialog = await screen.findByRole('dialog')
+  expect(await within(dialog).findByText('Nine-Hole Peg Test')).toBeInTheDocument()
+  // the replay screen draws only what OpenCV found, so the list says so before a black panel surprises anyone
+  expect(within(dialog).getByText(/not the video itself/)).toBeInTheDocument()
 })
 
 test('replay clips are named from the exercise registry, including arm clips by exercise id', async () => {
@@ -197,8 +206,10 @@ test('privacy, cloud and help rows say what is real', async () => {
   expect(screen.getByText('On this device, never stored')).toBeInTheDocument()
   expect(screen.getByText('Default')).toBeInTheDocument()
   expect(screen.getByText('Edge mode · this laptop')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /^Camera and microphone setup/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Camera setup/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /^Equipment and substitutes/ })).toBeInTheDocument()
+  // push-to-talk was removed on 21 Oct: nothing promises a microphone
+  expect(screen.queryByText(/microphone/i)).not.toBeInTheDocument()
 })
 
 test('export my data downloads the service record and this device, as JSON', async () => {
@@ -236,11 +247,11 @@ test('Coach row: Anthropic API not ready says why and that the rule coach runs',
 test('Coach row: off (or a service without the agent field) reads as the rule-based coach', async () => {
   mockApi({ '/health': health({ mode: 'off', model: '', mcp: false, ready: false }) })
   const { unmount } = await renderSettings()
-  expect(await screen.findByText('Off — rule-based coach')).toBeInTheDocument()
+  expect(await screen.findByText('Rule-based coach (AI agent off)')).toBeInTheDocument()
   unmount()
   mockApi({ '/health': health() })
   await renderSettings()
-  expect(await screen.findByText('Off — rule-based coach')).toBeInTheDocument()
+  expect(await screen.findByText('Rule-based coach (AI agent off)')).toBeInTheDocument()
 })
 
 test('Coach row: an unreachable service says so instead of guessing', async () => {

@@ -26,6 +26,8 @@ export type Exercise = {
   view?: 'side' | 'front'
   weekly?: boolean
   equipment: string
+  /** The printable calibration sheet (web/public/sheets, copied from docs/sheets by tools/make_sheets.py). */
+  sheetPdf?: string
   dose: string
   /** Dose on a gentle day (pain 4–6), inside the prescription's allowed adaptations. */
   gentleDose?: string
@@ -76,11 +78,11 @@ export const ALL_EXERCISES: Exercise[] = [
     steps: ['Sit tall facing the camera, arm by your side', 'Lift the arm out to the side, palm down, up to shoulder height', 'Hold, then lower slowly', "Keep the shoulder down — don't shrug it up toward your ear"],
     watchFor: 'Shrugging your shoulder or leaning away', stopIf: STOP_IF },
   { id: 'cup', serviceId: 'cup', name: 'Waiter – cup', category: 'Coordination · reach and place', eyebrow: 'Hand and arm', tag: 'Coordination', group: 'activity', mode: 'coached', session: 'cup',
-    equipment: 'A cup and the printed target sheet', dose: '2 slow arcs, then 2 fast', gentleDose: '2 slow arcs only', note: 'Move the cup in an arc from dot to dot across the sheet. The camera checks it lands on each one.', clip: 'cup', region: 'hand', needs: ['cup', 'sheets'],
+    equipment: 'A cup and the printed target sheet', sheetPdf: '/sheets/cup_targets.pdf', dose: '2 slow arcs, then 2 fast', gentleDose: '2 slow arcs only', note: 'Move the cup in an arc from dot to dot across the sheet. The camera checks it lands on each one.', clip: 'cup', region: 'hand', needs: ['cup', 'sheets'],
     steps: ['Cup in your weaker hand, sheet in front of you', 'Cup beside the sheet until the camera finds the four corners, then on dot 1, hand in your lap', 'Reach and move the cup to the next dot, one at a time', 'After dot 5, go back the way you came', 'Repeat twice, then twice as fast as you can'],
     watchFor: 'Your shoulder creeping up, or leaning to reach', stopIf: STOP_IF },
   { id: 'nhpt', serviceId: 'nhpt', name: 'Nine-Hole Peg Test', category: 'Standardized assessment · dexterity', eyebrow: 'Hand · dexterity', tag: 'Weekly test', group: 'activity', mode: 'coached', session: 'nhpt', weekly: true,
-    equipment: 'A pegboard, 9 pegs and the printed marker sheet', dose: 'One timed try with each hand · once a week', note: 'Put all nine pegs in the holes. The timer runs from your first peg to your ninth.', clip: 'nhpt', region: 'hand', needs: ['pegboard', 'sheets'],
+    equipment: 'A pegboard, 9 pegs and the printed marker sheet', sheetPdf: '/sheets/nhpt_board.pdf', dose: 'One timed try with each hand · once a week', note: 'Put all nine pegs in the holes. The timer runs from your first peg to your ninth.', clip: 'nhpt', region: 'hand', needs: ['pegboard', 'sheets'],
     steps: ['Pegs in the dish on the marked side, board on the printed sheet', 'When ready, pick up the first peg — the timer starts on your first lift', 'Place pegs in any hole, one at a time, as quickly as you comfortably can', 'The timer stops when the ninth peg is seated'],
     watchFor: 'Pegs dropping off the sheet', stopIf: STOP_IF },
   { id: 'external_rotation', serviceId: 'external_rotation', name: 'Rotate out', category: 'Shoulder rotation', group: 'demo', mode: 'demo', session: null, hidden: true,

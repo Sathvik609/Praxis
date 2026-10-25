@@ -7,6 +7,7 @@ import { Stat } from '../../design/Stat'
 import { api, isReplaySession, useApi, type Progress as ProgressData, type SessionRecord } from '../../lib/api'
 import { countOf, plural } from '../../lib/plural'
 import { exerciseOfSession, isHiddenSession } from '../../lib/seed'
+import { fmtV } from '../../lib/trend'
 
 type Range = '4w' | 'all'
 const WEEKS: Record<Range, number | null> = { '4w': 4, all: null }
@@ -184,6 +185,7 @@ export function Progress() {
     best = Math.max(best, streak)
     prev = t
   }
+  const daysHere = liveDates.filter((d) => inRange(d)).length
 
   // Pain and effort: what the patient reported; sample rows drawn hollow, never in the narrative.
   const pe = p.pain_effort.filter((x) => x.source !== 'replay' && inRange(x.date))
@@ -206,7 +208,7 @@ export function Progress() {
         <Card className="pg-card" title={tt('Nine-Hole Peg Test', `${me?.side ? `${me.side} · ` : ''}lower is better`)} action={sampleChip(sampleTrend.length > 0)}>
           {trend.length ? (
             plot(
-              <svg className="pg-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Nine-Hole Peg Test: ${trend.map((t) => `${fmtD(t.date)} ${t.total_s} s${t.kind === 'sample' ? ' sample' : ''}`).join(', ')}`}>
+              <svg className="pg-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Nine-Hole Peg Test: ${trend.map((t) => `${fmtD(t.date)} ${fmtV(t.total_s)} s${t.kind === 'sample' ? ' sample' : ''}`).join(', ')}`}>
                 <line x1={0} x2={W} y1={H - 22} y2={H - 22} className="pg-axis" />
                 <path d={path(nhPts)} className="pg-line" />
               </svg>,
@@ -217,8 +219,8 @@ export function Progress() {
           )}
           {trend.length > 0 && (
             <div className="pg-xl">
-              <span>{`${fmtD(trend[0].date)} · ${trend[0].total_s} s`}</span>
-              <span>{`${fmtD(trend[trend.length - 1].date)} · ${trend[trend.length - 1].total_s} s`}</span>
+              <span>{`${fmtD(trend[0].date)} · ${fmtV(trend[0].total_s)} s`}</span>
+              <span>{`${fmtD(trend[trend.length - 1].date)} · ${fmtV(trend[trend.length - 1].total_s)} s`}</span>
             </div>
           )}
           <p className="pg-note">{trendNote}</p>
@@ -306,7 +308,7 @@ export function Progress() {
         <div className="pg-side">
           <Card className="pg-card" title="Practice">
             <div className="pg-two">
-              {pr.planned == null ? (
+              {!pr.planned ? (
                 <Stat value={pr.done} label={`${plural(pr.done, 'session')} recorded`} />
               ) : (
                 // Planned practice days from the prescription's schedule since the first live session.
@@ -314,7 +316,7 @@ export function Progress() {
               )}
               <Stat value={pr.hours} unit="h" label="active time" />
             </div>
-            <p className="pg-note">{best >= 2 ? `Longest run: ${best} practice days in a row` : `${liveDates.filter((d) => inRange(d)).length} practice days in this range`}</p>
+            <p className="pg-note">{best >= 2 ? `Longest run: ${best} practice days in a row` : `${daysHere} ${plural(daysHere, 'practice day')} in this range`}</p>
             {p.sample && (
               <p className="pg-note">
                 {sampleChip(true)} <span>{`${p.sample.done}/${p.sample.planned} planned · ${p.sample.hours} h · illustrative, not added to yours`}</span>

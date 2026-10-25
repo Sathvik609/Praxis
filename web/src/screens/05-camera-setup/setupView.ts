@@ -78,17 +78,17 @@ function specs(view: Exclude<SetupView, 'table'>, side: Side, pendulum: boolean)
     return [
       camera,
       { id: 'person', label: 'One person in view', hint: 'Sit facing the camera with your upper body in the picture.' },
-      { id: 'front_view', label: 'You face the camera', hint: 'Turn your chair so you face the camera straight on.', self: true },
-      { id: 'upper_in_view', label: 'Both shoulders and both hands in view', hint: 'Move back until both hands fit with your arms out to the side.', self: true },
+      { id: 'front_view', label: 'You face the camera', hint: 'Turn your chair so you face the camera straight on.', self: true, yes: "Yes, I'm facing it" },
+      { id: 'upper_in_view', label: 'Both shoulders and both hands in view', hint: 'Move back until both hands fit with your arms out to the side.', self: true, yes: 'Yes, both hands fit' },
       lighting,
     ]
   }
   return [
     camera,
     { id: 'person', label: 'One person in view', hint: pendulum ? 'Stand so your whole upper body is in the picture.' : 'Sit so your whole upper body is in the picture.' },
-    { id: 'side_view', label: `Your ${side} side faces the camera`, hint: `Turn so your ${side} shoulder is closest to the camera.`, self: true },
-    { id: 'hip_in_view', label: 'Hip in view', hint: pendulum ? 'Step back from the table edge so your hip shows.' : 'A chair without arms lets the camera see your hip.', self: true },
-    { id: 'arm_in_view', label: 'Shoulder, elbow and wrist in view', hint: 'Move back until your whole arm fits, hand included.', self: true },
+    { id: 'side_view', label: `Your ${side} side faces the camera`, hint: `Turn so your ${side} shoulder is closest to the camera.`, self: true, yes: 'Yes, side on' },
+    { id: 'hip_in_view', label: 'Hip in view', hint: pendulum ? 'Step back from the table edge so your hip shows.' : 'A chair without arms lets the camera see your hip.', self: true, yes: 'Yes, my hip shows' },
+    { id: 'arm_in_view', label: 'Shoulder, elbow and wrist in view', hint: 'Move back until your whole arm fits, hand included.', self: true, yes: 'Yes, my whole arm fits' },
     lighting,
   ]
 }
@@ -121,7 +121,7 @@ export function resolveChecks(
     if (s.self && !decided) {
       const ticked = !!ticks[s.id]
       if (!ticked) selfOk = false
-      return { id: s.id, label: s.label, status: ticked ? 'pass' : 'pending', hint: s.hint, source: 'self' }
+      return { id: s.id, label: s.label, status: ticked ? 'pass' : 'pending', hint: s.hint, source: 'self', ...(s.yes ? { yes: s.yes } : {}) }
     }
     const status = svc?.status ?? 'pending'
     if (s.self && status !== 'pass') blocked = true

@@ -105,6 +105,16 @@ test('NHPT first and last from the sample are labeled sample; one verified is si
   expect(await screen.findByText(/^1 verified · 1 unverified/)).toBeInTheDocument()
 })
 
+test('peg test seconds read to one decimal, never a raw float', async () => {
+  const pts = { patients: [{ id: 'alex', name: 'Alex M.', program: 'GRASP L2 · left · wk 6', open_flags: 0, adherence_pct: null, nhpt_last_s: 26.4423, nhpt_first_s: 30.0712 }] }
+  mockApi({ ...ROUTES, '/api/therapist/patients': pts })
+  render(<MemoryRouter><Therapist /></MemoryRouter>)
+  await screen.findByRole('heading', { name: 'Alex M.' })
+  expect(screen.getByText(/NHPT · 30\.1 s at wk 1/)).toBeInTheDocument()
+  expect(screen.getByText('26.4')).toBeInTheDocument()
+  expect(screen.queryByText(/26\.4423/)).not.toBeInTheDocument()
+})
+
 test('sample sessions in the pain summary are labeled Sample', async () => {
   mockApi({ ...ROUTES, '/api/sessions': { sessions: [{ ...SESSION, illustrative: true }] } })
   render(<MemoryRouter><Therapist /></MemoryRouter>)

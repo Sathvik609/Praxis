@@ -7,6 +7,7 @@ page" is uniformly scaled, which the camera cannot tell from distance, so the pa
 """
 from __future__ import annotations
 
+import shutil
 import sys
 from pathlib import Path
 
@@ -67,6 +68,10 @@ def write_pdf(spec: SheetSpec, path: Path, px_per_mm: float = 8.0) -> None:
 if __name__ == "__main__":
     out = Path(__file__).resolve().parents[3] / "docs" / "sheets"
     out.mkdir(parents=True, exist_ok=True)
+    # The web app serves a copy so a judge can print a sheet from the exercise card.
+    web = Path(__file__).resolve().parents[3] / "web" / "public" / "sheets"
+    web.mkdir(parents=True, exist_ok=True)
     for spec in SHEETS.values():
         write_pdf(spec, out / f"{spec.name}.pdf")
-        print("wrote", out / f"{spec.name}.pdf")
+        shutil.copyfile(out / f"{spec.name}.pdf", web / f"{spec.name}.pdf")
+        print("wrote", out / f"{spec.name}.pdf", "and the web copy")

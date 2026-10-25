@@ -110,6 +110,22 @@ test('practice before any planned days counts sessions recorded here', async () 
   expect(await screen.findByText('session recorded')).toBeInTheDocument()
 })
 
+test('a plan with no planned days yet counts sessions, never "0/0"; one practice day is singular', async () => {
+  const s = (id: string, date: string) => ({ ...SESSION, id, date })
+  mockApi({ ...BASE, '/api/progress': { ...PROGRESS, practice: { done: 2, planned: 0, days_done: 0, hours: 0 } }, '/api/sessions': { sessions: [s('a', '2026-09-12'), s('b', '2026-09-12')] } })
+  renderProgress()
+  expect(await screen.findByText('sessions recorded')).toBeInTheDocument()
+  expect(screen.queryByText('0/0')).not.toBeInTheDocument()
+  expect(screen.getByText('1 practice day in this range')).toBeInTheDocument()
+})
+
+test('peg test times on the chart read to one decimal, never raw floats', async () => {
+  mockApi({ ...BASE, '/api/progress': { ...PROGRESS, nhpt_trend: [{ date: '2026-08-01', total_s: 26.4423 }, { date: '2026-09-12', total_s: 41.2 }] } })
+  renderProgress()
+  expect(await screen.findByText('1 Aug · 26.4 s')).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: /1 Aug 26\.4 s/ })).toBeInTheDocument()
+})
+
 test('the streak counts your live sessions only, never sample dates', async () => {
   const s = (id: string, date: string, illustrative = false) => ({ ...SESSION, id, date, illustrative })
   mockApi({ ...BASE, '/api/progress': { ...PROGRESS, verified_per_session: [] }, '/api/sessions': { sessions: [s('a', '2026-09-10', true), s('b', '2026-09-11', true), s('c', '2026-09-12'), s('d', '2026-09-13')] } })

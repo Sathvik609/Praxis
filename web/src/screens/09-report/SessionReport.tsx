@@ -402,7 +402,7 @@ export function SessionReport() {
         </div>
         {cam.nhpt_total_s != null && (
           <p className="mt-4 text-xl">
-            Nine-Hole Peg Test: <b>{cam.nhpt_total_s.toFixed(1)} s</b> · insertion-only · timing aid, not a clinical instrument
+            Nine-Hole Peg Test: <b>{cam.nhpt_total_s.toFixed(1)} s</b> · putting the pegs in only · a timing aid, not a clinical instrument
             {nhptLimited && ' · the camera lost the board during the test, so this time is limited'}
           </p>
         )}

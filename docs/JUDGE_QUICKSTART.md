@@ -2,7 +2,7 @@
 
 This takes five minutes and needs no install. If you have a webcam, you can try one exercise live. If you don't, the **Replay** path runs a recorded session through the same OpenCV 5 pipeline and coach.
 
-> Praxis is an adherence and coaching aid for exercises a therapist has already prescribed. **It is not a medical device.** The hosted build holds sample data only. There is no sign-in, so please don't enter real health information.
+> Praxis is an adherence and coaching aid for exercises a therapist has already prescribed. **It is not a medical device.** The hosted build holds no real patient data. There is no sign-in, so please don't enter real health information.
 
 ## 1. Open the app
 
@@ -23,7 +23,7 @@ Go to Settings (the gear in the left rail) → **Demo and judging** → **Show t
 
 ## 3. Without a webcam: Replay (2 min)
 
-Go to Settings → Demo and judging → **Replay a recorded session** and pick a clip:
+Go to Settings → Demo and judging → **Replay a recorded session** (or tap **No camera? Use a recorded session** on any camera setup screen) and pick a clip. There are clips for Waiter – cup and the peg test; Arm out to the side has no replay clip, because the real arm videos we measure on (REHAB24-6) can't be redistributed.
 
 <img src="img/screens/replay_picker.png" width="640" alt="Replay a recorded session: two synthetic render clips, Nine-Hole Peg Test and Waiter – cup">
 
@@ -55,7 +55,7 @@ The camera feed is processed in memory on the server and never stored. The red *
    - Walk out of view. The session pauses and says why, then carries on when you come back.
    - Tap **Pain / feel unwell** and give a 7 or higher. This stops the session.
 
-**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 or US Letter, at 100 % / actual size: [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf), [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf)). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand and the setup hint will name that corner.
+**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 or US Letter, at 100 % / actual size). Each card on the Exercises screen has a **Print the sheet** button, or use [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf) and [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand and the setup hint will name that corner.
 
 ## 5. Run it locally instead (edge / privacy mode, ~3 min)
 

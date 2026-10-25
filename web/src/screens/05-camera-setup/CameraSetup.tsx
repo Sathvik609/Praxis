@@ -220,6 +220,13 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
               <SetupDiagram view={view} pendulum={pendulum} />
             </div>
             <p>{copy.body}</p>
+            {ex.sheetPdf && (
+              <p>
+                <a href={ex.sheetPdf} target="_blank" rel="noopener" className="font-bold underline">
+                  Print the sheet (PDF, at 100 % size)
+                </a>
+              </p>
+            )}
             <p className="cs-info-muted">{SETUP_TIPS}</p>
             <ul className="cs-info-checks">
               {rows.map((r) => (
@@ -253,7 +260,7 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
             <button type="button" className="cs-allow" onClick={restart}>
               {blocked ? 'Try again' : 'Allow camera'}
             </button>
-            <button type="button" className="cs-link" onClick={() => nav('/details/settings')}>
+            <button type="button" className="cs-link" onClick={() => nav('/details/settings?replay=1')}>
               No camera? Use a recorded session
             </button>
           </div>

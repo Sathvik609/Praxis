@@ -122,6 +122,9 @@ test('a peg test that lost tracking says its time is limited, not a clean 100 % 
   renderReport()
   expect(await screen.findByText('Limited tracking')).toBeInTheDocument()
   expect(screen.getByText(/Nine-Hole Peg Test:/).closest('p')).toHaveTextContent(/camera lost the board during the test/)
+  // plain words, not "insertion-only": the clinical test also times taking the pegs out
+  expect(screen.getByText(/Nine-Hole Peg Test:/).closest('p')).toHaveTextContent(/putting the pegs in only/)
+  expect(screen.queryByText(/insertion-only/)).not.toBeInTheDocument()
 })
 
 test('coach note eyebrows come from the note category, and a note without one has none', async () => {

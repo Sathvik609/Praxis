@@ -9,6 +9,7 @@ import { Stat } from '../../design/Stat'
 import { api, isReplaySession, isTherapistOnly, useApi } from '../../lib/api'
 import { WEEKDAYS, daysLabel, visitText } from '../../lib/calendar'
 import { upcomingVisit } from '../../lib/seed'
+import { fmtV } from '../../lib/trend'
 import { ruleCoachLabel } from '../../session/agent'
 import { DEFAULT_SCHEDULE, ScheduleDialog, THERAPIST_ONLY } from './ScheduleDialog'
 
@@ -162,7 +163,7 @@ export function Therapist() {
               <div className="flex flex-wrap gap-8">
                 {/* 24 Oct: plain words instead of "— %" and "— s" before there is anything to count */}
                 {me?.adherence_pct == null ? <p className="text-muted">No practice days yet.</p> : <Stat value={me.adherence_pct} unit="%" label="planned days practised" />}
-                {me?.nhpt_last_s == null ? <p className="text-muted">No peg test yet.</p> : <Stat value={me.nhpt_last_s} unit="s" label={`NHPT · ${me.nhpt_first_s ?? '—'} s at wk 1${me.nhpt_sample ? ' · sample' : ''}`} />}
+                {me?.nhpt_last_s == null ? <p className="text-muted">No peg test yet.</p> : <Stat value={fmtV(me.nhpt_last_s)} unit="s" label={`NHPT · ${me.nhpt_first_s == null ? '—' : fmtV(me.nhpt_first_s)} s at wk 1${me.nhpt_sample ? ' · sample' : ''}`} />}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-muted">
                 {painRows.length ? (

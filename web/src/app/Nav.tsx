@@ -52,6 +52,7 @@ export function Nav({ program, initial }: { program: string; initial: string }) 
           longer labelled read-only. */}
       <Link
         to="/therapist"
+        title="Therapist view"
         className="ui-ther flex h-14 shrink-0 items-center gap-2 rounded-[var(--r-control)] border-2 border-teal-ink px-3 text-lg font-bold text-teal-ink transition-colors duration-150 hover:bg-tint-mint focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus)]/40"
       >
         <Stethoscope aria-hidden className="h-5 w-5" />

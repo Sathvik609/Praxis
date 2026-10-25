@@ -121,6 +121,11 @@ export function ChooseExercise() {
                           Start session
                         </button>
                       )}
+                      {e.sheetPdf && (
+                        <a className="lib-cta lib-cta-2 inline-flex items-center justify-center" href={e.sheetPdf} target="_blank" rel="noopener" aria-label={`Print the sheet: ${e.name}`}>
+                          Print the sheet
+                        </a>
+                      )}
                     </div>
                   </Card>
                 )

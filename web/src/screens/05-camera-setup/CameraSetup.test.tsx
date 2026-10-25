@@ -138,9 +138,10 @@ test('pose rows the camera does not check yet are confirmed by the patient in th
   renderSetup('/setup?exercise=abduction&side=right')
   expect(screen.getByRole('button', { name: 'Continue anyway' })).toBeEnabled()
   expect(coach()).toHaveTextContent('Turn your chair so you face the camera straight on.')
-  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
+  // each confirm button answers its own question, not a generic "I can see it"
+  fireEvent.click(within(coach()).getByRole('button', { name: "Yes, I'm facing it" }))
   expect(coach()).toHaveTextContent('Move back until both hands fit with your arms out to the side.')
-  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, I can see it' }))
+  fireEvent.click(within(coach()).getByRole('button', { name: 'Yes, both hands fit' }))
   expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled()
   expect(coach()).toHaveTextContent('Hold still in your starting pose')
 })
@@ -171,7 +172,8 @@ test('camera blocked shows why, Try again and a recorded session', () => {
   expect(screen.getByRole('alert')).toHaveTextContent(/Camera permission needed/)
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'No camera? Use a recorded session' }))
-  expect(screen.getByText('AT /details/settings')).toBeInTheDocument()
+  // straight to the list of recordings, not the whole Settings page
+  expect(screen.getByText('AT /details/settings?replay=1')).toBeInTheDocument()
 })
 
 test('sheet tasks show the tilted-laptop diagram and copy in the guide; the arm task does not', () => {
@@ -184,11 +186,13 @@ test('sheet tasks show the tilted-laptop diagram and copy in the guide; the arm 
   expect(screen.queryByText(/phone|webcam|stand|straight down/i)).not.toBeInTheDocument()
   expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
   expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /Print the sheet/ })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
   unmount()
   renderSetup('/setup?exercise=abduction')
   fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
   expect(screen.queryByRole('heading', { name: 'Tilt your laptop over the sheet' })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /Print the sheet/ })).not.toBeInTheDocument()
 })
 
 test('the coach pill shows the service hint when the camera looks too flat across the sheet', () => {

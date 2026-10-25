@@ -73,6 +73,13 @@ test('each card’s Start session opens that exercise’s demonstration (D-FLOW)
   expect(screen.getByText('AT /details/demo?exercise=cup&side=left')).toBeInTheDocument()
 })
 
+test('the two sheet tasks link their printable sheet (PDF); the arm task needs none', () => {
+  renderChoose()
+  expect(screen.getByRole('link', { name: 'Print the sheet: Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(screen.getByRole('link', { name: 'Print the sheet: Nine-Hole Peg Test' })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
+  expect(screen.queryByRole('link', { name: 'Print the sheet: Arm out to the side' })).not.toBeInTheDocument()
+})
+
 test('?next=nhpt (Home "Run the peg test") preselects and highlights the peg test', () => {
   renderChoose('/choose?next=nhpt')
   expect(screen.getByRole('button', { name: 'Select Nine-Hole Peg Test' })).toHaveAttribute('aria-pressed', 'true')
