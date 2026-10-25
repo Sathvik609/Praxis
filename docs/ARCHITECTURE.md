@@ -6,7 +6,7 @@ This page has three diagrams for judges:
 2. the OpenCV 5 pipeline for each exercise;
 3. one real agent loop where the OpenCV output changes what the agent does next.
 
-Every module and function named here exists in `services/session/praxis_session/` as of 10 Oct 2026.
+Every module and function named here exists in `services/session/praxis_session/` (checked again on 24 Oct 2026).
 
 **How to read the diagrams.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned and do not exist yet.**
 

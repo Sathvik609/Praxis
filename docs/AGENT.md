@@ -1,4 +1,4 @@
-# Agent coach — how it works
+# How the agent coach works
 
 At checkpoints, Claude (Sonnet 5.5 via the Anthropic API, not Amazon Bedrock) calls OpenCV 5 tools on the latest camera frame, and what the tools report decides its next call. The figure shows one real run. Code: `services/session/praxis_session/agent/` (tools, MCP servers, planners, metrics, daily cap) and `coach/agent.py`. Dated results are in the [Changelog](#changelog-dated-results) at the end of this file.
 
@@ -51,7 +51,7 @@ The harness now re-sends the current scene at 15 fps during every agent run (`ca
 
 Rows read "Claude agent · Anthropic API (dev)" because that was the label string in `agent/model.py` `AGENT_LABELS` when they were recorded; "(dev)" was dropped on 21 Oct, since the agent also runs on the judge endpoint. No cloud-mode (AWS) agent trace is committed: every agent trace here came from the eval harness or the replay pipeline on a laptop, calling the Anthropic API.
 
-## Rubric → evidence (Agentic Vision Award)
+## Where to find the evidence (Agentic Vision award)
 
 | Criterion (weight) | What to look at | Files · traces · tests · results |
 |---|---|---|
@@ -216,7 +216,7 @@ curl -s localhost:8000/health | jq .agent   # {"mode":"anthropic","model":"claud
 curl -s localhost:8000/api/agent/metrics | jq
 ```
 
-## Contract with the web app
+## What the web app expects
 
 - `coach` events: the Decision fields plus `source: "rule" | "agent"` and `label` ("Rule-based coach · LLM agent pending" with the agent off, "Rule-based coach" otherwise; "Claude agent · Anthropic API" | "Claude agent · scripted (test)").
 - `ui.prompt`: `{id, kind: progression | adjustment | resume, title, text, options, within_prescription, proposal?: {exercise, field, value, requested, clamped, unit}}`; answer `{"cmd": "answer", "prompt": id, "choice": option}`, option 0 accepts, option 1 declines.

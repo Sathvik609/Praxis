@@ -1,6 +1,6 @@
 <h1 align="center">Praxis</h1>
 
-<p align="center"><b>An agentic vision coach for arm and shoulder rehab at home, for exercises a therapist has prescribed. One laptop camera, a printed sheet, OpenCV 5.</b></p>
+<p align="center"><b>A coach that watches the arm and shoulder exercises your therapist gave you, at home. One laptop camera, a printed sheet, OpenCV 5.</b></p>
 
 <p align="center">
   <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
@@ -94,7 +94,7 @@ Here is one real agent run (Claude Sonnet 5.5, synthetic frames, 21 Oct). `check
 
 Built with: OpenCV 5 (`cv2.aruco` + `findHomography` sheet calibration, `HoughCircles`, HSV `inRange` + `findContours`, masked `matchTemplate`, OpenCV Zoo hand and pose ONNX models via `cv2.dnn`) · FastAPI · React + TypeScript + Three.js · Strands Agents + FastMCP · Claude via the Anthropic API · AWS EC2 Graviton4 (c8g) from the COOL AMI behind CloudFront.
 
-## Headline results
+## Results
 
 | What | Result | Evidence |
 |---|---|---|
@@ -102,7 +102,7 @@ Built with: OpenCV 5 (`cv2.aruco` + `findHomography` sheet calibration, `HoughCi
 | COOL vs the stock OpenCV wheel, same c8g.large (11 Oct) | 1.2–1.6× faster on HSV threshold, contours, Hough and template matching. Full classical frame: 1.03× (NHPT) and 0.94× (cup). Slower on decode, ArUco, warp and the DNN | [`benchmark/results/cool_vs_stock_c8g.md`](benchmark/results/cool_vs_stock_c8g.md) |
 | Claude agent (Sonnet 5.5, Anthropic API) on **real video** (REHAB24-6 run through the product pipeline, 40 sessions, simulated taps) | Corrected a fault (confirmed by motion capture) in 41/44 set reviews. Named the fix on 26/26 wrong-view pauses. 0 guardrail violations. First action p50/p95 3.7/5.8 s. $0.050 per session | [`evaluation/results/agent_video_v0.md`](evaluation/results/agent_video_v0.md) |
 | Claude agent on synthetic scenarios (21 Oct recheck of the 15 plumbing scenarios, current build) | 15/15, 0 guardrail violations. The suite now has 16: the new `mixed_signals` judgement scenario **fails 0/3** on Sonnet 5.5. This is an open finding ([`docs/AGENT.md`](docs/AGENT.md)) | [`agent_recheck_2026-10-21_all.md`](evaluation/results/agent_recheck_2026-10-21_all.md), [`agent_recheck_2026-10-21_mixed_signals_x3.md`](evaluation/results/agent_recheck_2026-10-21_mixed_signals_x3.md) |
-| Nine-Hole Peg Test and Waiter – cup | **Synthetic only.** We have no real-camera accuracy number. Pipeline checks on renders (NHPT rep F1 1.0, cup reach F1 0.984), a 107-condition robustness sweep, 3-D renders | [`dataset_v0.md`](evaluation/results/dataset_v0.md), [`robustness_v0.md`](evaluation/results/robustness_v0.md), [`synthetic3d_v0.md`](evaluation/results/synthetic3d_v0.md) |
+| Nine-Hole Peg Test and Waiter – cup | **Synthetic only.** We have no real-camera accuracy number. Pipeline checks on renders (NHPT rep F1 1.0, cup reach F1 1.0), a 107-condition robustness sweep, 3-D renders | [`dataset_v0.md`](evaluation/results/dataset_v0.md), [`robustness_v0.md`](evaluation/results/robustness_v0.md), [`synthetic3d_v0.md`](evaluation/results/synthetic3d_v0.md) |
 
 ## Run it locally (edge mode, no frame leaves the laptop)
 
@@ -114,7 +114,7 @@ cd ../../web && pnpm install && pnpm dev                                   # →
 
 Print the sheets at 100 % first: [`docs/sheets/nhpt_board.pdf`](docs/sheets/nhpt_board.pdf), [`docs/sheets/cup_targets.pdf`](docs/sheets/cup_targets.pdf). The agent coach stays off unless you set `PRAXIS_AGENT=anthropic` and an API key (see [Agent coach](#agent-coach-claude--opencv-tools-over-mcp-optional)). More commands are below.
 
-## Honest limits
+## What it can't do yet
 
 - We only have real-video accuracy for **Arm out to the side**, and only on healthy adults in a motion-capture lab, not patients at a laptop. We did not record our own sessions.
 - **NHPT and Waiter – cup are only validated on synthetic renders.**
@@ -123,9 +123,9 @@ Print the sheets at 100 % first: [`docs/sheets/nhpt_board.pdf`](docs/sheets/nhpt
 - On AWS we use EC2 + COOL + CloudFront. S3 and CDK are not built. CloudWatch is built but not yet verified on AWS. The agent runs on Claude via the Anthropic API; Bedrock is not used.
 - The hosted build has no sign-in and holds sample data only.
 
-Full list: [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §10 and [`docs/RISKS.md`](docs/RISKS.md).
+The full list is in [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) §10 and [`docs/RISKS.md`](docs/RISKS.md).
 
-## Docs map
+## Docs
 
 | File | What it holds |
 |---|---|

@@ -1,4 +1,4 @@
-# Praxis: Judge quick-start
+# Praxis: quick start for judges
 
 This takes five minutes and needs no install. If you have a webcam, you can try one exercise live. If you don't, the **Replay** path runs a recorded session through the same OpenCV 5 pipeline and coach.
 
@@ -60,7 +60,7 @@ The camera feed is processed in memory on the server and never stored. The red *
 ## 5. Run it locally instead (edge / privacy mode, ~3 min)
 
 ```bash
-git clone <repo> praxis && cd praxis
+git clone https://github.com/Sathvik609/Praxis.git praxis && cd praxis
 cd services/session && uv sync && uv run python tools/fetch_models.py   # SHA256-pinned Apache-2.0 ONNX models
 uv run uvicorn praxis_session.main:app --port 8000
 cd ../../web && pnpm install && pnpm dev                                # → http://localhost:5173

@@ -1,6 +1,6 @@
 {
  "dataset": "v0",
- "generated_on": "2026-10-11",
+ "generated_on": "2026-10-24",
  "cv2_version": "5.0.0",
  "debounce_frames": 2,
  "clear_frames": 3,
@@ -46,17 +46,17 @@
    "entries": 1,
    "participants": 1,
    "labeled_reps": 32,
-   "pred_reps": 31,
-   "tp": 31,
+   "pred_reps": 32,
+   "tp": 32,
    "fp": 0,
-   "fn": 1,
+   "fn": 0,
    "rep_precision": 1.0,
-   "rep_recall": 0.9688,
-   "rep_f1": 0.9841,
+   "rep_recall": 1.0,
+   "rep_f1": 1.0,
    "verified_agreement": 1.0,
-   "verified_n": 31,
+   "verified_n": 32,
    "reach_mae_ms": 0.0,
-   "reach_n": 31
+   "reach_n": 32
   },
   "nhpt": {
    "entries": 1,
@@ -129,13 +129,14 @@
     "pose": false
    },
    "labeled_reps": 32,
-   "pred_reps": 31,
-   "tp": 31,
+   "pred_reps": 32,
+   "tp": 32,
    "fp": 0,
-   "fn": 1,
-   "status_agree": 31,
-   "status_n": 31,
+   "fn": 0,
+   "status_agree": 32,
+   "status_n": 32,
    "abs_err": [
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -181,18 +182,7 @@
     "clean": 0,
     "false_alarm": 0
    },
-   "misses": [
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 0,
-      "t": 51.3,
-      "reach_ms": 400.0,
-      "expected_verified": true,
-      "rep": 32
-     }
-    }
-   ]
+   "misses": []
   },
   {
    "id": "synthetic_arm_01",

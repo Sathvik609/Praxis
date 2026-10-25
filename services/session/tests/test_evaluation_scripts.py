@@ -55,8 +55,8 @@ def test_dataset_v0_includes_cup_and_reach_metrics(tmp_path: Path):
     out = tmp_path / "res"
     assert ev.main(["--dataset", str(ds), "--out", str(out)]) == 0
     res = json.loads((out / "dataset_v0.json").read_text())
-    # Honest product-default numbers on the synthetic cup clip: 31/32 reaches, 200 ms MAE
-    # (results/dataset_v0.md). Not 1.0 / 0 ms — those came from debounce 1 / clear 1.
+    # Honest product-default numbers on the synthetic cup clip: 32/32 reaches since 24 Oct
+    # (31/32 before), 0 ms MAE (results/dataset_v0.md). Not 1.0 / 0 ms — those came from debounce 1 / clear 1.
     syn = res["synthetic"]
     assert syn["nhpt"]["rep_f1"] == 1.0 and syn["cup"]["rep_f1"] >= 0.95
     assert syn["cup"]["reach_mae_ms"] is not None and syn["cup"]["reach_mae_ms"] < 250

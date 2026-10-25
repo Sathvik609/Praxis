@@ -2,7 +2,7 @@
 
 **Synthetic renders, not real-camera evidence.** Every frame is an OpenCV render of the printed sheet (`perception/synth.py`, flat discs for pegs, cup base and hand) perturbed in image space; the REAL product code is measured on it (`Calibrator`, `quality.build_checks`, `BoardState`, `CupSheetState`). Real lenses, 3-D pegs and cups, specular paper, auto-exposure and motion are not in it. Regenerate with `cd services/session && uv run python ../../evaluation/scripts/robustness.py`.
 
-OpenCV 5.0.0 · generated 2026-10-12 · baseline: tilt 40.0°, yaw 5.0°, sheet fills ~80 % of 640×480, lens f = 1.4·w, noise σ3.0, JPEG q70 (what the browser sends). Each row changes one thing from the baseline unless it is in the *combined* group.
+OpenCV 5.0.0 · generated 2026-10-25 · baseline: tilt 40.0°, yaw 5.0°, sheet fills ~80 % of 640×480, lens f = 1.4·w, noise σ3.0, JPEG q70 (what the browser sends). Each row changes one thing from the baseline unless it is in the *combined* group.
 
 Columns: **cal** = first fix (all four markers, fresh calibrator); **session** = running session primed with a clean frame (fresh / partial = three markers / held = fewer, 1.5 s); **RMS** = the homography's reprojection RMS on the marker corners; **err** = worst true target position error after the round trip frame → mm; **tilt** = measured (true); **setup rows** = rows of screen 05 that fire, and whether that is the right advice for the condition.
 
@@ -13,7 +13,7 @@ Columns: **cal** = first fix (all four markers, fresh calibrator); **session** =
 | conditions | 81 | 91 |
 | first fix (all four markers) | 74 | 83 |
 | running session still calibrated (fresh / partial / held ≤ 1.5 s) | 81 | 91 |
-| occupancy all correct / cup found within 10 mm (when calibrated) | 65 of 74 | 67 of 77 |
+| occupancy all correct / cup found within 10 mm (when calibrated) | 61 of 74 | 71 of 77 |
 | phantoms (empty hole read occupied, extra free peg / cup where none) | 1 | 0 |
 | setup rows right for the condition | 80 of 81 | 90 of 91 |
 
@@ -36,6 +36,8 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | 16:9 camera squashed to 640×480 | camera-angle row read 45° as ~23° (square-pixel model broken) | the web centre-crops to 4:3 before encoding (web/src/session/useWebcamStream.ts); the row below is the server on a squashed frame |
 
 **12 Oct 2026, after the 3-D renders (`synthetic3d_v0.md`).** Hole occupancy now looks first at a height-aware seat column projected from the calibrated camera, because real 32 mm pegs stand in a board and project off their holes. This sweep's pegs are flat discs, which real pegs are not: past the 50° setup advice a flat disc on the next row lies where a standing peg's column is, so at 50–65° one or two flat pegs now read empty (all holes correct 69 → 65 of 74; one fewer phantom on the curled sheet). Real pegs at those angles are measured in `synthetic3d_v0.md`. The two defocus-r5 setup rows changed with an earlier commit, not this one (the pre-12 Oct code gives the same rows).
+
+**24 Oct 2026, after the second team test.** A hole filled by change alone (no peg colour) now counts only once the board has been still for three frames, and a loose peg is found by colour only, so a moving hand is never counted as pegs. This sweep scores one cold frame, so with a hand already over the grid the board is never still and peg 0 waits: hole occupancy all correct 65 → 61 of 74. In a session the pegs are seated before the hand comes over, and then all three stay seated for every skin tone (checked by priming the board with the seated frame first). The loose peg is now missed at gain ×2.2 and defocus r3. The cup gained: a hand gripping the cup (~22 % visible) is now found for all four skin tones (cup found 67 → 71 of 77).
 
 ## NHPT board sheet
 
@@ -66,7 +68,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | dim, mean luma 45 | yes | fresh | 0.327 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | lighting: “Too dark. Add light in front of you, not behind.” (right) |
 | dim, mean luma 65 | yes | fresh | 0.33 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | bright, gain ×1.5 | yes | fresh | 0.39 | 0.24 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| bright, gain ×2.2 | yes | fresh | 0.437 | 0.27 | 40.2 (40.3) | hough | ok | yes | 0 | lighting: “Too bright. Move the lamp or close the blind.” (right) |
+| bright, gain ×2.2 | yes | fresh | 0.437 | 0.27 | 40.2 (40.3) | hough | ok | **no** | 0 | lighting: “Too bright. Move the lamp or close the blind.” (right) |
 | warm tungsten white balance | yes | fresh | 0.37 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | cool / daylight-LED white balance | yes | fresh | 0.368 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | soft shadow gradient (100%→35%) | yes | fresh | 0.36 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -78,7 +80,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | motion blur 9 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | motion blur 15 px | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The corner markers cannot be read. If the sheet is in view, hold the laptop still, wipe the lens and add light.” (right) |
 | defocus r2 | yes | fresh | 0.462 | 0.25 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| defocus r3 | yes | fresh | 1.172 | 0.35 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
+| defocus r3 | yes | fresh | 1.172 | 0.35 | 40.3 (40.3) | hough | ok | **no** | 0 | none (right) |
 | defocus r5 | **no** | held | – | – | – (40.3) | – | – | – | – | lighting: “Image is blurry. Clean the lens or hold the camera still.” (**wrong**) |
 | JPEG q40 | yes | fresh | 0.345 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | JPEG q60 | yes | fresh | 0.355 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -86,10 +88,10 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | JPEG q90 | yes | fresh | 0.317 | 0.23 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | – | markers: “The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
 | hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | – | markers: “The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
-| light skin hand over hole grid | yes | fresh | 0.341 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| medium skin hand over hole grid | yes | fresh | 0.35 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| dark skin hand over hole grid | yes | fresh | 0.349 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| deep skin hand over hole grid | yes | fresh | 0.351 | 0.21 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
+| light skin hand over hole grid | yes | fresh | 0.341 | 0.22 | 40.3 (40.3) | hough | **wrong [0]** | yes | 0 | none (right) |
+| medium skin hand over hole grid | yes | fresh | 0.35 | 0.22 | 40.3 (40.3) | hough | **wrong [0, 4]** | yes | 0 | none (right) |
+| dark skin hand over hole grid | yes | fresh | 0.349 | 0.22 | 40.3 (40.3) | hough | **wrong [0]** | yes | 0 | none (right) |
+| deep skin hand over hole grid | yes | fresh | 0.351 | 0.21 | 40.3 (40.3) | hough | **wrong [0, 4]** | yes | 0 | none (right) |
 | peg colour red (default mask) | yes | fresh | 0.34 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | peg colour red (tap-to-sample) | yes | fresh | 0.344 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | peg colour blue (default mask) | yes | fresh | 0.346 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -112,7 +114,7 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | barrel lens distortion k1=-0.25 (f 0.8 w, tilt 45°) | yes | fresh | 0.988 | 1.12 | 45.0 (45.2) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 5 mm | yes | fresh | 0.809 | 1.88 | 40.2 (40.3) | hough | ok | yes | 0 | none (right) |
 | paper curl, ends up 10 mm | yes | fresh | 1.466 | 3.88 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
-| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [4, 8]** | **no** | **1** | none (right) |
+| paper curl, ends up 20 mm | yes | fresh | 3.037 | 7.81 | 40.1 (40.3) | spec | **wrong [0, 4, 8]** | **no** | **1** | none (right) |
 | folded crease, ridge 4 mm | yes | fresh | 0.56 | 1.17 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
 | folded crease, ridge 8 mm | yes | fresh | 1.005 | 2.38 | 40.3 (40.3) | mixed | ok | yes | 0 | none (right) |
 | mirrored frame | yes | fresh | 0.336 | 0.22 | 40.3 (40.3) | hough | ok | yes | 0 | none (right) |
@@ -173,16 +175,16 @@ Known blind spot: the homography's RMS rises with curl (0.8 mm at 5 mm, 1.5 mm a
 | hand over marker 2 (one marker) | **no** | partial | – | – | – (40.3) | – | – | – | markers: “The marker in the bottom-right corner (2) is covered or creased: clear and flatten it.” (right) |
 | hand over markers 1+2 (two markers) | **no** | held | – | – | – (40.3) | – | – | – | markers: “The markers in the top-right corner (1), bottom-right corner (2) are covered or creased: clear and flatten them.” (right) |
 | light skin fingers across cup (~55% visible) | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | yes | 0.3 | ok | none (right) |
-| light skin hand gripping cup (~22% visible) | yes | fresh | 0.214 | 0.23 | 40.3 (40.3) | **no** | – | **miss** | none (right) |
+| light skin hand gripping cup (~22% visible) | yes | fresh | 0.214 | 0.23 | 40.3 (40.3) | yes | 3.7 | ok | none (right) |
 | light skin hand on sheet, no cup | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
 | medium skin fingers across cup (~55% visible) | yes | fresh | 0.213 | 0.23 | 40.3 (40.3) | yes | 0.3 | ok | none (right) |
-| medium skin hand gripping cup (~22% visible) | yes | fresh | 0.211 | 0.23 | 40.3 (40.3) | **no** | – | **miss** | none (right) |
+| medium skin hand gripping cup (~22% visible) | yes | fresh | 0.211 | 0.23 | 40.3 (40.3) | yes | 3.4 | ok | none (right) |
 | medium skin hand on sheet, no cup | yes | fresh | 0.213 | 0.24 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
 | dark skin fingers across cup (~55% visible) | yes | fresh | 0.213 | 0.23 | 40.3 (40.3) | yes | 0.3 | ok | none (right) |
-| dark skin hand gripping cup (~22% visible) | yes | fresh | 0.215 | 0.23 | 40.3 (40.3) | **no** | – | **miss** | none (right) |
+| dark skin hand gripping cup (~22% visible) | yes | fresh | 0.215 | 0.23 | 40.3 (40.3) | yes | 6.0 | ok | none (right) |
 | dark skin hand on sheet, no cup | yes | fresh | 0.213 | 0.23 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
 | deep skin fingers across cup (~55% visible) | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
-| deep skin hand gripping cup (~22% visible) | yes | fresh | 0.217 | 0.23 | 40.3 (40.3) | **no** | – | **miss** | none (right) |
+| deep skin hand gripping cup (~22% visible) | yes | fresh | 0.217 | 0.23 | 40.3 (40.3) | yes | 4.9 | ok | none (right) |
 | deep skin hand on sheet, no cup | yes | fresh | 0.209 | 0.23 | 40.3 (40.3) | no (none there) | – | ok | none (right) |
 | cup band blue (default blue window) | yes | fresh | 0.212 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |
 | cup band blue (tap-to-sample) | yes | fresh | 0.216 | 0.23 | 40.3 (40.3) | yes | 0.4 | ok | none (right) |

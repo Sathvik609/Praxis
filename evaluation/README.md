@@ -1,4 +1,4 @@
-# evaluation
+# Evaluation
 
 This folder holds our labelled datasets, the scripts that regenerate every number, the result tables and the failure cases.
 **Recording real sessions? Follow `PROTOCOL.md` step by step.**

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-12",
+ "generated": "2026-10-25",
  "opencv": "5.0.0",
  "synthetic": true,
  "base": {
@@ -1594,8 +1594,8 @@
     "occupancy_ok": true,
     "occupancy_wrong": [],
     "phantom_holes": [],
-    "free_pegs": 1,
-    "free_peg_found": true,
+    "free_pegs": 0,
+    "free_peg_found": false,
     "phantom_free": 0,
     "colour": "default"
    },
@@ -2282,8 +2282,8 @@
     "occupancy_ok": true,
     "occupancy_wrong": [],
     "phantom_holes": [],
-    "free_pegs": 1,
-    "free_peg_found": true,
+    "free_pegs": 0,
+    "free_peg_found": false,
     "phantom_free": 0,
     "colour": "default"
    },
@@ -2735,8 +2735,10 @@
     "sharpness": 835.6,
     "px_per_mm": 1.14,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     0
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -2800,9 +2802,9 @@
     "sharpness": 962.2,
     "px_per_mm": 1.51,
     "cup_expected": true,
-    "cup_found": false,
-    "cup_err_mm": null,
-    "cup_ok": false,
+    "cup_found": true,
+    "cup_err_mm": 3.7,
+    "cup_ok": true,
     "colour": "default"
    }
   },
@@ -2862,8 +2864,11 @@
     "sharpness": 881.2,
     "px_per_mm": 1.14,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     0,
+     4
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -2927,9 +2932,9 @@
     "sharpness": 972.8,
     "px_per_mm": 1.51,
     "cup_expected": true,
-    "cup_found": false,
-    "cup_err_mm": null,
-    "cup_ok": false,
+    "cup_found": true,
+    "cup_err_mm": 3.4,
+    "cup_ok": true,
     "colour": "default"
    }
   },
@@ -2989,8 +2994,10 @@
     "sharpness": 964.3,
     "px_per_mm": 1.14,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     0
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -3054,9 +3061,9 @@
     "sharpness": 1012.3,
     "px_per_mm": 1.51,
     "cup_expected": true,
-    "cup_found": false,
-    "cup_err_mm": null,
-    "cup_ok": false,
+    "cup_found": true,
+    "cup_err_mm": 6.0,
+    "cup_ok": true,
     "colour": "default"
    }
   },
@@ -3116,8 +3123,11 @@
     "sharpness": 1052.9,
     "px_per_mm": 1.14,
     "holes": "hough",
-    "occupancy_ok": true,
-    "occupancy_wrong": [],
+    "occupancy_ok": false,
+    "occupancy_wrong": [
+     0,
+     4
+    ],
     "phantom_holes": [],
     "free_pegs": 1,
     "free_peg_found": true,
@@ -3181,9 +3191,9 @@
     "sharpness": 1057.5,
     "px_per_mm": 1.51,
     "cup_expected": true,
-    "cup_found": false,
-    "cup_err_mm": null,
-    "cup_ok": false,
+    "cup_found": true,
+    "cup_err_mm": 4.9,
+    "cup_ok": true,
     "colour": "default"
    }
   },
@@ -4681,6 +4691,7 @@
     "holes": "spec",
     "occupancy_ok": false,
     "occupancy_wrong": [
+     0,
      4,
      8
     ],

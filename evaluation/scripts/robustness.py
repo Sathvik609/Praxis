@@ -725,6 +725,14 @@ def summary(res: dict[str, Any]) -> list[str]:
         "`synthetic3d_v0.md`. The two defocus-r5 setup rows changed with an earlier commit, not this one (the pre-12 Oct "
         "code gives the same rows).",
         "",
+        "**24 Oct 2026, after the second team test.** A hole filled by change alone (no peg colour) now counts only "
+        "once the board has been still for three frames, and a loose peg is found by colour only, so a moving hand is "
+        "never counted as pegs. This sweep scores one cold frame, so with a hand already over the grid the board is "
+        "never still and peg 0 waits: hole occupancy all correct 65 → 61 of 74. In a session the pegs are seated "
+        "before the hand comes over, and then all three stay seated for every skin tone (checked by priming the board "
+        "with the seated frame first). The loose peg is now missed at gain ×2.2 and defocus r3. The cup gained: a "
+        "hand gripping the cup (~22 % visible) is now found for all four skin tones (cup found 67 → 71 of 77).",
+        "",
     ]
 
 def _yn(v: Any) -> str:
