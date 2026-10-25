@@ -60,8 +60,9 @@ def move(
     for _ in range(hold):  # lifted: base hidden
         evs += fsm.step(obs(t, cup=None, calibrated=calibrated))
         t += dt
-    mid = ((D[src][0] + D[dst][0]) / 2, (D[src][1] + D[dst][1]) / 2)
-    for _ in range(hold):  # in transit (base glimpsed mid-way)
+    for i in range(hold):  # in transit: base glimpsed moving across the middle
+        s = 0.35 + 0.3 * i / max(1, hold - 1)
+        mid = (D[src][0] + (D[dst][0] - D[src][0]) * s, D[src][1] + (D[dst][1] - D[src][1]) * s)
         evs += fsm.step(obs(t, cup=None if occlude else mid, calibrated=calibrated))
         t += dt
     for _ in range(hold + 2):  # placed on dst
@@ -136,7 +137,9 @@ def test_wrong_dot_emits_event_and_reanchors():
     fsm = CupFSM(clear_frames=2)
     for _ in range(3):
         fsm.step(obs(0.0, cup=D[0]))
-    evs, _ = move(fsm, 0.3, 0, 2)  # expected dot 1, went to dot 2
+    evs, t = move(fsm, 0.3, 0, 2)  # expected dot 1, went to dot 2
+    for i in range(4):  # the cup rests on dot 2 (it passed over dot 1 on the way: AWAY_READINGS)
+        evs += fsm.step(obs(t + 0.1 * i, cup=D[2]))
     assert any(e.type == "wrong_dot" and e.payload["expected"] == 1 for e in evs)
     assert fsm.dot == 2 and fsm.expected_next == 3
 
@@ -244,3 +247,70 @@ def test_never_seen_resting_stays_unverified():
         fsm.step(obs(0.0, cup=D[0]))
     r = _occluded_reach_then(fsm, 0.3, glimpse_at=None)
     assert len(r) == 1 and r[0].payload["reason"] == "cup_occluded"
+
+
+def test_before_the_cup_is_on_a_dot_the_next_dot_is_dot_1():
+    # team test 24 Oct (Rinky): the cup started beside the sheet and the screen already
+    # highlighted dot 2, so every count looked one dot ahead
+    fsm = CupFSM(clear_frames=2)
+    fsm.step(obs(0.0))
+    assert fsm.dot is None and fsm.expected_next == 0
+    fsm.step(obs(0.1, (*D[0], 58.0)))
+    assert fsm.dot == 0 and fsm.expected_next == 1
+
+
+def test_one_stray_reading_does_not_knock_the_cup_off_its_dot():
+    # the same session: over_dot / in_transit flipped every 0.1-0.3 s and dot 2 took 5 s to count
+    fsm = CupFSM(clear_frames=3)
+    fsm.step(obs(0.0, (*D[0], 58.0)))
+    fsm.step(obs(0.1))  # lifted
+    fsm.step(obs(0.2, (*D[1], 58.0)))
+    assert fsm.state == "over_dot"
+    far = (D[1][0] + 40.0, D[1][1] + 30.0, 58.0)
+    fsm.step(obs(0.3, far))  # one bad reading
+    assert fsm.state == "over_dot"
+    evs = []
+    for i in range(6):  # placed after three still frames, counted after three more (hand away)
+        evs += fsm.step(obs(0.4 + 0.1 * i, (*D[1], 58.0)))
+    assert any(e.type == "reach_complete" and e.payload["to_dot"] == 1 for e in evs)
+    # three in a row really is the cup moving on
+    fsm2 = CupFSM(clear_frames=3)
+    for t, c in [(0.0, D[0]), (0.1, None), (0.2, D[1])]:
+        fsm2.step(obs(t, None if c is None else (*c, 58.0)))
+    for t in (0.3, 0.4):
+        fsm2.step(obs(t, far))
+        assert fsm2.state == "over_dot"
+    fsm2.step(obs(0.5, far))
+    assert fsm2.state == "in_transit"
+
+
+def test_stray_readings_while_placed_do_not_restart_the_count():
+    # team test 24 Oct: placed -> in_transit -> over_dot -> placed up to 38 times for one
+    # placement (5-23 s to count); placed now ignores up to two stray readings in a row too
+    fsm = CupFSM(clear_frames=3)
+    for t, c in [(0.0, D[0]), (0.1, None)]:
+        fsm.step(obs(t, None if c is None else (*c, 58.0)))
+    t = 0.2
+    for _ in range(3):
+        fsm.step(obs(t, (*D[1], 58.0)))
+        t += 0.1
+    assert fsm.state == "placed"
+    far = (D[1][0] + 40.0, D[1][1] + 30.0, 58.0)
+    evs = fsm.step(obs(t, far)) + fsm.step(obs(t + 0.1, far))
+    assert fsm.state == "placed"
+    for i in range(3):
+        evs += fsm.step(obs(t + 0.2 + 0.1 * i, (*D[1], 58.0)))
+    assert [e.payload["to_dot"] for e in evs if e.type == "reach_complete"] == [1]
+
+
+def test_a_cup_seen_resting_with_no_hand_near_counts_without_a_second_wait():
+    # deep run 24 Oct: a plain (change-found) cup is unseen while gripped, so the three still
+    # frames and the three hand-clear frames ran one after the other (0.5 s after letting go);
+    # a quick next reach skipped the dot. Frames with no hand near now count for both.
+    fsm = CupFSM(clear_frames=3)
+    for t, c in [(0.0, D[0]), (0.1, None)]:
+        fsm.step(obs(t, None if c is None else (*c, 58.0)))
+    evs = []
+    for i in range(4):
+        evs += fsm.step(obs(0.2 + 0.1 * i, (*D[1], 58.0)))
+    assert [e.payload["to_dot"] for e in evs if e.type == "reach_complete"] == [1]

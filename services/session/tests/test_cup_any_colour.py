@@ -6,6 +6,7 @@ seen at the session's first fix is now kept as a reference, and a cup of any col
 included) is what changed on it; its camera-side bottom edge gives the base, as for the band.
 """
 
+import cv2
 import numpy as np
 import pytest
 
@@ -63,3 +64,38 @@ def test_an_empty_sheet_after_the_reference_has_no_cup():
     cs.capture_reference()
     again = camera_frame(CUP_TARGETS, tilt_deg=40, yaw_deg=5.0, focal_per_width=0.85, noise_sigma=2.0, seed=7)[0]
     assert cs.cup_mm(cs.warp(again, cal.run(again, 0.1))) is None
+
+
+def _hand(frame, P, x, y, z=30.0):
+    """A hand resting over the sheet (palm and fingers, skin), the camera-side edge curved."""
+    from praxis_session.perception.synth import SKIN_BGR, project
+    a = np.linspace(0, 2 * np.pi, 40, endpoint=False)
+    pts = project(P, np.stack([x + 40 * np.cos(a), y + 28 * np.sin(a), np.full(40, z)], axis=1))
+    cv2.fillPoly(frame, [np.round(pts).astype(np.int32)], SKIN_BGR, cv2.LINE_AA)
+
+
+def _ref_state(tilt=40):
+    cal, cs = Calibrator(CUP_TARGETS), CupSheetState(CUP_TARGETS)
+    empty = _scene(tilt, WHITE)
+    cs.warp(empty, cal.run(empty, 0.0))
+    cs.capture_reference()
+    return cal, cs
+
+
+def test_a_hand_on_the_sheet_is_not_a_cup():
+    # team test 24 Oct (Rinky): the cup jumped between dots while her hand was on the sheet
+    cal, cs = _ref_state()
+    P = view_camera(CUP_TARGETS, SIZE, 40, 5.0, 1.0, focal_per_width=0.85)
+    for x, y in [(90.0, 110.0), (150.0, 95.0), (210.0, 110.0)]:
+        frame = _scene(40, WHITE)
+        _hand(frame, P, x, y)
+        assert cs.cup_mm(cs.warp(frame, cal.run(frame, 0.1))) is None, (x, y)
+
+
+def test_a_cup_with_a_hand_elsewhere_on_the_sheet_is_still_where_it_is():
+    cal, cs = _ref_state()
+    P = view_camera(CUP_TARGETS, SIZE, 40, 5.0, 1.0, focal_per_width=0.85)
+    frame = _scene(40, RED, D[0])
+    _hand(frame, P, 200.0, 100.0)
+    cm = cs.cup_mm(cs.warp(frame, cal.run(frame, 0.1)))
+    assert cm is not None and float(np.hypot(cm[0] - D[0][0], cm[1] - D[0][1])) < 8.0, cm

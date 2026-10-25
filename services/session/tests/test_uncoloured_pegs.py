@@ -49,6 +49,13 @@ def _occupied(board, cal, frame, t):
     return {int(k.split("_")[1]) for k, v in board.occupancy(canon).items() if v == "occupied"}
 
 
+def _settled(board, cal, frame, t):
+    """The same view for a few frames: a peg seen by change alone counts once the board is quiet."""
+    for i in range(board.quiet_frames + 1):  # the frame it appears in is movement
+        got = _occupied(board, cal, frame, t + 0.08 * i)
+    return got
+
+
 @pytest.mark.parametrize(
     ("peg", "board_bgr"),
     [(LIGHT_WOOD, None), (WHITE, WOOD_BGR), (GREY, None), (GREY, WOOD_BGR)],
@@ -56,21 +63,21 @@ def _occupied(board, cal, frame, t):
 )
 def test_uncoloured_pegs_standing_in_holes_are_seen(peg, board_bgr):
     board, cal = _board(peg, board_bgr)
-    assert _occupied(board, cal, _frame([0, 4, 8], peg, board_bgr), 0.1) == {0, 4, 8}
+    assert _settled(board, cal, _frame([0, 4, 8], peg, board_bgr), 0.1) == {0, 4, 8}
 
 
 def test_a_hand_over_the_board_is_covering_not_pegs_and_seated_pegs_stay_seated():
     board, cal = _board(LIGHT_WOOD)
-    assert _occupied(board, cal, _frame([0, 1], LIGHT_WOOD), 0.1) == {0, 1}
+    assert _settled(board, cal, _frame([0, 1], LIGHT_WOOD), 0.1) == {0, 1}
     # the hand covers the middle and top rows (holes 0-5), seated pegs included
     covered = _occupied(board, cal, _frame([0, 1], LIGHT_WOOD, hand=(105.0, 125.0, 60.0, 35.0)), 0.2)
     assert covered == {0, 1}
-    assert _occupied(board, cal, _frame([0, 1], LIGHT_WOOD), 0.3) == {0, 1}
+    assert _settled(board, cal, _frame([0, 1], LIGHT_WOOD), 0.5) == {0, 1}
 
 
 def test_coloured_pegs_still_work_the_same():
     board, cal = _board((40, 40, 220))
-    assert _occupied(board, cal, _frame([2, 6], (40, 40, 220)), 0.1) == {2, 6}
+    assert _occupied(board, cal, _frame([2, 6], (40, 40, 220)), 0.1) == {2, 6}  # colour: no wait
 
 
 def test_wood_grain_specks_are_not_loose_pegs():
@@ -85,4 +92,62 @@ def test_wood_grain_specks_are_not_loose_pegs():
     frame, _ = camera_frame(NHPT_BOARD, tilt_deg=45.0, yaw_deg=5.0, focal_per_width=0.85, pegs_3d=pegs,
                             peg_bgr=GREY, board_bgr=WOOD_BGR, noise_sigma=3.0, seed=9)
     free = board.free_pegs_mm(board.warp(frame, cal.run(frame, 0.1)))
-    assert len(free) == 1 and np.hypot(free[0][0] - 160.0, free[0][1] - 148.5) < 20.0, free
+    # loose pegs come from colour only (a grey peg is not a colour), and no speck is a peg
+    assert free == [], free
+
+
+def _fingers(frame, P, x, y, n=3):
+    """Fingertips and their shadow over the board, no palm: the small pieces a real hand leaves
+    when most of it is off the sheet (team test 24 Oct, Rinky: 9 'pegs' from one)."""
+    for i in range(n):
+        fx = x - 10.0 + 10.0 * i
+        a = np.linspace(0, 2 * np.pi, 20, endpoint=False)
+        pts = project(P, np.stack([fx + 4.5 * np.cos(a), y + 12.0 * np.sin(a), np.full(20, 15.0)], axis=1))
+        cv2.fillPoly(frame, [np.round(pts).astype(np.int32)], SKIN_BGR, cv2.LINE_AA)
+        sh = project(P, np.stack([fx + 6.0 + 5.0 * np.cos(a), y + 6.0 + 12.0 * np.sin(a), np.zeros(20)], axis=1))
+        cv2.fillPoly(frame, [np.round(sh).astype(np.int32)], (150, 150, 150), cv2.LINE_AA)
+
+
+def test_a_hand_moving_over_the_board_is_never_counted_as_pegs():
+    board, cal = _board(LIGHT_WOOD)
+    P = view_camera(NHPT_BOARD, SIZE, 35.0, 5.0, 1.0, focal_per_width=0.85)
+    seen: set[int] = set()
+    t = 0.1
+    # fingertips and their shadows sweep over every hole, three frames at each, no peg placed
+    for k in [0, 4, 8, 2, 6, 3, 5, 1, 7]:
+        for _ in range(3):
+            f = _frame([], LIGHT_WOOD)
+            _fingers(f, P, H[k][0], H[k][1] + 4.0)
+            seen |= _occupied(board, cal, f, t)
+            t += 0.08
+    assert seen == set(), seen
+    # one real peg then goes in and the hand leaves: that one is counted
+    for _ in range(4):
+        got = _occupied(board, cal, _frame([4], LIGHT_WOOD), t)
+        t += 0.08
+    assert got == {4}
+
+
+def test_change_alone_never_makes_a_loose_peg():
+    board, cal = _board(LIGHT_WOOD)
+    P = view_camera(NHPT_BOARD, SIZE, 35.0, 5.0, 1.0, focal_per_width=0.85)
+    f = _frame([], LIGHT_WOOD)
+    _fingers(f, P, 160.0, 200.0)
+    assert board.free_pegs_mm(board.warp(f, cal.run(f, 0.1))) == []
+
+
+def test_fingertips_held_still_over_an_empty_hole_are_not_a_peg():
+    # deep run 24 Oct: fingertips frozen over a hole for 0.5 s made the board "quiet", the hole
+    # read occupied, and the NHPT timer started early and stopped two pegs early. Change mostly
+    # outside the peg footprints (fingers, their shadow) is never a peg.
+    board, cal = _board(GREY)
+    P = view_camera(NHPT_BOARD, SIZE, 35.0, 5.0, 1.0, focal_per_width=0.85)
+    rng = np.random.default_rng(0)
+    for k in (1, 4, 2):
+        f = _frame([], GREY)
+        _fingers(f, P, H[k][0], H[k][1] + 4.0)
+        seen = set()
+        for i in range(6):
+            seen |= _occupied(board, cal, f, 1.0 + k + 0.08 * i)
+        assert seen == set(), (k, seen)
+    del rng

@@ -63,6 +63,9 @@ from praxis_session.perception.board_spec import CUP_TARGETS, SheetSpec
 from praxis_session.perception.calibration import CalibrationResult
 
 ARC: list[int] = [0, 1, 2, 3, 4, 3, 2, 1, 0]
+# Readings in a row off the destination dot before over_dot / placed believe the cup moved on
+# (team test 24 Oct: single stray readings restarted one placement up to 38 times).
+AWAY_READINGS = 3
 Phase = Literal["slow", "fast"]
 STATES = ("at_dot", "lifted", "in_transit", "over_dot", "placed", "hand_clear")
 
@@ -358,6 +361,10 @@ class CupFSM:
         self._lost = False
         self._occluded = False
         self._count = 0
+        self._away = 0  # readings in a row off the destination dot (over_dot)
+        self._clear_run = 0  # frames in a row over the dot with no hand near (over_dot)
+        self._settle_pos: tuple[float, float] | None = None  # where the current still run began
+        self._stray = False
         self._last_cup: tuple[float, float] | None = None
         self._arc_reaches: list[dict[str, Any]] = []
         self.arc_means_ms: list[float | None] = []
@@ -368,6 +375,8 @@ class CupFSM:
     def expected_next(self) -> int | None:
         if self.finished or self._seq_idx + 1 >= len(ARC):
             return None
+        if self.dot is None:
+            return ARC[0]  # the cup is not on a dot yet: it starts on dot 1 (team test 24 Oct)
         return ARC[self._seq_idx + 1]
 
     @property
@@ -404,8 +413,10 @@ class CupFSM:
             self._lost = True
         cup = None if obs.cup_mm is None else (float(obs.cup_mm[0]), float(obs.cup_mm[1]))
         handler = getattr(self, f"_in_{self.state}")
+        self._stray = False
         evs: list[Event] = handler(obs, cup)
-        self._last_cup = cup
+        if not self._stray:
+            self._last_cup = cup
         return evs
 
     # ---- helpers -------------------------------------------------------------------------
@@ -470,8 +481,10 @@ class CupFSM:
         return []
 
     def _enter_over(self, obs: CupObservation, k: int, occluded: bool) -> list[Event]:
-        self._dst, self._occluded, self._count = k, occluded, 1
+        self._dst, self._occluded, self._count, self._away = k, occluded, 1, 0
+        self._clear_run = 0
         self._settle_t = obs.t
+        self._settle_pos = None if obs.cup_mm is None else (float(obs.cup_mm[0]), float(obs.cup_mm[1]))
         self._rest_seen_t = None if occluded else obs.t
         evs = [self._go("over_dot", obs.t, to_dot=k)]
         return evs + self._maybe_place(obs)
@@ -479,14 +492,25 @@ class CupFSM:
     def _in_over_dot(self, obs: CupObservation, cup) -> list[Event]:
         assert self._dst is not None
         dst = self.dots[self._dst]
+        far = obs.hand_mm is None or _d(obs.hand_mm, dst) > self.hand_clear_mm
+        self._clear_run = self._clear_run + 1 if far else 0
         if cup is not None:
             if _d(cup, dst) > self.dot_radius_mm:
-                self._count = 0
+                # a stray reading is not the cup moving on (team test 24 Oct: over_dot and
+                # in_transit flipped every 0.1-0.3 s); AWAY_READINGS in a row is
+                self._away += 1
+                if self._away < AWAY_READINGS:
+                    self._stray = True  # and it is not the last position either
+                    return []
+                self._count = self._away = 0
                 return [self._go("in_transit", obs.t)]
-            moved = self._last_cup is not None and _d(cup, self._last_cup) > self.stationary_mm
+            self._away = 0
+            # still = within stationary_mm of where the run began, so a slow carry across a dot
+            # (a few mm a frame) is not a placement (deep run 24 Oct)
+            moved = self._settle_pos is not None and _d(cup, self._settle_pos) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
-            if self._count == 1:
-                self._settle_t = obs.t
+            if self._count == 1 or self._settle_pos is None:
+                self._settle_t, self._settle_pos = obs.t, cup
             self._occluded = False
             self._rest_seen_t = obs.t
         else:
@@ -497,11 +521,16 @@ class CupFSM:
                 self._occluded = True
             else:
                 self._count = 0
+        if self._count <= 1:  # hand-clear frames only count while the cup is resting
+            self._clear_run = 1 if far and self._count == 1 else 0
         return self._maybe_place(obs)
 
     def _maybe_place(self, obs: CupObservation) -> list[Event]:
         if self._count >= self.clear_frames:
-            self._t_placed, self._count = self._settle_t, 0
+            self._t_placed, self._away = self._settle_t, 0
+            # frames already seen with no hand near count towards hand-clear too (deep run
+            # 24 Oct: still then clear one after the other made a plain cup 0.5 s late)
+            self._count = min(self._clear_run, self.clear_frames - 1) if self._clear_run else 0
             return [self._go("placed", obs.t, to_dot=self._dst, t_placed=self._t_placed)]
         return []
 
@@ -509,8 +538,14 @@ class CupFSM:
         assert self._dst is not None
         dst = self.dots[self._dst]
         if cup is not None and _d(cup, dst) > self.dot_radius_mm:
+            self._away += 1  # as in over_dot: placed -> in_transit restarted one count 38 times
+            if self._away < AWAY_READINGS:
+                self._stray = True
+                return []
+            self._away = 0
             return [self._go("in_transit", obs.t)]  # picked up again before clearing
         if cup is not None:
+            self._away = 0
             self._rest_seen_t = obs.t  # base seen resting on the dot while the hand lets go
         if obs.hand_mm is None or _d(obs.hand_mm, dst) > self.hand_clear_mm:
             self._count += 1

@@ -55,6 +55,14 @@
                    while an occluder is there (a seated wooden peg is skin-coloured itself).
                    Coloured pegs read exactly as before; the change only adds what colour misses
                    (tests/test_uncoloured_pegs.py).
+                   Round 2 (same day, a real session counted nine pegs for one: fingertips and
+                   their shadows changed the board too): a hole filled by change alone (no peg
+                   colour) counts only once the board has been **quiet** for `quiet_frames` frames
+                   running (no occluder, and less than `stray_area_mm2` of the change appeared or
+                   went since the last frame: a resting peg does not move, fingers and shadows do);
+                   change that lies mostly (`stray_outside_frac`) outside the footprints never makes
+                   a NEW seat (still fingertips and their shadow; a seated peg they touch stays);
+                   loose pegs (lifts, drops) come from colour only.
 5. Height (12 Oct 2026, found by the 3-D renders, evaluation/results/synthetic3d_v0.md). A real
                    peg is 32 mm tall and stands in a board on the sheet; from a laptop camera
                    20-50 deg off vertical its body lands on the sheet plane as a streak that
@@ -253,10 +261,24 @@ class BoardState:
         disc_in_footprint: float = 0.25,
         change_threshold: int = 38,
         occluder_area_mm2: float = 700.0,
+        stray_area_mm2: float = 60.0,
+        quiet_frames: int = 3,
     ) -> None:
         self.spec = spec
         self.change_threshold = change_threshold
         self.occluder_area_mm2 = occluder_area_mm2
+        # section 6: change outside the peg footprints bigger than this (fingertips, a hand's
+        # shadow) means the board is not quiet; a peg seen by change alone needs `quiet_frames`
+        self.stray_area_mm2 = stray_area_mm2
+        self.stray_outside_frac = 0.4
+        self._stray_mask: np.ndarray | None = None
+        self.quiet_frames = quiet_frames
+        self._stray = False
+        self._prev_changed: np.ndarray | None = None
+        self._change_frame: np.ndarray | None = None
+        self._frame_quiet = True
+        self._quiet_run = 0
+        self._change_run: list[int] = []
         self._ref: EmptyReference | None = None  # the empty board, section 6
         self._raw: np.ndarray | None = None  # the last warp before paper normalisation
         self.column_z_mm = column_z_mm
@@ -400,6 +422,10 @@ class BoardState:
         self._skin_base = []
         self._last_occ = None
         self._ref = None
+        self._quiet_run = 0
+        self._change_run = []
+        self._prev_changed = None
+        self._change_frame = None
 
     # ---- height-aware regions (section 5 of the module docstring) ---------------------------
     def seat_geometry(self) -> dict[str, Any] | None:
@@ -483,21 +509,29 @@ class BoardState:
         n, labels, stats, _ = cv2.connectedComponentsWithStats(changed, connectivity=8)
         big = self.occluder_area_mm2 * self.px_per_mm**2
         large = np.zeros(n, bool)
+        # Area outside where seated pegs stand: the footprints, or discs of 1.5 r without
+        # a camera model. Nine pegs at 45 deg touch, but stay inside their footprints.
+        geom = self.seat_geometry()
+        if geom is not None:
+            seat = geom["any_footprint"]
+        else:
+            disc = np.zeros(changed.shape, np.uint8)
+            for h in self._holes or []:
+                cv2.circle(disc, (int(round(h.x)), int(round(h.y))), int(round(1.5 * self.hole_radius_px)), 255, -1)
+            seat = disc > 0
+        outside = np.bincount(labels[~seat], minlength=n)
+        outside[0] = 0
         cand = np.flatnonzero(stats[:, cv2.CC_STAT_AREA] > big)
         cand = cand[cand > 0]
-        if cand.size:
-            # Area outside where seated pegs stand: the footprints, or discs of 1.5 r without
-            # a camera model. Nine pegs at 45 deg touch, but stay inside their footprints.
-            geom = self.seat_geometry()
-            if geom is not None:
-                seat = geom["any_footprint"]
-            else:
-                disc = np.zeros(changed.shape, np.uint8)
-                for h in self._holes or []:
-                    cv2.circle(disc, (int(round(h.x)), int(round(h.y))), int(round(1.5 * self.hole_radius_px)), 255, -1)
-                seat = disc > 0
-            outside = np.bincount(labels[~seat], minlength=n)
-            large[cand] = outside[cand] > big
+        large[cand] = outside[cand] > big
+        # Something moving (fingertips, a hand's shadow): more than `stray_area_mm2` of change
+        # appeared or went since the last frame. A peg resting anywhere does not move.
+        if self._change_frame is not raw:  # once per frame (change_masks runs more than once)
+            k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+            prev = self._prev_changed
+            moved = None if prev is None or prev.shape != changed.shape else cv2.morphologyEx(cv2.bitwise_xor(prev, changed), cv2.MORPH_OPEN, k3)
+            self._stray = moved is None or int(np.count_nonzero(moved)) > self.stray_area_mm2 * self.px_per_mm**2
+            self._prev_changed, self._change_frame = changed, raw
         if large.any():
             # fingertips the threshold split off the hand: small pieces within 4 mm of it
             k = max(3, int(round(8 * self.px_per_mm)) | 1)
@@ -505,6 +539,15 @@ class BoardState:
             touching = np.unique(labels[(near > 0) & (labels > 0)])
             large[touching] = True
         occluder = np.where(large[labels], 255, 0).astype(np.uint8)
+        # Mostly outside the footprints and not a hand: fingertips or their shadow, never a peg
+        # (deep run 24 Oct: frozen fingertips over an empty hole read as a seated peg). A seated
+        # peg's change lies inside its own footprint.
+        area = np.maximum(stats[:, cv2.CC_STAT_AREA], 1)
+        stray = (~large) & (outside > self.stray_outside_frac * area)
+        stray[0] = False
+        # kept apart, not removed: a seated peg the fingers touch merges with them and must
+        # stay seated; the stray share only stops a NEW seat (_gate_change_only)
+        self._stray_mask = np.where(stray[labels], 255, 0).astype(np.uint8)
         return cv2.bitwise_and(changed, cv2.bitwise_not(occluder)), occluder
 
     def _patch(self, gray: np.ndarray, h: Hole) -> np.ndarray | None:
@@ -536,8 +579,9 @@ class BoardState:
         return cv2.inRange(hsv, np.array(SKIN_HSV_LO, np.uint8), np.array(SKIN_HSV_HI, np.uint8))
 
     # ---- pegs -----------------------------------------------------------------------------
-    def peg_mask(self, canonical_bgr: np.ndarray, colour_range: Any = "current") -> np.ndarray:
-        """`colour_range`: "current", None (the default saturated band) or a window to test."""
+    def peg_mask(self, canonical_bgr: np.ndarray, colour_range: Any = "current", include_change: bool = True) -> np.ndarray:
+        """`colour_range`: "current", None (the default saturated band) or a window to test.
+        `include_change` False: colour only (loose pegs, section 6)."""
         rng = self.colour_range if isinstance(colour_range, str) else colour_range
         hsv = cv2.cvtColor(canonical_bgr, cv2.COLOR_BGR2HSV)
         if rng is None:
@@ -551,7 +595,7 @@ class BoardState:
             mask = cv2.bitwise_and(mask, cv2.bitwise_not(skin))
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))  # 1.7 mm: wood-grain specks go
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        change = self.change_masks(canonical_bgr)
+        change = self.change_masks(canonical_bgr) if include_change else None
         if change is not None:  # section 6: what colour misses (wooden, white, grey pegs)
             mask = cv2.bitwise_and(cv2.bitwise_or(mask, change[0]), cv2.bitwise_not(change[1]))
         return mask
@@ -573,7 +617,8 @@ class BoardState:
         """(x, y, area) in canonical px for every peg-coloured blob above a minimum area and no
         longer than `max_peg_len_mm` (a peg lying on its side is ~32 mm; a pen or a phone is not
         a peg), outside the excluded (hand) rectangles."""
-        mask = self._exclude(self.peg_mask(canonical_bgr, colour_range), exclude_mm)
+        # colour only: change alone is a moving hand as often as a dropped peg (section 6)
+        mask = self._exclude(self.peg_mask(canonical_bgr, colour_range, include_change=False), exclude_mm)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         min_area = (self.px_per_mm * 5.0) ** 2  # 25 mm2: a peg's top alone is ~40; specks are not pegs
         max_len = self.max_peg_len_mm * self.px_per_mm
@@ -595,9 +640,21 @@ class BoardState:
         skin = self.skin_mask(canonical_bgr)
         change = self.change_masks(canonical_bgr)
         occluder = None if change is None else change[1]
+        colour = None if change is None else self.peg_mask(canonical_bgr, include_change=False)
+        self._frame_quiet = change is None or (not self._stray and not occluder.any())
         out = []
         for h in holes:
             frac = self._disc_fraction(mask, h)
+            colour_seen = False
+            stray_share = 0.0
+            if self._stray_mask is not None and change is not None:
+                stray_share = self._disc_fraction(self._stray_mask, h)
+                if geom is not None and geom["columns"][h.index].size:
+                    stray_share = max(stray_share, float(self._stray_mask.ravel()[geom["columns"][h.index]].mean() / 255.0))
+            if colour is not None:
+                colour_seen = self._disc_fraction(colour, h) >= self.occupied_fraction
+                if geom is not None and geom["columns"][h.index].size:
+                    colour_seen = colour_seen or float(colour.ravel()[geom["columns"][h.index]].mean() / 255.0) >= self.column_occupied_fraction
             score = None
             tpl = self._templates[h.index] if h.index < len(self._templates) else None
             patch = self._patch(gray, h)
@@ -637,6 +694,8 @@ class BoardState:
                     "peg_fraction": round(frac, 4),
                     "empty_template_score": None if score is None else round(score, 4),
                     "column_fraction": None if col is None else round(col, 4),
+                    "colour_seen": colour_seen,
+                    "stray_share": round(stray_share, 4),
                     # with the empty board known, skin hides a hole only while an occluder is
                     # there (a seated wooden peg is skin-coloured itself), section 6
                     "hidden": bool(
@@ -670,7 +729,28 @@ class BoardState:
                 out.append(False)  # another peg's streak, not a peg in this hole
             else:
                 out.append(self._occupied(s))
+        if self._ref is not None:
+            out = self._gate_change_only(scores, out)
         self._last_occ = list(out)
+        return out
+
+    def _gate_change_only(self, scores: list[dict[str, Any]], out: list[bool]) -> list[bool]:
+        """A hole newly filled by change alone (no peg colour) counts only after the board has
+        been quiet for `quiet_frames` frames running with it filled (section 6): a seated peg
+        stays when the hand has gone, fingertips and shadows move on."""
+        self._quiet_run = self._quiet_run + 1 if self._frame_quiet else 0
+        if len(self._change_run) != len(out):
+            self._change_run = [0] * len(out)
+        last = self._last_occ if self._last_occ is not None and len(self._last_occ) == len(out) else [False] * len(out)
+        for k, s in enumerate(scores):
+            if out[k] and not last[k] and not s.get("colour_seen"):
+                # fingertips or their shadow over the hole (change mostly off the footprints)
+                fingers = s.get("stray_share", 0.0) >= 0.3
+                self._change_run[k] = self._change_run[k] + 1 if self._frame_quiet and not fingers else 0
+                if self._quiet_run < self.quiet_frames or self._change_run[k] < self.quiet_frames:
+                    out[k] = False
+            else:
+                self._change_run[k] = 0
         return out
 
     def _occupied(self, s: dict[str, float]) -> bool:
