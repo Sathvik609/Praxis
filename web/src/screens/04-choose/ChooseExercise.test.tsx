@@ -118,6 +118,15 @@ test('pain 7 or more is a rest day: every card says Resting today, nothing start
   expect(screen.getByText('AT /details')).toBeInTheDocument()
 })
 
+test('25 Oct team test: on a rest day each card still opens its demo, and no sheet to print', () => {
+  checkin(8)
+  renderChoose()
+  expect(screen.getAllByRole('button', { name: /^Watch the demo/ })).toHaveLength(3)
+  expect(screen.queryByRole('link', { name: /^Print the sheet/ })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Watch the demo: Waiter – cup' }))
+  expect(screen.getByText(/^AT \/details\/demo\?exercise=cup/)).toBeInTheDocument()
+})
+
 test('rest day: "check in again" goes to the check-in', () => {
   checkin(8)
   renderChoose()

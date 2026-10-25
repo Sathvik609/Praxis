@@ -114,14 +114,22 @@ export function ChooseExercise() {
                       </div>
                     </button>
                     <div className="lib-ctas">
+                      {/* 25 Oct team test: a rest day kept only "Print the sheet", so the demos the
+                          banner offers could not be opened. The demo screen itself never starts a
+                          session on a stopped day. */}
                       {rest ? (
-                        <span className="lib-rest">Resting today</span>
+                        <>
+                          <button type="button" className="lib-cta lib-cta-1" aria-label={`Watch the demo: ${e.name}`} onClick={() => start(e.id)}>
+                            Watch the demo
+                          </button>
+                          <span className="lib-rest">Resting today</span>
+                        </>
                       ) : (
                         <button type="button" className="lib-cta lib-cta-1" aria-label={`Start session: ${e.name}`} onClick={() => start(e.id)}>
                           Start session
                         </button>
                       )}
-                      {e.sheetPdf && (
+                      {e.sheetPdf && !rest && (
                         <a className="lib-cta lib-cta-2 inline-flex items-center justify-center" href={e.sheetPdf} target="_blank" rel="noopener" aria-label={`Print the sheet: ${e.name}`}>
                           Print the sheet
                         </a>

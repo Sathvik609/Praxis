@@ -1,10 +1,14 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { ME, PRESCRIPTION, SESSION, mockApi } from '../../test/api-mock'
 
 vi.mock('../../avatar/AvatarScene', () => ({ AvatarScene: () => <div data-testid="scene" /> }))
 
 import { Home } from './Home'
+
+function Search() {
+  return <div data-testid="search">{useLocation().search}</div>
+}
 
 /** Renders Home and lets its five API reads settle, so no state update lands after a test. */
 async function renderHome() {
@@ -13,7 +17,7 @@ async function renderHome() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/details/choose" element={<div>CHOOSE</div>} />
-        <Route path="/details/demo" element={<div>DEMO</div>} />
+        <Route path="/details/demo" element={<><div>DEMO</div><Search /></>} />
         <Route path="/session" element={<div>SESSION</div>} />
         <Route path="/details/progress" element={<div>PROGRESS</div>} />
         <Route path="/report/:id" element={<div>REPORT</div>} />
@@ -58,6 +62,33 @@ test('home shows next practice, the week from the calendar and the affected area
   expect(screen.getByRole('tablist', { name: 'Affected areas' })).toBeInTheDocument()
   // design v2: the shoulder is the default focus area
   expect(screen.getByRole('tab', { name: /Left shoulder/ })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('25 Oct judge walkthrough: on the weekly peg-test day the card says the peg test, as the calendar does', async () => {
+  const sunday = { ...day('2026-10-11', 6, 'today'), planned: false, nhpt_due: true, minutes: 0, exercises: [{ id: 'nhpt', name: 'Nine-Hole Peg Test' }] }
+  mockApi(routes({ '/api/calendar': { ...CALENDAR, today: '2026-10-11', days: [...WEEK_DAYS.slice(0, 6).map((d) => ({ ...d, is_today: false, status: d.status === 'today' ? 'done' : d.status })), sunday] } }))
+  await renderHome()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Nine-Hole Peg Test$/)
+  expect(screen.getByText(/Weekly test · you need 9 pegs and the printed peg sheet/)).toBeInTheDocument()
+  expect(screen.queryByText(/About 10 min/)).not.toBeInTheDocument()
+})
+
+test('25 Oct judge walkthrough: on a rest day the card says so, and practice is still one tap away', async () => {
+  const saturday = { ...day('2026-10-10', 5, 'today'), planned: false, nhpt_due: false, minutes: 0, exercises: [] }
+  mockApi(routes({ '/api/calendar': { ...CALENDAR, today: '2026-10-10', days: [...WEEK_DAYS.slice(0, 5).map((d) => ({ ...d, is_today: false })), saturday, WEEK_DAYS[6]] } }))
+  await renderHome()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Rest day$/)
+  expect(screen.getByText(/Rest is part of your plan\. You can still practise if you like\./)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
+})
+
+test('25 Oct judge walkthrough: after choosing the right side at check-in, Home names the right side too', async () => {
+  localStorage.setItem('praxis.side', 'right')
+  await renderHome()
+  for (const tab of [/Right shoulder/, /Right elbow/, /Right hand/]) expect(screen.getByRole('tab', { name: tab })).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/Left (shoulder|elbow|hand)/)
+  fireEvent.click(screen.getByRole('button', { name: 'Practise Arm out to the side' }))
+  expect(screen.getByTestId('search')).toHaveTextContent('side=right')
 })
 
 test('design review 21 Oct: no everyday goal, no trend line and no program list on Home', async () => {

@@ -6,7 +6,7 @@ import { arrowSelect } from '../../design/arrowKeys'
 import { Card } from '../../design/Card'
 import { Chip } from '../../design/Chip'
 import { Check, ZoomIn, ZoomOut } from '../../design/Icon'
-import { api, isReplaySession, useApi } from '../../lib/api'
+import { api, isReplaySession, useApi, type Calendar } from '../../lib/api'
 import { STATUS_WORD, areaSummary, type AreaKey } from '../../lib/areaSummary'
 import { WEEKDAYS } from '../../lib/calendar'
 import { DAY_MINUTES, DAY_ORDER } from '../../lib/plan'
@@ -21,6 +21,17 @@ import { StageMinis } from './StageMinis'
 const ZOOMS = [1, 1.25, 1.5]
 const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
 
+/** The practice card follows today on the calendar (25 Oct: on the Sunday peg-test day and on
+ *  rest days it used to say Arm out to the side + Waiter – cup). Before the calendar loads, or
+ *  on a day it lists nothing for, it shows the default day order. */
+function todayCard(calendar: Calendar | null | undefined): { title: string; sub: string } {
+  const today = calendar?.days.find((d) => d.is_today)
+  if (today && !today.planned && !today.nhpt_due) return { title: 'Rest day', sub: 'Rest is part of your plan. You can still practise if you like.' }
+  const names = today?.exercises.length ? today.exercises.map((e) => e.name) : DAY_ORDER.map((id) => exerciseById(id)?.name ?? id)
+  if (today && !today.planned) return { title: names.join(' + '), sub: 'Weekly test · you need 9 pegs and the printed peg sheet' }
+  return { title: names.join(' + '), sub: `About ${today?.minutes || DAY_MINUTES} min · you need a cup and the printed target sheet` }
+}
+
 /** Screen 02 · Home (design v2, designers' 6 Oct artifact). Next practice, this week from
  *  `/api/calendar`, and the affected-areas card: tabs + body-map hotspots pick an area; the
  *  stage tiles and the area card are derived from stored sessions, progress, the prescription
@@ -32,19 +43,28 @@ export function Home() {
   const [focus, setFocus] = useState<AreaKey>('lShoulder')
   const [reducedMotion] = useState(prefersReducedMotion) // the idle figure stays still
   const [coachOpen, setCoachOpen] = useState(false)
-  const region = REGIONS[focus]
   const { data: me } = useApi(() => api.me())
+  // 25 Oct judge walkthrough: the areas name the side chosen at check-in (the program's side before that).
+  const side = readSide() ?? (me?.side === 'right' ? 'right' : 'left')
+  const sided = (k: AreaKey) => {
+    const r = REGIONS[k]
+    return side === 'left' ? r : { ...r, title: r.title.replace(/^Left/, 'Right'), primary: { ...r.primary, to: r.primary.to.replace('side=left', 'side=right') } }
+  }
+  const joint = (k: AreaKey) => (side === 'left' ? k : k.replace(/^l/, 'r'))
+  const region = sided(focus)
   const { data: sessions } = useApi(() => api.sessions())
   const { data: progress } = useApi(() => api.progress())
   const { data: rx } = useApi(() => api.prescription())
   const { data: calendar } = useApi(() => api.calendar())
+  const card = todayCard(calendar)
   const view = areaSummary(focus, { sessions, progress, rx, calendar, me })
   const area = 'name' in view ? view : null
   const headline = area?.headline ?? 'Nothing measured here'
-  const hotspots: Hotspot[] = AR_ORDER.map((k) => ({ key: k, joint: k, status: REGIONS[k].status, label: REGIONS[k].title, word: STATUS_WORD[REGIONS[k].status] }))
+  const hotspots: Hotspot[] = AR_ORDER.map((k) => ({ key: k, joint: joint(k), status: REGIONS[k].status, label: sided(k).title, word: STATUS_WORD[REGIONS[k].status] }))
   const week = calendar ? calendar.days.filter((d) => d.date >= calendar.week.from && d.date <= calendar.week.to) : []
   const openReport = () => nav(sessions?.[0] ? `/report/${sessions[0].id}` : '/details/progress')
-  const pickArea = (k: string) => {
+  const pickArea = (j: string) => {
+    const k = j.replace(/^r/, 'l')
     if (k === 'lShoulder' || k === 'lElbow' || k === 'lWrist') setFocus(k)
   }
 
@@ -57,8 +77,8 @@ export function Home() {
             {/* 24 Oct: where a first-time visitor starts. Said in words; the ring on the button only repeats it. */}
             <span className="start-here-tag"><span className="start-here-arrow" aria-hidden="true">↓</span>Start here</span>
           </div>
-          <h1 className="text-3xl text-white">{DAY_ORDER.map((id) => exerciseById(id)?.name ?? id).join(' + ')}</h1>
-          <p className="mt-1 text-white/80">About {DAY_MINUTES} min · you need a cup and the printed target sheet</p>
+          <h1 className="text-3xl text-white">{card.title}</h1>
+          <p className="mt-1 text-white/80">{card.sub}</p>
           <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav('/details/choose')}>Start session</Button>
           <Button full variant="secondary" className="mt-3 hero-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
           <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu on the left.</p>
@@ -104,7 +124,7 @@ export function Home() {
         </div>
         <div className="hp-tabs" role="tablist" aria-label="Affected areas" onKeyDown={arrowSelect}>
           {AR_ORDER.map((k) => {
-            const r = REGIONS[k]
+            const r = sided(k)
             const on = k === focus
             return (
               <button key={k} type="button" role="tab" aria-selected={on} aria-controls="area-panel" className={`hp-tab ${on ? 'hp-tab-on' : ''}`} onClick={() => setFocus(k)}>
@@ -116,7 +136,7 @@ export function Home() {
           })}
         </div>
         <div className="hp-stage relative">
-          <AvatarPanel clip="idle" autoplay={!reducedMotion} camera="front" markers={[]} hotspots={hotspots} hotActive={focus} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
+          <AvatarPanel clip="idle" autoplay={!reducedMotion} camera="front" markers={[]} hotspots={hotspots} hotActive={joint(focus)} onHot={pickArea} compact showCues zoom={ZOOMS[zoomIdx]} overlayTop={64} />
           <StageMinis k={focus} name={region.title} view={view} />
         </div>
         <div className="hp-actions">
