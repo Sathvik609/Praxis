@@ -65,6 +65,10 @@ def _next_practice(summary: dict[str, Any], clinician: str) -> dict[str, Any]:
     "Dr. Rao"): the report names whoever prescribes, never a fixed name (6 Oct)."""
     mode = summary.get("mode")
     cam = summary.get("camera", {})
+    if session_source(summary) == "replay":
+        # 25 Oct judge walkthrough: a replay's report said "Assessment recorded". A recorded clip
+        # is not the patient's practice and changes nothing in the plan.
+        return {"text": "This was a replay of a saved clip. It is not part of your practice and does not change your plan.", "proposal": "none (replay)", "level_change": False}
     if summary.get("stopped"):
         return {"text": "Session ended by a stop rule. Continue only after your therapist reviews the flag.", "proposal": "review with clinician", "level_change": False}
     if mode == "cup":

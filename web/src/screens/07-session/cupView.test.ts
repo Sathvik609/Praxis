@@ -57,6 +57,11 @@ test('progression facts come from the camera: verified slow reaches and the arc 
   expect(cupProgressFacts([], cupFrame({ arc_means_ms: [null, 1200] })).fasterPct).toBeNull()
 })
 
+test('progression facts stop at the end of the slow arcs: reaches made while the prompt waits are not counted (25 Oct replay said 21 of 21)', () => {
+  const evs = [reach(1, 1, true), arcDone(2, 1), reach(3, 2, false, 'cup_occluded'), arcDone(4, 2), reach(5, 1, true), reach(6, 2, true)]
+  expect(cupProgressFacts(evs as never, cupFrame({ arc_means_ms: [1600, 1200] }))).toEqual({ verified: 1, total: 2, fasterPct: 25 })
+})
+
 test('pace against arc 1 in words: under 5 % either way is the same pace, never "0% faster" (10 Oct)', () => {
   expect(paceVsArc1(0)).toBe('same pace as arc 1')
   expect(paceVsArc1(4)).toBe('same pace as arc 1')

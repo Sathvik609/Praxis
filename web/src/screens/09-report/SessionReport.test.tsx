@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ME, SESSION, mockApi } from '../../test/api-mock'
+import { readDay } from '../../lib/day'
 import { SessionReport } from './SessionReport'
 
 function renderReport() {
@@ -216,7 +217,7 @@ test('a replay session without capture times shows processing time instead', asy
   const latency = { capture_to_event_p50: null, capture_to_event_p95: null, proc_p50: 20, proc_p95: 30, event_to_cue_p50: null, event_to_cue_p95: null, frames: 40, dropped: 0, cues: 0 }
   mockApi({ '/api/sessions/abc': { ...SESSION, summary: { ...SESSION.summary, latency } }, '/api/patients/me': ME })
   renderReport()
-  expect(await screen.findByText(/processing 20 \/ 30 ms · event→cue — · 40 frames, 0 dropped/)).toBeInTheDocument()
+  expect(await screen.findByText('Latency p50 / p95 · OpenCV processing 20 / 30 ms · 40 frames · replay: no camera, so no capture or cue times')).toBeInTheDocument()
 })
 
 test('no latency line for a record that carries none (seeded history)', async () => {
@@ -499,4 +500,14 @@ test('the camera card fills the column when it draws per-rep bars', async () => 
   renderReport()
   const card = (await screen.findByRole('heading', { name: 'What the camera measured' })).closest('.rp-cam')
   expect(card).not.toHaveClass('rp-cam-flat')
+})
+
+test('a replay report is never bound to today (25 Oct: it marked the cup done and could stop the day)', async () => {
+  localStorage.setItem('praxis.day', JSON.stringify({ ...readDay(), checkin: { pain: 2, location: '', energy: 'ok', minutes: 20, new_symptoms: false, tier: 'full', at: new Date().toISOString() }, current: 'cup' }))
+  mockApi({ '/api/sessions/abc': { ...SESSION, source: 'replay', replay: true }, '/api/patients/me': ME })
+  renderReport()
+  await screen.findByText('Replay · not counted')
+  expect(readDay().done).toEqual([])
+  expect(readDay().current).toBe('cup')
+  localStorage.clear()
 })

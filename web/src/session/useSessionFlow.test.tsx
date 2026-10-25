@@ -5,6 +5,7 @@ import { readDay } from '../lib/day'
 import { ACK_WAIT_MS, useSessionFlow } from './useSessionFlow'
 
 const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>
+const replayWrapper = ({ children }: { children: ReactNode }) => <MemoryRouter initialEntries={['/session?exercise=cup&replay=synthetic_cup_01']}>{children}</MemoryRouter>
 
 afterEach(() => localStorage.clear())
 
@@ -176,3 +177,14 @@ test('End session stops the camera at once and the session reads as ended until 
   expect(result.current.ended).toBe(true)
 })
 
+
+test('the stored check-in goes to a live session but never to a replay (25 Oct: a rest-day pain stopped the replay and flagged the therapist)', () => {
+  sessionStorage.setItem('praxis.checkin', JSON.stringify({ pain: 8, energy: 'low', minutes: 10, new_symptoms: false }))
+  const live = vi.fn()
+  renderHook(() => useSessionFlow([], live, vi.fn(), true), { wrapper })
+  expect(live).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'checkin', pain: 8 }))
+  const replay = vi.fn()
+  renderHook(() => useSessionFlow([], replay, vi.fn(), true), { wrapper: replayWrapper })
+  expect(replay).not.toHaveBeenCalled()
+  sessionStorage.clear()
+})

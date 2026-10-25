@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { finishReport, recordPainAfter } from '../lib/day'
 import type { PraxisEvent } from '../lib/events'
 import type { Feedback } from '../screens/08-feedback/FeedbackOverlay'
@@ -34,6 +34,10 @@ export const ACK_WAIT_MS = 5000
  *  open for the feedback: nothing is measured behind the feedback form. */
 export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, unknown>) => void, stop: () => void, connected: boolean, endCapture?: () => void) {
   const nav = useNavigate()
+  // 25 Oct: a replay plays the clip at the prescribed dose; it is not today's practice, so it
+  // never gets today's check-in (a rest-day pain stopped it) and is never bound to the day.
+  const [sp] = useSearchParams()
+  const replay = !!sp.get('replay')
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [early, setEarly] = useState(false)
   const [recordingEnded, setRecordingEnded] = useState(false)
@@ -47,7 +51,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
   const sentCheckin = useRef(false)
 
   useEffect(() => {
-    if (!connected || sentCheckin.current) return
+    if (!connected || sentCheckin.current || replay) return
     sentCheckin.current = true
     try {
       const raw = sessionStorage.getItem('praxis.checkin')
@@ -58,7 +62,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     } catch {
       /* no check-in stored */
     }
-  }, [connected, send])
+  }, [connected, send, replay])
 
   const ack = [...events].reverse().find((e) => e.type === 'command' && e.cmd === 'feedback') as (PraxisEvent & { summary?: { session_id?: string } }) | undefined
   /** Leave for the report with the screen's own state (no stored report to open). Once. */
@@ -79,7 +83,7 @@ export function useSessionFlow(events: PraxisEvent[], send: (o: Record<string, u
     const next = then.current
     if (next && sid) {
       // the report is stored; bind it to today (as the report page would) and go on
-      finishReport(sid, next.mode, false)
+      if (!replay) finishReport(sid, next.mode, false)
       nav(next.url)
       return
     }

@@ -78,7 +78,7 @@ test('replay clips open in a modal with the synthetic label and start a replay s
   expect(screen.queryByText('Nine-Hole Peg Test')).not.toBeInTheDocument()
   const dialog = await openReplay()
   expect(await within(dialog).findByText('Nine-Hole Peg Test')).toBeInTheDocument()
-  expect(within(dialog).getByText('Synthetic render')).toBeInTheDocument()
+  expect(within(dialog).getByText('Computer-made clip')).toBeInTheDocument()
   expect(within(dialog).getByText(/same OpenCV pipeline and coach as a live session/)).toBeInTheDocument()
   expect(within(dialog).getByText('Left hand')).toBeInTheDocument() // the peg test is a hand task; "rendered" is said once, by the tag
   expect(within(dialog).queryByText(/rendered test clip/)).toBeNull()
@@ -190,15 +190,35 @@ test("reset today's check-in clears an ordinary check-in on this device", async 
   expect(screen.getByRole('button', { name: /^Reset today's check-in/ })).toBeDisabled()
 })
 
-test('a stopped day cannot be reset', async () => {
+test('a rest day is not wiped, but the row offers to check in again (25 Oct: it said it could not be reset)', async () => {
   mockApi({})
   writeDay({ ...readDay(), checkin: CHECKIN(8, 'rest'), stopped: 'rest' })
   await renderSettings()
+  const row = screen.getByRole('button', { name: /^Reset today's check-in/ })
+  expect(row).toHaveTextContent('Today says rest · tap to check in again')
+  fireEvent.click(row)
+  expect(screen.getByText('CHECKIN')).toBeInTheDocument()
+  expect(readDay().stopped).toBe('rest')
+})
+
+test('a day a stop rule ended cannot be reset', async () => {
+  mockApi({})
+  writeDay({ ...readDay(), checkin: CHECKIN(2, 'full'), stopped: 'session' })
+  await renderSettings()
   const reset = screen.getByRole('button', { name: /^Reset today's check-in/ })
   expect(reset).toBeDisabled()
-  expect(reset).toHaveTextContent('Today is stopped')
+  expect(reset).toHaveTextContent("A stop rule ended today, so it can't be reset")
   fireEvent.click(reset)
-  expect(readDay().stopped).toBe('rest')
+  expect(readDay().stopped).toBe('session')
+})
+
+test('the theme row names Dark as the default (24 Oct)', async () => {
+  mockApi({})
+  await renderSettings()
+  fireEvent.click(screen.getByRole('radio', { name: 'Light' }))
+  expect(document.body.textContent).not.toMatch(/Light is the default/)
+  fireEvent.click(screen.getByRole('radio', { name: 'Dark' }))
+  expect(screen.getByText(/Low-glare navy · the default/)).toBeInTheDocument()
 })
 
 test('privacy, cloud and help rows say what is real', async () => {

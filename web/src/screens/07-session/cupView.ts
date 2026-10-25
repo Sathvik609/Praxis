@@ -104,7 +104,10 @@ export function cupActiveS(events: Ev[], frame: FrameEvent | null): number | nul
 /** What the progression prompt is based on: slow-arc reaches verified by the camera, and how
  *  much faster the second slow arc's mean reach was than the first (`arc_means_ms`). */
 export function cupProgressFacts(events: Ev[], frame: FrameEvent | null): { verified: number; total: number; fasterPct: number | null } {
-  const slow = events.filter((e) => e.type === 'reach_complete' && (e.phase ?? 'slow') === 'slow')
+  // 25 Oct: the evidence is the slow arcs only. A replay keeps playing while the prompt waits,
+  // and those placements are still tagged slow, so stop at the arc_complete that awaits the choice.
+  const end = events.findIndex((e) => e.type === 'arc_complete' && e.awaiting_phase === true)
+  const slow = (end < 0 ? events : events.slice(0, end + 1)).filter((e) => e.type === 'reach_complete' && (e.phase ?? 'slow') === 'slow')
   const means = (frame?.cup as { arc_means_ms?: (number | null)[] } | undefined)?.arc_means_ms ?? []
   const [a, b] = means
   const fasterPct = a && b ? Math.round(((a - b) / a) * 100) : null

@@ -40,8 +40,9 @@ type LatencyBlock = {
 const pp = (a: number | null, b: number | null) => (a != null && b != null ? `${Math.round(a)} / ${Math.round(b)} ms` : '—')
 
 function latencyText(l: LatencyBlock): string {
-  const first = l.capture_to_event_p50 != null ? `capture→event ${pp(l.capture_to_event_p50, l.capture_to_event_p95)}` : `processing ${pp(l.proc_p50, l.proc_p95)}`
-  return `Latency p50 / p95 · ${first} · event→cue ${pp(l.event_to_cue_p50, l.event_to_cue_p95)} · ${l.frames} frames, ${l.dropped} dropped`
+  // 25 Oct: a replay has no camera, so it has no capture time and its "event→cue —" read oddly.
+  if (l.capture_to_event_p50 == null) return `Latency p50 / p95 · OpenCV processing ${pp(l.proc_p50, l.proc_p95)} · ${l.frames} frames · replay: no camera, so no capture or cue times`
+  return `Latency p50 / p95 · capture→event ${pp(l.capture_to_event_p50, l.capture_to_event_p95)} · event→cue ${pp(l.event_to_cue_p50, l.event_to_cue_p95)} · ${l.frames} frames, ${l.dropped} dropped`
 }
 
 const mmss = (s: number | undefined) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '—')
@@ -111,7 +112,7 @@ export function SessionReport() {
     return () => clearTimeout(h)
   }, [notePending, polls, reload])
   const has = !!data?.summary && !isHiddenSession(data)
-  const dayRun = useDayRun(data?.summary ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped) // day flow (Track C)
+  const dayRun = useDayRun(data?.summary && !isReplaySession(data) ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped) // day flow (Track C)
   const thisId = has ? (exerciseOfSession(data!)?.id ?? null) : null
   // The day block and per-exercise columns belong only to a report of today's run.
   const inDay = !!dayRun && !!thisId && DAY_ORDER.includes(thisId)

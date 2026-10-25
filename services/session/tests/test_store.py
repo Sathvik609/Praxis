@@ -338,6 +338,15 @@ def test_next_practice_names_the_prescriptions_clinician(tmp_path):
     assert all("Rao" not in s["next_practice"]["text"] for s in st.sessions() if s["mode"] in ("cup", "arm"))
 
 
+def test_a_replay_report_never_says_anything_was_recorded_for_the_plan(tmp_path):
+    st = Store(tmp_path / "p.db")
+    st.seed_if_empty()
+    for mode in ("nhpt", "cup", "arm"):
+        st.save_session(_summary(session_id=f"r_{mode}", mode=mode, source="replay"), {}, {}, [])
+        text = st.session(f"r_{mode}")["next_practice"]["text"]
+        assert "replay" in text and "recorded" not in text.lower() and "Assessment" not in text
+
+
 def test_update_feedback_merges_told_us_and_flags_high_pain_once(tmp_path):
     st = Store(tmp_path / "p.db")
     st.seed_if_empty()

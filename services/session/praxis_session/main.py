@@ -391,9 +391,10 @@ def api_calendar(start: date | None = Query(None, alias="from"), end: date | Non
 
 
 @app.get("/api/plan")
-def api_plan(pain: int = 0, nhpt_due: bool = True) -> dict[str, object]:
-    """Today in the default order at the pain tier's dose (`plan.day_plan`). A rule in code."""
-    return day_plan(pain, SEED_PRESCRIPTION, nhpt_due=nhpt_due)
+def api_plan(pain: int = 0, nhpt_due: bool = True, continue_gently: bool = False) -> dict[str, object]:
+    """Today in the default order at the pain tier's dose (`plan.day_plan`). A rule in code.
+    `continue_gently` is the check-in's choice at or above the stop level (25 Oct)."""
+    return day_plan(pain, SEED_PRESCRIPTION, nhpt_due=nhpt_due, continue_gently=continue_gently)
 
 
 class CheckinBody(BaseModel):
@@ -910,6 +911,10 @@ def _handle_command_unchecked(cmd: dict, pipeline: SessionPipeline | None, coach
     if pipeline is None or coach is None:
         return [make_event("command", cmd=name, ok=False, error="no pipeline")]
     if name == "checkin":
+        if coach.replay_clip:
+            # 25 Oct: a replay plays the clip at the prescribed dose. Today's check-in belongs to
+            # live sessions; applied here, a rest-day pain ended the replay and flagged the therapist.
+            return [make_event("command", cmd=name, ok=True, session_id=coach.session_id, ignored="replay")]
         pain = _int_field(cmd, "pain", 0, 0, 10)
         minutes = _int_field(cmd, "minutes", 0, 0, 600)
         # Pain tier (plan.py), enforced here and not left to the client: pain 4-6 tightens the

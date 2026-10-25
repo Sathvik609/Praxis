@@ -87,7 +87,7 @@ export function Settings() {
             <ul className="st-list">
               <SettingsRow
                 title="Theme"
-                sub={theme === 'auto' ? 'Follows your device' : theme === 'dark' ? 'Low-glare navy for evenings' : 'Light is the default'}
+                sub={theme === 'auto' ? 'Follows your device' : theme === 'dark' ? 'Low-glare navy · the default' : 'Bright, for daylight'}
                 control={
                   <div role="radiogroup" aria-label="Theme" className="st-seg" onKeyDown={arrowSelect}>
                     {THEMES.map(([v, l]) => (
@@ -118,9 +118,11 @@ export function Settings() {
               <SettingsRow title="Replay a recorded session" sub="Same OpenCV pipeline, no webcam needed" onClick={() => setReplayOpen(true)} />
               <SettingsRow
                 title="Reset today's check-in"
-                sub={day.stopped ? "Today is stopped, so it can't be reset" : day.checkin ? `Checked in today · pain ${day.checkin.pain}` : 'No check-in yet today'}
-                onClick={resetToday}
-                disabled={!!day.stopped || !day.checkin}
+                // 25 Oct: a rest day is never wiped here (stop rules override), but the check-in
+                // screen lets the patient check in again, so the row says so and opens it.
+                sub={day.stopped === 'rest' ? 'Today says rest · tap to check in again' : day.stopped === 'session' ? "A stop rule ended today, so it can't be reset" : day.stopped ? "Today is stopped, so it can't be reset" : day.checkin ? `Checked in today · pain ${day.checkin.pain}` : 'No check-in yet today'}
+                onClick={day.stopped === 'rest' ? () => nav('/details/checkin') : resetToday}
+                disabled={day.stopped === 'rest' ? false : !!day.stopped || !day.checkin}
               />
               {health?.team_test && (
                 <>
@@ -173,7 +175,7 @@ export function Settings() {
                   key={c.id}
                   title={name}
                   sub={`${c.mode === 'nhpt' ? 'Left hand' : 'Left arm'}${c.synthetic ? '' : ' · recorded with consent'}`}
-                  control={c.synthetic ? <span className="st-tag">Synthetic render</span> : undefined}
+                  control={c.synthetic ? <span className="st-tag">Computer-made clip</span> : undefined}
                   ariaLabel={`Replay ${name}`}
                   to={`/session?exercise=${ex?.id ?? c.mode}&${c.mode === 'nhpt' ? 'hand' : 'side'}=left&replay=${c.id}`}
                 />

@@ -795,3 +795,20 @@ def test_socket_check_in_with_continue_gently_runs_the_gentle_dose_without_stopp
     s2 = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="cg2")
     out2 = main._handle_command({"cmd": "checkin", "pain": 8, "minutes": 14}, p2, s2, now=1.0)
     assert "stop" in [e.type for e in out2] and s2.stopped
+
+
+def test_a_replay_ignores_the_check_in_so_it_never_stops_the_day_or_flags_the_therapist(tmp_path):
+    """25 Oct review: on a rest day (pain 8) the web sent today's check-in into a replay, the pain
+    stop rule ended the replay at once and wrote a therapist flag for a recorded clip. A replay
+    plays the clip at the prescribed dose; the check-in belongs to live sessions only."""
+    import praxis_session.main as main
+    from praxis_session.pipeline import SessionPipeline
+    from praxis_session.prescription import SEED_PRESCRIPTION
+    from praxis_session.session import CoachSession
+
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    s = CoachSession(mode="cup", prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="rp1", replay_clip="synthetic_cup_01")
+    out = main._handle_command({"cmd": "checkin", "pain": 8, "minutes": 14}, p, s, now=1.0)
+    assert out[0].payload["ok"] is True and out[0].payload.get("ignored") == "replay"
+    assert not s.stopped and p.tier == "full"
+    assert [e.type for e in out] == ["command"]
