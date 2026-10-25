@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- Source of docs/img/architecture_simple.png. Remake (from the repo root):
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+    --force-device-scale-factor=2 --window-size=1600,760 \
+    --screenshot=docs/img/architecture_simple.png docs/img/architecture_simple.html
+-->
+<html><head><meta charset="utf-8"><style>
+  body { margin: 0; width: 1600px; height: 760px; background: #0b1220; color: #e8edf7;
+         font: 19px/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  .wrap { display: flex; align-items: center; gap: 0; padding: 40px 40px 0; height: 660px; box-sizing: border-box; }
+  .box { border: 2px solid #33415f; border-radius: 14px; background: #111a2e; padding: 22px 26px; box-sizing: border-box; }
+  h2 { margin: 0 0 4px; font-size: 25px; }
+  .sub { color: #9aa8c4; font-size: 17px; margin-bottom: 10px; }
+  .row { border-top: 1px solid #2a3654; padding: 10px 0; }
+  .row:last-child { padding-bottom: 0; }
+  .row b { color: #fff; }
+  .row span { color: #9aa8c4; }
+  .ocv { color: #7fd6a5 !important; }
+  .safe { color: #ffb36b !important; }
+  .mono { font-family: Menlo, monospace; font-size: 16px; color: #b8c4dc !important; }
+  .links { width: 190px; flex: none; display: flex; flex-direction: column; gap: 46px; align-items: center; color: #8fb0ff; font-size: 17px; text-align: center; }
+  .link { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .num { width: 30px; height: 30px; line-height: 30px; border-radius: 50%; background: #3d62e3; color: #fff; font-weight: 700; }
+  .line { width: 150px; height: 2px; background: #6d8fe8; position: relative; }
+  .line.r::after, .line.l::before { content: ""; position: absolute; top: -6px; border: 7px solid transparent; }
+  .line.r::after { right: -12px; border-left: 10px solid #6d8fe8; }
+  .line.l::before { left: -12px; border-right: 10px solid #6d8fe8; }
+  .foot { padding: 30px 40px 0; color: #9aa8c4; font-size: 17px; }
+</style></head><body>
+<div class="wrap">
+  <div class="box" style="width:300px; flex:none;">
+    <h2>Patient's laptop</h2>
+    <div class="sub">A web page. Nothing to install.</div>
+    <div class="row"><b>Built-in camera</b><br><span>small frames, 10–15 a second</span></div>
+    <div class="row"><b>Captions and cues</b><br><span>audio if turned on</span></div>
+    <div class="row"><b>Taps</b><br><span>pain, Yes / Not yet, Take a rest</span></div>
+    <div class="row"><b>3-D mannequin</b><br><span>shows the move, never scores</span></div>
+  </div>
+
+  <div class="links">
+    <div class="link"><div class="num">1</div>camera frames<div class="line r"></div></div>
+    <div class="link"><div class="line l"></div>events, captions,<br>prompts. Never video<div class="num">2</div></div>
+  </div>
+
+  <div class="box" style="flex:1;">
+    <h2>One Python service</h2>
+    <div class="sub">On AWS: EC2 c8g.large (Graviton4) from the COOL AMI, behind CloudFront HTTPS.<br>Or on the laptop itself, and then no frame leaves it.</div>
+    <div class="row"><b class="ocv">OpenCV 5</b><br><span>sheet markers → millimetres, holes and pegs, cup on the dots, hand and pose models (cv2.dnn)</span></div>
+    <div class="row"><b class="safe">Safety rules, first</b><br><span>pain, leaning, unchecked reps, losing you on camera: pause or stop, and flag the therapist</span></div>
+    <div class="row"><b>Coach</b><br><span>a rule coach for every cue, or the agent at checkpoints, calling OpenCV tools over MCP</span></div>
+    <div class="row"><b>Saved: events only</b> <span class="mono">sessions · events · flags · trace</span><br><span>Frames are processed in memory and dropped.</span></div>
+  </div>
+
+  <div class="links">
+    <div class="link"><div class="num">3</div>at checkpoints<div class="line r"></div></div>
+    <div class="link"><div class="line l"></div>tool calls,<br>short cue<div class="num">4</div></div>
+  </div>
+
+  <div class="box" style="width:230px; flex:none;">
+    <h2>Anthropic API</h2>
+    <div class="sub">Claude Sonnet 5.5</div>
+    <div class="row"><span>Gets numbers and short text, never frames.</span></div>
+    <div class="row"><span>Off unless turned on.</span></div>
+  </div>
+</div>
+<div class="foot">Every decision is logged as OpenCV event → decision → action and can be opened in the app. Full diagrams: docs/ARCHITECTURE.md</div>
+</body></html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Source of docs/img/agent_loop_simple.png. Remake (from the repo root):
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+    --force-device-scale-factor=2 --window-size=1600,440 \
+    --screenshot=docs/img/agent_loop_simple.png docs/img/agent_loop_simple.html
+  Tool names are the real ones in services/session/praxis_session/agent/tools.py.
+-->
+<html><head><meta charset="utf-8"><style>
+  body { margin: 0; width: 1600px; height: 440px; background: #0b1220; color: #e8edf7;
+         font: 19px/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  .wrap { display: flex; align-items: stretch; padding: 40px 40px 0; gap: 0; box-sizing: border-box; }
+  .box { flex: 1; border: 2px solid #33415f; border-radius: 14px; background: #111a2e; padding: 22px 24px; box-sizing: border-box; }
+  .num { display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; background: #3d62e3; color: #fff; font-weight: 700; margin-right: 8px; }
+  h2 { margin: 0 0 12px; font-size: 24px; }
+  p { margin: 0 0 10px; color: #9aa8c4; font-size: 17px; }
+  code { font-family: Menlo, monospace; font-size: 15px; color: #7fd6a5; }
+  .ocv { color: #7fd6a5; } .safe { color: #ffb36b; }
+  .arrow { width: 56px; flex: none; display: flex; align-items: center; justify-content: center; color: #6d8fe8; font-size: 34px; }
+  .back { margin: 22px 40px 0; border: 2px dashed #6d8fe8; border-top: none; border-radius: 0 0 14px 14px; height: 26px; position: relative; }
+  .back span { position: absolute; left: 50%; transform: translateX(-50%); bottom: -14px; background: #0b1220; padding: 0 12px; color: #8fb0ff; font-size: 17px; white-space: nowrap; }
+  .foot { padding: 34px 40px 0; color: #9aa8c4; font-size: 17px; }
+</style></head><body>
+<div class="wrap">
+  <div class="box">
+    <h2><span class="num">1</span><span class="ocv">OpenCV sees</span></h2>
+    <p>A checkpoint: check-in, end of a set, a pause, end of the peg test.</p>
+    <p>Only events and numbers go on. Never frames.</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box">
+    <h2><span class="num">2</span><span class="safe">Safety rules first</span></h2>
+    <p>Pain, leaning, losing you on camera: pause or stop, and flag the therapist.</p>
+    <p>In code. The agent cannot override them.</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box" style="flex:1.25">
+    <h2><span class="num">3</span>Our agent looks again</h2>
+    <p>Claude Sonnet 5.5 calls OpenCV tools over MCP:</p>
+    <p><code>check_setup</code> · <code>get_set_summary</code><br><code>recalibrate</code> · <code>resample_target_colour</code></p>
+    <p>and picks one action inside the prescription.</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box">
+    <h2><span class="num">4</span>Patient decides</h2>
+    <p>A short cue, or a prompt: go faster, rest, resume.</p>
+    <p>Any dose change waits for <b style="color:#fff">Yes</b> / <b style="color:#fff">Not yet</b>.</p>
+  </div>
+</div>
+<div class="back"><span>the next OpenCV result shows whether it worked</span></div>
+<div class="foot">Every step is logged: OpenCV event → tool call → action, with the event id it rests on. Off unless turned on; the rule coach covers every cue without it.</div>
+</body></html>

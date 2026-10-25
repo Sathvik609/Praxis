@@ -66,7 +66,7 @@ uv run uvicorn praxis_session.main:app --port 8000
 cd ../../web && pnpm install && pnpm dev                                # → http://localhost:5173
 ```
 
-In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_AGENT=anthropic` and an API key are set (README → Agent coach). The rule coach and every stop rule work without it.
+In this mode no frame leaves the laptop. The agent coach is off unless `PRAXIS_AGENT=anthropic` and an API key are set ([`docs/DEVELOPING.md`](DEVELOPING.md) → Agent coach). The rule coach and every stop rule work without it.
 
 ## 6. Where the evidence is
 
