@@ -181,3 +181,14 @@ def test_continue_gently_at_check_in_does_not_stop_but_later_pain_still_does():
     assert types(sr.on_pain(8, t=1.0)) == ["stop", "therapist_flag"] and sr.stopped
     sr2 = StopRules(SEED_PRESCRIPTION)
     assert sr2.on_checkin(pain=8, new_symptoms=True, t=0.0, continue_gently=True)[0].payload["rule"] == "symptoms"
+
+
+def test_nhpt_pegs_the_board_saw_seated_never_pause_the_timed_test():
+    """Team test 24 Oct (session adefd6629d72): the board saw all nine pegs seated, but the hand
+    model missed the hand, so seven came back unverified (grasp_not_seen / no_hand_near_hole). Three
+    in a row paused the timed test for 21 s ("check the setup") and the pause landed inside peg 7's
+    split. The seat itself was seen; only the hand link is missing: no pause, no flag."""
+    sr = StopRules(SEED_PRESCRIPTION)
+    peg = lambda t, r: make_event("rep_complete", t=t, verified=False, reason=r, hole=t, target="hole")  # noqa: E731
+    assert sr.on_events([peg(1, "grasp_not_seen"), peg(2, "no_hand_near_hole"), peg(3, "no_hand_near_hole"),
+                         peg(4, "grasp_not_seen"), peg(5, "no_hand_near_hole"), peg(6, "no_hand_near_hole")]) == []

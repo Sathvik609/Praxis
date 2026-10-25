@@ -8,7 +8,10 @@ flag  -> post-session pain at or above the stop level (`pain_after`, 6 Oct): a f
 
 Unverified is not failed (24 Sep review). A rep with `verified: false` is either
 - **unverified**: the camera could not check it (`cup_occluded`, `marker_lost`,
-  `no_hand_near_hole`, anything not listed below) -> `failed_reps` pause, "check the setup"; or
+  anything not listed below) -> `failed_reps` pause, "check the setup"; or
+- **seen seated** (`SEEN_SEATED`: `grasp_not_seen`, `no_hand_near_hole`): the board saw the peg
+  go in, only the hand model missed the hand. Neither streak moves: no pause inside a timed NHPT
+  (team test 24 Oct: a 21 s pause landed in peg 7's split); or
 - **missed**: the camera saw it clearly and it fell short (`MISS_REASONS`: `target_missed`,
   `hold_too_short`, `swing_too_small`) -> `missed_reps` gentle rest, never "check the setup".
 The two streaks and thresholds are separate; a miss restarts the unverified streak (the camera
@@ -22,6 +25,7 @@ from praxis_session.events import Event, make_event
 from praxis_session.prescription import Prescription
 
 MISS_REASONS: frozenset[str] = frozenset({"target_missed", "hold_too_short", "swing_too_small"})
+SEEN_SEATED: frozenset[str] = frozenset({"grasp_not_seen", "no_hand_near_hole"})
 
 
 def is_miss(payload: dict[str, Any]) -> bool:
@@ -112,6 +116,8 @@ class StopRules:
             elif e.type in ("rep_complete", "reach_complete"):
                 if e.payload.get("verified") is not False:
                     self._unverified_streak = self._missed_streak = 0
+                elif e.payload.get("reason") in SEEN_SEATED:
+                    pass  # the board saw the seat; the hand model missed the hand (docstring)
                 elif is_miss(e.payload):
                     # The camera saw the rep clearly and it fell short: performance, not setup.
                     self._unverified_streak = 0
