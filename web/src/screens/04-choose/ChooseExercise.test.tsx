@@ -75,9 +75,9 @@ test('each card’s Start session opens that exercise’s demonstration (D-FLOW)
 
 test('the two sheet tasks link their printable sheet (PDF); the arm task needs none', () => {
   renderChoose()
-  expect(screen.getByRole('link', { name: 'Print the sheet: Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
-  expect(screen.getByRole('link', { name: 'Print the sheet: Nine-Hole Peg Test' })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
-  expect(screen.queryByRole('link', { name: 'Print the sheet: Arm out to the side' })).not.toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Get the sheet (PDF): Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(screen.getByRole('link', { name: 'Get the sheet (PDF): Nine-Hole Peg Test' })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
+  expect(screen.queryByRole('link', { name: 'Get the sheet (PDF): Arm out to the side' })).not.toBeInTheDocument()
 })
 
 test('?next=nhpt (Home "Run the peg test") preselects and highlights the peg test', () => {
@@ -124,7 +124,7 @@ test('25 Oct team test: on a rest day each card still opens its demo, and the sh
   renderChoose()
   expect(screen.getAllByRole('button', { name: /^Watch the demo/ })).toHaveLength(3)
   // Settings › Equipment and sheets sends people here, so the sheets stay on a rest day too
-  expect(screen.getByRole('link', { name: 'Print the sheet: Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(screen.getByRole('link', { name: 'Get the sheet (PDF): Waiter – cup' })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
   fireEvent.click(screen.getByRole('button', { name: 'Watch the demo: Waiter – cup' }))
   expect(screen.getByText(/^AT \/details\/demo\?exercise=cup/)).toBeInTheDocument()
 })

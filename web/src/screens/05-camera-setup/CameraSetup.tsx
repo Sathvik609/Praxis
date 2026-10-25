@@ -228,7 +228,7 @@ function SetupLive({ ex, side, rehearse }: { ex: Exercise; side: Side; rehearse:
             {ex.sheetPdf && (
               <p>
                 <a href={ex.sheetPdf} target="_blank" rel="noopener" className="font-bold underline">
-                  Print the sheet (PDF, at 100 % size)
+                  Get the sheet (PDF, print at 100 % size)
                 </a>
               </p>
             )}

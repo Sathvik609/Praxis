@@ -114,7 +114,7 @@ export function ChooseExercise() {
                       </div>
                     </button>
                     <div className="lib-ctas">
-                      {/* 25 Oct team test: a rest day kept only "Print the sheet", so the demos the
+                      {/* 25 Oct team test: a rest day kept only the sheet link, so the demos the
                           banner offers could not be opened. The demo screen itself never starts a
                           session on a stopped day. */}
                       {rest ? (
@@ -131,8 +131,8 @@ export function ChooseExercise() {
                       )}
                       {/* Shown on a rest day too, beside Watch the demo: Settings › Equipment and sheets opens this page. */}
                       {e.sheetPdf && (
-                        <a className="lib-cta lib-cta-2 inline-flex items-center justify-center" href={e.sheetPdf} target="_blank" rel="noopener" aria-label={`Print the sheet: ${e.name}`}>
-                          Print the sheet
+                        <a className="lib-cta lib-cta-2 inline-flex items-center justify-center" href={e.sheetPdf} target="_blank" rel="noopener" aria-label={`Get the sheet (PDF): ${e.name}`}>
+                          Get the sheet (PDF)
                         </a>
                       )}
                     </div>

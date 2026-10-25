@@ -186,13 +186,13 @@ test('sheet tasks show the tilted-laptop diagram and copy in the guide; the arm 
   expect(screen.queryByText(/phone|webcam|stand|straight down/i)).not.toBeInTheDocument()
   expect(screen.getByText('Camera looks down at the sheet')).toBeInTheDocument()
   expect(screen.getByText(/ArUco calibration/)).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: /Print the sheet/ })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(screen.getByRole('link', { name: /Get the sheet \(PDF, print at 100 % size\)/ })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
   unmount()
   renderSetup('/setup?exercise=abduction')
   fireEvent.click(screen.getByRole('button', { name: 'Setup guide and camera details' }))
   expect(screen.queryByRole('heading', { name: 'Tilt your laptop over the sheet' })).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Place the camera in front of you' })).toBeInTheDocument()
-  expect(screen.queryByRole('link', { name: /Print the sheet/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /Get the sheet \(PDF, print at 100 % size\)/ })).not.toBeInTheDocument()
 })
 
 test('the coach pill shows the service hint when the camera looks too flat across the sheet', () => {
