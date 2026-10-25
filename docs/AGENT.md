@@ -1,6 +1,6 @@
 # Agent coach — how it works
 
-At checkpoints, Claude (Sonnet 5.5 via the Anthropic API, not Amazon Bedrock) calls OpenCV 5 tools on the latest camera frame, and what the tools report decides its next call. The figure shows one real run. Design: `docs/superpowers/specs/2026-09-29-agent-coach-design.md`. Code: `services/session/praxis_session/agent/` (tools, MCP servers, planners, metrics, daily cap) and `coach/agent.py`. Dated results are in the [Changelog](#changelog-dated-results) at the end of this file.
+At checkpoints, Claude (Sonnet 5.5 via the Anthropic API, not Amazon Bedrock) calls OpenCV 5 tools on the latest camera frame, and what the tools report decides its next call. The figure shows one real run. Code: `services/session/praxis_session/agent/` (tools, MCP servers, planners, metrics, daily cap) and `coach/agent.py`. Dated results are in the [Changelog](#changelog-dated-results) at the end of this file.
 
 ![Green cup, before and after: check_setup reports the target unseen, the agent re-samples the cup colour, OpenCV then detects the cup, the resume prompt passes a fresh check, and the next reach is verified](img/agent_qualifier_green_cup.svg)
 
