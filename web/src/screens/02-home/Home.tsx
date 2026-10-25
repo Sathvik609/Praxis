@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AvatarPanel, type Hotspot } from '../../avatar/AvatarPanel'
 import { Button } from '../../design/Button'
@@ -25,8 +25,16 @@ const AR_ORDER: AreaKey[] = ['lShoulder', 'lElbow', 'lWrist']
  *  rest days it used to say Arm out to the side + Waiter – cup). Before the calendar loads, or
  *  on a day it lists nothing for, it shows the default day order. Today's check-in comes first:
  *  a check-in that says rest (without Continue gently) or a stop rule makes it a rest day, and the
- *  button only opens the exercises (their demos), as Choose does on such a day. */
-type TodayCard = { title: string; sub: string; action: string; to: string }
+ *  button only opens the exercises (their demos), as Choose does on such a day. The sheet the day
+ *  needs opens from the card itself (25 Oct: a teammate could not find where to get it). */
+type TodayCard = { title: string; sub: ReactNode; action: string; to: string }
+function sheetLink(id: ExerciseId, text: string) {
+  return (
+    <a href={exerciseById(id)?.sheetPdf} target="_blank" rel="noopener" title="Opens the PDF. Print it at 100 % size." className="font-bold text-white underline">
+      {text}
+    </a>
+  )
+}
 function todayCard(calendar: Calendar | null | undefined, day: Day): TodayCard {
   if (day.stopped != null || day.checkin?.tier === 'rest') {
     const sub = day.stopped === 'session' ? "A stop rule ended today's practice. Rest the arm today." : 'Your check-in says rest today. You can still watch the demos.'
@@ -35,9 +43,9 @@ function todayCard(calendar: Calendar | null | undefined, day: Day): TodayCard {
   const today = calendar?.days.find((d) => d.is_today)
   if (today && !today.planned && !today.nhpt_due) return { title: 'Rest day', sub: 'Rest is part of your plan. You can still practise if you like.', action: 'Start session', to: '/details/choose' }
   const names = today?.exercises.length ? today.exercises.map((e) => e.name) : DAY_ORDER.map((id) => exerciseById(id)?.name ?? id)
-  if (today && !today.planned) return { title: names.join(' + '), sub: 'Weekly test · you need 9 pegs and the printed peg sheet', action: 'Start session', to: '/details/choose?next=nhpt' }
-  const pegs = today?.nhpt_due ? ' · peg test today: 9 pegs and the peg sheet' : ''
-  return { title: names.join(' + '), sub: `About ${today?.minutes || DAY_MINUTES} min · you need a cup and the printed target sheet${pegs}`, action: 'Start session', to: '/details/choose' }
+  if (today && !today.planned) return { title: names.join(' + '), sub: <>Weekly test · you need 9 pegs and the {sheetLink('nhpt', 'printed peg sheet')}</>, action: 'Start session', to: '/details/choose?next=nhpt' }
+  const pegs = today?.nhpt_due ? <> · peg test today: 9 pegs and the {sheetLink('nhpt', 'peg sheet')}</> : null
+  return { title: names.join(' + '), sub: <>About {today?.minutes || DAY_MINUTES} min · you need a cup and the {sheetLink('cup', 'printed target sheet')}{pegs}</>, action: 'Start session', to: '/details/choose' }
 }
 
 /** Screen 02 · Home (design v2, designers' 6 Oct artifact). Next practice, this week from

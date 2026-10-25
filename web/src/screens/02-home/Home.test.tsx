@@ -70,7 +70,9 @@ test('25 Oct judge walkthrough: on the weekly peg-test day the card says the peg
   mockApi(routes({ '/api/calendar': { ...CALENDAR, today: '2026-10-11', days: [...WEEK_DAYS.slice(0, 6).map((d) => ({ ...d, is_today: false, status: d.status === 'today' ? 'done' : d.status })), sunday] } }))
   await renderHome()
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Nine-Hole Peg Test$/)
-  expect(screen.getByText(/Weekly test · you need 9 pegs and the printed peg sheet/)).toBeInTheDocument()
+  expect(screen.getByRole('heading', { level: 1 }).nextElementSibling).toHaveTextContent(/^Weekly test · you need 9 pegs and the printed peg sheet$/)
+  expect(screen.getByRole('link', { name: /printed peg sheet/ })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
+  expect(screen.queryByRole('link', { name: /target sheet/ })).not.toBeInTheDocument()
   expect(screen.queryByText(/About 10 min/)).not.toBeInTheDocument()
 })
 
@@ -91,6 +93,22 @@ test('25 Oct cross-check: Start session on the peg-test day opens Choose with th
   expect(screen.getByTestId('search')).toHaveTextContent('?next=nhpt')
 })
 
+test('25 Oct: the sheet the day needs opens from the Home card, so nobody has to hunt for it', async () => {
+  await renderHome()
+  const link = screen.getByRole('link', { name: /printed target sheet/ })
+  expect(link).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(link).toHaveAttribute('target', '_blank')
+  expect(screen.queryByRole('link', { name: /peg sheet/ })).not.toBeInTheDocument()
+})
+
+test('25 Oct: on a practice day with the peg test due, both sheets open from the card', async () => {
+  const today = { ...WEEK_DAYS[1], nhpt_due: true }
+  mockApi(routes({ '/api/calendar': { ...CALENDAR, days: [WEEK_DAYS[0], today, ...WEEK_DAYS.slice(2)] } }))
+  await renderHome()
+  expect(screen.getByRole('link', { name: /printed target sheet/ })).toHaveAttribute('href', '/sheets/cup_targets.pdf')
+  expect(screen.getByRole('link', { name: /peg sheet/ })).toHaveAttribute('href', '/sheets/nhpt_board.pdf')
+})
+
 const checkin = (pain: number, extra: Record<string, unknown> = {}) => ({ pain, location: '', energy: 'ok', minutes: 20, new_symptoms: false, side: 'left', tier: pain >= 7 ? 'rest' : 'full', flagged: pain >= 7, reasons: [], synced: true, at: new Date().toISOString(), ...extra })
 
 test('25 Oct cross-check: after a check-in that says rest, Home says rest today instead of offering the full day', async () => {
@@ -99,6 +117,7 @@ test('25 Oct cross-check: after a check-in that says rest, Home says rest today 
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Rest today$/)
   expect(screen.getByText(/Your check-in says rest today\. You can still watch the demos\./)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Start session' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /sheet/ })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'See the exercises' }))
   expect(screen.getByText('CHOOSE')).toBeInTheDocument()
 })

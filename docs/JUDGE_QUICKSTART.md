@@ -55,7 +55,7 @@ The camera feed is processed in memory on the server and never stored. The red *
    - Walk out of view. The session pauses and says why, then carries on when you come back.
    - Tap **Pain / feel unwell** and give a 7 or higher. This stops the session.
 
-**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 or US Letter, at 100 % / actual size). Each card on the Exercises screen has a **Get the sheet (PDF)** button, or use [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf) and [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand and the setup hint will name that corner.
+**Waiter – cup** and the **Nine-Hole Peg Test** need a printed sheet (A4 or US Letter, at 100 % / actual size). The Home card links the sheet the day needs, each card on the Exercises screen has a **Get the sheet (PDF)** button, or use [`docs/sheets/cup_targets.pdf`](sheets/cup_targets.pdf) and [`docs/sheets/nhpt_board.pdf`](sheets/nhpt_board.pdf). Lay it flat 25–35 cm in front of the laptop and tilt the screen forward until the camera sees the whole sheet. Cover a corner marker with your hand and the setup hint will name that corner.
 
 ## 5. Run it locally instead (edge / privacy mode, ~3 min)
 
