@@ -172,12 +172,21 @@ class EmptyReference:
         ratio = bgr / self._paper
         return ((ratio >= 0.8) & (ratio <= 1.15)).all(axis=2)
 
-    def changed(self, raw_bgr: np.ndarray, threshold: float) -> np.ndarray:
+    def _matched(self, raw_bgr: np.ndarray) -> np.ndarray:
         cur = cv2.GaussianBlur(raw_bgr, (3, 3), 0).astype(np.float32)
         cur_med = np.median(cur.reshape(-1, 3), axis=0)
-        cur = np.clip(cur * (self._med / np.maximum(cur_med, 1.0)), 0, 255)
+        return np.clip(cur * (self._med / np.maximum(cur_med, 1.0)), 0, 255)
+
+    def changed(self, raw_bgr: np.ndarray, threshold: float) -> np.ndarray:
+        cur = self._matched(raw_bgr)
         out = np.abs(cur - self._ref_f).max(axis=2) >= threshold
         return out & ~(self._obj & self._paper_like(cur))
+
+    def shadow(self, raw_bgr: np.ndarray) -> np.ndarray:
+        """Darker than the reference by about the same factor in every channel (40-95 %): a
+        cast shadow. A peg, a hand or a sleeve edge changes the colour, not only the level."""
+        ratio = self._matched(raw_bgr) / np.maximum(self._ref_f, 1.0)
+        return ((ratio >= 0.4) & (ratio <= 0.95)).all(axis=2) & (np.ptp(ratio, axis=2) <= 0.12)
 
 
 def hsv_window_from_patch(
@@ -503,22 +512,26 @@ class BoardState:
         if self._ref is None or self._ref.shape != canonical_bgr.shape:
             return None
         raw = self._raw if self._raw is not None and self._raw.shape == canonical_bgr.shape else canonical_bgr
-        changed = self._ref.changed(raw, self.change_threshold)
-        changed = changed.astype(np.uint8) * 255
-        changed = cv2.morphologyEx(changed, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
-        n, labels, stats, _ = cv2.connectedComponentsWithStats(changed, connectivity=8)
-        big = self.occluder_area_mm2 * self.px_per_mm**2
-        large = np.zeros(n, bool)
         # Area outside where seated pegs stand: the footprints, or discs of 1.5 r without
         # a camera model. Nine pegs at 45 deg touch, but stay inside their footprints.
         geom = self.seat_geometry()
         if geom is not None:
             seat = geom["any_footprint"]
         else:
-            disc = np.zeros(changed.shape, np.uint8)
+            disc = np.zeros(raw.shape[:2], np.uint8)
             for h in self._holes or []:
                 cv2.circle(disc, (int(round(h.x)), int(round(h.y))), int(round(1.5 * self.hole_radius_px)), 255, -1)
             seat = disc > 0
+        k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        changed = cv2.morphologyEx(self._ref.changed(raw, self.change_threshold).astype(np.uint8) * 255, cv2.MORPH_OPEN, k3)
+        # A hand is judged without cast shadows off the footprints (25 Oct, 3-D renders lit by a
+        # low window: seated pegs' long shadows joined into one hand-sized region and blanked the
+        # next pegs). Fingertip shadows still count as stray change below.
+        solid = cv2.bitwise_and(changed, np.where(self._ref.shadow(raw) & ~seat, 0, 255).astype(np.uint8))
+        solid = cv2.morphologyEx(solid, cv2.MORPH_OPEN, k3)
+        n, labels, stats, _ = cv2.connectedComponentsWithStats(solid, connectivity=8)
+        big = self.occluder_area_mm2 * self.px_per_mm**2
+        large = np.zeros(n, bool)
         outside = np.bincount(labels[~seat], minlength=n)
         outside[0] = 0
         cand = np.flatnonzero(stats[:, cv2.CC_STAT_AREA] > big)
@@ -527,7 +540,6 @@ class BoardState:
         # Something moving (fingertips, a hand's shadow): more than `stray_area_mm2` of change
         # appeared or went since the last frame. A peg resting anywhere does not move.
         if self._change_frame is not raw:  # once per frame (change_masks runs more than once)
-            k3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
             prev = self._prev_changed
             moved = None if prev is None or prev.shape != changed.shape else cv2.morphologyEx(cv2.bitwise_xor(prev, changed), cv2.MORPH_OPEN, k3)
             self._stray = moved is None or int(np.count_nonzero(moved)) > self.stray_area_mm2 * self.px_per_mm**2
@@ -541,9 +553,18 @@ class BoardState:
         occluder = np.where(large[labels], 255, 0).astype(np.uint8)
         # Mostly outside the footprints and not a hand: fingertips or their shadow, never a peg
         # (deep run 24 Oct: frozen fingertips over an empty hole read as a seated peg). A seated
-        # peg's change lies inside its own footprint.
-        area = np.maximum(stats[:, cv2.CC_STAT_AREA], 1)
-        stray = (~large) & (outside > self.stray_outside_frac * area)
+        # peg's change lies inside its own footprint. Shadows included: a shadow across an empty
+        # hole is part of a region that lies mostly off the footprints; pieces 2 mm apart (cut
+        # by a hole's dark rim, which a shadow cannot darken further) are one region.
+        k2 = max(3, int(round(2 * self.px_per_mm)) | 1)
+        joined = cv2.dilate(changed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k2, k2)))
+        n, labels = cv2.connectedComponents(joined, connectivity=8)
+        labels = np.where(changed > 0, labels, 0)
+        outside = np.bincount(labels[~seat], minlength=n)
+        hand = np.zeros(n, bool)
+        hand[np.unique(labels[occluder > 0])] = True
+        area = np.maximum(np.bincount(labels.ravel(), minlength=n), 1)
+        stray = (~hand) & (outside > self.stray_outside_frac * area)
         stray[0] = False
         # kept apart, not removed: a seated peg the fingers touch merges with them and must
         # stay seated; the stray share only stops a NEW seat (_gate_change_only)

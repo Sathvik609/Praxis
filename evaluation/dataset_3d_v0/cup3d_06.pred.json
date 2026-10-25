@@ -28,7 +28,7 @@
   {
    "type": "reach_complete",
    "t": 9.833333333333334,
-   "id": 9808,
+   "id": 9862,
    "rep": 1,
    "from_dot": 2,
    "to_dot": 3,
@@ -44,7 +44,7 @@
   {
    "type": "reach_complete",
    "t": 13.083333333333334,
-   "id": 9856,
+   "id": 9910,
    "rep": 2,
    "from_dot": 3,
    "to_dot": 4,
@@ -60,7 +60,7 @@
   {
    "type": "reach_complete",
    "t": 16.25,
-   "id": 9906,
+   "id": 9960,
    "rep": 3,
    "from_dot": 4,
    "to_dot": 3,
@@ -76,7 +76,7 @@
   {
    "type": "reach_complete",
    "t": 17.5,
-   "id": 9927,
+   "id": 9981,
    "rep": 4,
    "from_dot": 3,
    "to_dot": 2,
@@ -92,7 +92,7 @@
   {
    "type": "reach_complete",
    "t": 22.166666666666668,
-   "id": 9992,
+   "id": 10046,
    "rep": 5,
    "from_dot": 2,
    "to_dot": 1,
@@ -108,7 +108,7 @@
   {
    "type": "reach_complete",
    "t": 25.166666666666668,
-   "id": 10039,
+   "id": 10093,
    "rep": 6,
    "from_dot": 1,
    "to_dot": 0,
@@ -124,7 +124,7 @@
   {
    "type": "arc_complete",
    "t": 25.166666666666668,
-   "id": 10040,
+   "id": 10094,
    "arc": 1,
    "phase": "slow",
    "mean_reach_ms": 2125.0,
@@ -134,7 +134,7 @@
   {
    "type": "reach_complete",
    "t": 28.166666666666668,
-   "id": 10086,
+   "id": 10140,
    "rep": 7,
    "from_dot": 0,
    "to_dot": 1,
@@ -150,7 +150,7 @@
   {
    "type": "reach_complete",
    "t": 31.5,
-   "id": 10137,
+   "id": 10191,
    "rep": 8,
    "from_dot": 1,
    "to_dot": 2,
@@ -166,7 +166,7 @@
   {
    "type": "reach_complete",
    "t": 34.75,
-   "id": 10183,
+   "id": 10237,
    "rep": 9,
    "from_dot": 2,
    "to_dot": 3,
@@ -182,14 +182,14 @@
   {
    "type": "wrong_dot",
    "t": 37.083333333333336,
-   "id": 10221,
+   "id": 10275,
    "dot": 2,
    "expected": 4
   },
   {
    "type": "reach_complete",
    "t": 37.083333333333336,
-   "id": 10222,
+   "id": 10276,
    "rep": 10,
    "from_dot": 3,
    "to_dot": 2,
@@ -205,14 +205,14 @@
   {
    "type": "wrong_dot",
    "t": 37.666666666666664,
-   "id": 10236,
+   "id": 10290,
    "dot": 4,
    "expected": 1
   },
   {
    "type": "reach_complete",
    "t": 37.666666666666664,
-   "id": 10237,
+   "id": 10291,
    "rep": 11,
    "from_dot": 2,
    "to_dot": 4,
@@ -228,14 +228,14 @@
   {
    "type": "wrong_dot",
    "t": 40.166666666666664,
-   "id": 10276,
+   "id": 10330,
    "dot": 2,
    "expected": 3
   },
   {
    "type": "reach_complete",
    "t": 40.166666666666664,
-   "id": 10277,
+   "id": 10331,
    "rep": 12,
    "from_dot": 4,
    "to_dot": 2,
@@ -251,14 +251,14 @@
   {
    "type": "wrong_dot",
    "t": 40.666666666666664,
-   "id": 10289,
+   "id": 10343,
    "dot": 3,
    "expected": 1
   },
   {
    "type": "reach_complete",
    "t": 40.666666666666664,
-   "id": 10290,
+   "id": 10344,
    "rep": 13,
    "from_dot": 2,
    "to_dot": 3,
@@ -274,14 +274,14 @@
   {
    "type": "wrong_dot",
    "t": 43.916666666666664,
-   "id": 10340,
+   "id": 10394,
    "dot": 2,
    "expected": 4
   },
   {
    "type": "reach_complete",
    "t": 43.916666666666664,
-   "id": 10341,
+   "id": 10395,
    "rep": 14,
    "from_dot": 3,
    "to_dot": 2,
@@ -297,7 +297,7 @@
   {
    "type": "reach_complete",
    "t": 46.666666666666664,
-   "id": 10383,
+   "id": 10437,
    "rep": 15,
    "from_dot": 2,
    "to_dot": 1,
@@ -313,7 +313,7 @@
   {
    "type": "reach_complete",
    "t": 49.583333333333336,
-   "id": 10427,
+   "id": 10481,
    "rep": 16,
    "from_dot": 1,
    "to_dot": 0,
@@ -329,7 +329,7 @@
   {
    "type": "arc_complete",
    "t": 49.583333333333336,
-   "id": 10428,
+   "id": 10482,
    "arc": 2,
    "phase": "slow",
    "mean_reach_ms": 1391.7,
@@ -339,7 +339,7 @@
   {
    "type": "reach_complete",
    "t": 52.0,
-   "id": 10472,
+   "id": 10526,
    "rep": 17,
    "from_dot": 0,
    "to_dot": 1,
@@ -355,7 +355,7 @@
   {
    "type": "reach_complete",
    "t": 54.0,
-   "id": 10505,
+   "id": 10559,
    "rep": 18,
    "from_dot": 1,
    "to_dot": 2,
@@ -371,7 +371,7 @@
   {
    "type": "reach_complete",
    "t": 56.083333333333336,
-   "id": 10539,
+   "id": 10593,
    "rep": 19,
    "from_dot": 2,
    "to_dot": 3,
@@ -387,7 +387,7 @@
   {
    "type": "reach_complete",
    "t": 58.083333333333336,
-   "id": 10572,
+   "id": 10626,
    "rep": 20,
    "from_dot": 3,
    "to_dot": 4,
@@ -403,14 +403,14 @@
   {
    "type": "wrong_dot",
    "t": 59.583333333333336,
-   "id": 10597,
+   "id": 10651,
    "dot": 2,
    "expected": 3
   },
   {
    "type": "reach_complete",
    "t": 59.583333333333336,
-   "id": 10598,
+   "id": 10652,
    "rep": 21,
    "from_dot": 4,
    "to_dot": 2,
@@ -426,14 +426,14 @@
   {
    "type": "wrong_dot",
    "t": 60.083333333333336,
-   "id": 10610,
+   "id": 10664,
    "dot": 3,
    "expected": 1
   },
   {
    "type": "reach_complete",
    "t": 60.083333333333336,
-   "id": 10611,
+   "id": 10665,
    "rep": 22,
    "from_dot": 2,
    "to_dot": 3,
@@ -449,14 +449,14 @@
   {
    "type": "wrong_dot",
    "t": 61.083333333333336,
-   "id": 10629,
+   "id": 10683,
    "dot": 2,
    "expected": 4
   },
   {
    "type": "reach_complete",
    "t": 61.083333333333336,
-   "id": 10630,
+   "id": 10684,
    "rep": 23,
    "from_dot": 3,
    "to_dot": 2,
@@ -472,7 +472,7 @@
   {
    "type": "reach_complete",
    "t": 63.916666666666664,
-   "id": 10673,
+   "id": 10727,
    "rep": 24,
    "from_dot": 2,
    "to_dot": 1,
@@ -488,7 +488,7 @@
   {
    "type": "reach_complete",
    "t": 65.83333333333333,
-   "id": 10703,
+   "id": 10757,
    "rep": 25,
    "from_dot": 1,
    "to_dot": 0,
@@ -504,7 +504,7 @@
   {
    "type": "arc_complete",
    "t": 65.83333333333333,
-   "id": 10704,
+   "id": 10758,
    "arc": 3,
    "phase": "slow",
    "mean_reach_ms": 953.7,
@@ -514,7 +514,7 @@
   {
    "type": "reach_complete",
    "t": 68.08333333333333,
-   "id": 10744,
+   "id": 10798,
    "rep": 26,
    "from_dot": 0,
    "to_dot": 1,
@@ -530,7 +530,7 @@
   {
    "type": "reach_complete",
    "t": 70.33333333333333,
-   "id": 10782,
+   "id": 10836,
    "rep": 27,
    "from_dot": 1,
    "to_dot": 2,
@@ -546,7 +546,7 @@
   {
    "type": "reach_complete",
    "t": 71.83333333333333,
-   "id": 10807,
+   "id": 10861,
    "rep": 28,
    "from_dot": 2,
    "to_dot": 3,
@@ -562,14 +562,14 @@
   {
    "type": "wrong_dot",
    "t": 72.75,
-   "id": 10824,
+   "id": 10878,
    "dot": 2,
    "expected": 4
   },
   {
    "type": "reach_complete",
    "t": 72.75,
-   "id": 10825,
+   "id": 10879,
    "rep": 29,
    "from_dot": 3,
    "to_dot": 2,
@@ -585,14 +585,14 @@
   {
    "type": "wrong_dot",
    "t": 73.75,
-   "id": 10844,
+   "id": 10898,
    "dot": 4,
    "expected": 1
   },
   {
    "type": "reach_complete",
    "t": 73.75,
-   "id": 10845,
+   "id": 10899,
    "rep": 30,
    "from_dot": 2,
    "to_dot": 4,
@@ -608,7 +608,7 @@
   {
    "type": "reach_complete",
    "t": 75.75,
-   "id": 10878,
+   "id": 10932,
    "rep": 31,
    "from_dot": 4,
    "to_dot": 3,
@@ -624,7 +624,7 @@
   {
    "type": "reach_complete",
    "t": 77.83333333333333,
-   "id": 10913,
+   "id": 10967,
    "rep": 32,
    "from_dot": 3,
    "to_dot": 2,
@@ -640,7 +640,7 @@
   {
    "type": "reach_complete",
    "t": 79.66666666666667,
-   "id": 10944,
+   "id": 10998,
    "rep": 33,
    "from_dot": 2,
    "to_dot": 1,
@@ -656,7 +656,7 @@
   {
    "type": "reach_complete",
    "t": 81.66666666666667,
-   "id": 10975,
+   "id": 11029,
    "rep": 34,
    "from_dot": 1,
    "to_dot": 0,
@@ -672,7 +672,7 @@
   {
    "type": "arc_complete",
    "t": 81.66666666666667,
-   "id": 10976,
+   "id": 11030,
    "arc": 4,
    "phase": "slow",
    "mean_reach_ms": 1009.3,

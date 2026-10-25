@@ -102,6 +102,9 @@ class NHPT:
                 ev.type == "state_change"
                 and ev.payload["to"] == "seated"
                 and self.t_start is not None
+                # a hole already counted (a carried peg read over it, then the real seat) does
+                # not count again: the test ends when nine different holes are filled
+                and self.fsm._seated_hole not in {p["hole"] for p in self.pegs}
             ):
                 hole = self.fsm._seated_hole
                 assert self._last_seat_t is not None

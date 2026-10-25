@@ -15,7 +15,7 @@
  },
  "fps": 12.0,
  "frames": 339,
- "nhpt_total_s": 20.9167,
+ "nhpt_total_s": 22.5,
  "coverage": {
   "frames": 339,
   "hand": 7,
@@ -27,43 +27,43 @@
  "events": [
   {
    "type": "nhpt_start",
-   "t": 5.666666666666667,
-   "id": 2759,
-   "t_start": 5.666666666666667,
-   "inferred": false
+   "t": 4.25,
+   "id": 2797,
+   "t_start": 4.083333333333333,
+   "inferred": true
   },
   {
    "type": "rep_complete",
-   "t": 7.25,
-   "id": 2783,
+   "t": 4.5,
+   "id": 2803,
    "rep": 1,
-   "hole": 4,
-   "target": null,
-   "duration_s": 1.1667,
-   "t_grasp": 5.666666666666667,
-   "t_seated": 6.833333333333333,
-   "t_clear": 7.25,
-   "verified": false,
-   "reason": "no_hand_near_hole"
-  },
-  {
-   "type": "rep_complete",
-   "t": 8.583333333333334,
-   "id": 2805,
-   "rep": 2,
    "hole": 7,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 8.166666666666666,
-   "t_seated": 8.166666666666666,
-   "t_clear": 8.583333333333334,
+   "t_grasp": 4.083333333333333,
+   "t_seated": 4.083333333333333,
+   "t_clear": 4.5,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
+   "t": 7.166666666666667,
+   "id": 2842,
+   "rep": 2,
+   "hole": 4,
+   "target": null,
+   "duration_s": 1.0833,
+   "t_grasp": 5.666666666666667,
+   "t_seated": 6.75,
+   "t_clear": 7.166666666666667,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
    "t": 10.0,
-   "id": 2828,
+   "id": 2882,
    "rep": 3,
    "hole": 0,
    "target": null,
@@ -76,36 +76,36 @@
   },
   {
    "type": "rep_complete",
-   "t": 13.083333333333334,
-   "id": 2871,
+   "t": 13.0,
+   "id": 2924,
    "rep": 4,
    "hole": 6,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 12.666666666666666,
-   "t_seated": 12.666666666666666,
-   "t_clear": 13.083333333333334,
+   "t_grasp": 12.583333333333334,
+   "t_seated": 12.583333333333334,
+   "t_clear": 13.0,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
-   "t": 16.083333333333332,
-   "id": 2913,
+   "t": 15.333333333333334,
+   "id": 2958,
    "rep": 5,
    "hole": 8,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 15.666666666666666,
-   "t_seated": 15.666666666666666,
-   "t_clear": 16.083333333333332,
+   "t_grasp": 14.916666666666666,
+   "t_seated": 14.916666666666666,
+   "t_clear": 15.333333333333334,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
    "t": 18.416666666666668,
-   "id": 2947,
+   "id": 3001,
    "rep": 6,
    "hole": 3,
    "target": null,
@@ -118,22 +118,22 @@
   },
   {
    "type": "rep_complete",
-   "t": 21.75,
-   "id": 2993,
+   "t": 21.25,
+   "id": 3041,
    "rep": 7,
    "hole": 5,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 21.333333333333332,
-   "t_seated": 21.333333333333332,
-   "t_clear": 21.75,
+   "t_grasp": 20.833333333333332,
+   "t_seated": 20.833333333333332,
+   "t_clear": 21.25,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
    "t": 24.25,
-   "id": 3030,
+   "id": 3084,
    "rep": 8,
    "hole": 1,
    "target": null,
@@ -147,68 +147,68 @@
   {
    "type": "nhpt_complete",
    "t": 26.75,
-   "id": 3065,
-   "total_s": 20.9167,
-   "start_inferred": false,
+   "id": 3119,
+   "total_s": 22.5,
+   "start_inferred": true,
    "splits_s": [
-    1.1667,
-    1.3333,
-    1.4167,
-    3.0833,
+    0.0,
+    2.6667,
+    2.8333,
     3.0,
     2.3333,
-    3.3333,
-    2.5,
+    3.0833,
+    2.8333,
+    3.0,
     2.75
    ],
    "pegs": [
     {
      "peg": 1,
-     "hole": 4,
-     "t": 6.833333333333333,
-     "split_s": 1.1667
+     "hole": 7,
+     "t": 4.083333333333333,
+     "split_s": 0.0
     },
     {
      "peg": 2,
-     "hole": 7,
-     "t": 8.166666666666666,
-     "split_s": 1.3333
+     "hole": 4,
+     "t": 6.75,
+     "split_s": 2.6667
     },
     {
      "peg": 3,
      "hole": 0,
      "t": 9.583333333333334,
-     "split_s": 1.4167
+     "split_s": 2.8333
     },
     {
      "peg": 4,
      "hole": 6,
-     "t": 12.666666666666666,
-     "split_s": 3.0833
+     "t": 12.583333333333334,
+     "split_s": 3.0
     },
     {
      "peg": 5,
      "hole": 8,
-     "t": 15.666666666666666,
-     "split_s": 3.0
+     "t": 14.916666666666666,
+     "split_s": 2.3333
     },
     {
      "peg": 6,
      "hole": 3,
      "t": 18.0,
-     "split_s": 2.3333
+     "split_s": 3.0833
     },
     {
      "peg": 7,
      "hole": 5,
-     "t": 21.333333333333332,
-     "split_s": 3.3333
+     "t": 20.833333333333332,
+     "split_s": 2.8333
     },
     {
      "peg": 8,
      "hole": 1,
      "t": 23.833333333333332,
-     "split_s": 2.5
+     "split_s": 3.0
     },
     {
      "peg": 9,
@@ -221,7 +221,7 @@
   {
    "type": "rep_complete",
    "t": 27.0,
-   "id": 3070,
+   "id": 3124,
    "rep": 9,
    "hole": 2,
    "target": null,

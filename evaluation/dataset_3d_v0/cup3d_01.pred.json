@@ -28,14 +28,14 @@
   {
    "type": "wrong_dot",
    "t": 6.666666666666667,
-   "id": 3981,
+   "id": 4035,
    "dot": 2,
    "expected": 4
   },
   {
    "type": "reach_complete",
    "t": 6.666666666666667,
-   "id": 3982,
+   "id": 4036,
    "rep": 1,
    "from_dot": 3,
    "to_dot": 2,
@@ -51,14 +51,14 @@
   {
    "type": "wrong_dot",
    "t": 9.416666666666666,
-   "id": 4026,
+   "id": 4080,
    "dot": 3,
    "expected": 1
   },
   {
    "type": "reach_complete",
    "t": 9.416666666666666,
-   "id": 4027,
+   "id": 4081,
    "rep": 2,
    "from_dot": 2,
    "to_dot": 3,
@@ -74,7 +74,7 @@
   {
    "type": "reach_complete",
    "t": 12.166666666666666,
-   "id": 4069,
+   "id": 4123,
    "rep": 3,
    "from_dot": 3,
    "to_dot": 4,
@@ -90,7 +90,7 @@
   {
    "type": "reach_complete",
    "t": 15.416666666666666,
-   "id": 4117,
+   "id": 4171,
    "rep": 4,
    "from_dot": 4,
    "to_dot": 3,
@@ -106,7 +106,7 @@
   {
    "type": "reach_complete",
    "t": 18.833333333333332,
-   "id": 4167,
+   "id": 4221,
    "rep": 5,
    "from_dot": 3,
    "to_dot": 2,
@@ -122,7 +122,7 @@
   {
    "type": "reach_complete",
    "t": 22.0,
-   "id": 4214,
+   "id": 4268,
    "rep": 6,
    "from_dot": 2,
    "to_dot": 1,
@@ -138,7 +138,7 @@
   {
    "type": "reach_complete",
    "t": 25.083333333333332,
-   "id": 4260,
+   "id": 4314,
    "rep": 7,
    "from_dot": 1,
    "to_dot": 0,
@@ -154,7 +154,7 @@
   {
    "type": "arc_complete",
    "t": 25.083333333333332,
-   "id": 4261,
+   "id": 4315,
    "arc": 1,
    "phase": "slow",
    "mean_reach_ms": 1428.6,
@@ -164,7 +164,7 @@
   {
    "type": "reach_complete",
    "t": 28.416666666666668,
-   "id": 4312,
+   "id": 4366,
    "rep": 8,
    "from_dot": 0,
    "to_dot": 1,
@@ -180,7 +180,7 @@
   {
    "type": "reach_complete",
    "t": 31.5,
-   "id": 4358,
+   "id": 4412,
    "rep": 9,
    "from_dot": 1,
    "to_dot": 2,
@@ -196,7 +196,7 @@
   {
    "type": "reach_complete",
    "t": 34.5,
-   "id": 4407,
+   "id": 4461,
    "rep": 10,
    "from_dot": 2,
    "to_dot": 3,
@@ -212,7 +212,7 @@
   {
    "type": "reach_complete",
    "t": 37.25,
-   "id": 4449,
+   "id": 4503,
    "rep": 11,
    "from_dot": 3,
    "to_dot": 4,
@@ -228,7 +228,7 @@
   {
    "type": "reach_complete",
    "t": 40.333333333333336,
-   "id": 4495,
+   "id": 4549,
    "rep": 12,
    "from_dot": 4,
    "to_dot": 3,
@@ -244,7 +244,7 @@
   {
    "type": "reach_complete",
    "t": 43.583333333333336,
-   "id": 4543,
+   "id": 4597,
    "rep": 13,
    "from_dot": 3,
    "to_dot": 2,
@@ -260,7 +260,7 @@
   {
    "type": "reach_complete",
    "t": 46.666666666666664,
-   "id": 4589,
+   "id": 4643,
    "rep": 14,
    "from_dot": 2,
    "to_dot": 1,
@@ -276,7 +276,7 @@
   {
    "type": "reach_complete",
    "t": 49.833333333333336,
-   "id": 4636,
+   "id": 4690,
    "rep": 15,
    "from_dot": 1,
    "to_dot": 0,
@@ -292,7 +292,7 @@
   {
    "type": "arc_complete",
    "t": 49.833333333333336,
-   "id": 4637,
+   "id": 4691,
    "arc": 2,
    "phase": "slow",
    "mean_reach_ms": 1687.5,
@@ -302,7 +302,7 @@
   {
    "type": "reach_complete",
    "t": 51.916666666666664,
-   "id": 4669,
+   "id": 4723,
    "rep": 16,
    "from_dot": 0,
    "to_dot": 1,
@@ -318,7 +318,7 @@
   {
    "type": "reach_complete",
    "t": 53.75,
-   "id": 4698,
+   "id": 4752,
    "rep": 17,
    "from_dot": 1,
    "to_dot": 2,
@@ -334,7 +334,7 @@
   {
    "type": "reach_complete",
    "t": 55.75,
-   "id": 4731,
+   "id": 4785,
    "rep": 18,
    "from_dot": 2,
    "to_dot": 3,
@@ -350,7 +350,7 @@
   {
    "type": "reach_complete",
    "t": 57.416666666666664,
-   "id": 4758,
+   "id": 4812,
    "rep": 19,
    "from_dot": 3,
    "to_dot": 4,
@@ -366,7 +366,7 @@
   {
    "type": "reach_complete",
    "t": 59.416666666666664,
-   "id": 4789,
+   "id": 4843,
    "rep": 20,
    "from_dot": 4,
    "to_dot": 3,
@@ -382,7 +382,7 @@
   {
    "type": "reach_complete",
    "t": 61.416666666666664,
-   "id": 4820,
+   "id": 4874,
    "rep": 21,
    "from_dot": 3,
    "to_dot": 2,
@@ -398,7 +398,7 @@
   {
    "type": "reach_complete",
    "t": 63.416666666666664,
-   "id": 4853,
+   "id": 4907,
    "rep": 22,
    "from_dot": 2,
    "to_dot": 1,
@@ -414,7 +414,7 @@
   {
    "type": "reach_complete",
    "t": 65.25,
-   "id": 4882,
+   "id": 4936,
    "rep": 23,
    "from_dot": 1,
    "to_dot": 0,
@@ -430,7 +430,7 @@
   {
    "type": "arc_complete",
    "t": 65.25,
-   "id": 4883,
+   "id": 4937,
    "arc": 3,
    "phase": "slow",
    "mean_reach_ms": 916.6,
@@ -440,7 +440,7 @@
   {
    "type": "reach_complete",
    "t": 67.41666666666667,
-   "id": 4920,
+   "id": 4974,
    "rep": 24,
    "from_dot": 0,
    "to_dot": 1,
@@ -456,7 +456,7 @@
   {
    "type": "reach_complete",
    "t": 69.16666666666667,
-   "id": 4950,
+   "id": 5004,
    "rep": 25,
    "from_dot": 1,
    "to_dot": 2,
@@ -472,7 +472,7 @@
   {
    "type": "reach_complete",
    "t": 71.0,
-   "id": 4983,
+   "id": 5037,
    "rep": 26,
    "from_dot": 2,
    "to_dot": 3,
@@ -488,7 +488,7 @@
   {
    "type": "reach_complete",
    "t": 72.83333333333333,
-   "id": 5014,
+   "id": 5068,
    "rep": 27,
    "from_dot": 3,
    "to_dot": 4,
@@ -504,7 +504,7 @@
   {
    "type": "reach_complete",
    "t": 75.08333333333333,
-   "id": 5048,
+   "id": 5102,
    "rep": 28,
    "from_dot": 4,
    "to_dot": 3,
@@ -520,7 +520,7 @@
   {
    "type": "reach_complete",
    "t": 77.16666666666667,
-   "id": 5082,
+   "id": 5136,
    "rep": 29,
    "from_dot": 3,
    "to_dot": 2,
@@ -536,7 +536,7 @@
   {
    "type": "reach_complete",
    "t": 79.25,
-   "id": 5116,
+   "id": 5170,
    "rep": 30,
    "from_dot": 2,
    "to_dot": 1,
@@ -552,7 +552,7 @@
   {
    "type": "reach_complete",
    "t": 81.08333333333333,
-   "id": 5147,
+   "id": 5201,
    "rep": 31,
    "from_dot": 1,
    "to_dot": 0,
@@ -568,7 +568,7 @@
   {
    "type": "arc_complete",
    "t": 81.08333333333333,
-   "id": 5148,
+   "id": 5202,
    "arc": 4,
    "phase": "slow",
    "mean_reach_ms": 989.6,

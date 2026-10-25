@@ -2,7 +2,7 @@
  "dataset": "3d_v0",
  "synthetic": true,
  "banner": "Synthetic 3-D renders, not real-camera evidence.",
- "generated_on": "2026-10-24",
+ "generated_on": "2026-10-25",
  "cv2_version": "5.0.0",
  "tol_s": 1.0,
  "debounce_frames": 2,
@@ -40,33 +40,33 @@
    "entries": 10,
    "participants": 1,
    "labeled_reps": 90,
-   "pred_reps": 86,
-   "tp": 79,
-   "fp": 7,
-   "fn": 11,
-   "rep_precision": 0.9186,
-   "rep_recall": 0.8778,
-   "rep_f1": 0.8977,
-   "verified_agreement": 0.0506,
-   "verified_n": 79,
-   "nhpt_mae_s": 2.031,
-   "nhpt_n": 8,
-   "verified": 5,
-   "unverified": 81,
+   "pred_reps": 96,
+   "tp": 90,
+   "fp": 6,
+   "fn": 0,
+   "rep_precision": 0.9375,
+   "rep_recall": 1.0,
+   "rep_f1": 0.9677,
+   "verified_agreement": 0.0556,
+   "verified_n": 90,
+   "nhpt_mae_s": 1.166,
+   "nhpt_n": 10,
+   "verified": 6,
+   "unverified": 90,
    "unverified_reasons": {
-    "grasp_not_seen": 54,
-    "no_hand_near_hole": 27
+    "grasp_not_seen": 64,
+    "no_hand_near_hole": 26
    },
    "expected_unverified": 0,
-   "event_time_mae_s": 0.573,
-   "event_time_bias_s": 0.567,
+   "event_time_mae_s": 0.434,
+   "event_time_bias_s": 0.422,
    "hand_model_frames_pct": 8.8,
    "calibrated_frames_pct": 100.0,
    "three_or_held_frames_pct": 41.5,
-   "split_mae_s": 0.231,
-   "split_n": 77,
-   "completed": 8,
-   "timer_start_inferred": 6
+   "split_mae_s": 0.225,
+   "split_n": 90,
+   "completed": 10,
+   "timer_start_inferred": 7
   }
  },
  "entries": [
@@ -105,14 +105,14 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 24.8587,
-   "nhpt_pred_s": 20.6667,
-   "nhpt_abs_err_s": 4.192,
+   "nhpt_pred_s": 23.5,
+   "nhpt_abs_err_s": 1.359,
    "misses": [
     {
      "kind": "false_positive",
      "pred": {
       "key": 7,
-      "t": 13.0,
+      "t": 12.666666666666666,
       "verified": false,
       "reason": "grasp_not_seen"
      }
@@ -130,7 +130,7 @@
      },
      "pred": {
       "key": 6,
-      "t": 3.9166666666666665,
+      "t": 3.5833333333333335,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 0
@@ -149,7 +149,7 @@
      },
      "pred": {
       "key": 7,
-      "t": 6.916666666666667,
+      "t": 6.583333333333333,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 1
@@ -168,7 +168,7 @@
      },
      "pred": {
       "key": 2,
-      "t": 9.916666666666666,
+      "t": 9.583333333333334,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 2
@@ -187,7 +187,7 @@
      },
      "pred": {
       "key": 1,
-      "t": 12.583333333333334,
+      "t": 12.25,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 3
@@ -206,7 +206,7 @@
      },
      "pred": {
       "key": 4,
-      "t": 16.0,
+      "t": 15.583333333333334,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 4
@@ -244,7 +244,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 21.583333333333332,
+      "t": 21.25,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 6
@@ -263,7 +263,7 @@
      },
      "pred": {
       "key": 5,
-      "t": 24.583333333333332,
+      "t": 24.25,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 7
@@ -282,7 +282,7 @@
      },
      "pred": {
       "key": 3,
-      "t": 27.5,
+      "t": 27.083333333333332,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 8
@@ -296,7 +296,7 @@
      },
      "pred": {
       "t": 26.6745,
-      "total_s": 20.6667
+      "total_s": 23.5
      }
     }
    ],
@@ -339,34 +339,34 @@
      "three_markers": 116,
      "held": 27
     },
-    "event_time_bias_s": 0.675,
-    "event_time_mae_s": 0.675,
+    "event_time_bias_s": 0.36,
+    "event_time_mae_s": 0.36,
     "event_time_signed_s": [
-     0.766,
-     0.7572,
-     0.7557,
-     0.4113,
-     0.7964,
+     0.4326,
+     0.4238,
+     0.4223,
+     0.078,
+     0.3797,
      0.3656,
-     0.6646,
-     0.7352,
-     0.8255
+     0.3313,
+     0.4019,
+     0.4088
     ],
     "timer_start_inferred": true,
-    "timer_start_err_s": 2.101,
+    "timer_start_err_s": 1.768,
     "completed": true,
     "split_errors_s": [
      -1.335,
      -0.009,
-     -0.002,
+     -0.001,
      -0.344,
-     0.385,
-     -0.431,
-     0.299,
+     0.302,
+     -0.014,
+     -0.034,
      0.071,
-     0.09
+     0.007
     ],
-    "split_mae_s": 0.33
+    "split_mae_s": 0.235
    }
   },
   {
@@ -383,9 +383,9 @@
     "pose": false
    },
    "labeled_reps": 9,
-   "pred_reps": 9,
+   "pred_reps": 10,
    "tp": 9,
-   "fp": 0,
+   "fp": 1,
    "fn": 0,
    "status_agree": 0,
    "status_n": 9,
@@ -407,6 +407,15 @@
    "nhpt_pred_s": 21.3333,
    "nhpt_abs_err_s": 0.872,
    "misses": [
+    {
+     "kind": "false_positive",
+     "pred": {
+      "key": 6,
+      "t": 8.25,
+      "verified": false,
+      "reason": "grasp_not_seen"
+     }
+    },
     {
      "kind": "status_mismatch",
      "label": {
@@ -439,7 +448,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 6.0,
+      "t": 5.583333333333333,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 1
@@ -458,9 +467,9 @@
      },
      "pred": {
       "key": 3,
-      "t": 8.833333333333334,
+      "t": 8.75,
       "verified": false,
-      "reason": "no_hand_near_hole",
+      "reason": "grasp_not_seen",
       "matched": 2
      }
     },
@@ -477,7 +486,7 @@
      },
      "pred": {
       "key": 6,
-      "t": 11.583333333333334,
+      "t": 11.5,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 3
@@ -496,7 +505,7 @@
      },
      "pred": {
       "key": 7,
-      "t": 14.166666666666666,
+      "t": 13.666666666666666,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 4
@@ -604,10 +613,10 @@
    },
    "x": {
     "verified": 0,
-    "unverified": 9,
+    "unverified": 10,
     "unverified_reasons": {
-     "no_hand_near_hole": 5,
-     "grasp_not_seen": 4
+     "no_hand_near_hole": 4,
+     "grasp_not_seen": 6
     },
     "expected_unverified": 0,
     "coverage": {
@@ -618,14 +627,14 @@
      "three_markers": 88,
      "held": 23
     },
-    "event_time_bias_s": 0.39,
-    "event_time_mae_s": 0.39,
+    "event_time_bias_s": 0.27,
+    "event_time_mae_s": 0.306,
     "event_time_signed_s": [
      0.4287,
-     0.3498,
-     0.4318,
-     0.4335,
-     0.4061,
+     -0.0669,
+     0.3485,
+     0.3502,
+     -0.0939,
      0.344,
      0.3681,
      0.3591,
@@ -636,16 +645,16 @@
     "completed": true,
     "split_errors_s": [
      -0.835,
-     -0.079,
-     0.082,
+     -0.496,
+     0.415,
      0.002,
-     -0.027,
-     -0.062,
+     -0.444,
+     0.438,
      0.024,
      -0.009,
      0.033
     ],
-    "split_mae_s": 0.128
+    "split_mae_s": 0.3
    }
   },
   {
@@ -662,12 +671,12 @@
     "pose": false
    },
    "labeled_reps": 9,
-   "pred_reps": 6,
-   "tp": 4,
-   "fp": 2,
-   "fn": 5,
-   "status_agree": 0,
-   "status_n": 4,
+   "pred_reps": 9,
+   "tp": 9,
+   "fp": 0,
+   "fn": 0,
+   "status_agree": 1,
+   "status_n": 9,
    "abs_err": [],
    "signed_err": [],
    "lean": {
@@ -683,86 +692,9 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 26.7934,
-   "nhpt_pred_s": null,
+   "nhpt_pred_s": 25.3333,
+   "nhpt_abs_err_s": 1.46,
    "misses": [
-    {
-     "kind": "false_positive",
-     "pred": {
-      "key": 0,
-      "t": 24.083333333333332,
-      "verified": false,
-      "reason": "no_hand_near_hole"
-     }
-    },
-    {
-     "kind": "false_positive",
-     "pred": {
-      "key": 4,
-      "t": 25.5,
-      "verified": false,
-      "reason": "grasp_not_seen"
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 4,
-      "t": 16.2548,
-      "t_start": 14.8951,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 5
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 0,
-      "t": 19.3022,
-      "t_start": 17.9019,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 6
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 5,
-      "t": 22.318,
-      "t_start": 20.8799,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 7
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 3,
-      "t": 25.5686,
-      "t_start": 23.9985,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 8
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 7,
-      "t": 28.8024,
-      "t_start": 27.2958,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 9
-     }
-    },
     {
      "kind": "status_mismatch",
      "label": {
@@ -804,25 +736,6 @@
     {
      "kind": "status_mismatch",
      "label": {
-      "key": 2,
-      "t": 10.0847,
-      "t_start": 8.4924,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 3
-     },
-     "pred": {
-      "key": 2,
-      "t": 10.583333333333334,
-      "verified": false,
-      "reason": "no_hand_near_hole",
-      "matched": 2
-     }
-    },
-    {
-     "kind": "status_mismatch",
-     "label": {
       "key": 6,
       "t": 13.1866,
       "t_start": 11.665,
@@ -833,17 +746,116 @@
      },
      "pred": {
       "key": 6,
-      "t": 13.666666666666666,
+      "t": 13.583333333333334,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 3
      }
     },
     {
-     "kind": "nhpt_no_time",
+     "kind": "status_mismatch",
+     "label": {
+      "key": 4,
+      "t": 16.2548,
+      "t_start": 14.8951,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     },
+     "pred": {
+      "key": 4,
+      "t": 16.666666666666668,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 4
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 0,
+      "t": 19.3022,
+      "t_start": 17.9019,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 0,
+      "t": 19.75,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 5,
+      "t": 22.318,
+      "t_start": 20.8799,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 7
+     },
+     "pred": {
+      "key": 5,
+      "t": 22.75,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 6
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 3,
+      "t": 25.5686,
+      "t_start": 23.9985,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     },
+     "pred": {
+      "key": 3,
+      "t": 26.0,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 7
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 7,
+      "t": 28.8024,
+      "t_start": 27.2958,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     },
+     "pred": {
+      "key": 7,
+      "t": 29.25,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 8
+     }
+    },
+    {
+     "kind": "nhpt_timer_error",
      "label": {
       "t": 28.8024,
       "total_s": 26.7934
+     },
+     "pred": {
+      "t": 28.8024,
+      "total_s": 25.3333
      }
     }
    ],
@@ -871,10 +883,10 @@
     "notes": "camera moved back from 310 to 380 mm so all four markers are in view (setup)"
    },
    "x": {
-    "verified": 0,
-    "unverified": 6,
+    "verified": 1,
+    "unverified": 8,
     "unverified_reasons": {
-     "grasp_not_seen": 3,
+     "grasp_not_seen": 5,
      "no_hand_near_hole": 3
     },
     "expected_unverified": 0,
@@ -886,24 +898,34 @@
      "three_markers": 127,
      "held": 33
     },
-    "event_time_bias_s": 0.466,
-    "event_time_mae_s": 0.466,
+    "event_time_bias_s": 0.43,
+    "event_time_mae_s": 0.43,
     "event_time_signed_s": [
      0.4181,
      0.467,
-     0.4986,
-     0.4801
+     0.4153,
+     0.3967,
+     0.4119,
+     0.4478,
+     0.432,
+     0.4314,
+     0.4476
     ],
     "timer_start_inferred": true,
     "timer_start_err_s": 1.908,
-    "completed": false,
+    "completed": true,
     "split_errors_s": [
      -1.49,
      0.049,
-     0.032,
-     -0.019
+     -0.052,
+     -0.019,
+     0.015,
+     0.036,
+     -0.016,
+     -0.001,
+     0.016
     ],
-    "split_mae_s": 0.398
+    "split_mae_s": 0.188
    }
   },
   {
@@ -941,8 +963,8 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 24.0133,
-   "nhpt_pred_s": 20.6667,
-   "nhpt_abs_err_s": 3.347,
+   "nhpt_pred_s": 23.5,
+   "nhpt_abs_err_s": 0.513,
    "misses": [
     {
      "kind": "false_positive",
@@ -1123,17 +1145,6 @@
       "reason": "no_hand_near_hole",
       "matched": 8
      }
-    },
-    {
-     "kind": "nhpt_timer_error",
-     "label": {
-      "t": 25.8074,
-      "total_s": 24.0133
-     },
-     "pred": {
-      "t": 25.8074,
-      "total_s": 20.6667
-     }
     }
    ],
    "tol": 1.0,
@@ -1256,7 +1267,7 @@
      },
      "pred": {
       "key": 3,
-      "t": 3.5,
+      "t": 3.25,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 0
@@ -1275,7 +1286,7 @@
      },
      "pred": {
       "key": 6,
-      "t": 6.0,
+      "t": 5.666666666666667,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 1
@@ -1294,7 +1305,7 @@
      },
      "pred": {
       "key": 7,
-      "t": 8.5,
+      "t": 8.25,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 2
@@ -1313,7 +1324,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 10.916666666666666,
+      "t": 10.666666666666666,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 3
@@ -1332,7 +1343,7 @@
      },
      "pred": {
       "key": 4,
-      "t": 13.25,
+      "t": 13.0,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 4
@@ -1351,7 +1362,7 @@
      },
      "pred": {
       "key": 2,
-      "t": 15.583333333333334,
+      "t": 15.333333333333334,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 5
@@ -1370,7 +1381,7 @@
      },
      "pred": {
       "key": 0,
-      "t": 17.666666666666668,
+      "t": 17.583333333333332,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 6
@@ -1389,7 +1400,7 @@
      },
      "pred": {
       "key": 1,
-      "t": 20.416666666666668,
+      "t": 20.166666666666668,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 7
@@ -1408,7 +1419,7 @@
      },
      "pred": {
       "key": 5,
-      "t": 22.916666666666668,
+      "t": 22.666666666666668,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 8
@@ -1464,34 +1475,34 @@
      "three_markers": 102,
      "held": 27
     },
-    "event_time_bias_s": 0.608,
-    "event_time_mae_s": 0.608,
+    "event_time_bias_s": 0.367,
+    "event_time_mae_s": 0.367,
     "event_time_signed_s": [
-     0.5962,
-     0.6388,
-     0.6329,
-     0.6319,
-     0.647,
-     0.6477,
-     0.3691,
-     0.6853,
-     0.6228
+     0.3462,
+     0.3055,
+     0.3829,
+     0.3819,
+     0.397,
+     0.3977,
+     0.2857,
+     0.4353,
+     0.3728
     ],
     "timer_start_inferred": true,
-    "timer_start_err_s": 1.772,
+    "timer_start_err_s": 1.522,
     "completed": true,
     "split_errors_s": [
      -1.176,
-     0.043,
-     -0.006,
+     -0.041,
+     0.077,
      -0.001,
      0.015,
      0.001,
-     -0.279,
-     0.316,
+     -0.112,
+     0.15,
      -0.062
     ],
-    "split_mae_s": 0.211
+    "split_mae_s": 0.182
    }
   },
   {
@@ -1509,11 +1520,11 @@
    },
    "labeled_reps": 9,
    "pred_reps": 9,
-   "tp": 8,
-   "fp": 1,
-   "fn": 1,
+   "tp": 9,
+   "fp": 0,
+   "fn": 0,
    "status_agree": 3,
-   "status_n": 8,
+   "status_n": 9,
    "abs_err": [],
    "signed_err": [],
    "lean": {
@@ -1533,27 +1544,6 @@
    "nhpt_abs_err_s": 1.32,
    "misses": [
     {
-     "kind": "false_positive",
-     "pred": {
-      "key": 6,
-      "t": 26.083333333333332,
-      "verified": true,
-      "reason": null
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 7,
-      "t": 25.6014,
-      "t_start": 24.2359,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 9
-     }
-    },
-    {
      "kind": "status_mismatch",
      "label": {
       "key": 2,
@@ -1566,7 +1556,7 @@
      },
      "pred": {
       "key": 2,
-      "t": 3.5,
+      "t": 3.4166666666666665,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 0
@@ -1604,7 +1594,7 @@
      },
      "pred": {
       "key": 1,
-      "t": 9.333333333333334,
+      "t": 9.25,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 2
@@ -1623,7 +1613,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 12.0,
+      "t": 11.916666666666666,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 3
@@ -1642,10 +1632,29 @@
      },
      "pred": {
       "key": 3,
-      "t": 14.916666666666666,
+      "t": 14.666666666666666,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 4
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 7,
+      "t": 25.6014,
+      "t_start": 24.2359,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     },
+     "pred": {
+      "key": 7,
+      "t": 26.0,
+      "verified": false,
+      "reason": "no_hand_near_hole",
+      "matched": 8
      }
     },
     {
@@ -1684,11 +1693,11 @@
     "notes": "camera moved back from 320 to 350 mm so all four markers are in view (setup)"
    },
    "x": {
-    "verified": 4,
-    "unverified": 5,
+    "verified": 3,
+    "unverified": 6,
     "unverified_reasons": {
      "grasp_not_seen": 4,
-     "no_hand_near_hole": 1
+     "no_hand_near_hole": 2
     },
     "expected_unverified": 0,
     "coverage": {
@@ -1699,32 +1708,34 @@
      "three_markers": 113,
      "held": 23
     },
-    "event_time_bias_s": 0.477,
-    "event_time_mae_s": 0.477,
+    "event_time_bias_s": 0.385,
+    "event_time_mae_s": 0.385,
     "event_time_signed_s": [
-     0.4797,
+     0.3964,
      0.4752,
-     0.5448,
-     0.4643,
-     0.4618,
-     0.4661,
-     0.4843,
-     0.4404
+     0.4615,
+     0.381,
+     0.2118,
+     0.3827,
+     0.401,
+     0.357,
+     0.3986
     ],
     "timer_start_inferred": true,
-    "timer_start_err_s": 1.802,
+    "timer_start_err_s": 1.718,
     "completed": true,
     "split_errors_s": [
      -1.322,
-     -0.005,
-     0.07,
+     0.079,
+     -0.014,
      -0.081,
-     -0.003,
-     0.004,
+     -0.169,
+     0.171,
      0.018,
-     -0.044
+     -0.044,
+     0.042
     ],
-    "split_mae_s": 0.193
+    "split_mae_s": 0.216
    }
   },
   {
@@ -1741,12 +1752,12 @@
     "pose": false
    },
    "labeled_reps": 9,
-   "pred_reps": 6,
-   "tp": 5,
-   "fp": 1,
-   "fn": 4,
+   "pred_reps": 12,
+   "tp": 9,
+   "fp": 3,
+   "fn": 0,
    "status_agree": 0,
-   "status_n": 5,
+   "status_n": 9,
    "abs_err": [],
    "signed_err": [],
    "lean": {
@@ -1762,7 +1773,8 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 22.4514,
-   "nhpt_pred_s": null,
+   "nhpt_pred_s": 21.3333,
+   "nhpt_abs_err_s": 1.118,
    "misses": [
     {
      "kind": "false_positive",
@@ -1774,51 +1786,21 @@
      }
     },
     {
-     "kind": "false_negative",
-     "label": {
-      "key": 1,
-      "t": 13.8259,
-      "t_start": 12.5033,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 5
+     "kind": "false_positive",
+     "pred": {
+      "key": 8,
+      "t": 13.333333333333334,
+      "verified": false,
+      "reason": "grasp_not_seen"
      }
     },
     {
-     "kind": "false_negative",
-     "label": {
-      "key": 2,
-      "t": 16.6195,
-      "t_start": 15.3823,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 6
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 6,
-      "t": 21.6653,
-      "t_start": 20.5171,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 8
-     }
-    },
-    {
-     "kind": "false_negative",
-     "label": {
-      "key": 3,
-      "t": 24.2343,
-      "t_start": 23.0673,
-      "expected_verified": true,
-      "reason": null,
-      "deliberate_error": null,
-      "rep": 9
+     "kind": "false_positive",
+     "pred": {
+      "key": 8,
+      "t": 16.333333333333332,
+      "verified": true,
+      "reason": null
      }
     },
     {
@@ -1872,7 +1854,7 @@
      },
      "pred": {
       "key": 5,
-      "t": 8.833333333333334,
+      "t": 8.5,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 2
@@ -1900,6 +1882,44 @@
     {
      "kind": "status_mismatch",
      "label": {
+      "key": 1,
+      "t": 13.8259,
+      "t_start": 12.5033,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 5
+     },
+     "pred": {
+      "key": 1,
+      "t": 14.25,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 4
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 2,
+      "t": 16.6195,
+      "t_start": 15.3823,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 6
+     },
+     "pred": {
+      "key": 2,
+      "t": 17.0,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 5
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
       "key": 8,
       "t": 19.195,
       "t_start": 18.1128,
@@ -1912,15 +1932,57 @@
       "key": 8,
       "t": 19.083333333333332,
       "verified": false,
-      "reason": "no_hand_near_hole",
+      "reason": "grasp_not_seen",
       "matched": 6
      }
     },
     {
-     "kind": "nhpt_no_time",
+     "kind": "status_mismatch",
+     "label": {
+      "key": 6,
+      "t": 21.6653,
+      "t_start": 20.5171,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 8
+     },
+     "pred": {
+      "key": 6,
+      "t": 21.666666666666668,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 7
+     }
+    },
+    {
+     "kind": "status_mismatch",
+     "label": {
+      "key": 3,
+      "t": 24.2343,
+      "t_start": 23.0673,
+      "expected_verified": true,
+      "reason": null,
+      "deliberate_error": null,
+      "rep": 9
+     },
+     "pred": {
+      "key": 3,
+      "t": 24.083333333333332,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 8
+     }
+    },
+    {
+     "kind": "nhpt_timer_error",
      "label": {
       "t": 24.2343,
       "total_s": 22.4514
+     },
+     "pred": {
+      "t": 24.2343,
+      "total_s": 21.3333
      }
     }
    ],
@@ -1948,11 +2010,11 @@
     "notes": ""
    },
    "x": {
-    "verified": 0,
-    "unverified": 6,
+    "verified": 1,
+    "unverified": 11,
     "unverified_reasons": {
-     "grasp_not_seen": 4,
-     "no_hand_near_hole": 2
+     "grasp_not_seen": 10,
+     "no_hand_near_hole": 1
     },
     "expected_unverified": 0,
     "coverage": {
@@ -1963,25 +2025,34 @@
      "three_markers": 91,
      "held": 20
     },
-    "event_time_bias_s": 0.181,
-    "event_time_mae_s": 0.266,
+    "event_time_bias_s": 0.136,
+    "event_time_mae_s": 0.217,
     "event_time_signed_s": [
      0.3886,
      0.388,
-     0.3408,
+     0.0075,
      -0.1021,
-     -0.1117
+     0.4241,
+     0.3805,
+     -0.1117,
+     0.0014,
+     -0.151
     ],
     "timer_start_inferred": true,
     "timer_start_err_s": 0.967,
-    "completed": false,
+    "completed": true,
     "split_errors_s": [
      -0.578,
      -0.001,
-     -0.047,
-     -0.443
+     -0.38,
+     -0.11,
+     0.526,
+     -0.044,
+     -0.492,
+     0.113,
+     -0.152
     ],
-    "split_mae_s": 0.267
+    "split_mae_s": 0.266
    }
   },
   {
@@ -1999,11 +2070,11 @@
    },
    "labeled_reps": 9,
    "pred_reps": 9,
-   "tp": 8,
-   "fp": 1,
-   "fn": 1,
+   "tp": 9,
+   "fp": 0,
+   "fn": 0,
    "status_agree": 0,
-   "status_n": 8,
+   "status_n": 9,
    "abs_err": [],
    "signed_err": [],
    "lean": {
@@ -2019,20 +2090,11 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 24.356,
-   "nhpt_pred_s": 20.9167,
-   "nhpt_abs_err_s": 3.439,
+   "nhpt_pred_s": 22.5,
+   "nhpt_abs_err_s": 1.856,
    "misses": [
     {
-     "kind": "false_positive",
-     "pred": {
-      "key": 7,
-      "t": 8.166666666666666,
-      "verified": false,
-      "reason": "grasp_not_seen"
-     }
-    },
-    {
-     "kind": "false_negative",
+     "kind": "status_mismatch",
      "label": {
       "key": 7,
       "t": 3.2128,
@@ -2041,6 +2103,13 @@
       "reason": null,
       "deliberate_error": null,
       "rep": 1
+     },
+     "pred": {
+      "key": 7,
+      "t": 4.083333333333333,
+      "verified": false,
+      "reason": "grasp_not_seen",
+      "matched": 0
      }
     },
     {
@@ -2056,7 +2125,7 @@
      },
      "pred": {
       "key": 4,
-      "t": 6.833333333333333,
+      "t": 6.75,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 1
@@ -2094,7 +2163,7 @@
      },
      "pred": {
       "key": 6,
-      "t": 12.666666666666666,
+      "t": 12.583333333333334,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 3
@@ -2113,7 +2182,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 15.666666666666666,
+      "t": 14.916666666666666,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 4
@@ -2151,7 +2220,7 @@
      },
      "pred": {
       "key": 5,
-      "t": 21.333333333333332,
+      "t": 20.833333333333332,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 6
@@ -2203,7 +2272,7 @@
      },
      "pred": {
       "t": 26.1323,
-      "total_s": 20.9167
+      "total_s": 22.5
      }
     }
    ],
@@ -2234,8 +2303,8 @@
     "verified": 0,
     "unverified": 9,
     "unverified_reasons": {
-     "no_hand_near_hole": 3,
-     "grasp_not_seen": 6
+     "grasp_not_seen": 6,
+     "no_hand_near_hole": 3
     },
     "expected_unverified": 0,
     "coverage": {
@@ -2246,31 +2315,34 @@
      "three_markers": 124,
      "held": 41
     },
-    "event_time_bias_s": 0.828,
-    "event_time_mae_s": 0.828,
+    "event_time_bias_s": 0.675,
+    "event_time_mae_s": 0.675,
     "event_time_signed_s": [
-     0.7583,
+     0.8705,
+     0.675,
      0.7049,
-     0.8766,
-     1.1359,
+     0.7932,
+     0.3859,
      0.7547,
-     1.1964,
+     0.6964,
      0.7431,
      0.451
     ],
-    "timer_start_inferred": false,
-    "timer_start_err_s": 3.89,
+    "timer_start_inferred": true,
+    "timer_start_err_s": 2.307,
     "completed": true,
     "split_errors_s": [
-     -0.053,
-     0.172,
-     0.259,
-     -0.381,
-     0.442,
-     -0.453,
+     -1.437,
+     -0.196,
+     0.03,
+     0.088,
+     -0.407,
+     0.369,
+     -0.058,
+     0.047,
      -0.292
     ],
-    "split_mae_s": 0.293
+    "split_mae_s": 0.325
    }
   },
   {
@@ -2308,8 +2380,8 @@
     "false_alarm": 0
    },
    "nhpt_labeled_s": 19.1353,
-   "nhpt_pred_s": 18.0833,
-   "nhpt_abs_err_s": 1.052,
+   "nhpt_pred_s": 18.0,
+   "nhpt_abs_err_s": 1.135,
    "misses": [
     {
      "kind": "status_mismatch",
@@ -2324,7 +2396,7 @@
      },
      "pred": {
       "key": 1,
-      "t": 3.3333333333333335,
+      "t": 3.0833333333333335,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 0
@@ -2343,7 +2415,7 @@
      },
      "pred": {
       "key": 2,
-      "t": 5.583333333333333,
+      "t": 5.333333333333333,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 1
@@ -2362,7 +2434,7 @@
      },
      "pred": {
       "key": 5,
-      "t": 7.916666666666667,
+      "t": 7.666666666666667,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 2
@@ -2400,7 +2472,7 @@
      },
      "pred": {
       "key": 8,
-      "t": 12.333333333333334,
+      "t": 12.083333333333334,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 4
@@ -2419,7 +2491,7 @@
      },
      "pred": {
       "key": 6,
-      "t": 14.583333333333334,
+      "t": 14.416666666666666,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 5
@@ -2438,7 +2510,7 @@
      },
      "pred": {
       "key": 7,
-      "t": 16.916666666666668,
+      "t": 16.666666666666668,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 6
@@ -2457,7 +2529,7 @@
      },
      "pred": {
       "key": 3,
-      "t": 19.083333333333332,
+      "t": 18.833333333333332,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 7
@@ -2476,7 +2548,7 @@
      },
      "pred": {
       "key": 4,
-      "t": 21.416666666666668,
+      "t": 21.083333333333332,
       "verified": false,
       "reason": "no_hand_near_hole",
       "matched": 8
@@ -2490,7 +2562,7 @@
      },
      "pred": {
       "t": 20.7528,
-      "total_s": 18.0833
+      "total_s": 18.0
      }
     }
    ],
@@ -2533,34 +2605,34 @@
      "three_markers": 95,
      "held": 30
     },
-    "event_time_bias_s": 0.563,
-    "event_time_mae_s": 0.563,
+    "event_time_bias_s": 0.341,
+    "event_time_mae_s": 0.341,
     "event_time_signed_s": [
-     0.5661,
-     0.6134,
-     0.5818,
+     0.3161,
+     0.3634,
+     0.3318,
      0.3432,
-     0.5959,
-     0.5443,
-     0.5631,
-     0.594,
-     0.6639
+     0.3459,
+     0.3777,
+     0.3131,
+     0.344,
+     0.3305
     ],
     "timer_start_inferred": true,
-    "timer_start_err_s": 1.716,
+    "timer_start_err_s": 1.466,
     "completed": true,
     "split_errors_s": [
      -1.15,
      0.047,
      -0.032,
-     -0.239,
-     0.253,
-     -0.052,
-     0.019,
+     0.011,
+     0.003,
+     0.032,
+     -0.065,
      0.031,
-     0.07
+     -0.014
     ],
-    "split_mae_s": 0.21
+    "split_mae_s": 0.154
    }
   },
   {
@@ -2709,7 +2781,7 @@
      },
      "pred": {
       "key": 7,
-      "t": 25.666666666666668,
+      "t": 25.583333333333332,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 6
@@ -2728,7 +2800,7 @@
      },
      "pred": {
       "key": 3,
-      "t": 29.416666666666668,
+      "t": 29.333333333333332,
       "verified": false,
       "reason": "grasp_not_seen",
       "matched": 7
@@ -2793,8 +2865,8 @@
      "three_markers": 155,
      "held": 12
     },
-    "event_time_bias_s": 0.513,
-    "event_time_mae_s": 0.513,
+    "event_time_bias_s": 0.495,
+    "event_time_mae_s": 0.495,
     "event_time_signed_s": [
      0.5055,
      0.5227,
@@ -2802,8 +2874,8 @@
      0.508,
      0.4957,
      0.4537,
-     0.5816,
-     0.5578,
+     0.4982,
+     0.4744,
      0.5013
     ],
     "timer_start_inferred": false,
@@ -2816,11 +2888,11 @@
      0.014,
      -0.012,
      -0.042,
-     0.128,
+     0.045,
      -0.024,
-     -0.056
+     0.027
     ],
-    "split_mae_s": 0.132
+    "split_mae_s": 0.12
    }
   },
   {

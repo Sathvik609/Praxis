@@ -94,3 +94,18 @@ def test_a_seen_grasp_still_starts_the_timer_at_the_lift():
     evs = run(n, transfer(0.0, 4))
     start = next(e for e in evs if e.type == "nhpt_start")
     assert start.payload.get("inferred", False) is False and n.t_start == 0.2
+
+
+def test_a_hole_seated_twice_counts_once_toward_the_nine():
+    # 25 Oct (3-D render nhpt3d_07): a hand carrying a peg over an empty hole read as a seat there,
+    # the hole emptied and later filled for real; the timer counted nine seats with one hole
+    # three times and stopped 8 s early. The test ends when nine different holes are filled.
+    n = NHPT(debounce_frames=1, clear_frames=1)
+    seq = [(0.0, _occ(), []), (1.0, _occ(4), []), (1.2, _occ(4), []), (1.4, _occ(4), []),
+           (2.0, _occ(), []), (2.2, _occ(), []), (2.4, _occ(), []),
+           (3.0, _occ(4), []), (3.2, _occ(4), []), (3.4, _occ(4), []),
+           (5.0, _occ(4, 0), []), (5.2, _occ(4, 0), []), (5.4, _occ(4, 0), [])]
+    evs = run(n, seq)
+    assert [e.payload["hole"] for e in evs if e.type == "rep_complete"] == [4, 4, 0]  # every seat still reported
+    assert [e.payload["hole"] for e in evs if e.type == "nhpt_split"] == [4, 0]
+    assert n.snapshot(6.0)["pegs_done"] == 2

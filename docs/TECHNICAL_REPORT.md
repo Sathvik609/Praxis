@@ -344,10 +344,10 @@ Each condition is framed the way setup leaves it (all four markers in view). Gro
 
 | | Rep F1 (P / R) before → after | Timing after |
 |---|---|---|
-| Nine-Hole Peg Test (90 pegs) | 0.41 (0.58 / 0.31) → **0.90** (0.92 / 0.88) | seat time +0.57 s bias, per-peg split MAE 0.23 s, NHPT total MAE 2.0 s (8 of 10 completed) |
+| Nine-Hole Peg Test (90 pegs) | 0.41 (0.58 / 0.31) → **0.97** (0.94 / 1.0) | seat time +0.42 s bias, per-peg split MAE 0.23 s, NHPT total MAE 1.2 s (10 of 10 completed) |
 | Waiter – cup (192 reaches) | 0.21 (1.0 / 0.12) → **0.79** (0.95 / 0.68) | reach-time MAE 0.72 s (bias +0.64 s) |
 
-These are the 24 Oct numbers: we rendered all 16 clips again and scored them on the build with the 24 Oct fixes below. On 12 Oct (after the four fixes listed next) they were NHPT 0.85 (0.85 / 0.86, 9 of 10 completed, total MAE 2.6 s) and cup 0.80 (1.0 / 0.67, reach-time MAE 0.77 s).
+These are the 25 Oct numbers: we rendered all 16 clips again on 24 Oct and scored them on the build with the 24 and 25 Oct fixes below. On 24 Oct, before the shadow fix, the peg test was 0.90 (0.92 / 0.88, 8 of 10 completed, total MAE 2.0 s). On 12 Oct (after the four fixes listed next) they were NHPT 0.85 (0.85 / 0.86, 9 of 10 completed, total MAE 2.6 s) and cup 0.80 (1.0 / 0.67, reach-time MAE 0.77 s).
 
 The renders found four product defects. We fixed each one test-first (`tests/test_parallax.py`, `tests/test_cup3d.py`, `tests/test_nhpt.py`):
 1. *A seated peg read as empty.* Seen from 20–50°, a standing peg lands on the sheet plane as a streak. The streak starts past its hole (because of the board's thickness) and ends 10–40 mm away. Looking only at the hole disc, the hole read empty, the streak became a "free peg" (phantom grasps and drops), and at ~50° it lit up the next row's hole. Now occupancy looks first at a **seat column** for each hole: the hole raised 10–24 mm and projected with `cv2.projectPoints`. The camera model for that projection gets its focal length from a single-view `cv2.calibrateCamera` on the 16 marker corners (within 2 % of the true focal length on renders; the nominal 1.2 × width put a peg top 3–11 mm off). Free pegs exclude every hole's footprint.
@@ -359,9 +359,9 @@ We did not loosen any threshold to raise a number.
 
 What still fails, and why:
 - The OpenCV Zoo hand model finds the simple stand-in hand on only 3–9 % of frames. So almost every peg is `unverified` (grasp or hand-near-hole not seen), and verified agreement means little here. Most inferred timer starts miss the first transfer (≈1.5 s).
-- 7 extra NHPT reports (14 on 12 Oct). Most count an already seated hole again after the hand hid it, or put a peg in another row's hole at 42–50°.
+- 6 extra NHPT reports (14 on 12 Oct). Most count an already seated hole again after the hand hid it, or read a peg carried over an empty hole as seated there. A hole counts once toward the nine, so they no longer end the test early.
 - The dim-light clip with 6 mm yellow pegs, which never confirmed a seat on 12 Oct, now counts all nine (the board-change reference sees them).
-- New on 24 Oct: two clips stop counting partway. `nhpt3d_03` (30°, deep skin, 9 mm green pegs) counts 4 of 9 and `nhpt3d_07` (50°, 7 mm red pegs) counts 5 of 9, so neither test finishes. We have not found the cause yet. It came with the 24 Oct still-board rules, which make a peg seen only by change wait for a still board.
+- Fixed on 25 Oct: two clips lit by a low window (`nhpt3d_03`, `nhpt3d_07`) stopped counting at 4 and 5 of 9 on 24 Oct. Each standing peg cast a long shadow; the shadows joined into one hand-sized region, which was read as a hand covering the board, so the next pegs were blanked. Cast shadows (paper darker by the same factor in every channel) off the peg footprints no longer count toward a hand (`tests/test_peg_shadows.py`). That then showed a second bug: the test ended after nine seats even when one hole was counted three times, so it now ends when nine different holes are filled (`tests/test_nhpt.py`). Both clips now finish (25.3 s vs 26.8 s, 21.3 s vs 22.5 s).
 - One cup clip (`cup3d_06`, 35°, yaw 14°) now counts dot 2 five extra times (5 extra reports, all verified). The cause is open; the 24 Oct rules that ignore up to two stray readings near a dot are the first suspect.
 - Two cup clips fail. In dim light, a grey cup's noise reads as blue band. At 20°, the cup on an outer dot or the resting hand always hides a corner marker, so the four-marker first fix never comes (`docs/RISKS.md`).
 - Every other cup clip loses the first one or two reaches the same way: the cup standing on dot 1, as the instructions say, hides the corner marker behind it.
