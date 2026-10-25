@@ -250,13 +250,16 @@ function DemonstrationFor() {
                 <RotateCcw aria-hidden size={16} />
                 Watch again
               </button>
-              {demo ? (
-                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={tick}>I did a set</button>
+              {/* 25 Oct team test: on a stopped day this was a greyed-out Continue with no way back. */}
+              {stopped ? (
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus onClick={() => nav('/details/choose')}>Back to exercises</button>
+              ) : demo ? (
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus onClick={tick}>I did a set</button>
               ) : (
-                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus disabled={stopped} onClick={practise}>{ctaLabel}</button>
+                <button type="button" className="dth-mbtn dth-mbtn-1" data-autofocus onClick={practise}>{ctaLabel}</button>
               )}
             </div>
-            {demo && (
+            {demo && !stopped && (
               <div className="dth-links">
                 <button type="button" onClick={() => nav('/details/choose')}>Back to exercises</button>
               </div>

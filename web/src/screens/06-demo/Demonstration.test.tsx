@@ -237,7 +237,10 @@ test('a day stopped at check-in lets you watch but not start', async () => {
   finishClip()
   const modal = screen.getByRole('dialog', { name: 'Before you start' })
   expect(within(modal).getByText(/No exercises today/)).toBeInTheDocument()
-  expect(within(modal).getByRole('button', { name: /^Continue/ })).toBeDisabled()
+  // 25 Oct team test: the box ended on a greyed-out Continue with no way back; now the way back is the main button
+  expect(within(modal).queryByRole('button', { name: /^Continue/ })).not.toBeInTheDocument()
+  await userEvent.click(within(modal).getByRole('button', { name: 'Back to exercises' }))
+  expect(screen.getByTestId('where')).toHaveTextContent('/details/choose')
 })
 
 // 13 Oct team test: returning testers wanted to go straight on without watching the clip.
