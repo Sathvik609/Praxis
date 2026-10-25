@@ -18,17 +18,17 @@
  "nhpt_total_s": null,
  "coverage": {
   "frames": 1105,
-  "hand": 21,
+  "hand": 12,
   "calibrated": 1019,
   "four_markers": 56,
-  "three_markers": 770,
-  "held": 193
+  "three_markers": 769,
+  "held": 194
  },
  "events": [
   {
    "type": "reach_complete",
-   "t": 10.5,
-   "id": 6435,
+   "t": 10.416666666666666,
+   "id": 6500,
    "rep": 1,
    "from_dot": 2,
    "to_dot": 3,
@@ -39,12 +39,12 @@
    "phase": "slow",
    "t_lift": 8.333333333333334,
    "t_placed": 10.083333333333334,
-   "t_clear": 10.5
+   "t_clear": 10.416666666666666
   },
   {
    "type": "reach_complete",
-   "t": 14.083333333333334,
-   "id": 6484,
+   "t": 13.916666666666666,
+   "id": 6549,
    "rep": 2,
    "from_dot": 3,
    "to_dot": 4,
@@ -55,12 +55,12 @@
    "phase": "slow",
    "t_lift": 11.666666666666666,
    "t_placed": 13.666666666666666,
-   "t_clear": 14.083333333333334
+   "t_clear": 13.916666666666666
   },
   {
    "type": "reach_complete",
-   "t": 17.333333333333332,
-   "id": 6529,
+   "t": 17.25,
+   "id": 6596,
    "rep": 3,
    "from_dot": 4,
    "to_dot": 3,
@@ -71,12 +71,12 @@
    "phase": "slow",
    "t_lift": 15.0,
    "t_placed": 16.916666666666668,
-   "t_clear": 17.333333333333332
+   "t_clear": 17.25
   },
   {
    "type": "reach_complete",
-   "t": 20.666666666666668,
-   "id": 6575,
+   "t": 20.5,
+   "id": 6644,
    "rep": 4,
    "from_dot": 3,
    "to_dot": 2,
@@ -87,28 +87,28 @@
    "phase": "slow",
    "t_lift": 18.5,
    "t_placed": 20.25,
-   "t_clear": 20.666666666666668
+   "t_clear": 20.5
   },
   {
    "type": "reach_complete",
    "t": 24.166666666666668,
-   "id": 6623,
+   "id": 6701,
    "rep": 5,
    "from_dot": 2,
    "to_dot": 1,
-   "reach_ms": 1916.7,
+   "reach_ms": 2083.3,
    "verified": true,
    "reason": null,
    "arc": 1,
    "phase": "slow",
    "t_lift": 21.833333333333332,
-   "t_placed": 23.75,
+   "t_placed": 23.916666666666668,
    "t_clear": 24.166666666666668
   },
   {
    "type": "reach_complete",
-   "t": 27.166666666666668,
-   "id": 6667,
+   "t": 27.0,
+   "id": 6744,
    "rep": 6,
    "from_dot": 1,
    "to_dot": 0,
@@ -119,22 +119,22 @@
    "phase": "slow",
    "t_lift": 25.333333333333332,
    "t_placed": 26.75,
-   "t_clear": 27.166666666666668
+   "t_clear": 27.0
   },
   {
    "type": "arc_complete",
-   "t": 27.166666666666668,
-   "id": 6668,
+   "t": 27.0,
+   "id": 6745,
    "arc": 1,
    "phase": "slow",
-   "mean_reach_ms": 1791.7,
+   "mean_reach_ms": 1819.5,
    "unverified": 0,
    "awaiting_phase": false
   },
   {
    "type": "reach_complete",
-   "t": 31.0,
-   "id": 6721,
+   "t": 30.833333333333332,
+   "id": 6800,
    "rep": 7,
    "from_dot": 0,
    "to_dot": 1,
@@ -145,12 +145,12 @@
    "phase": "slow",
    "t_lift": 29.166666666666668,
    "t_placed": 30.583333333333332,
-   "t_clear": 31.0
+   "t_clear": 30.833333333333332
   },
   {
    "type": "reach_complete",
-   "t": 34.666666666666664,
-   "id": 6771,
+   "t": 34.5,
+   "id": 6853,
    "rep": 8,
    "from_dot": 1,
    "to_dot": 2,
@@ -161,12 +161,12 @@
    "phase": "slow",
    "t_lift": 32.5,
    "t_placed": 34.25,
-   "t_clear": 34.666666666666664
+   "t_clear": 34.5
   },
   {
    "type": "reach_complete",
-   "t": 38.333333333333336,
-   "id": 6821,
+   "t": 38.166666666666664,
+   "id": 6904,
    "rep": 9,
    "from_dot": 2,
    "to_dot": 3,
@@ -177,12 +177,12 @@
    "phase": "slow",
    "t_lift": 36.0,
    "t_placed": 37.916666666666664,
-   "t_clear": 38.333333333333336
+   "t_clear": 38.166666666666664
   },
   {
    "type": "reach_complete",
-   "t": 42.0,
-   "id": 6871,
+   "t": 41.833333333333336,
+   "id": 6955,
    "rep": 10,
    "from_dot": 3,
    "to_dot": 4,
@@ -193,12 +193,12 @@
    "phase": "slow",
    "t_lift": 39.583333333333336,
    "t_placed": 41.583333333333336,
-   "t_clear": 42.0
+   "t_clear": 41.833333333333336
   },
   {
    "type": "reach_complete",
-   "t": 45.333333333333336,
-   "id": 6917,
+   "t": 45.166666666666664,
+   "id": 7004,
    "rep": 11,
    "from_dot": 4,
    "to_dot": 3,
@@ -209,12 +209,12 @@
    "phase": "slow",
    "t_lift": 43.0,
    "t_placed": 44.916666666666664,
-   "t_clear": 45.333333333333336
+   "t_clear": 45.166666666666664
   },
   {
    "type": "reach_complete",
-   "t": 48.833333333333336,
-   "id": 6965,
+   "t": 48.666666666666664,
+   "id": 7053,
    "rep": 12,
    "from_dot": 3,
    "to_dot": 2,
@@ -225,12 +225,12 @@
    "phase": "slow",
    "t_lift": 46.5,
    "t_placed": 48.416666666666664,
-   "t_clear": 48.833333333333336
+   "t_clear": 48.666666666666664
   },
   {
    "type": "reach_complete",
-   "t": 52.333333333333336,
-   "id": 7013,
+   "t": 52.166666666666664,
+   "id": 7106,
    "rep": 13,
    "from_dot": 2,
    "to_dot": 1,
@@ -241,12 +241,12 @@
    "phase": "slow",
    "t_lift": 50.083333333333336,
    "t_placed": 51.916666666666664,
-   "t_clear": 52.333333333333336
+   "t_clear": 52.166666666666664
   },
   {
    "type": "reach_complete",
-   "t": 55.5,
-   "id": 7059,
+   "t": 55.333333333333336,
+   "id": 7153,
    "rep": 14,
    "from_dot": 1,
    "to_dot": 0,
@@ -257,12 +257,12 @@
    "phase": "slow",
    "t_lift": 53.5,
    "t_placed": 55.083333333333336,
-   "t_clear": 55.5
+   "t_clear": 55.333333333333336
   },
   {
    "type": "arc_complete",
-   "t": 55.5,
-   "id": 7060,
+   "t": 55.333333333333336,
+   "id": 7154,
    "arc": 2,
    "phase": "slow",
    "mean_reach_ms": 1791.7,
@@ -271,8 +271,8 @@
   },
   {
    "type": "reach_complete",
-   "t": 58.083333333333336,
-   "id": 7097,
+   "t": 57.916666666666664,
+   "id": 7192,
    "rep": 15,
    "from_dot": 0,
    "to_dot": 1,
@@ -283,12 +283,12 @@
    "phase": "slow",
    "t_lift": 57.25,
    "t_placed": 57.666666666666664,
-   "t_clear": 58.083333333333336
+   "t_clear": 57.916666666666664
   },
   {
    "type": "reach_complete",
-   "t": 60.333333333333336,
-   "id": 7130,
+   "t": 60.166666666666664,
+   "id": 7226,
    "rep": 16,
    "from_dot": 1,
    "to_dot": 2,
@@ -299,28 +299,28 @@
    "phase": "slow",
    "t_lift": 58.916666666666664,
    "t_placed": 59.916666666666664,
-   "t_clear": 60.333333333333336
+   "t_clear": 60.166666666666664
   },
   {
    "type": "reach_complete",
-   "t": 62.666666666666664,
-   "id": 7164,
+   "t": 62.333333333333336,
+   "id": 7259,
    "rep": 17,
    "from_dot": 2,
    "to_dot": 3,
-   "reach_ms": 1166.7,
+   "reach_ms": 916.7,
    "verified": true,
    "reason": null,
    "arc": 3,
    "phase": "slow",
    "t_lift": 61.083333333333336,
-   "t_placed": 62.25,
-   "t_clear": 62.666666666666664
+   "t_placed": 62.0,
+   "t_clear": 62.333333333333336
   },
   {
    "type": "reach_complete",
-   "t": 64.91666666666667,
-   "id": 7197,
+   "t": 64.75,
+   "id": 7295,
    "rep": 18,
    "from_dot": 3,
    "to_dot": 4,
@@ -331,12 +331,12 @@
    "phase": "slow",
    "t_lift": 63.25,
    "t_placed": 64.5,
-   "t_clear": 64.91666666666667
+   "t_clear": 64.75
   },
   {
    "type": "reach_complete",
    "t": 66.91666666666667,
-   "id": 7227,
+   "id": 7328,
    "rep": 19,
    "from_dot": 4,
    "to_dot": 3,
@@ -351,8 +351,8 @@
   },
   {
    "type": "reach_complete",
-   "t": 69.25,
-   "id": 7261,
+   "t": 69.08333333333333,
+   "id": 7361,
    "rep": 20,
    "from_dot": 3,
    "to_dot": 2,
@@ -363,12 +363,12 @@
    "phase": "slow",
    "t_lift": 67.58333333333333,
    "t_placed": 68.83333333333333,
-   "t_clear": 69.25
+   "t_clear": 69.08333333333333
   },
   {
    "type": "reach_complete",
-   "t": 71.16666666666667,
-   "id": 7290,
+   "t": 71.0,
+   "id": 7391,
    "rep": 21,
    "from_dot": 2,
    "to_dot": 1,
@@ -379,12 +379,12 @@
    "phase": "slow",
    "t_lift": 69.75,
    "t_placed": 70.75,
-   "t_clear": 71.16666666666667
+   "t_clear": 71.0
   },
   {
    "type": "reach_complete",
-   "t": 73.25,
-   "id": 7321,
+   "t": 73.08333333333333,
+   "id": 7423,
    "rep": 22,
    "from_dot": 1,
    "to_dot": 0,
@@ -395,22 +395,22 @@
    "phase": "slow",
    "t_lift": 71.91666666666667,
    "t_placed": 72.83333333333333,
-   "t_clear": 73.25
+   "t_clear": 73.08333333333333
   },
   {
    "type": "arc_complete",
-   "t": 73.25,
-   "id": 7322,
+   "t": 73.08333333333333,
+   "id": 7424,
    "arc": 3,
    "phase": "slow",
-   "mean_reach_ms": 989.6,
+   "mean_reach_ms": 958.4,
    "unverified": 0,
    "awaiting_phase": true
   },
   {
    "type": "reach_complete",
-   "t": 75.5,
-   "id": 7355,
+   "t": 75.33333333333333,
+   "id": 7460,
    "rep": 23,
    "from_dot": 0,
    "to_dot": 1,
@@ -421,12 +421,12 @@
    "phase": "slow",
    "t_lift": 74.66666666666667,
    "t_placed": 75.08333333333333,
-   "t_clear": 75.5
+   "t_clear": 75.33333333333333
   },
   {
    "type": "reach_complete",
-   "t": 77.58333333333333,
-   "id": 7386,
+   "t": 77.41666666666667,
+   "id": 7494,
    "rep": 24,
    "from_dot": 1,
    "to_dot": 2,
@@ -437,28 +437,28 @@
    "phase": "slow",
    "t_lift": 76.25,
    "t_placed": 77.16666666666667,
-   "t_clear": 77.58333333333333
+   "t_clear": 77.41666666666667
   },
   {
    "type": "reach_complete",
-   "t": 80.0,
-   "id": 7421,
+   "t": 79.66666666666667,
+   "id": 7528,
    "rep": 25,
    "from_dot": 2,
    "to_dot": 3,
-   "reach_ms": 1166.7,
+   "reach_ms": 916.7,
    "verified": true,
    "reason": null,
    "arc": 4,
    "phase": "slow",
    "t_lift": 78.41666666666667,
-   "t_placed": 79.58333333333333,
-   "t_clear": 80.0
+   "t_placed": 79.33333333333333,
+   "t_clear": 79.66666666666667
   },
   {
    "type": "reach_complete",
-   "t": 82.16666666666667,
-   "id": 7453,
+   "t": 82.0,
+   "id": 7563,
    "rep": 26,
    "from_dot": 3,
    "to_dot": 4,
@@ -469,12 +469,12 @@
    "phase": "slow",
    "t_lift": 80.5,
    "t_placed": 81.75,
-   "t_clear": 82.16666666666667
+   "t_clear": 82.0
   },
   {
    "type": "reach_complete",
-   "t": 84.08333333333333,
-   "id": 7482,
+   "t": 83.91666666666667,
+   "id": 7593,
    "rep": 27,
    "from_dot": 4,
    "to_dot": 3,
@@ -485,12 +485,12 @@
    "phase": "slow",
    "t_lift": 82.66666666666667,
    "t_placed": 83.66666666666667,
-   "t_clear": 84.08333333333333
+   "t_clear": 83.91666666666667
   },
   {
    "type": "reach_complete",
-   "t": 86.25,
-   "id": 7514,
+   "t": 86.16666666666667,
+   "id": 7629,
    "rep": 28,
    "from_dot": 3,
    "to_dot": 2,
@@ -501,12 +501,12 @@
    "phase": "slow",
    "t_lift": 84.83333333333333,
    "t_placed": 85.83333333333333,
-   "t_clear": 86.25
+   "t_clear": 86.16666666666667
   },
   {
    "type": "reach_complete",
-   "t": 88.41666666666667,
-   "id": 7546,
+   "t": 88.25,
+   "id": 7661,
    "rep": 29,
    "from_dot": 2,
    "to_dot": 1,
@@ -517,12 +517,12 @@
    "phase": "slow",
    "t_lift": 87.08333333333333,
    "t_placed": 88.0,
-   "t_clear": 88.41666666666667
+   "t_clear": 88.25
   },
   {
    "type": "reach_complete",
-   "t": 90.66666666666667,
-   "id": 7579,
+   "t": 90.5,
+   "id": 7695,
    "rep": 30,
    "from_dot": 1,
    "to_dot": 0,
@@ -533,15 +533,15 @@
    "phase": "slow",
    "t_lift": 89.25,
    "t_placed": 90.25,
-   "t_clear": 90.66666666666667
+   "t_clear": 90.5
   },
   {
    "type": "arc_complete",
-   "t": 90.66666666666667,
-   "id": 7580,
+   "t": 90.5,
+   "id": 7696,
    "arc": 4,
    "phase": "slow",
-   "mean_reach_ms": 958.4,
+   "mean_reach_ms": 927.1,
    "unverified": 0,
    "awaiting_phase": true
   }

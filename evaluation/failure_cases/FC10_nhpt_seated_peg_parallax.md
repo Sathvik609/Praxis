@@ -25,5 +25,6 @@ exclude every hole's footprint. No threshold was loosened.
 
 ## Status
 Fixed on the renders: rep F1 0.85 (P 0.85 / R 0.86), 9 of 10 clips complete, NHPT total MAE
-2.6 s. Assumes the standard 32 mm peg and a board up to ~12 mm; never seen a real peg or board.
+2.6 s (12 Oct). Rendered again on the 24 Oct build: 0.90 (P 0.92 / R 0.88), 8 of 10 complete,
+NHPT total MAE 2.0 s; two clips now stop counting partway (report §8.1.1). Assumes the standard 32 mm peg and a board up to ~12 mm; never seen a real peg or board.
 Remaining extras: FC15.

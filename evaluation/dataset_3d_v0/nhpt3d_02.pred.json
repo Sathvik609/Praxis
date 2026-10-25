@@ -15,218 +15,116 @@
  },
  "fps": 12.0,
  "frames": 312,
- "nhpt_total_s": 16.4167,
+ "nhpt_total_s": 21.3333,
  "coverage": {
   "frames": 312,
   "hand": 54,
   "calibrated": 312,
-  "four_markers": 199,
-  "three_markers": 90,
+  "four_markers": 201,
+  "three_markers": 88,
   "held": 23
  },
  "events": [
   {
    "type": "nhpt_start",
-   "t": 2.8333333333333335,
-   "id": 442,
-   "t_start": 2.6666666666666665,
-   "inferred": true
-  },
-  {
-   "type": "rep_complete",
    "t": 3.0,
    "id": 447,
-   "rep": 1,
-   "hole": 3,
-   "target": null,
-   "duration_s": 0.0,
-   "t_grasp": 2.6666666666666665,
-   "t_seated": 2.6666666666666665,
-   "t_clear": 3.0,
-   "verified": false,
-   "reason": "grasp_not_seen"
+   "t_start": 3.0,
+   "inferred": false
   },
   {
    "type": "rep_complete",
-   "t": 3.25,
-   "id": 456,
-   "rep": 2,
+   "t": 3.75,
+   "id": 461,
+   "rep": 1,
    "hole": 0,
    "target": null,
-   "duration_s": 0.0,
+   "duration_s": 0.3333,
    "t_grasp": 3.0,
-   "t_seated": 3.0,
-   "t_clear": 3.25,
+   "t_seated": 3.3333333333333335,
+   "t_clear": 3.75,
    "verified": false,
-   "reason": "grasp_not_seen"
+   "reason": "no_hand_near_hole"
   },
   {
    "type": "rep_complete",
-   "t": 5.833333333333333,
-   "id": 493,
-   "rep": 3,
+   "t": 6.416666666666667,
+   "id": 499,
+   "rep": 2,
    "hole": 8,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 5.583333333333333,
-   "t_seated": 5.583333333333333,
-   "t_clear": 5.833333333333333,
+   "t_grasp": 6.0,
+   "t_seated": 6.0,
+   "t_clear": 6.416666666666667,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
-   "t": 8.5,
-   "id": 531,
+   "t": 9.25,
+   "id": 540,
+   "rep": 3,
+   "hole": 3,
+   "target": null,
+   "duration_s": 0.3333,
+   "t_grasp": 8.5,
+   "t_seated": 8.833333333333334,
+   "t_clear": 9.25,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "rep_complete",
+   "t": 12.0,
+   "id": 579,
    "rep": 4,
    "hole": 6,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 8.25,
-   "t_seated": 8.25,
-   "t_clear": 8.5,
+   "t_grasp": 11.583333333333334,
+   "t_seated": 11.583333333333334,
+   "t_clear": 12.0,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
-   "t": 9.166666666666666,
-   "id": 545,
+   "t": 14.583333333333334,
+   "id": 616,
    "rep": 5,
-   "hole": 3,
-   "target": null,
-   "duration_s": 0.0,
-   "t_grasp": 8.75,
-   "t_seated": 8.75,
-   "t_clear": 9.166666666666666,
-   "verified": false,
-   "reason": "grasp_not_seen"
-  },
-  {
-   "type": "rep_complete",
-   "t": 11.916666666666666,
-   "id": 584,
-   "rep": 6,
-   "hole": 6,
-   "target": null,
-   "duration_s": 0.0,
-   "t_grasp": 11.5,
-   "t_seated": 11.5,
-   "t_clear": 11.916666666666666,
-   "verified": false,
-   "reason": "grasp_not_seen"
-  },
-  {
-   "type": "rep_complete",
-   "t": 13.916666666666666,
-   "id": 614,
-   "rep": 7,
    "hole": 7,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 13.666666666666666,
-   "t_seated": 13.666666666666666,
-   "t_clear": 13.916666666666666,
+   "t_grasp": 14.166666666666666,
+   "t_seated": 14.166666666666666,
+   "t_clear": 14.583333333333334,
    "verified": false,
    "reason": "grasp_not_seen"
   },
   {
    "type": "rep_complete",
-   "t": 16.5,
-   "id": 651,
-   "rep": 8,
+   "t": 17.083333333333332,
+   "id": 652,
+   "rep": 6,
    "hole": 4,
    "target": null,
    "duration_s": 0.0,
-   "t_grasp": 16.25,
-   "t_seated": 16.25,
-   "t_clear": 16.5,
+   "t_grasp": 16.666666666666668,
+   "t_seated": 16.666666666666668,
+   "t_clear": 17.083333333333332,
    "verified": false,
    "reason": "grasp_not_seen"
-  },
-  {
-   "type": "nhpt_complete",
-   "t": 19.25,
-   "id": 690,
-   "total_s": 16.4167,
-   "start_inferred": true,
-   "splits_s": [
-    0.0,
-    0.3333,
-    2.5833,
-    2.6667,
-    0.5,
-    2.75,
-    2.1667,
-    2.5833,
-    2.8333
-   ],
-   "pegs": [
-    {
-     "peg": 1,
-     "hole": 3,
-     "t": 2.6666666666666665,
-     "split_s": 0.0
-    },
-    {
-     "peg": 2,
-     "hole": 0,
-     "t": 3.0,
-     "split_s": 0.3333
-    },
-    {
-     "peg": 3,
-     "hole": 8,
-     "t": 5.583333333333333,
-     "split_s": 2.5833
-    },
-    {
-     "peg": 4,
-     "hole": 6,
-     "t": 8.25,
-     "split_s": 2.6667
-    },
-    {
-     "peg": 5,
-     "hole": 3,
-     "t": 8.75,
-     "split_s": 0.5
-    },
-    {
-     "peg": 6,
-     "hole": 6,
-     "t": 11.5,
-     "split_s": 2.75
-    },
-    {
-     "peg": 7,
-     "hole": 7,
-     "t": 13.666666666666666,
-     "split_s": 2.1667
-    },
-    {
-     "peg": 8,
-     "hole": 4,
-     "t": 16.25,
-     "split_s": 2.5833
-    },
-    {
-     "peg": 9,
-     "hole": 1,
-     "t": 19.083333333333332,
-     "split_s": 2.8333
-    }
-   ]
   },
   {
    "type": "rep_complete",
    "t": 19.5,
-   "id": 695,
-   "rep": 9,
+   "id": 688,
+   "rep": 7,
    "hole": 1,
    "target": null,
-   "duration_s": 0.5833,
-   "t_grasp": 18.5,
+   "duration_s": 0.25,
+   "t_grasp": 18.833333333333332,
    "t_seated": 19.083333333333332,
    "t_clear": 19.5,
    "verified": false,
@@ -234,13 +132,101 @@
   },
   {
    "type": "rep_complete",
+   "t": 22.083333333333332,
+   "id": 726,
+   "rep": 8,
+   "hole": 5,
+   "target": null,
+   "duration_s": 0.5,
+   "t_grasp": 21.166666666666668,
+   "t_seated": 21.666666666666668,
+   "t_clear": 22.083333333333332,
+   "verified": false,
+   "reason": "no_hand_near_hole"
+  },
+  {
+   "type": "nhpt_complete",
+   "t": 24.5,
+   "id": 761,
+   "total_s": 21.3333,
+   "start_inferred": false,
+   "splits_s": [
+    0.3333,
+    2.6667,
+    2.8333,
+    2.75,
+    2.5833,
+    2.5,
+    2.4167,
+    2.5833,
+    2.6667
+   ],
+   "pegs": [
+    {
+     "peg": 1,
+     "hole": 0,
+     "t": 3.3333333333333335,
+     "split_s": 0.3333
+    },
+    {
+     "peg": 2,
+     "hole": 8,
+     "t": 6.0,
+     "split_s": 2.6667
+    },
+    {
+     "peg": 3,
+     "hole": 3,
+     "t": 8.833333333333334,
+     "split_s": 2.8333
+    },
+    {
+     "peg": 4,
+     "hole": 6,
+     "t": 11.583333333333334,
+     "split_s": 2.75
+    },
+    {
+     "peg": 5,
+     "hole": 7,
+     "t": 14.166666666666666,
+     "split_s": 2.5833
+    },
+    {
+     "peg": 6,
+     "hole": 4,
+     "t": 16.666666666666668,
+     "split_s": 2.5
+    },
+    {
+     "peg": 7,
+     "hole": 1,
+     "t": 19.083333333333332,
+     "split_s": 2.4167
+    },
+    {
+     "peg": 8,
+     "hole": 5,
+     "t": 21.666666666666668,
+     "split_s": 2.5833
+    },
+    {
+     "peg": 9,
+     "hole": 2,
+     "t": 24.333333333333332,
+     "split_s": 2.6667
+    }
+   ]
+  },
+  {
+   "type": "rep_complete",
    "t": 24.75,
-   "id": 764,
-   "rep": 10,
+   "id": 766,
+   "rep": 9,
    "hole": 2,
    "target": null,
-   "duration_s": 3.1667,
-   "t_grasp": 21.166666666666668,
+   "duration_s": 0.5,
+   "t_grasp": 23.833333333333332,
    "t_seated": 24.333333333333332,
    "t_clear": 24.75,
    "verified": false,

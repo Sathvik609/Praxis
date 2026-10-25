@@ -15,7 +15,7 @@
    "participant": "render3d",
    "frames": 345,
    "fps": 12.0,
-   "render_s": 98.7,
+   "render_s": 49.8,
    "condition": {
     "id": "nhpt3d_01",
     "exercise": "nhpt",
@@ -50,7 +50,7 @@
    "participant": "render3d",
    "frames": 312,
    "fps": 12.0,
-   "render_s": 92.5,
+   "render_s": 48.6,
    "condition": {
     "id": "nhpt3d_02",
     "exercise": "nhpt",
@@ -85,7 +85,7 @@
    "participant": "render3d",
    "frames": 372,
    "fps": 12.0,
-   "render_s": 138.8,
+   "render_s": 54.6,
    "condition": {
     "id": "nhpt3d_03",
     "exercise": "nhpt",
@@ -120,7 +120,7 @@
    "participant": "render3d",
    "frames": 334,
    "fps": 12.0,
-   "render_s": 98.9,
+   "render_s": 48.2,
    "condition": {
     "id": "nhpt3d_04",
     "exercise": "nhpt",
@@ -155,7 +155,7 @@
    "participant": "render3d",
    "frames": 291,
    "fps": 12.0,
-   "render_s": 91.7,
+   "render_s": 42.6,
    "condition": {
     "id": "nhpt3d_05",
     "exercise": "nhpt",
@@ -190,7 +190,7 @@
    "participant": "render3d",
    "frames": 333,
    "fps": 12.0,
-   "render_s": 96.0,
+   "render_s": 53.8,
    "condition": {
     "id": "nhpt3d_06",
     "exercise": "nhpt",
@@ -225,7 +225,7 @@
    "participant": "render3d",
    "frames": 316,
    "fps": 12.0,
-   "render_s": 104.7,
+   "render_s": 45.8,
    "condition": {
     "id": "nhpt3d_07",
     "exercise": "nhpt",
@@ -260,7 +260,7 @@
    "participant": "render3d",
    "frames": 339,
    "fps": 12.0,
-   "render_s": 150.7,
+   "render_s": 59.9,
    "condition": {
     "id": "nhpt3d_08",
     "exercise": "nhpt",
@@ -295,7 +295,7 @@
    "participant": "render3d",
    "frames": 272,
    "fps": 12.0,
-   "render_s": 111.7,
+   "render_s": 57.8,
    "condition": {
     "id": "nhpt3d_09",
     "exercise": "nhpt",
@@ -330,7 +330,7 @@
    "participant": "render3d",
    "frames": 417,
    "fps": 12.0,
-   "render_s": 113.5,
+   "render_s": 81.6,
    "condition": {
     "id": "nhpt3d_10",
     "exercise": "nhpt",
@@ -365,7 +365,7 @@
    "participant": "render3d",
    "frames": 990,
    "fps": 12.0,
-   "render_s": 298.0,
+   "render_s": 206.3,
    "condition": {
     "id": "cup3d_01",
     "exercise": "cup",
@@ -400,7 +400,7 @@
    "participant": "render3d",
    "frames": 904,
    "fps": 12.0,
-   "render_s": 264.7,
+   "render_s": 192.9,
    "condition": {
     "id": "cup3d_02",
     "exercise": "cup",
@@ -435,7 +435,7 @@
    "participant": "render3d",
    "frames": 1105,
    "fps": 12.0,
-   "render_s": 372.0,
+   "render_s": 202.8,
    "condition": {
     "id": "cup3d_03",
     "exercise": "cup",
@@ -470,7 +470,7 @@
    "participant": "render3d",
    "frames": 1008,
    "fps": 12.0,
-   "render_s": 391.0,
+   "render_s": 170.5,
    "condition": {
     "id": "cup3d_04",
     "exercise": "cup",
@@ -505,7 +505,7 @@
    "participant": "render3d",
    "frames": 831,
    "fps": 12.0,
-   "render_s": 242.8,
+   "render_s": 138.1,
    "condition": {
     "id": "cup3d_05",
     "exercise": "cup",
@@ -540,7 +540,7 @@
    "participant": "render3d",
    "frames": 998,
    "fps": 12.0,
-   "render_s": 215.6,
+   "render_s": 171.7,
    "condition": {
     "id": "cup3d_06",
     "exercise": "cup",

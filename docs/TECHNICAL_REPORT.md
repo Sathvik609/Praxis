@@ -1,6 +1,6 @@
 # Praxis: an agentic vision coach for upper-limb rehab at home
 
-**Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 21 Oct 2026**
+**Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 24 Oct 2026**
 
 Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · Full engineering detail, module by module: [`docs/ENGINEERING_NOTES.md`](ENGINEERING_NOTES.md)
 
@@ -27,7 +27,7 @@ What is measured and what is not, in one place:
 
 | Area | Status (21 Oct 2026) |
 |---|---|
-| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 894 service tests + 1014 web tests green (21 Oct); CI on every push |
+| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 934 service tests (one skipped) and 1019 web tests pass (24 Oct); CI on every push |
 | Claude agent coach (17 tools over MCP, autonomy table, guardrails) | built; Claude Sonnet 5.5 via the Anthropic API. **On real video** (REHAB24-6 run through the product pipeline, 40 sessions): a fault confirmed by motion capture was corrected in 41/44 set reviews, the fix was named on 26/26 real wrong-view pauses, **0 guardrail violations**. Synthetic, 15 scenarios, 21 Oct recheck: 15/15, 0 violations (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; stopped between work sessions, started for judging 24 Oct–10 Nov). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). We checked the 21 Oct rebuild with `/health`, a replay and 3 agent runs |
 | Accuracy on real people | **Arm out to the side only, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.93** (§8.4, after the 12 Oct threshold changes). It exposed two pose defects, both now fixed. NHPT and Waiter – cup: synthetic only (§8.1). Our own-recordings protocol is built but not run (§8.6). |
@@ -344,8 +344,10 @@ Each condition is framed the way setup leaves it (all four markers in view). Gro
 
 | | Rep F1 (P / R) before → after | Timing after |
 |---|---|---|
-| Nine-Hole Peg Test (90 pegs) | 0.41 (0.58 / 0.31) → **0.85** (0.85 / 0.86) | seat time +0.31 s bias, per-peg split MAE 0.29 s, NHPT total MAE 2.6 s (9 of 10 completed) |
-| Waiter – cup (192 reaches) | 0.21 (1.0 / 0.12) → **0.80** (1.0 / 0.67) | reach-time MAE 0.77 s (bias +0.76 s) |
+| Nine-Hole Peg Test (90 pegs) | 0.41 (0.58 / 0.31) → **0.90** (0.92 / 0.88) | seat time +0.57 s bias, per-peg split MAE 0.23 s, NHPT total MAE 2.0 s (8 of 10 completed) |
+| Waiter – cup (192 reaches) | 0.21 (1.0 / 0.12) → **0.79** (0.95 / 0.68) | reach-time MAE 0.72 s (bias +0.64 s) |
+
+These are the 24 Oct numbers: we rendered all 16 clips again and scored them on the build with the 24 Oct fixes below. On 12 Oct (after the four fixes listed next) they were NHPT 0.85 (0.85 / 0.86, 9 of 10 completed, total MAE 2.6 s) and cup 0.80 (1.0 / 0.67, reach-time MAE 0.77 s).
 
 The renders found four product defects. We fixed each one test-first (`tests/test_parallax.py`, `tests/test_cup3d.py`, `tests/test_nhpt.py`):
 1. *A seated peg read as empty.* Seen from 20–50°, a standing peg lands on the sheet plane as a streak. The streak starts past its hole (because of the board's thickness) and ends 10–40 mm away. Looking only at the hole disc, the hole read empty, the streak became a "free peg" (phantom grasps and drops), and at ~50° it lit up the next row's hole. Now occupancy looks first at a **seat column** for each hole: the hole raised 10–24 mm and projected with `cv2.projectPoints`. The camera model for that projection gets its focal length from a single-view `cv2.calibrateCamera` on the 16 marker corners (within 2 % of the true focal length on renders; the nominal 1.2 × width put a peg top 3–11 mm off). Free pegs exclude every hole's footprint.
@@ -357,8 +359,10 @@ We did not loosen any threshold to raise a number.
 
 What still fails, and why:
 - The OpenCV Zoo hand model finds the simple stand-in hand on only 3–9 % of frames. So almost every peg is `unverified` (grasp or hand-near-hole not seen), and verified agreement means little here. Most inferred timer starts miss the first transfer (≈1.5 s).
-- Of 14 extra NHPT reports, 10 count an already seated hole again after the hand hid it, and 4 put a peg in another row's hole at 42–50°.
-- One NHPT clip (dim light, 6 mm yellow pegs) never confirms a seat. The default colour window covers only 20–30 % of a peg there, and tap-to-sample is not replayed.
+- 7 extra NHPT reports (14 on 12 Oct). Most count an already seated hole again after the hand hid it, or put a peg in another row's hole at 42–50°.
+- The dim-light clip with 6 mm yellow pegs, which never confirmed a seat on 12 Oct, now counts all nine (the board-change reference sees them).
+- New on 24 Oct: two clips stop counting partway. `nhpt3d_03` (30°, deep skin, 9 mm green pegs) counts 4 of 9 and `nhpt3d_07` (50°, 7 mm red pegs) counts 5 of 9, so neither test finishes. We have not found the cause yet. It came with the 24 Oct still-board rules, which make a peg seen only by change wait for a still board.
+- One cup clip (`cup3d_06`, 35°, yaw 14°) now counts dot 2 five extra times (5 extra reports, all verified). The cause is open; the 24 Oct rules that ignore up to two stray readings near a dot are the first suspect.
 - Two cup clips fail. In dim light, a grey cup's noise reads as blue band. At 20°, the cup on an outer dot or the resting hand always hides a corner marker, so the four-marker first fix never comes (`docs/RISKS.md`).
 - Every other cup clip loses the first one or two reaches the same way: the cup standing on dot 1, as the instructions say, hides the corner marker behind it.
 - Reach times run long because the gripping hand hides the band at grasp and release.
