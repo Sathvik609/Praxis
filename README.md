@@ -7,6 +7,7 @@
   <img alt="AWS Graviton4 with COOL" src="https://img.shields.io/badge/AWS-Graviton4%20%C2%B7%20COOL-FF9900?logo=amazonwebservices&logoColor=white">
   <img alt="Claude agent over MCP" src="https://img.shields.io/badge/Claude%20agent-MCP%20tools-D97757?logo=anthropic&logoColor=white">
   <img alt="Not a medical device" src="https://img.shields.io/badge/not%20a-medical%20device-C0362C">
+  <a href="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/Sathvik609/Praxis/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
 <p align="center">
