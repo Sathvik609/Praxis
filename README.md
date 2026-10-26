@@ -24,7 +24,7 @@
 - **Technical report:** [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md), also as [PDF](docs/Praxis_Technical_Report.pdf)
 - **Diagrams:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · **Evaluation:** [evaluation/README.md](evaluation/README.md)
 
-Praxis helps people do the shoulder, arm and hand exercises their therapist prescribed. There are three: **Arm out to the side**, **Waiter – cup** (moving a cup across five printed dots) and the **Nine-Hole Peg Test** (a weekly timed test). OpenCV 5 checks each rep from the laptop camera. Hard-coded safety rules check every event first. Then a coach gives a short cue that stays inside the prescription.
+Praxis helps people do the shoulder, arm and hand exercises a therapist prescribes. There are three: **Arm out to the side**, **Waiter – cup** (moving a cup across five printed dots) and the **Nine-Hole Peg Test** (a weekly timed test). OpenCV 5 checks each rep from the laptop camera. Hard-coded safety rules check every event first. Then a coach gives a short cue that stays inside the prescription.
 
 > Praxis is an adherence and coaching aid. **It is not a medical device.** The therapist prescribes, the coach suggests changes inside that prescription, and the safety rules in code always win. Video is processed in memory and never stored.
 
@@ -115,6 +115,7 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 - With the hips out of view, Arm out to the side still counts reps, but it cannot check shoulder hiking or leaning, and the angle is less accurate.
 - Angles are relative to the camera, not clinical goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
 - No usability (SUS) study and no patients. Our own testing was 17 saved live sessions by 3 of us (13–24 Oct) plus 7 automated runs; the 21 Oct snapshot is in [team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md).
+- **No therapist has used or reviewed Praxis yet.** The cup task comes from the published GRASP programme (UBC), the peg test is a standard clinical test, and Arm out to the side is a standard shoulder exercise. The prescription in the app is a sample we wrote, and the therapist view shows sample data.
 - On AWS we use EC2 (COOL AMI) and CloudFront. S3 storage and a one-command CDK deploy are not built, and the hosted app has no sign-in.
 
 Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISKS.md).

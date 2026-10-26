@@ -567,6 +567,7 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses the exercise idea
 - **AWS** is EC2 + COOL + CloudFront. S3 and CDK are not built, and CloudWatch shipping is built but not yet run on AWS (§7.5). The agent model is Claude via the Anthropic API. COOL's gain depends on the stage: 1.03× on a full NHPT frame, 0.94× on a cup frame (§7.2).
 - **Scope.** Three exercises, by decision. The other shoulder exercises are dormant in the code so we could go deep on three; the rotations also can't be measured well from one front camera.
 - **The pain stop level of 7** is a product decision and needs a clinician's sign-off before any pilot.
+- **No therapist has used or reviewed Praxis yet.** The cup task comes from the published GRASP programme (UBC), the peg test is a standard clinical test, and Arm out to the side is a standard shoulder exercise. The prescription in the app is a sample we wrote, and the therapist view shows sample data.
 
 **Next, in order:** real recordings and dataset v1 → retune on failure cases → SUS with ≥ 5 participants and one or two therapist interviews → CloudWatch logs.
 
