@@ -25,7 +25,7 @@
   .line.r::after, .line.l::before { content: ""; position: absolute; top: -6px; border: 7px solid transparent; }
   .line.r::after { right: -12px; border-left: 10px solid #6d8fe8; }
   .line.l::before { left: -12px; border-right: 10px solid #6d8fe8; }
-  .aws { flex: 1; border: 2px dashed #FF9900; border-radius: 18px; padding: 40px 12px 12px; position: relative; }
+  .aws { flex: 1; border: 2px solid #FF9900; border-radius: 18px; padding: 40px 12px 12px; position: relative; }
   .awslabel { position: absolute; top: 9px; left: 18px; color: #FFB347; font-size: 17px; font-weight: 700; }
   .foot { padding: 30px 40px 0; color: #9aa8c4; font-size: 17px; }
 </style></head><body>
@@ -33,7 +33,7 @@
   <div class="box" style="width:300px; flex:none;">
     <h2>Patient's laptop</h2>
     <div class="sub">A web page. Nothing to install.</div>
-    <div class="row"><b>Built-in camera</b><br><span>small frames, 10–15 a second</span></div>
+    <div class="row"><b>Built-in camera</b><br><span>small frames, up to 12 a second</span></div>
     <div class="row"><b>Captions and cues</b><br><span>audio if turned on</span></div>
     <div class="row"><b>Taps</b><br><span>pain, Yes / Not yet, Take a rest</span></div>
     <div class="row"><b>3-D mannequin</b><br><span>shows the move, never scores</span></div>
@@ -50,7 +50,7 @@
     <h2>One Python service</h2>
     <div class="sub">OpenCV 5 is COOL's build on Graviton4. The same service also runs on a laptop, and then no frame leaves it.</div>
     <div class="row"><b class="ocv">OpenCV 5</b><br><span>sheet markers → millimetres, holes and pegs, cup on the dots, hand and pose models (cv2.dnn)</span></div>
-    <div class="row"><b class="safe">Safety rules, first</b><br><span>pain, leaning, repeated missed or unverified reps, losing you on camera: pause or stop, and flag the therapist</span></div>
+    <div class="row"><b class="safe">Safety rules, first</b><br><span>pain, leaning, repeated missed or unverified reps: pause or stop, and flag the therapist · losing you on camera: pause</span></div>
     <div class="row"><b>Coach</b><br><span>a rule coach for every cue, or the agent at checkpoints, calling OpenCV tools over MCP</span></div>
     <div class="row"><b>Saved: events only</b> <span class="mono">sessions · events · flags · trace</span><br><span>Frames are processed in memory and dropped.</span></div>
   </div>
@@ -65,7 +65,7 @@
     <h2>Anthropic API</h2>
     <div class="sub">Claude Sonnet 5.5</div>
     <div class="row"><span>Gets numbers and short text, never frames.</span></div>
-    <div class="row"><span>Off unless turned on.</span></div>
+    <div class="row"><span>On in the hosted build; off by default on a laptop.</span></div>
   </div>
 </div>
 <div class="foot">Every decision is logged as OpenCV event → decision → action and can be opened in the app. Full diagrams: docs/ARCHITECTURE.md</div>

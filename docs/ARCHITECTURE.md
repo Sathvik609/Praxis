@@ -74,7 +74,7 @@ flowchart LR
     subgraph AWS["AWS us-east-2 · rebuilt 21 Oct 2026"]
         CF["CloudFront HTTPS<br/>d235zashbh751z.cloudfront.net<br/>WSS upgrade, caching off"]
         EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
-        GRD["Guardrails: SG from CloudFront prefix list only,<br/>$50 budget with email alerts<br/>(no budget action, no SCPs)"]
+        GRD["Guardrails: SG: CloudFront prefix list + one admin IP,<br/>$50 budget with email alerts<br/>(no budget action, no SCPs)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]
         CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
@@ -221,7 +221,7 @@ sequenceDiagram
     T-->>CS: intent queued: prompt kind resume
     Note over CS: socket loop drains intents and re-checks stop:<br/>a pain stop mid-run drops them (agent_drop)
     CS->>B: prompt "Setup looks good — resume?" (Yes, resume · Not yet)
-    B->>P: caption on screen, spoken by the browser (SpeechSynthesis)
+    B->>P: caption on screen (spoken if Audio is on)
     P->>B: taps "Yes, resume"   (human approval)
     B->>CS: answer resume-1 choice Yes
     CS->>B: resume · "Thanks. Carrying on from where we stopped."

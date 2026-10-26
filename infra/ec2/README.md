@@ -18,9 +18,8 @@ address survives stop/start), a CloudFront-only security group, HTTPS at
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
   so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh <elastic-ip> --agent`.
-- **Spend:** budget `praxis-monthly-50` ($50/month, emails at 80 %, 100 % and forecast 100 %);
-  credits about $117 (until Oct 2027). COOL is billed through Marketplace ($0.01/h for c8g.large,
-  7-day trial from 21 Oct); promotional credits may not cover Marketplace fees.
+- **Spend:** a $50/month AWS budget with email alerts. COOL is billed through Marketplace
+  ($0.01/h for c8g.large).
 
 ## What it builds
 - One **c8g.large** (Graviton4, 2 vCPU, 4 GiB) in **us-east-2** (the account's project region), launched from the AWS Marketplace

@@ -19,7 +19,7 @@
 
 <p align="center"><img src="docs/img/screens/replay_cup.png" width="860" alt="Waiter – cup in Replay: OpenCV finds the four corner markers and the five dots on the printed sheet, the mannequin shows the move, the coach's caption and the verified and unverified counts"></p>
 
-- **Live app:** <https://d235zashbh751z.cloudfront.net> (AWS Graviton4 with COOL). No webcam? Settings → **Replay a recorded session**.
+- **Live app:** <https://d235zashbh751z.cloudfront.net> (AWS Graviton4 with COOL). No webcam? Settings → Demo and judging → **Replay a recorded session**.
 - **Five-minute guide:** [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md)
 - **Technical report:** [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md), also as [PDF](docs/Praxis_Technical_Report.pdf)
 - **Diagrams:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · **Evaluation:** [evaluation/README.md](evaluation/README.md)
@@ -30,7 +30,7 @@ Praxis helps people do the shoulder, arm and hand exercises a therapist prescrib
 
 ## Why it matters
 
-- More than 70 % of people who have a stroke have arm problems, and in one group of 102 patients only 11.6 % got full arm function back at six months.
+- More than 70 % of people who have a stroke have arm problems, and in one study of 102 stroke patients with a weak arm, only 11.6 % got full arm function back at six months.
 - Recovery needs many repetitions. In 312 observed therapy sessions, arm practice happened in half of them, about 32 reps each time. The rest is meant to happen at home, where up to 70 % of people don't keep up their exercises.
 - At home nobody checks how well a rep was done or how much to do on a bad day, and the therapist only hears about it at the next visit.
 
@@ -71,7 +71,7 @@ Sources: [report §1](docs/TECHNICAL_REPORT.md).
   </tr>
   <tr>
     <td valign="top"><b>Arm angle</b><br><sub>The OpenCV Zoo pose model gives the shoulder angle (smoothed; the target is capped at 90°) and flags leaning or a hiked shoulder when the hips are in view. The mannequin only shows the move; it never scores.<br><code>cv2.dnn</code><br><a href="services/session/praxis_session/perception/pose.py">pose.py</a> · <a href="services/session/praxis_session/perception/arm_fsm.py">arm_fsm.py</a></sub></td>
-    <td valign="top"><b>Safety rules first, then the coach</b><br><sub>Pain, repeated leaning, repeated missed or unverified reps, or losing you on camera pause or stop the session and flag the therapist, before any coach sees the event. Every cue traces back to an OpenCV event.<br><a href="services/session/praxis_session/stop_rules.py">stop_rules.py</a> · <a href="services/session/praxis_session/coach/rules.py">coach/rules.py</a></sub></td>
+    <td valign="top"><b>Safety rules first, then the coach</b><br><sub>Pain, repeated leaning and repeated missed or unverified reps pause or stop the session and flag the therapist; losing you on camera pauses until you're back. All of this runs before any coach sees the event. Every cue traces back to an OpenCV event.<br><a href="services/session/praxis_session/stop_rules.py">stop_rules.py</a> · <a href="services/session/praxis_session/coach/rules.py">coach/rules.py</a></sub></td>
     <td valign="top"><b>Our agent (optional)</b><br><sub>Claude Sonnet 5.5 runs at checkpoints and calls OpenCV tools over MCP. It gets numbers and short text, never frames. Every dose change is a prompt the patient accepts.<br><a href="services/session/praxis_session/agent/tools.py">agent/tools.py</a> · <a href="docs/AGENT.md">AGENT.md</a></sub></td>
   </tr>
 </table>
@@ -102,11 +102,11 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 |---|---|---|
 | Arm angle on **real video** (REHAB24-6, a public lab dataset: 8 healthy adults, 88 reps) vs motion capture | angle error (MAE) 3.8°, rep F1 0.96 | [rehab24_v0.md](evaluation/results/rehab24_v0.md) |
 | Same videos cropped to **laptop framing** (hips at or below the bottom edge) | rep F1 0.91–0.93 (34–35 of 35 reps found), angle error 5.0–7.5°. Before our 25 Oct fix: F1 0.28–0.76 | [rehab24_laptop_framing_v0.md](evaluation/results/rehab24_laptop_framing_v0.md) |
-| Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions, 12 Oct run) | Named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); 0 guardrail breaks; first action 3.7 s median; about $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
+| Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions, 12 Oct run) | Named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated). The rule coach alone, cueing during the rep, also addressed 22 of 22, but fewer of its claims held up (36 of 79, against 67 of 83 for our agent). 0 guardrail violations; first action 3.7 s median; about $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
 | Our agent on 15 synthetic test scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
-| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, fixed and re-tested on renders, not yet re-tested live: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. Speed in 4 real cup sessions: camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
+| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, fixed and re-tested on renders, not yet re-tested live: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. Speed in 4 real cup sessions on our Railway test build (not the AWS server): camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
 | Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Computer-made 3-D videos, not real people. Peg test: F1 0.97, total time off by 1.2 s on average; most seats (90 of 96) are counted but marked unverified (grasp not seen). Cup: F1 0.79, reach time off by 0.7 s | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
-| COOL vs stock OpenCV, same c8g.large (measured 11 Oct) | 1.2–1.6× faster on colour threshold, contours, Hough and template matching; 10–16 % slower on JPEG decode, ArUco, warp and the hand model; about even on a full frame | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
+| COOL vs stock OpenCV, same c8g.large (measured 11 Oct) | 1.2–1.6× faster on colour threshold, contours, Hough and template matching; 10–16 % slower on JPEG decode, ArUco, warp and the hand model; end to end, a peg-test frame is 3 % faster and a cup frame 6 % slower | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
 
 ## Where it fails
 
@@ -129,7 +129,7 @@ uv run uvicorn praxis_session.main:app --port 8000                       # → h
 cd web && pnpm install && pnpm dev                                        # → http://localhost:5173
 ```
 
-Print [the peg sheet](docs/sheets/nhpt_board.pdf) or [the cup sheet](docs/sheets/cup_targets.pdf) at 100 %. No webcam: Settings → Replay a recorded session. Tests: `uv run pytest -q` (service) and `pnpm test` (web). Agent, evaluation, Docker and deploy commands: [docs/DEVELOPING.md](docs/DEVELOPING.md).
+Print [the peg sheet](docs/sheets/nhpt_board.pdf) or [the cup sheet](docs/sheets/cup_targets.pdf) at 100 %. No webcam: Settings → Demo and judging → Replay a recorded session. Tests: `uv run pytest -q` (service) and `pnpm test` (web). Agent, evaluation, Docker and deploy commands: [docs/DEVELOPING.md](docs/DEVELOPING.md).
 
 ## Repo map
 

@@ -29,15 +29,15 @@
   <div class="arrow">→</div>
   <div class="box">
     <h2><span class="num">2</span><span class="safe">Safety rules first</span></h2>
-    <p>Pain, leaning, losing you on camera: pause or stop, and flag the therapist.</p>
+    <p>Pain, leaning, repeated missed or unverified reps: pause or stop, and flag the therapist. Losing you on camera: pause.</p>
     <p>In code. The agent cannot override them.</p>
   </div>
   <div class="arrow">→</div>
   <div class="box" style="flex:1.25">
     <h2><span class="num">3</span>Our agent looks again</h2>
-    <p>Claude Sonnet 5.5 calls OpenCV tools over MCP:</p>
+    <p>Claude Sonnet 5.5 calls tools over MCP, including OpenCV checks:</p>
     <p><code>check_setup</code> · <code>get_set_summary</code><br><code>recalibrate</code> · <code>resample_target_colour</code></p>
-    <p>and picks one action inside the prescription.</p>
+    <p>and acts only inside the prescription.</p>
   </div>
   <div class="arrow">→</div>
   <div class="box">
@@ -47,5 +47,5 @@
   </div>
 </div>
 <div class="back"><span>the next OpenCV result shows whether it worked</span></div>
-<div class="foot">Every step is logged: OpenCV event → tool call → action, with the event id it rests on. Off unless turned on; the rule coach covers every cue without it.</div>
+<div class="foot">Every step is logged: OpenCV event → tool call → action, with the event id it rests on. On in the hosted build, off by default on a laptop; the rule coach covers every cue without it.</div>
 </body></html>
