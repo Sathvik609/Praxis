@@ -1,4 +1,4 @@
-"""Agent configuration, model providers and planners (agent coach design §2, §6, §9).
+"""Agent configuration, model providers and planners (docs/AGENT.md, "Configuration" and "Model choice").
 
 `PRAXIS_AGENT` picks the coach:
 - `off` (default): the rule coach only, exactly as before 29 Sep; no agent, no MCP routes.
@@ -44,7 +44,7 @@ RUN_TIMEOUT_S = 15.0
 # 15 s with Claude and the rule coach took over. Waiting longer costs no movement time.
 PAUSE_RUN_TIMEOUT_S = 25.0
 MCP_STARTUP_TIMEOUT_S = 3
-# Anthropic API list prices per million tokens (claude-api skill, cached 2026-10-06): input,
+# Anthropic API list prices per million tokens (pricing page, checked 6 Oct 2026): input,
 # output, cache read (0.1x input) and 5-minute cache write (1.25x input).
 PRICES: dict[str, dict[str, float]] = {
     "claude-sonnet-5": {"input": 2.00, "output": 10.00, "cache_read": 0.20, "cache_write": 2.50},

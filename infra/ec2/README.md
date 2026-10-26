@@ -8,7 +8,7 @@ address survives stop/start), a CloudFront-only security group, HTTPS at
 `"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
 
 ## Region, start / stop and spend
-- **Region:** us-east-2 (Ohio). Account ids, sign-in URLs and owner emails are not in the repo.
+- **Region:** us-east-2 (Ohio).
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
   so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh <elastic-ip> --agent`.

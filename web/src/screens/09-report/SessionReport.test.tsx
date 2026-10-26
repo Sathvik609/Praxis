@@ -26,7 +26,7 @@ test('report separates camera measurements from what the patient told us', async
   expect(screen.getByText('unverified (hand or marker hidden)')).toBeInTheDocument()
   expect(screen.getByText('High confidence')).toBeInTheDocument()
   expect(screen.getByText('Medium confidence')).toBeInTheDocument()
-  // P0 items the artifact dropped are kept small (ruling R7)
+  // P0 items the artifact dropped are kept small
   expect(screen.getByText(/Nothing here is combined into a score\./)).toBeInTheDocument()
   expect(screen.getByText(/^Exertion/)).toHaveTextContent(/Exertion\s*Low\s*· behavioural index/)
   // the coach section is titled with the service's own label, never "agent-generated"

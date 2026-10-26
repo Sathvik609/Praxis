@@ -183,9 +183,9 @@ def test_summary_reports_which_clock_it_used(tmp_path):
 
 
 def test_summary_carries_the_exercise_and_the_signed_in_user():
-    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, exercise="abduction", username="Sathvik")
+    s = CoachSession(mode="arm", prescription=SEED_PRESCRIPTION, exercise="abduction", username="T1")
     out = s.summary()
-    assert out["exercise"] == "abduction" and out["username"] == "sathvik"
+    assert out["exercise"] == "abduction" and out["username"] == "t1"
     assert CoachSession(mode="cup", prescription=SEED_PRESCRIPTION).summary()["exercise"] is None
 
 

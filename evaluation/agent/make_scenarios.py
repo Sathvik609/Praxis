@@ -1,5 +1,5 @@
-"""Regenerates evaluation/agent/scenarios/*.json: the nine agent-coach scenarios of the design
-(§8), three added on 10 Oct (prompt_injection, green_cup, arm_setup) and three on 11 Oct
+"""Regenerates evaluation/agent/scenarios/*.json: the original nine agent-coach scenarios
+(see docs/AGENT.md), three added on 10 Oct (prompt_injection, green_cup, arm_setup) and three on 11 Oct
 (nhpt_checkpoint, agent_offline_mid_session, outside_range_clamp), and on 21 Oct one
 `judgement` scenario (mixed_signals: conflicting evidence, only weighing both signals passes;
 a fixed script fails it by construction): 16 in all. A patient

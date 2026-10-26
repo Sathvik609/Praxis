@@ -1,5 +1,5 @@
 /* Design-preview-only rules from the designers' stylesheet (live/index.css): preview badge placement,
-   simulated camera scene, preview controls. Imported only by the design build (Task 21), never by the app.
+   simulated camera scene, preview controls. Imported only by the design build, never by the app.
    The badge is never hidden here: it must show in every preview. */
 #design-preview-badge{top:auto!important;left:16px!important;bottom:16px!important;transform:none!important;border-radius:8px!important;border-bottom:0!important;border-left:3px solid #A15C00!important;font-size:11px!important;padding:4px 10px!important;opacity:.92;z-index:60!important}
 body:has(footer.sticky) #design-preview-badge{bottom:96px!important}

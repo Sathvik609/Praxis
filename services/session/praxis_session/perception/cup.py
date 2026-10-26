@@ -506,7 +506,7 @@ class CupFSM:
                 return [self._go("in_transit", obs.t)]
             self._away = 0
             # still = within stationary_mm of where the run began, so a slow carry across a dot
-            # (a few mm a frame) is not a placement (deep run 24 Oct)
+            # (a few mm a frame) is not a placement (24 Oct team test)
             moved = self._settle_pos is not None and _d(cup, self._settle_pos) > self.stationary_mm
             self._count = 1 if moved else self._count + 1
             if self._count == 1 or self._settle_pos is None:
@@ -528,8 +528,8 @@ class CupFSM:
     def _maybe_place(self, obs: CupObservation) -> list[Event]:
         if self._count >= self.clear_frames:
             self._t_placed, self._away = self._settle_t, 0
-            # frames already seen with no hand near count towards hand-clear too (deep run
-            # 24 Oct: still then clear one after the other made a plain cup 0.5 s late)
+            # frames already seen with no hand near count towards hand-clear too (24 Oct team
+            # test: still then clear one after the other made a plain cup 0.5 s late)
             self._count = min(self._clear_run, self.clear_frames - 1) if self._clear_run else 0
             return [self._go("placed", obs.t, to_dot=self._dst, t_placed=self._t_placed)]
         return []

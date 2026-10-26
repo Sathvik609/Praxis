@@ -19,7 +19,7 @@ import { RULE_TITLE } from './SessionOverlays'
  *  classes in design/designer.css): header, feed and reference panels, coach and stats cards,
  *  the hold over the feed, the fixed control bar and the End dialog. The safety and honesty
  *  rules are rendered with the artifact's own elements: "Live · not recording" (`sx-rec`), the
- *  coach label as visible text, verified and unverified counts, Pause and Pain / feel unwell in
+ *  coach label as visible text, verified and unverified counts, Take a rest and Pain / feel unwell in
  *  the bar. */
 
 export const STATUS_ICON: Record<LiveStatus, ReactNode> = {
@@ -262,7 +262,7 @@ type Note = { text: string; label: string; source: CoachSource }
  *  open coach prompt belongs inside the hold (the screen renders it in the `prompt` slot).
  *  `caution` is the tracking-lost state (the service's `perception` pause): a non-blocking
  *  notice with no button, since the service resumes by itself once the camera sees the person
- *  or the sheet again (D-CAL-2) and the `resume` event closes it. */
+ *  or the sheet again and the `resume` event closes it. */
 export type Hold = {
   open: boolean
   kind: HoldKind

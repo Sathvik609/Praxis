@@ -11,7 +11,7 @@ import type { Projection } from './scene'
  *  arc, a cue line on the moving arm and a hold ring at the wrist; the footer shows the tempo
  *  chips and the figure's own "Reference reps" ticks (its own loops, not the patient's reps).
  *
- *  Wiring (design v2 port, D-AVATAR): the mode comes from real events through `refMode`, and the
+ *  Wiring (design v2 port): the mode comes from real events through `refMode`, and the
  *  first demonstration waits for a coach event that carries `ui.avatar_clip` (`demoRequested`),
  *  so the figure's playback always traces to an event. Later requests (the coach's "lift started"
  *  cue) re-sync the figure's cycle to the patient's lift. */
@@ -49,8 +49,6 @@ export function refMode(events: PraxisEvent[], _frame: FrameLike, hold: { open: 
   return 'run'
 }
 
-/** Time (s) of the newest coach event that asks for avatar playback (`ui.avatar_clip`: the rule
- *  coach's `arm_intro` at exercise start and `arm_lift` when a lift starts), or null. */
 /** The GLB action time for the figure's height `h` (0 = arm down, 1 = top of its lift). The top
  *  is the recorded peak, or `limitDeg` when that is lower (a gentle day's 60°): the height is
  *  turned into an elevation fraction on the action's lift / lower curves (as `buildScript`). */
@@ -61,6 +59,8 @@ export function refActionTime(am: { rep: [number, number]; pace?: GlbPace }, h: 
   return pacedActionTime(am, lowering ? 0.8 + 0.2 * (1 - e) : 0.4 * e)
 }
 
+/** Time (s) of the newest coach event that asks for avatar playback (`ui.avatar_clip`: the rule
+ *  coach's `arm_intro` at exercise start and `arm_lift` when a lift starts), or null. */
 export function demoRequested(events: PraxisEvent[]): number | null {
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i]
@@ -266,7 +266,7 @@ export function RefAvatar({
   const phase = ui.phase
   const dimmed = mode === 'dim-lost' || mode === 'dim-cue'
   const idle = mode === 'idle' || waiting
-  const label = idle ? 'Reference · ready' : dimmed ? (mode === 'dim-lost' ? 'Reference · waiting for you' : 'Reference · listen to the coach') : ui.demo ? 'Reference · demonstration' : 'Reference · follow my pace'
+  const label = idle ? 'Reference · ready' : dimmed ? (mode === 'dim-lost' ? 'Reference · waiting for you' : 'Reference · read the coach card') : ui.demo ? 'Reference · demonstration' : 'Reference · follow my pace'
   const PH: [Phase, string, number][] = [
     ['lift', 'Lift', tempo.lift],
     ['hold', 'Hold', tempo.hold],

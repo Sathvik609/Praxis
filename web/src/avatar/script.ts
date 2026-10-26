@@ -48,7 +48,7 @@ export function stepTexts(action: GlbAction, o: ScriptOpts = {}): string[] | nul
     case 'waiter_cup':
       return [
         // 25 Oct team test: a cup already on dot 1 at the start hid it from the camera there
-        'Cup off the sheet until the camera finds the four corners, then on dot 1',
+        'Keep the cup off the sheet until the camera finds the four corners, then set it on dot 1',
         'Take hold of the cup with your weaker hand',
         'Lift it, move it to the next dot and set it down, dot by dot to 5',
         'After dot 5, come back the same way to dot 1',

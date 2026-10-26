@@ -47,7 +47,7 @@ BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
 DEFAULT_OUT = ROOT / "evaluation" / "dataset_3d_v0"
 TEX_PX_PER_MM = 6.0
 SHEET_OF = {"nhpt": "nhpt_board", "cup": "cup_targets"}
-TITLES = {"nhpt_board": "Nine-Hole Peg Test board", "cup_targets": "Waiter - cup target sheet"}
+TITLES = {"nhpt_board": "Nine-Hole Peg Test board", "cup_targets": "Waiter – cup target sheet"}
 
 
 def sheet_geom(spec: SheetSpec) -> dict:

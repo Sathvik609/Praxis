@@ -105,7 +105,7 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 | Same videos cropped to **laptop framing** (hips at or below the bottom edge) | rep F1 0.91–0.93 (34–35 of 35 reps found), angle error 5.0–7.5°. Before our 25 Oct fix: F1 0.28–0.76 | [rehab24_laptop_framing_v0.md](evaluation/results/rehab24_laptop_framing_v0.md) |
 | Our agent (Sonnet 5.5) on **real video** (REHAB24-6 through the product, 40 sessions, 12 Oct run) | Named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated). The rule coach alone, cueing during the rep, also addressed 22 of 22, but fewer of its claims held up (36 of 79, against 67 of 83 for our agent). 0 guardrail violations; first action 3.7 s median; about $0.05 a session | [agent_video_v0.md](evaluation/results/agent_video_v0.md) |
 | Our agent on 15 synthetic test scenarios | 15 of 15 pass. One newer, harder case (mixed signals) **fails in all 3 runs**; it is still open | [AGENT.md](docs/AGENT.md) |
-| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, fixed and re-tested on renders, not yet re-tested live: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts lagging 5–23 s. Speed in 4 real cup sessions on our Railway test build (not the AWS server): camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
+| Nine-Hole Peg Test and Waiter – cup, **live on real webcams** (our team, laptop camera, 13–24 Oct) | Found real bugs the renders missed, fixed and re-tested on renders, not yet re-tested live: plain wooden pegs and an ordinary cup not seen, a hand over the board counted as pegs (1 real peg read as 9), cup counts that arrived seconds late. Speed in 4 real cup sessions on our Railway test build (not the AWS server): camera to result in 132–147 ms (median), network included. No stopwatch-checked accuracy yet | [report §8.1.1](docs/TECHNICAL_REPORT.md) · [live_sessions_2026-10-24.md](evaluation/results/live_sessions_2026-10-24.md) |
 | Nine-Hole Peg Test and Waiter – cup, **measured** on 3-D Blender renders | Computer-made 3-D videos, not real people. Peg test: F1 0.97, total time off by 1.2 s on average; most seats (90 of 96) are counted but marked unverified (grasp not seen). Cup: F1 0.79, reach time off by 0.7 s | [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md) |
 | COOL vs stock OpenCV, same c8g.large (measured 11 Oct) | 1.2–1.6× faster on colour threshold, contours, Hough and template matching; 10–16 % slower on JPEG decode, ArUco, warp and the hand model; end to end, a peg-test frame is 3 % faster and a cup frame 6 % slower | [cool_vs_stock_c8g.md](benchmark/results/cool_vs_stock_c8g.md) |
 
@@ -115,11 +115,11 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 - **The peg test and cup have no stopwatch-checked real number yet.** On the 3-D renders the cup still misses about a third of reaches, almost all in a dim room and at a very flat 20° screen tilt; the failures are listed in [synthetic3d_v0.md](evaluation/results/synthetic3d_v0.md).
 - With the hips out of view, Arm out to the side still counts reps, but it cannot check shoulder hiking or leaning, and the angle is less accurate.
 - Angles are relative to the camera, not clinical goniometry. The printed peg sheet is a timing aid, not the clinical instrument.
-- No usability (SUS) study and no patients. Our own testing was 17 saved live sessions by 3 of us (13–24 Oct) plus 7 automated runs; the 21 Oct snapshot is in [team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md).
+- No usability (SUS) study and no patients. Our own testing was 17 saved live sessions by 3 of us (13–24 Oct; a count from the hosted store, 13 of them in the committed snapshots) plus 7 automated runs; the 21 Oct snapshot is in [team_test_2026-10-21.md](evaluation/results/team_test_2026-10-21.md).
 - **No therapist has used or reviewed Praxis yet.** The cup task comes from the published GRASP programme (UBC), the peg test is a standard clinical test, and Arm out to the side is a standard shoulder exercise. The prescription in the app is a sample we wrote, and the therapist view shows sample data.
 - On AWS we use EC2 (COOL AMI) and CloudFront. S3 storage and a one-command CDK deploy are not built, and the hosted app has no sign-in.
 
-Full list: [report §10](docs/TECHNICAL_REPORT.md).
+Full list: [report §10](docs/TECHNICAL_REPORT.md). Failure cases with evidence, one file each: [evaluation/failure_cases/](evaluation/failure_cases/README.md).
 
 ## Run it yourself
 
@@ -140,7 +140,7 @@ web/                React + TypeScript web app, Three.js mannequin
 evaluation/         datasets, scripts that regenerate every number, results
 benchmark/          COOL vs stock OpenCV
 infra/ec2/          AWS deploy script and CloudWatch setup (CloudWatch not yet run on AWS)
-docs/               report (+ PDF), quickstart, diagrams, agent, licences, risks, sheets
+docs/               report (+ PDF), quickstart, diagrams, agent, accessibility, licences, sheets, wireframes
 traces/             sample coach traces: OpenCV event → decision → action
 ```
 

@@ -4,8 +4,8 @@ imshow). Writes <clip>.labels.json next to the clip in the praxis.labels/1 schem
 
     cd services/session
     uv run python tools/label_clip.py ../../evaluation/dataset_v1/raw/p01/abduction/20261012T101500.mp4 \
-        --labeller ST [--gonio 88,91,86,-,90,...]
-    uv run python tools/label_clip.py <clip.mp4> --labeller ST --validate-only
+        --labeller <initials> [--gonio 88,91,86,-,90,...]
+    uv run python tools/label_clip.py <clip.mp4> --labeller <initials> --validate-only
 
 Opens a window on the clip (step-by-step guide: evaluation/PROTOCOL.md §7). Keys, also drawn on
 the frame:
@@ -283,7 +283,7 @@ def run_ui(video: Path, state: LabelState, out: Path) -> int:  # pragma: no cove
         cv2.namedWindow(WINDOW)
     except cv2.error:
         print("This OpenCV build has no GUI (headless wheel without a window backend).")
-        print("Label on a machine whose cv2 can open windows (the pinned macOS wheel can).")
+        print("Label in a separate environment with a non-headless OpenCV build (opencv-python).")
         return 2
     while True:
         t = i / fps

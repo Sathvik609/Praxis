@@ -30,4 +30,4 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 
 - **covered_marker**: “Let's start with slow arcs. Move the cup smoothly and keep your hand off the sheet's corner markers.” → “The bottom-left and bottom-right corners of the sheet are covered or creased. Please clear them and flatten the sheet.” → “Sheet corners are clear again. Ready to carry on?” → “Thanks. Carrying on from where we stopped.”
 
-Traces: `traces/agent/anthropic/<scenario>.jsonl`.
+Traces: `traces/agent/anthropic-sonnet-5-5/<scenario>.jsonl`.

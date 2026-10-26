@@ -52,7 +52,7 @@ const TIER_TONE: Record<Tier, ChipTone> = { full: 'mint', gentle: 'amber', rest:
  *  therapist is still told (a day an older build stopped for new symptoms still shows as stopped). "Your therapist has been told" appears only when
  *  the service says it flagged; offline, the check-in is kept on this device and posted again
  *  on the next load. A second visit the same day reuses today's answers (one tap to go on).
- *  `?next=<exercise>` is the demonstration's hand-off (design v2, 6 Oct: Choose → Demonstration
+ *  `?next=<exercise>` is the link from the demonstration (design v2, 6 Oct: Choose → Demonstration
  *  → Check-in → Camera setup): with a valid check-in today it goes straight to that exercise's
  *  camera setup without asking again; otherwise the form ends in "Continue to camera setup" and
  *  Back returns to the demonstration. `&rehearse=1` is passed through to setup. */
@@ -84,7 +84,7 @@ export function CheckIn() {
   if (c && day.stopped && !again) {
     return <Stopped day={day} painMax={rx?.stop_rules?.pain_max} onHome={() => nav('/details')} onAgain={() => setAgain(true)} />
   }
-  // Demo hand-off: today's answers stand, so setup follows without asking again (D-FLOW).
+  // From the demonstration: today's answers stand, so setup follows without asking again.
   if (c && !again && nextCoached) return <Navigate replace to={nextUrl(nextCoached.id, c.side)} />
   if (c && !again) {
     return (

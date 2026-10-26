@@ -25,7 +25,7 @@ const DIST = join(WEB, 'dist-design')
 const AXE = readFileSync(join(WEB, 'node_modules', 'axe-core', 'axe.min.js'), 'utf8')
 const jsonOut = process.argv.includes('--json') ? process.argv[process.argv.indexOf('--json') + 1] : null
 
-/** The three contrast pairs kept by product decision D-CONTRAST (docs/RISKS.md, 6 Oct; pinned in
+/** The three contrast pairs kept by product decision D-CONTRAST (docs/ACCESSIBILITY.md, 6 Oct; pinned in
  *  `src/design/contrast.test.ts`). Nothing else is excluded. Colours as axe reports them. */
 const D_CONTRAST = [
   { fg: '#a15c00', bg: '#ecedf0', why: 'light --amber-ink on --bg (4.43:1)' },

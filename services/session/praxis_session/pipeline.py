@@ -1,7 +1,7 @@
 """Per-frame composition of perception stages into events (OpenCV cv2.__version__ == 5.0.0).
 
 Modes: "calibrate" (calibration + setup checks) and "nhpt" (board state ->
-peg FSM -> NHPT timer). Later phases add "cup" and "arm". One pipeline per WebSocket
+peg FSM -> NHPT timer), "cup" (cup sheet -> cup FSM) and "arm" (pose -> arm FSM). One pipeline per WebSocket
 connection or replay; frames are processed and dropped, events go to the ring and the socket.
 
 Agent coach support (29 Sep): `latest_frame` holds a *reference* to the frame being processed,
@@ -87,11 +87,11 @@ PEG_DIAMETER_MM = 8.0
 Mode = Literal["calibrate", "nhpt", "cup", "arm"]
 MODES: tuple[str, ...] = ("calibrate", "nhpt", "cup", "arm")
 POSE_LOSS_FRAMES = 15
-# Uncalibrated frames (after the 1.5 s hold in Calibrator) before `perception_lost` (D-CAL-1).
+# Uncalibrated frames (after the 1.5 s hold in Calibrator) before `perception_lost`.
 LOSS_FRAMES = 20
-DEBOUNCE_S = 0.25  # NHPT occupancy debounce in seconds (D-SEG-1); frame counts are a floor
+DEBOUNCE_S = 0.25  # NHPT occupancy debounce in seconds; frame counts are a floor
 TIER_RANK: dict[str, int] = {"full": 0, "gentle": 1, "rest": 2}  # same order as plan.TIER_RANK
-# `angle` (camera tilt from the ArUco pose, <= 25°) joined the sheet tasks' gate in D-CAL-3.
+# `angle` (camera tilt from the ArUco pose, <= 25°) is part of the sheet tasks' gate.
 REQUIRED_CHECKS = ("camera", "task_area", "markers", "angle", "lighting")
 REQUIRED_BY_MODE: dict[str, tuple[str, ...]] = {
     "default": REQUIRED_CHECKS,
@@ -125,8 +125,8 @@ class SessionPipeline:
         tier: str = "full",
         prescription: Prescription | None = None,
     ) -> None:
-        """`exercise` picks the `perception/exercises.py` entry that drives arm mode (default
-        `flexion`, i.e. Arm to the front exactly as before) and `tier` applies its gentle
+        """`exercise` picks the `perception/exercises.py` entry that drives arm mode (the
+        service passes Arm out to the side by default) and `tier` applies its gentle
         overrides; `target_deg`/`hold_s`/`sets`/`reps` still override both when given.
         `prescription` (default: the seed) supplies the tier clamps, the lean thresholds and
         the range `set_hold` is clamped to."""
@@ -263,7 +263,7 @@ class SessionPipeline:
         return {"ok": False, "error": f"unknown command {name!r} for mode {self.mode}"}
 
     def _sample_colour(self, cmd: dict[str, Any]) -> dict[str, Any]:
-        """Tap-to-sample (D-SEG-1 / D-SEG-3; live-screen tap 12 Oct). The point is one of
+        """Tap-to-sample (live-screen tap 12 Oct). The point is one of
         {"x_px", "y_px"} in the frame as the service received it (the web undoes its mirrored,
         letterboxed preview first), {"x_mm", "y_mm"} on the sheet, or {"hole": k}. Frame px go
         to sheet mm through the last calibration homography (cv2.perspectiveTransform); the 6 mm
@@ -710,7 +710,7 @@ class SessionPipeline:
         self._note_calibration(cal)
         board_d: dict[str, Any] | None = None
         holes_px: list[list[float]] = []
-        # The hand runs first so its box can be excluded from the free-peg blobs (D-SEG-1).
+        # The hand runs first so its box can be excluded from the free-peg blobs.
         hand_block, hand_mm, hand_rect = self._hand_block(frame_bgr, t, cal)
         if cal.calibrated:
             holes_px = self._board.holes_frame_px(cal)
@@ -724,7 +724,7 @@ class SessionPipeline:
                 canon, exclude_mm=[hand_rect] if hand_rect is not None else None
             )
         occ = board_d["occupancy"] if board_d else {}
-        # Any-hole mode: no suggested hole, so the UI draws no amber ring (D-SEG-2).
+        # Any-hole mode: no suggested hole, so the UI draws no amber ring.
         next_hole = None
         snap = self._nhpt.snapshot(t)
         self._emit(

@@ -1,4 +1,4 @@
-"""AgentCoach: Claude at checkpoints, beside the rule coach (agent coach design §3, §6).
+"""AgentCoach: Claude at checkpoints, beside the rule coach (docs/AGENT.md, "Workflow").
 
 The rule coach keeps the instant in-rep cues. At a checkpoint (`checkin`, `set_complete`,
 `arc_complete`, a stop-rule `pause:failed_reps` / `pause:perception`, `nhpt_complete`,

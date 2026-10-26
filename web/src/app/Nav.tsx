@@ -30,7 +30,7 @@ export function Nav({ program, initial }: { program: string; initial: string }) 
         <PraxisMark className="ui-logo-mark" />
         Praxis
       </Link>
-      <nav aria-label="Hubs" className="ui-hubs flex gap-1">
+      <nav aria-label="Main" className="ui-hubs flex gap-1">
         {hubs.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}
@@ -47,8 +47,8 @@ export function Nav({ program, initial }: { program: string; initial: string }) 
         ))}
       </nav>
       <span className="ui-program ml-auto min-w-0 truncate text-muted" title={program}>Program: {program}</span>
-      {/* Screen 11 lives outside the patient shell; this is its only way in (no clinician
-          accounts until Cognito in W6). Since 28 Sep it edits practice days, so it is no
+      {/* Screen 11 lives outside the patient shell; this is its only way in (there are no
+          clinician accounts in this build). Since 28 Sep it edits practice days, so it is no
           longer labelled read-only. */}
       <Link
         to="/therapist"

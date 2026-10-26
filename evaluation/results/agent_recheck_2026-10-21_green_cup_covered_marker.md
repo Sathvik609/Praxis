@@ -33,4 +33,4 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 - **covered_marker**: “Let's start with slow arcs. Move the cup smoothly dot to dot, and keep your hand clear of the sheet's corners.” → “The camera can't see the bottom-left and bottom-right corners of the sheet. Please clear and flatten those corners so nothing covers them.” → “Sheet corners are clear again. Ready to carry on?” → “Thanks. Carrying on from where we stopped.”
 - **green_cup**: “Let's begin with two slow arcs. Reach smoothly from dot to dot, sit tall, and keep your hand off the cup's view.” → “The camera hadn't recognised your cup's colour, so those reps weren't counted. It has now learned it. Keep the cup on a dot.” → “Camera now recognises your cup. Ready to carry on?” → “Thanks. Carrying on from where we stopped.”
 
-Traces: `traces/agent/anthropic/<scenario>.jsonl`.
+Traces: `traces/agent/anthropic-sonnet-5-5/<scenario>.jsonl`.

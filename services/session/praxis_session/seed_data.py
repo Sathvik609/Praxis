@@ -1,4 +1,4 @@
-"""Illustrative seed matching the wireframes (Alex M., Dr. Rao, Hospital GRASP L2 v3).
+"""Illustrative seed matching the wireframes (Alex M., Hospital GRASP L2 v3).
 
 Loaded once into an empty store. Every number here is illustrative and labeled so in the UI.
 Since 28 Sep the history names only the three visible exercises (Arm out to the side, Waiter –

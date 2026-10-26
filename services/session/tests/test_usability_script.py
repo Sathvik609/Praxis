@@ -56,7 +56,7 @@ def test_task_summary(tmp_path):
 
 
 @pytest.mark.parametrize("row,msg", [
-    ("Sathvik,2026-10-14,T1,live,success,40,0,7,", "pseudonym"),
+    ("Jordan,2026-10-14,T1,live,success,40,0,7,", "pseudonym"),
     ("p01,2026-10-14,T99,live,success,40,0,7,", "task"),
     ("p01,2026-10-14,T1,live,great,40,0,7,", "outcome"),
     ("p01,2026-10-14,T1,live,success,40,0,9,", "seq"),

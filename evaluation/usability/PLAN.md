@@ -23,16 +23,16 @@ Scored by `evaluation/scripts/usability.py` (tasks + SEQ) and `evaluation/script
 
 ## Setup (before the participant arrives)
 
-- **Two screens.** The participant's laptop (built-in camera, Chrome) shows the app at the review
-  the team's hosted test link in a **fresh Incognito window per participant**
+- **Two screens.** The participant's laptop (built-in camera, Chrome) shows the app at the
+  team's hosted test link in a **fresh Incognito window per participant**
   (the day's check-in lives in browser storage, so a new window starts a clean day). The moderator's
-  own phone or laptop shows the online form (link in `README.md`), out of the participant's sight:
-  it shows the success criteria and hints. The review link runs the rule coach (agent off) and its
+  own phone or laptop shows the online form (if an online form is used), out of the participant's sight:
+  it shows the success criteria and hints. The hosted test build runs the rule coach (agent off) and its
   database is shared and wiped on each redeploy, so Progress (T8) shows sample history.
 - Printed sheet `docs/sheets/cup_targets.pdf` at 100 %, a mug with a blue band on its base (tape),
   on a table with the laptop tilted as in the setup guide. If you have no kit, run T5 in **Replay**
   mode instead and write `replay` in the task's `mode` column.
-- `observer_sheet.md` printed, or the online study form (link in `README.md`) open on a phone.
+- `observer_sheet.md` printed, or the online study form (if an online form is used) open on a phone.
 - Consent (verbal is enough; read it out): *"We are testing the app, not you. Nothing is recorded:
   the camera picture goes to our server, is processed in memory and thrown away. You can stop at any time. We'll write down what
   you do and say, under a code name like p03, never your name. Is that OK?"* Mark yes/no on the sheet.
@@ -86,9 +86,9 @@ After each session, list every problem you saw in `issues.csv` (copy `issues_tem
 the task, what happened, how many participants hit it, and a severity (Nielsen's 0–4):
 **4** stops the task or is unsafe (e.g. could not find the pain button) · **3** major, needed the
 hint · **2** minor, slowed them · **1** cosmetic · **0** not a problem. `usability.py` lists them by
-severity then frequency. Fix 4s and 3s before the freeze (23 Oct) and note the fix next to the issue.
+severity then frequency. Fix 4s and 3s before the next build and note the fix next to the issue.
 
-## How the result is reported (rule #3)
+## How the result is reported
 
 - n, and who took part ("6 adults, 2 aged 60+, no patients"), and the mode of every task.
 - Task success rate per task with a Wilson 95 % interval, median time, mean SEQ; SUS mean ± SD.

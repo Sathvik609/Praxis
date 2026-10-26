@@ -4,7 +4,7 @@ import { Card } from '../design/Card'
 import { Camera, Play, RotateCcw } from '../design/Icon'
 
 /** Shown in the feed when the camera is blocked or the coach service is unreachable, so a
- *  judge without a webcam always has a way forward (audit 17 Sep, A6). A highlight card on
+ *  judge without a webcam always has a way forward. A highlight card on
  *  the dark stage; the text carries the state, the icon is decorative. */
 export function cameraBlockedCopy(reason: 'camera_blocked' | 'service_unreachable', detail?: string | null): { title: string; text: string } {
   if (reason === 'service_unreachable') {

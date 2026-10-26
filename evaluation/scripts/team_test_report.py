@@ -223,7 +223,7 @@ def render(r: dict[str, Any]) -> str:
     m = r["meta"]
     L += ["# Team test 21 Oct 2026 — 13 Oct build", "",
           f"**{r['header']}.**", "",
-          f"Sessions run {m['sessions_run']} on the hosted review build; snapshot taken {m['snapshot_taken']} (GET only). "
+          f"Sessions run {m['sessions_run']} on the team's Railway test build (not the AWS judge server); snapshot taken {m['snapshot_taken']} (GET only). "
           "Healthy teammates on their own laptops, nobody labelled the reps, so nothing here is accuracy: it says where the product got in the way. "
           "**Human** = T1–T3 (team members, pseudonyms). **Automated** = `test-claude`: an AI agent drove the site in a browser with a synthetic clip as the camera, not a person; "
           "they exercise the flow, not a human body.", "",
@@ -312,7 +312,7 @@ def render(r: dict[str, Any]) -> str:
           "| | capture → event p50 (ms) | event → cue p50 (ms) |", "|---|---:|---:|"]
     for grp in GROUPS:
         L.append(f"| {grp} | {_n(t[grp]['median_capture_to_event_p50_ms'])} | {_n(t[grp]['median_event_to_cue_p50_ms'])} |")
-    L += ["", "## Socket closes", "", f"- {m['socket_close']}. Two 13 Oct sockets that dropped before saving are known only from the team's notes (nothing was stored for them).", ""]
+    L += ["", "## Socket closes", "", f"- {m['socket_close']}. Two 13 Oct sockets that dropped before saving are known only from our working log (nothing was stored for them).", ""]
 
     L += ["## Fixed afterwards (21 Oct; not deployed on the 13 Oct build these sessions ran on)", "",
           "| commit | change |", "|---|---|"]

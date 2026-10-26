@@ -45,10 +45,8 @@ Side-on, the product's front-view gate stays closed (it asks the patient to turn
 
 ### The front-view gate on real people
 
-The gate closes (`turn_front`) when the shoulder separation is below 0.6 × the trunk length. Measured separation:
+The gate closes (`turn_front`) when the shoulder separation is below 0.6 × the trunk length. Separation was not cached by this run; see `rehab24_v0.md`.
 
-| subject facing the camera | frames | p5 | p25 | median | p75 | p95 |
-|---|---|---|---|---|---|---|
 ## Lighting (front view)
 
 | lights | recordings | pose found | frame MAE vs `ref_frontal` | rep-peak MAE | rep F1 | movement F1 |
@@ -60,7 +58,7 @@ The lights-off recordings are subjects 1–3 only, so lighting and subject are c
 
 ## Correct / incorrect repetitions vs the product's compensation flags (front view)
 
-REHAB24-6 labels each repetition correct or incorrect; the physiotherapist chose a different mistake per subject and the mistake is not labelled. The product flags trunk lean and shoulder hike only. Because the hike flag fires on almost every overhead lift (above), this table cannot show discrimination; it is here because the brief asked for it.
+REHAB24-6 labels each repetition correct or incorrect; the physiotherapist chose a different mistake per subject and the mistake is not labelled. The product flags trunk lean and shoulder hike only. Because the hike flag fires on almost every overhead lift (above), this table cannot show discrimination; it is kept so this file has the same sections as `rehab24_v0.md`.
 
 | label | flagged (lean or hike) | not flagged | no matching rep |
 |---|---|---|---|

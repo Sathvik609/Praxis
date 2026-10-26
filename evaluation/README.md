@@ -10,7 +10,7 @@ This folder holds the datasets, the scripts that regenerate every number, the re
 | Arm out to the side, angle and reps | REHAB24-6, real lab video vs motion capture (front view: 8 of its 9 healthy adults, 88 reps) | angle MAE 3.8°, rep F1 0.96 | `results/rehab24_v0.md` |
 | The same, cropped to laptop framing | REHAB24-6, 35 reps, hips at or below the frame edge | rep F1 0.91–0.93, angle MAE 5.0–7.5° | `results/rehab24_laptop_framing_v0.md` |
 | Agent coach on real video | REHAB24-6 through the product, 40 sessions | our agent named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); 0 guardrail violations | `results/agent_video_v0.md` |
-| Agent coach, scripted scenarios | 15 scenarios, Claude Sonnet 5.5 (21 Oct) | 15/15; the harder `mixed_signals` fails 0/3 | `results/agent_recheck_2026-10-21_all.md` |
+| Agent coach, scripted scenarios | 15 of 16 scenarios, Claude Sonnet 5.5 (21 Oct) | 15/15; the harder `mixed_signals` fails 0/3 | `results/agent_recheck_2026-10-21_all.md` |
 | NHPT and Waiter – cup | synthetic 3-D Blender renders | NHPT F1 0.97, total-time MAE 1.2 s; cup F1 0.79, reach-time MAE 0.7 s | `results/synthetic3d_v0.md` |
 | Camera robustness | 2-D renders: 81 NHPT and 91 cup sheet conditions | first fix 74/81 and 83/91; all holes right 61/74, cup found within 10 mm 71/77; setup advice right 80/81 and 90/91 | `results/robustness_v0.md` |
 | Live sessions, speed only | our Railway test build (not AWS), 24 Oct, one teammate, 5 sessions (4 cup, 1 NHPT) | capture → event p50 132–177 ms; server processing p95 10–75 ms; not accuracy | `results/live_sessions_2026-10-24.md` |
@@ -47,8 +47,8 @@ The NHPT and the cup have no labelled real-camera number yet. Our own live sessi
   the hole (NHPT) or dot (cup), whether it should be verified or unverified and why, and any scripted
   error. For Arm out to the side it also has the goniometer-app angle (`peak_deg_goniometer`) and
   trunk lean / shoulder hike.
-- `data/team_test_2026-10-21/`: the team shake-down on our Railway test build (13 Oct build, not AWS) (15 live
-  sessions, 12–15 Oct: 8 by three of us, 7 automated; snapshot taken 21 Oct, GET requests only). It has the stored session summaries
+- `data/team_test_2026-10-21/`: the team shake-down on our Railway test build (13 Oct build, not AWS): 15 live
+  sessions, 12–15 Oct, 8 by three of us and 7 automated; snapshot taken 21 Oct, GET requests only. It has the stored session summaries
   and events, 6 traces, the server's `/api/review` summary and `meta.json` (where the data came from).
   Testers are pseudonymised (T1–T3; `test-claude` = automated, an AI agent in a browser, synthetic clip). No frames
   exist. Not labelled.

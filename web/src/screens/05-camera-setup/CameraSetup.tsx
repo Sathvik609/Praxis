@@ -19,11 +19,11 @@ type SetupChecksEvent = { checks: Check[]; all_required_pass: boolean }
 type QualityEvent = { steadiness?: { ok?: boolean } }
 
 /** Screen 05 · Camera setup and calibration (design v2, 6 Oct: the designers' immersive `cs-*`
- *  layout, live J65151–65385). The checks come from the service's `setup_checks` events
+ *  layout). The checks come from the service's `setup_checks` events
  *  (`setupView.ts`); pose rows the service does not measure yet and the table view's
  *  "Is this your left arm?" are patient self-checks, confirmed in the coach pill. Once every
  *  required check passes, a still-pose countdown and a 4 s auto-continue run into the session
- *  (D-FLOW: Demonstration → Check-in → Setup → Session), with a visible Cancel.
+ *  (Demonstration → Check-in → Setup → Session), with a visible Cancel.
  *
  *  A day stopped at check-in never opens the camera. */
 export function CameraSetup() {

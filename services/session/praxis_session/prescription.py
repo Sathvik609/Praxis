@@ -73,7 +73,6 @@ class Schedule(BaseModel):
 SEED_SCHEDULE = Schedule(
     practice_days=[0, 1, 2, 3, 4],
     nhpt_day=6,
-    # The old seed said "Thu 18 Sep, 2:30 PM", which is in the past on 28 Sep.
     next_visit=NextVisit(at="2026-10-01T14:30", with_="your therapist"),
     minutes_per_day=SCHEDULE_MINUTES,
 )

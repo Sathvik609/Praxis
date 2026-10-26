@@ -23,7 +23,7 @@ const THEMES: [Theme, string][] = [
   ['auto', 'Auto'],
 ]
 
-/** Settings (the designers' `.st` three-column layout, live J64234–64318), wired to real data:
+/** Settings (the designers' `.st` three-column layout), wired to real data:
  *  the profile from `GET /api/patients/me` (no seeded name), display and guidance preferences
  *  that the app reads (`lib/prefs.ts`, `session/guidance.ts`, `app/theme.ts`), the replay entry
  *  (judge fallback: a recorded clip through the identical pipeline), the coach in use from
@@ -213,7 +213,7 @@ function ProfileRows({ me, error, side, onOpen }: { me: Patient | null; error: s
   )
 }
 
-/** Which coach runs, from the service's `/health` (agent spec §7). The rule coach always runs
+/** Which coach runs, from the service's `/health` (docs/AGENT.md). The rule coach always runs
  *  between agent checkpoints and whenever the agent is off or not ready. */
 function CoachRow({ health, error }: { health: Health | null; error: string | null }) {
   if (!health) return <SettingsRow title="Coach" sub={error ? 'Coach status unavailable — the session service is not reachable.' : 'Checking the coach…'} />

@@ -17,7 +17,7 @@ mirroring, aspect squash). What is measured is the REAL product code on those fr
     task area, markers, camera angle; steadiness is a single frame here so it always passes);
   - NHPT: `board.BoardState` on an empty board first (Hough holes + per-hole templates, as in a
     session), then occupancy and free pegs with pegs seated in holes 0, 4, 8 and one free peg;
-  - Waiter - cup: `cup.CupSheetState.cup_mm` with the cup base on dot 2 (and no-cup negatives).
+  - Waiter – cup: `cup.CupSheetState.cup_mm` with the cup base on dot 2 (and no-cup negatives).
 
 Writes results/robustness_v0.{json,md}. Deterministic (fixed seeds).
 """

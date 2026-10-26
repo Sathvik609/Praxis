@@ -106,7 +106,7 @@ ANGLE_HINT = (
 
 
 def camera_angle(cal: CalibrationResult, max_tilt_deg: float = MAX_TILT_DEG) -> dict:
-    """Overhead-mount gate (D-CAL-3): the sheet-plane homography ignores height, so a peg top
+    """Camera-angle gate: the sheet-plane homography ignores height, so a peg top
     or a hand 30-100 mm above the sheet projects tens of mm off at a typical webcam angle.
     `tilt_deg` comes from cv2.solvePnP on the marker corners (calibration.py); above
     `max_tilt_deg` the setup asks for the camera to be moved. `ok` is None until there is a fix.
@@ -209,11 +209,11 @@ def build_checks(
     spec: SheetSpec | None = None,
     frame_shape: tuple | None = None,
 ) -> list[dict]:
-    """The wireframe's five rows plus the camera-angle row (D-CAL-3), in order; status
+    """The wireframe's five rows plus the camera-angle row, in order; status
     pass|check|pending with a fix hint. With `frame_shape`, a missing marker's hint says
     whether it is outside the picture or covered (`missing_marker_causes`).
 
-    Arm to the front uses no printed sheet: with needs_sheet=False the marker, angle and
+    The arm exercise uses no printed sheet: with needs_sheet=False the marker, angle and
     task-area rows are replaced by one side-view row (pending until the pose model gates it)."""
 
     def row(id_: str, label: str, ok: bool | None, hint: str | None) -> dict:
@@ -221,8 +221,8 @@ def build_checks(
         return {"id": id_, "label": label, "status": status, "hint": None if ok else hint}
 
     present = presence_d.get("present")
-    # Setup needs all four markers (the setup screen refuses to start without them); a partial or held fix is
-    # enough to keep a running session going but not to unlock Continue.
+    # The markers row passes only with all four markers; a partial or held fix keeps a running session
+    # going but does not tick this row (the patient may still continue; without the sheet nothing is counted).
     markers_ok = bool(cal.calibrated and not cal.missing)
     causes = (
         missing_marker_causes(cal, spec, frame_shape)

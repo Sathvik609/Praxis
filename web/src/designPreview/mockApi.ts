@@ -166,8 +166,8 @@ function selfReport(b: { exercise?: string }): unknown {
 function nextPractice(summary: SessionRecord['summary']): SessionRecord['next_practice'] {
   const cam = summary.camera ?? {}
   if (summary.stopped) return { text: 'Session ended by a stop rule. Rest the arm today; your therapist has been flagged.', proposal: 'review with clinician', level_change: false }
-  if (summary.mode === 'cup') return { text: 'Continue your assigned plan. No level change — that needs Dr. Rao.', proposal: 'keep the arcs your plan assigns; keep the hand clear after each placement', level_change: false }
-  if (summary.mode === 'arm') return { text: 'Continue your assigned plan. No level change — that needs Dr. Rao.', proposal: cam.posture_cues ? 'keep hold at 3 s, watch leaning' : 'keep hold at 3 s', level_change: false }
+  if (summary.mode === 'cup') return { text: 'Continue your assigned plan. No level change without your therapist.', proposal: 'keep the arcs your plan assigns; keep the hand clear after each placement', level_change: false }
+  if (summary.mode === 'arm') return { text: 'Continue your assigned plan. No level change without your therapist.', proposal: cam.posture_cues ? 'keep hold at 3 s, watch leaning' : 'keep hold at 3 s', level_change: false }
   return { text: 'Assessment recorded. Practice continues on the assigned plan.', proposal: 'repeat the peg test weekly, same board and camera setup', level_change: false }
 }
 

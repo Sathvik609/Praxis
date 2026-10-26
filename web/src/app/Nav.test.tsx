@@ -44,7 +44,7 @@ test('design v2 rail: logo is the Praxis mark named "Praxis · home", hubs keep 
   expect(logo).toHaveClass('ui-logo')
   expect(logo).toHaveAttribute('href', '/details')
   expect(logo.querySelector('svg.ui-logo-mark')).not.toBeNull()
-  const nav = screen.getByRole('navigation', { name: 'Hubs' })
+  const nav = screen.getByRole('navigation', { name: 'Main' })
   expect(nav).toHaveClass('ui-hubs')
   for (const name of ['Home', 'Exercises', 'Progress', 'Calendar', 'Settings']) {
     const hub = screen.getByRole('link', { name })

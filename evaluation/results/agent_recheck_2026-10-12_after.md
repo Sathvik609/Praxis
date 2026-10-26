@@ -33,4 +33,4 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 - **dim_light**: “The camera lost the sheet because the room is too dark. Please add light in front of you, not behind, and I'll check again.” → “It's still too dark. Please switch on a lamp in front of you, not behind, so the camera can see the sheet.”
 - **green_cup**: “Welcome! Let's start with the slow arcs. Reach smoothly from dot to dot and keep your body upright.” → “The camera hadn't recognised your cup's colour, so those reaches weren't counted. It has now learned it.” → “Cup colour learned; ready to continue. Ready to carry on?” → “Thanks. Carrying on from where we stopped.”
 
-Traces: `traces/agent/anthropic/<scenario>.jsonl`.
+Traces: `traces/agent/anthropic-sonnet-5-5/<scenario>.jsonl`.

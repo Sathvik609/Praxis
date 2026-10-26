@@ -59,7 +59,7 @@ test('mode comes only from props: tag text per mode, no toggles of its own', () 
   expect(screen.getByText('Reference · waiting for you')).toBeInTheDocument()
   expect(screen.getByLabelText('Reference figure')).toHaveClass('av-dim')
   rerender(<RefAvatar clip="abduction" mode="dim-cue" demoAt={null} holdS={3} side="left" />)
-  expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
+  expect(screen.getByText('Reference · read the coach card')).toBeInTheDocument()
 })
 
 test('before the coach asks for a demonstration the figure waits; the request starts it', () => {

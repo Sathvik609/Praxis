@@ -174,7 +174,7 @@ export function LiveCup() {
   const eyebrow = correcting ? 'Coach · Correction' : 'Coach'
 
   const refMode: CupRefMode = hold.open || !!complete || !cup ? 'idle' : lost || wrongRecent || correcting ? 'dim' : 'point'
-  const refLabel = refMode === 'idle' ? 'idle' : lost ? 'waiting for you' : refMode === 'dim' ? 'listen to the coach' : dotNext != null ? `dot ${dotNext + 1} is next` : 'idle'
+  const refLabel = refMode === 'idle' ? 'ready' : lost ? 'waiting for you' : refMode === 'dim' ? 'read the coach card' : dotNext != null ? `dot ${dotNext + 1} is next` : 'ready'
 
   const pain = readCheckinPain()
   const facts = cupProgressFacts(events, frame)
@@ -275,7 +275,7 @@ export function LiveCup() {
           coachCard
         )}
 
-        <SxStats {...stats} extra={<ExertionChip exertion={coach.exertion} compact />} verified={verifiedReaches} unverified={unverified} />
+        <SxStats {...stats} extra={<ExertionChip exertion={coach.exertion} compact />} verified={doneVerified} unverified={doneUnverified} />
       </main>
 
       {showModal && cp.prompt && <ProgressionModal prompt={cp.prompt} basis={basis} whyOpen={cp.whyOpen} whyText={cp.whyText} onChoose={cp.choose} />}

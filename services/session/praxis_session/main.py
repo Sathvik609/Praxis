@@ -230,7 +230,7 @@ def api_put_schedule(body: ScheduleBody, request: Request) -> dict[str, object]:
     as prescription v(N+1) (dose, adaptations and stop rules carried over), logged in
     `schedule_log` and as a `prescription_changed` event. 422 and no change when invalid.
     Therapist only (21 Oct): 403 without the therapist token (`_require_therapist`); there is
-    still no sign-in (removed 21 Sep, Cognito deferred)."""
+    still no sign-in (removed 21 Sep; Cognito is not built)."""
     _require_therapist(request)
     before = store.prescription()["version"]
     try:
@@ -284,7 +284,7 @@ FEEDBACK_FIXED = ("cmd", "ended_early", "end_reason")
 
 @app.patch("/api/sessions/{session_id}/feedback")
 def api_patch_feedback(session_id: str, body: dict[str, Any] = Body(...)) -> dict[str, object]:
-    """Report · Edit feedback (6 Oct, ruling R4). Merges the body into the stored session's
+    """Report · Edit feedback (6 Oct). Merges the body into the stored session's
     feedback and `summary.told_us` exactly as the end-of-session path does, writes a
     `feedback_edit` trace line, and re-applies the post-session pain rule: `pain_after` at or
     above the stop level adds one `pain_after` therapist flag (never a stop; the session is
@@ -345,7 +345,7 @@ def api_flag_reviewed(flag_id: int, request: Request) -> dict[str, object]:
 
 
 class GoalNote(BaseModel):
-    note: str = ""
+    note: Annotated[str, Field(max_length=2000)] = ""
 
 
 @app.post("/api/goal-log")

@@ -11,9 +11,9 @@ it('cleans names like the service does', () => {
 it('stores, reads and clears the tester name', () => {
   expect(readTester()).toBeNull()
   expect(testerParams()).toEqual({})
-  expect(writeTester('Sathvik')).toBe('sathvik')
-  expect(readTester()).toBe('sathvik')
-  expect(testerParams()).toEqual({ tester: 'sathvik' })
+  expect(writeTester('Alex')).toBe('alex')
+  expect(readTester()).toBe('alex')
+  expect(testerParams()).toEqual({ tester: 'alex' })
   writeTester('')
   expect(readTester()).toBeNull()
 })

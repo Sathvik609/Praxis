@@ -1,9 +1,9 @@
 /* Design tokens: the designers' final palette (Praxis design-preview artifact, 6 Oct 2026),
-   exactly as the artifact renders it (decisions D-PALETTE, D-CONTRAST). Each value is the final
+   exactly as the artifact renders it (palette as designed; contrast exceptions in docs/ACCESSIBILITY.md). Each value is the final
    effective value after every override pass in the designers' stylesheet; design/designer.css
    (imported after this file) still re-declares the same values in its cascade order, so keep
    both in step. design/contrast.test.ts measures these blocks; AA misses are listed there and in
-   docs/RISKS.md. Keep the `:root {` and `:root[data-theme='dark']` selectors: the test parses them. */
+   docs/ACCESSIBILITY.md. Keep the `:root {` and `:root[data-theme='dark']` selectors: the test parses them. */
 :root {
   /* brand: one primary blue for teal/mint/focus (fills, stage accents, charts) */
   --teal: #3D62E3;

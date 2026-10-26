@@ -140,7 +140,7 @@ def test_perception_loss_pauses_and_exertion_forces_rest():
 
 
 def test_perception_pause_says_it_will_carry_on_and_fires_again_after_regain():
-    """D-CAL-2: the pause copy promises auto-resume; a second loss after a regain pauses again."""
+    """The pause copy promises auto-resume; a second loss after a regain pauses again."""
     sr = StopRules(SEED_PRESCRIPTION)
     evs = sr.on_events([make_event("perception_lost", t=3.0, missing=[1, 2])])
     assert types(evs) == ["pause"] and evs[0].payload["missing"] == [1, 2]

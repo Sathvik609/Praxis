@@ -10,7 +10,7 @@ const DEFAULT_TITLE: Record<PromptKind, string> = {
   resume: 'Setup looks good — resume?',
 }
 
-/** Wireframe 07b, generalised (agent spec §7): any coach prompt — a progression, a dose
+/** Wireframe 07b, generalised (docs/AGENT.md): any coach prompt — a progression, a dose
  *  adjustment already clamped to the prescription, or a request to resume after a setup fix.
  *  Nothing changes until the patient taps; option 0 accepts (primary), option 1 declines,
  *  "Why?" opens the coach's reason inline and keeps the prompt open. The card is not modal:

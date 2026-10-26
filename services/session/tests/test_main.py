@@ -241,7 +241,7 @@ def test_ws_replay_unknown_clip_errors(client):
 
 def test_ws_replay_coach_keeps_speaking_after_an_answer(client):
     """Replay frames carry clip time; commands must use the same clock or the coach's
-    rate limiter silences every later instruct cue (audit 17 Sep, A2)."""
+    rate limiter silences every later instruct cue (17 Sep)."""
     with client.websocket_connect("/session?mode=cup&sheet=cup_targets&replay=synthetic_cup_01&clear=1") as ws:
         assert ws.receive_json()["type"] == "replay_start"
         prompt_seen = False
@@ -634,7 +634,7 @@ def test_coach_set_hold_is_applied_to_the_pipeline_and_traced(tmp_path):
     assert main._apply_coach_commands(p, c) == []
 
 
-# ---- 6 Oct design v2 (Task 17): Edit feedback (ruling R4) ----------------------------------
+# ---- 6 Oct design v2: Edit feedback -------------------------------------------------------
 
 
 def test_patch_feedback_updates_the_stored_session_traces_and_flags(client):

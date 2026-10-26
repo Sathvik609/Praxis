@@ -1,9 +1,10 @@
-"""Body pose for Arm to the front (OpenCV cv2.__version__ == 5.0.0, cv2.dnn).
+"""Body pose for the arm exercise (Arm out to the side, front view) (OpenCV cv2.__version__ == 5.0.0, cv2.dnn).
 
 OpenCV Zoo MediaPipe pair (Apache-2.0, docs/LICENSES.md): person detection (224x224) then
 BlazePose landmarks (256x256) -> 33 points in frame px with visibility. Angles are computed in
-the image plane and are camera-relative progress, never clinical goniometry. Side view
-(practising side toward the camera) is the documented assumption; `view_ok` reports it.
+the image plane and are camera-relative progress, never clinical goniometry. The shipped
+exercise is scored from the front view (`front_view_ok`); `view_ok` reports the side view the
+hidden entries need.
 
 Region of interest (11 Oct, from real video, `evaluation/results/rehab24_v0.md`): MediaPipe's
 policy, not a detector call per frame. The landmark region is tracked from the previous frame's
@@ -245,7 +246,7 @@ def shoulder_elevation_deg(res: PoseResult, side: str) -> float:
     In the **side** view this is shoulder flexion (Arm to the front); the sign is not
     recoverable, so a reach behind the body would also read as a positive elevation. In the
     **front** view the same number is abduction (Arm out to the side); cross-body motion is
-    indistinguishable from abduction here, which is one reason scaption was dropped (23 Sep).
+    indistinguishable from abduction here, which is why scaption is not offered.
     Shoulder rotation has no metric at all: the forearm points at a single webcam, so Rotate
     out / Rotate in are demo-only and self-ticked (`exercises.py`).
     """

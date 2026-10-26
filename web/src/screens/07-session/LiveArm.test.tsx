@@ -73,7 +73,7 @@ test('posture cue appears after a compensation_lean event in the watch tone; the
   expect(screen.getByText("Sit tall — you're leaning to the side to lift. Lower the arm a little and lift from the shoulder.")).toBeInTheDocument()
   expect(screen.getByText('Coach · posture')).toBeInTheDocument()
   expect(screen.getByText(/Sit tall/).closest('section')).toHaveClass('sx-coach-watch')
-  expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
+  expect(screen.getByText('Reference · read the coach card')).toBeInTheDocument()
 })
 
 test('a lift past the ceiling shows the range cue in the watch tone, in words, and dims the figure', () => {
@@ -82,7 +82,7 @@ test('a lift past the ceiling shows the range cue in the watch tone, in words, a
   expect(screen.getByText(/Stop at shoulder height/)).toBeInTheDocument()
   expect(screen.getByText('Coach · range')).toBeInTheDocument()
   expect(screen.getByText(/Stop at shoulder height/).closest('section')).toHaveClass('sx-coach-watch')
-  expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
+  expect(screen.getByText('Reference · read the coach card')).toBeInTheDocument()
 })
 
 test('an old above_ceiling event no longer colours the coach card', () => {
@@ -230,7 +230,7 @@ test('out of frame: a centered caution over the camera with no button; it clears
   expect(caution).toHaveTextContent(/until your shoulder is back in view/)
   expect(within(caution).queryByRole('button')).toBeNull()
   expect(screen.queryByRole('alertdialog')).toBeNull()
-  // the service resumes on perception_regained (D-CAL-2): nothing for the patient to tap
+  // the service resumes on perception_regained: nothing for the patient to tap
   mockStream([...lost, { type: 'perception_regained', t: 13, id: 4 }, { type: 'resume', t: 13, id: 5, rule: 'perception', text: 'Tracking is back. Carry on.' }, { ...frame, t: 13.1, id: 6 }])
   rerender(tree('/session?exercise=abduction&side=left'))
   expect(screen.queryByRole('alert', { name: 'Tracking lost' })).toBeNull()

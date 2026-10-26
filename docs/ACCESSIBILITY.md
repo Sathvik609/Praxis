@@ -66,7 +66,7 @@ Not done: no session with a real screen reader (VoiceOver, NVDA, JAWS) or switch
 | 17 | Controls with no designer focus style | Browser default focus ring | `:focus-visible` ring in the focus token (`--focus`) in the CSS base layer, so every designer and Tailwind focus rule still wins |
 | 18 | Home and Demonstration figures | Played on their own under reduced motion | Wait for Play when Settings › Reduced motion or the system setting is on (visual change only for those users, as Settings promises) |
 
-### Kept by product decision (D-CONTRAST, 6 Oct)
+### Kept by product decision (6 Oct)
 
 The designers' palette is used exactly, so three pairs miss 4.5:1. They are the only exclusions anywhere: pinned with their ratios in `contrast.test.ts`, and named in `scripts/a11y-browser.mjs`.
 
@@ -78,11 +78,9 @@ The designers' palette is used exactly, so three pairs miss 4.5:1. They are the 
 
 In the Chrome pass axe never matched these: it reports text on a gradient as "incomplete" (it cannot pick one background colour), and the amber pair did not occur on the checked screens. The token test is what holds them.
 
-### Found, not fixed (needs the designers)
+### Found, not fixed (needs a design decision)
 
 The Chrome pass found four more pairs below 4.5:1, all in `design/designer.css`. Fixing them changes the designers' colours, so they are recorded here and not restyled; the script fails on them until a decision is made.
-
-Four more contrast misses found by axe in headless Chrome (`web/scripts/a11y-browser.mjs`), all in the designers' stylesheet, outside D-CONTRAST: Camera setup's not-yet step labels `#8A9099` on `#F2F5FA` 2.94:1 (light); Calendar's untracked day lines `#6A7390` on `#F4F7FB` 4.37:1 (light); Calendar's clinic tag `#8391AA` on `#392E21` 4.15:1 (dark); Therapist's neutral chips `#8391AA` on `#253246` 4.06:1 (dark).
 
 | Screen | Element | Pair | Ratio |
 |---|---|---|---|
@@ -113,7 +111,7 @@ Totals: 18 issues fixed (1–7 from axe, 8–18 from the keyboard and screen-rea
 - **No real assistive-technology testing yet** (§1). Pilot sessions should include at least one keyboard-only run and one VoiceOver run of the default day.
 - **The camera view and the figure are visual.** The overlay canvas and the WebGL figure have no text equivalent of their own; the same information is given in text (status band, counts, captions, the Demonstration's step captions), but a blind patient cannot use the camera-coached exercises in a meaningful way.
 - **Radio groups keep every option as a Tab stop** (plus arrows), instead of the WAI-ARIA single-Tab-stop pattern; only the pain / effort scales use a roving tab index.
-- **Target size:** controls are 40–48 px as the designers drew them (D-SIZE). That meets 2.1 AA (2.5.5 target size is AAA) but is harder for patients with impaired hand control.
+- **Target size:** controls are 40–48 px as the designers drew them (a product decision). That meets 2.1 AA (2.5.5 target size is AAA) but is harder for patients with impaired hand control.
 - **Text over live video** (the "You" tag and band over the camera) has its own backing, but its contrast against a real room is not measurable in the test pages.
 - The Chrome pass covers the screens, not every dialog; the dialogs are checked in jsdom without contrast.
 

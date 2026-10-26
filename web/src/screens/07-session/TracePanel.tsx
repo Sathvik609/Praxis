@@ -121,7 +121,7 @@ function AgentRunRows({ run }: { run: AgentRun }) {
 /** Judge / developer trace ("Show trace"): OpenCV output → decision → tool call
  *  → action with timestamps; stop rules are shown where they fired, before the coach.
  *  `pipeline` holds the screen's developer lines (the OpenCV step, rolling latency p50/p95)
- *  so they stay off the patient's video. Agent runs (agent spec §7) come from `/api/trace`
+ *  so they stay off the patient's video. Agent runs (docs/AGENT.md) come from `/api/trace`
  *  for the socket's session, polled while the panel is open (`agentRows` overrides it), and
  *  are listed under the perception event that triggered them. */
 export function TracePanel({ events, replay = false, pipeline = [], agentRows, sessionId = null }: { events: PraxisEvent[]; replay?: boolean; pipeline?: ReactNode[]; agentRows?: TraceRow[] | null; sessionId?: string | null }) {

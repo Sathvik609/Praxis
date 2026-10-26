@@ -62,7 +62,7 @@ class Coach(Protocol):
     def decide(self, ctx: CoachContext) -> list[Decision]: ...
 
 
-# ---- tools (plain functions; the agent binds these names as MCP/Gateway tools in W6) ----
+# ---- tools (plain functions; the agent binds the same names as MCP tools in agent/tools.py) ----
 def get_events(ring: EventRing, n: int = 50) -> list[dict[str, Any]]:
     return [e.to_dict() for e in ring.latest(n)]
 
@@ -88,5 +88,5 @@ def write_session_summary(store: Any, summary: dict[str, Any]) -> dict[str, Any]
 
 
 def speak(text: str, t: float, cue_id: str, action: str) -> Event:
-    """A speak action becomes a captioned event; the browser voices it (Polly in W6)."""
+    """A speak action becomes a captioned event; the browser voices it with SpeechSynthesis."""
     return make_event("speak", t=t, text=text, cue_id=cue_id, action=action)

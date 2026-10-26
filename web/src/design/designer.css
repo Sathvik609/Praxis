@@ -1,15 +1,15 @@
 /* Designers' stylesheet (Praxis design-preview artifact, edited 6 Oct 2026), ported verbatim from
-   live/index.css L2811-5081 in cascade order. Unlayered and imported last in index.css, so it overrides
-   the Tailwind layers exactly as in the artifact. Removed: rules from the global.md §2.2 drop list that a
+   the designers' stylesheet in cascade order. Unlayered and imported last in index.css, so it overrides
+   the Tailwind layers exactly as in the artifact. Removed: rules that a
    computed-style comparison against the artifact showed to be dead (overridden backgrounds, pointer
    sheens, superseded palettes, unrendered hero links / callouts, the old Progress and Settings layout
-   hacks, the fit-engine `flex-shrink` rule); preview-only rules (moved to designPreview/preview.css);
+   overrides, the fit-engine `flex-shrink` rule); preview-only rules (moved to designPreview/preview.css);
    `.sx-rec{display:none}` (the red "Live · not recording" marker must always show); and the Judge-view
    gate on `.judge-only` Sample labels and the preview badge. Show trace, .sx-mono and .cs-telemetry
-   stay behind Judge view as designed (D-JUDGE).
+   stay behind Settings › Show technical details, as designed.
    Token values here and in design/tokens.css are the same final values; tokens.css is what
    design/contrast.test.ts measures.
-   Primitives (6 Oct, Task 2): selectors that found components through Tailwind utilities, an aria-label
+   Primitives (6 Oct): selectors that found components through Tailwind utilities, an aria-label
    or Radix internals now use the classes the components emit (ui-btn--<variant>, ui-seg / ui-seg-btn,
    ui-scale-btn, ui-check-box, ui-chip, ui-stat-num, ui-flowbar, ui-main, ui-logo, ui-dialog / ui-scrim).
    Declarations and rule order are unchanged; a computed-style comparison against the artifact on the
@@ -487,7 +487,7 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 :root[data-theme="dark"] [data-stage],:root[data-theme="dark"] .sx-ref{background:linear-gradient(180deg,#1E232A,#12161B)!important}
 /* Hero cards: soft surface with the blue action, as in the reference */
 .ui-card--brand{background:var(--surface-soft)!important;color:var(--text)!important;border:1px solid var(--edge)}
-/* Task 6: the [class*="text-white"] rules re-ink the Home hero's children; drop them once Home stops emitting text-white. */
+/* The [class*="text-white"] rules re-ink the Home hero's children. */
 .ui-card--brand [class*="text-white"]{color:var(--text)!important}
 .ui-card--brand p[class*="text-white/"],.ui-card--brand [class*="text-white/8"],.ui-card--brand [class*="text-white/7"]{color:var(--muted)!important}
 .ui-card--brand .ui-btn.ui-btn--inverse{background:var(--teal-fill)!important;color:#fff!important;box-shadow:0 6px 16px rgba(61,98,227,.28)}
@@ -525,7 +525,7 @@ main h1.text-3xl{font-size:1.625rem;line-height:1.25}
 [class*="bg-[radial-gradient(circle_at_50%_40%"]{background:linear-gradient(180deg,#F8F9FB,#E4E7EC)!important;color:var(--muted)!important}
 [role=alert][class*="bg-[var(--stage-a)]"]{background:rgba(236,237,240,.96)!important}
 /* Camera Panel component (setup preview, legacy views). design/Panel.tsx now paints var(--cam) + ink itself; this
-   still re-colours the therapist Decision trace section (Task 11). */
+   still re-colours the therapist Decision trace section. */
 [class*="rounded-[var(--r-card)]"][class*="bg-[var(--stage-a)]"]:not(.sx-trace *){background:var(--cam)!important;color:var(--text)!important}
 
 /* Camera setup: light shell */
@@ -1590,7 +1590,7 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 .rp-ex-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
 .rp-ex-h b{font-size:16px;line-height:24px;font-weight:700;color:var(--text)}
 .rp-ex-h>span:not([class]){font-size:14px;line-height:20px;color:var(--muted)}
-/* Task 19: the designers' `.rp-ex-h .ui-chip{margin-left:auto}` never matched in the artifact (Chip had no ui-chip
+/* The designers' `.rp-ex-h .ui-chip{margin-left:auto}` never matched in the artifact (Chip had no ui-chip
    class); removed so adding ui-chip does not move report chips. Restore only if the designers want them right-aligned. */
 .rp-ex-sub{margin-top:2px;font-size:14px;line-height:20px;color:var(--muted)}
 .rp-bars{position:relative;height:96px;margin-top:16px;display:flex;align-items:flex-end;gap:4px}
@@ -1633,7 +1633,7 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] .rp-legend i:not(.rp-bar-u){background:#3A84FF}
 /* Layout: camera card full width (~45% of the page), then coach notes | told + next practice */
 .rp{min-height:100%}
-/* App, 10 Oct (no fit engine, D-SIZE): never shrink the report to the window inside the flex-column
+/* App, 10 Oct (no fit engine; sizes as designed): never shrink the report to the window inside the flex-column
    main; the page scrolls instead of clipping the right column's cards. */
 .rp{flex-shrink:0}
 .rp-cam{min-height:45vh;display:flex;flex-direction:column}
@@ -1867,9 +1867,9 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 :root[data-theme="dark"] :is(.pg-date,.pg-what b){color:#EAF0FA}
 :root[data-theme="dark"] .pg-open{color:#8DB6FF}
 :root[data-theme="dark"] .pg-spike-l{color:#FF9A9A}
-/* Port (Task 20): unverified reaches stack on top of a bar with the report's hatch (.rp-bar-u);
+/* unverified reaches stack on top of a bar with the report's hatch (.rp-bar-u);
    sample bars are outlined, never filled like the patient's own */
-/* Port (Task 20): the session list column also holds the everyday goal log (wireframe 10) */
+/* the session list column also holds the everyday goal log (wireframe 10) */
 .pg-main{display:flex;flex-direction:column;gap:20px;min-height:0}
 .pg-main>.pg-list{flex:1}
 @media (max-height:820px){.pg-main{gap:14px}}

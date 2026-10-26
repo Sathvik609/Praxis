@@ -19,7 +19,7 @@ export const PREFIX_BYTES = 8
 export const ACK_TYPES: ReadonlySet<string> = new Set(['frame', 'setup_checks', 'heartbeat', 'error'])
 
 /** Frames sent but not yet answered. One at a time capped a far service at one frame per
- *  round trip (13 Oct team test: ~230 ms to the Railway region, ~4 fps), so up to this many are
+ *  round trip (13 Oct team test: ~230 ms to a far region, ~4 fps), so up to this many are
  *  pipelined; the service still drops the oldest queued frame when it falls behind, so the
  *  newest frame is always the one processed. */
 export const MAX_IN_FLIGHT = 3

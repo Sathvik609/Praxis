@@ -45,7 +45,7 @@ def test_setup_rows_say_which_checks_gate_the_start():
 
 def test_perception_lost_and_regained():
     """Every marker gone (the sheet pushed out of view): the homography is held 1.5 s, then
-    LOSS_FRAMES (20) uncalibrated frames are needed before `perception_lost` (D-CAL-1). At 0.5 s
+    LOSS_FRAMES (20) uncalibrated frames are needed before `perception_lost`. At 0.5 s
     steps: 15 bad frames (3 held + 12 lost) stay quiet, 25 (3 held + 22 lost) pause. Two markers
     covered but unmoved never pause (24 Oct, anchored hold)."""
     from tests.test_calibration import hide_markers
@@ -93,7 +93,7 @@ def _check(evs, id_):
 
 
 def test_angle_check_passes_for_an_overhead_camera_and_gates_a_steep_one():
-    """D-CAL-3: the synthetic default view (tilt 15°, yaw 5°) passes; 40° must be fixed."""
+    """The synthetic default view (tilt 15°, yaw 5°) passes; 40° must be fixed."""
     p = SessionPipeline(mode="calibrate", sheet="nhpt_board")
     evs = p.process(camera_frame(NHPT_BOARD)[0], 0.0, 0)
     row = _check(evs, "angle")

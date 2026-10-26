@@ -34,4 +34,4 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 
 - **mixed_signals**: “Nice set. Your arm dipped a little mid-set but came back strong. Keep your body upright as you lift, and take your time.”
 
-Traces: `traces/agent/anthropic/<scenario>.jsonl`.
+Traces: `traces/agent/anthropic-sonnet-5-5/<scenario>.jsonl`.

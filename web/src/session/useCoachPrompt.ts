@@ -5,7 +5,7 @@ import { isWhy, type Prompt } from './agent'
 type Send = (msg: Record<string, unknown>) => void
 type Asked = { eventId: number; after: number; open: boolean }
 
-/** Answers the open coach prompt over the session socket (agent spec §7):
+/** Answers the open coach prompt over the session socket (docs/AGENT.md):
  *  `{cmd: "answer", prompt: id, choice: option text}`. Accept / decline close the prompt; "Why?"
  *  is sent once, keeps the prompt open and shows the next coach cue (the service answers a Why
  *  with an `instruct`) as the reason. Later taps on Why only show / hide it. */

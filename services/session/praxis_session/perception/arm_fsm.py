@@ -30,7 +30,7 @@ angle is still reported for display) while the view is wrong (`gate = "turn_side
 side-view exercises, `"turn_front"` for front-view ones) or the practising-side
 shoulder/elbow/hip visibility is below `MIN_VISIBILITY` (`gate = "hips_out_of_view"`).
 Compensation checks run for `kind="hold"` only: the pendulum is done leaning forward on purpose,
-so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep review).
+so it never raises `compensation_lean` or `shoulder_hiking` (24 Sep).
 `compensation_lean` needs the lean to persist for `lean_persist_s` with both hips visible;
 `shoulder_hiking` needs both shoulders and both hips visible (the hike is in trunk lengths). A
 seated patient with the hips behind a desk or below a laptop's frame therefore gets no lean or
@@ -497,7 +497,7 @@ class ArmFSM:
         self._peak = round(self._swing_hi - self._swing_lo, 1)
         # No lean or shoulder-hike check here: the pendulum is *done* leaning forward on a table
         # with the arm hanging (exercises.py steps), so a forward trunk is the instruction, not
-        # a compensation (24 Sep review, P0).
+        # a compensation (24 Sep).
         sign = 1 if a > self.swing_band_deg else (-1 if a < -self.swing_band_deg else 0)
         if sign == 0 or sign == self._swing_sign:
             return evs

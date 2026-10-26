@@ -10,7 +10,7 @@ import { CoachChat } from '../coach/CoachChat'
 
 /** Screen 04 · Exercise library (design v2, 6 Oct; artifact `ChooseExercise`). The three
  *  exercises of the 28 Sep lock as one row of cards, each with the artifact's eyebrow + tag and its
- *  own "Start session", which opens the demonstration first (D-FLOW: Choose → Demonstration →
+ *  own "Start session", which opens the demonstration first (Choose → Demonstration →
  *  Check-in → Camera setup). The artifact's instructions-only cards (Block towers, Grip power,
  *  Box and Block Test) are dropped tasks and are not ported, nor is its unreachable "Help me choose".
  *
@@ -150,7 +150,7 @@ export function ChooseExercise() {
         right={rest ? <Button onClick={() => nav('/details')}>Back to Home</Button> : null}
       />
 
-      {/* Library coach (Task 7); kept by the v2 rewrite (ruling R1). */}
+      {/* Library coach, kept by the design v2 rewrite. */}
       <CoachChat
         open={coachOpen}
         onOpenChange={setCoachOpen}

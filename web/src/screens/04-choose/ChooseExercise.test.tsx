@@ -67,7 +67,7 @@ test('24 Oct: only the three launchable exercises are listed, no Coming soon pla
   for (const t of ['Shelf reach', 'Finger tapping', 'Wrist circles']) expect(screen.queryByText(t)).not.toBeInTheDocument()
 })
 
-test('each card’s Start session opens that exercise’s demonstration (D-FLOW), never camera setup', () => {
+test('each card’s Start session opens that exercise’s demonstration, never camera setup', () => {
   renderChoose()
   fireEvent.click(screen.getByRole('button', { name: 'Start session: Waiter – cup' }))
   expect(screen.getByText('AT /details/demo?exercise=cup&side=left')).toBeInTheDocument()
@@ -186,7 +186,7 @@ test('mid-day the next undone exercise is preselected and the saved side is used
   expect(screen.getByText('AT /details/demo?exercise=cup&side=right')).toBeInTheDocument()
 })
 
-test('ask the coach opens the library coach from Choose (ruling R1)', async () => {
+test('ask the coach opens the library coach from Choose', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }) as Response))
   try {
     renderChoose()

@@ -1,4 +1,4 @@
-"""The agent coach's tools: one implementation, every guardrail (agent coach design §4-§5).
+"""The agent coach's tools: one implementation, every guardrail (docs/AGENT.md, "Tools" and "Autonomy policy").
 
 The same functions are served three ways: by the FastMCP servers `perception`, `exertion` and
 `coach` (`agent/mcp_server.py`, transport `mcp`), as direct Strands tools when MCP is down

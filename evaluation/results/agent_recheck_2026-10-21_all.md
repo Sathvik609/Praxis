@@ -76,4 +76,4 @@ Scenarios: `evaluation/agent/scenarios/*.json` (synthetic OpenCV frames, injecte
 - **repeated_lean**: “Good lifts, but your body is leaning sideways. Stand tall and keep your trunk still as the arm rises.” → “How about target 75° instead of 90°? Tap Yes to change it, or Keep.” → “Keeping it as it is. That's fine.”
 - **three_unverified**: “Your hand is covering the cup, so the camera can't count those. Try grasping it from the side and keep your hand low so the cup stays visible.” → “Camera sees the sheet clearly; ready to continue once the cup stays uncovered. Ready to carry on?” → “Thanks. Carrying on from where we stopped.”
 
-Traces: `traces/agent/anthropic/<scenario>.jsonl`.
+Traces: `traces/agent/anthropic-sonnet-5-5/<scenario>.jsonl`.

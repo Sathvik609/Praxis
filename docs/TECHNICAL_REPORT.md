@@ -28,7 +28,7 @@ What is measured and what is not:
 
 | Area | Status (26 Oct 2026) |
 |---|---|
-| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 952 service tests and 1,052 web tests (26 Oct, run locally); `.github/workflows/ci.yml` has the same lint, type and test steps |
+| OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 952 service tests and 1,047 web tests (26 Oct, run locally); `.github/workflows/ci.yml` has the same lint, type and test steps |
 | Our agent (17 tools over MCP, autonomy table, guardrails) | built, on the Anthropic API. **Real video** (REHAB24-6 through the product pipeline, 40 sessions, patient taps simulated): named a fault motion capture confirmed, and gave a correction, in 41 of 44 set reviews; named the fix on 26 of 26 real wrong-view pauses; **0 guardrail violations**. Synthetic (15 scenarios, 21 Oct recheck): 15/15, 0 violations (§8.3) |
 | AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; up from submission until 10 Nov 2026). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). Last deployed and checked 26 Oct: `/health`, both replays and agent runs |
 | Accuracy on real people | **Arm out to the side, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.96** (§8.4). With laptop framing (hips at or below the bottom edge, cropped from the same video): rep F1 0.91–0.93 (34–35 of 35 reps found), angle MAE 5.0–7.5° (§8.4, fixed 25 Oct after the team's laptop sessions). NHPT and Waiter – cup ran live with the team on real webcams (§8.6); their accuracy numbers are from 3-D renders (§8.1.1). |
@@ -232,7 +232,7 @@ Every run writes trace rows: `agent_run` (trigger, model, transport, tokens, ms,
 | Service | the same FastAPI service under systemd. The venv comes from `uv.lock` **minus** the OpenCV wheel, so `import cv2` loads COOL. The install stops unless `cv2.__file__` is under `/opt/cool` |
 | HTTPS | CloudFront → `d235zashbh751z.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets can upgrade) |
 | Network | security group: port 8000 only from the CloudFront origin prefix list and one admin IP; SSH from that IP only; MCP routes return 403 from the internet |
-| Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %, an Anthropic spend limit and daily agent-run cap, root MFA, no long-lived keys (CloudShell). Rebuilt 21 Oct in the Praxis-Team management account after the first account became unreachable, so member-account SCPs do not apply |
+| Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %, an Anthropic spend limit and daily agent-run cap, root MFA, no long-lived keys (CloudShell) |
 | Deploy | one idempotent command (safe to re-run): `infra/ec2/deploy.sh <host> [--agent]` |
 
 On the 21 Oct rebuild, `/health` through HTTPS reported `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded. Last deployed and checked 26 Oct (through 3040eea): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance runs until 10 Nov 2026, with our agent capped at 300 checkpoint runs a day.
@@ -304,7 +304,7 @@ The robustness sweep (`evaluation/results/robustness_v0.md`, renders only) cover
 
 Not covered and still open: real exposure and glare, black pegs, and a curled sheet, which nothing flags (§10).
 
-### 8.1.1 Physically based 3-D renders of the NHPT and Waiter – cup (`evaluation/results/synthetic3d_v0.md`)
+#### 8.1.1 Physically based 3-D renders of the NHPT and Waiter – cup (`evaluation/results/synthetic3d_v0.md`)
 
 **Synthetic 3-D renders, not real-camera evidence.** We store no video of our live sessions, so the next-best evidence for the two sheet tasks is a Blender (Eevee) scene built in code (`evaluation/blender/`): the product's printed page, 32 mm pegs standing in a perforated board, a tapered cup with a 19 mm blue tape ring, a skin-toned stand-in hand and forearm, four lighting setups with shadows, motion blur, sensor noise and JPEG q70, and a laptop camera 20–50° from straight down. Ground truth comes from the animation script. 16 clips (10 NHPT × 9 pegs, 6 cups × 32 reaches, 9,167 frames) play through the unchanged replay pipeline at product defaults.
 
@@ -426,7 +426,7 @@ Two thresholds were set from this data (`evaluation/results/rehab24_thresholds_v
 
 The head must be in frame. With the face masked, the pose was found on 51 % of frames and was wrong (MAE 26°). With the head cropped out, it was found on none. Our code never reads the face, but the detector uses it as an anchor.
 
-Laptop framing (`evaluation/results/rehab24_laptop_framing_v0.md`). Seated at a laptop, the hips are at or below the bottom of the frame. In the team's sessions ([`team_test_2026-10-21.md`](../evaluation/results/team_test_2026-10-21.md)), `setup_blocked` fired 14 times in 9 of 12 Arm out to the side sessions, every time for `hips_out_of_view`. We reproduced this by cropping the four front-on REHAB24-6 recordings to a 4:3 view with the bottom edge on the hip line or above it. The angle gate, which needed the hip, closed on 72 % and 98 % of frames, and only 24 and 6 of 35 reps were found. So the arm now gates on the practising shoulder and elbow only, a dip under the start line within 0.8 s is not a rep (no labelled lift is shorter than 1 s), and the shoulder-hike flag needs both hips visible. With the hips at the edge, 34 of 35 reps are found (rep F1 0.76 → 0.93) and the angle is scored on 84 % of frames. With the hips well out, 35 of 35 are found (F1 0.28 → 0.91) and setup pauses drop from 11 to 1. On full-body data the angle is unchanged (3.81°) and false reps fall from 13 to 8. The cost: with the hips out of view there is no shoulder-hike or lean check, and the angle is less accurate.
+Laptop framing (`evaluation/results/rehab24_laptop_framing_v0.md`). Seated at a laptop, the hips are at or below the bottom of the frame. In the team's sessions ([`team_test_2026-10-21.md`](../evaluation/results/team_test_2026-10-21.md)), `setup_blocked` fired 14 times in 9 of 12 Arm out to the side sessions, every time for `hips_out_of_view`. We reproduced this by cropping the four front-on REHAB24-6 recordings to a 4:3 view with the bottom edge on the hip line or above it. The angle gate, which needed the hip, closed on 72 % and 98 % of frames, and only 24 and 6 of 35 reps were found. So the arm now gates on the practising shoulder and elbow only, a dip under the start line within 0.8 s is not a rep (no labelled lift is shorter than 1 s), and the shoulder-hike flag needs both hips visible. With the hips at the edge, 34 of 35 reps are found (rep F1 0.76 → 0.93) and the angle is scored on 84 % of frames. With the hips well out, 35 of 35 are found (F1 0.28 → 0.91) and setup pauses drop from 11 to 1. On full-body data the angle is unchanged (3.81°) and false reps fall to 8. The cost: with the hips out of view there is no shoulder-hike or lean check, and the angle is less accurate.
 
 Caveats: these are healthy adults in black suits, standing in a motion-capture lab and filmed by corner cameras several metres away, not a patient seated 2 m from a laptop. The dataset's lifts go overhead and never hold for 3 s, so only 16 of 96 counted reps were *verified*, which is correct on this data.
 
@@ -465,7 +465,7 @@ Three of us used the hosted review build live: 17 saved sessions from 13 to 24 O
 - Video is processed in memory and dropped. We store only events, metrics, the decision trace and the session summary. The app has no recording feature. Evaluation clips exist only with signed consent and are deleted after 30 days.
 - With the agent on, check-in answers and event summaries are sent to the model provider. Images never are.
 - The face is never analysed for pain, emotion or identity.
-- The hosted endpoint has no sign-in, so judging is easy. It starts empty and holds no real patient data. Please don't enter real health information. Spend is capped by a daily agent-run limit and the Anthropic spend limit. AWS has a $50 budget with email alerts only (no budget action, no SCPs). Real patients would need Cognito sign-in first (§10). The two therapist writes (practice days, Mark reviewed) need `PRAXIS_THERAPIST_TOKEN` or a local request, so the hosted therapist view is read-only.
+- The hosted endpoint has no sign-in, so judging is easy. It starts empty and holds no real patient data. Please don't enter real health information. Spend is capped by a daily agent-run limit and the Anthropic spend limit. AWS has a $50 budget with email alerts only (alerts only). Real patients would need Cognito sign-in first (§10). The two therapist writes (practice days, Mark reviewed) need `PRAXIS_THERAPIST_TOKEN` or a local request, so the hosted therapist view is read-only.
 
 ### 9.3 Human control and transparency
 Take a rest (which pauses) · Pain / feel unwell · End session are on every live screen. A pause the patient asked for, or a rule pause, resumes only on the patient's tap. Tracking lost pauses counting and clears itself when the camera sees the patient or the sheet again. The browser speaks the coach's cues and always captions them. Audio (Settings › Audio) is off by default so the page never talks unasked. One tap in the demo, or raising the session volume slider, turns it on. The rule coach and the agent are both labelled, and every agent line is captioned. Settings › Demo and judging › *Show technical details* opens the full trace: OpenCV event → stop rule → decision → tool → action, with timestamps.
@@ -502,7 +502,7 @@ GRASP is UBC / Heart & Stroke Foundation material. Praxis uses only the exercise
 | What | Command |
 |---|---|
 | Service tests (952) | `cd services/session && uv sync && uv run pytest -q` |
-| Web tests (1,052), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
+| Web tests (1,047), lint, types | `cd web && pnpm install && pnpm test && pnpm lint && pnpm typecheck` |
 | Run locally | `uv run python tools/fetch_models.py && uv run uvicorn praxis_session.main:app --port 8000`; `pnpm dev` |
 | Replay without a webcam | app: Settings → Demo and judging → Replay a recorded session; or `uv run python -m praxis_session.replay` |
 | Pipeline numbers (§8.1) | `uv run python ../../evaluation/scripts/eval.py` |

@@ -761,7 +761,9 @@ def write_results(summary: dict[str, Any], out_dir: Path, stem: str) -> Path:
             seen.add(r["id"])
             said = r.get("agent_said") or []
             lines.append(f"- **{r['id']}**: " + (" → ".join(f"“{t}”" for t in said) if said else "(nothing; see outcomes)"))
-        lines += ["", f"Traces: `traces/agent/{planner}/<scenario>.jsonl`.", ""]
+        # same folder the traces are copied to (model runs get a model-suffixed folder)
+        trace_sub = planner if stem_for(planner, summary["model"]) == STEMS.get(planner) else f"{planner}-{base_model(summary['model']).removeprefix('claude-')}"
+        lines += ["", f"Traces: `traces/agent/{trace_sub}/<scenario>.jsonl`.", ""]
     path = out_dir / f"{stem}.md"
     path.write_text("\n".join(lines))
     return path

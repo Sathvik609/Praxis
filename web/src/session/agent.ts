@@ -1,6 +1,6 @@
 import type { PraxisEvent } from '../lib/events'
 
-/** Agent coach contract on the web side (spec 2026-09-29-agent-coach-design §7). Pure helpers
+/** Agent coach contract on the web side (see docs/AGENT.md). Pure helpers
  *  shared by the live screens, the trace panel and Settings; no React here. */
 
 /** Label of the rule coach while no agent is configured; also what a legacy coach event with

@@ -8,7 +8,7 @@ from praxis_session.prescription import clamp
 
 LABEL = "Rule-based coach · LLM agent pending"
 
-# Cadence (audit 17 Sep, A8). One global gap dropped every second cup cue and every arm
+# Cadence (17 Sep). One global gap dropped every second cup cue and every arm
 # "hold"/"good lift". Now: a short minimum spacing between any two instruct cues, plus a
 # per-cue cooldown so the same cue is not repeated back to back. Corrections, prompts,
 # rest and regress always pass.

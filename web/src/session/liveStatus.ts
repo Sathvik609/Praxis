@@ -3,7 +3,7 @@ import { processingPlace } from '../lib/config'
 import type { Overlay } from './useCoach'
 
 /** One status for the header chip, the feed label and the coach fallback, so the screen
- *  never says "Tracking ready" next to "Getting the camera ready" (audit 17 Sep, A7). */
+ *  never says "Tracking ready" next to "Getting the camera ready". */
 export type LiveStatus =
   | 'connecting'
   | 'camera_blocked'

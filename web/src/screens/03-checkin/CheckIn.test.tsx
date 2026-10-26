@@ -157,7 +157,7 @@ test("today's check-in is reused: one tap continues; checking in again is offere
   expect(screen.getByRole('button', { name: 'Continue to exercises' })).toBeInTheDocument()
 })
 
-test('demo hand-off with a valid check-in today goes straight to camera setup without asking again', () => {
+test('the demonstration link with a valid check-in today goes straight to camera setup without asking again', () => {
   storeDay({})
   mockApi({ '/api/prescription': PRESCRIPTION })
   renderCheckIn('/checkin?next=cup&side=left')
@@ -165,7 +165,7 @@ test('demo hand-off with a valid check-in today goes straight to camera setup wi
   expect(screen.queryByRole('heading', { name: 'Before you start' })).not.toBeInTheDocument()
 })
 
-test('the hand-off passes rehearse=1 through to camera setup', () => {
+test('the demonstration link passes rehearse=1 through to camera setup', () => {
   storeDay({ side: 'right' })
   mockApi({ '/api/prescription': PRESCRIPTION })
   renderCheckIn('/checkin?next=nhpt&side=right&rehearse=1')

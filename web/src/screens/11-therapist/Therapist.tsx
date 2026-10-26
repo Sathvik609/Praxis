@@ -16,8 +16,8 @@ import { DEFAULT_SCHEDULE, ScheduleDialog, THERAPIST_ONLY } from './ScheduleDial
 type Trace = { session: string | null; rows: Record<string, unknown>[] }
 
 /** Screen 11 · Therapist dashboard. Rendered outside the patient Shell with its own clinician
- *  header. The dose is read-only for the competition build (clinician accounts arrive with
- *  Cognito in W6); since 28 Sep the practice days, peg-test day and next clinic visit can be
+ *  header. The dose is read-only for the competition build (this build has no clinician
+ *  accounts); since 28 Sep the practice days, peg-test day and next clinic visit can be
  *  edited ("Edit practice days", saved as prescription v(N+1)), which drives screen 12. */
 export function Therapist() {
   const { data: patients, error: pError } = useApi(() => api.therapistPatients())

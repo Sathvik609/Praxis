@@ -33,7 +33,7 @@ export type TapToSampleState = {
   sampleHole: (hole: number) => void
 }
 
-/** Tap-to-sample (12 Oct, RISKS 11 Oct): the patient taps the cup base (07b) or a peg (07) on
+/** Tap-to-sample (12 Oct): the patient taps the cup base (07b) or a peg (07) on
  *  the camera picture; the service samples its colour on the warped sheet and answers with a
  *  caption (`command` · `sample_colour` · `message`), traced as a patient-initiated `ui` action. */
 export function useTapToSample(events: PraxisEvent[], send: (o: Record<string, unknown>) => void): TapToSampleState {

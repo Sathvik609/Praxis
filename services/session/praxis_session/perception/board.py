@@ -552,7 +552,7 @@ class BoardState:
             large[touching] = True
         occluder = np.where(large[labels], 255, 0).astype(np.uint8)
         # Mostly outside the footprints and not a hand: fingertips or their shadow, never a peg
-        # (deep run 24 Oct: frozen fingertips over an empty hole read as a seated peg). A seated
+        # (24 Oct team test: frozen fingertips over an empty hole read as a seated peg). A seated
         # peg's change lies inside its own footprint. Shadows included: a shadow across an empty
         # hole is part of a region that lies mostly off the footprints; pieces 2 mm apart (cut
         # by a hole's dark rim, which a shadow cannot darken further) are one region.

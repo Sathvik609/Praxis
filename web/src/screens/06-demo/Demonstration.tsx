@@ -20,12 +20,12 @@ const RECHECK_AFTER_MS = 2 * 3600e3
 /** Screen 06 · Demonstration, design v2 (6 Oct 2026): the designers' full-screen theater
  *  (`dth-*`). The reference figure plays the clip mirrored so it faces the patient, with the
  *  theater dock (step, progress, Play/Pause, Replay, Slower) and its readouts (AvatarPanel
- *  `theater`). 21 Oct team review: Audio (each step read aloud, on by default, the same
+ *  `theater`). 21 Oct team review: Audio (each step read aloud, off by default, the same
  *  `prefs.audio` as Settings > Audio) and Skip demo (the theater's primary button) sit at the
  *  bottom right of the dock; Exit stays top left. When the clip ends, "Before you start" lists the target, Watch for and Stop if,
  *  with Watch again and one primary action.
  *
- *  The primary action follows the artifact's flow (D-FLOW): no check-in today → check-in with
+ *  The primary action follows the artifact's flow: no check-in today → check-in with
  *  `next`; a stale check-in (older than 2 h), a day a stop rule ended, or pain after the last
  *  session ≥ 4 → a quick pain check; otherwise camera setup. The quick pain check is a real
  *  check-in (`saveCheckin` → `POST /api/checkin`), so the service sets the tier and writes the

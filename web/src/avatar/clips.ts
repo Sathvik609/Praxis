@@ -4,7 +4,7 @@ import { type Angles, type Joint, type Vec3, restAngles } from './rig'
 
 /** Keyframed clips for the mannequin. Reaches are authored as *targets* on the stage (a dot, a
  *  hole, the dish) and solved to joint angles by `solveArm`, so the mitt lands where the caption
- *  says. Every clip is clinician-reviewed choreography, not a scoring reference. */
+ *  says. Every clip is hand-authored choreography, not a scoring reference. */
 
 export type Ease = 'inout' | 'anticipate' | 'overshoot'
 export type CueTarget = { kind: 'dot' | 'hole' | 'ceiling' | 'dish'; index: number }
@@ -95,13 +95,13 @@ function cupClip(): Clip {
   const at = (i: number) => reach(over(dots[i]), lean(i))
   const lifted = (i: number) => reach(over(dots[i], HAND_OVER_TABLE + 0.05), lean(i))
   const keys: Key[] = [
-    { t: 0, pose: reach(LAP), pinch: 0.6, carry: 'cup', target: null, parked: 0, step: 1, caption: 'Step 1 of 5 · cup in your weaker hand, sheet in front of you' },
-    { t: 1.0, pose: reach(LAP), pinch: 0.6, hold: true, ease: 'anticipate', target: { kind: 'dot', index: 0 }, step: 2, caption: 'Step 2 of 5 · place the cup on dot 1, hand back to lap' },
+    { t: 0, pose: reach(LAP), pinch: 0.6, carry: 'cup', target: null, parked: 0, step: 1, caption: 'Step 1 of 5 · Keep the cup off the sheet until the camera finds the four corners' },
+    { t: 1.0, pose: reach(LAP), pinch: 0.6, hold: true, ease: 'anticipate', target: { kind: 'dot', index: 0 }, step: 2, caption: 'Step 2 of 5 · Then set the cup on dot 1, hand back to your lap' },
     { t: 2.2, pose: at(0), ease: 'overshoot', target: { kind: 'dot', index: 0 }, landed: true },
     { t: 2.45, pose: at(0), pinch: 0, hold: true, carry: null, parked: 0 },
     { t: 2.7, pose: lifted(0), target: null },
     { t: 3.6, pose: reach(LAP), hold: true },
-    { t: 4.2, pose: reach(LAP), hold: true, ease: 'anticipate', target: { kind: 'dot', index: 0 }, step: 3, caption: 'Step 3 of 5 · reach and move the cup to the next dot, one at a time' },
+    { t: 4.2, pose: reach(LAP), hold: true, ease: 'anticipate', target: { kind: 'dot', index: 0 }, step: 3, caption: 'Step 3 of 5 · Lift it, move it to the next dot and set it down, dot by dot to 5' },
     { t: 5.2, pose: at(0), ease: 'overshoot', target: { kind: 'dot', index: 0 }, landed: true },
     { t: 5.45, pose: at(0), pinch: 0.6, hold: true, carry: 'cup' },
   ]
@@ -115,7 +115,7 @@ function cupClip(): Clip {
   hop(1, 2)
   hop(2, 3)
   hop(3, 4)
-  keys.push({ t: t + 0.15, pose: at(4), hold: true, step: 4, caption: 'Step 4 of 5 · after dot 5, go back the way you came' })
+  keys.push({ t: t + 0.15, pose: at(4), hold: true, step: 4, caption: 'Step 4 of 5 · After dot 5, come back the same way to dot 1' })
   t += 0.15
   hop(4, 3)
   hop(3, 2)
@@ -123,7 +123,7 @@ function cupClip(): Clip {
   hop(1, 0)
   keys.push({ t: t + 0.25, pose: at(0), pinch: 0, hold: true, carry: null, parked: 0 })
   keys.push({ t: t + 0.5, pose: lifted(0), target: null })
-  keys.push({ t: t + 1.4, pose: reach(LAP), hold: true, step: 5, caption: 'Step 5 of 5 · do that twice slowly, then twice more, as fast as you comfortably can' })
+  keys.push({ t: t + 1.4, pose: reach(LAP), hold: true, step: 5, caption: 'Step 5 of 5 · Across and back twice slowly, then twice more, quicker' })
   keys.push({ t: t + 2.6, pose: reach(LAP), hold: true })
   return { name: 'cup', duration: t + 2.6, loop: false, camera: 'front', side: 'left', steps: 5, keys, pathJoint: 'lHand', props: ['table', 'cupSheet', 'cup'] }
 }

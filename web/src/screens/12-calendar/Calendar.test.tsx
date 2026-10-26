@@ -94,7 +94,7 @@ test('week view: last week and this week, every status in words, today from the 
   expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)/)
 })
 
-test('side cards: today (no start button, D-FLOW) and the clinic visit; the week card is gone', async () => {
+test('side cards: today (no start button) and the clinic visit; the week card is gone', async () => {
   mockApi(ROUTES)
   renderCalendar()
   const today = await screen.findByRole('region', { name: 'Today' })

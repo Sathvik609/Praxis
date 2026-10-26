@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import type { PraxisEvent } from '../lib/events'
 
-/** Agent rows of the decision trace (`/api/trace`, agent spec §7): `agent_run` start / end,
+/** Agent rows of the decision trace (`/api/trace`, docs/AGENT.md): `agent_run` start / end,
  *  the agent's `tool` calls, its `decide` / `action` rows and `agent_error`. Grouped per run
  *  and anchored to the perception event that triggered it, so the Show-trace panel can list
  *  each run under that event. */

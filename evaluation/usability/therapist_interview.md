@@ -19,7 +19,7 @@ count, "Sit tall" correction) → a stop-rule pause → Waiter – cup (replay i
 → therapist view (flags, trends). Then the Nine-Hole Peg Test screen. Think aloud. Note quotes.
 
 Ask while they look:
-4. The pain tiers are 0–3 full dose, 4–6 gentle, ≥ 7 rest + flag to you. Are those cut-offs sensible?
+4. The pain tiers are 0–3 full dose, 4–6 gentle, ≥ 7 rest advised (or continue gently) and a flag to you. Are those cut-offs sensible?
 5. The camera reports "verified" and "unverified" reps and never a score out of 100. Is that the
    right level of information for you? For the patient?
 6. The coach may suggest an easier or harder dose, only within adaptations you allowed, and the patient

@@ -80,7 +80,7 @@ function DayCard({ day, view, anchor }: { day: CalendarDay; view: View; anchor: 
  *  clock, never the browser's. Out of scope by decision: reminders, moving a day, logging
  *  practice without the camera. Design v2 (6 Oct): one-column grid with the side cards in a row
  *  below (`cal-layout`), no week card, and no "Start session" on the today card (the flow starts
- *  from Choose → Demonstration, D-FLOW). */
+ *  from Choose → Demonstration). */
 export function Calendar() {
   const [view, setView] = useState<View>('week')
   const [today, setToday] = useState<string | null>(null)

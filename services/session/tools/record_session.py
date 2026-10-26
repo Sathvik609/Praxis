@@ -3,7 +3,7 @@ VideoWriter, imshow). Step-by-step guide: evaluation/PROTOCOL.md.
 
     cd services/session
     uv run python tools/record_session.py record            # asks everything it needs
-    uv run python tools/record_session.py record --participant p01 --exercise abduction --side left --by ST
+    uv run python tools/record_session.py record --participant p01 --exercise abduction --side left --by <initials>
     uv run python tools/record_session.py purge-expired [--dry-run]   # 30-day deletion, run daily
     uv run python tools/record_session.py withdraw p03 [--remove-derived]
 

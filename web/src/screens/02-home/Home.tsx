@@ -96,7 +96,7 @@ export function Home() {
           <p className="mt-1 text-white/80">{card.sub}</p>
           <Button full variant="inverse" className="mt-5 start-here" onClick={() => nav(card.to)}>{card.action}</Button>
           <Button full variant="secondary" className="mt-3 hero-coach coach-btn" aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>Ask the coach</Button>
-          <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the platform from the menu.</p>
+          <p className="start-here-hint mt-3">Each step tells you what to do next. You can also explore the app from the menu.</p>
         </Card>
 
         <Card className="wk-card" title="This week" action={week.some((d) => d.sample) ? <Chip tone="neutral">Sample history</Chip> : undefined}>
@@ -117,7 +117,7 @@ export function Home() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-            <span className="text-muted">{sessions?.[0] ? `Last session · ${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · replay' : ''}` : 'No sessions yet'}</span>
+            <span className="text-muted">{sessions?.[0] ? `Last session · ${sessions[0].summary.camera.verified ?? 0} verified · ${sessions[0].title}${isReplaySession(sessions[0]) ? ' · Replay · not counted' : ''}` : 'No sessions yet'}</span>
             {/* 24 Oct: no report to open before the first session */}
             {sessions?.[0] && <Button variant="secondary" className="shrink-0" onClick={openReport}>Open report</Button>}
           </div>

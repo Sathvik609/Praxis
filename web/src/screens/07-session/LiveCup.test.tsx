@@ -82,7 +82,7 @@ test('a wrong dot is an amber band and the coach correction card', () => {
   expect(screen.getByText('Cup on dot 5 · expected dot 4')).toHaveClass('sx-band-amber')
   expect(screen.getByText('Coach · Correction')).toBeInTheDocument()
   expect(screen.getByText(/That's dot 5; next is dot 4/).closest('section')).toHaveClass('cup-coach-amber')
-  expect(screen.getByText('Reference · listen to the coach')).toBeInTheDocument()
+  expect(screen.getByText('Reference · read the coach card')).toBeInTheDocument()
 })
 
 test('the reference points at the next dot from the frame', () => {

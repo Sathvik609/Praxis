@@ -16,7 +16,7 @@ export type CalendarDay = { date: string; weekday: number; is_today: boolean; st
 export type CalendarWeek = { from: string; to: string; done_days: number; planned_days: number; minutes_done: number; minutes_planned: number; nhpt_done: boolean }
 export type Calendar = { from: string; to: string; today: string; days: CalendarDay[]; week: CalendarWeek; schedule: Schedule; next_visit: (ClinicVisit & { date: string; text: string; upcoming: boolean; sample?: boolean }) | null; tracking_since: string | null }
 export type ScheduleBody = { practice_days: number[]; nhpt_day: number; next_visit: NextVisit | null }
-/** `cat` (6 Oct, Task 17) is the report's note eyebrow; older stored notes have none. */
+/** `cat` (6 Oct) is the report's note eyebrow; older stored notes have none. */
 export type CoachNote = { text: string; confidence: 'high' | 'medium' | 'low'; evidence: number[]; cat?: 'Performance' | 'Posture' | 'Safety' | 'Data quality' }
 /** The agent coach's one session note (`write_session_summary`, ≤ 400 chars), with the event ids
  *  it cites and the agent's own label (e.g. "Claude agent · Anthropic API"). */
@@ -132,7 +132,7 @@ export const api = {
   /** Therapist view · Edit practice days: stored as prescription v(N+1). Therapist only: 403
    *  (`isTherapistOnly`) without the therapist token. */
   putSchedule: (body: ScheduleBody) => send<Prescription>('PUT', '/api/prescription/schedule', body, therapistHeaders()),
-  /** Report · Edit feedback (ruling R4): merges into the stored feedback, may add a `pain_after`
+  /** Report · Edit feedback: merges into the stored feedback, may add a `pain_after`
    *  flag, and answers with the whole session record (same shape as `session`). */
   updateFeedback: (id: string, f: Record<string, unknown>) => send<SessionRecord>('PATCH', `/api/sessions/${id}/feedback`, f),
   trace: (session?: string) => get<{ session: string | null; rows: Record<string, unknown>[] }>(`/api/trace?n=200${session ? `&session=${session}` : ''}`),

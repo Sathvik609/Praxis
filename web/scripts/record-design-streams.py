@@ -24,7 +24,7 @@ side needs the front view, so the other shoulder and hip are moved out to 0.8 to
 (the test suite's `figure(frontal=True)` geometry) and the other arm hangs. The practising arm's
 image-plane angle is unchanged. `pose.landmarks_px`/`visibility` are dropped from frame events
 (the web app never reads them; the overlay uses `overlay.skeleton_px`) to keep the bundle small.
-Nothing is written to the repo: the SQLite store and traces go to a temp dir.
+Only the ws fixtures above are written to the repo; the SQLite store and traces go to a temp dir.
 
     cd services/session && uv run python ../../web/scripts/record-design-streams.py
 """

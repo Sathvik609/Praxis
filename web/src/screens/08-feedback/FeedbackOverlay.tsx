@@ -80,7 +80,7 @@ function FbChoices<T extends string>({ label, options, value, onChange }: { labe
 }
 
 /** Screen 08 · Post-session feedback (design v2, 6 Oct: the designers' one-question-per-step
- *  dialog, live J65659–65772). Pain now (0–10, with today's check-in pain for comparison), how
+ *  dialog). Pain now (0–10, with today's check-in pain for comparison), how
  *  hard it was (the effort number is derived from the choice and says so), whether it could be
  *  done again tomorrow, and — when the session ended early — what got in the way. An optional
  *  note on the last step travels as `detail`. Unanswered questions are left out, never zero.

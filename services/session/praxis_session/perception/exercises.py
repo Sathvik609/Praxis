@@ -1,6 +1,6 @@
 """Exercise registry (OpenCV cv2.__version__ == 5.0.0): the 28 Sep 2026 lock.
 
-Seven entries, of which **three are visible** (28 Sep, supersedes the 23 Sep seven): Arm out
+Seven entries, of which **three are visible**: Arm out
 to the side, Waiter – cup and the Nine-Hole Peg Test. The other four are `visible=False`:
 their code, clips, GLB actions and perception tests stay, dormant, so the decision is
 reversible, but nothing may show, schedule, self-tick, replay or run them (the socket refuses
@@ -21,8 +21,8 @@ they always did; the service boundary (`main.py`) runs `DEFAULT_VISIBLE_ID` inst
 
 `mode="coached"` entries are verified from OpenCV events only. `mode="demo"` entries have no
 metric and no pipeline, so nothing can produce a camera-verified rep for them: a single webcam
-cannot honestly measure a forearm that rotates toward it. Scaption (indistinguishable from
-abduction in the front view) and extension (small, noisy range) were dropped on 23 Sep.
+cannot honestly measure a forearm that rotates toward it. Scaption is not offered
+(indistinguishable from abduction in the front view), nor extension (small, noisy range).
 
 For the arm-FSM entries the registry says which camera view the exercise needs, which
 camera-relative metric scores it (the functions live in `pose.py` and run on the BlazePose

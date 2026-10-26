@@ -14,7 +14,7 @@
  *
  * Read-only against the service: the script never sends `feedback`, so no session is stored.
  * Frames never reach the browser in replay, so the recordings hold events only (no video).
- * Arm out to the side has no replay clip; its stream comes from `record-arm-design-stream.py`.
+ * Arm out to the side has no replay clip; its stream comes from `record-design-streams.py`.
  */
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'

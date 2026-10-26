@@ -1,4 +1,4 @@
-"""Local SQLite store (edge mode). Same tables DynamoDB will mirror in W6.
+"""Local SQLite store (edge mode). The same tables a cloud store (DynamoDB) could mirror later; not built.
 
 patients, prescriptions(vN), sessions (summary/checkin/feedback JSON), events (non-frame),
 flags, goal_log, checkins (the day's check-in, `POST /api/checkin`). Raw video is never stored
@@ -416,7 +416,7 @@ class Store:
         return sid
 
     def update_feedback(self, sid: str, patch: dict[str, Any], t: float) -> tuple[dict[str, Any], dict[str, Any] | None] | None:
-        """Report · Edit feedback (6 Oct, ruling R4): merge `patch` into the stored feedback and
+        """Report · Edit feedback (6 Oct): merge `patch` into the stored feedback and
         rebuild `summary.told_us` as the end of a session does (check-in, then feedback). Pain at
         or above the current stop level adds one `pain_after` therapist flag (summary and flags
         table) unless the session already has one; a lowered pain never withdraws a flag, and

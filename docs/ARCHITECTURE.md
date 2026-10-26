@@ -10,7 +10,7 @@ Every module and function named here exists in `services/session/praxis_session/
 
 **How to read the diagrams.** Solid boxes and arrows are built and tested. **Dashed boxes and arrows are planned or not yet running on AWS.**
 
-Since 11 Oct 2026 the session service runs on AWS. We rebuilt it on 21 Oct in a new account. It is a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS. The COOL vs stock benchmark is in `benchmark/`. Still not built: S3, CDK and the tools Lambda (there is no `services/tools-lambda/` folder). CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). Our agent uses Claude via the Anthropic API; Bedrock is not used.
+Since 11 Oct 2026 the session service runs on AWS. We rebuilt it on 21 Oct in a new account. It is a Graviton4 c8g.large launched from the COOL AMI (COOL's OpenCV 5.1.0-dev) behind CloudFront HTTPS. The COOL vs stock benchmark is in `benchmark/`. Still not built: S3, CDK and a tools Lambda. CloudWatch logs, metrics, dashboard and alarms are built but not yet verified on AWS (`infra/ec2/README.md`). Our agent uses Claude via the Anthropic API; Bedrock is not used.
 
 ## 1. System architecture
 
@@ -74,7 +74,7 @@ flowchart LR
     subgraph AWS["AWS us-east-2 · rebuilt 21 Oct 2026"]
         CF["CloudFront HTTPS<br/>d235zashbh751z.cloudfront.net<br/>WSS upgrade, caching off"]
         EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
-        GRD["Guardrails: SG: CloudFront prefix list + one admin IP,<br/>$50 budget with email alerts<br/>(no budget action, no SCPs)"]
+        GRD["Guardrails: SG: CloudFront prefix list + one admin IP,<br/>$50 budget with email alerts<br/>(alerts only)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]
         CW["CloudWatch: /praxis/session logs, EMF metrics,<br/>dashboard, alarms (built, not yet verified on AWS)"]
         CDK["AWS CDK (planned;<br/>infra/ec2/deploy.sh today)"]
@@ -93,7 +93,7 @@ flowchart LR
     class S3,CW,CDK planned
 ```
 
-**What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped (the team's notes, 17 Sep row). `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
+**What runs where today.** In edge mode, everything above the AWS box runs on one laptop (`uv run uvicorn praxis_session.main:app`). The same service also runs on the c8g instance for the hosted judge endpoint (the AWS box), and in one container (`services/session/Dockerfile`) hosted on Railway for team review. On the laptop, no frame leaves the machine. On Railway, frames travel over TLS to the container, where they are processed in memory and dropped. `PRAXIS_CLOUD_ENABLED` defaults to `0` and gates every cloud call. The agent's model is Claude via the Anthropic API, called from wherever the service runs (the laptop or the c8g instance). `PRAXIS_AGENT=bedrock` falls back to the rule coach alone (12 Oct).
 
 **Agent status.** Our agent is built (29 Sep). It is off by default locally (`PRAXIS_AGENT=off`) and on in the hosted build (`deploy.sh --agent`). We tested it offline with `ScriptedPlanner` (in CI) and since 10 Oct against real Claude through the Anthropic API (Sonnet 5.5 since 12 Oct). The real-model run below includes (`docs/AGENT.md`):
 

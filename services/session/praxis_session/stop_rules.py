@@ -147,7 +147,7 @@ class StopRules:
                 # sheet away is not a tracking problem (fake-camera e2e, 11 Oct).
                 continue
             elif e.type == "perception_lost":
-                # Clears itself: CoachSession resumes on `perception_regained` (D-CAL-2).
+                # Clears itself: CoachSession resumes on `perception_regained`.
                 missing = e.payload.get("missing") or []
                 what = "your shoulder is" if "pose" in missing else "all four corner markers are"
                 out.append(make_event("pause", t=e.t, rule="perception", text=f"I lost tracking. Paused until {what} back in view, then we carry on.", missing=missing))

@@ -19,7 +19,7 @@ from praxis_session.trace import Trace
 # still gives the in-rep cues, the agent takes the checkpoints (29 Sep).
 RULE_LABEL_WITH_AGENT = "Rule-based coach"
 SESSION_RING = 400  # non-frame events kept per session: what an agent's evidence ids may cite
-# Checkpoints (agent coach design §3): event type -> trigger name, and stop-rule pauses.
+# Checkpoints (docs/AGENT.md, "Workflow"): event type -> trigger name, and stop-rule pauses.
 CHECKPOINT_EVENTS = {"set_complete": "set_complete", "arc_complete": "arc_complete", "nhpt_complete": "nhpt_complete"}
 CHECKPOINT_PAUSES = ("failed_reps", "perception", "setup")
 
@@ -398,7 +398,7 @@ class CoachSession:
             out.append(make_event("exertion", t=t, **state))
         out += self._log_stop(self.stop_rules.on_events(events))
         out += self._log_stop(self.stop_rules.on_exertion(state, self.exertion.high_for_s(t), t))
-        # A perception pause clears itself when tracking returns (D-CAL-2); pauses the patient
+        # A perception pause clears itself when tracking returns; pauses the patient
         # or another rule asked for still need a tap.
         if self.paused and self.pause_rule == "perception" and any(e.type == "perception_regained" for e in events):
             out += self.resume(t, rule="perception", text="Tracking is back. Carry on.")

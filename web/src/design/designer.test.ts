@@ -28,7 +28,7 @@ test('no rule hides Sample labels (judge-only gate, hp-sample, pg-sample)', () =
 
 test('-webkit-backdrop-filter comes before its unprefixed twin (the build keeps both)', () => {
   // Tailwind's lightningcss pass keeps only the -webkit- line when the unprefixed one comes first,
-  // so Chrome kept the glass blur an override switches off (the Home avatar went blurry on Railway).
+  // so Chrome kept the glass blur an override switches off (the Home avatar went blurry on the hosted build).
   const unprefixedFirst = rules.filter((r) => /(?<![-\w])backdrop-filter\s*:[^;}]+;\s*-webkit-backdrop-filter/.test(r.body))
   expect(unprefixedFirst.map((r) => r.selector)).toEqual([])
 })

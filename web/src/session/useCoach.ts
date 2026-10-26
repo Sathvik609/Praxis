@@ -118,8 +118,8 @@ export function useCoach(events: PraxisEvent[], opts: Opts = {}) {
   }
 }
 
-/** Browser text-to-speech (Polly later). Cues queue instead of cancelling each other mid-word
- *  (audit A8); a correction drops queued instructions, a stop interrupts. */
+/** Browser text-to-speech (Polly later). Cues queue instead of cancelling each other mid-word;
+ *  a correction drops queued instructions, a stop interrupts. */
 const queue: { text: string; priority: SpeechPriority }[] = []
 let speaking = false
 

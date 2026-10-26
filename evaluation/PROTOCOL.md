@@ -51,7 +51,7 @@ allow it, then run the command again.
 ### 1.3 Make sure clips cannot leave the laptop
 Clips are written to `evaluation/dataset_v1/raw/` and git ignores every video and image type
 there; the recorder asks git before every recording and refuses a folder that is not ignored.
-**But the repo lives on the Desktop**: if *System Settings › Apple ID › iCloud › iCloud Drive ›
+**A repo in a synced folder (Desktop, Documents)**: if *System Settings › Apple ID › iCloud › iCloud Drive ›
 Desktop & Documents Folders* is on (or OneDrive/Dropbox syncs the Desktop), clips would be
 uploaded. Turn that sync off for the recording laptop, or record with
 `--raw-dir ~/praxis_clips` (outside the repo and outside any synced folder) and copy only the
@@ -190,7 +190,7 @@ start position, wait for the 3-2-1 countdown, stop with **Space** when the take 
 Pass the planned errors with `--errors` so they are on the record, e.g.:
 
 ```bash
-uv run python tools/record_session.py record --participant p03 --exercise abduction --side right --by ST --errors lean,hike,past_ceiling,short_hold,low_lift
+uv run python tools/record_session.py record --participant p03 --exercise abduction --side right --by XX --errors lean,hike,past_ceiling,short_hold,low_lift
 ```
 
 The recorder asks anything you did not pass as a flag, then the consent questions, then opens
@@ -234,7 +234,7 @@ Label each clip soon after recording, ideally by a teammate who did not record i
 looking at the app's counts first**.
 
 ```bash
-uv run python tools/label_clip.py ../../evaluation/dataset_v1/raw/p03/abduction/20261012T101500.mp4 --labeller ST --gonio 88,91,86,-,90,92,89,90
+uv run python tools/label_clip.py ../../evaluation/dataset_v1/raw/p03/abduction/20261012T101500.mp4 --labeller XX --gonio 88,91,86,-,90,92,89,90
 ```
 
 A window opens on the clip; the keys are printed on the frame and in `--help`. For each rep:

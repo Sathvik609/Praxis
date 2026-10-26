@@ -33,7 +33,7 @@ cd web && pnpm install && pnpm dev
 #      a band colour: press "Cup not found? Tap the cup base on the picture" and tap it, or Enter
 #      for the cup on its dot; sends {"cmd":"sample_colour","x_px":..,"y_px":..}. Black/grey/white is refused with the reason).
 #    → http://localhost:5173/session?exercise=abduction&side=left runs Arm out to the side (face the camera,
-#      no sheet needed). A link to a hidden exercise (pendulum, arm, external_rotation, ...) goes back to Choose.
+#      no sheet needed). A link to a hidden exercise (pendulum, flexion, external_rotation, internal_rotation) goes back to Choose.
 #    → http://localhost:8000/api/plan?pain=5  today's plan at the gentle tier.
 #
 #    Socket form (ids in services/session/praxis_session/perception/exercises.py):
@@ -140,7 +140,7 @@ The image builds the web app and serves it from the session service. So the brow
 - coach corrections
 - the screen-08 answers
 
-The most widespread problems come first (`praxis_session/review.py`). With the agent on (`PRAXIS_AGENT=anthropic`), an "AI coach" section reads each session's trace. It shows runs and outcomes, triggers, tools called and tools that failed (a guardrail refusal, for example a stale run or a dose already in force, is listed separately from a failure), MCP vs direct transport, errors (the rule coach takes over), dropped output, time from checkpoint to first action, tokens and an estimated cost. Only live sessions count; replays and the sample history do not. A session is stored only when its feedback arrives, so the review also counts live sockets that closed before that (close code, whether an agent run was in flight, seconds since the last agent run; trace row `socket_close`). On Railway the store sits on a volume at `/app/data`, so it survives redeploys. The service runs in US East (`us-east4-eqdc4a`); we moved it from Amsterdam on 13 Oct to cut live-frame lag. The flag is off by default.
+The most widespread problems come first (`praxis_session/review.py`). With the agent on (`PRAXIS_AGENT=anthropic`), an "AI coach" section reads each session's trace. It shows runs and outcomes, triggers, tools called and tools that failed (a guardrail refusal, for example a stale run or a dose already in force, is listed separately from a failure), MCP vs direct transport, errors (the rule coach takes over), dropped output, time from checkpoint to first action, tokens and an estimated cost. Only live sessions count; replays and the sample history do not. A session is stored only when its feedback arrives, so the review also counts live sockets that closed before that (close code, whether an agent run was in flight, seconds since the last agent run; trace row `socket_close`). On Railway the store sits on a volume at `/app/data`, so it survives redeploys. The Railway service runs in a US East region. The flag is off by default.
 
 **Therapist-only writes (21 Oct).** There is no sign-in (Cognito is deferred). So the two therapist actions, Edit practice days (`PUT /api/prescription/schedule`) and Mark reviewed (`POST /api/flags/{id}/reviewed`), are guarded by `PRAXIS_THERAPIST_TOKEN`:
 

@@ -84,7 +84,7 @@ const NOTE_POLLS = 10
  *  exercise column keeps its own verified · unverified counts and only active time is summed.
  *  The coach section is titled "Agent" only when the Claude agent's note is shown, else with the
  *  service's rule-coach label; notes are cut to NOTE_SENTENCES sentences. "Edit feedback" PATCHes
- *  the stored session (ruling R4). Kept from v1 (ruling R7): exertion chip, latency line,
+ *  the stored session. Kept from v1: exertion chip, latency line,
  *  "Nothing here is combined into a score." Side comes from `summary.camera.side` only.
  *  Team design review (21 Oct): metrics first, one legend for the bars, less copy; therapist
  *  flags and the delivery card left this patient report (flags stay on screen 11, delivery
@@ -112,7 +112,7 @@ export function SessionReport() {
     return () => clearTimeout(h)
   }, [notePending, polls, reload])
   const has = !!data?.summary && !isHiddenSession(data)
-  const dayRun = useDayRun(data?.summary && !isReplaySession(data) ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped) // day flow (Track C)
+  const dayRun = useDayRun(data?.summary && !isReplaySession(data) ? data.id : undefined, data?.summary?.mode, data?.summary?.stopped)
   const thisId = has ? (exerciseOfSession(data!)?.id ?? null) : null
   // The day block and per-exercise columns belong only to a report of today's run.
   const inDay = !!dayRun && !!thisId && DAY_ORDER.includes(thisId)
@@ -201,7 +201,7 @@ export function SessionReport() {
   const doneIds = inDay ? DAY_ORDER.filter((x) => x !== thisId && (dayRun!.done.includes(x) || dayRun!.finished.some((f) => f.exercise === x))) : []
   const pendingIds = inDay ? DAY_ORDER.filter((x) => x !== thisId && !doneIds.includes(x)) : []
   const doneCount = DAY_ORDER.length - pendingIds.length
-  // Fix #16: a stop rule (or a finished short day) leaves nothing to start, so the day card shows.
+  // A stop rule (or a finished short day) leaves nothing to start, so the day card shows.
   const next = inDay ? nextExercise(dayRun!) : null
   const canStart = !!next
   const daySide = dayRun?.checkin?.side ?? sideOr(null)
@@ -424,7 +424,7 @@ export function SessionReport() {
             <li><i aria-hidden className="rp-bar-u" />Unverified</li>
           </ul>
         )}
-        {/* Kept small (ruling R7): exertion chip, the no-score statement and the latency line. */}
+        {/* Kept small: exertion chip, the no-score statement and the latency line. */}
         <div className="rp-cam-foot">
           <p className="rp-meta mt-3">
             Exertion

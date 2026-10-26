@@ -81,7 +81,7 @@ def test_no_regress_when_the_hold_is_already_at_the_prescribed_floor():
 
 
 def test_in_rep_cues_are_not_dropped_at_one_second_cadence():
-    """Audit A8: one global 2.5 s gap dropped every second cup cue. Per-cue cooldowns keep them."""
+    """One global 2.5 s gap dropped every second cup cue. Per-cue cooldowns keep them."""
     c = RuleCoach()
     evs = [make_event("reach_complete", t=5.0 + i, to_dot=(i + 1) % 5, from_dot=i % 5, verified=True, reason=None, reach_ms=1000, arc=1, phase="slow") for i in range(8)]
     d = c.decide(ctx("cup", evs, 13.0))

@@ -56,7 +56,7 @@ test('home shows next practice, the week from the calendar and the affected area
   expect(screen.getByText(/About 10 min/)).toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/Pendulum|Arm to the front|Rotate (in|out)|Block towers|Grip power|Box and Block/)
   expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument()
-  // Ruling R2: the artifact moved the replay entry to Settings › Demo and judging; Home has none
+  // Design v2: the artifact moved the replay entry to Settings › Demo and judging; Home has none
   expect(screen.queryByRole('button', { name: /Replay a recorded session/ })).not.toBeInTheDocument()
   expect(screen.getByText('This week')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Your affected areas' })).toBeInTheDocument()
@@ -285,7 +285,7 @@ test('open report goes to the last session report when there is one, else progre
 test('a replayed last session says replay (review 28 Sep)', async () => {
   mockApi(routes({ '/api/sessions': { sessions: [{ ...SESSION, source: 'replay', replay: true, title: 'Waiter – cup' }] } }))
   await renderHome()
-  expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · replay/)).toBeInTheDocument()
+  expect(await screen.findByText(/Last session · 17 verified · Waiter – cup · Replay · not counted/)).toBeInTheDocument()
 })
 
 test('without sessions there is no report to open and no seeded last session is shown', async () => {
@@ -303,7 +303,7 @@ test('the next-practice card marks where to start, how to go on, and that the re
   expect(within(card).getByText('Start here')).toBeInTheDocument() // in words, not only the highlight
   expect(start).toHaveClass('start-here')
   expect(card).toHaveTextContent(/each step tells you what to do next/i)
-  expect(card).toHaveTextContent(/explore the platform from the menu\./i)
+  expect(card).toHaveTextContent(/explore the app from the menu\./i)
   // the menu is not always on the left (it collapses on small screens)
   expect(card).not.toHaveTextContent(/menu on the left/)
   expect(screen.queryByRole('button', { name: /Hide/ })).not.toBeInTheDocument()

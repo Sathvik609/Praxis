@@ -1,7 +1,7 @@
 """ArUco sheet calibration: frame px <-> sheet mm via cv2.findHomography.
 
-The first calibration of a session needs all four markers (ids 0-3) visible (the setup screen
-refuses to start otherwise). After that, brief occlusion is tolerated:
+The first calibration of a session needs all four markers (ids 0-3) visible; until then nothing
+on the sheet is measured. After that, brief occlusion is tolerated:
 
 - four markers            -> ``source="fresh"``: homography from 16 corners (exact fit);
 - exactly three markers   -> ``source="partial"``: homography from 12 corners with

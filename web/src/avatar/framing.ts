@@ -16,7 +16,7 @@ export type Framing = {
   yShift?: number
 }
 
-/** Camera presets (plan B5): front 2.6 m / target 1.30 (Home compact 2.2 m / 1.36), side from
+/** Camera presets: front 2.3 m, look height 1.30 m (Home compact 2.25 m / 1.36 m), side from
  *  the practising side, close-up 1.5 m on the hand. Table clips look down a little so the sheet reads. */
 export function framingPreset(f: Framing, hand: THREE.Vector3): { eye: THREE.Vector3; look: THREE.Vector3 } {
   const { camera, closeUp, compact, hasTable, tall } = f

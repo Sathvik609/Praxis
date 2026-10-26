@@ -35,7 +35,7 @@
   --radius-control: var(--r-control);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
-  /* Named type scale (audit 17 Sep, A5). Body is 18 px on a 16 px root so rem-based
+  /* Named type scale. Body is 18 px on a 16 px root so rem-based
      spacing, radii and heights keep their designed size. */
   --text-display: 2.5rem;
   --text-display--line-height: 1.1;
@@ -54,7 +54,7 @@ html {
   color: var(--text);
 }
 body {
-  /* Type scale is the designers' (D-SIZE): body 16/24; design/designer.css sets the rest. */
+  /* Type scale is the designers': body 16/24; design/designer.css sets the rest. */
   font-size: 16px;
   line-height: 24px;
 }

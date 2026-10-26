@@ -3,8 +3,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ME, SESSION } from '../../test/api-mock'
 import { SessionReport } from './SessionReport'
 
-// The overlay itself is screen 08 (Task 18); this file checks only the report's wiring of
-// "Edit feedback" to PATCH /api/sessions/{id}/feedback (ruling R4).
+// The overlay itself is screen 08; this file checks only the report's wiring of
+// "Edit feedback" to PATCH /api/sessions/{id}/feedback.
 vi.mock('../08-feedback/FeedbackOverlay', () => ({
   FeedbackOverlay: ({ open, onSave, onSkip }: { open: boolean; onSave: (f: Record<string, unknown>) => void; onSkip: () => void }) =>
     open ? (

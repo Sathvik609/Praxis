@@ -27,7 +27,7 @@ results file).
 ## What we changed
 Nothing for this; the prompt was not tuned to this dataset (it would be fitting the agent to
 someone else's exercise). The real-video run did find two other agent bugs, fixed 12 Oct
-(the team's notes: pause re-trigger every 3 s, a lost spoken fix after a setup pause).
+(our working log: pause re-trigger every 3 s, a lost spoken fix after a setup pause).
 
 ## Status
 Open. Needs labelled clean and faulty sets of our own exercise (dataset v1). Stated as a caveat in
