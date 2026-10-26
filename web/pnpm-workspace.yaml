@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   "@tailwindcss/oxide": true
+
+# patched transitive dependency (GHSA: event-loop DoS in source-map-js < 1.2.2)
+overrides:
+  source-map-js: 1.2.2
