@@ -251,10 +251,10 @@ One JSON log line per run goes to stdout, and the counters are at `GET /api/agen
 ### 7.1 What runs
 | | |
 |---|---|
-| Compute | EC2 `<instance-id>`, **c8g.large (Graviton4, Neoverse-V2, 2 vCPU, 4 GiB)**, us-east-2, 60 GB gp3, Elastic IP |
+| Compute | EC2 **c8g.large (Graviton4, Neoverse-V2, 2 vCPU, 4 GiB)**, us-east-2, 60 GB gp3, Elastic IP |
 | Image | AWS Marketplace **COOL AMI** `ami-005a9f90c70ba8d9b` (*Cloud Optimized OpenCV For AWS Graviton4*, COOL v3, Ubuntu 24.04); `cv2` 5.1.0-dev from `/opt/cool`, SVE + NEON baseline, KleidiCV 0.7.0 HAL |
 | Service | the same FastAPI service under systemd. The venv comes from `uv.lock` **minus** the OpenCV wheel, so `import cv2` loads COOL. The install stops unless `cv2.__file__` is under `/opt/cool` |
-| HTTPS | CloudFront `<cloudfront-id>` → `d235zashbh751z.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets can upgrade) |
+| HTTPS | CloudFront → `d235zashbh751z.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets can upgrade) |
 | Network | security group: port 8000 only from the CloudFront origin prefix list and one admin IP; SSH from that IP only; MCP routes return 403 from the internet |
 | Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %; Anthropic spend limit + daily agent-run cap; root MFA; no long-lived keys (CloudShell). Rebuilt 21 Oct in the Praxis-Team management account because the 11 Oct member account became unreachable, so the member-account SCPs no longer apply to this instance |
 | Deploy | one idempotent command (safe to re-run): `infra/ec2/deploy.sh <host> [--agent]` |

@@ -24,7 +24,7 @@ Scored by `evaluation/scripts/usability.py` (tasks + SEQ) and `evaluation/script
 ## Setup (before the participant arrives)
 
 - **Two screens.** The participant's laptop (built-in camera, Chrome) shows the app at the review
-  link https://team-test.example in a **fresh Incognito window per participant**
+  the team's hosted test link in a **fresh Incognito window per participant**
   (the day's check-in lives in browser storage, so a new window starts a clean day). The moderator's
   own phone or laptop shows the online form (link in `README.md`), out of the participant's sight:
   it shows the success criteria and hints. The review link runs the rule coach (agent off) and its

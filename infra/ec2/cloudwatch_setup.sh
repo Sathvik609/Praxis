@@ -2,8 +2,8 @@
 # CloudWatch observability for the Praxis EC2 box. Run in AWS CloudShell (AWS CLI only, uses the
 # CloudShell user's credentials); idempotent, safe to re-run.
 #
-#   bash infra/ec2/cloudwatch_setup.sh <alarm-email> [--replace-profile]
-#        [--instance i-...] [--region us-east-2] [--distribution <cloudfront-id>]
+#   bash infra/ec2/cloudwatch_setup.sh <alarm-email> --instance <instance-id> --distribution <cloudfront-id>
+#        [--replace-profile] [--region us-east-2]
 #
 # 1. IAM role + instance profile `praxis-ec2-role` (CloudWatchAgentServerPolicy), attached to the
 #    instance (running or stopped). CloudWatch permissions only.
@@ -20,11 +20,12 @@
 set -euo pipefail
 
 EMAIL="${1:-}"
-[[ "$EMAIL" == *@*.* ]] || { echo "usage: cloudwatch_setup.sh <alarm-email> [--replace-profile] [--instance ID] [--region R] [--distribution ID]" >&2; exit 2; }
+USAGE="usage: cloudwatch_setup.sh <alarm-email> --instance ID --distribution ID [--replace-profile] [--region R]"
+[[ "$EMAIL" == *@*.* ]] || { echo "$USAGE" >&2; exit 2; }
 shift
-INSTANCE_ID=<instance-id>
+INSTANCE_ID=
 REGION=us-east-2
-DISTRIBUTION_ID=<cloudfront-id>
+DISTRIBUTION_ID=
 REPLACE_PROFILE=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -36,6 +37,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+[ -n "$INSTANCE_ID" ] && [ -n "$DISTRIBUTION_ID" ] || { echo "$USAGE" >&2; exit 2; }
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROLE=praxis-ec2-role

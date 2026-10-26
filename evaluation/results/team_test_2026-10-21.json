@@ -5,7 +5,7 @@
   "build": "13 Oct 2026 build (the 13 Oct handoff names the End session, lag and Skip demo fixes (5c57dec–d96fb88) as live; /health does not report a commit). The 21 Oct Phase 2 fixes were NOT deployed there.",
   "sessions_run": "2026-10-12 to 2026-10-15",
   "snapshot_taken": "2026-10-21",
-  "source": "https://team-test.example — GET only: /api/sessions (listing), /api/sessions/{id} (summary + stored events, one file per session in sessions/), /api/trace?session={id}&n=100000 (traces/, only the sessions still in the server's memory), /api/review (review_server.json, the server's own aggregate, which read every trace file on its disk)",
+  "source": "the team's hosted test build on Railway (address not published) — GET only: /api/sessions (listing), /api/sessions/{id} (summary + stored events, one file per session in sessions/), /api/trace?session={id}&n=100000 (traces/, only the sessions still in the server's memory), /api/review (review_server.json, the server's own aggregate, which read every trace file on its disk)",
   "live_sessions": 15,
   "excluded": "the 4 illustrative seed sessions (s-09xx, source null) are not live and are not included",
   "testers": {

@@ -1,10 +1,10 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
 Status 25 Oct 2026: **latest code deployed (through 38d406b), instance stopped until submission.**
-`<instance-id>` (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
+One instance (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
 `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
 address survives stop/start), a CloudFront-only security group, HTTPS at
-**https://d235zashbh751z.cloudfront.net** (CloudFront `<cloudfront-id>`). `/health` shows
+**https://d235zashbh751z.cloudfront.net** (CloudFront). `/health` shows
 `"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
 
 ## Account and access (read first)
@@ -94,7 +94,7 @@ What exists in the repo:
 # 1. AWS CloudShell (us-east-2). The script needs only itself and cloudwatch/dashboard.json:
 #    Actions > Upload file for both, then: mkdir -p ec2/cloudwatch && mv cloudwatch_setup.sh ec2/ && mv dashboard.json ec2/cloudwatch/
 #    (and run bash ec2/cloudwatch_setup.sh ... below), or clone the repo.
-bash infra/ec2/cloudwatch_setup.sh <your-budget-alert-email>
+bash infra/ec2/cloudwatch_setup.sh <your-budget-alert-email> --instance <instance-id> --distribution <cloudfront-id>
 #    then click "Confirm subscription" in the AWS Notifications email.
 # 2. Start the instance (as usual), then on the laptop:
 infra/ec2/deploy.sh <instance-public-dns> --skip-web --cloudwatch   # add --agent as before if wanted
