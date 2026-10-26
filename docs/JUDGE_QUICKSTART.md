@@ -10,7 +10,7 @@ This takes five minutes and needs no install. If you have a webcam, you can try 
 
 This is our AWS deployment. It is an EC2 c8g.large (Graviton4) in us-east-2, launched from the COOL AMI. It runs the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To check what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
 
-The endpoint is up from submission until 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST); the instance is stopped until we submit. If it does not answer, please use §5 (local run, about 3 minutes) and tell us. We start the instance on request.
+The endpoint is up from submission until 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). If it does not answer, please use §5 (local run, about 3 minutes) and tell us.
 
 ## 2. Turn on the judge view (10 s)
 

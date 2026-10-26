@@ -1,6 +1,6 @@
 # Praxis: an agentic vision coach for upper-limb rehab at home
 
-**Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 25 Oct 2026**
+**Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 26 Oct 2026**
 
 Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · Full engineering detail, module by module: [`docs/ENGINEERING_NOTES.md`](ENGINEERING_NOTES.md)
 
@@ -25,11 +25,11 @@ How it works, briefly:
 
 What is measured and what is not, in one place:
 
-| Area | Status (25 Oct 2026) |
+| Area | Status (26 Oct 2026) |
 |---|---|
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 952 service tests and 1,052 web tests (26 Oct); CI on every push |
 | Our agent (17 tools over MCP, autonomy table, guardrails) | built; runs on the Anthropic API. **On real video** (REHAB24-6 run through the product pipeline, 40 sessions): named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); named the fix on 26 of 26 real wrong-view pauses; **0 guardrail violations**. Synthetic, 15 scenarios, 21 Oct recheck: 15/15, 0 violations (§8.3) |
-| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; stopped between work sessions; up from submission until 10 Nov 2026). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). Last deployed and checked 25 Oct: `/health`, both replays and agent runs |
+| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; up from submission until 10 Nov 2026). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). Last deployed and checked 25 Oct: `/health`, both replays and agent runs |
 | Accuracy on real people | **Arm out to the side, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.96** (§8.4). With laptop framing (hips at or below the bottom edge, cropped from the same video) rep F1 is 0.91–0.93 (34–35 of 35 reps found) and the angle MAE is 5.0–7.5° (§8.4, fixed 25 Oct after the team's laptop sessions). NHPT and Waiter – cup ran live with the team on real webcams (§8.6); their accuracy numbers are from 3-D renders (§8.1.1). |
 | Usability (SUS), patient or therapist pilots | not run. Three of us used the hosted build live (17 saved sessions, 13–24 Oct, plus 7 automated runs). That was a shake-down, not a usability study (§8.7) |
 | S3, CDK | not built (§7.4) |
@@ -259,7 +259,7 @@ One JSON log line per run goes to stdout, and the counters are at `GET /api/agen
 | Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %; Anthropic spend limit + daily agent-run cap; root MFA; no long-lived keys (CloudShell). Rebuilt 21 Oct in the Praxis-Team management account because the 11 Oct member account became unreachable, so the member-account SCPs no longer apply to this instance |
 | Deploy | one idempotent command (safe to re-run): `infra/ec2/deploy.sh <host> [--agent]` |
 
-**Checked on the instance.** On the 21 Oct rebuild, `/health` through HTTPS reports `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded and the agent ready. A replay ran through CloudFront, and 3 runs of our agent completed. Last deployed and checked 25 Oct: `/health`, both replays and agent runs. The instance is stopped until submission.
+**Checked on the instance.** On the 21 Oct rebuild, `/health` through HTTPS reports `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded and the agent ready. A replay ran through CloudFront, and 3 runs of our agent completed. Last deployed and checked 26 Oct (through fa32240): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance runs from submission until 10 Nov 2026, with our agent capped at 300 checkpoint runs a day.
 
 On 11 Oct, on the previous instance (same COOL AMI, same c8g.large type, in the old account):
 - the full service test suite, run against COOL's `cv2`, passed **634 / 636**. The two failures check `.gitignore` rules and need a git checkout, which the host does not have.
