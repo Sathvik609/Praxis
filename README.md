@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/img/praxis_banner.png" alt="Praxis: a camera coach for the arm and shoulder exercises your therapist gave you. Laptop camera, printed sheet, OpenCV 5."></p>
+<p align="center"><img src="docs/img/praxis_banner.png" alt="Praxis: a webcam coach for shoulder and arm rehab at home. Laptop camera, printed sheet, OpenCV 5."></p>
 
 <p align="center">
   <img alt="OpenCV 5" src="https://img.shields.io/badge/OpenCV-5-5C3EE8?logo=opencv&logoColor=white">
