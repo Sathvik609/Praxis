@@ -139,6 +139,8 @@ evaluation/         datasets, scripts that regenerate every number, results
 benchmark/          COOL vs stock OpenCV
 infra/ec2/          AWS deploy script and CloudWatch setup (CloudWatch not yet run on AWS)
 docs/               report (+ PDF), quickstart, diagrams, agent, licences, risks, sheets
+traces/             sample coach traces (JSON lines): OpenCV event → decision → tool call → action
+video/              slides and notes for the submission video
 ```
 
 ## Team
