@@ -25,4 +25,4 @@ labelled. No hand threshold was loosened to raise a number.
 
 ## Status
 Open. The renders say nothing about real hands; measure the hand model's detection rate on real
-laptop-camera footage (dataset v1) before tuning. `docs/RISKS.md` (2026-10-12).
+laptop-camera footage (dataset v1) before tuning (the team's notes, 2026-10-12).

@@ -294,7 +294,7 @@ function DemonstrationFor() {
         </OverlayActions>
       </Overlay>
       {/* The quick check stopped the day. No frame in the artifact: extends Check-in's
-          stopped card inside the artifact's own overlay (docs/PLAN.md). */}
+          stopped card inside the artifact's own overlay. */}
       <Overlay open={!!restResult} title={restTitle} description={restResult?.stop === 'rest' ? 'Rest is advised today.' : "Today's practice has stopped."} className="w-[min(640px,92vw)]">
         {restResult && (
           <>

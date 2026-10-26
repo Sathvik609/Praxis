@@ -66,7 +66,7 @@ Not done: no session with a real screen reader (VoiceOver, NVDA, JAWS) or switch
 | 17 | Controls with no designer focus style | Browser default focus ring | `:focus-visible` ring in the focus token (`--focus`) in the CSS base layer, so every designer and Tailwind focus rule still wins |
 | 18 | Home and Demonstration figures | Played on their own under reduced motion | Wait for Play when Settings › Reduced motion or the system setting is on (visual change only for those users, as Settings promises) |
 
-### Kept by product decision (D-CONTRAST, `docs/RISKS.md` 6 Oct)
+### Kept by product decision (D-CONTRAST, 6 Oct)
 
 The designers' palette is used exactly, so three pairs miss 4.5:1. They are the only exclusions anywhere: pinned with their ratios in `contrast.test.ts`, and named in `scripts/a11y-browser.mjs`.
 
@@ -80,7 +80,9 @@ In the Chrome pass axe never matched these: it reports text on a gradient as "in
 
 ### Found, not fixed (needs the designers)
 
-The Chrome pass found four more pairs below 4.5:1, all in `design/designer.css`. Fixing them changes the designers' colours, so they are recorded (`docs/RISKS.md`, 10 Oct) and not restyled; the script fails on them until a decision is made.
+The Chrome pass found four more pairs below 4.5:1, all in `design/designer.css`. Fixing them changes the designers' colours, so they are recorded here and not restyled; the script fails on them until a decision is made.
+
+Four more contrast misses found by axe in headless Chrome (`web/scripts/a11y-browser.mjs`), all in the designers' stylesheet, outside D-CONTRAST: Camera setup's not-yet step labels `#8A9099` on `#F2F5FA` 2.94:1 (light); Calendar's untracked day lines `#6A7390` on `#F4F7FB` 4.37:1 (light); Calendar's clinic tag `#8391AA` on `#392E21` 4.15:1 (dark); Therapist's neutral chips `#8391AA` on `#253246` 4.06:1 (dark).
 
 | Screen | Element | Pair | Ratio |
 |---|---|---|---|

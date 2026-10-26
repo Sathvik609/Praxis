@@ -135,7 +135,7 @@ export function CheckIn() {
 }
 
 /** The day ends at check-in: new or worse symptoms, pain at the stop level, or a stop rule
- *  earlier today. Extends screen 03 (no frame in wireframes v1.1; docs/PLAN.md). */
+ *  earlier today. Extends screen 03 (no frame in wireframes v1.1). */
 function Stopped({ day, painMax, onHome, onAgain }: { day: Day; painMax?: number; onHome: () => void; onAgain: () => void }) {
   const c = day.checkin!
   const stop = day.stopped

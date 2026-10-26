@@ -161,7 +161,7 @@ def test_template_score_breaks_ties_near_the_fraction_threshold():
 
 def test_pegs_still_read_from_a_laptop_camera_angle():
     # Laptop camera only (10 Oct): the screen tilted forward looks down at ~45°. Synthetic pegs are
-    # flat discs, so this checks the warp and Hough, not 3D peg parallax (docs/RISKS.md).
+    # flat discs, so this checks the warp and Hough, not 3D peg parallax (report §10).
     frame, _ = camera_frame(NHPT_BOARD, tilt_deg=45, yaw_deg=5, pegs_mm=[H[0], H[4], H[8]], noise_sigma=2.0)
     cal = Calibrator(NHPT_BOARD).run(frame)
     board = BoardState(NHPT_BOARD)

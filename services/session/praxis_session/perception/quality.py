@@ -57,7 +57,7 @@ class MarkerSteadiness:
         return {"jitter_px": round(jitter, 2), "ok": jitter < self.max_jitter_px}
 
 
-# Below this the 8 mm pegs are under ~6 px wide (synthetic-derived, 10 Oct; see docs/RISKS.md).
+# Below this the 8 mm pegs are under ~6 px wide (synthetic-derived, 10 Oct; see report §10).
 MIN_PX_PER_MM = 0.75
 
 

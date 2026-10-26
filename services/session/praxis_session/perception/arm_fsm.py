@@ -16,7 +16,7 @@ Two rep shapes:
   band-passed with hysteresis and one rep is a full to-and-fro; the rep is verified when its
   peak-to-peak amplitude reached `target_deg - tolerance_deg` (15 deg), otherwise it is
   counted with reason `swing_too_small`. **Approximation, validated on synthetic landmark
-  streams only** (docs/RISKS.md).
+  streams only** (report §10).
 
 Events: exercise_start, state_change, rep_complete{verified, reason, above_ceiling},
 target_missed, hold_too_short, compensation_lean, shoulder_hiking,
@@ -57,7 +57,7 @@ fixed, single-frame behaviour (tests, comparisons).
 `ABOVE_CEILING_FRAMES` consecutive scored frames while lifting or holding; at most once per rep.
 It is a coaching event, not a stop rule: the rep is still counted and verified by the usual
 target/hold logic, and carries `above_ceiling: true`. The tolerance absorbs landmark jitter around
-the line; both numbers are tuned on synthetic landmark streams only (docs/RISKS.md).
+the line; both numbers are tuned on synthetic landmark streams only (report §10).
 """
 
 from __future__ import annotations

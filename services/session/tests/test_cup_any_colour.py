@@ -18,7 +18,7 @@ from praxis_session.perception.synth import camera_frame, draw_cup, view_camera
 D = CUP_TARGETS.targets_mm
 SIZE = (640, 480)
 # A white mug's side faces sideways and catches less light than the paper facing up; one exactly
-# as bright as the paper shows no change and is a known limit (docs/RISKS.md, 24 Oct).
+# as bright as the paper shows no change and is a known limit (report §10, 24 Oct).
 WHITE = (188, 190, 193)
 RED = (45, 40, 190)
 GREEN = (60, 150, 60)

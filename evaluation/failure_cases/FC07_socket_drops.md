@@ -9,7 +9,7 @@ nothing was stored. Both drops came about 20 s after an agent run, on a ~4 fps f
 
 ## Evidence
 There is no stored data: a session is saved only when its feedback arrives. The record is
-`docs/RISKS.md` (2026-10-13, "Team test: two Arm sessions never ended") and
+the team's notes (2026-10-13, "Team test: two Arm sessions never ended") and
 `evaluation/results/team_test_2026-10-21.md`, "Socket closes" (not recorded on the 13 Oct build).
 
 ## Why

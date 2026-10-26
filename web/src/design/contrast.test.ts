@@ -1,7 +1,7 @@
 /** WCAG 2.1 contrast for every ink/background pair the primitives use, both themes.
  *  Values mirror design/tokens.css (the designers' final palette, 6 Oct 2026); change both together.
  *  The palette is adopted exactly as the artifact (decision D-CONTRAST): no hex nudges. Pairs that
- *  miss AA are named in KNOWN_MISSES with their measured ratio and recorded in docs/RISKS.md, so any
+ *  miss AA are named in KNOWN_MISSES with their measured ratio and recorded in docs/ACCESSIBILITY.md, so any
  *  palette change re-opens the decision instead of silently passing or failing. */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -32,7 +32,7 @@ const css = readFileSync(resolve(__dirname, 'tokens.css'), 'utf8').replace(/\/\*
 const light = parse(css, ':root {')
 const dark = { ...light, ...parse(css, ":root[data-theme='dark']") }
 
-/** Known AA misses in the artifact palette (D-CONTRAST, docs/RISKS.md "Contrast exceptions"). */
+/** Known AA misses in the artifact palette (D-CONTRAST, docs/ACCESSIBILITY.md). */
 const KNOWN_MISSES: Record<string, number> = {
   'light amber-ink on bg': 4.43,
   'light white on sel-bg first stop': 3.3,

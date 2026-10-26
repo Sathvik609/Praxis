@@ -302,7 +302,7 @@ The robustness sweep (`evaluation/results/robustness_v0.md`, renders only) cover
 - Setup rows give the right advice in 80 / 81 board and 90 / 91 cup conditions.
 - Median target error 0.23 mm.
 
-Not covered and still open: real exposure and glare, black pegs, and a curled sheet, which nothing flags (`docs/RISKS.md`).
+Not covered and still open: real exposure and glare, black pegs, and a curled sheet, which nothing flags (§10).
 
 ### 8.1.1 Physically based 3-D renders of the NHPT and Waiter – cup (`evaluation/results/synthetic3d_v0.md`)
 
@@ -324,7 +324,7 @@ Smaller fixes keep a covered hole's state, count a peg whose lift the hand model
 What still fails:
 - The OpenCV Zoo hand model finds the stand-in hand on only 3–9 % of frames, so almost every peg is `unverified` and most inferred timer starts miss the first transfer (≈1.5 s).
 - 6 extra NHPT reports, mostly a seated hole counted again after the hand hid it. A hole counts once toward the nine, so they do not end the test early.
-- One cup clip counts dot 2 five extra times, cause open. Two cup clips fail: in dim light a grey cup's noise reads as blue band, and at 20° the cup or the resting hand always hides a corner marker (`docs/RISKS.md`). The others lose the first one or two reaches to the cup on dot 1 hiding a marker.
+- One cup clip counts dot 2 five extra times, cause open. Two cup clips fail: in dim light a grey cup's noise reads as blue band, and at 20° the cup or the resting hand always hides a corner marker (§10). The others lose the first one or two reaches to the cup on dot 1 hiding a marker.
 - Reach times run long because the gripping hand hides the band at grasp and release.
 
 The team's real sessions found defects the renders missed. Two changed the design:
@@ -443,7 +443,7 @@ The final run passed **76 / 76 checks** (a manual run of the script, with no sav
 
 ### 8.6 Our own recordings: protocol built, not run for this submission
 
-`evaluation/PROTOCOL.md` defines **dataset v1**: ≥ 5 healthy adult volunteers, consent on paper, pseudonyms, clips deleted after 30 days, and 99 reps each, including scripted errors and a phone goniometer reading for each lift. A 25-minute team version is in `evaluation/QUICK_PILOT.md`. The tooling is built and tested end to end on stand-in clips: `record_session.py` refuses to write anywhere git would commit, `label_clip.py` labels on the replay clock, and `eval.py` scores every metric and, with consent, saves frames from every miss as a failure case.
+`evaluation/PROTOCOL.md` defines **dataset v1**: ≥ 5 healthy adult volunteers, consent on paper, pseudonyms, clips deleted after 30 days, and 99 reps each, including scripted errors and a phone goniometer reading for each lift. The tooling is built and tested end to end on stand-in clips: `record_session.py` refuses to write anywhere git would commit, `label_clip.py` labels on the replay clock, and `eval.py` scores every metric and, with consent, saves frames from every miss as a failure case.
 
 The team used Praxis live on laptop webcams (13–24 Oct) but did not label clips with this protocol. No video is stored (§9.2), so those sessions give event logs, not ground truth. The defects they found are in §8.1.1 and §8.4. So the accuracy numbers for the two sheet tasks come from the 3-D renders (§8.1.1), the robustness sweep (§8.1) and the browser run (§8.5).
 
@@ -465,7 +465,7 @@ Three of us used the hosted review build live: 17 saved sessions from 13 to 24 O
 - Video is processed in memory and dropped. We store only events, metrics, the decision trace and the session summary. The app has no recording feature. Evaluation clips exist only with signed consent and are deleted after 30 days.
 - With the agent on, check-in answers and event summaries are sent to the model provider. Images never are.
 - The face is never analysed for pain, emotion or identity.
-- The hosted endpoint has no sign-in, so judging is easy. It starts empty and holds no real patient data. Please don't enter real health information. Spend is capped by a daily agent-run limit and the Anthropic spend limit. AWS has a $50 budget with email alerts only (no budget action, no SCPs). Real patients would need Cognito sign-in first (`docs/RISKS.md`). The two therapist writes (practice days, Mark reviewed) need `PRAXIS_THERAPIST_TOKEN` or a local request, so the hosted therapist view is read-only.
+- The hosted endpoint has no sign-in, so judging is easy. It starts empty and holds no real patient data. Please don't enter real health information. Spend is capped by a daily agent-run limit and the Anthropic spend limit. AWS has a $50 budget with email alerts only (no budget action, no SCPs). Real patients would need Cognito sign-in first (§10). The two therapist writes (practice days, Mark reviewed) need `PRAXIS_THERAPIST_TOKEN` or a local request, so the hosted therapist view is read-only.
 
 ### 9.3 Human control and transparency
 Take a rest (which pauses) · Pain / feel unwell · End session are on every live screen. A pause the patient asked for, or a rule pause, resumes only on the patient's tap. Tracking lost pauses counting and clears itself when the camera sees the patient or the sheet again. The browser speaks the coach's cues and always captions them. Audio (Settings › Audio) is off by default so the page never talks unasked. One tap in the demo, or raising the session volume slider, turns it on. The rule coach and the agent are both labelled, and every agent line is captioned. Settings › Demo and judging › *Show technical details* opens the full trace: OpenCV event → stop rule → decision → tool → action, with timestamps.

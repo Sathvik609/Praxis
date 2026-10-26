@@ -174,5 +174,5 @@ evaluation/         dataset, scripts, results
 benchmark/          COOL vs stock OpenCV harness + results (11 Oct)
 traces/             coach JSON traces
 video/              video kit: capture script, slides
-docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHITECTURE.md, AGENT.md, ENGINEERING_NOTES.md, ACCESSIBILITY.md, LICENSES.md, RISKS.md, PLAN.md, sheets/, wireframes/, img/
+docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHITECTURE.md, AGENT.md, ENGINEERING_NOTES.md, ACCESSIBILITY.md, LICENSES.md, sheets/, wireframes/, img/
 ```

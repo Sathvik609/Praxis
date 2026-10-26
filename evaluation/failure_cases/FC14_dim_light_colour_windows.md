@@ -13,7 +13,7 @@ arcs.
 
 ## Evidence
 `evaluation/results/synthetic3d_v0.md`, per-clip rows `nhpt3d_04` and `cup3d_04`;
-`docs/TECHNICAL_REPORT.md` §8.1 and `docs/RISKS.md` (2026-10-12) give the reading below.
+`docs/TECHNICAL_REPORT.md` §8.1 and the team's notes (2026-10-12) give the reading below.
 
 ## Why (12 Oct reading)
 The default HSV windows: in dim light a 6 mm yellow peg is only 20–30 % peg-coloured in its seat

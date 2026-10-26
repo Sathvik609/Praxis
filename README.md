@@ -119,7 +119,7 @@ The detailed diagrams (OpenCV steps per exercise, one full agent run) are in [do
 - **No therapist has used or reviewed Praxis yet.** The cup task comes from the published GRASP programme (UBC), the peg test is a standard clinical test, and Arm out to the side is a standard shoulder exercise. The prescription in the app is a sample we wrote, and the therapist view shows sample data.
 - On AWS we use EC2 (COOL AMI) and CloudFront. S3 storage and a one-command CDK deploy are not built, and the hosted app has no sign-in.
 
-Full list: [report §10](docs/TECHNICAL_REPORT.md) and [docs/RISKS.md](docs/RISKS.md).
+Full list: [report §10](docs/TECHNICAL_REPORT.md).
 
 ## Run it yourself
 

@@ -312,7 +312,7 @@ def render(r: dict[str, Any]) -> str:
           "| | capture → event p50 (ms) | event → cue p50 (ms) |", "|---|---:|---:|"]
     for grp in GROUPS:
         L.append(f"| {grp} | {_n(t[grp]['median_capture_to_event_p50_ms'])} | {_n(t[grp]['median_event_to_cue_p50_ms'])} |")
-    L += ["", "## Socket closes", "", f"- {m['socket_close']}. Two 13 Oct sockets that dropped before saving are known only from `docs/RISKS.md` (nothing was stored for them).", ""]
+    L += ["", "## Socket closes", "", f"- {m['socket_close']}. Two 13 Oct sockets that dropped before saving are known only from the team's notes (nothing was stored for them).", ""]
 
     L += ["## Fixed afterwards (21 Oct, Phase 2; not deployed on the 13 Oct build these sessions ran on)", "",
           "| commit | change |", "|---|---|"]

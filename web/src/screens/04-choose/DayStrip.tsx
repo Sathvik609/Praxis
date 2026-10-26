@@ -5,7 +5,7 @@ import { exerciseById, type ExerciseId } from '../../lib/seed'
 
 /** "Today · 1 of 2 · Arm out to the side" plus one chip per exercise of today's run. Each chip
  *  says in words whether it is done or current (colour only repeats it). Extends the FlowBar
- *  step dots of screens 03–06 (no frame in wireframes v1.1; docs/PLAN.md). */
+ *  step dots of screens 03–06 (no frame in wireframes v1.1). */
 export function DayStrip({ day, active, className = '' }: { day: Day; active?: ExerciseId | null; className?: string }) {
   const plan = dayPlan(day)
   if (!day.checkin || day.stopped) return null

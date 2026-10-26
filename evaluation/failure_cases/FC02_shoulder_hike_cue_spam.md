@@ -39,4 +39,4 @@ current allowance. Raising it blind would trade nagging for missed compensation.
 
 ## Status
 Mitigated. Decide the threshold from the next test's stored `hike` / `limit` values or dataset v1's
-scripted hikes. Also in `docs/RISKS.md` (2026-10-21).
+scripted hikes.

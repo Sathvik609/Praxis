@@ -7,10 +7,10 @@ Two things live here, both so the team (and judges) can see where Praxis got it 
    cause, what we changed or why we did not, and the status. Every number in them is copied from
    a file that a script regenerates; the case files only explain. No frame of a person is here or
    anywhere in the repo: the team-test service never stores frames, REHAB24-6 frames may not be
-   redistributed (CC BY-NC 4.0, `docs/RISKS.md`), and the 3-D renders are synthetic.
+   redistributed (CC BY-NC 4.0, the team's notes), and the 3-D renders are synthetic.
 2. **Per-clip frame folders `<clip_id>/` (local only).** Every miss on a consented **real**
    recording, with a few frames around it, written by `evaluation/scripts/eval.py`; nothing in
-   them is made by hand. None exist yet (no dataset v1 recordings; `docs/RISKS.md`).
+   them is made by hand. None exist yet (no dataset v1 recordings; the team's notes).
 
 ## Documented cases
 

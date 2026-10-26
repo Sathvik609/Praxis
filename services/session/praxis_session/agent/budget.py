@@ -6,7 +6,7 @@ day for the whole process. `AgentCoach.run_once` takes one run from the budget b
 (Strands + Claude or scripted) is called; over the cap the model is not called, the session goes
 `agent_status offline` with `DAILY_CAP_REASON`, the trace gets `agent_error {error_kind:
 "daily_cap"}`, and the rule coach carries on. The counter is in memory: a restart resets it, so
-the team also sets a spend limit in the Anthropic console (docs/RISKS.md).
+the team also sets a spend limit in the Anthropic console (report §10).
 """
 from __future__ import annotations
 
