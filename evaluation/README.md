@@ -13,7 +13,7 @@ This folder holds the datasets, the scripts that regenerate every number, the re
 | Agent coach, scripted scenarios | 15 scenarios, Claude Sonnet 5.5 (21 Oct) | 15/15; the harder `mixed_signals` fails 0/3 | `results/agent_recheck_2026-10-21_all.md` |
 | NHPT and Waiter – cup | synthetic 3-D Blender renders | NHPT F1 0.97, total-time MAE 1.2 s; cup F1 0.79, reach-time MAE 0.7 s | `results/synthetic3d_v0.md` |
 | Camera robustness | 2-D renders: 81 NHPT and 91 cup sheet conditions | first fix 74/81 and 83/91; all holes right 61/74, cup found within 10 mm 71/77; setup advice right 80/81 and 90/91 | `results/robustness_v0.md` |
-| Live sessions, speed only | hosted build, 24 Oct, one teammate, 5 sessions (4 cup, 1 NHPT) | capture → event p50 132–177 ms; server processing p95 10–75 ms; not accuracy | `results/live_sessions_2026-10-24.md` |
+| Live sessions, speed only | our Railway test build (not AWS), 24 Oct, one teammate, 5 sessions (4 cup, 1 NHPT) | capture → event p50 132–177 ms; server processing p95 10–75 ms; not accuracy | `results/live_sessions_2026-10-24.md` |
 
 The NHPT and the cup have no labelled real-camera number yet. Our own live sessions stored events only, no video.
 

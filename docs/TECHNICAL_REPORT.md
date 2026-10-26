@@ -29,9 +29,9 @@ What is measured and what is not, in one place:
 |---|---|
 | OpenCV 5 pipeline, three exercises, every screen, stop rules, rule coach, trace, replay | built; 952 service tests and 1,052 web tests (26 Oct); CI on every push |
 | Our agent (17 tools over MCP, autonomy table, guardrails) | built; runs on the Anthropic API. **On real video** (REHAB24-6 run through the product pipeline, 40 sessions): named a fault that motion capture confirmed, and gave a correction, in 41 of 44 set reviews (patient taps simulated); named the fix on 26 of 26 real wrong-view pauses; **0 guardrail violations**. Synthetic, 15 scenarios, 21 Oct recheck: 15/15, 0 violations (§8.3) |
-| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; up from submission until 10 Nov 2026). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). Last deployed and checked 25 Oct: `/health`, both replays and agent runs |
+| AWS: Graviton4 + COOL + CloudFront | **live** (rebuilt 21 Oct; up from submission until 10 Nov 2026). On 11 Oct, on the previous instance (same AMI and type), the test suite passed 634/636 on COOL and we measured the benchmark (§7). Last deployed and checked 26 Oct: `/health`, both replays and agent runs |
 | Accuracy on real people | **Arm out to the side, on a public lab dataset** (REHAB24-6, 8 healthy adults, front camera, 88 reps): angle MAE **3.8°** vs motion capture (95 % limits −9° to +10°), rep-peak MAE 3.8°, rep F1 **0.96** (§8.4). With laptop framing (hips at or below the bottom edge, cropped from the same video) rep F1 is 0.91–0.93 (34–35 of 35 reps found) and the angle MAE is 5.0–7.5° (§8.4, fixed 25 Oct after the team's laptop sessions). NHPT and Waiter – cup ran live with the team on real webcams (§8.6); their accuracy numbers are from 3-D renders (§8.1.1). |
-| Usability (SUS), patient or therapist pilots | not run. Three of us used the hosted build live (17 saved sessions, 13–24 Oct, plus 7 automated runs). That was a shake-down, not a usability study (§8.7) |
+| Usability (SUS), patient or therapist pilots | not run. Three of us used our Railway test build live (17 saved sessions, 13–24 Oct, plus 7 automated runs). That was a shake-down, not a usability study (§8.7) |
 | S3, CDK | not built (§7.4) |
 | CloudWatch logs, EMF metrics, dashboard, alarms | built and tested locally, not yet run on AWS (§7.5) |
 
@@ -392,7 +392,7 @@ Checks after these fixes, all on synthetic frames through `SessionPipeline` at p
 **Nobody has re-timed a real peg test with a stopwatch since these fixes.**
 
 ### 8.2 Latency (`evaluation/results/latency_v0.md`)
-These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced), on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). This does **not** include the JPEG encode in the browser, the network hop or rendering. In the team's four real cup sessions on the hosted build (24 Oct), capture → event, network included, had a median of 132–147 ms and a p95 of 205–1,129 ms (server-side processing stayed at a p95 of 10–39 ms, so the slow tail is the network or queueing, not the OpenCV step). The agent's first action takes 3.7 / 6.2 s on the synthetic scenarios and 3.7 / 5.8 s on real video (Sonnet 5.5, §8.3). That is why it works at checkpoints and never on in-rep cues.
+These runs drive the real WebSocket handler in-process the way the browser does (JPEG q80, capture-time prefix, ack-paced), on an Apple-silicon laptop with the hand model on. Pooled p50 / p95: **capture → event 9.7 / 14.8 ms**, **event → cue 0.8 / 1.2 ms** (rule coach). This does **not** include the JPEG encode in the browser, the network hop or rendering. In the team's four real cup sessions on our Railway test build (24 Oct; not the AWS server, and browser and server clocks differ, so indicative only), capture → event, network included, had a median of 132–147 ms and a p95 of 205–1,129 ms (server-side processing stayed at a p95 of 10–39 ms, so the slow tail is the network or queueing, not the OpenCV step). The agent's first action takes 3.7 / 6.2 s on the synthetic scenarios and 3.7 / 5.8 s on real video (Sonnet 5.5, §8.3). That is why it works at checkpoints and never on in-rep cues.
 
 ### 8.3 Agent coach (`evaluation/results/agent_video_v0.md`, `agent_models_v0.md`, `agent_ablation_v0.md`)
 `evaluation/scripts/agent_eval.py` runs 16 scenarios built from synthetic OpenCV frames, injected pose landmarks and scripted event streams. They cover:
@@ -423,6 +423,8 @@ Each scenario is checked for task success, perception tool before action, guardr
 | Peg-test time explained, no clinical claims | 1 / 1 | 1 / 1 |
 | Conflicting evidence weighed (`mixed_signals`: lean and peak slide named, lower target) | 0 / 1 | 0 / 1 (0 / 3 over three repeats) |
 | Unsafe actions | 0 | 0 |
+
+A fixed scripted planner (no language model) scores the same as our agent on these scenarios (`agent_ablation_v0.md`): they test the tools, the order of calls and the guardrails, not judgement. The difference shows on real video, where the scripted planner addressed 0 of 22 faulty sets and our agent 41 of 44 (§8.3).
 
 The scenarios are synthetic, and no patient has used the agent. This shows the tools, the guardrails and the model's tool choice working. It does not show clinical judgement.
 
@@ -458,7 +460,7 @@ Running real video found two product bugs, both fixed and tested. A pause from t
 - Haiku 5.5: 30/30 (earlier 30/30), 3.2/5.3 s, $0.001 per session
 - Sonnet 5: 29/30, 5.3/10.7 s, $0.018 per session
 
-Haiku 5.5 was as accurate and far cheaper. But in both real-video runs before the hike re-tune, it once asked for a 100° target (refused by the clamp, counted as a violation). So the default is **Sonnet 5.5**. In the re-run on the current pipeline Haiku had no violations (2 in 120 real-video sessions overall), which reopens the choice (`docs/AGENT.md` § Model choice). With caching an agent run costs ≈ $0.013. The daily cap of 100 runs limits spend to ≈ $1.30 a day.
+Haiku 5.5 was as accurate and far cheaper. But in both real-video runs before the hike re-tune, it once asked for a 100° target (refused by the clamp, counted as a violation). So the default is **Sonnet 5.5**. In the re-run on the current pipeline Haiku had no violations (2 in 120 real-video sessions overall), which reopens the choice (`docs/AGENT.md` § Model choice). With caching an agent run costs ≈ $0.013. The default daily cap of 100 runs limits spend to ≈ $1.30 a day; the judge server runs with 300 (≈ $3.90 a day).
 
 ### 8.4 Arm angle on real video (REHAB24-6) (`evaluation/results/rehab24_v0.md`)
 REHAB24-6 [12] is a public rehabilitation dataset. It has RGB video from two synchronised 30 fps cameras, a 26-joint motion-capture skeleton, and repetitions that are segmented and labelled by a physiotherapist. Its exercise 1 is arm abduction: 13 recordings, 9 healthy adults, 178 repetitions.

@@ -26,7 +26,7 @@ flowchart LR
     subgraph SVC["Session service · one Python 3.12 process · FastAPI (main.py)"]
         WS["WS /session (alias /ws/session)<br/>frames decoded with cv2.imdecode,<br/>drop-oldest, thread pool"]
         RP["Replay mode<br/>?replay=clip id · cv2.VideoCapture<br/>same pipeline, no webcam"]
-        subgraph PIPE["SessionPipeline (pipeline.py) · OpenCV 5.0.0"]
+        subgraph PIPE["SessionPipeline (pipeline.py) · OpenCV 5 (COOL 5.1.0-dev on AWS)"]
             CAL["Calibrator: cv2.aruco + findHomography<br/>+ solvePnP tilt"]
             BRD["BoardState: warpPerspective,<br/>HoughCircles, HSV inRange,<br/>findContours, matchTemplate"]
             CUP["CupSheetState + CupFSM"]
