@@ -1,7 +1,7 @@
 import type { Joint } from './rig'
 
 /** Joint markers: Focus (blue) / Watch (amber) / Stable (light blue, design v2), always with a text label; red is
- *  reserved for stop (CLAUDE.md §1 Avatar, wireframes §3). Colour never carries meaning alone. */
+ *  reserved for stop (wireframes §3). Colour never carries meaning alone. */
 export type MarkerStatus = 'focus' | 'watch' | 'stable' | 'stop'
 export type Marker = { joint: Joint; status: MarkerStatus; label: string }
 

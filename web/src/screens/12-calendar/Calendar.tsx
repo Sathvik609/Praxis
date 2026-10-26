@@ -74,7 +74,7 @@ function DayCard({ day, view, anchor }: { day: CalendarDay; view: View; anchor: 
   )
 }
 
-/** Screen 12 · Calendar (Figma v1.2 `12_calendar`, 28 Sep 2026). Practice days come from the
+/** Screen 12 · Calendar (design v1.2, 28 Sep 2026). Practice days come from the
  *  prescription (the therapist sets them); a day is done only when a live camera session
  *  happened. Replays never count; sample history is labelled Sample. "Today" is the service's
  *  clock, never the browser's. Out of scope by decision: reminders, moving a day, logging

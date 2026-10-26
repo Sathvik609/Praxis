@@ -154,7 +154,7 @@ docker build -f services/session/Dockerfile -t praxis .
 docker run -p 8000:8000 praxis            # → http://127.0.0.1:8000/
 ```
 
-You can also serve a build locally without Docker: `cd web && pnpm build`, then start uvicorn with `PRAXIS_WEB_DIST=../../web/dist`. This is still the **edge build** (`PRAXIS_CLOUD_ENABLED=0`, rule-based coach). If you host it remotely, webcam frames travel to the host over TLS, where they are processed in memory and thrown away, never stored. The AWS cloud mode is separate: Graviton4 c8g + COOL OpenCV behind CloudFront HTTPS (`infra/ec2/`, `docs/ENGINEERING_NOTES.md` §5).
+You can also serve a build locally without Docker: `cd web && pnpm build`, then start uvicorn with `PRAXIS_WEB_DIST=../../web/dist`. This is still the **edge build** (`PRAXIS_CLOUD_ENABLED=0`, rule-based coach). If you host it remotely, webcam frames travel to the host over TLS, where they are processed in memory and thrown away, never stored. The AWS cloud mode is separate: Graviton4 c8g + COOL OpenCV behind CloudFront HTTPS (`infra/ec2/`, `docs/TECHNICAL_REPORT.md` §7).
 
 </details>
 
@@ -173,6 +173,5 @@ infra/ec2/          AWS deploy script, systemd unit, CloudWatch setup (no CDK ap
 evaluation/         dataset, scripts, results
 benchmark/          COOL vs stock OpenCV harness + results (11 Oct)
 traces/             coach JSON traces
-video/              video kit: capture script, slides
-docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHITECTURE.md, AGENT.md, ENGINEERING_NOTES.md, ACCESSIBILITY.md, LICENSES.md, sheets/, wireframes/, img/
+docs/               TECHNICAL_REPORT.md (submission), JUDGE_QUICKSTART.md, ARCHITECTURE.md, AGENT.md, ACCESSIBILITY.md, LICENSES.md, sheets/, wireframes/, img/
 ```

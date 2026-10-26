@@ -361,7 +361,7 @@ main h1.text-3xl{font-size:1.75rem;line-height:1.2}
   [role=radiogroup]:not(.ui-seg){gap:4px!important}
   [role=radiogroup]:not(.ui-seg)>button{min-height:44px;font-size:.95rem}
 }
-/* Clinician view (th-head = clinician header, th-grid = patients | board). The artifact's hack
+/* Clinician view (th-head = clinician header, th-grid = patients | board). The artifact's selector
    ([class~=h-16][class~=px-6]:has(>a[href$="/details"])) also matched the patient .ui-nav; that
    effect is kept explicitly on .ui-nav so both headers look exactly as in the artifact. */
 .th-head,.ui-nav{flex-wrap:wrap}
@@ -2101,7 +2101,7 @@ main .wk-card .grid.grid-cols-7{margin-top:8px!important}
 /* Upcoming goal node: solid grey (opaque), no stroke */
 :root:root:root:root .ad-steps li:not(.is-done):not(.is-now) i{background:#C9D0DC;border:0;box-shadow:none;opacity:1}
 :root:root:root:root[data-theme="dark"] .ad-steps li:not(.is-done):not(.is-now) i{background:#5A6478;border:0;opacity:1}
-/* App, 10 Oct: fit the laptop window by layout (product owner at 1336 × 759; also 1280 × 800 and
+/* App, 10 Oct: fit the laptop window by layout (1336 × 759; also 1280 × 800 and
    1440 × 900). Spacing and control heights only, on the designers' classes; no zoom or transform
    scaling of whole pages (that blurs text and skews the avatar hotspots and camera overlays).
    Controls stay 40–48 px. Pages that are lists (Therapist) or long records (Report) still scroll,

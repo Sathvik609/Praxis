@@ -8,7 +8,7 @@ Reads only the committed, pseudonymised snapshot in `evaluation/data/team_test_2
 (stored session summaries + events, 6 trace files, the server's own `/api/review` aggregate;
 no frames exist anywhere). Every number in the output is computed here from those files, split
 into **human testers** (T1–T3, team members) and **automated** sessions (`test-claude`:
-Claude-driven checks with a synthetic clip as the camera, not a person). Deterministic: the
+an AI agent drove the site in a browser with a synthetic clip as the camera, not a person). Deterministic: the
 same snapshot always gives byte-identical output.
 
 What this is: a team shake-down of the 13 Oct build (healthy teammates, home laptops), not a
@@ -42,7 +42,7 @@ EXERCISE = {"arm": "Arm out to the side", "cup": "Waiter – cup", "nhpt": "Nine
 HEADER = ("15 live sessions, 4 testers including automated agent-driven sessions; team shake-down "
           "on the 13 Oct build, not a usability study; small numbers")
 
-# What changed afterwards (21 Oct, Phase 2, merged in 0629944 / 3137c50, then 234b86f). Text only;
+# What changed afterwards (21 Oct, merged in 3137c50, then 234b86f). Text only;
 # the effect on these sessions is computed below where the stored events allow it.
 FIXES = [
     ("3ff1eaf", "Arm setup gate: `hips_out_of_view` must hold for `HIPS_BLOCK_S` before the setup pause (other view gates keep `SETUP_BLOCK_S`); `setup_blocked` carries the visibility numbers"),
@@ -225,7 +225,7 @@ def render(r: dict[str, Any]) -> str:
           f"**{r['header']}.**", "",
           f"Sessions run {m['sessions_run']} on the hosted review build; snapshot taken {m['snapshot_taken']} (GET only). "
           "Healthy teammates on their own laptops, nobody labelled the reps, so nothing here is accuracy: it says where the product got in the way. "
-          "**Human** = T1–T3 (team members, pseudonyms). **Automated** = `test-claude`: Claude-driven checks with a synthetic clip as the camera, not a person; "
+          "**Human** = T1–T3 (team members, pseudonyms). **Automated** = `test-claude`: an AI agent drove the site in a browser with a synthetic clip as the camera, not a person; "
           "they exercise the flow, not a human body.", "",
           "Regenerate: `cd services/session && uv run python ../../evaluation/scripts/team_test_report.py` "
           "(reads `evaluation/data/team_test_2026-10-21/`, pseudonymised, no frames).", ""]
@@ -314,7 +314,7 @@ def render(r: dict[str, Any]) -> str:
         L.append(f"| {grp} | {_n(t[grp]['median_capture_to_event_p50_ms'])} | {_n(t[grp]['median_event_to_cue_p50_ms'])} |")
     L += ["", "## Socket closes", "", f"- {m['socket_close']}. Two 13 Oct sockets that dropped before saving are known only from the team's notes (nothing was stored for them).", ""]
 
-    L += ["## Fixed afterwards (21 Oct, Phase 2; not deployed on the 13 Oct build these sessions ran on)", "",
+    L += ["## Fixed afterwards (21 Oct; not deployed on the 13 Oct build these sessions ran on)", "",
           "| commit | change |", "|---|---|"]
     L += [f"| `{f['commit']}` | {f['what']} |" for f in r["fixes_21oct"]]
     c = r["constants_21oct"]

@@ -50,7 +50,7 @@ The NHPT and the cup have no labelled real-camera number yet. Our own live sessi
 - `data/team_test_2026-10-21/`: the team shake-down on our Railway test build (13 Oct build, not AWS) (15 live
   sessions, 12–15 Oct: 8 by three of us, 7 automated; snapshot taken 21 Oct, GET requests only). It has the stored session summaries
   and events, 6 traces, the server's `/api/review` summary and `meta.json` (where the data came from).
-  Testers are pseudonymised (T1–T3; `test-claude` = automated, Claude-driven, synthetic clip). No frames
+  Testers are pseudonymised (T1–T3; `test-claude` = automated, an AI agent in a browser, synthetic clip). No frames
   exist. Not labelled.
 - `data/live_sessions_2026-10-24/`: the latency blocks of 5 stored sessions from one teammate (T1) on
   the hosted build, 24 Oct (home laptop webcam, real pegs and a real cup). Speed only: no frames, no

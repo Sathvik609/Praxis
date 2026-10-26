@@ -18,7 +18,7 @@ placement is timed at the first frame of that run (`t_placed` in the `placed` st
 reach_ms is lift -> arrival at any frame rate (it was late by clear_frames - 1 frame periods,
 +200 ms at 10 fps).
 
-Sprint D-SEG-3: the base colour can be sampled from a tap (sample_cup_colour; the blue band
+The base colour can be sampled from a tap (sample_cup_colour; the blue band
 stays the default), and a placement that was inferred from the hand while the base was hidden
 still counts as verified when the base was seen within `dot_radius_mm` of the destination at
 any time in the last `rest_window_s` (0.6 s) before hand-clear - a hand from above hides the

@@ -23,7 +23,7 @@ function cap(s: string) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 }
 
-/** `summary.latency` from the service (Sprint D, D-LAT): percentiles over the whole session,
+/** `summary.latency` from the service: percentiles over the whole session,
  *  null when the browser sent no capture time (replay) or nothing happened. */
 type LatencyBlock = {
   capture_to_event_p50: number | null
@@ -440,7 +440,7 @@ export function SessionReport() {
       <div className="rp-grid">
         <div className="rp-col">
           {/* "Agent" only when the Claude agent's note is on screen; otherwise the service's
-              rule-coach label (CLAUDE.md §3 rule 3: no claim outruns the build). */}
+              rule-coach label (no claim outruns the build). */}
           <Card title={agentNote ? 'Agent' : s.summary.coach.label} className="rp-notes-card">
             <ul className="rp-notes">
               {agentNote && (

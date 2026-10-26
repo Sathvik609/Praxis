@@ -4,7 +4,7 @@ Edge/privacy mode: 640x480 JPEG frames arrive over WebSocket, are decoded in mem
 OpenCV 5 (cv2.__version__ == 5.0.0 at authoring), processed, and discarded. Only JSON events
 leave the process. Cloud hooks are gated behind PRAXIS_CLOUD_ENABLED (default off).
 
-Frame stream (Sprint D, D-LAT): each binary message is an optional 8-byte little-endian
+Frame stream: each binary message is an optional 8-byte little-endian
 float64 `t_capture` (ms since epoch, browser clock) + JPEG (`latency.split_capture_prefix`).
 A reader task feeds one queue; the consumer runs `pipeline.process` in the default thread
 pool, and any frames that queued up meanwhile are dropped oldest-first (`frame.dropped`).
@@ -520,7 +520,7 @@ async def session_ws(
     One pipeline per connection; every event goes to the shared ring and back over the socket
     as one JSON text message per event. Frames are decoded in memory and dropped.
 
-    Sprint E: `mode=arm` takes `exercise` (a `perception/exercises.py` id) and `tier`
+    `mode=arm` takes `exercise` (a `perception/exercises.py` id) and `tier`
     (`full`/`gentle`, the pain-tier overrides). `target`/`hold`/`sets`/`reps` still override
     both when given. Since 28 Sep a missing or unknown arm exercise runs `DEFAULT_VISIBLE_ID`
     (Arm out to the side) and a hidden one is refused (`not_offered`).

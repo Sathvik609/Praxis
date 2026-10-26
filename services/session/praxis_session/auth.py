@@ -1,5 +1,5 @@
 """Who may call an internal or therapist-only route (no sign-in exists since 21 Sep; Cognito is
-deferred, CLAUDE.md §4).
+not built).
 
 Two rules share one notion of "local": a request from loopback with no proxy header at all.
 Railway, CloudFront and the EC2 unit (uvicorn --proxy-headers rewrites the client address from

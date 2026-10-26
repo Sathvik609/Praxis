@@ -439,7 +439,7 @@ export function SxHold({
   )
 }
 
-/** The fixed control bar (CLAUDE.md §1: Take a rest · Pain / feel unwell · End session on every
+/** The fixed control bar (Take a rest · Pain / feel unwell · End session on every
  *  in-session screen), in the artifact's `.sx-btn` look. 21 Oct team review: the captions switch
  *  and the coach voice volume on the left; Show trace (Judge view only), Take a rest, Pain /
  *  feel unwell and End session on the right. There is no separate Pause: it did what Take a rest

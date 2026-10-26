@@ -2,7 +2,7 @@
 
 The JSONL file is opened lazily on the first row that is not the `session` header, so a
 socket that never produces an event (setup, an abandoned connection) leaves no file behind;
-the header is written first when the file is created (Sprint D, D-LAT-2)."""
+the header is written first when the file is created."""
 from __future__ import annotations
 
 import json

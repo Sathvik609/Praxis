@@ -1,4 +1,4 @@
-"""Calendar (screen 12, Figma frame `12_calendar`, 28 Sep 2026): day statuses from the
+"""Calendar (screen 12, 28 Sep 2026): day statuses from the
 prescription's practice schedule and the stored sessions. Pure functions, no clock of their
 own: `today` (and `now` for the clinic visit) come from the caller, so tests pin them.
 

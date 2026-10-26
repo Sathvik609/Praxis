@@ -2,7 +2,7 @@
 
 Any-hole targets, timer from the first peg lift (first at_source -> grasped) to the ninth peg
 seated, per-peg splits (seated-to-seated). Emits nhpt_start, nhpt_split, nhpt_complete on top
-of the FSM's own events. This is a timing aid, not a clinical instrument (CLAUDE.md §1).
+of the FSM's own events. This is a timing aid, not a clinical instrument.
 
 A first peg whose lift was never seen (12 Oct 2026; peg_fsm "grasp_not_seen") starts the timer
 at its seat: `nhpt_start.inferred` / `nhpt_complete.start_inferred` say so, and the total then

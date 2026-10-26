@@ -275,4 +275,4 @@ sequenceDiagram
 
 With the agent off, the same scenario stays paused with a generic message, and no reach is ever verified (`evaluation/results/agent_ablation_v0.md`).
 
-More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/ENGINEERING_NOTES.md` §2–§4.
+More detail: `docs/AGENT.md` (tools table, configuration, web contract) and `docs/TECHNICAL_REPORT.md` §4–§6.

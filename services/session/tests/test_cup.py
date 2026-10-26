@@ -168,7 +168,7 @@ def test_phase_switch_is_explicit_and_completion_after_four_arcs():
         fsm.set_phase("turbo")
 
 
-# ---- Sprint D-SEG-3: colour sampling, resting-window verification ------------------------------
+# ---- Colour sampling, resting-window verification ------------------------------
 def test_cup_colour_sampling_switches_from_the_default_blue_band():
     frame, _ = camera_frame(CUP_TARGETS, cup_mm=D[2], cup_bgr=(30, 200, 60))  # a green base
     cal = Calibrator(CUP_TARGETS).run(frame)

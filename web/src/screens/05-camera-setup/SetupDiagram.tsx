@@ -1,7 +1,7 @@
 /** Camera placement diagrams for screen 05, one per view (own drawings, inline SVG, both
  *  themes via currentColor and the palette tokens). Mint marks the practising arm and the sheet,
  *  amber the camera's line of sight. Each has a text alternative that says the same thing in
- *  words. Since 10 Oct 2026 the only camera is the laptop's built-in one (product owner): the
+ *  words. Since 10 Oct 2026 the only camera is the laptop's built-in one: the
  *  front view puts the laptop on a table facing the patient, the table view tilts its screen
  *  forward over the sheet. The dormant side views (hidden 28 Sep) keep their tripod drawing. */
 import type { SetupView } from './setupView'

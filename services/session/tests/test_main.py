@@ -260,7 +260,7 @@ def test_ws_replay_coach_keeps_speaking_after_an_answer(client):
     assert after_answer, "no instruct cue after the answer: replay commands used wall-clock time"
 
 
-# ---- Sprint D, D-LAT: capture-time prefix, off-loop processing, drop-oldest, latency -------
+# ---- Capture-time prefix, off-loop processing, drop-oldest, latency -------
 
 
 def _prefixed(jpeg: bytes, t_capture_ms: float) -> bytes:

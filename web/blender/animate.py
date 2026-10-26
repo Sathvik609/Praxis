@@ -69,7 +69,7 @@ def rig_world(angles: dict) -> dict:
     return out
 
 
-# The avatar never lifts the upper arm above the prescription ceiling (CLAUDE.md §1). Same rule,
+# The avatar never lifts the upper arm above the prescription ceiling. Same rule,
 # same maths as `capElevation` in web/src/avatar/rehabClips.ts; glbAnim.test.ts checks they agree.
 ELEVATION_CEILING_DEG = 90.0
 UA_REST = Vector((0.025, -0.27, 0.0)).normalized()  # rig.ts REST.lElbow.offset, rig frame

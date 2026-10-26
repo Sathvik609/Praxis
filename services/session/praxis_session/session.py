@@ -112,7 +112,7 @@ class CoachSession:
         # 28 Sep: a replayed clip is marked from the socket to the store, so no trend, total or
         # pain list counts it as the patient's practice.
         self.replay_clip = replay_clip
-        # Sprint E: which registry exercise this arm session ran, and whose session it is.
+        # Which registry exercise this arm session ran, and whose session it is.
         self.exercise = exercise
         self.username = (username or "").lower() or None
         self.prescription = prescription

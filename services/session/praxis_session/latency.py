@@ -1,4 +1,4 @@
-"""Frame-stream latency bookkeeping for one session (Sprint D, D-LAT).
+"""Frame-stream latency bookkeeping for one session.
 
 Wire format (browser -> service): each binary WebSocket message is an optional 8-byte
 little-endian IEEE-754 float64 `t_capture` (milliseconds since the Unix epoch, taken in the

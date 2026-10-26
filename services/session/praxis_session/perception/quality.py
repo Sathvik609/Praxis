@@ -1,6 +1,6 @@
 """Camera-setup quality checks for screen 05 (OpenCV cv2.__version__ == 5.0.0).
 
-Presence is a frame-difference fallback until the pose model lands (Phase 5); every presence
+Presence is a frame-difference fallback (calibrate mode runs no pose model); every presence
 result carries method="frame_difference" so the UI and trace can label it.
 """
 
@@ -95,7 +95,7 @@ def task_area_in_view(
     return {"ok": inside and big_enough, "hint": hint, "px_per_mm": round(ppm, 2)}
 
 
-# Laptop camera only (10 Oct, product owner): the sheet sits 25–35 cm in front of the laptop and
+# Laptop camera only (10 Oct): the sheet sits 25–35 cm in front of the laptop and
 # the screen is tilted forward, so the built-in camera looks down at ~40–50°. Calibration holds
 # well past 60° on renders, but beyond ~50° a seated peg (~20 mm proud) hides the next hole
 # (32 mm pitch), so 50° is the limit.
@@ -221,7 +221,7 @@ def build_checks(
         return {"id": id_, "label": label, "status": status, "hint": None if ok else hint}
 
     present = presence_d.get("present")
-    # Setup needs all four markers (CLAUDE.md: refuse to start); a partial or held fix is
+    # Setup needs all four markers (the setup screen refuses to start without them); a partial or held fix is
     # enough to keep a running session going but not to unlock Continue.
     markers_ok = bool(cal.calibrated and not cal.missing)
     causes = (

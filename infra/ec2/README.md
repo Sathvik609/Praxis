@@ -7,14 +7,8 @@ address survives stop/start), a CloudFront-only security group, HTTPS at
 **https://d235zashbh751z.cloudfront.net** (CloudFront). `/health` shows
 `"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
 
-## Account and access (read first)
-- **Account:** the team's AWS Organizations management account, region **us-east-2 (Ohio)**.
-  Everything for the judge build lives here. Account IDs, sign-in URLs and owner emails are kept
-  out of the repo (team notes only).
-- **Ways in (both tested 21 Oct):** the account owner's root login and one IAM admin user, both
-  with MFA. CloudShell (console, us-east-2) has the AWS CLI with the signed-in identity; the
-  laptop's local AWS keys are not used.
-- **Earlier build:** an 11 Oct build in another account is retired; this account holds the only judge build.
+## Region, start / stop and spend
+- **Region:** us-east-2 (Ohio). Account ids, sign-in URLs and owner emails are not in the repo.
 - **Start / stop** (CloudShell): `aws ec2 start-instances --instance-ids <instance-id>` /
   `aws ec2 stop-instances --instance-ids <instance-id>`. The Elastic IP keeps the address,
   so CloudFront needs no change. Redeploy from the laptop: `infra/ec2/deploy.sh <elastic-ip> --agent`.

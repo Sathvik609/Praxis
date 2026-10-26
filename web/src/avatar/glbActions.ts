@@ -5,7 +5,7 @@ import type { Joint } from './rig'
  *  `praxis_avatar.meta.json`): which action to play, where in it the patient's rep progress puts
  *  the figure, which props show, which caption and target are current, and which bone a rig joint
  *  label follows. No three.js here, so all of it is unit-tested. The figure never scores anyone:
- *  it is a pacing reference and reps are verified from OpenCV events only (CLAUDE.md §1 Avatar). */
+ *  it is a pacing reference and reps are verified from OpenCV events only. */
 
 export const GLB_ACTIONS = ['idle', 'pendulum', 'flexion', 'abduction', 'external_rotation', 'internal_rotation', 'waiter_cup', 'nhpt'] as const
 export type GlbAction = (typeof GLB_ACTIONS)[number]

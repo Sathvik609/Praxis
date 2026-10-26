@@ -63,7 +63,7 @@ def test_event_payload_and_frame_px_overlay():
     assert np.allclose(np.array(px), truth, atol=2.5)
 
 
-# ---- Sprint D-SEG-1: colour sampling, skin/hand exclusion, Hough + template used ----------
+# ---- Colour sampling, skin/hand exclusion, Hough + template used ----------
 from dataclasses import replace  # noqa: E402
 
 from praxis_session.perception.synth import WOOD_BGR  # noqa: E402

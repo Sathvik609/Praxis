@@ -16,7 +16,7 @@ downloaded whole: the zip central directory is read with HTTP range requests and
 each member is verified twice instead: the zip CRC-32 stored by the authors (checked while
 it is inflated) and the SHA-256 pinned in `MEMBERS` below after the first verified fetch.
 The 120-fps joint files and the 41-marker archives are not used. Evaluation only; nothing here
-is redistributed and no frame or joint file ever enters git (CLAUDE.md §1 Privacy).
+is redistributed and no frame or joint file ever enters git (privacy rule).
 
     uv run python tools/fetch_rehab24.py [--dir ../../evaluation/external/rehab24_6] [--check]
 """

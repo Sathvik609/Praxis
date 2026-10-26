@@ -102,7 +102,7 @@ export function PainCheck({ open, onSubmit, onCancel }: { open: boolean; onSubmi
   )
 }
 
-/** Exertion context chip (CLAUDE.md §1): behavioural index level with its reasons. The word
+/** Exertion context chip: behavioural index level with its reasons. The word
  *  carries the level; the tone only echoes it. `compact` is the one-line form for the session
  *  stats card (`SxStats.extra`, ruling R7), in the artifact's own `sx-chip` / `sx-small` classes. */
 export function ExertionChip({ exertion, compact = false }: { exertion: ExertionState | null; compact?: boolean }) {

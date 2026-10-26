@@ -4,7 +4,7 @@ import { type Angles, type Joint, type Vec3, restAngles } from './rig'
 
 /** Keyframed clips for the mannequin. Reaches are authored as *targets* on the stage (a dot, a
  *  hole, the dish) and solved to joint angles by `solveArm`, so the mitt lands where the caption
- *  says. Every clip is clinician-reviewed choreography, not a scoring reference (CLAUDE.md §1). */
+ *  says. Every clip is clinician-reviewed choreography, not a scoring reference. */
 
 export type Ease = 'inout' | 'anticipate' | 'overshoot'
 export type CueTarget = { kind: 'dot' | 'hole' | 'ceiling' | 'dish'; index: number }

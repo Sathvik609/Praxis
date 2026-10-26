@@ -138,7 +138,7 @@ def test_nhpt_milestones():
     assert "nine" in d[0].text.lower()
 
 
-# ---- Sprint E: one cue table per exercise -------------------------------------------------
+# ---- One cue table per exercise -------------------------------------------------
 def arm_snap(exercise="flexion", **over):
     from praxis_session.perception.exercises import EXERCISES
 

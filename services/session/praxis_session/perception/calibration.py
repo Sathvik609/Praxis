@@ -1,7 +1,7 @@
 """ArUco sheet calibration: frame px <-> sheet mm via cv2.findHomography.
 
-The first calibration of a session needs all four markers (ids 0-3) visible (CLAUDE.md §1:
-refuse to start otherwise). After that, brief occlusion is tolerated (Sprint D-CAL-1):
+The first calibration of a session needs all four markers (ids 0-3) visible (the setup screen
+refuses to start otherwise). After that, brief occlusion is tolerated:
 
 - four markers            -> ``source="fresh"``: homography from 16 corners (exact fit);
 - exactly three markers   -> ``source="partial"``: homography from 12 corners with
@@ -26,7 +26,7 @@ as received; ``mirrored`` says so, and the orientation that worked is tried firs
 ``rejected`` counts candidate squares ArUco found but could not decode (blur, glare), which
 lets the setup hint say "cannot read" rather than "missing".
 
-``tilt_deg`` (Sprint D-CAL-3) is the angle between the camera axis and the sheet normal from
+``tilt_deg`` is the angle between the camera axis and the sheet normal from
 ``cv2.solvePnP`` (planar IPPE) on the visible marker corners with a nominal pinhole
 (f = 1.2 x frame width, principal point at the centre, no distortion); it is a setup gate,
 not a measurement.

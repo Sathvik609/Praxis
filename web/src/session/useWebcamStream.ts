@@ -58,7 +58,7 @@ type Opts = { wsUrl: string; mode: string; fps?: number; params?: Record<string,
 /** Streams 640x480 JPEG frames to the session service and collects the JSON events it returns.
  *  Frames are built on a canvas from the <video>; nothing is recorded.
  *
- *  Back-pressure (Sprint D, D-LAT): every frame is prefixed with its capture time (8-byte
+ *  Back-pressure: every frame is prefixed with its capture time (8-byte
  *  little-endian float64, ms since epoch — see `latency.ts`), and at most `MAX_IN_FLIGHT`
  *  frames are unanswered at once: each per-frame event (`ACK_TYPES`) frees a slot (plus one per
  *  frame the service dropped), and a slot unanswered for `ACK_TIMEOUT_MS` frees itself. `fps`

@@ -173,7 +173,7 @@ def test_hike_needs_both_shoulders_visible():
     assert "shoulder_hiking" not in types(evs) and types(evs).count("rep_complete") == 1
 
 
-# ---- Sprint E: the FSM is driven by a registry entry ------------------------------------
+# ---- The FSM is driven by a registry entry ------------------------------------
 def swing(peak: float, cycles: int = 1, fps: float = FPS):
     """One-second sine swings about vertical, `peak` degrees each way."""
     import math

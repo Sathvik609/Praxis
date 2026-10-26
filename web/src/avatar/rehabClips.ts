@@ -43,7 +43,7 @@ export const LOOP_BRIDGE_S = 0.7
 
 const rad = (v: Vec3): Vec3 => [v[0] * D, v[1] * D, v[2] * D]
 
-/** The avatar never lifts the upper arm above the prescription ceiling (CLAUDE.md §1: Arm to the
+/** The avatar never lifts the upper arm above the prescription ceiling (Arm to the
  *  front and Arm out to the side stop at 90°). Every recorded rep that goes higher is scaled so
  *  its peak sits exactly on the ceiling: at each key the upper arm is turned back toward hanging
  *  straight down, in its own plane of elevation, by the same proportion. Timing, the plane of the

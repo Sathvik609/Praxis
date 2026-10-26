@@ -96,7 +96,7 @@ def test_snapshot_shape():
     assert fsm.snapshot() == {"state": "at_source", "target": 2, "reps": 0, "finished": False}
 
 
-# ---- Sprint D-SEG-2: pinch-driven grasp, hand-gated seating -----------------------------------
+# ---- Pinch-driven grasp, hand-gated seating -----------------------------------
 DISH = (190.0, 148.5)  # a dish of pegs beside the board: no free-peg blob is ever visible
 
 

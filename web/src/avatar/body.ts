@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { MINT, makeBodyMaterial } from './stage'
 
 /** Geometry builders for the ceramic mannequin. Everything is generated from primitives in
- *  code (CLAUDE.md §1 Avatar): a lathe-turned torso–neck–head shell, spherical deltoid caps,
+ *  code: a lathe-turned torso–neck–head shell, spherical deltoid caps,
  *  tapered limb cylinders, ball joints and mitt hands. Units are metres; y is relative to the
  *  hips joint for the torso; limbs are built along −y and oriented by the scene each frame. */
 

@@ -2,7 +2,7 @@
  *  panel). Corner brackets echo the ArUco markers the overlay draws on the sheet. Each hole
  *  carries its number and a state word for screen readers, never colour alone.
  *
- *  Tap-to-sample (Sprint D-SEG-1): when `onSampleHole` is given, every hole is a 56 px button;
+ *  Tap-to-sample: when `onSampleHole` is given, every hole is a 56 px button;
  *  tapping a seated peg asks the service to sample that peg's colour (`sample_colour`), for
  *  wooden or pale pegs the default mask misses. `sampled` shows the confirmation line. */
 export function BoardView({

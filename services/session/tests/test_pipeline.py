@@ -82,7 +82,7 @@ def test_one_covered_marker_never_loses_tracking_after_a_fresh_calibration():
     assert "perception_lost" not in seen
     cal = evs[0].to_dict()
     assert cal["calibrated"] and cal["source"] == "partial" and cal["missing"] == [2]
-    # setup still wants all four markers before Continue (CLAUDE.md: refuse to start)
+    # setup still wants all four markers before Continue (setup refuses to start without them)
     checks = evs[2].to_dict()
     markers = next(c for c in checks["checks"] if c["id"] == "markers")
     assert markers["status"] == "check" and checks["all_required_pass"] is False
@@ -465,7 +465,7 @@ def test_sheet_setup_still_requires_markers():
     assert checks["all_required_pass"] is False
 
 
-# ---- Sprint D-SEG ---------------------------------------------------------------------------
+# ---- Colour sampling ---------------------------------------------------------------------------
 def test_sample_colour_command_sets_peg_range_and_frames_report_it():
     from praxis_session.perception.synth import WOOD_BGR
 
@@ -592,7 +592,7 @@ def test_nhpt_next_hole_is_null_in_any_hole_mode():
     assert d["calibrated"] and d["overlay"]["next_hole"] is None
 
 
-# ---- Sprint E: the registry drives arm mode ---------------------------------------------
+# ---- The registry drives arm mode ---------------------------------------------
 def _pose_res(lm):
     from praxis_session.perception.pose import PoseResult
 

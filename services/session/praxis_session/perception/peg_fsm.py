@@ -7,7 +7,7 @@ Transitions are gated on debounced occupancy deltas and free-peg / hand proximit
 Events: state_change, rep_complete, wrong_hole, drop. No frames are touched here;
 cv2.__version__ == 5.0.0 upstream (board.py).
 
-Sprint D-SEG-2:
+Hand-aware rules:
 - grasp fires when the free-peg count drops (pegs on the sheet) OR when the pinch aperture is
   <= `pinch_grasp_mm` (25 mm, sheet-plane projection) while the hand is in the source zone for
   two consecutive observations - so pegs lifted from a dish, where no free peg is ever visible,
@@ -15,7 +15,7 @@ Sprint D-SEG-2:
 - seating is hand-gated: once hand data has been seen in the session, a hole that fills without
   the hand having been within `hand_gate_mm` (30 mm) of it in the last `hand_gate_s` (0.5 s) is
   still counted but its rep_complete carries verified=False, reason="no_hand_near_hole"
-  (unverified is not failed: CLAUDE.md §1). Without any hand data reps stay verified=True.
+  (unverified is not failed). Without any hand data reps stay verified=True.
 
 A seat whose grasp was never seen (12 Oct 2026, found by the 3-D renders): pegs come from a
 dish off the board, so the lift is visible only as the hand model's pinch; when the hand model

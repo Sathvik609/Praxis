@@ -1,6 +1,6 @@
 """Per-frame composition of perception stages into events (OpenCV cv2.__version__ == 5.0.0).
 
-Modes: "calibrate" (Phase 1: calibration + setup checks) and "nhpt" (Phase 2: board state ->
+Modes: "calibrate" (calibration + setup checks) and "nhpt" (board state ->
 peg FSM -> NHPT timer). Later phases add "cup" and "arm". One pipeline per WebSocket
 connection or replay; frames are processed and dropped, events go to the ring and the socket.
 

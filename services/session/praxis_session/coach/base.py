@@ -1,7 +1,7 @@
 """Coach interface shared by the rule coach and the Strands agent (Claude via the Anthropic API).
 
 Actions are restricted to instruct | correct | progress | regress | rest | stop. Every
-Decision must cite the perception event ids it was made from (CLAUDE.md rule 5). Tools carry
+Decision must cite the perception event ids it was made from. Tools carry
 the names the agent will bind: get_events, get_exertion_state, get_prescription,
 read_patient_model, write_session_summary, speak.
 """
@@ -77,13 +77,13 @@ def get_prescription(p: Prescription) -> dict[str, Any]:
 
 def read_patient_model(store: Any, patient_id: str) -> dict[str, Any]:
     if store is None:
-        return {"patient_id": patient_id, "history": [], "source": "no store (Phase 8)"}
+        return {"patient_id": patient_id, "history": [], "source": "no store"}
     return store.read_patient_model(patient_id)
 
 
 def write_session_summary(store: Any, summary: dict[str, Any]) -> dict[str, Any]:
     if store is None:
-        return {"ok": False, "reason": "no store (Phase 8)"}
+        return {"ok": False, "reason": "no store"}
     return store.write_session_summary(summary)
 
 

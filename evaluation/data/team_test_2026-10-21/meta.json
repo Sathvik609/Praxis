@@ -1,6 +1,6 @@
 {
  "what": "Team shake-down test of the hosted review build (Railway, PRAXIS_TEAM_TEST=1), not a usability study",
- "build": "13 Oct 2026 build (the 13 Oct handoff names the End session, lag and Skip demo fixes (4478689–5817755) as live; /health does not report a commit). The 21 Oct Phase 2 fixes were NOT deployed there.",
+ "build": "13 Oct 2026 build (it included the End session, lag and Skip demo fixes, 4478689–5817755; /health does not report a commit). The 21 Oct fixes were NOT deployed there.",
  "sessions_run": "2026-10-12 to 2026-10-15",
  "snapshot_taken": "2026-10-21",
  "source": "the team's hosted test build on Railway (address not published) — GET only: /api/sessions (listing), /api/sessions/{id} (summary + stored events, one file per session in sessions/), /api/trace?session={id}&n=100000 (traces/, only the sessions still in the server's memory), /api/review (review_server.json, the server's own aggregate, which read every trace file on its disk)",
@@ -10,7 +10,7 @@
   "T1": "team member (pseudonym)",
   "T2": "team member (pseudonym)",
   "T3": "team member (pseudonym)",
-  "test-claude": "automated (Claude-driven, synthetic clip): Claude Code drove the hosted site with a synthetic or replayed clip as the camera; not a person"
+  "test-claude": "automated (AI-agent-driven browser session, synthetic clip): an AI agent drove the hosted site in a browser with a synthetic or replayed clip as the camera; not a person"
  },
  "pseudonymisation": "real tester names replaced by T1-T3 everywhere (username, trace user, review keys); the mapping is not committed. No free-text notes from people exist in the snapshot (the only feedback 'detail' text is test-claude's 'automated check by Claude (synthetic clip)'). Self-reported pain/effort answers are kept because stop rules depend on them.",
  "pixels": "none: the service never stores frames; these files hold events, summaries and trace rows only (checked by tests/test_team_test_report.py: no inline image, base64 or JPEG payloads)",

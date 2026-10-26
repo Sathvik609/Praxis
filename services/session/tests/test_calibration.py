@@ -41,7 +41,7 @@ def test_blank_frame_reports_all_missing():
     assert d["calibrated"] is False and d["sheet"] == "nhpt_board"
 
 
-# ---- Sprint D-CAL-1: hold through brief marker loss, three-marker fallback ----------------
+# ---- Hold through brief marker loss, three-marker fallback ----------------
 
 
 def hide_markers(frame, H_true, spec, ids):
@@ -148,7 +148,7 @@ def test_one_marker_that_moved_does_not_hold_the_old_fix():
     assert not res.calibrated
 
 
-# ---- Sprint D-CAL-3: camera tilt from ArUco pose (cv2.solvePnP) -------------------------
+# ---- Camera tilt from ArUco pose (cv2.solvePnP) -------------------------
 
 
 @pytest.mark.parametrize("spec", [NHPT_BOARD, CUP_TARGETS])

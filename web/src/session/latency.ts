@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import type { PraxisEvent } from '../lib/events'
 
-/** Frame-stream latency (Sprint D, D-LAT).
+/** Frame-stream latency.
  *
  *  Wire format, browser → service: every binary WebSocket message is an 8-byte little-endian
  *  IEEE-754 float64 `t_capture` (milliseconds since the Unix epoch, `performance.timeOrigin +

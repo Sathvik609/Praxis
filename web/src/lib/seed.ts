@@ -1,5 +1,5 @@
 /** Illustrative local data matching the wireframes (Alex M., Dr. Rao, Hospital GRASP L2 v3).
- *  Phase 8 replaces this with the session service's store; all values are labeled illustrative. */
+ *  The session service's store replaces this; all values are labeled illustrative. */
 
 /** Web ids. `arm` is Arm to the front (hidden since 28 Sep); every other id is the service
  *  registry id (`perception/exercises.py`). */

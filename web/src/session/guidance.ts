@@ -8,7 +8,7 @@
 export type Guidance = { larger: boolean }
 
 export const GUIDANCE_KEY = 'praxis.guidance'
-// Larger text is off by default since 10 Oct (product owner: pages looked zoomed in on a
+// Larger text is off by default since 10 Oct (pages looked zoomed in on a
 // 1336 x 759 laptop window). The 16 px root lets every screen fit by layout; patients who want the
 // designers' 18 px root turn it on in Settings, and a stored explicit value always wins.
 export const GUIDANCE_DEFAULT: Guidance = { larger: false }

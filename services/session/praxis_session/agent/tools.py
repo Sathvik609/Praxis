@@ -12,7 +12,7 @@ runs `perception.quality` and a fresh `cv2.aruco` detection + `cv2.findHomograph
 Guardrails live here, in code, not in the prompt:
 - coach (action) tools only inside an agent run, never once the session is stopped, never
   from a stale run (the session moved on), and only with `evidence` ids that exist in *this*
-  session's event ring (CLAUDE.md rule 5);
+  session's event ring (every action must cite the perception events it was made from);
 - only the six actions exist; unknown tools/fields are errors and nothing happens;
 - adjustments are clamped with `prescription.clamp` and only become a patient prompt; they
   are applied by the pipeline only when the patient taps Yes (`CoachSession.on_answer`);

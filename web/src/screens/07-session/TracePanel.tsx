@@ -118,7 +118,7 @@ function AgentRunRows({ run }: { run: AgentRun }) {
   )
 }
 
-/** Judge / developer trace (CLAUDE.md §1 "Show trace"): OpenCV output → decision → tool call
+/** Judge / developer trace ("Show trace"): OpenCV output → decision → tool call
  *  → action with timestamps; stop rules are shown where they fired, before the coach.
  *  `pipeline` holds the screen's developer lines (the OpenCV step, rolling latency p50/p95)
  *  so they stay off the patient's video. Agent runs (agent spec §7) come from `/api/trace`

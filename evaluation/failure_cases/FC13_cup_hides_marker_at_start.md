@@ -18,7 +18,7 @@ first calibration needs all four markers (a locked decision), so nothing is coun
 cup moves; at 20° a corner stays hidden for the whole run.
 
 ## What we changed
-Four markers for the first fix is locked in `CLAUDE.md` §1, so the rule stays. `82cf274` (24 Oct,
+Four markers for the first fix is a product rule, so the rule stays. `82cf274` (24 Oct,
 after the same thing happened in the team's real cup sessions) changed the order instead: the cup
 steps say "Keep the cup beside the sheet until the camera finds all four corners, then put it on
 dot 1" (`perception/exercises.py`), and while the sheet is not found the live caption adds "Keep

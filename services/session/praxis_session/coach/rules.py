@@ -33,7 +33,7 @@ HIKE_CUE_GAP_S = 20.0
 # One intro and one done line per camera-coached arm exercise (locked set, 23 Sep), in our own
 # words (GRASP text is UBC / Heart & Stroke material; see docs/LICENSES.md). Everything else
 # reuses the arm pools. The rotations are demo only: no camera event exists for the coach to
-# act on, so they have no lines here (CLAUDE.md working rule 5).
+# act on, so they have no lines here (every cue must trace to a perception event).
 INTRO: dict[str, str] = {
     "pendulum": "Pendulum: lean forward on the table, let the arm hang heavy, and swing it gently forward and back.",
     "flexion": "Arm to the front: sit side-on to me, lift to shoulder height and hold while I count three.",
@@ -230,7 +230,7 @@ class RuleCoach:
                 return [Decision("instruct", "arm_done", DONE.get(ex.id, "Both sets done. Rest your arm — good work."), "exercise complete", ev)]
         return []
 
-    # ---- Sprint E helpers ----------------------------------------------------------------
+    # ---- Registry helpers ----------------------------------------------------------------
     @staticmethod
     def _exercise(ctx: CoachContext, payload: dict):
         """Which registry entry this arm session is running: the event says so at the start,

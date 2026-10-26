@@ -139,7 +139,7 @@ class Store:
         self._migrate()
 
     def _migrate(self) -> None:
-        """Columns added after a database was first written (Sprint E: which exercise a session
+        """Columns added after a database was first written (which exercise a session
         was, and whose it is). SQLite has no IF NOT EXISTS for ADD COLUMN."""
         have = {r["name"] for r in self._db.execute("PRAGMA table_info(sessions)")}
         for col in ("exercise", "username"):

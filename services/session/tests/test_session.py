@@ -7,7 +7,7 @@ def make(mode="cup", tmp_path=None):
     return CoachSession(mode=mode, prescription=SEED_PRESCRIPTION, trace_dir=tmp_path, session_id="t")
 
 
-# ---- Sprint D-CAL-2: auto-resume when tracking returns after a perception pause ----------
+# ---- Auto-resume when tracking returns after a perception pause ----------
 
 
 def test_perception_pause_auto_resumes_when_tracking_returns(tmp_path):

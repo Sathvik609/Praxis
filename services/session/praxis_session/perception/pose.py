@@ -233,7 +233,7 @@ def _angle(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.degrees(np.arccos(np.clip(np.dot(a, b) / (na * nb), -1.0, 1.0))))
 
 
-# ---- per-exercise metrics (Sprint E; camera-relative degrees, never goniometry) ---------
+# ---- per-exercise metrics (camera-relative degrees, never goniometry) ---------
 def _sides(side: str) -> tuple[int, int]:
     i = 0 if side == "left" else 1
     return i, 1 - i
@@ -294,7 +294,7 @@ def arm_angles(res: PoseResult, side: str) -> dict:
         "trunk_lean_deg": round(lean, 1),
         "shoulder_hike_norm": round(hike, 3),
         "view_ok": sep < SIDE_SEP_MAX,
-        # Sprint E: front-view exercises want shoulders separated, not stacked; both flags come
+        # Front-view exercises want shoulders separated, not stacked; both flags come
         # from the same separation (12 Oct: separate thresholds, see FRONT_SEP_MIN).
         "front_view_ok": sep >= FRONT_SEP_MIN,
         "shoulder_sep_norm": round(sep, 3),

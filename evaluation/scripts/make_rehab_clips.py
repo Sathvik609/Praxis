@@ -29,7 +29,7 @@ web/src/avatar/clips/rehab/<exercise>.json. Pendulum exists in neither dataset a
 procedurally (labelled source "procedural"). evaluation/results/rehab_reference_ranges.json holds
 the peak-angle mean ± sd across correct and incorrect repetitions per exercise.
 
-The avatar plays these as a pacing reference only; it never scores the patient (CLAUDE.md §1).
+The avatar plays these as a pacing reference only; it never scores the patient.
 Angles are Kinect/camera-relative body-frame angles, not goniometry. numpy only.
 
     uv run python ../../evaluation/scripts/make_rehab_clips.py [--external DIR] [--clips DIR] [--ranges FILE]

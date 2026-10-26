@@ -3,7 +3,7 @@
 
 **Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 26 Oct 2026**
 
-Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · Full engineering detail, module by module: [`docs/ENGINEERING_NOTES.md`](ENGINEERING_NOTES.md)
+Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
 
 > Praxis helps people keep up with exercises a therapist has already prescribed, and coaches them while they do them. **It is not a medical device.** It does not diagnose and it does not choose exercises. Its angles and times are not clinical measurements.
 

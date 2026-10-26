@@ -5,7 +5,7 @@ One FSM for every arm entry in `perception/exercises.py` (pipeline "arm"; demo-o
 entries are refused with ValueError). A registry entry supplies the metric,
 the required camera view, the target, the in-code ceiling, the dose and the tier overrides, so
 adding an exercise never edits this file. `ArmFSM()` with no argument is still "Arm to the
-front" (`flexion`) with exactly the behaviour that shipped in Phase 5.
+front" (`flexion`) with its original behaviour.
 
 Two rep shapes:
 - `kind="hold"` (Arm to the front, Arm out to the side): `start_pose -> moving -> target_reached -> hold ->
@@ -22,9 +22,9 @@ Events: exercise_start, state_change, rep_complete{verified, reason, above_ceili
 target_missed, hold_too_short, compensation_lean, shoulder_hiking,
 above_ceiling{set, rep, angle_deg, ceiling_deg}, set_complete{verified_reps, best_deg,
 above_ceiling_count}, arm_complete. Angles are camera-relative progress, never clinical goniometry; the target is
-clamped to the exercise's ceiling in code (CLAUDE.md guardrails).
+clamped to the exercise's ceiling in code (a guardrail in code).
 
-Gating (Sprint D, generalised in Sprint E): the image-plane metric only means something from
+Gating: the image-plane metric only means something from
 the view the exercise needs, so the FSM freezes (no transitions, no compensation events; the
 angle is still reported for display) while the view is wrong (`gate = "turn_side"` for
 side-view exercises, `"turn_front"` for front-view ones) or the practising-side
@@ -111,7 +111,7 @@ def hike_allowance(
     return round(y + margin, 4)
 
 
-# FSM state -> the phase the avatar and the big count follow (Sprint E contract).
+# FSM state -> the phase the avatar and the big count follow.
 PHASES = {
     "start_pose": "start",
     "moving": "lift",

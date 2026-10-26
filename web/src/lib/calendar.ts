@@ -1,4 +1,4 @@
-/** Screen 12 · Calendar helpers (Figma `12_calendar`, 28 Sep 2026). Dates are ISO
+/** Screen 12 · Calendar helpers (28 Sep 2026). Dates are ISO
  *  `YYYY-MM-DD` strings throughout and all arithmetic is done in UTC, so the browser's time
  *  zone never shifts a day. "Today" is the service's (`/api/calendar` → `today`), never the
  *  browser clock. */
@@ -26,7 +26,7 @@ export const mondayOf = (day: string): string => addDays(day, -weekday(day))
 export type View = 'week' | 'month'
 export type Range = { from: string; to: string }
 
-/** Week view (as the Figma frame): last week and this week, Monday to Sunday. */
+/** Week view (as designed): last week and this week, Monday to Sunday. */
 export function weekRange(anchor: string): Range {
   const mon = mondayOf(anchor)
   return { from: addDays(mon, -7), to: addDays(mon, 6) }

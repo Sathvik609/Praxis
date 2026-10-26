@@ -8,7 +8,7 @@ and tremor as the dominant 3-12 Hz component of the detrended index-tip trace.
 
 Every millimetre here is a sheet-plane projection of a hand that is above the sheet: relative,
 not calibrated to the hand's height (parallax), hence the payload name `pinch_rel_mm`.
-Sprint D-SEG-3: the landmark confidence threshold is the Zoo default 0.5 (was 0.8, which
+The landmark confidence threshold is the Zoo default 0.5 (was 0.8, which
 dropped most real frames), and the metrics window survives up to `miss_tolerance` (3)
 consecutive missed frames instead of being wiped by one, so SPARC / tremor can populate.
 """

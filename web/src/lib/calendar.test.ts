@@ -10,7 +10,7 @@ test('date arithmetic stays on the day in any time zone', () => {
   expect(weekday('2026-10-04')).toBe(6) // Sunday
 })
 
-test('week view is last week and this week, Monday to Sunday (as the Figma frame)', () => {
+test('week view is last week and this week, Monday to Sunday (as designed)', () => {
   expect(weekRange('2026-09-28')).toEqual({ from: '2026-09-21', to: '2026-10-04' })
   expect(weekRange('2026-10-01')).toEqual({ from: '2026-09-21', to: '2026-10-04' })
   expect(rangeLabel(weekRange('2026-09-16'))).toBe('7 – 20 Sep 2026')
