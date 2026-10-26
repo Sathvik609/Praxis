@@ -164,7 +164,7 @@ test('the cup and peg test play their scripts (same steps as the Demonstration l
   h.load.mockResolvedValue(asset)
   const { rerender } = render(<AvatarPanel clip="cup" />)
   await screen.findByTestId('glb-scene')
-  expect(screen.getByText('Step 1 of 5 · Cup on dot 1 of the sheet, your hand resting beside it')).toBeInTheDocument()
+  expect(screen.getByText('Step 1 of 5 · Cup off the sheet until the camera finds the four corners, then on dot 1')).toBeInTheDocument()
   rerender(<AvatarPanel clip="nhpt" />)
   expect(screen.getByText(/^Step 1 of 4 · Pick a peg from the dish/)).toBeInTheDocument()
 })
