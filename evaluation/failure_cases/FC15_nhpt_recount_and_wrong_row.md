@@ -21,7 +21,7 @@ seat. At steep angles a standing peg's top projects onto the next row's hole (FC
 
 ## What we changed
 12 Oct (`services/session/tests/test_nhpt.py`, `test_parallax.py`): a hole keeps its state while
-something covers it. 25 Oct (`5e10e46`): the test ends when nine **different** holes are filled,
+something covers it. 25 Oct (`58a0503`): the test ends when nine **different** holes are filled,
 so a hole counted twice no longer ends the test early (before, one clip counted one hole three
 times and ended before all nine holes were filled).
 

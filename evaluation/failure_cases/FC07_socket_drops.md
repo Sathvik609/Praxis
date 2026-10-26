@@ -19,10 +19,10 @@ socket dropped is not known.
 ## What we changed
 `4478689` (13 Oct): Save / Skip on a closed socket, a drop after the feedback, or no ack within
 5 s all leave for the report; the camera stops at End; patient-ended sessions are stored
-`ended_early`. `24f114d` (21 Oct): every live socket writes a `socket_close` trace row (saved or
+`ended_early`. `6c9ce02` (21 Oct): every live socket writes a `socket_close` trace row (saved or
 not, close code, agent run in flight, seconds since the last agent run), and `/api/review` counts
 sockets that closed before their session was saved.
 
 ## Status
 Mitigated (no more stuck screen); the cause of the drops is open until a test runs on a build
-with `24f114d`.
+with `6c9ce02`.

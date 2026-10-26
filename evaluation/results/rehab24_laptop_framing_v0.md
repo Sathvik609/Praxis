@@ -8,7 +8,7 @@ Generated 2026-10-25 by `evaluation/scripts/rehab24_laptop_framing.py`, OpenCV 5
 | hips_at_edge | 35 | 34 | 4 | 0.93 | 0 | 84% | 5.0° | 0 | 0 |
 | hips_out | 35 | 35 | 7 | 0.91 | 3 | 85% | 7.5° | 1 | 1 |
 
-**Before the 25 Oct fix** (the same script on commit d750879, pipeline e657f752cc9c; the angle gate needed the hip, and a dip over the start line of any length was a rep):
+**Before the 25 Oct fix** (the same script on commit 7d0650b, pipeline e657f752cc9c; the angle gate needed the hip, and a dip over the start line of any length was a rep):
 
 | framing | labelled reps | reps found | false reps | rep F1 | reps < 1 s | angle scored | angle MAE | shoulder-hike flags | setup pauses |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|

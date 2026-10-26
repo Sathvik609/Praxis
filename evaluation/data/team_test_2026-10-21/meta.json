@@ -15,5 +15,5 @@
  "pseudonymisation": "real tester names replaced by T1-T3 everywhere (username, trace user, review keys); the mapping is not committed. No free-text notes from people exist in the snapshot (the only feedback 'detail' text is test-claude's 'automated check by Claude (synthetic clip)'). Self-reported pain/effort answers are kept because stop rules depend on them.",
  "pixels": "none: the service never stores frames; these files hold events, summaries and trace rows only (checked by tests/test_team_test_report.py: no inline image, base64 or JPEG payloads)",
  "traces_note": "traces/ holds 6 of 15 sessions (all T1): the other sessions' traces were no longer in the server's memory and /api/trace serves memory only. Agent totals over all 15 sessions therefore come from review_server.json.",
- "socket_close": "not recorded: the 13 Oct build predates the socket_close trace row (24f114d, 21 Oct)"
+ "socket_close": "not recorded: the 13 Oct build predates the socket_close trace row (6c9ce02, 21 Oct)"
 }

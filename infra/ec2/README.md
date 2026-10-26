@@ -1,6 +1,6 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
-Status 26 Oct 2026: **latest code deployed (through fa32240), instance running until 10 Nov 2026** (`PRAXIS_AGENT_DAILY_RUNS=300` in `/etc/praxis/agent.env`).
+Status 26 Oct 2026: **latest code deployed (through 3040eea), instance running until 10 Nov 2026** (`PRAXIS_AGENT_DAILY_RUNS=300` in `/etc/praxis/agent.env`).
 One instance (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
 `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
 address survives stop/start), a CloudFront-only security group, HTTPS at

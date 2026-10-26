@@ -22,7 +22,7 @@ tap-to-sample for both, but the evaluation never replays a tap.
 
 ## What we changed
 Nothing aimed at these clips. The 11 Oct paper-referenced normalisation (FC19's sweep) fixed the
-flat dim-room case but not small yellow pegs. `82cf274` (24 Oct, for the team's uncoloured real
+flat dim-room case but not small yellow pegs. `9dcd2fb` (24 Oct, for the team's uncoloured real
 pegs) adds change from the empty board to the peg mask, which also finds the dim yellow pegs (report
 §8.1.1). The cup is now found as change from the empty sheet too (FC11), but the dim grey cup is
 still mostly missed; why has not been re-analysed on the new detector.

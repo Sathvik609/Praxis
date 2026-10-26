@@ -21,13 +21,13 @@ That one tester produced 30 of 31 flags points at that person's posture or set-u
 the threshold.
 
 ## What we changed
-`3ff1eaf` (21 Oct): the rule coach says the hike correction at most `HIKE_CUES_PER_SET` = 2 times
+`bd69790` (21 Oct): the rule coach says the hike correction at most `HIKE_CUES_PER_SET` = 2 times
 per set, `HIKE_CUE_GAP_S` = 20 s apart. On the same stored events that is 14 captions instead of
 31 (computed by `team_test_report.py` with the shipped constants; 13 for the humans, 1 automated).
 Detection, events, counts in the report and stop rules are unchanged, and stored events now keep
 `hike` and `limit`.
 
-`e12f0fc` (25 Oct): the flag now needs both hips in view as well as both shoulders, because the
+`b5ecedf` (25 Oct): the flag now needs both hips in view as well as both shoulders, because the
 hike is measured in trunk lengths (shoulder to hip); with the hips guessed below a laptop's frame
 the number was noise. On REHAB24-6 cropped to laptop framing it fired once in 35 reps with the
 hips out of frame, and not at all with the full body or the hips at the bottom edge (`evaluation/results/rehab24_laptop_framing_v0.md`).

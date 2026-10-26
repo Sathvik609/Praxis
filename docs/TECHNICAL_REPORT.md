@@ -235,7 +235,7 @@ Every run writes trace rows: `agent_run` (trigger, model, transport, tokens, ms,
 | Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %, an Anthropic spend limit and daily agent-run cap, root MFA, no long-lived keys (CloudShell). Rebuilt 21 Oct in the Praxis-Team management account after the first account became unreachable, so member-account SCPs do not apply |
 | Deploy | one idempotent command (safe to re-run): `infra/ec2/deploy.sh <host> [--agent]` |
 
-On the 21 Oct rebuild, `/health` through HTTPS reported `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded. Last deployed and checked 26 Oct (through fa32240): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance runs until 10 Nov 2026, with our agent capped at 300 checkpoint runs a day.
+On the 21 Oct rebuild, `/health` through HTTPS reported `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded. Last deployed and checked 26 Oct (through 3040eea): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance runs until 10 Nov 2026, with our agent capped at 300 checkpoint runs a day.
 
 On 11 Oct, on the previous instance (same AMI and type), the service test suite passed **634 / 636** against COOL's `cv2` (the two failures need a git checkout), a cup replay over `wss://` through CloudFront counted 31 reaches in 517 frames, and we measured the benchmark below. Neither was re-run on the rebuild.
 
