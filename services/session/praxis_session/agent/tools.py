@@ -585,9 +585,10 @@ def check_setup(session_id: str) -> dict[str, Any]:
 
 
 def recalibrate(session_id: str) -> dict[str, Any]:
-    """Reset the sheet calibration (sheet tasks: all four markers needed again) or the pose gate
-    (arm), let the next frames through, and report markers found, homography error in mm and
-    whether the pose is visible. Use after the patient has fixed the setup."""
+    """Reset the sheet calibration (sheet tasks: corners still where the last fix puts them
+    resume at once, a moved sheet needs corners that fit) or the pose gate (arm), let the next
+    frames through, and report markers found, homography error in mm and whether the pose is
+    visible. Use after the patient has fixed the setup."""
     h = _h()
     s = h.session
     # 11 Oct: it resets tracking, so like every action it needs a live agent run (an outside

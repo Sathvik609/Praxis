@@ -228,6 +228,14 @@ class Calibrator:
     def ever_calibrated(self) -> bool:
         return self._last_good is not None
 
+    def anchor_from(self, old: "Calibrator") -> None:
+        """Keep `old`'s last fix as the anchor only (agent `recalibrate`, 25 Oct team test: the
+        reset ran while a hand still hid every corner, and resuming then needed all four at once,
+        41 s). Corners seen where that fix puts them hold it again at once, three corners refit and
+        two refit when they fit; the timed 1.5 s hold, which needs no marker at all, does not
+        carry over, so a sheet that moved is never measured through the old fix."""
+        self._last_good, self._last_good_t = old._last_good, float("-inf")
+
     def run(self, frame_bgr: np.ndarray, t: float | None = None) -> CalibrationResult:
         t = time.time() if t is None else float(t)
         gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)

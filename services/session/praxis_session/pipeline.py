@@ -384,7 +384,9 @@ class SessionPipeline:
 
     def _apply_recalibrate(self) -> None:
         """Reset on the frame thread (never from the tool's thread): sheet tasks get a fresh
-        calibrator (all four markers needed again), arm gets a fresh pose gate."""
+        calibrator that keeps the last fix only as an anchor (Calibrator.anchor_from: corners
+        still in place resume at once, a moved sheet needs corners that fit), arm gets a fresh
+        pose gate."""
         self._recal_pending = False
         if self.mode == "arm":
             self._angle_filter.reset()
@@ -394,7 +396,9 @@ class SessionPipeline:
             if self._arm is not None:
                 self._arm.gate = None
         else:
-            self._cal = Calibrator(self.spec)
+            cal = Calibrator(self.spec)
+            cal.anchor_from(self._cal)
+            self._cal = cal
             self._steady = MarkerSteadiness()
             self._recent_markers.clear()
 

@@ -69,9 +69,14 @@ def test_recalibrate_resets_the_calibrator_on_the_next_frame():
     assert r["ok"] is True and r["reset"] == "calibrator"
     assert p.frames_since_recalibrate == 0
     hidden, _ = camera_frame(CUP_TARGETS, hide_marker=0)
-    p.process(hidden, 0.1, 1)  # fresh calibrator: three markers are not enough for a first fix
-    assert p.last_calibration["calibrated"] is False and p.last_calibration["missing"] == [0]
+    # 25 Oct: the fresh calibrator keeps the last fix as an anchor, so three corners in place refit
+    p.process(hidden, 0.1, 1)
+    assert p.last_calibration["calibrated"] is True and p.last_calibration["source"] == "partial"
+    assert p.last_calibration["missing"] == [0]
     assert p.frames_since_recalibrate == 1
+    p.command({"cmd": "recalibrate"})
+    p.process(np.full_like(f, 90), 0.2, 2)  # no corner at all: no timed hold after the reset
+    assert p.last_calibration["calibrated"] is False
 
 
 def test_recalibrate_on_arm_resets_the_pose_gate():

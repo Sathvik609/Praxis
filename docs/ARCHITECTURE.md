@@ -213,7 +213,7 @@ sequenceDiagram
     Note over T: guardrails: evidence ids must be in this session's ring,<br/>≤ 160 chars, ≤ 1 per 4 s, ≤ 6 calls per run
     P->>B: moves the forearm, flattens the sheet
     AG->>T: recalibrate
-    T->>PL: command recalibrate → new Calibrator (4 markers needed again)
+    T->>PL: command recalibrate → new Calibrator (keeps the last fix as an anchor)
     T-->>AG: calibrated, markers_found [0,1,2,3], rms_mm 0.165, tilt_deg 15.9
     AG->>T: request_resume(reason, evidence)
     T->>PL: fresh check_setup on the latest frame

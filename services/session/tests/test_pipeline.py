@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from praxis_session.perception.board_spec import NHPT_BOARD
+from praxis_session.perception.board_spec import CUP_TARGETS, NHPT_BOARD
 from praxis_session.perception.synth import camera_frame
 from praxis_session.pipeline import SessionPipeline
 from praxis_session.schema import validate_event
@@ -734,3 +734,38 @@ def test_apply_tier_keeps_the_running_dose_once_reps_have_started():
         p.process_pose(_pose_res(figure(ang)), t=i / 15.0, frame_index=i)
     assert p.snapshot()["arm"]["reps_total"] == 1
     assert p.apply_tier("gentle") == {"tier": "full", "changed": False}
+
+
+def test_recalibrate_keeps_the_last_fix_so_one_corner_in_place_resumes_tracking():
+    """25 Oct team test (cup): every corner hidden by the hand -> paused; the agent's
+    `recalibrate` ran while they were still hidden and threw the fix away, so resuming needed all
+    four corners at once (41 s). Recalibrate now drops only the timed 1.5 s hold: corners still
+    where the last fix puts them resume tracking at once; a sheet that moved does not."""
+    from tests.test_calibration import hide_markers
+
+    good, H = camera_frame(CUP_TARGETS)
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    p.process(good, 0.0, 0)
+    covered = hide_markers(good, H, CUP_TARGETS, [0, 1, 2, 3])
+    seen = [t for i in range(1, 26) for t in _types(p.process(covered, i * 0.5, i))]
+    assert "perception_lost" in seen
+    assert p.command({"cmd": "recalibrate"})["reset"] == "calibrator"
+    p.process(covered, 12.6, 26)
+    assert p.last_calibration["calibrated"] is False  # nothing seen: no timed hold after the reset
+    two = hide_markers(good, H, CUP_TARGETS, [0, 3])  # the cup and hand on dot 1's side
+    assert "perception_regained" in _types(p.process(two, 12.7, 27))
+    assert p.last_calibration["source"] == "held"
+
+
+def test_recalibrate_after_the_sheet_moved_needs_corners_that_fit():
+    from tests.test_calibration import hide_markers
+
+    good, H = camera_frame(CUP_TARGETS)
+    p = SessionPipeline(mode="cup", sheet="cup_targets", use_hand=False)
+    p.process(good, 0.0, 0)
+    p.command({"cmd": "recalibrate"})
+    moved, H2 = camera_frame(CUP_TARGETS, yaw_deg=12)
+    p.process(hide_markers(moved, H2, CUP_TARGETS, [1, 2, 3]), 1.0, 1)  # one corner, moved
+    assert p.last_calibration["calibrated"] is False
+    p.process(moved, 1.1, 2)
+    assert p.last_calibration["source"] == "fresh"
