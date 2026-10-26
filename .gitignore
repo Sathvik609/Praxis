@@ -84,3 +84,6 @@ video/captures/*.mp4
 video/captures/*.png
 video/captures/captures.json
 video/.replay/
+
+# internal planning notes for Claude Code sessions (kept local, not published)
+CLAUDE.md
