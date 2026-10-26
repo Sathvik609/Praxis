@@ -978,7 +978,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--compare", default=None, help="a previous results JSON to show as 'before' (front view)")
     ap.add_argument("--only", default=None, help="comma-separated video ids (debugging)")
     ap.add_argument("--compare-thresholds", default=None,
-                    help="results JSON from before the 12 Oct threshold changes (e.g. `git show 008e236:evaluation/results/rehab24_v0.json`); "
+                    help="results JSON from before the 12 Oct threshold changes (e.g. `git show b076992:evaluation/results/rehab24_v0.json`); "
                          "without it the block already in the output JSON is kept")
     args = ap.parse_args(argv)
     if args.fingerprint:

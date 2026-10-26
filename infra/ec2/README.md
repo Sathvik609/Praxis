@@ -1,6 +1,6 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
-Status 25 Oct 2026: **latest code deployed (through 38d406b), instance stopped until submission.**
+Status 25 Oct 2026: **latest code deployed (through d064d76), instance stopped until submission.**
 One instance (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
 `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
 address survives stop/start), a CloudFront-only security group, HTTPS at

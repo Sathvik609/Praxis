@@ -20,7 +20,7 @@ reads the face.
 
 ## Why we did not change more
 No yaw-labelled data of seated patients. For the head, the copy was changed instead: since
-11 Oct (`38abb45`) the camera-setup placement text for Arm out to the side asks for the head in
+11 Oct (`01ebe66`) the camera-setup placement text for Arm out to the side asks for the head in
 view ("Your face is never analysed, but the camera finds you by your head",
 `web/src/screens/05-camera-setup/SetupDiagram.tsx`), and so do the person hint and the live status
 line; the setup checklist's pose row fails when no pose is found.

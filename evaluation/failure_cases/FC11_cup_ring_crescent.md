@@ -19,7 +19,7 @@ near half shows as a crescent, smaller than the 30 mm disc the detector expected
 camera-side edge, which is the cup's bottom edge lying on the paper, giving the base centre; the
 session learns the cup's radius from tight fits and uses partly hidden bands for the centre only.
 
-`4bbfa37` (24 Oct, from the team's real sessions, where the cup state did not change once in
+`82cf274` (24 Oct, from the team's real sessions, where the cup state did not change once in
 1,751 frames): the sheet seen at the first fix is kept as a reference, and a cup of any
 colour is found as what changed from the empty sheet, with the base fitted to the camera-side edge
 of its silhouette (`services/session/tests/test_cup_any_colour.py`).

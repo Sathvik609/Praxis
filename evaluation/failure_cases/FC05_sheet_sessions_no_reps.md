@@ -26,7 +26,7 @@ Nothing for these two sessions: their cause is not recorded. FC13 and FC14 (rend
 ways for these exercises to see nothing at the start, but there is no evidence either happened
 here. The later team sessions (23–24 Oct) did record why sheet tasks saw nothing: real pegs
 without a strong colour (`pegs_detected` 0) and an ordinary cup that never changed state. Both
-were fixed in `4bbfa37` (24 Oct: change from the empty board and the empty sheet; FC11, FC14) and
+were fixed in `82cf274` (24 Oct: change from the empty board and the empty sheet; FC11, FC14) and
 checked on synthetic frames and renders only (`docs/TECHNICAL_REPORT.md` §8.1.1).
 
 ## Status

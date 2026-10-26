@@ -122,9 +122,9 @@ def main() -> int:
         lines.append(f"| {f} | {o['labelled_reps']} | {o['rep']['tp']} | {o['rep']['fp']} | {o['rep']['f1']:.2f} | {o['reps_under_1s']} | "
                      f"{o['gate_open_rate']:.0%} | {o['angle_mae_deg']:.1f}° | {o['shoulder_hiking']} | {o['setup_blocked']} |")
     before_path = r24.OUT_DIR / f"{NAME}_before_fix.json"
-    if before_path.exists():  # the same script run on commit 872b054 (before the 25 Oct fix)
+    if before_path.exists():  # the same script run on commit d750879 (before the 25 Oct fix)
         b = json.loads(before_path.read_text())
-        lines += ["", f"**Before the 25 Oct fix** (the same script on commit 872b054, pipeline {b['pipeline_fingerprint']}; "
+        lines += ["", f"**Before the 25 Oct fix** (the same script on commit d750879, pipeline {b['pipeline_fingerprint']}; "
                   "the angle gate needed the hip, and a dip over the start line of any length was a rep):", "",
                   lines[4], lines[5]]
         for f, o in b["framings"].items():
