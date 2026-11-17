@@ -6,11 +6,11 @@ This takes five minutes and needs no install. If you have a webcam, you can try 
 
 ## 1. Open the app
 
-**https://d235zashbh751z.cloudfront.net** (Chrome or Edge, desktop or landscape tablet, 1280 × 800 or larger).
+**https://praxis-production-e334.up.railway.app** (Chrome or Edge, desktop or landscape tablet, 1280 × 800 or larger).
 
-This is our AWS deployment. It is an EC2 c8g.large (Graviton4) in us-east-2, launched from the COOL AMI. It runs the session service on COOL's OpenCV 5.1.0-dev behind CloudFront HTTPS. To check what is running, open [`/health`](https://d235zashbh751z.cloudfront.net/health) and look for `opencv_build.cool: true` and `arch: aarch64`.
+This is our Railway deployment. It runs the same session service on stock OpenCV 5.0.0 (x86), with the rule-based coach; the Claude agent is off there. To check what is running, open [`/health`](https://praxis-production-e334.up.railway.app/health).
 
-The endpoint is up from submission until 10 Nov 2026 (judging ends 10 Nov, 2:45 am EST). If it does not answer, please use §5 (local run, about 3 minutes) and tell us.
+During judging the app also ran on AWS: an EC2 c8g.large (Graviton4) in us-east-2, launched from the COOL AMI (OpenCV 5.1.0-dev), behind CloudFront HTTPS, with the Claude agent on. That build was taken down on 17 Nov 2026, after the results. If the Railway link does not answer, please use §5 (local run, about 3 minutes).
 
 ## 2. Turn on the judge view (10 s)
 

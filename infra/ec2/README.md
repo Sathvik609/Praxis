@@ -1,11 +1,14 @@
 # Praxis on AWS Graviton with COOL (EC2)
 
-Status 26 Oct 2026: **latest code deployed (through 3040eea), instance running until 10 Nov 2026** (`PRAXIS_AGENT_DAILY_RUNS=300` in `/etc/praxis/agent.env`).
-One instance (`praxis-cool`, c8g.large, us-east-2) from the COOL AMI
-`ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP (so the
-address survives stop/start), a CloudFront-only security group, HTTPS at
-**https://d235zashbh751z.cloudfront.net** (CloudFront). `/health` shows
-`"cool": true`, `aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors.
+Status 17 Nov 2026: **taken down after the results.** The instance, its disk and Elastic IP, the
+CloudFront distribution and the COOL subscription were all deleted. The live app is now on Railway:
+https://praxis-production-e334.up.railway.app (stock OpenCV 5, rule-based coach).
+
+What ran during judging (deployed through 3040eea on 26 Oct): one instance (`praxis-cool`, c8g.large,
+us-east-2) from the COOL AMI `ami-005a9f90c70ba8d9b` (COOL v3, OpenCV 5.1.0-dev), an Elastic IP, a
+CloudFront-only security group and HTTPS through CloudFront. `/health` showed `"cool": true`,
+`aarch64`; a replay through the judge link ran 3 real Claude runs, 0 errors. The steps below are kept
+so the deployment can be rebuilt.
 
 ## Region, start / stop and spend
 - **Region:** us-east-2 (Ohio).

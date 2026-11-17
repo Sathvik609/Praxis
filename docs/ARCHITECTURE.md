@@ -72,7 +72,7 @@ flowchart LR
     UI -->|"answer, pain, pause, commands"| WS
 
     subgraph AWS["AWS us-east-2 · rebuilt 21 Oct 2026"]
-        CF["CloudFront HTTPS<br/>d235zashbh751z.cloudfront.net<br/>WSS upgrade, caching off"]
+        CF["CloudFront HTTPS<br/>WSS upgrade, caching off<br/>(taken down 17 Nov 2026)"]
         EC2["EC2 c8g.large · Graviton4<br/>COOL AMI · OpenCV 5.1.0-dev (/opt/cool)<br/>same service under systemd"]
         GRD["Guardrails: SG: CloudFront prefix list + one admin IP,<br/>$50 budget with email alerts<br/>(alerts only)"]
         S3["S3: event logs, traces,<br/>reports (planned)"]

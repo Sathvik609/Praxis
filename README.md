@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://d235zashbh751z.cloudfront.net">Try it live</a> ·
+  <a href="https://praxis-production-e334.up.railway.app">Try it live</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#results">Results</a> ·
   <a href="#where-it-fails">Where it fails</a> ·
@@ -20,7 +20,7 @@
 
 <p align="center"><img src="docs/img/screens/replay_cup.png" width="860" alt="Waiter – cup in Replay: OpenCV finds the four corner markers and the five dots on the printed sheet, the mannequin shows the move, the coach's caption and the verified and unverified counts"></p>
 
-- **Live app:** <https://d235zashbh751z.cloudfront.net> (AWS Graviton4 with COOL). No webcam? Settings → Demo and judging → **Replay a recorded session**.
+- **Live app:** <https://praxis-production-e334.up.railway.app> (Railway: stock OpenCV 5 and the rule-based coach; the Claude agent is off). The AWS Graviton4 + COOL build ran for judging and was taken down on 17 Nov 2026. No webcam? Settings → Demo and judging → **Replay a recorded session**.
 - **Five-minute guide:** [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md)
 - **Technical report:** [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md), also as [PDF](docs/Praxis_Technical_Report.pdf)
 - **Diagrams:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · **Evaluation:** [evaluation/README.md](evaluation/README.md)

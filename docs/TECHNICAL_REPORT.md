@@ -3,7 +3,7 @@
 
 **Technical report · OpenCV AI Competition 2026 (powered by AWS) · Team Praxis · 26 Oct 2026**
 
-Live (AWS Graviton4 + COOL, HTTPS): **https://d235zashbh751z.cloudfront.net** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
+Live (Railway, stock OpenCV 5, rule-based coach): **https://praxis-production-e334.up.railway.app** · Judge quick-start: [`docs/JUDGE_QUICKSTART.md`](JUDGE_QUICKSTART.md) · Diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md). The AWS Graviton4 + COOL build described in §7 ran for judging and was taken down on 17 Nov 2026.
 
 > Praxis helps people keep up with exercises a therapist has already prescribed, and coaches them while they do them. **It is not a medical device.** It does not diagnose and it does not choose exercises. Its angles and times are not clinical measurements.
 
@@ -230,12 +230,12 @@ Every run writes trace rows: `agent_run` (trigger, model, transport, tokens, ms,
 | Compute | EC2 **c8g.large (Graviton4, Neoverse-V2, 2 vCPU, 4 GiB)**, us-east-2, 60 GB gp3, Elastic IP |
 | Image | AWS Marketplace **COOL AMI** `ami-005a9f90c70ba8d9b` (*Cloud Optimized OpenCV For AWS Graviton4*, COOL v3, Ubuntu 24.04); `cv2` 5.1.0-dev from `/opt/cool`, SVE + NEON baseline, KleidiCV 0.7.0 HAL |
 | Service | the same FastAPI service under systemd. The venv comes from `uv.lock` **minus** the OpenCV wheel, so `import cv2` loads COOL. The install stops unless `cv2.__file__` is under `/opt/cool` |
-| HTTPS | CloudFront → `d235zashbh751z.cloudfront.net` (HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets can upgrade) |
+| HTTPS | CloudFront (taken down 17 Nov 2026; HTTP→HTTPS, caching off, all viewer headers forwarded so WebSockets can upgrade) |
 | Network | security group: port 8000 only from the CloudFront origin prefix list and one admin IP; SSH from that IP only; MCP routes return 403 from the internet |
 | Cost and safety rails | $50/month budget with email alerts at 80 %, 100 % and forecast 100 %, an Anthropic spend limit and daily agent-run cap, root MFA, no long-lived keys (CloudShell) |
 | Deploy | one idempotent command (safe to re-run): `infra/ec2/deploy.sh <host> [--agent]` |
 
-On the 21 Oct rebuild, `/health` through HTTPS reported `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded. Last deployed and checked 26 Oct (through 3040eea): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance runs until 10 Nov 2026, with our agent capped at 300 checkpoint runs a day.
+On the 21 Oct rebuild, `/health` through HTTPS reported `opencv_build {version 5.1.0-dev, cool: true, dnn: true, arch: aarch64}`, with the hand and pose models loaded. Last deployed and checked 26 Oct (through 3040eea): `/health`, a full cup replay (32 of 32 reaches) and real agent runs through CloudFront. The instance ran through judging, with our agent capped at 300 checkpoint runs a day, and was taken down on 17 Nov 2026.
 
 On 11 Oct, on the previous instance (same AMI and type), the service test suite passed **634 / 636** against COOL's `cv2` (the two failures need a git checkout), a cup replay over `wss://` through CloudFront counted 31 reaches in 517 frames, and we measured the benchmark below. Neither was re-run on the rebuild.
 

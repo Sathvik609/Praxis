@@ -3,7 +3,7 @@
  * Capture the fixtures the static design preview (`pnpm build:design`) serves instead of the
  * session service. Build-time only: the preview bundle never talks to this URL.
  *
- *   node scripts/capture-design-fixtures.mjs [--base https://d235zashbh751z.cloudfront.net]
+ *   node scripts/capture-design-fixtures.mjs [--base https://praxis-production-e334.up.railway.app]
  *
  * Writes `src/designPreview/fixtures/`:
  *   http.json          every GET the web app makes (path -> JSON body), incl. each /api/sessions/{id}
@@ -21,7 +21,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const argBase = process.argv.indexOf('--base')
-const BASE = (argBase > 0 ? process.argv[argBase + 1] : process.env.PRAXIS_CAPTURE_BASE) || 'https://d235zashbh751z.cloudfront.net'
+const BASE = (argBase > 0 ? process.argv[argBase + 1] : process.env.PRAXIS_CAPTURE_BASE) || 'https://praxis-production-e334.up.railway.app'
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'designPreview', 'fixtures')
 const VISIBLE = new Set(['abduction', 'cup', 'nhpt']) // 28 Sep lock; hidden exercises are out of scope
 
